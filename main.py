@@ -15,6 +15,7 @@ def uname():
 def getDkimKey():
     with open("/var/domain") as domainFile:
         domain = domainFile.readline()
+        domain = domain.rstrip("\n")
     dkim = subprocess.check_output(["cat", "/var/dkim/" + domain + ".selector.txt"])
     return jsonify(dkim)
 @app.route("/pythonVersion", methods=["GET"])
