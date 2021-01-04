@@ -13,10 +13,10 @@ def uname():
     return jsonify(uname)
 @app.route("/getDKIM", methods=["GET"])
 def getDkimKey():
-    with open("domain") as domainFile:
+    with open("/var/domain") as domainFile:
         domain = domainFile.readline()
         domain = domain.rstrip("\n")
-    dkim = subprocess.check_output(["cat", domain + ".selector.txt"])
+    dkim = subprocess.check_output(["cat", "/var/dkim/" + domain + ".selector.txt"])
     return jsonify(dkim)
 @app.route("/pythonVersion", methods=["GET"])
 def getPythonVersion():
