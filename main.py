@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from flask import Flask, jsonify, request
 from flask_restful import Resource, Api, reqparse
+import base64
 import pandas as pd
 import ast
 import subprocess
@@ -18,6 +19,7 @@ def getDkimKey():
         domain = domain.rstrip("\n")
     catProcess = subprocess.Popen(["cat", "/var/dkim/" + domain + ".selector.txt"], stdout=subprocess.PIPE)
     dkim = catProcess.communicate()[0]
+    dkim = base64.b64encode(dkim.encode());
     print(dkim)
     return jsonify(dkim)
 @app.route("/pythonVersion", methods=["GET"])
