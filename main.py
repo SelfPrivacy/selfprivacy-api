@@ -16,7 +16,9 @@ def getDkimKey():
     with open("/var/domain") as domainFile:
         domain = domainFile.readline()
         domain = domain.rstrip("\n")
-    dkim = subprocess.check_output(["cat", "/var/dkim/" + domain + ".selector.txt"])
+    catProcess = subprocess.Popen(["cat", "/var/dkim/" + domain + ".selector.txt"], stdout=subprocess.PIPE)
+    dkim = catProcess.communicate()[0]
+    print(dkim)
     return jsonify(dkim)
 @app.route("/pythonVersion", methods=["GET"])
 def getPythonVersion():
