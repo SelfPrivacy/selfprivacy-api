@@ -19,7 +19,7 @@ def getDkimKey():
         domain = domain.rstrip("\n")
     catProcess = subprocess.Popen(["cat", "/var/dkim/" + domain + ".selector.txt"], stdout=subprocess.PIPE)
     dkim = catProcess.communicate()[0]
-    dkim = base64.b64encode(dkim.encode());
+    dkim = base64.b64encode(dkim)
     print(dkim)
     return jsonify(dkim)
 @app.route("/pythonVersion", methods=["GET"])
