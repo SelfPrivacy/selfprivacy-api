@@ -19,10 +19,10 @@ def getDkimKey():
         domain = domain.rstrip("\n")
     catProcess = subprocess.Popen(["cat", "/var/dkim/" + domain + ".selector.txt"], stdout=subprocess.PIPE)
     dkim = catProcess.communicate()[0]
-    dkim = str(dkim, "utf-8")
-    dkim = base64.b64encode(dkim)
+    #dkim = str(dkim, "utf-8")
+    #dkim = base64.b64encode(dkim)
     print(dkim)
-    return jsonify(dkim)
+    return "0"
 @app.route("/pythonVersion", methods=["GET"])
 def getPythonVersion():
     pythonVersion = subprocess.check_output(["python","--version"])
