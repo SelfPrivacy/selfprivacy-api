@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, json
 from flask_restful import Resource, Api, reqparse
 import base64
 import pandas as pd
@@ -22,7 +22,12 @@ def getDkimKey():
     dkim = base64.b64encode(dkim)
     dkim = str(dkim, 'utf-8')
     print(dkim)
-    return "1" #jsonify(dkim) 
+    response = app.response_class(
+        response=json.dumps(dkim),
+        status=200,
+        mimetype='application/json'
+    )
+    return response
 @app.route("/pythonVersion", methods=["GET"])
 def getPythonVersion():
     pythonVersion = subprocess.check_output(["python","--version"])
