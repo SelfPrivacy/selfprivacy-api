@@ -70,5 +70,12 @@ def getServiceStatus():
         smtp=smtpService.returncode,
         http=httpService.returncode
     )
+@app.route("/decryptDisk", methods=["POST"])
+def requestDiskDecryption():
+    decryptionService = subprocess.Popen(["echo", "-n", request.headers['X-Decryption-Key'], "|", "cryptsetup", "luksOpen", "/dev/sdb", "decryptedVar"], stdout=subprocess.PIPE, shell=False)
+    decryptionService.communicate()[0]
+    return jsonify(
+        status=decryptionService.returncode
+    )
 if __name__ == '__main__':
     app.run(port=5050, debug=False)
