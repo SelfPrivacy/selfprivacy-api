@@ -49,9 +49,15 @@ def upgradeSystem():
      return jsonify(upgradeResult.returncode)
 @app.route("/createUser", methods=["GET"])
 def createUser():
-    user = subprocess.Popen(["useradd","-m",request.headers.get("X-User")])
-    user.communicate()[0]
-    return jsonify(user.returncode)
+    with open("users.nix", "r+") as file:
+        appendData = "      #---      \"" + request.headers["X-User"] + "\" = {\n        isNormalUser = true;\n        hashedPassword = \"" + request.headers["X-HashedPassword"] + "\";\n      };"
+        for i, line in enumerate(file):
+            if line.startswith("#---"):
+                file[i] = file[i].strip + appendData + "\n"
+        file.seek(0)
+        for line in file:
+            file.write(line)
+
 @app.route("/deleteUser", methods=["DELETE"])
 def deleteUser():
     user = subprocess.Popen(["userdel",request.headers.get("X-User")])
@@ -77,5 +83,23 @@ def requestDiskDecryption():
     return jsonify(
         status=decryptionService.returncode
     )
+
+@app.route("/enableSSH", methods=["POST"])
+def enableSSH():
+    readOnlyFileDescriptor = open("/etc/nixos/configuration.nix", "rt")
+    readWriteFileDescriptor = open("/etc/nixos/configuration.nix", "wt")
+
+    for line in readOnlyFileDescriptor:
+        readWriteFileDescriptor.write(line.replace("services.openssh.enable = false;", "services.openssh.enable = true;"))
+
+    readWriteFileDescriptor.close()
+    readOnlyFileDescriptor.close()
+
+    return jsonify(
+        status=0
+    )
+
 if __name__ == '__main__':
     app.run(port=5050, debug=False)
+
+
