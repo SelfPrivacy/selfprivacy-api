@@ -6,6 +6,7 @@ import pandas as pd
 import ast
 import subprocess
 import os
+import fileinput
 app = Flask(__name__)
 api = Api(app)
 @app.route("/systemVersion", methods=["GET"])
@@ -47,16 +48,37 @@ def upgradeSystem():
      upgradeResult = subprocess.Popen(["nixos-rebuild","switch","--upgrade"])
      upgradeResult.communicate()[0]
      return jsonify(upgradeResult.returncode)
-@app.route("/createUser", methods=["GET"])
+@app.route("/createUser", methods=["POST"])
 def createUser():
-    with open("users.nix", "r+") as file:
-        appendData = "      #---      \"" + request.headers["X-User"] + "\" = {\n        isNormalUser = true;\n        hashedPassword = \"" + request.headers["X-HashedPassword"] + "\";\n      };"
-        for i, line in enumerate(file):
-            if line.startswith("#---"):
-                file[i] = file[i].strip + appendData + "\n"
-        file.seek(0)
-        for line in file:
-            file.write(line)
+    readOnlyFileDescriptor = open("users.nix", "r")
+    fileContent = list()
+    index = int(0)
+    
+    while True:
+        line = readOnlyFileDescriptor.readline()
+
+        if not line:
+            break
+        else:
+            fileContent.append(line)
+
+    userTemplate = """
+      \"{0}\" = {{
+        isNormalUser = true;
+        hashedPassword = \"{1}\";
+      }};\n""".format(request.headers.get("X-User"), request.headers.get("X-Password"))
+
+    for line in fileContent:
+        index += 1
+        if line.startswith("      #delimiter"):
+            fileContent.insert(index, userTemplate)
+
+    readWriteFileDescriptor = open("users.nix", "w")
+    operationResult = readWriteFileDescriptor.writelines(fileContent)
+
+    return jsonify(
+        result=0
+    )
 
 @app.route("/deleteUser", methods=["DELETE"])
 def deleteUser():
