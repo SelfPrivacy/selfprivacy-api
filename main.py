@@ -11,7 +11,6 @@ import fileinput
 
 app = Flask(__name__)
 api = Api(app)
-socketio = SocketIO(app)
 
 
 @app.route("/systemVersion", methods=["GET"])
