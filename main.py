@@ -1,18 +1,26 @@
 #!/usr/bin/env python3
 from flask import Flask, jsonify, request, json
 from flask_restful import Resource, Api, reqparse
+from flask_socketio import SocketIO
 import base64
 import pandas as pd
 import ast
 import subprocess
 import os
 import fileinput
+
+
 app = Flask(__name__)
 api = Api(app)
+socketio = SocketIO(app)
+
+
 @app.route("/systemVersion", methods=["GET"])
 def uname():
     uname = subprocess.check_output(["uname", "-arm"])
     return jsonify(uname)
+
+
 @app.route("/getDKIM", methods=["GET"])
 def getDkimKey():
     with open("/var/domain") as domainFile:
@@ -29,31 +37,42 @@ def getDkimKey():
         mimetype='application/json'
     )
     return response
+
+
 @app.route("/pythonVersion", methods=["GET"])
 def getPythonVersion():
     pythonVersion = subprocess.check_output(["python","--version"])
     return jsonify(pythonVersion)
+
+
 @app.route("/apply", methods=["GET"])
 def rebuildSystem():
      rebuildResult = subprocess.Popen(["nixos-rebuild","switch"])
      rebuildResult.communicate()[0]
      return jsonify(rebuildResult.returncode)
+
+
 @app.route("/rollback", methods=["GET"])
 def rollbackSystem():
      rollbackResult = subprocess.Popen(["nixos-rebuild","switch","--rollback"])
      rollbackResult.communicate()[0]
      return jsonify(rollbackResult.returncode)
+
+
 @app.route("/upgrade", methods=["GET"])
 def upgradeSystem():
      upgradeResult = subprocess.Popen(["nixos-rebuild","switch","--upgrade"])
      upgradeResult.communicate()[0]
      return jsonify(upgradeResult.returncode)
+
+
 @app.route("/createUser", methods=["POST"])
 def createUser():
     readOnlyFileDescriptor = open("users.nix", "r")
     fileContent = list()
     index = int(0)
     
+
     while True:
         line = readOnlyFileDescriptor.readline()
 
@@ -62,30 +81,40 @@ def createUser():
         else:
             fileContent.append(line)
 
+
     userTemplate = """
+      #begin
       \"{0}\" = {{
         isNormalUser = true;
         hashedPassword = \"{1}\";
-      }};\n""".format(request.headers.get("X-User"), request.headers.get("X-Password"))
+      }};
+      #end""".format(request.headers.get("X-User"), request.headers.get("X-Password"))
+
 
     for line in fileContent:
         index += 1
-        if line.startswith("      #delimiter"):
+        if line.startswith("      #begin"):
             fileContent.insert(index, userTemplate)
 
     readWriteFileDescriptor = open("users.nix", "w")
     operationResult = readWriteFileDescriptor.writelines(fileContent)
 
+
     return jsonify(
-        result=0
+        result=0,
+        descriptor = operationResult
     )
+
 
 @app.route("/deleteUser", methods=["DELETE"])
 def deleteUser():
     user = subprocess.Popen(["userdel",request.headers.get("X-User")])
     user.communicate()[0]
     return jsonify(user.returncode)
+
+
 @app.route("/serviceStatus", methods=["GET"])
+
 def getServiceStatus():
     imapService = subprocess.Popen(["systemctl", "status", "dovecot2.service"])
     imapService.communicate()[0]
@@ -98,15 +127,23 @@ def getServiceStatus():
         smtp=smtpService.returncode,
         http=httpService.returncode
     )
+
+
 @app.route("/decryptDisk", methods=["POST"])
 def requestDiskDecryption():
-    decryptionService = subprocess.Popen(["echo", "-n", request.headers['X-Decryption-Key'], "|", "cryptsetup", "luksOpen", "/dev/sdb", "decryptedVar"], stdout=subprocess.PIPE, shell=False)
-    decryptionService.communicate()[0]
+
+    decryptionCommand = '''
+echo -n {0} | cryptsetup luksOpen /dev/sdb decryptedVar'''.format(request.headers.get("X-Decryption-Key"))
+
+    decryptionService = subprocess.Popen(decryptionCommand, shell=True, stdout=subprocess.PIPE)
+    decryptionService.communicate()
     return jsonify(
         status=decryptionService.returncode
     )
 
+
 @app.route("/enableSSH", methods=["POST"])
+
 def enableSSH():
     readOnlyFileDescriptor = open("/etc/nixos/configuration.nix", "rt")
     readWriteFileDescriptor = open("/etc/nixos/configuration.nix", "wt")
@@ -121,7 +158,6 @@ def enableSSH():
         status=0
     )
 
+
 if __name__ == '__main__':
     app.run(port=5050, debug=False)
-
-
