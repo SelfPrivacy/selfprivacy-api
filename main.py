@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 from flask import Flask, jsonify, request, json
 from flask_restful import Resource, Api, reqparse
-from flask_socketio import SocketIO
 import base64
 import pandas as pd
 import ast
