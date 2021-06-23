@@ -66,7 +66,7 @@ def upgradeSystem():
 
 @app.route("/createUser", methods=["POST"])
 def createUser():
-    readOnlyFileDescriptor = open("users.nix", "r")
+    readOnlyFileDescriptor = open("/etc/nixos/users.nix", "r")
     fileContent = list()
     index = int(0)
     
