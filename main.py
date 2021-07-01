@@ -92,7 +92,7 @@ def createUser():
     for line in fileContent:
         index += 1
         if line.startswith("      #begin"):
-            fileContent.insert(index, userTemplate)
+            fileContent.insert(index-1, userTemplate)
 
     readWriteFileDescriptor = open("/etc/nixos/users.nix", "w")
     operationResult = readWriteFileDescriptor.writelines(fileContent)
