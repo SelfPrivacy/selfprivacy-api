@@ -95,8 +95,6 @@ def createUser():
       
       """.format(request.headers.get("X-User"), request.headers.get("X-Password"))
 
-    print("[TRACE] {0}".format(userTemplate))
-
     for line in fileContent:
         index += 1
         if line.startswith("      #begin"):
@@ -104,6 +102,7 @@ def createUser():
             print("[INFO] Writing new user configuration snippet to memory...", sep="")
             fileContent.insert(index-1, userTemplate)
             print("done")
+            break
 
     print("[INFO] Writing data from memory to file...", sep="")
     readWriteFileDescriptor = open("/etc/nixos/users.nix", "w")
