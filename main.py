@@ -66,10 +66,13 @@ def upgradeSystem():
 
 @app.route("/createUser", methods=["POST"])
 def createUser():
+    print("[INFO] Opening /etc/nixos/users.nix...", sep="")
     readOnlyFileDescriptor = open("/etc/nixos/users.nix", "r")
+    print("done")
     fileContent = list()
     index = int(0)
-    
+
+    print("[INFO] Reading file content...", sep="")
 
     while True:
         line = readOnlyFileDescriptor.readline()
@@ -78,6 +81,7 @@ def createUser():
             break
         else:
             fileContent.append(line)
+            print("[DEBUG] Read line!")
 
 
     userTemplate = """
@@ -88,13 +92,19 @@ def createUser():
       }};
       #end""".format(request.headers.get("X-User"), request.headers.get("X-Password"))
 
+    print("[TRACE] {0}".format(userTemplate))
 
     for line in fileContent:
-        index += 1
+        index -= 1
         if line.startswith("      #begin"):
-            fileContent.insert(index-1, userTemplate)
+            print("[DEBUG] Found user configuration snippet match!")
+            print("[INFO] Writing new user configuration snippet to memory...", sep="")
+            fileContent.insert(index, userTemplate)
+            print("done")
 
+    print("[INFO] Writing data from memory to file...", sep="")
     readWriteFileDescriptor = open("/etc/nixos/users.nix", "w")
+    print("done")
     operationResult = readWriteFileDescriptor.writelines(fileContent)
 
 
