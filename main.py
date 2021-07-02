@@ -98,11 +98,11 @@ def createUser():
     print("[TRACE] {0}".format(userTemplate))
 
     for line in fileContent:
-        index -= 1
+        index += 1
         if line.startswith("      #begin"):
             print("[DEBUG] Found user configuration snippet match!")
             print("[INFO] Writing new user configuration snippet to memory...", sep="")
-            fileContent.insert(index, userTemplate)
+            fileContent.insert(index-1, userTemplate)
             print("done")
 
     print("[INFO] Writing data from memory to file...", sep="")
