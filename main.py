@@ -85,12 +85,15 @@ def createUser():
 
 
     userTemplate = """
+
       #begin
       \"{0}\" = {{
         isNormalUser = true;
         hashedPassword = \"{1}\";
       }};
-      #end""".format(request.headers.get("X-User"), request.headers.get("X-Password"))
+      #end
+      
+      """.format(request.headers.get("X-User"), request.headers.get("X-Password"))
 
     print("[TRACE] {0}".format(userTemplate))
 
