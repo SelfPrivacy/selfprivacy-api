@@ -47,7 +47,9 @@ def getPythonVersion():
 def rebuildSystem():
      rebuildResult = subprocess.Popen(["nixos-rebuild","switch"])
      rebuildResult.communicate()[0]
-     return jsonify(rebuildResult.returncode)
+     return jsonify(
+         status=rebuildResult.returncode
+         )
 
 
 @app.route("/rollback", methods=["GET"])
