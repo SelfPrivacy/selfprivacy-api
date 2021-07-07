@@ -61,7 +61,9 @@ def rollbackSystem():
 def upgradeSystem():
      upgradeResult = subprocess.Popen(["nixos-rebuild","switch","--upgrade"])
      upgradeResult.communicate()[0]
-     return jsonify(upgradeResult.returncode)
+     return jsonify(
+         status=upgradeResult.returncode
+         )
 
 
 @app.route("/createUser", methods=["POST"])
@@ -92,7 +94,6 @@ def createUser():
         hashedPassword = \"{1}\";
       }};
       #end
-      
       """.format(request.headers.get("X-User"), request.headers.get("X-Password"))
 
     for line in fileContent:
