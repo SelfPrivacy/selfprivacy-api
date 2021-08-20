@@ -171,6 +171,191 @@ def enableSSH():
         status=0
     )
 
+@app.route("/services/bitwarden/enable")
+
+def enableBitwarden():
+    readOnlyFileDescriptor = open("/etc/nixos/passmgr/bitwarden.nix", "rt")
+    readWriteFileDescriptor = open("/etc/nixos/passmgr/bitwarden.nix", "wt")
+
+    for line in readOnlyFileDescriptor:
+        readWriteFileDescriptor.write(line.replace("enable = false;", "enable = true;"))
+
+    readWriteFileDescriptor.close()
+    readOnlyFileDescriptor.close()
+
+    return jsonify(
+        status=0
+    )
+
+# Bitwarden
+
+@app.route("/services/bitwarden/disable")
+
+def disableBitwarden():
+    readOnlyFileDescriptor = open("/etc/nixos/passmgr/bitwarden.nix", "rt")
+    readWriteFileDescriptor = open("/etc/nixos/passmgr/bitwarden.nix", "wt")
+
+    for line in readOnlyFileDescriptor:
+        readWriteFileDescriptor.write(line.replace("enable = true;", "enable = false;"))
+
+    readWriteFileDescriptor.close()
+    readOnlyFileDescriptor.close()
+
+    return jsonify(
+        status=0
+    )
+
+@app.route("/services/bitwarden/enable")
+
+def enableBitwarden():
+    readOnlyFileDescriptor = open("/etc/nixos/passmgr/bitwarden.nix", "rt")
+    readWriteFileDescriptor = open("/etc/nixos/passmgr/bitwarden.nix", "wt")
+
+    for line in readOnlyFileDescriptor:
+        readWriteFileDescriptor.write(line.replace("enable = false;", "enable = true;"))
+
+    readWriteFileDescriptor.close()
+    readOnlyFileDescriptor.close()
+
+    return jsonify(
+        status=0
+    )
+
+#Gitea
+
+@app.route("/services/gitea/disable")
+
+def disableBitwarden():
+    readOnlyFileDescriptor = open("/etc/nixos/git/gitea.nix", "rt")
+    readWriteFileDescriptor = open("/etc/nixos/git/gitea.nix", "wt")
+
+    for line in readOnlyFileDescriptor:
+        readWriteFileDescriptor.write(line.replace("enable = true;", "enable = false;"))
+
+    readWriteFileDescriptor.close()
+    readOnlyFileDescriptor.close()
+
+    return jsonify(
+        status=0
+    )
+
+@app.route("/services/gitea/enable")
+
+def enableBitwarden():
+    readOnlyFileDescriptor = open("/etc/nixos/git/gitea.nix", "rt")
+    readWriteFileDescriptor = open("/etc/nixos/git/gitea.nix", "wt")
+
+    for line in readOnlyFileDescriptor:
+        readWriteFileDescriptor.write(line.replace("enable = false;", "enable = true;"))
+
+    readWriteFileDescriptor.close()
+    readOnlyFileDescriptor.close()
+
+    return jsonify(
+        status=0
+    )
+
+#Nextcloud
+
+@app.route("/services/nextcloud/disable")
+
+def disableBitwarden():
+    readOnlyFileDescriptor = open("/etc/nixos/nextcloud/nextcloud.nix", "rt")
+    readWriteFileDescriptor = open("/etc/nixos/nextcloud/nextcloud.nix", "wt")
+
+    for line in readOnlyFileDescriptor:
+        readWriteFileDescriptor.write(line.replace("enable = true;", "enable = false;"))
+
+    readWriteFileDescriptor.close()
+    readOnlyFileDescriptor.close()
+
+    return jsonify(
+        status=0
+    )
+
+@app.route("/services/nextcloud/enable")
+
+def enableBitwarden():
+    readOnlyFileDescriptor = open("/etc/nixos/nextcloud/nextcloud.nix", "rt")
+    readWriteFileDescriptor = open("/etc/nixos/nextcloud/nextcloud.nix", "wt")
+
+    for line in readOnlyFileDescriptor:
+        readWriteFileDescriptor.write(line.replace("enable = false;", "enable = true;"))
+
+    readWriteFileDescriptor.close()
+    readOnlyFileDescriptor.close()
+
+    return jsonify(
+        status=0
+    )
+
+#Pleroma
+
+@app.route("/services/pleroma/disable")
+
+def disableBitwarden():
+    readOnlyFileDescriptor = open("/etc/nixos/social/pleroma.nix", "rt")
+    readWriteFileDescriptor = open("/etc/nixos/social/pleroma.nix", "wt")
+
+    for line in readOnlyFileDescriptor:
+        readWriteFileDescriptor.write(line.replace("enable = true;", "enable = false;"))
+
+    readWriteFileDescriptor.close()
+    readOnlyFileDescriptor.close()
+
+    return jsonify(
+        status=0
+    )
+
+@app.route("/services/pleroma/enable")
+
+def enableBitwarden():
+    readOnlyFileDescriptor = open("/etc/nixos/social/pleroma.nix", "rt")
+    readWriteFileDescriptor = open("/etc/nixos/social/pleroma.nix", "wt")
+
+    for line in readOnlyFileDescriptor:
+        readWriteFileDescriptor.write(line.replace("enable = false;", "enable = true;"))
+
+    readWriteFileDescriptor.close()
+    readOnlyFileDescriptor.close()
+
+    return jsonify(
+        status=0
+    )
+
+#Ocserv
+
+@app.route("/services/ocserv/disable")
+
+def disableBitwarden():
+    readOnlyFileDescriptor = open("/etc/nixos/vpn/ocserv.nix", "rt")
+    readWriteFileDescriptor = open("/etc/nixos/vpn/ocserv.nix", "wt")
+
+    for line in readOnlyFileDescriptor:
+        readWriteFileDescriptor.write(line.replace("enable = true;", "enable = false;"))
+
+    readWriteFileDescriptor.close()
+    readOnlyFileDescriptor.close()
+
+    return jsonify(
+        status=0
+    )
+
+@app.route("/services/ocserv/enable")
+
+def enableBitwarden():
+    readOnlyFileDescriptor = open("/etc/nixos/vpn/ocserv.nix", "rt")
+    readWriteFileDescriptor = open("/etc/nixos/vpn/ocserv.nix", "wt")
+
+    for line in readOnlyFileDescriptor:
+        readWriteFileDescriptor.write(line.replace("enable = false;", "enable = true;"))
+
+    readWriteFileDescriptor.close()
+    readOnlyFileDescriptor.close()
+
+    return jsonify(
+        status=0
+    )
 
 if __name__ == '__main__':
     app.run(port=5050, debug=False)
