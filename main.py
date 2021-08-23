@@ -155,7 +155,7 @@ echo -n {0} | cryptsetup luksOpen /dev/sdb decryptedVar'''.format(request.header
     )
 
 
-@app.route("/enableSSH", methods=["POST"])
+@app.route("/services/ssh/enable", methods=["POST"])
 
 def enableSSH():
     readOnlyFileDescriptor = open("/etc/nixos/configuration.nix", "rt")
@@ -205,27 +205,11 @@ def disableBitwarden():
         status=0
     )
 
-@app.route("/services/bitwarden/enable")
-
-def enableBitwarden():
-    readOnlyFileDescriptor = open("/etc/nixos/passmgr/bitwarden.nix", "rt")
-    readWriteFileDescriptor = open("/etc/nixos/passmgr/bitwarden.nix", "wt")
-
-    for line in readOnlyFileDescriptor:
-        readWriteFileDescriptor.write(line.replace("enable = false;", "enable = true;"))
-
-    readWriteFileDescriptor.close()
-    readOnlyFileDescriptor.close()
-
-    return jsonify(
-        status=0
-    )
-
 #Gitea
 
 @app.route("/services/gitea/disable")
 
-def disableBitwarden():
+def disableGitea():
     readOnlyFileDescriptor = open("/etc/nixos/git/gitea.nix", "rt")
     readWriteFileDescriptor = open("/etc/nixos/git/gitea.nix", "wt")
 
@@ -241,7 +225,7 @@ def disableBitwarden():
 
 @app.route("/services/gitea/enable")
 
-def enableBitwarden():
+def enableGitea():
     readOnlyFileDescriptor = open("/etc/nixos/git/gitea.nix", "rt")
     readWriteFileDescriptor = open("/etc/nixos/git/gitea.nix", "wt")
 
@@ -259,7 +243,7 @@ def enableBitwarden():
 
 @app.route("/services/nextcloud/disable")
 
-def disableBitwarden():
+def disableNextcloud():
     readOnlyFileDescriptor = open("/etc/nixos/nextcloud/nextcloud.nix", "rt")
     readWriteFileDescriptor = open("/etc/nixos/nextcloud/nextcloud.nix", "wt")
 
@@ -275,7 +259,7 @@ def disableBitwarden():
 
 @app.route("/services/nextcloud/enable")
 
-def enableBitwarden():
+def enableNextcloud():
     readOnlyFileDescriptor = open("/etc/nixos/nextcloud/nextcloud.nix", "rt")
     readWriteFileDescriptor = open("/etc/nixos/nextcloud/nextcloud.nix", "wt")
 
@@ -293,7 +277,7 @@ def enableBitwarden():
 
 @app.route("/services/pleroma/disable")
 
-def disableBitwarden():
+def disablePleroma():
     readOnlyFileDescriptor = open("/etc/nixos/social/pleroma.nix", "rt")
     readWriteFileDescriptor = open("/etc/nixos/social/pleroma.nix", "wt")
 
@@ -309,7 +293,7 @@ def disableBitwarden():
 
 @app.route("/services/pleroma/enable")
 
-def enableBitwarden():
+def enablePleroma():
     readOnlyFileDescriptor = open("/etc/nixos/social/pleroma.nix", "rt")
     readWriteFileDescriptor = open("/etc/nixos/social/pleroma.nix", "wt")
 
@@ -327,7 +311,7 @@ def enableBitwarden():
 
 @app.route("/services/ocserv/disable")
 
-def disableBitwarden():
+def disableOcserv():
     readOnlyFileDescriptor = open("/etc/nixos/vpn/ocserv.nix", "rt")
     readWriteFileDescriptor = open("/etc/nixos/vpn/ocserv.nix", "wt")
 
@@ -343,7 +327,7 @@ def disableBitwarden():
 
 @app.route("/services/ocserv/enable")
 
-def enableBitwarden():
+def enableOcserv():
     readOnlyFileDescriptor = open("/etc/nixos/vpn/ocserv.nix", "rt")
     readWriteFileDescriptor = open("/etc/nixos/vpn/ocserv.nix", "wt")
 
@@ -355,6 +339,52 @@ def enableBitwarden():
 
     return jsonify(
         status=0
+    )
+
+@app.route("/services/ssh/key/send", methods=["POST"])
+
+def readKey():
+
+    requestBody = request.get_json()
+
+    publicKey = requestBody.data(["public_key"])
+
+
+    print("[INFO] Opening /etc/nixos/configuration.nix...", sep="")
+    readOnlyFileDescriptor = open("/etc/nixos/users.nix", "r")
+    print("done")
+    fileContent = list()
+    index = int(0)
+
+    print("[INFO] Reading file content...", sep="")
+
+    while True:
+        line = readOnlyFileDescriptor.readline()
+
+        if not line:
+            break
+        else:
+            fileContent.append(line)
+            print("[DEBUG] Read line!")
+
+    for line in fileContent:
+        index += 1
+        if "openssh.authorizedKeys.keys = [" in line:
+            print("[DEBUG] Found SSH key configuration snippet match!")
+            print("[INFO] Writing new SSH key", sep="")
+            fileContent.insert(index, "\n      \"" + publicKey + "\"")
+            print("done")
+            break
+
+    print("[INFO] Writing data from memory to file...", sep="")
+    readWriteFileDescriptor = open("/etc/nixos/configuration.nix", "w")
+    print("done")
+    operationResult = readWriteFileDescriptor.writelines(fileContent)
+
+
+    return jsonify(
+        result=0,
+        descriptor = operationResult
     )
 
 if __name__ == '__main__':
