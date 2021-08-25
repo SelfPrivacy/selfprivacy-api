@@ -372,7 +372,7 @@ def readKey():
         if "openssh.authorizedKeys.keys = [" in line:
             print("[DEBUG] Found SSH key configuration snippet match!")
             print("[INFO] Writing new SSH key", sep="")
-            fileContent.insert(index, "\n      \"" + publicKey + "\"")
+            fileContent.append(index, "\n      \"" + publicKey + "\"")
             print("done")
             break
 
