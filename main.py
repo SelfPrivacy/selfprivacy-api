@@ -171,6 +171,8 @@ def enableSSH():
         status=0
     )
 
+# Bitwarden
+
 @app.route("/services/bitwarden/enable", methods=["POST"])
 
 def enableBitwarden():
@@ -186,8 +188,6 @@ def enableBitwarden():
     return jsonify(
         status=0
     )
-
-# Bitwarden
 
 @app.route("/services/bitwarden/disable", methods=["POST"])
 
