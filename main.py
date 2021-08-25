@@ -171,7 +171,7 @@ def enableSSH():
         status=0
     )
 
-@app.route("/services/bitwarden/enable")
+@app.route("/services/bitwarden/enable", methods=["POST"])
 
 def enableBitwarden():
     readOnlyFileDescriptor = open("/etc/nixos/passmgr/bitwarden.nix", "rt")
@@ -189,7 +189,7 @@ def enableBitwarden():
 
 # Bitwarden
 
-@app.route("/services/bitwarden/disable")
+@app.route("/services/bitwarden/disable", methods=["POST"])
 
 def disableBitwarden():
     readOnlyFileDescriptor = open("/etc/nixos/passmgr/bitwarden.nix", "rt")
@@ -207,7 +207,7 @@ def disableBitwarden():
 
 #Gitea
 
-@app.route("/services/gitea/disable")
+@app.route("/services/gitea/disable", methods=["POST"])
 
 def disableGitea():
     readOnlyFileDescriptor = open("/etc/nixos/git/gitea.nix", "rt")
@@ -223,7 +223,7 @@ def disableGitea():
         status=0
     )
 
-@app.route("/services/gitea/enable")
+@app.route("/services/gitea/enable", methods=["POST"])
 
 def enableGitea():
     readOnlyFileDescriptor = open("/etc/nixos/git/gitea.nix", "rt")
@@ -241,7 +241,7 @@ def enableGitea():
 
 #Nextcloud
 
-@app.route("/services/nextcloud/disable")
+@app.route("/services/nextcloud/disable", methods=["POST"])
 
 def disableNextcloud():
     readOnlyFileDescriptor = open("/etc/nixos/nextcloud/nextcloud.nix", "rt")
@@ -257,7 +257,7 @@ def disableNextcloud():
         status=0
     )
 
-@app.route("/services/nextcloud/enable")
+@app.route("/services/nextcloud/enable", methods=["POST"])
 
 def enableNextcloud():
     readOnlyFileDescriptor = open("/etc/nixos/nextcloud/nextcloud.nix", "rt")
@@ -275,7 +275,7 @@ def enableNextcloud():
 
 #Pleroma
 
-@app.route("/services/pleroma/disable")
+@app.route("/services/pleroma/disable", methods=["POST"])
 
 def disablePleroma():
     readOnlyFileDescriptor = open("/etc/nixos/social/pleroma.nix", "rt")
@@ -291,7 +291,7 @@ def disablePleroma():
         status=0
     )
 
-@app.route("/services/pleroma/enable")
+@app.route("/services/pleroma/enable", methods=["POST"])
 
 def enablePleroma():
     readOnlyFileDescriptor = open("/etc/nixos/social/pleroma.nix", "rt")
@@ -309,7 +309,7 @@ def enablePleroma():
 
 #Ocserv
 
-@app.route("/services/ocserv/disable")
+@app.route("/services/ocserv/disable", methods=["POST"])
 
 def disableOcserv():
     readOnlyFileDescriptor = open("/etc/nixos/vpn/ocserv.nix", "rt")
@@ -325,7 +325,7 @@ def disableOcserv():
         status=0
     )
 
-@app.route("/services/ocserv/enable")
+@app.route("/services/ocserv/enable", methods=["POST"])
 
 def enableOcserv():
     readOnlyFileDescriptor = open("/etc/nixos/vpn/ocserv.nix", "rt")
@@ -341,7 +341,7 @@ def enableOcserv():
         status=0
     )
 
-@app.route("/services/ssh/key/send", methods=["POST"])
+@app.route("/services/ssh/key/send", methods=["PUT"])
 
 def readKey():
 
