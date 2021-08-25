@@ -351,7 +351,7 @@ def readKey():
 
 
     print("[INFO] Opening /etc/nixos/configuration.nix...", sep="")
-    readOnlyFileDescriptor = open("/etc/nixos/users.nix", "r")
+    readOnlyFileDescriptor = open("/etc/nixos/configuration.nix", "r")
     print("done")
     fileContent = list()
     index = int(0)
