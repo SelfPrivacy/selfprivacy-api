@@ -272,7 +272,7 @@ def enableGitea():
 @app.route("/services/nextcloud/disable", methods=["POST"])
 
 def disableNextcloud():
-    readOnlyFileDescriptor = open("/etc/nixos/cloud/nextcloud.nix", "rt")
+    readOnlyFileDescriptor = open("/etc/nixos/nextcloud/nextcloud.nix", "rt")
     
 
     fileContent = readOnlyFileDescriptor.read()
@@ -280,7 +280,7 @@ def disableNextcloud():
     fileContent = fileContent.replace("enable = true;", "enable = false;")     
     readOnlyFileDescriptor.close()
 
-    readWriteFileDescriptor = open("/etc/nixos/cloud/nextcloud.nix", "wt") 
+    readWriteFileDescriptor = open("/etc/nixos/nextcloud/nextcloud.nix", "wt") 
 
     writeOperationDescriptor = readWriteFileDescriptor.write(fileContent)
     readWriteFileDescriptor.close()
@@ -293,7 +293,7 @@ def disableNextcloud():
 @app.route("/services/nextcloud/enable", methods=["POST"])
 
 def enableNextcloud():
-    readOnlyFileDescriptor = open("/etc/nixos/cloud/nextcloud.nix", "rt")
+    readOnlyFileDescriptor = open("/etc/nixos/nextcloud/nextcloud.nix", "rt")
     
 
     fileContent = readOnlyFileDescriptor.read()
@@ -301,7 +301,7 @@ def enableNextcloud():
     fileContent = fileContent.replace("enable = false;", "enable = true;")     
     readOnlyFileDescriptor.close()
 
-    readWriteFileDescriptor = open("/etc/nixos/cloud/nextcloud.nix", "wt") 
+    readWriteFileDescriptor = open("/etc/nixos/nextcloud/nextcloud.nix", "wt") 
 
     writeOperationDescriptor = readWriteFileDescriptor.write(fileContent)
     readWriteFileDescriptor.close()
