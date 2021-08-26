@@ -168,11 +168,13 @@ def enableSSH():
 
     readWriteFileDescriptor = open("/etc/nixos/configuration.nix", "wt") 
 
-    writeOperationStatus = readWriteFileDescriptor.write(fileContent)
+    writeOperationDescriptor = readWriteFileDescriptor.write(fileContent)
     readWriteFileDescriptor.close()
     
     return jsonify(
-        status=writeOperationStatus
+        status=0,
+        descriptor=writeOperationDescriptor
+
     )
 
 # Bitwarden
@@ -181,33 +183,45 @@ def enableSSH():
 
 def enableBitwarden():
     readOnlyFileDescriptor = open("/etc/nixos/passmgr/bitwarden.nix", "rt")
-    readWriteFileDescriptor = open("/etc/nixos/passmgr/bitwarden.nix", "wt")
+    
 
-    for line in readOnlyFileDescriptor:
-        readWriteFileDescriptor.write(line.replace("enable = false;", "enable = true;"))
+    fileContent = readOnlyFileDescriptor.read()
 
-    readWriteFileDescriptor.close()
+    fileContent = fileContent.replace("enable = false;", "enable = true;")     
     readOnlyFileDescriptor.close()
 
+    readWriteFileDescriptor = open("/etc/nixos/passmgr/bitwarden.nix", "wt") 
+
+    writeOperationDescriptor = readWriteFileDescriptor.write(fileContent)
+    readWriteFileDescriptor.close()
+    
     return jsonify(
-        status=0
+        status=0,
+        descriptor=writeOperationDescriptor
     )
 
 @app.route("/services/bitwarden/disable", methods=["POST"])
 
 def disableBitwarden():
+
     readOnlyFileDescriptor = open("/etc/nixos/passmgr/bitwarden.nix", "rt")
-    readWriteFileDescriptor = open("/etc/nixos/passmgr/bitwarden.nix", "wt")
+    
 
-    for line in readOnlyFileDescriptor:
-        readWriteFileDescriptor.write(line.replace("enable = true;", "enable = false;"))
+    fileContent = readOnlyFileDescriptor.read()
 
-    readWriteFileDescriptor.close()
+    fileContent = fileContent.replace("enable = true;", "enable = false;")     
     readOnlyFileDescriptor.close()
 
+    readWriteFileDescriptor = open("/etc/nixos/passmgr/bitwarden.nix", "wt") 
+
+    writeOperationDescriptor = readWriteFileDescriptor.write(fileContent)
+    readWriteFileDescriptor.close()
+    
     return jsonify(
-        status=0
+        status=0,
+        descriptor=writeOperationDescriptor
     )
+
 
 #Gitea
 
@@ -215,32 +229,42 @@ def disableBitwarden():
 
 def disableGitea():
     readOnlyFileDescriptor = open("/etc/nixos/git/gitea.nix", "rt")
-    readWriteFileDescriptor = open("/etc/nixos/git/gitea.nix", "wt")
+    
 
-    for line in readOnlyFileDescriptor:
-        readWriteFileDescriptor.write(line.replace("enable = true;", "enable = false;"))
+    fileContent = readOnlyFileDescriptor.read()
 
-    readWriteFileDescriptor.close()
+    fileContent = fileContent.replace("enable = true;", "enable = false;")     
     readOnlyFileDescriptor.close()
 
+    readWriteFileDescriptor = open("/etc/nixos/git/gitea.nix", "wt") 
+
+    writeOperationDescriptor = readWriteFileDescriptor.write(fileContent)
+    readWriteFileDescriptor.close()
+    
     return jsonify(
-        status=0
+        status=0,
+        descriptor=writeOperationDescriptor
     )
 
 @app.route("/services/gitea/enable", methods=["POST"])
 
 def enableGitea():
     readOnlyFileDescriptor = open("/etc/nixos/git/gitea.nix", "rt")
-    readWriteFileDescriptor = open("/etc/nixos/git/gitea.nix", "wt")
+    
 
-    for line in readOnlyFileDescriptor:
-        readWriteFileDescriptor.write(line.replace("enable = false;", "enable = true;"))
+    fileContent = readOnlyFileDescriptor.read()
 
-    readWriteFileDescriptor.close()
+    fileContent = fileContent.replace("enable = false;", "enable = true;")     
     readOnlyFileDescriptor.close()
 
+    readWriteFileDescriptor = open("/etc/nixos/git/gitea.nix", "wt") 
+
+    writeOperationDescriptor = readWriteFileDescriptor.write(fileContent)
+    readWriteFileDescriptor.close()
+    
     return jsonify(
-        status=0
+        status=0,
+        descriptor=writeOperationDescriptor
     )
 
 #Nextcloud
@@ -248,33 +272,43 @@ def enableGitea():
 @app.route("/services/nextcloud/disable", methods=["POST"])
 
 def disableNextcloud():
-    readOnlyFileDescriptor = open("/etc/nixos/nextcloud/nextcloud.nix", "rt")
-    readWriteFileDescriptor = open("/etc/nixos/nextcloud/nextcloud.nix", "wt")
+    readOnlyFileDescriptor = open("/etc/nixos/cloud/nextcloud.nix", "rt")
+    
 
-    for line in readOnlyFileDescriptor:
-        readWriteFileDescriptor.write(line.replace("enable = true;", "enable = false;"))
+    fileContent = readOnlyFileDescriptor.read()
 
-    readWriteFileDescriptor.close()
+    fileContent = fileContent.replace("enable = true;", "enable = false;")     
     readOnlyFileDescriptor.close()
 
+    readWriteFileDescriptor = open("/etc/nixos/cloud/nextcloud.nix", "wt") 
+
+    writeOperationDescriptor = readWriteFileDescriptor.write(fileContent)
+    readWriteFileDescriptor.close()
+    
     return jsonify(
-        status=0
+        status=0,
+        descriptor=writeOperationDescriptor
     )
 
 @app.route("/services/nextcloud/enable", methods=["POST"])
 
 def enableNextcloud():
-    readOnlyFileDescriptor = open("/etc/nixos/nextcloud/nextcloud.nix", "rt")
-    readWriteFileDescriptor = open("/etc/nixos/nextcloud/nextcloud.nix", "wt")
+    readOnlyFileDescriptor = open("/etc/nixos/cloud/nextcloud.nix", "rt")
+    
 
-    for line in readOnlyFileDescriptor:
-        readWriteFileDescriptor.write(line.replace("enable = false;", "enable = true;"))
+    fileContent = readOnlyFileDescriptor.read()
 
-    readWriteFileDescriptor.close()
+    fileContent = fileContent.replace("enable = false;", "enable = true;")     
     readOnlyFileDescriptor.close()
 
+    readWriteFileDescriptor = open("/etc/nixos/cloud/nextcloud.nix", "wt") 
+
+    writeOperationDescriptor = readWriteFileDescriptor.write(fileContent)
+    readWriteFileDescriptor.close()
+    
     return jsonify(
-        status=0
+        status=0,
+        descriptor=writeOperationDescriptor
     )
 
 #Pleroma
@@ -283,32 +317,42 @@ def enableNextcloud():
 
 def disablePleroma():
     readOnlyFileDescriptor = open("/etc/nixos/social/pleroma.nix", "rt")
-    readWriteFileDescriptor = open("/etc/nixos/social/pleroma.nix", "wt")
+    
 
-    for line in readOnlyFileDescriptor:
-        readWriteFileDescriptor.write(line.replace("enable = true;", "enable = false;"))
+    fileContent = readOnlyFileDescriptor.read()
 
-    readWriteFileDescriptor.close()
+    fileContent = fileContent.replace("enable = true;", "enable = false;")     
     readOnlyFileDescriptor.close()
 
+    readWriteFileDescriptor = open("/etc/nixos/social/pleroma.nix", "wt") 
+
+    writeOperationDescriptor = readWriteFileDescriptor.write(fileContent)
+    readWriteFileDescriptor.close()
+    
     return jsonify(
-        status=0
+        status=0,
+        descriptor=writeOperationDescriptor
     )
 
 @app.route("/services/pleroma/enable", methods=["POST"])
 
 def enablePleroma():
     readOnlyFileDescriptor = open("/etc/nixos/social/pleroma.nix", "rt")
-    readWriteFileDescriptor = open("/etc/nixos/social/pleroma.nix", "wt")
+    
 
-    for line in readOnlyFileDescriptor:
-        readWriteFileDescriptor.write(line.replace("enable = false;", "enable = true;"))
+    fileContent = readOnlyFileDescriptor.read()
 
-    readWriteFileDescriptor.close()
+    fileContent = fileContent.replace("enable = false;", "enable = true;")     
     readOnlyFileDescriptor.close()
 
+    readWriteFileDescriptor = open("/etc/nixos/social/pleroma.nix", "wt") 
+
+    writeOperationDescriptor = readWriteFileDescriptor.write(fileContent)
+    readWriteFileDescriptor.close()
+    
     return jsonify(
-        status=0
+        status=0,
+        descriptor=writeOperationDescriptor
     )
 
 #Ocserv
@@ -317,32 +361,42 @@ def enablePleroma():
 
 def disableOcserv():
     readOnlyFileDescriptor = open("/etc/nixos/vpn/ocserv.nix", "rt")
-    readWriteFileDescriptor = open("/etc/nixos/vpn/ocserv.nix", "wt")
+    
 
-    for line in readOnlyFileDescriptor:
-        readWriteFileDescriptor.write(line.replace("enable = true;", "enable = false;"))
+    fileContent = readOnlyFileDescriptor.read()
 
-    readWriteFileDescriptor.close()
+    fileContent = fileContent.replace("enable = true;", "enable = false;")     
     readOnlyFileDescriptor.close()
 
+    readWriteFileDescriptor = open("/etc/nixos/vpn/ocserv.nix", "wt") 
+
+    writeOperationDescriptor = readWriteFileDescriptor.write(fileContent)
+    readWriteFileDescriptor.close()
+    
     return jsonify(
-        status=0
+        status=0,
+        descriptor=writeOperationDescriptor
     )
 
 @app.route("/services/ocserv/enable", methods=["POST"])
 
 def enableOcserv():
     readOnlyFileDescriptor = open("/etc/nixos/vpn/ocserv.nix", "rt")
-    readWriteFileDescriptor = open("/etc/nixos/vpn/ocserv.nix", "wt")
+    
 
-    for line in readOnlyFileDescriptor:
-        readWriteFileDescriptor.write(line.replace("enable = false;", "enable = true;"))
+    fileContent = readOnlyFileDescriptor.read()
 
-    readWriteFileDescriptor.close()
+    fileContent = fileContent.replace("enable = true;", "enable = false;")     
     readOnlyFileDescriptor.close()
 
+    readWriteFileDescriptor = open("/etc/nixos/vpn/ocserv.nix", "wt") 
+
+    writeOperationDescriptor = readWriteFileDescriptor.write(fileContent)
+    readWriteFileDescriptor.close()
+    
     return jsonify(
-        status=0
+        status=0,
+        descriptor=writeOperationDescriptor
     )
 
 @app.route("/services/ssh/key/send", methods=["PUT"])
