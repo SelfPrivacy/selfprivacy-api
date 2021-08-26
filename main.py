@@ -159,14 +159,18 @@ echo -n {0} | cryptsetup luksOpen /dev/sdb decryptedVar'''.format(request.header
 
 def enableSSH():
     readOnlyFileDescriptor = open("/etc/nixos/configuration.nix", "rt")
-    readWriteFileDescriptor = open("/etc/nixos/configuration.nix", "wt")
+    
 
-    for line in readOnlyFileDescriptor:
-        readWriteFileDescriptor.write(line.replace("services.openssh.enable = false;", "services.openssh.enable = true;"))
+    fileContent = readOnlyFileDescriptor.read()
 
-    readWriteFileDescriptor.close()
+    fileContent = fileContent.replace("enabled = false;", "enabled = true;")     
     readOnlyFileDescriptor.close()
 
+    readWriteFileDescriptor = open("/etc/nixos/configuration.nix", "wt") 
+
+    readWriteFileDescriptor.write(fileContent)
+    readWriteFileDescriptor.close()
+    
     return jsonify(
         status=0
     )
