@@ -163,7 +163,7 @@ def enableSSH():
 
     fileContent = readOnlyFileDescriptor.read()
 
-    fileContent = fileContent.replace("enabled = false;", "enabled = true;")     
+    fileContent = fileContent.replace("enable = false;", "enable = true;")     
     readOnlyFileDescriptor.close()
 
     readWriteFileDescriptor = open("/etc/nixos/configuration.nix", "wt") 
