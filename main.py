@@ -168,11 +168,11 @@ def enableSSH():
 
     readWriteFileDescriptor = open("/etc/nixos/configuration.nix", "wt") 
 
-    readWriteFileDescriptor.write(fileContent)
+    writeOperationStatus = readWriteFileDescriptor.write(fileContent)
     readWriteFileDescriptor.close()
     
     return jsonify(
-        status=0
+        status=writeOperationStatus
     )
 
 # Bitwarden
