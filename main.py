@@ -143,7 +143,7 @@ def getServiceStatus():
     nextcloudService.communicate()[0]
     ocservService = subprocess.Popen(["systemctl", "status", "ocserv.service"])
     ocservService.communicate()[0]
-    pleromaService = subprocess.Popen(["systemctl", "status", "pleroma.service "])
+    pleromaService = subprocess.Popen(["systemctl", "status", "pleroma.service"])
     pleromaService.communicate()[0]
 
     return jsonify(
