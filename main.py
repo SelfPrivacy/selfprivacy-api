@@ -43,7 +43,7 @@ def getPythonVersion():
     return jsonify(pythonVersion)
 
 
-@app.route("/apply", methods=["GET"])
+@app.route("/system/configuration/apply", methods=["GET"])
 def rebuildSystem():
      rebuildResult = subprocess.Popen(["nixos-rebuild","switch"])
      rebuildResult.communicate()[0]
@@ -52,14 +52,14 @@ def rebuildSystem():
          )
 
 
-@app.route("/rollback", methods=["GET"])
+@app.route("/system/configuration/rollback", methods=["GET"])
 def rollbackSystem():
      rollbackResult = subprocess.Popen(["nixos-rebuild","switch","--rollback"])
      rollbackResult.communicate()[0]
      return jsonify(rollbackResult.returncode)
 
 
-@app.route("/upgrade", methods=["GET"])
+@app.route("/system/upgrade", methods=["GET"])
 def upgradeSystem():
      upgradeResult = subprocess.Popen(["nixos-rebuild","switch","--upgrade"])
      upgradeResult.communicate()[0]
@@ -68,7 +68,7 @@ def upgradeSystem():
          )
 
 
-@app.route("/createUser", methods=["POST"])
+@app.route("/users/create", methods=["POST"])
 def createUser():
     print("[INFO] Opening /etc/nixos/users.nix...", sep="")
     readOnlyFileDescriptor = open("/etc/nixos/users.nix", "r")
@@ -126,7 +126,7 @@ def deleteUser():
     return jsonify(user.returncode)
 
 
-@app.route("/serviceStatus", methods=["GET"])
+@app.route("/services/status", methods=["GET"])
 
 def getServiceStatus():
     imapService = subprocess.Popen(["systemctl", "status", "dovecot2.service"])
@@ -135,10 +135,26 @@ def getServiceStatus():
     smtpService.communicate()[0]
     httpService = subprocess.Popen(["systemctl", "status", "nginx.service"])
     httpService.communicate()[0]
+    bitwardenService = subprocess.Popen(["systemctl", "status", "bitwarden_rs.service"])
+    bitwardenService.communicate()[0]
+    giteaService = subprocess.Popen(["systemctl", "status", "gitea.service"])
+    giteaService.communicate()[0]
+    nextcloudService = subprocess.Popen(["systemctl", "status", "phpfpm-nextcloud.service"])
+    nextcloudService.communicate()[0]
+    ocservService = subprocess.Popen(["systemctl", "status", "ocserv.service"])
+    ocservService.communicate()[0]
+    pleromaService = subprocess.Popen(["systemctl", "status", "pleroma.service "])
+    pleromaService.communicate()[0]
+
     return jsonify(
         imap=imapService.returncode,
         smtp=smtpService.returncode,
-        http=httpService.returncode
+        http=httpService.returncode,
+        bitwarden=bitwardenService.returncode,
+        gitea=giteaService.returncode,
+        nextcloud=nextcloudService.returncode,
+        ocserv=ocservService.returncode,
+        pleroma=pleromaService.returncode
     )
 
 
