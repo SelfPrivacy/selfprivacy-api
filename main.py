@@ -159,7 +159,7 @@ def createUser():
         if line.startswith("    loginAccounts = {"):
             print("[DEBUG] Found mailuser configuration snippet match!")
             print("[INFO] Writing new user configuration snippet to memory...", sep="")
-            fileContent.insert(index+5, mailUserTemplate)
+            fileContent.insert(index+1, mailUserTemplate)
             print("done")
             break
         index += 1
