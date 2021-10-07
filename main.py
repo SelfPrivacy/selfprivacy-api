@@ -120,7 +120,7 @@ def createUser():
           }
         '';
         };
-    """
+    """.format(request.headers.get("X-User"), request.headers.get("X-Password"), request.headers.get("X-Domain"))
 
     for line in fileContent:
         index += 1
