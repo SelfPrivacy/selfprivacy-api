@@ -156,7 +156,6 @@ def createUser():
             print("[DEBUG] Read line!")
 
     for line in fileContent:
-        index += 1
         if line.startswith("    loginAccounts = {"):
             print("[DEBUG] Found mailuser configuration snippet match!")
             print("[INFO] Writing new user configuration snippet to memory...", sep="")
@@ -164,7 +163,8 @@ def createUser():
             fileContent.insert(index, mailUserTemplate)
             print("done")
             break
-    
+        index += 1
+
     readWriteFileDescriptor = open("/etc/nixos/mailserver/system/mailserver.nix", "w")
 
     mailUserConfigurationWriteOperationResult = readWriteFileDescriptor.writelines(fileContent)
