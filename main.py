@@ -70,6 +70,13 @@ def upgradeSystem():
 
 @app.route("/users/create", methods=["POST"])
 def createUser():
+
+    rawPassword = request.headers.get("X-Password")
+    passwordHashProcessDescriptor = subprocess.Popen(["mkpasswd", "-m", "sha-512", "\"", rawPassword, "\""], shell=True, stdout=subprocess.PIPE)
+    hashedPassword = passwordHashProcessDescriptor.communicate()[0]
+
+    print("[TRACE] {0}".format(hashedPassword))
+
     print("[INFO] Opening /etc/nixos/users.nix...", sep="")
     readOnlyFileDescriptor = open("/etc/nixos/users.nix", "r")
     print("done")
@@ -98,6 +105,23 @@ def createUser():
       #end
       """.format(request.headers.get("X-User"), request.headers.get("X-Password"))
 
+    mailUserTemplate = """
+        \"{0}@{2}\" = {
+          hashedPassword = 
+            \"{1}\";
+          catchAll = [ \"{2}\" ];
+
+          sieveScript = ''
+          require [\"fileinto\", \"mailbox\"];
+          if header :contains \"Chat-Version\" \"1.0\"
+          {     
+            fileinto :create \"DeltaChat\";
+                stop;
+          }
+        '';
+        };
+    """
+
     for line in fileContent:
         index += 1
         if line.startswith("      #begin"):
@@ -109,13 +133,45 @@ def createUser():
 
     print("[INFO] Writing data from memory to file...", sep="")
     readWriteFileDescriptor = open("/etc/nixos/users.nix", "w")
+    userConfigurationWriteOperationResult = readWriteFileDescriptor.writelines(fileContent)
     print("done")
-    operationResult = readWriteFileDescriptor.writelines(fileContent)
 
+    readOnlyFileDescriptor.close()
+    readWriteFileDescriptor.close()
+
+    print("[INFO] Opening /etc/nixos/mailserver/system/mailserver.nix.nix for reading...", sep="")
+    readOnlyFileDescriptor = open("/etc/nixos/mailserver/system/mailserver.nix")
+    print("done")
+
+    fileContent = list()
+
+    while True:
+        line = readOnlyFileDescriptor.readline()
+
+        if not line:
+            break
+        else:
+            fileContent.append(line)
+            print("[DEBUG] Read line!")
+
+    for line in fileContent:
+        index += 1
+        if line.startswith("    loginAccounts = {"):
+            print("[DEBUG] Found mailuser configuration snippet match!")
+            print("[INFO] Writing new user configuration snippet to memory...", sep="")
+            fileContent.insert(index-1, "\n")
+            fileContent.insert(index, mailUserTemplate)
+            print("done")
+            break
+    
+    readWriteFileDescriptor = open("/etc/nixos/mailserver/system/mailserver.nix", "w")
+
+    mailUserConfigurationWriteOperationResult = readWriteFileDescriptor.writelines(fileContent)
 
     return jsonify(
         result=0,
-        descriptor = operationResult
+        descriptor0 = userConfigurationWriteOperationResult,
+        descriptor1 = mailUserConfigurationWriteOperationResult
     )
 
 
