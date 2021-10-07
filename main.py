@@ -144,6 +144,7 @@ def createUser():
     print("done")
 
     fileContent = list()
+    index = int(0)
 
     while True:
         line = readOnlyFileDescriptor.readline()
