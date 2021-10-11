@@ -74,6 +74,7 @@ def createUser():
     rawPassword = request.headers.get("X-Password")
     passwordHashProcessDescriptor = subprocess.Popen(["mkpasswd", "-m", "sha-512", "\"", rawPassword, "\""], shell=True, stdout=subprocess.PIPE)
     hashedPassword = passwordHashProcessDescriptor.communicate()[0]
+    hashedPassword = hashedPassword.decode("ascii")
 
     print("[TRACE] {0}".format(hashedPassword))
 
