@@ -78,6 +78,7 @@ def createUser():
     passwordHashProcessDescriptor = subprocess.Popen(hashingCommand, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     hashedPassword = passwordHashProcessDescriptor.communicate()[0]
     hashedPassword = hashedPassword.decode("ascii")
+    hashedPassword = hashedPassword.rstrip()
 
     print("[TRACE] {0}".format(hashedPassword))
 
