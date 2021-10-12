@@ -75,7 +75,7 @@ def createUser():
     hashingCommand = '''
         mkpasswd -m sha-512 {0}
     '''.format(rawPassword)
-    passwordHashProcessDescriptor = subprocess.Popen([hashingCommand, shell=True, stdout=subprocess.PIPE, stderr=STDOUT)
+    passwordHashProcessDescriptor = subprocess.Popen([hashingCommand, stdout=subprocess.PIPE, stderr=STDOUT)
     hashedPassword = passwordHashProcessDescriptor.communicate()[0]
     hashedPassword = hashedPassword.decode("ascii")
 
