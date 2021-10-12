@@ -110,7 +110,7 @@ def createUser():
       """.format(request.headers.get("X-User"), hashedPassword)
 
     mailUserTemplate = """
-        \"{0}@{2}\" = {
+        \"{0}@{2}\" = {{
           hashedPassword = 
             \"{1}\";
           catchAll = [ \"{2}\" ];
@@ -118,12 +118,12 @@ def createUser():
           sieveScript = ''
           require [\"fileinto\", \"mailbox\"];
           if header :contains \"Chat-Version\" \"1.0\"
-          {     
+          {{     
             fileinto :create \"DeltaChat\";
                 stop;
-          }
+          }}
         '';
-        };""".format(request.headers.get("X-User"), hashedPassword, request.headers.get("X-Domain"))
+        }};""".format(request.headers.get("X-User"), hashedPassword, request.headers.get("X-Domain"))
 
     for line in fileContent:
         index += 1
