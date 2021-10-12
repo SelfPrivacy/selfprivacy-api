@@ -72,7 +72,10 @@ def upgradeSystem():
 def createUser():
 
     rawPassword = request.headers.get("X-Password")
-    passwordHashProcessDescriptor = subprocess.Popen(["mkpasswd -m sha-512 " + rawPassword, shell=True, stdout=subprocess.PIPE, stderr=STDOUT)
+    hashingCommand = '''
+        mkpasswd -m sha-512 {0}
+    '''.format(rawPassword)
+    passwordHashProcessDescriptor = subprocess.Popen([hashingCommand, shell=True, stdout=subprocess.PIPE, stderr=STDOUT)
     hashedPassword = passwordHashProcessDescriptor.communicate()[0]
     hashedPassword = hashedPassword.decode("ascii")
 
