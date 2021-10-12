@@ -107,7 +107,7 @@ def createUser():
         hashedPassword = \"{1}\";
       }};
       #end
-      """.format(request.headers.get("X-User"), request.headers.get("X-Password"))
+      """.format(request.headers.get("X-User"), hashedPassword)
 
     mailUserTemplate = """
         \"{0}@{2}\" = {
@@ -124,7 +124,7 @@ def createUser():
           }
         '';
         };
-    """.format(request.headers.get("X-User"), request.headers.get("X-Password"), request.headers.get("X-Domain"))
+    """.format(request.headers.get("X-User"), hashedPassword, request.headers.get("X-Domain"))
 
     for line in fileContent:
         index += 1
