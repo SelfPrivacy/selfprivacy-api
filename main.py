@@ -123,8 +123,7 @@ def createUser():
                 stop;
           }
         '';
-        };
-    """.format(request.headers.get("X-User"), hashedPassword, request.headers.get("X-Domain"))
+        };""".format(request.headers.get("X-User"), hashedPassword, request.headers.get("X-Domain"))
 
     for line in fileContent:
         index += 1
