@@ -14,13 +14,13 @@ api = Api(app)
 
 
 @app.route("/systemVersion", methods=["GET"])
-def uname():
+def Uname():
     uname = subprocess.check_output(["uname", "-arm"])
     return jsonify(uname)
 
 
 @app.route("/getDKIM", methods=["GET"])
-def getDkimKey():
+def GetDkimKey():
     with open("/var/domain") as domainFile:
         domain = domainFile.readline()
         domain = domain.rstrip("\n")
@@ -38,13 +38,13 @@ def getDkimKey():
 
 
 @app.route("/pythonVersion", methods=["GET"])
-def getPythonVersion():
+def GetPythonVersion():
     pythonVersion = subprocess.check_output(["python","--version"])
     return jsonify(pythonVersion)
 
 
 @app.route("/system/configuration/apply", methods=["GET"])
-def rebuildSystem():
+def RebuildSystem():
      rebuildResult = subprocess.Popen(["nixos-rebuild","switch"])
      rebuildResult.communicate()[0]
      return jsonify(
@@ -53,14 +53,14 @@ def rebuildSystem():
 
 
 @app.route("/system/configuration/rollback", methods=["GET"])
-def rollbackSystem():
+def RollbackSystem():
      rollbackResult = subprocess.Popen(["nixos-rebuild","switch","--rollback"])
      rollbackResult.communicate()[0]
      return jsonify(rollbackResult.returncode)
 
 
 @app.route("/system/upgrade", methods=["GET"])
-def upgradeSystem():
+def UpgradeSystem():
      upgradeResult = subprocess.Popen(["nixos-rebuild","switch","--upgrade"])
      upgradeResult.communicate()[0]
      return jsonify(
@@ -69,7 +69,7 @@ def upgradeSystem():
 
 
 @app.route("/users/create", methods=["POST"])
-def createUser():
+def CreateUser():
 
     rawPassword = request.headers.get("X-Password")
     hashingCommand = '''
@@ -188,7 +188,7 @@ def deleteUser():
 
 @app.route("/services/status", methods=["GET"])
 
-def getServiceStatus():
+def GetServiceStatus():
     imapService = subprocess.Popen(["systemctl", "status", "dovecot2.service"])
     imapService.communicate()[0]
     smtpService = subprocess.Popen(["systemctl", "status", "postfix.service"])
@@ -219,7 +219,7 @@ def getServiceStatus():
 
 
 @app.route("/decryptDisk", methods=["POST"])
-def requestDiskDecryption():
+def RequestDiskDecryption():
 
     decryptionCommand = '''
 echo -n {0} | cryptsetup luksOpen /dev/sdb decryptedVar'''.format(request.headers.get("X-Decryption-Key"))
@@ -233,7 +233,7 @@ echo -n {0} | cryptsetup luksOpen /dev/sdb decryptedVar'''.format(request.header
 
 @app.route("/services/ssh/enable", methods=["POST"])
 
-def enableSSH():
+def EnableSSH():
     readOnlyFileDescriptor = open("/etc/nixos/configuration.nix", "rt")
     
 
@@ -257,7 +257,7 @@ def enableSSH():
 
 @app.route("/services/bitwarden/enable", methods=["POST"])
 
-def enableBitwarden():
+def EnableBitwarden():
     readOnlyFileDescriptor = open("/etc/nixos/passmgr/bitwarden.nix", "rt")
     
 
@@ -278,7 +278,7 @@ def enableBitwarden():
 
 @app.route("/services/bitwarden/disable", methods=["POST"])
 
-def disableBitwarden():
+def DisableBitwarden():
 
     readOnlyFileDescriptor = open("/etc/nixos/passmgr/bitwarden.nix", "rt")
     
@@ -303,7 +303,7 @@ def disableBitwarden():
 
 @app.route("/services/gitea/disable", methods=["POST"])
 
-def disableGitea():
+def DisableGitea():
     readOnlyFileDescriptor = open("/etc/nixos/git/gitea.nix", "rt")
     
 
@@ -324,7 +324,7 @@ def disableGitea():
 
 @app.route("/services/gitea/enable", methods=["POST"])
 
-def enableGitea():
+def EnableGitea():
     readOnlyFileDescriptor = open("/etc/nixos/git/gitea.nix", "rt")
     
 
@@ -347,7 +347,7 @@ def enableGitea():
 
 @app.route("/services/nextcloud/disable", methods=["POST"])
 
-def disableNextcloud():
+def DisableNextcloud():
     readOnlyFileDescriptor = open("/etc/nixos/nextcloud/nextcloud.nix", "rt")
     
 
@@ -368,7 +368,7 @@ def disableNextcloud():
 
 @app.route("/services/nextcloud/enable", methods=["POST"])
 
-def enableNextcloud():
+def EnableNextcloud():
     readOnlyFileDescriptor = open("/etc/nixos/nextcloud/nextcloud.nix", "rt")
     
 
@@ -391,7 +391,7 @@ def enableNextcloud():
 
 @app.route("/services/pleroma/disable", methods=["POST"])
 
-def disablePleroma():
+def DisablePleroma():
     readOnlyFileDescriptor = open("/etc/nixos/social/pleroma.nix", "rt")
     
 
@@ -412,7 +412,7 @@ def disablePleroma():
 
 @app.route("/services/pleroma/enable", methods=["POST"])
 
-def enablePleroma():
+def EnablePleroma():
     readOnlyFileDescriptor = open("/etc/nixos/social/pleroma.nix", "rt")
     
 
@@ -435,7 +435,7 @@ def enablePleroma():
 
 @app.route("/services/ocserv/disable", methods=["POST"])
 
-def disableOcserv():
+def DisableOcserv():
     readOnlyFileDescriptor = open("/etc/nixos/vpn/ocserv.nix", "rt")
     
 
@@ -456,7 +456,7 @@ def disableOcserv():
 
 @app.route("/services/ocserv/enable", methods=["POST"])
 
-def enableOcserv():
+def EnableOcserv():
     readOnlyFileDescriptor = open("/etc/nixos/vpn/ocserv.nix", "rt")
     
 
@@ -475,9 +475,38 @@ def enableOcserv():
         descriptor=writeOperationDescriptor
     )
 
+@app.route("/services/restic/backup/list", methods=["GET"])
+
+def ListAllBackups():
+    backupListingProcessDescriptor = subprocess.Popen(["restic", "-r", "b2:" + 
+                                                        request.headers.get("X-Repository-Name") + ":/sfbackup", 
+                                                        "snapshots", "--password-file", "/var/lib/restic/rpass", "--json"
+                                                    ], shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    
+    backupListingProcessDescriptor.communicate()[0]
+
+    return backupListingProcessDescriptor
+
+
+
+
+@app.route("/services/restic/backup/create", methods=["PUT"])
+
+def CreateSingleBackup():
+    backupProcessDescriptor = subprocess.Popen(["restic", "-r", "b2:" + 
+                                    request.headers.get("X-Repository-Name") + ":/sfbackup", "--verbose", "backup", "/var", 
+                                    "--password-file", "/var/lib/restic/rpass"
+                                ])
+
+    backupProcessDescriptor.communicate()[0]
+
+    return jsonify(
+        status=backupProcessDescriptor.returncode
+    )
+
 @app.route("/services/ssh/key/send", methods=["PUT"])
 
-def readKey():
+def ReadKey():
 
     requestBody = request.get_json()
 
