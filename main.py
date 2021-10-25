@@ -483,9 +483,9 @@ def ListAllBackups():
                                                         "snapshots", "--password-file", "/var/lib/restic/rpass", "--json"
                                                     ], shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     
-    backupListingProcessDescriptor.communicate()[0]
+    snapshotsList = backupListingProcessDescriptor.communicate()[0]
 
-    return backupListingProcessDescriptor
+    return snapshotsList
 
 
 
