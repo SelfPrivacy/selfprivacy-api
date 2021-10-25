@@ -480,7 +480,7 @@ def EnableOcserv():
 def ListAllBackups():
     backupListingProcessDescriptor = subprocess.Popen(["restic", "-r", "b2:" + 
                                                         request.headers.get("X-Repository-Name") + ":/sfbackup", 
-                                                        "snapshots", "--password-file", "/var/lib/restic/rpass", "--json"
+                                                        "snapshots", "list", "--password-file", "/var/lib/restic/rpass", "--json"
                                                     ])
     
     snapshotsList = backupListingProcessDescriptor.communicate()[0]
