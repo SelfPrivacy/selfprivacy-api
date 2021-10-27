@@ -494,7 +494,7 @@ def ListAllBackups():
 
 def CreateSingleBackup():
 
-     backupCommand = '''
+    backupCommand = '''
         restic -r b2:{}:/sfbackup --verbose backup /var --password-file /var/lib/restic/rpass
     '''.format(request.headers.get("X-Repository-Name"))
 
