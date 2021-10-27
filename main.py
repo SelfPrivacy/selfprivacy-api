@@ -495,15 +495,15 @@ def ListAllBackups():
 def CreateSingleBackup():
 
     backupCommand = '''
-        restic -r b2:{}:/sfbackup --verbose backup /var --password-file /var/lib/restic/rpass
+        restic -r b2:{0}:/sfbackup --verbose backup /var --password-file /var/lib/restic/rpass
     '''.format(request.headers.get("X-Repository-Name"))
 
     backupProcessDescriptor = subprocess.Popen(backupCommand, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-    backupProcessDescriptor.communicate()[0]
+    commandOutput=backupProcessDescriptor.communicate()[0]
 
     return jsonify(
-        status=backupProcessDescriptor.returncode
+        commandOutput
     )
 
 @app.route("/services/ssh/key/send", methods=["PUT"])
