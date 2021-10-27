@@ -502,9 +502,7 @@ def CreateSingleBackup():
 
     commandOutput=backupProcessDescriptor.communicate()[0]
 
-    return jsonify(
-        commandOutput
-    )
+    return commandOutput
 
 @app.route("/services/ssh/key/send", methods=["PUT"])
 
