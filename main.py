@@ -493,10 +493,12 @@ def ListAllBackups():
 @app.route("/services/restic/backup/create", methods=["PUT"])
 
 def CreateSingleBackup():
-    backupProcessDescriptor = subprocess.Popen(["restic", "-r", "b2:" + 
-                                    request.headers.get("X-Repository-Name") + ":/sfbackup", "--verbose", "backup", "/var", 
-                                    "--password-file", "/var/lib/restic/rpass"
-                                ])
+
+     backupCommand = '''
+        restic -r b2:{}:/sfbackup --verbose backup /var --password-file /var/lib/restic/rpass
+    '''.format(request.headers.get("X-Repository-Name"))
+
+    backupProcessDescriptor = subprocess.Popen(backupCommand, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
     backupProcessDescriptor.communicate()[0]
 
