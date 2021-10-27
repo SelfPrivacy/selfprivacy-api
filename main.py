@@ -478,10 +478,12 @@ def EnableOcserv():
 @app.route("/services/restic/backup/list", methods=["GET"])
 
 def ListAllBackups():
-    backupListingProcessDescriptor = subprocess.Popen(["restic", "-r", "b2:" + 
-                                                        request.headers.get("X-Repository-Name") + ":/sfbackup", 
-                                                        "snapshots", "list", "--password-file", "/var/lib/restic/rpass", "--json"
-                                                    ], shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+    backupListingCommand = '''
+        restic -r b2:{0}:/sfbackup snapshots list --password-file /var/lib/restic/rpass --json
+    '''.format(request.headers.get("X-Repository-Name"))
+
+    backupListingProcessDescriptor = subprocess.Popen(backupListingCommand, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     
     snapshotsList = backupListingProcessDescriptor.communicate()[0]
 
