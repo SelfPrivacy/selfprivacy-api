@@ -502,9 +502,10 @@ def CreateSingleBackup():
 
     backupProcessDescriptor = subprocess.Popen(backupCommand, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-    commandOutput=backupProcessDescriptor.communicate()[0]
-
-    return commandOutput
+    return jsonify(
+        status=0,
+        message="Backup creation has started"
+    )
 
 @app.route("/services/ssh/key/send", methods=["PUT"])
 
