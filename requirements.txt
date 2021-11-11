@@ -2,4 +2,4 @@ wheel
 flask
 flask_restful
 flask_socketio
-pandas
+setuptools

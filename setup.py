@@ -1,7 +1,8 @@
-from distutils.core import setup
+from setuptools import setup, find_packages
 
 setup(
-    name='selfprivacy-api',
-    version='1.0.1',
-    scripts=['main.py',],
+    name='selfprivacy_api',
+    version='1.1.0',
+    packages=find_packages(),
+    scripts=['selfprivacy_api/app.py',],
 )
