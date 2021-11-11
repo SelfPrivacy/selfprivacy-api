@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from flask import Blueprint, request
-from flask_restful import Resource
+from flask_restful import Resource, reqparse
 
 from selfprivacy_api.resources.services import api
 
@@ -25,9 +25,13 @@ class EnableSSH(Resource):
 # Write new SSH key
 class WriteSSHKey(Resource):
     def put(self):
-        requestBody = request.get_json()
+        parser = reqparse.RequestParser()
+        parser.add_argument(
+            "public_key", type=str, required=True, help="Key cannot be blank!"
+        )
+        args = parser.parse_args()
 
-        publicKey = requestBody.data(["public_key"])
+        publicKey = args["public_key"]
 
         print("[INFO] Opening /etc/nixos/configuration.nix...", sep="")
         readOnlyFileDescriptor = open("/etc/nixos/configuration.nix", "r")
@@ -51,7 +55,7 @@ class WriteSSHKey(Resource):
             if "openssh.authorizedKeys.keys = [" in line:
                 print("[DEBUG] Found SSH key configuration snippet match!")
                 print("[INFO] Writing new SSH key", sep="")
-                fileContent.append(index, '\n      "' + publicKey + '"')
+                fileContent.append('\n      "' + publicKey + '"')
                 print("done")
                 break
 
