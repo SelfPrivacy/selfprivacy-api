@@ -1,6 +1,5 @@
 wheel
 flask
 flask_restful
-flask-restful
 flask_socketio
-pandas
+setuptools
