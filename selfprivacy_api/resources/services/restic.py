@@ -2,6 +2,7 @@
 from flask import request
 from flask_restful import Resource
 import subprocess
+import threading
 
 from selfprivacy_api.resources.services import api
 
@@ -27,7 +28,7 @@ class ListAllBackups(Resource):
 
 
 # Create a new restic backup
-class CreateBackup(Resource):
+class AsyncCreateBackup(Resource, threading.Thread):
     def put(self):
         backupCommand = """
             restic -r b2:{0}:/sfbackup --verbose backup /var --password-file /var/lib/restic/rpass
@@ -39,8 +40,6 @@ class CreateBackup(Resource):
             backupCommand, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
         )
 
-        commandOutput = backupProcessDescriptor.communicate()[0]
-
         return {
             "status": 0,
             "message": "Backup creation has started",
@@ -48,4 +47,4 @@ class CreateBackup(Resource):
 
 
 api.add_resource(ListAllBackups, "/restic/backup/list")
-api.add_resource(CreateBackup, "/restic/backup/create")
+api.add_resource(AsyncCreateBackup, "/restic/backup/create")
