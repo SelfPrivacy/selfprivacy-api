@@ -2,6 +2,9 @@
 from flask import Blueprint, jsonify, request
 from flask_restful import Resource, Api
 import subprocess
+import portalocker
+import json
+import re
 
 from selfprivacy_api import resources
 
@@ -24,123 +27,62 @@ class Users(Resource):
         hashedPassword = hashedPassword.decode("ascii")
         hashedPassword = hashedPassword.rstrip()
 
-        print("[TRACE] {0}".format(hashedPassword))
-
-        print("[INFO] Opening /etc/nixos/users.nix...", sep="")
-        readOnlyFileDescriptor = open("/etc/nixos/users.nix", "r")
-        print("done")
-        fileContent = list()
-        index = int(0)
-
-        print("[INFO] Reading file content...", sep="")
-
-        while True:
-            line = readOnlyFileDescriptor.readline()
-
-            if not line:
-                break
-            else:
-                fileContent.append(line)
-                print("[DEBUG] Read line!")
-
-        userTemplate = """
-
-        #begin
-        \"{0}\" = {{
-            isNormalUser = true;
-            hashedPassword = \"{1}\";
-        }};
-        #end
-        """.format(
-            request.headers.get("X-User"), hashedPassword
-        )
-
-        mailUserTemplate = """
-            \"{0}@{2}\" = {{
-            hashedPassword = 
-                \"{1}\";
-            catchAll = [ \"{2}\" ];
-
-            sieveScript = ''
-            require [\"fileinto\", \"mailbox\"];
-            if header :contains \"Chat-Version\" \"1.0\"
-            {{     
-                fileinto :create \"DeltaChat\";
-                    stop;
-            }}
-            '';
-            }};""".format(
-            request.headers.get("X-User"),
-            hashedPassword,
-            request.headers.get("X-Domain"),
-        )
-
-        for line in fileContent:
-            index += 1
-            if line.startswith("      #begin"):
-                print("[DEBUG] Found user configuration snippet match!")
-                print(
-                    "[INFO] Writing new user configuration snippet to memory...", sep=""
+        with open("/etc/nixos/userdata/userdata.json", "r+", encoding="utf8") as f:
+            portalocker.lock(f, portalocker.LOCK_EX)
+            try:
+                data = json.load(f)
+                # Return 400 if username is not provided
+                if request.headers.get("X-User") is None:
+                    return {"error": "username is required"}, 400
+                # Return 400 if password is not provided
+                if request.headers.get("X-Password") is None:
+                    return {"error": "password is required"}, 400
+                # Check is username passes regex
+                if not re.match(r"^[a-z_][a-z0-9_]+$", request.headers.get("X-User")):
+                    return {"error": "username must be alphanumeric"}, 400
+                # Check if username less than 32 characters
+                if len(request.headers.get("X-User")) > 32:
+                    return {"error": "username must be less than 32 characters"}, 400
+                # Return 400 if user already exists
+                for user in data["users"]:
+                    if user["username"] == request.headers.get("X-User"):
+                        return {"error": "User already exists"}, 400
+                if "users" not in data:
+                    data["users"] = []
+                data["users"].append(
+                    {
+                        "username": request.headers.get("X-User"),
+                        "hashedPassword": hashedPassword,
+                    }
                 )
-                fileContent.insert(index - 1, userTemplate)
-                print("done")
-                break
+                f.seek(0)
+                json.dump(data, f, indent=4)
+                f.truncate()
+            finally:
+                portalocker.unlock(f)
 
-        print("[INFO] Writing data from memory to file...", sep="")
-        readWriteFileDescriptor = open("/etc/nixos/users.nix", "w")
-        userConfigurationWriteOperationResult = readWriteFileDescriptor.writelines(
-            fileContent
-        )
-        print("done")
-
-        readOnlyFileDescriptor.close()
-        readWriteFileDescriptor.close()
-
-        print(
-            "[INFO] Opening /etc/nixos/mailserver/system/mailserver.nix.nix for reading...",
-            sep="",
-        )
-        readOnlyFileDescriptor = open("/etc/nixos/mailserver/system/mailserver.nix")
-        print("done")
-
-        fileContent = list()
-        index = int(0)
-
-        while True:
-            line = readOnlyFileDescriptor.readline()
-
-            if not line:
-                break
-            else:
-                fileContent.append(line)
-                print("[DEBUG] Read line!")
-
-        for line in fileContent:
-            if line.startswith("    loginAccounts = {"):
-                print("[DEBUG] Found mailuser configuration snippet match!")
-                print(
-                    "[INFO] Writing new user configuration snippet to memory...", sep=""
-                )
-                fileContent.insert(index + 1, mailUserTemplate)
-                print("done")
-                break
-            index += 1
-
-        readWriteFileDescriptor = open(
-            "/etc/nixos/mailserver/system/mailserver.nix", "w"
-        )
-
-        mailUserConfigurationWriteOperationResult = readWriteFileDescriptor.writelines(
-            fileContent
-        )
-
-        return {
-            "result": 0,
-            "descriptor0": userConfigurationWriteOperationResult,
-            "descriptor1": mailUserConfigurationWriteOperationResult,
-        }
+        return {"result": 0}
 
     def delete(self):
-        user = subprocess.Popen(["userdel", request.headers.get("X-User")])
-        user.communicate()[0]
-        return user.returncode
+        with open("/etc/nixos/userdata/userdata.json", "r+", encoding="utf8") as f:
+            portalocker.lock(f, portalocker.LOCK_EX)
+            try:
+                data = json.load(f)
+                # Return 400 if username is not provided
+                if request.headers.get("X-User") is None:
+                    return {"error": "username is required"}, 400
+                # Return 400 if user does not exist
+                for user in data["users"]:
+                    if user["username"] == request.headers.get("X-User"):
+                        data["users"].remove(user)
+                        break
+                else:
+                    return {"error": "User does not exist"}, 400
+
+                f.seek(0)
+                json.dump(data, f, indent=4)
+                f.truncate()
+            finally:
+                portalocker.unlock(f)
+
+        return {"result": 0}

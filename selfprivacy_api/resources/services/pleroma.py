@@ -1,22 +1,28 @@
 #!/usr/bin/env python3
 from flask_restful import Resource
+import portalocker
+import json
 
 from selfprivacy_api.resources.services import api
 
 # Enable Pleroma
 class EnablePleroma(Resource):
     def post(self):
-        readOnlyFileDescriptor = open("/etc/nixos/social/pleroma.nix", "rt")
-        fileContent = readOnlyFileDescriptor.read()
-        fileContent = fileContent.replace("enable = false;", "enable = true;")
-        readOnlyFileDescriptor.close()
-        readWriteFileDescriptor = open("/etc/nixos/social/pleroma.nix", "wt")
-        writeOperationDescriptor = readWriteFileDescriptor.write(fileContent)
-        readWriteFileDescriptor.close()
+        with portalocker.Lock("/etc/nixos/userdata/userdata.json", "r+") as f:
+            portalocker.lock(f, portalocker.LOCK_EX)
+            try:
+                data = json.load(f)
+                if "pleroma" not in data:
+                    data["pleroma"] = {}
+                data["pleroma"]["enable"] = True
+                f.seek(0)
+                json.dump(data, f, indent=4)
+                f.truncate()
+            finally:
+                portalocker.unlock(f)
 
         return {
             "status": 0,
-            "descriptor": writeOperationDescriptor,
             "message": "Pleroma enabled",
         }
 
@@ -24,17 +30,21 @@ class EnablePleroma(Resource):
 # Disable Pleroma
 class DisablePleroma(Resource):
     def post(self):
-        readOnlyFileDescriptor = open("/etc/nixos/social/pleroma.nix", "rt")
-        fileContent = readOnlyFileDescriptor.read()
-        fileContent = fileContent.replace("enable = true;", "enable = false;")
-        readOnlyFileDescriptor.close()
-        readWriteFileDescriptor = open("/etc/nixos/social/pleroma.nix", "wt")
-        writeOperationDescriptor = readWriteFileDescriptor.write(fileContent)
-        readWriteFileDescriptor.close()
+        with portalocker.Lock("/etc/nixos/userdata/userdata.json", "r+") as f:
+            portalocker.lock(f, portalocker.LOCK_EX)
+            try:
+                data = json.load(f)
+                if "pleroma" not in data:
+                    data["pleroma"] = {}
+                data["pleroma"]["enable"] = False
+                f.seek(0)
+                json.dump(data, f, indent=4)
+                f.truncate()
+            finally:
+                portalocker.unlock(f)
 
         return {
             "status": 0,
-            "descriptor": writeOperationDescriptor,
             "message": "Pleroma disabled",
         }
 

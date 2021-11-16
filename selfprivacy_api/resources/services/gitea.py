@@ -1,22 +1,28 @@
 #!/usr/bin/env python3
 from flask_restful import Resource
+import portalocker
+import json
 
 from selfprivacy_api.resources.services import api
 
 # Enable Gitea
 class EnableGitea(Resource):
     def post(self):
-        readOnlyFileDescriptor = open("/etc/nixos/git/gitea.nix", "rt")
-        fileContent = readOnlyFileDescriptor.read()
-        fileContent = fileContent.replace("enable = false;", "enable = true;")
-        readOnlyFileDescriptor.close()
-        readWriteFileDescriptor = open("/etc/nixos/git/gitea.nix", "wt")
-        writeOperationDescriptor = readWriteFileDescriptor.write(fileContent)
-        readWriteFileDescriptor.close()
+        with open("/etc/nixos/userdata/userdata.json", "r+", encoding="utf8") as f:
+            portalocker.lock(f, portalocker.LOCK_EX)
+            try:
+                data = json.load(f)
+                if "gitea" not in data:
+                    data["gitea"] = {}
+                data["gitea"]["enable"] = True
+                f.seek(0)
+                json.dump(data, f, indent=4)
+                f.truncate()
+            finally:
+                portalocker.unlock(f)
 
         return {
             "status": 0,
-            "descriptor": writeOperationDescriptor,
             "message": "Gitea enabled",
         }
 
@@ -24,17 +30,21 @@ class EnableGitea(Resource):
 # Disable Gitea
 class DisableGitea(Resource):
     def post(self):
-        readOnlyFileDescriptor = open("/etc/nixos/git/gitea.nix", "rt")
-        fileContent = readOnlyFileDescriptor.read()
-        fileContent = fileContent.replace("enable = true;", "enable = false;")
-        readOnlyFileDescriptor.close()
-        readWriteFileDescriptor = open("/etc/nixos/git/gitea.nix", "wt")
-        writeOperationDescriptor = readWriteFileDescriptor.write(fileContent)
-        readWriteFileDescriptor.close()
+        with open("/etc/nixos/userdata/userdata.json", "r+", encoding="utf8") as f:
+            portalocker.lock(f, portalocker.LOCK_EX)
+            try:
+                data = json.load(f)
+                if "gitea" not in data:
+                    data["gitea"] = {}
+                data["gitea"]["enable"] = False
+                f.seek(0)
+                json.dump(data, f, indent=4)
+                f.truncate()
+            finally:
+                portalocker.unlock(f)
 
         return {
             "status": 0,
-            "descriptor": writeOperationDescriptor,
             "message": "Gitea disabled",
         }
 
