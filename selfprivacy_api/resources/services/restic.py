@@ -31,7 +31,7 @@ class ListAllBackups(Resource):
 class AsyncCreateBackup(Resource):
     def put(self):
         backupCommand = """
-            restic -r b2:{0}:/sfbackup --verbose backup /var --password-file /var/lib/restic/rpass > tmp/backup.log
+            restic -r b2:{0}:/sfbackup --verbose backup /var --password-file /var/lib/restic/rpass > /tmp/backup.log
         """.format(
             request.headers.get("X-Repository-Name")
         )
