@@ -3,6 +3,9 @@
 from flask import Blueprint
 from flask_restful import Api
 
+services = Blueprint("services", __name__, url_prefix="/services")
+api = Api(services)
+
 from . import (
     bitwarden,
     gitea,
@@ -14,6 +17,3 @@ from . import (
     restic,
     ssh,
 )
-
-services = Blueprint("services", __name__, url_prefix="/services")
-api = Api(services)
