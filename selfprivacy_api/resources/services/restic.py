@@ -55,8 +55,7 @@ class CheckBackupStatus(Resource):
             backupStatusCheckCommand, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
         )
 
-        backupProcessStatus = backupStatusCheckProcessDescriptor.communicate()[0]
-        backupProcessStatus = backupProcessStatus.decode("utf-8")
+        backupProcessStatus = backupStatusCheckProcessDescriptor.communicate()[0].decode("utf-8")
 
         try:
             json.loads(backupProcessStatus)
