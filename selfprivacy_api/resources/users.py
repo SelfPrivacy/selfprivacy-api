@@ -1,88 +1,181 @@
 #!/usr/bin/env python3
-from flask import Blueprint, jsonify, request
-from flask_restful import Resource, Api
+"""Users management module"""
 import subprocess
-import portalocker
 import json
 import re
+import portalocker
+from flask_restful import Resource, reqparse
 
-from selfprivacy_api import resources
 
-api_users = Blueprint("api_users", __name__)
-api = Api(api_users)
-
-# Create a new user
 class Users(Resource):
-    def post(self):
-        rawPassword = request.headers.get("X-Password")
-        hashingCommand = """
-            mkpasswd -m sha-512 {0}
-        """.format(
-            rawPassword
-        )
-        passwordHashProcessDescriptor = subprocess.Popen(
-            hashingCommand, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-        )
-        hashedPassword = passwordHashProcessDescriptor.communicate()[0]
-        hashedPassword = hashedPassword.decode("ascii")
-        hashedPassword = hashedPassword.rstrip()
+    """Users management"""
 
-        with open("/etc/nixos/userdata/userdata.json", "r+", encoding="utf8") as f:
-            portalocker.lock(f, portalocker.LOCK_EX)
+    def get(self):
+        """
+        Get a list of users
+        ---
+        tags:
+            - Users
+        security:
+            - bearerAuth: []
+        responses:
+            200:
+                description: A list of users
+            401:
+                description: Unauthorized
+        """
+        with open(
+            "/etc/nixos/userdata/userdata.json", "r", encoding="utf-8"
+        ) as userdata_file:
+            portalocker.lock(userdata_file, portalocker.LOCK_SH)
             try:
-                data = json.load(f)
-                # Return 400 if username is not provided
-                if request.headers.get("X-User") is None:
-                    return {"error": "username is required"}, 400
-                # Return 400 if password is not provided
-                if request.headers.get("X-Password") is None:
-                    return {"error": "password is required"}, 400
-                # Check is username passes regex
-                if not re.match(r"^[a-z_][a-z0-9_]+$", request.headers.get("X-User")):
-                    return {"error": "username must be alphanumeric"}, 400
-                # Check if username less than 32 characters
-                if len(request.headers.get("X-User")) > 32:
-                    return {"error": "username must be less than 32 characters"}, 400
+                data = json.load(userdata_file)
+                users = []
+                for user in data["users"]:
+                    users.append(user["username"])
+            finally:
+                portalocker.unlock(userdata_file)
+        return users
+
+    def post(self):
+        """
+        Create a new user
+        ---
+        consumes:
+            - application/json
+        tags:
+            - Users
+        security:
+            - bearerAuth: []
+        parameters:
+            - in: body
+              name: user
+              required: true
+              description: User to create
+              schema:
+                type: object
+                required:
+                    - username
+                    - password
+                properties:
+                    username:
+                        type: string
+                        description: Unix username. Must be alphanumeric and less than 32 characters
+                    password:
+                        type: string
+                        description: Unix password.
+        responses:
+            201:
+                description: Created user
+            400:
+                description: Bad request
+            401:
+                description: Unauthorized
+            409:
+                description: User already exists
+        """
+        parser = reqparse.RequestParser(bundle_errors=True)
+        parser.add_argument("username", type=str, required=True)
+        parser.add_argument("password", type=str, required=True)
+        args = parser.parse_args()
+
+        hashing_command = ["mkpasswd", "-m", "sha-512", args["password"]]
+        password_hash_process_descriptor = subprocess.Popen(
+            hashing_command,
+            shell=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+        hashed_password = password_hash_process_descriptor.communicate()[0]
+        hashed_password = hashed_password.decode("ascii")
+        hashed_password = hashed_password.rstrip()
+
+        # Check is username passes regex
+        if not re.match(r"^[a-z_][a-z0-9_]+$", args["username"]):
+            return {"error": "username must be alphanumeric"}, 400
+        # Check if username less than 32 characters
+        if len(args["username"]) > 32:
+            return {"error": "username must be less than 32 characters"}, 400
+
+        with open(
+            "/etc/nixos/userdata/userdata.json", "r+", encoding="utf-8"
+        ) as userdata_file:
+            portalocker.lock(userdata_file, portalocker.LOCK_EX)
+            try:
+                data = json.load(userdata_file)
+
                 # Return 400 if user already exists
                 for user in data["users"]:
-                    if user["username"] == request.headers.get("X-User"):
-                        return {"error": "User already exists"}, 400
+                    if user["username"] == args["username"]:
+                        return {"error": "User already exists"}, 409
+
                 if "users" not in data:
                     data["users"] = []
                 data["users"].append(
                     {
-                        "username": request.headers.get("X-User"),
-                        "hashedPassword": hashedPassword,
+                        "username": args["username"],
+                        "hashedPassword": hashed_password,
                     }
                 )
-                f.seek(0)
-                json.dump(data, f, indent=4)
-                f.truncate()
+                userdata_file.seek(0)
+                json.dump(data, userdata_file, indent=4)
+                userdata_file.truncate()
             finally:
-                portalocker.unlock(f)
+                portalocker.unlock(userdata_file)
 
-        return {"result": 0}
+        return {"result": 0, "username": args["username"]}, 201
 
-    def delete(self):
-        with open("/etc/nixos/userdata/userdata.json", "r+", encoding="utf8") as f:
-            portalocker.lock(f, portalocker.LOCK_EX)
+
+class User(Resource):
+    """Single user managment"""
+
+    def delete(self, username):
+        """
+        Delete a user
+        ---
+        tags:
+            - Users
+        security:
+            - bearerAuth: []
+        parameters:
+            - in: path
+              name: username
+              required: true
+              description: User to delete
+              type: string
+        responses:
+            200:
+                description: Deleted user
+            400:
+                description: Bad request
+            401:
+                description: Unauthorized
+            404:
+                description: User not found
+        """
+        with open(
+            "/etc/nixos/userdata/userdata.json", "r+", encoding="utf-8"
+        ) as userdata_file:
+            portalocker.lock(userdata_file, portalocker.LOCK_EX)
             try:
-                data = json.load(f)
+                data = json.load(userdata_file)
                 # Return 400 if username is not provided
-                if request.headers.get("X-User") is None:
+                if username is None:
                     return {"error": "username is required"}, 400
+                if username == data["username"]:
+                    return {"error": "Cannot delete root user"}, 400
                 # Return 400 if user does not exist
                 for user in data["users"]:
-                    if user["username"] == request.headers.get("X-User"):
+                    if user["username"] == username:
                         data["users"].remove(user)
                         break
                 else:
-                    return {"error": "User does not exist"}, 400
+                    return {"error": "User does not exist"}, 404
 
-                f.seek(0)
-                json.dump(data, f, indent=4)
-                f.truncate()
+                userdata_file.seek(0)
+                json.dump(data, userdata_file, indent=4)
+                userdata_file.truncate()
             finally:
-                portalocker.unlock(f)
+                portalocker.unlock(userdata_file)
 
-        return {"result": 0}
+        return {"result": 0, "username": username}

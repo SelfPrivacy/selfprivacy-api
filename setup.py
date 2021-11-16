@@ -1,8 +1,10 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='selfprivacy_api',
-    version='1.1.0',
+    name="selfprivacy_api",
+    version="1.1.0",
     packages=find_packages(),
-    scripts=['selfprivacy_api/app.py',],
+    scripts=[
+        "selfprivacy_api/app.py",
+    ],
 )

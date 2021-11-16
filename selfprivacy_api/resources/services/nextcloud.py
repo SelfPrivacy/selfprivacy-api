@@ -1,25 +1,43 @@
 #!/usr/bin/env python3
-from flask_restful import Resource
-import portalocker
+"""Nextcloud management module"""
 import json
+import portalocker
+from flask_restful import Resource
 
 from selfprivacy_api.resources.services import api
 
-# Enable Nextcloud
+
 class EnableNextcloud(Resource):
+    """Enable Nextcloud"""
+
     def post(self):
-        with portalocker.Lock("/etc/nixos/userdata/userdata.json", "r+") as f:
-            portalocker.lock(f, portalocker.LOCK_EX)
+        """
+        Enable Nextcloud
+        ---
+        tags:
+            - Nextcloud
+        security:
+            - bearerAuth: []
+        responses:
+            200:
+                description: Nextcloud enabled
+            401:
+                description: Unauthorized
+        """
+        with open(
+            "/etc/nixos/userdata/userdata.json", "r+", encoding="utf-8"
+        ) as userdata_file:
+            portalocker.lock(userdata_file, portalocker.LOCK_EX)
             try:
-                data = json.load(f)
+                data = json.load(userdata_file)
                 if "nextcloud" not in data:
                     data["nextcloud"] = {}
                 data["nextcloud"]["enable"] = True
-                f.seek(0)
-                json.dump(data, f, indent=4)
-                f.truncate()
+                userdata_file.seek(0)
+                json.dump(data, userdata_file, indent=4)
+                userdata_file.truncate()
             finally:
-                portalocker.unlock(f)
+                portalocker.unlock(userdata_file)
 
         return {
             "status": 0,
@@ -27,21 +45,37 @@ class EnableNextcloud(Resource):
         }
 
 
-# Disable Nextcloud
 class DisableNextcloud(Resource):
+    """Disable Nextcloud"""
+
     def post(self):
-        with portalocker.Lock("/etc/nixos/userdata/userdata.json", "r+") as f:
-            portalocker.lock(f, portalocker.LOCK_EX)
+        """
+        Disable Nextcloud
+        ---
+        tags:
+            - Nextcloud
+        security:
+            - bearerAuth: []
+        responses:
+            200:
+                description: Nextcloud disabled
+            401:
+                description: Unauthorized
+        """
+        with open(
+            "/etc/nixos/userdata/userdata.json", "r+", encoding="utf-8"
+        ) as userdata_file:
+            portalocker.lock(userdata_file, portalocker.LOCK_EX)
             try:
-                data = json.load(f)
+                data = json.load(userdata_file)
                 if "nextcloud" not in data:
                     data["nextcloud"] = {}
                 data["nextcloud"]["enable"] = False
-                f.seek(0)
-                json.dump(data, f, indent=4)
-                f.truncate()
+                userdata_file.seek(0)
+                json.dump(data, userdata_file, indent=4)
+                userdata_file.truncate()
             finally:
-                portalocker.unlock(f)
+                portalocker.unlock(userdata_file)
 
         return {
             "status": 0,

@@ -1,69 +1,131 @@
 #!/usr/bin/env python3
+"""Backups management module"""
+import json
+import subprocess
 from flask import request
 from flask_restful import Resource
-import subprocess
-import json
 
 from selfprivacy_api.resources.services import api
 
-# List all restic backups
-class ListAllBackups(Resource):
-    def get(self):
-        backupListingCommand = """
-            restic -r b2:{0}:/sfbackup snapshots --password-file /var/lib/restic/rpass --json
-        """.format(
-            request.headers.get("X-Repository-Name")
-        )
 
-        backupListingProcessDescriptor = subprocess.Popen(
-            backupListingCommand,
-            shell=True,
+class ListAllBackups(Resource):
+    """List all restic backups"""
+
+    def get(self):
+        """
+        Get all restic backups
+        ---
+        tags:
+            - Backups
+        security:
+            - bearerAuth: []
+        responses:
+            200:
+                description: A list of snapshots
+            400:
+                description: Bad request
+            401:
+                description: Unauthorized
+        """
+        repository_name = request.headers.get("X-Repository-Name")
+
+        backup_listing_command = [
+            "restic",
+            "-r",
+            f"b2:{repository_name}:/sfbackup",
+            "snapshots",
+            "--json",
+        ]
+
+        with subprocess.Popen(
+            backup_listing_command,
+            shell=False,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-        )
+        ) as backup_listing_process_descriptor:
+            snapshots_list = backup_listing_process_descriptor.communicate()[0]
 
-        snapshotsList = backupListingProcessDescriptor.communicate()[0]
-
-        return snapshotsList.decode("utf-8")
+        return snapshots_list.decode("utf-8")
 
 
-# Create a new restic backup
 class AsyncCreateBackup(Resource):
-    def put(self):
-        backupCommand = """
-            restic -r b2:{0}:/sfbackup --verbose backup /var --password-file /var/lib/restic/rpass > /tmp/backup.log
-        """.format(
-            request.headers.get("X-Repository-Name")
-        )
+    """Create a new restic backup"""
 
-        backupProcessDescriptor = subprocess.Popen(
-            backupCommand, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-        )
+    def put(self):
+        """
+        Initiate a new restic backup
+        ---
+        tags:
+            - Backups
+        security:
+            - bearerAuth: []
+        responses:
+            200:
+                description: Backup creation has started
+            400:
+                description: Bad request
+            401:
+                description: Unauthorized
+        """
+        repository_name = request.headers.get("X-Repository-Name")
+
+        backup_command = [
+            "restic",
+            "-r",
+            f"b2:{repository_name}:/sfbackup",
+            "--verbose",
+            "--json",
+            "backup",
+            "/var",
+        ]
+
+        with open("/tmp/backup.log", "w", encoding="utf-8") as log_file:
+            subprocess.Popen(
+                backup_command, shell=False, stdout=log_file, stderr=subprocess.STDOUT
+            )
 
         return {
             "status": 0,
             "message": "Backup creation has started",
         }
 
+
 class CheckBackupStatus(Resource):
+    """Check current backup status"""
+
     def get(self):
-        backupStatusCheckCommand = """
-            tail -1 /tmp/backup.log
         """
+        Get backup status
+        ---
+        tags:
+            - Backups
+        security:
+            - bearerAuth: []
+        responses:
+            200:
+                description: Backup status
+            400:
+                description: Bad request
+            401:
+                description: Unauthorized
+        """
+        backup_status_check_command = ["tail", "-1", "/tmp/backup.log"]
 
-        backupStatusCheckProcessDescriptor = subprocess.Popen(
-            backupStatusCheckCommand, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-        )
-
-        backupProcessStatus = backupStatusCheckProcessDescriptor.communicate()[0].decode("utf-8")
+        with subprocess.Popen(
+            backup_status_check_command,
+            shell=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        ) as backup_status_check_process_descriptor:
+            backup_process_status = (
+                backup_status_check_process_descriptor.communicate()[0].decode("utf-8")
+            )
 
         try:
-            json.loads(backupProcessStatus)
+            json.loads(backup_process_status)
         except ValueError:
-            return {
-                "message": backupProcessStatus
-            }
-        return backupProcessStatus
+            return {"message": backup_process_status}
+        return backup_process_status
 
 
 api.add_resource(ListAllBackups, "/restic/backup/list")

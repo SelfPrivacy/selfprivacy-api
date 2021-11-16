@@ -1,20 +1,56 @@
 #!/usr/bin/env python3
-from flask import Flask, jsonify, request, json
-from flask_restful import Resource
+"""Unassigned views"""
 import subprocess
+from flask_restful import Resource, reqparse
 
-from selfprivacy_api.utils import get_domain
 
-# Decrypt disk
 class DecryptDisk(Resource):
-    def post(self):
-        decryptionCommand = """
-    echo -n {0} | cryptsetup luksOpen /dev/sdb decryptedVar""".format(
-            request.headers.get("X-Decryption-Key")
-        )
+    """Decrypt disk"""
 
-        decryptionService = subprocess.Popen(
-            decryptionCommand, shell=True, stdout=subprocess.PIPE
+    def post(self):
+        """
+        Decrypt /dev/sdb using cryptsetup luksOpen
+        ---
+        consumes:
+            - application/json
+        tags:
+            - System
+        security:
+            - bearerAuth: []
+        parameters:
+            - in: body
+              name: body
+              required: true
+              description: Provide a password for decryption
+              schema:
+                type: object
+                required:
+                    - password
+                properties:
+                    password:
+                        type: string
+                        description: Decryption password.
+        responses:
+            201:
+                description: OK
+            400:
+                description: Bad request
+            401:
+                description: Unauthorized
+        """
+        parser = reqparse.RequestParser(bundle_errors=True)
+        parser.add_argument("password", type=str, required=True)
+        args = parser.parse_args()
+
+        decryption_command = ["cryptsetup", "luksOpen", "/dev/sdb", "decryptedVar"]
+
+        # TODO: Check if this works at all
+
+        decryption_service = subprocess.Popen(
+            decryption_command,
+            shell=False,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
         )
-        decryptionService.communicate()
-        return {"status": decryptionService.returncode}
+        decryption_service.communicate(input=args["password"])
+        return {"status": decryption_service.returncode}, 201
