@@ -25,7 +25,9 @@ class RebuildSystem(Resource):
             401:
                 description: Unauthorized
         """
-        rebuild_result = subprocess.Popen(["nixos-rebuild", "switch"])
+        rebuild_result = subprocess.Popen(
+            ["systemctl", "start", "sp-nixos-rebuild.service"], start_new_session=True
+        )
         rebuild_result.communicate()[0]
         return rebuild_result.returncode
 
@@ -47,7 +49,9 @@ class RollbackSystem(Resource):
             401:
                 description: Unauthorized
         """
-        rollback_result = subprocess.Popen(["nixos-rebuild", "switch", "--rollback"])
+        rollback_result = subprocess.Popen(
+            ["systemctl", "start", "sp-nixos-rollback.service"], start_new_session=True
+        )
         rollback_result.communicate()[0]
         return rollback_result.returncode
 
@@ -69,9 +73,32 @@ class UpgradeSystem(Resource):
             401:
                 description: Unauthorized
         """
-        upgrade_result = subprocess.Popen(["nixos-rebuild", "switch", "--upgrade"])
+        upgrade_result = subprocess.Popen(
+            ["systemctl", "start", "sp-nixos-upgrade.service"], start_new_session=True
+        )
         upgrade_result.communicate()[0]
         return upgrade_result.returncode
+
+
+class RebootSystem(Resource):
+    """Reboot the system"""
+
+    def get(self):
+        """
+        Reboot the system
+        ---
+        tags:
+            - System
+        security:
+            - bearerAuth: []
+        responses:
+            200:
+                description: System reboot has started
+            401:
+                description: Unauthorized
+        """
+        subprocess.Popen(["reboot"], start_new_session=True)
+        return "System reboot has started"
 
 
 class SystemVersion(Resource):
@@ -121,5 +148,6 @@ class PythonVersion(Resource):
 api.add_resource(RebuildSystem, "/configuration/apply")
 api.add_resource(RollbackSystem, "/configuration/rollback")
 api.add_resource(UpgradeSystem, "/configuration/upgrade")
+api.add_resource(RebootSystem, "/reboot")
 api.add_resource(SystemVersion, "/version")
 api.add_resource(PythonVersion, "/pythonVersion")
