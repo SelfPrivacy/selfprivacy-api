@@ -1,25 +1,43 @@
 #!/usr/bin/env python3
-from flask_restful import Resource
-import portalocker
+"""Gitea management module"""
 import json
+import portalocker
+from flask_restful import Resource
 
 from selfprivacy_api.resources.services import api
 
-# Enable Gitea
+
 class EnableGitea(Resource):
+    """Enable Gitea"""
+
     def post(self):
-        with open("/etc/nixos/userdata/userdata.json", "r+", encoding="utf8") as f:
-            portalocker.lock(f, portalocker.LOCK_EX)
+        """
+        Enable Gitea
+        ---
+        tags:
+            - Gitea
+        security:
+            - bearerAuth: []
+        responses:
+            200:
+                description: Gitea enabled
+            401:
+                description: Unauthorized
+        """
+        with open(
+            "/etc/nixos/userdata/userdata.json", "r+", encoding="utf-8"
+        ) as userdata_file:
+            portalocker.lock(userdata_file, portalocker.LOCK_EX)
             try:
-                data = json.load(f)
+                data = json.load(userdata_file)
                 if "gitea" not in data:
                     data["gitea"] = {}
                 data["gitea"]["enable"] = True
-                f.seek(0)
-                json.dump(data, f, indent=4)
-                f.truncate()
+                userdata_file.seek(0)
+                json.dump(data, userdata_file, indent=4)
+                userdata_file.truncate()
             finally:
-                portalocker.unlock(f)
+                portalocker.unlock(userdata_file)
 
         return {
             "status": 0,
@@ -27,21 +45,37 @@ class EnableGitea(Resource):
         }
 
 
-# Disable Gitea
 class DisableGitea(Resource):
+    """Disable Gitea"""
+
     def post(self):
-        with open("/etc/nixos/userdata/userdata.json", "r+", encoding="utf8") as f:
-            portalocker.lock(f, portalocker.LOCK_EX)
+        """
+        Disable Gitea
+        ---
+        tags:
+            - Gitea
+        security:
+            - bearerAuth: []
+        responses:
+            200:
+                description: Gitea disabled
+            401:
+                description: Unauthorized
+        """
+        with open(
+            "/etc/nixos/userdata/userdata.json", "r+", encoding="utf-8"
+        ) as userdata_file:
+            portalocker.lock(userdata_file, portalocker.LOCK_EX)
             try:
-                data = json.load(f)
+                data = json.load(userdata_file)
                 if "gitea" not in data:
                     data["gitea"] = {}
                 data["gitea"]["enable"] = False
-                f.seek(0)
-                json.dump(data, f, indent=4)
-                f.truncate()
+                userdata_file.seek(0)
+                json.dump(data, userdata_file, indent=4)
+                userdata_file.truncate()
             finally:
-                portalocker.unlock(f)
+                portalocker.unlock(userdata_file)
 
         return {
             "status": 0,

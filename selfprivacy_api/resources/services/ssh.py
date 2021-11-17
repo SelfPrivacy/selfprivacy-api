@@ -1,26 +1,43 @@
 #!/usr/bin/env python3
-from flask import Blueprint, request
-from flask_restful import Resource, reqparse
-import portalocker
+"""SSH management module"""
 import json
+import portalocker
+from flask_restful import Resource, reqparse
 
 from selfprivacy_api.resources.services import api
 
-# Enable SSH
+
 class EnableSSH(Resource):
+    """Enable SSH"""
+
     def post(self):
-        with portalocker.Lock("/etc/nixos/userdata/userdata.json", "r+") as f:
-            portalocker.lock(f, portalocker.LOCK_EX)
+        """
+        Enable SSH
+        ---
+        tags:
+            - SSH
+        security:
+            - bearerAuth: []
+        responses:
+            200:
+                description: SSH enabled
+            401:
+                description: Unauthorized
+        """
+        with open(
+            "/etc/nixos/userdata/userdata.json", "r+", encoding="utf-8"
+        ) as userdata_file:
+            portalocker.lock(userdata_file, portalocker.LOCK_EX)
             try:
-                data = json.load(f)
+                data = json.load(userdata_file)
                 if "ssh" not in data:
                     data["ssh"] = {}
                 data["ssh"]["enable"] = True
-                f.seek(0)
-                json.dump(data, f, indent=4)
-                f.truncate()
+                userdata_file.seek(0)
+                json.dump(data, userdata_file, indent=4)
+                userdata_file.truncate()
             finally:
-                portalocker.unlock(f)
+                portalocker.unlock(userdata_file)
 
         return {
             "status": 0,
@@ -28,40 +45,75 @@ class EnableSSH(Resource):
         }
 
 
-# Write new SSH key
 class WriteSSHKey(Resource):
+    """Write new SSH key"""
+
     def put(self):
+        """
+        Add a SSH root key
+        ---
+        consumes:
+            - application/json
+        tags:
+            - SSH
+        security:
+            - bearerAuth: []
+        parameters:
+            - in: body
+              name: body
+              required: true
+              description: Public key to add
+              schema:
+                type: object
+                required:
+                    - public_key
+                properties:
+                    public_key:
+                        type: string
+                        description: ssh-ed25519 public key.
+        responses:
+            201:
+                description: Key added
+            400:
+                description: Bad request
+            401:
+                description: Unauthorized
+            409:
+                description: Key already exists
+        """
         parser = reqparse.RequestParser()
         parser.add_argument(
             "public_key", type=str, required=True, help="Key cannot be blank!"
         )
         args = parser.parse_args()
 
-        publicKey = args["public_key"]
+        public_key = args["public_key"]
 
-        with portalocker.Lock("/etc/nixos/userdata/userdata.json", "r+") as f:
-            portalocker.lock(f, portalocker.LOCK_EX)
+        with open(
+            "/etc/nixos/userdata/userdata.json", "r+", encoding="utf-8"
+        ) as userdata_file:
+            portalocker.lock(userdata_file, portalocker.LOCK_EX)
             try:
-                data = json.load(f)
+                data = json.load(userdata_file)
                 if "ssh" not in data:
                     data["ssh"] = {}
-                # Return 400 if key already in array
+                # Return 409 if key already in array
                 for key in data["ssh"]["rootSshKeys"]:
-                    if key == publicKey:
+                    if key == public_key:
                         return {
                             "error": "Key already exists",
-                        }, 400
-                data["ssh"]["rootSshKeys"].append(publicKey)
-                f.seek(0)
-                json.dump(data, f, indent=4)
-                f.truncate()
+                        }, 409
+                data["ssh"]["rootSshKeys"].append(public_key)
+                userdata_file.seek(0)
+                json.dump(data, userdata_file, indent=4)
+                userdata_file.truncate()
             finally:
-                portalocker.unlock(f)
+                portalocker.unlock(userdata_file)
 
         return {
             "status": 0,
             "message": "New SSH key successfully written",
-        }
+        }, 201
 
 
 api.add_resource(EnableSSH, "/ssh/enable")

@@ -1,25 +1,43 @@
 #!/usr/bin/env python3
-from flask_restful import Resource
-import portalocker
+"""Pleroma management module"""
 import json
+import portalocker
+from flask_restful import Resource
 
 from selfprivacy_api.resources.services import api
 
-# Enable Pleroma
+
 class EnablePleroma(Resource):
+    """Enable Pleroma"""
+
     def post(self):
-        with portalocker.Lock("/etc/nixos/userdata/userdata.json", "r+") as f:
-            portalocker.lock(f, portalocker.LOCK_EX)
+        """
+        Enable Pleroma
+        ---
+        tags:
+            - Pleroma
+        security:
+            - bearerAuth: []
+        responses:
+            200:
+                description: Pleroma enabled
+            401:
+                description: Unauthorized
+        """
+        with open(
+            "/etc/nixos/userdata/userdata.json", "r+", encoding="utf-8"
+        ) as userdata_file:
+            portalocker.lock(userdata_file, portalocker.LOCK_EX)
             try:
-                data = json.load(f)
+                data = json.load(userdata_file)
                 if "pleroma" not in data:
                     data["pleroma"] = {}
                 data["pleroma"]["enable"] = True
-                f.seek(0)
-                json.dump(data, f, indent=4)
-                f.truncate()
+                userdata_file.seek(0)
+                json.dump(data, userdata_file, indent=4)
+                userdata_file.truncate()
             finally:
-                portalocker.unlock(f)
+                portalocker.unlock(userdata_file)
 
         return {
             "status": 0,
@@ -27,21 +45,37 @@ class EnablePleroma(Resource):
         }
 
 
-# Disable Pleroma
 class DisablePleroma(Resource):
+    """Disable Pleroma"""
+
     def post(self):
-        with portalocker.Lock("/etc/nixos/userdata/userdata.json", "r+") as f:
-            portalocker.lock(f, portalocker.LOCK_EX)
+        """
+        Disable Pleroma
+        ---
+        tags:
+            - Pleroma
+        security:
+            - bearerAuth: []
+        responses:
+            200:
+                description: Pleroma disabled
+            401:
+                description: Unauthorized
+        """
+        with open(
+            "/etc/nixos/userdata/userdata.json", "r+", encoding="utf-8"
+        ) as userdata_file:
+            portalocker.lock(userdata_file, portalocker.LOCK_EX)
             try:
-                data = json.load(f)
+                data = json.load(userdata_file)
                 if "pleroma" not in data:
                     data["pleroma"] = {}
                 data["pleroma"]["enable"] = False
-                f.seek(0)
-                json.dump(data, f, indent=4)
-                f.truncate()
+                userdata_file.seek(0)
+                json.dump(data, userdata_file, indent=4)
+                userdata_file.truncate()
             finally:
-                portalocker.unlock(f)
+                portalocker.unlock(userdata_file)
 
         return {
             "status": 0,

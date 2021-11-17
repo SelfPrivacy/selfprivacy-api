@@ -1,25 +1,43 @@
 #!/usr/bin/env python3
-from flask_restful import Resource
-import portalocker
+"""Bitwarden management module"""
 import json
+import portalocker
+from flask_restful import Resource
 
 from selfprivacy_api.resources.services import api
 
-# Enable Bitwarden
+
 class EnableBitwarden(Resource):
+    """Enable Bitwarden"""
+
     def post(self):
-        with open("/etc/nixos/userdata/userdata.json", "r+", encoding="utf8") as f:
-            portalocker.lock(f, portalocker.LOCK_EX)
+        """
+        Enable Bitwarden
+        ---
+        tags:
+            - Bitwarden
+        security:
+            - bearerAuth: []
+        responses:
+            200:
+                description: Bitwarden enabled
+            401:
+                description: Unauthorized
+        """
+        with open(
+            "/etc/nixos/userdata/userdata.json", "r+", encoding="utf-8"
+        ) as userdata_file:
+            portalocker.lock(userdata_file, portalocker.LOCK_EX)
             try:
-                data = json.load(f)
+                data = json.load(userdata_file)
                 if "bitwarden" not in data:
                     data["bitwarden"] = {}
                 data["bitwarden"]["enable"] = True
-                f.seek(0)
-                json.dump(data, f, indent=4)
-                f.truncate()
+                userdata_file.seek(0)
+                json.dump(data, userdata_file, indent=4)
+                userdata_file.truncate()
             finally:
-                portalocker.unlock(f)
+                portalocker.unlock(userdata_file)
 
         return {
             "status": 0,
@@ -27,21 +45,37 @@ class EnableBitwarden(Resource):
         }
 
 
-# Disable Bitwarden
 class DisableBitwarden(Resource):
+    """Disable Bitwarden"""
+
     def post(self):
-        with open("/etc/nixos/userdata/userdata.json", "r+", encoding="utf8") as f:
-            portalocker.lock(f, portalocker.LOCK_EX)
+        """
+        Disable Bitwarden
+        ---
+        tags:
+            - Bitwarden
+        security:
+            - bearerAuth: []
+        responses:
+            200:
+                description: Bitwarden disabled
+            401:
+                description: Unauthorized
+        """
+        with open(
+            "/etc/nixos/userdata/userdata.json", "r+", encoding="utf-8"
+        ) as userdata_file:
+            portalocker.lock(userdata_file, portalocker.LOCK_EX)
             try:
-                data = json.load(f)
+                data = json.load(userdata_file)
                 if "bitwarden" not in data:
                     data["bitwarden"] = {}
                 data["bitwarden"]["enable"] = False
-                f.seek(0)
-                json.dump(data, f, indent=4)
-                f.truncate()
+                userdata_file.seek(0)
+                json.dump(data, userdata_file, indent=4)
+                userdata_file.truncate()
             finally:
-                portalocker.unlock(f)
+                portalocker.unlock(userdata_file)
 
         return {
             "status": 0,

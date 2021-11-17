@@ -1,25 +1,43 @@
 #!/usr/bin/env python3
-from flask_restful import Resource
-import portalocker
+"""OpenConnect VPN server management module"""
 import json
+import portalocker
+from flask_restful import Resource
 
 from selfprivacy_api.resources.services import api
 
-# Enable OpenConnect VPN server
+
 class EnableOcserv(Resource):
+    """Enable OpenConnect VPN server"""
+
     def post(self):
-        with portalocker.Lock("/etc/nixos/userdata/userdata.json", "r+") as f:
-            portalocker.lock(f, portalocker.LOCK_EX)
+        """
+        Enable OCserv
+        ---
+        tags:
+            - OCserv
+        security:
+            - bearerAuth: []
+        responses:
+            200:
+                description: OCserv enabled
+            401:
+                description: Unauthorized
+        """
+        with open(
+            "/etc/nixos/userdata/userdata.json", "r+", encoding="utf-8"
+        ) as userdata_file:
+            portalocker.lock(userdata_file, portalocker.LOCK_EX)
             try:
-                data = json.load(f)
+                data = json.load(userdata_file)
                 if "ocserv" not in data:
                     data["ocserv"] = {}
                 data["ocserv"]["enable"] = True
-                f.seek(0)
-                json.dump(data, f, indent=4)
-                f.truncate()
+                userdata_file.seek(0)
+                json.dump(data, userdata_file, indent=4)
+                userdata_file.truncate()
             finally:
-                portalocker.unlock(f)
+                portalocker.unlock(userdata_file)
 
         return {
             "status": 0,
@@ -27,21 +45,37 @@ class EnableOcserv(Resource):
         }
 
 
-# Disable OpenConnect VPN server
 class DisableOcserv(Resource):
+    """Disable OpenConnect VPN server"""
+
     def post(self):
-        with portalocker.Lock("/etc/nixos/userdata/userdata.json", "r+") as f:
-            portalocker.lock(f, portalocker.LOCK_EX)
+        """
+        Disable OCserv
+        ---
+        tags:
+            - OCserv
+        security:
+            - bearerAuth: []
+        responses:
+            200:
+                description: OCserv disabled
+            401:
+                description: Unauthorized
+        """
+        with open(
+            "/etc/nixos/userdata/userdata.json", "r+", encoding="utf-8"
+        ) as userdata_file:
+            portalocker.lock(userdata_file, portalocker.LOCK_EX)
             try:
-                data = json.load(f)
+                data = json.load(userdata_file)
                 if "ocserv" not in data:
                     data["ocserv"] = {}
                 data["ocserv"]["enable"] = False
-                f.seek(0)
-                json.dump(data, f, indent=4)
-                f.truncate()
+                userdata_file.seek(0)
+                json.dump(data, userdata_file, indent=4)
+                userdata_file.truncate()
             finally:
-                portalocker.unlock(f)
+                portalocker.unlock(userdata_file)
 
         return {
             "status": 0,

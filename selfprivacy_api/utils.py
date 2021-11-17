@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
+"""Various utility functions"""
 
-# Get domain from /var/domain without trailing new line
+
 def get_domain():
-    with open("/var/domain", "r") as f:
-        domain = f.readline().rstrip()
+    """Get domain from /var/domain without trailing new line"""
+    with open("/var/domain", "r", encoding="utf-8") as domain_file:
+        domain = domain_file.readline().rstrip()
     return domain
