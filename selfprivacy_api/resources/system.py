@@ -120,6 +120,6 @@ class PythonVersion(Resource):
 
 api.add_resource(RebuildSystem, "/configuration/apply")
 api.add_resource(RollbackSystem, "/configuration/rollback")
-api.add_resource(UpgradeSystem, "/upgrade")
+api.add_resource(UpgradeSystem, "/configuration/upgrade")
 api.add_resource(SystemVersion, "/version")
 api.add_resource(PythonVersion, "/pythonVersion")
