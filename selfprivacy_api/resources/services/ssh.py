@@ -98,12 +98,12 @@ class WriteSSHKey(Resource):
                 if "ssh" not in data:
                     data["ssh"] = {}
                 # Return 409 if key already in array
-                for key in data["ssh"]["rootSshKeys"]:
+                for key in data["ssh"]["rootKeys"]:
                     if key == public_key:
                         return {
                             "error": "Key already exists",
                         }, 409
-                data["ssh"]["rootSshKeys"].append(public_key)
+                data["ssh"]["rootKeys"].append(public_key)
                 userdata_file.seek(0)
                 json.dump(data, userdata_file, indent=4)
                 userdata_file.truncate()
