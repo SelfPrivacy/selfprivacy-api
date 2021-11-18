@@ -104,13 +104,14 @@ class Users(Resource):
             try:
                 data = json.load(userdata_file)
 
+                if "users" not in data:
+                    data["users"] = []
+
                 # Return 400 if user already exists
                 for user in data["users"]:
                     if user["username"] == args["username"]:
                         return {"error": "User already exists"}, 409
 
-                if "users" not in data:
-                    data["users"] = []
                 data["users"].append(
                     {
                         "username": args["username"],

@@ -97,6 +97,8 @@ class WriteSSHKey(Resource):
                 data = json.load(userdata_file)
                 if "ssh" not in data:
                     data["ssh"] = {}
+                if "rootKeys" not in data["ssh"]:
+                    data["ssh"]["rootKeys"] = []
                 # Return 409 if key already in array
                 for key in data["ssh"]["rootKeys"]:
                     if key == public_key:
