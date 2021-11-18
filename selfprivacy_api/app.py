@@ -48,7 +48,7 @@ def create_app():
     def spec():
         if app.config["ENABLE_SWAGGER"] == "1":
             swag = swagger(app)
-            swag["info"]["version"] = "1.0"
+            swag["info"]["version"] = "1.0.0"
             swag["info"]["title"] = "SelfPrivacy API"
             swag["info"]["description"] = "SelfPrivacy API"
             swag["securityDefinitions"] = {
