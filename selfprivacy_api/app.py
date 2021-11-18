@@ -7,7 +7,7 @@ from flask_swagger import swagger
 from flask_swagger_ui import get_swaggerui_blueprint
 
 from selfprivacy_api.resources.users import User, Users
-from selfprivacy_api.resources.common import DecryptDisk
+from selfprivacy_api.resources.common import ApiVersion, DecryptDisk
 from selfprivacy_api.resources.system import api_system
 from selfprivacy_api.resources.services import services as api_services
 
@@ -37,6 +37,7 @@ def create_app():
             if auth != "Bearer " + app.config["AUTH_TOKEN"]:
                 return jsonify({"error": "Invalid token"}), 401
 
+    api.add_resource(ApiVersion, "/api/version")
     api.add_resource(Users, "/users")
     api.add_resource(User, "/users/<string:username>")
     api.add_resource(DecryptDisk, "/decryptDisk")

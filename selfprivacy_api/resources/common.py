@@ -12,8 +12,6 @@ class ApiVersion(Resource):
         ---
         tags:
             - System
-        security:
-            - bearerAuth: []
         responses:
             200:
                 description: API version
