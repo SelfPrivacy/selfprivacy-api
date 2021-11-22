@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Users management module"""
 import subprocess
-import json
 import re
-import portalocker
 from flask_restful import Resource, reqparse
+
+from selfprivacy_api.utils import WriteUserData, ReadUserData
 
 
 class Users(Resource):
@@ -24,17 +24,10 @@ class Users(Resource):
             401:
                 description: Unauthorized
         """
-        with open(
-            "/etc/nixos/userdata/userdata.json", "r", encoding="utf-8"
-        ) as userdata_file:
-            portalocker.lock(userdata_file, portalocker.LOCK_SH)
-            try:
-                data = json.load(userdata_file)
-                users = []
-                for user in data["users"]:
-                    users.append(user["username"])
-            finally:
-                portalocker.unlock(userdata_file)
+        with ReadUserData() as data:
+            users = []
+            for user in data["users"]:
+                users.append(user["username"])
         return users
 
     def post(self):
@@ -97,32 +90,21 @@ class Users(Resource):
         if len(args["username"]) > 32:
             return {"error": "username must be less than 32 characters"}, 400
 
-        with open(
-            "/etc/nixos/userdata/userdata.json", "r+", encoding="utf-8"
-        ) as userdata_file:
-            portalocker.lock(userdata_file, portalocker.LOCK_EX)
-            try:
-                data = json.load(userdata_file)
+        with WriteUserData() as data:
+            if "users" not in data:
+                data["users"] = []
 
-                if "users" not in data:
-                    data["users"] = []
+            # Return 400 if user already exists
+            for user in data["users"]:
+                if user["username"] == args["username"]:
+                    return {"error": "User already exists"}, 409
 
-                # Return 400 if user already exists
-                for user in data["users"]:
-                    if user["username"] == args["username"]:
-                        return {"error": "User already exists"}, 409
-
-                data["users"].append(
-                    {
-                        "username": args["username"],
-                        "hashedPassword": hashed_password,
-                    }
-                )
-                userdata_file.seek(0)
-                json.dump(data, userdata_file, indent=4)
-                userdata_file.truncate()
-            finally:
-                portalocker.unlock(userdata_file)
+            data["users"].append(
+                {
+                    "username": args["username"],
+                    "hashedPassword": hashed_password,
+                }
+            )
 
         return {"result": 0, "username": args["username"]}, 201
 
@@ -154,29 +136,18 @@ class User(Resource):
             404:
                 description: User not found
         """
-        with open(
-            "/etc/nixos/userdata/userdata.json", "r+", encoding="utf-8"
-        ) as userdata_file:
-            portalocker.lock(userdata_file, portalocker.LOCK_EX)
-            try:
-                data = json.load(userdata_file)
-                # Return 400 if username is not provided
-                if username is None:
-                    return {"error": "username is required"}, 400
-                if username == data["username"]:
-                    return {"error": "Cannot delete root user"}, 400
-                # Return 400 if user does not exist
-                for user in data["users"]:
-                    if user["username"] == username:
-                        data["users"].remove(user)
-                        break
-                else:
-                    return {"error": "User does not exist"}, 404
-
-                userdata_file.seek(0)
-                json.dump(data, userdata_file, indent=4)
-                userdata_file.truncate()
-            finally:
-                portalocker.unlock(userdata_file)
+        with WriteUserData() as data:
+            # Return 400 if username is not provided
+            if username is None:
+                return {"error": "username is required"}, 400
+            if username == data["username"]:
+                return {"error": "Cannot delete root user"}, 400
+            # Return 400 if user does not exist
+            for user in data["users"]:
+                if user["username"] == username:
+                    data["users"].remove(user)
+                    break
+            else:
+                return {"error": "User does not exist"}, 404
 
         return {"result": 0, "username": username}

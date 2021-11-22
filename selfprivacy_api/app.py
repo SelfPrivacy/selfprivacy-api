@@ -22,6 +22,8 @@ def create_app():
     api = Api(app)
 
     app.config["AUTH_TOKEN"] = os.environ.get("AUTH_TOKEN")
+    if app.config["AUTH_TOKEN"] is None:
+        raise ValueError("AUTH_TOKEN is not set")
     app.config["ENABLE_SWAGGER"] = os.environ.get("ENABLE_SWAGGER", "0")
 
     # Check bearer token
@@ -49,7 +51,7 @@ def create_app():
     def spec():
         if app.config["ENABLE_SWAGGER"] == "1":
             swag = swagger(app)
-            swag["info"]["version"] = "1.0.0"
+            swag["info"]["version"] = "1.1.0"
             swag["info"]["title"] = "SelfPrivacy API"
             swag["info"]["description"] = "SelfPrivacy API"
             swag["securityDefinitions"] = {

@@ -24,7 +24,7 @@ class ApiVersion(Resource):
             401:
                 description: Unauthorized
         """
-        return {"version": "1.0.0"}
+        return {"version": "1.1.0"}
 
 
 class DecryptDisk(Resource):

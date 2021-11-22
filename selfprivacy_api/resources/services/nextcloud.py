@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """Nextcloud management module"""
-import json
-import portalocker
 from flask_restful import Resource
 
 from selfprivacy_api.resources.services import api
+from selfprivacy_api.utils import WriteUserData
 
 
 class EnableNextcloud(Resource):
@@ -24,20 +23,10 @@ class EnableNextcloud(Resource):
             401:
                 description: Unauthorized
         """
-        with open(
-            "/etc/nixos/userdata/userdata.json", "r+", encoding="utf-8"
-        ) as userdata_file:
-            portalocker.lock(userdata_file, portalocker.LOCK_EX)
-            try:
-                data = json.load(userdata_file)
-                if "nextcloud" not in data:
-                    data["nextcloud"] = {}
-                data["nextcloud"]["enable"] = True
-                userdata_file.seek(0)
-                json.dump(data, userdata_file, indent=4)
-                userdata_file.truncate()
-            finally:
-                portalocker.unlock(userdata_file)
+        with WriteUserData() as data:
+            if "nextcloud" not in data:
+                data["nextcloud"] = {}
+            data["nextcloud"]["enable"] = True
 
         return {
             "status": 0,
@@ -62,20 +51,10 @@ class DisableNextcloud(Resource):
             401:
                 description: Unauthorized
         """
-        with open(
-            "/etc/nixos/userdata/userdata.json", "r+", encoding="utf-8"
-        ) as userdata_file:
-            portalocker.lock(userdata_file, portalocker.LOCK_EX)
-            try:
-                data = json.load(userdata_file)
-                if "nextcloud" not in data:
-                    data["nextcloud"] = {}
-                data["nextcloud"]["enable"] = False
-                userdata_file.seek(0)
-                json.dump(data, userdata_file, indent=4)
-                userdata_file.truncate()
-            finally:
-                portalocker.unlock(userdata_file)
+        with WriteUserData() as data:
+            if "nextcloud" not in data:
+                data["nextcloud"] = {}
+            data["nextcloud"]["enable"] = False
 
         return {
             "status": 0,
