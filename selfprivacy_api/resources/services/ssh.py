@@ -3,7 +3,7 @@
 from flask_restful import Resource, reqparse
 
 from selfprivacy_api.resources.services import api
-from selfprivacy_api.utils import WriteUserData, ReadUserData
+from selfprivacy_api.utils import WriteUserData, ReadUserData, validate_ssh_public_key
 
 
 class EnableSSH(Resource):
@@ -154,13 +154,10 @@ class WriteSSHKey(Resource):
 
         public_key = args["public_key"]
 
-        # Validate SSH public key
-        # It may be ssh-ed25519 or ssh-rsa
-        if not public_key.startswith("ssh-ed25519"):
-            if not public_key.startswith("ssh-rsa"):
-                return {
-                    "error": "Invalid key type. Only ssh-ed25519 and ssh-rsa are supported.",
-                }, 400
+        if not validate_ssh_public_key(public_key):
+            return {
+                "error": "Invalid key type. Only ssh-ed25519 and ssh-rsa are supported.",
+            }, 400
 
         with WriteUserData() as data:
             if "ssh" not in data:
@@ -272,13 +269,10 @@ class SSHKeys(Resource):
                 "error": "Use /ssh/key/send to add root keys",
             }, 400
 
-        # Validate SSH public key
-        # It may be ssh-ed25519 or ssh-rsa
-        if not args["public_key"].startswith("ssh-ed25519"):
-            if not args["public_key"].startswith("ssh-rsa"):
-                return {
-                    "error": "Invalid key type. Only ssh-ed25519 and ssh-rsa are supported.",
-                }, 400
+        if not validate_ssh_public_key(args["public_key"]):
+            return {
+                "error": "Invalid key type. Only ssh-ed25519 and ssh-rsa are supported.",
+            }, 400
 
         with WriteUserData() as data:
             if username == data["username"]:

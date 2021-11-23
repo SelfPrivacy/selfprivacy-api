@@ -49,3 +49,12 @@ class ReadUserData(object):
     def __exit__(self, *args):
         portalocker.unlock(self.userdata_file)
         self.userdata_file.close()
+
+
+def validate_ssh_public_key(key):
+    """Validate SSH public key. It may be ssh-ed25519 or ssh-rsa."""
+    if not key.startswith("ssh-ed25519"):
+        if not key.startswith("ssh-rsa"):
+            return False
+    return True
+    
