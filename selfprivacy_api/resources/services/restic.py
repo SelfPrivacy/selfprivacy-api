@@ -32,7 +32,7 @@ class ListAllBackups(Resource):
         backup_listing_command = [
             "restic",
             "-r",
-            f"b2:{repository_name}:/sfbackup",
+            f"rclone:backblaze:{repository_name}:/sfbackup",
             "snapshots",
             "--json",
         ]
@@ -72,7 +72,7 @@ class AsyncCreateBackup(Resource):
         backup_command = [
             "restic",
             "-r",
-            f"b2:{repository_name}:/sfbackup",
+            f"rclone:backblaze:{repository_name}:/sfbackup",
             "--verbose",
             "--json",
             "backup",
