@@ -278,6 +278,12 @@ class SSHKeys(Resource):
             if username == data["username"]:
                 if "sshKeys" not in data:
                     data["sshKeys"] = []
+                # Return 409 if key already in array
+                for key in data["sshKeys"]:
+                    if key == args["public_key"]:
+                        return {
+                            "error": "Key already exists",
+                        }, 409
                 data["sshKeys"].append(args["public_key"])
                 return {
                     "message": "New SSH key successfully written",

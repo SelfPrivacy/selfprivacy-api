@@ -6,3 +6,9 @@ setuptools
 portalocker
 flask-swagger
 flask-swagger-ui
+pytz
+
+pytest
+coverage
+pytest-mock
+pytest-datadir

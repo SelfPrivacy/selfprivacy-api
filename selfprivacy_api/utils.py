@@ -2,7 +2,10 @@
 """Various utility functions"""
 import json
 import portalocker
+from flask import current_app
 
+
+USERDATA_FILE = "/etc/nixos/userdata/userdata.json"
 
 def get_domain():
     """Get domain from /var/domain without trailing new line"""
@@ -16,7 +19,7 @@ class WriteUserData(object):
 
     def __init__(self):
         self.userdata_file = open(
-            "/etc/nixos/userdata/userdata.json", "r+", encoding="utf-8"
+            USERDATA_FILE, "r+", encoding="utf-8"
         )
         portalocker.lock(self.userdata_file, portalocker.LOCK_EX)
         self.data = json.load(self.userdata_file)
@@ -38,7 +41,7 @@ class ReadUserData(object):
 
     def __init__(self):
         self.userdata_file = open(
-            "/etc/nixos/userdata/userdata.json", "r", encoding="utf-8"
+            USERDATA_FILE, "r", encoding="utf-8"
         )
         portalocker.lock(self.userdata_file, portalocker.LOCK_SH)
         self.data = json.load(self.userdata_file)

@@ -16,15 +16,18 @@ swagger_blueprint = get_swaggerui_blueprint(
 )
 
 
-def create_app():
+def create_app(test_config=None):
     """Initiate Flask app and bind routes"""
     app = Flask(__name__)
     api = Api(app)
 
-    app.config["AUTH_TOKEN"] = os.environ.get("AUTH_TOKEN")
-    if app.config["AUTH_TOKEN"] is None:
-        raise ValueError("AUTH_TOKEN is not set")
-    app.config["ENABLE_SWAGGER"] = os.environ.get("ENABLE_SWAGGER", "0")
+    if test_config is None:
+        app.config["AUTH_TOKEN"] = os.environ.get("AUTH_TOKEN")
+        if app.config["AUTH_TOKEN"] is None:
+            raise ValueError("AUTH_TOKEN is not set")
+        app.config["ENABLE_SWAGGER"] = os.environ.get("ENABLE_SWAGGER", "0")
+    else:
+        app.config.update(test_config)
 
     # Check bearer token
     @app.before_request
