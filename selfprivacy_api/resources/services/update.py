@@ -31,8 +31,10 @@ class PullRepositoryChanges(Resource):
 
         git_pull_command = ["git", "pull"]
 
-
+        current_working_directory = os.getcwd()
         os.chdir("/etc/nixos")
+
+
         git_pull_process_descriptor = subprocess.Popen(
             git_pull_command,
             stdout=subprocess.PIPE,
@@ -42,6 +44,8 @@ class PullRepositoryChanges(Resource):
 
 
         git_pull_process_descriptor.communicate()[0]
+
+        os.chdir(current_working_directory)
 
         if git_pull_process_descriptor.returncode == 0:
             return {
