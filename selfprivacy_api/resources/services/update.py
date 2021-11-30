@@ -1,8 +1,6 @@
 #!/usr/bin/env/python3
 """Update dispatch module"""
-import json
 import os
-import portalocker
 import subprocess
 from flask_restful import Resource, reqparse
 
