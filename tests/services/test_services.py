@@ -7,6 +7,7 @@ def read_json(file_path):
     with open(file_path, "r", encoding="utf-8") as f:
         return json.load(f)
 
+
 def call_args_asserts(mocked_object):
     assert mocked_object.call_count == 8
     assert mocked_object.call_args_list[0][0][0] == [
@@ -49,6 +50,7 @@ def call_args_asserts(mocked_object):
         "status",
         "pleroma.service",
     ]
+
 
 class ProcessMock:
     """Mock subprocess.Popen"""

@@ -5,10 +5,12 @@ from selfprivacy_api.app import create_app
 
 @pytest.fixture
 def app():
-    app = create_app({
-        "AUTH_TOKEN": "TEST_TOKEN",
-        "ENABLE_SWAGGER": "0",
-    })
+    app = create_app(
+        {
+            "AUTH_TOKEN": "TEST_TOKEN",
+            "ENABLE_SWAGGER": "0",
+        }
+    )
 
     yield app
 
@@ -16,6 +18,7 @@ def app():
 @pytest.fixture
 def client(app):
     return app.test_client()
+
 
 class AuthorizedClient(testing.FlaskClient):
     def __init__(self, *args, **kwargs):
@@ -28,10 +31,12 @@ class AuthorizedClient(testing.FlaskClient):
         kwargs["headers"]["Authorization"] = f"Bearer {self.token}"
         return super().open(*args, **kwargs)
 
+
 @pytest.fixture
 def authorized_client(app):
     app.test_client_class = AuthorizedClient
     return app.test_client()
+
 
 @pytest.fixture
 def runner(app):

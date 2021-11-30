@@ -7,6 +7,7 @@ from flask import current_app
 
 USERDATA_FILE = "/etc/nixos/userdata/userdata.json"
 
+
 def get_domain():
     """Get domain from /var/domain without trailing new line"""
     with open("/var/domain", "r", encoding="utf-8") as domain_file:
@@ -18,9 +19,7 @@ class WriteUserData(object):
     """Write userdata.json with lock"""
 
     def __init__(self):
-        self.userdata_file = open(
-            USERDATA_FILE, "r+", encoding="utf-8"
-        )
+        self.userdata_file = open(USERDATA_FILE, "r+", encoding="utf-8")
         portalocker.lock(self.userdata_file, portalocker.LOCK_EX)
         self.data = json.load(self.userdata_file)
 
@@ -40,9 +39,7 @@ class ReadUserData(object):
     """Read userdata.json with lock"""
 
     def __init__(self):
-        self.userdata_file = open(
-            USERDATA_FILE, "r", encoding="utf-8"
-        )
+        self.userdata_file = open(USERDATA_FILE, "r", encoding="utf-8")
         portalocker.lock(self.userdata_file, portalocker.LOCK_SH)
         self.data = json.load(self.userdata_file)
 
@@ -60,4 +57,3 @@ def validate_ssh_public_key(key):
         if not key.startswith("ssh-rsa"):
             return False
     return True
-    

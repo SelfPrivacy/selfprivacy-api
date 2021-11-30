@@ -147,23 +147,26 @@ class AsyncRestoreBackup(Resource):
             401:
                 description: Unauthorized
         """
-        backup_restoration_command = ["restic", "-r", "rclone:backblaze:sfbackup", "var", "--json"]
+        backup_restoration_command = [
+            "restic",
+            "-r",
+            "rclone:backblaze:sfbackup",
+            "var",
+            "--json",
+        ]
 
-        with open("/tmp/backup.log", "w", encoding="utf-8") as backup_log_file_descriptor:
+        with open(
+            "/tmp/backup.log", "w", encoding="utf-8"
+        ) as backup_log_file_descriptor:
             with subprocess.Popen(
                 backup_restoration_command,
                 shell=False,
                 stdout=subprocess.PIPE,
                 stderr=backup_log_file_descriptor,
             ) as backup_restoration_process_descriptor:
-                backup_restoration_status = (
-                    "Backup restoration procedure started"
-                )
-            
-            return {
-                "status": 0,
-                "message": backup_restoration_status
-            }
+                backup_restoration_status = "Backup restoration procedure started"
+
+            return {"status": 0, "message": backup_restoration_status}
 
 
 api.add_resource(ListAllBackups, "/restic/backup/list")

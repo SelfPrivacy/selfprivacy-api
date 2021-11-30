@@ -172,91 +172,143 @@ def test_set_settings_undefined(authorized_client, undefined_settings, settings)
     if "passwordAuthentication" in settings:
         assert data["passwordAuthentication"] == settings["passwordAuthentication"]
 
+
 def test_add_root_key(authorized_client, ssh_on):
-    response = authorized_client.put(f"/services/ssh/key/send", json={"public_key": "ssh-rsa KEY test@pc"})
+    response = authorized_client.put(
+        f"/services/ssh/key/send", json={"public_key": "ssh-rsa KEY test@pc"}
+    )
     assert response.status_code == 201
     assert read_json(ssh_on / "turned_on.json")["ssh"]["rootKeys"] == [
         "ssh-rsa KEY test@pc",
     ]
 
+
 def test_add_root_key_one_more(authorized_client, root_and_admin_have_keys):
-    response = authorized_client.put(f"/services/ssh/key/send", json={"public_key": "ssh-rsa KEY test@pc"})
+    response = authorized_client.put(
+        f"/services/ssh/key/send", json={"public_key": "ssh-rsa KEY test@pc"}
+    )
     assert response.status_code == 201
-    assert read_json(root_and_admin_have_keys / "root_and_admin_have_keys.json")["ssh"]["rootKeys"] == [
+    assert read_json(root_and_admin_have_keys / "root_and_admin_have_keys.json")["ssh"][
+        "rootKeys"
+    ] == [
         "ssh-ed25519 KEY test@pc",
         "ssh-rsa KEY test@pc",
     ]
 
+
 def test_add_existing_root_key(authorized_client, root_and_admin_have_keys):
-    response = authorized_client.put(f"/services/ssh/key/send", json={"public_key": "ssh-ed25519 KEY test@pc"})
+    response = authorized_client.put(
+        f"/services/ssh/key/send", json={"public_key": "ssh-ed25519 KEY test@pc"}
+    )
     assert response.status_code == 409
-    assert read_json(root_and_admin_have_keys / "root_and_admin_have_keys.json")["ssh"]["rootKeys"] == [
+    assert read_json(root_and_admin_have_keys / "root_and_admin_have_keys.json")["ssh"][
+        "rootKeys"
+    ] == [
         "ssh-ed25519 KEY test@pc",
     ]
 
+
 def test_add_invalid_root_key(authorized_client, ssh_on):
-    response = authorized_client.put(f"/services/ssh/key/send", json={"public_key": "INVALID KEY test@pc"})
+    response = authorized_client.put(
+        f"/services/ssh/key/send", json={"public_key": "INVALID KEY test@pc"}
+    )
     assert response.status_code == 400
 
+
 def test_add_root_key_via_wrong_endpoint(authorized_client, ssh_on):
-    response = authorized_client.post(f"/services/ssh/keys/root", json={"public_key": "ssh-rsa KEY test@pc"})
+    response = authorized_client.post(
+        f"/services/ssh/keys/root", json={"public_key": "ssh-rsa KEY test@pc"}
+    )
     assert response.status_code == 400
+
 
 def test_get_root_key(authorized_client, root_and_admin_have_keys):
     response = authorized_client.get(f"/services/ssh/keys/root")
     assert response.status_code == 200
     assert response.json == ["ssh-ed25519 KEY test@pc"]
 
+
 def test_get_root_key_when_none(authorized_client, ssh_on):
     response = authorized_client.get(f"/services/ssh/keys/root")
     assert response.status_code == 200
     assert response.json == []
 
+
 def test_delete_root_key(authorized_client, root_and_admin_have_keys):
-    response = authorized_client.delete(f"/services/ssh/keys/root", json={"public_key": "ssh-ed25519 KEY test@pc"})
+    response = authorized_client.delete(
+        f"/services/ssh/keys/root", json={"public_key": "ssh-ed25519 KEY test@pc"}
+    )
     assert response.status_code == 200
-    assert read_json(root_and_admin_have_keys / "root_and_admin_have_keys.json")["ssh"]["rootKeys"] == []
+    assert (
+        read_json(root_and_admin_have_keys / "root_and_admin_have_keys.json")["ssh"][
+            "rootKeys"
+        ]
+        == []
+    )
+
 
 def test_delete_root_nonexistent_key(authorized_client, root_and_admin_have_keys):
-    response = authorized_client.delete(f"/services/ssh/keys/root", json={"public_key": "ssh-rsa KEY test@pc"})
+    response = authorized_client.delete(
+        f"/services/ssh/keys/root", json={"public_key": "ssh-rsa KEY test@pc"}
+    )
     assert response.status_code == 404
-    assert read_json(root_and_admin_have_keys / "root_and_admin_have_keys.json")["ssh"]["rootKeys"] == [
+    assert read_json(root_and_admin_have_keys / "root_and_admin_have_keys.json")["ssh"][
+        "rootKeys"
+    ] == [
         "ssh-ed25519 KEY test@pc",
     ]
+
 
 def test_get_admin_key(authorized_client, root_and_admin_have_keys):
     response = authorized_client.get(f"/services/ssh/keys/tester")
     assert response.status_code == 200
     assert response.json == ["ssh-rsa KEY test@pc"]
 
+
 def test_get_admin_key_when_none(authorized_client, ssh_on):
     response = authorized_client.get(f"/services/ssh/keys/tester")
     assert response.status_code == 200
     assert response.json == []
 
+
 def test_delete_admin_key(authorized_client, root_and_admin_have_keys):
-    response = authorized_client.delete(f"/services/ssh/keys/tester", json={"public_key": "ssh-rsa KEY test@pc"})
+    response = authorized_client.delete(
+        f"/services/ssh/keys/tester", json={"public_key": "ssh-rsa KEY test@pc"}
+    )
     assert response.status_code == 200
-    assert read_json(root_and_admin_have_keys / "root_and_admin_have_keys.json")["sshKeys"] == []
+    assert (
+        read_json(root_and_admin_have_keys / "root_and_admin_have_keys.json")["sshKeys"]
+        == []
+    )
+
 
 def test_add_admin_key(authorized_client, ssh_on):
-    response = authorized_client.post(f"/services/ssh/keys/tester", json={"public_key": "ssh-rsa KEY test@pc"})
+    response = authorized_client.post(
+        f"/services/ssh/keys/tester", json={"public_key": "ssh-rsa KEY test@pc"}
+    )
     assert response.status_code == 201
     assert read_json(ssh_on / "turned_on.json")["sshKeys"] == [
         "ssh-rsa KEY test@pc",
     ]
 
+
 def test_add_admin_key_one_more(authorized_client, root_and_admin_have_keys):
-    response = authorized_client.post(f"/services/ssh/keys/tester", json={"public_key": "ssh-rsa KEY_2 test@pc"})
+    response = authorized_client.post(
+        f"/services/ssh/keys/tester", json={"public_key": "ssh-rsa KEY_2 test@pc"}
+    )
     assert response.status_code == 201
-    assert read_json(root_and_admin_have_keys / "root_and_admin_have_keys.json")["sshKeys"] == [
-        "ssh-rsa KEY test@pc",
-        "ssh-rsa KEY_2 test@pc"
-    ]
+    assert read_json(root_and_admin_have_keys / "root_and_admin_have_keys.json")[
+        "sshKeys"
+    ] == ["ssh-rsa KEY test@pc", "ssh-rsa KEY_2 test@pc"]
+
 
 def test_add_existing_admin_key(authorized_client, root_and_admin_have_keys):
-    response = authorized_client.post(f"/services/ssh/keys/tester", json={"public_key": "ssh-rsa KEY test@pc"})
+    response = authorized_client.post(
+        f"/services/ssh/keys/tester", json={"public_key": "ssh-rsa KEY test@pc"}
+    )
     assert response.status_code == 409
-    assert read_json(root_and_admin_have_keys / "root_and_admin_have_keys.json")["sshKeys"] == [
+    assert read_json(root_and_admin_have_keys / "root_and_admin_have_keys.json")[
+        "sshKeys"
+    ] == [
         "ssh-rsa KEY test@pc",
     ]
