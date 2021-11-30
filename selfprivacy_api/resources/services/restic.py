@@ -32,7 +32,7 @@ class ListAllBackups(Resource):
         backup_listing_command = [
             "restic",
             "-r",
-            f"b2:{repository_name}:/sfbackup",
+            f"rclone:backblaze:{repository_name}:/sfbackup",
             "snapshots",
             "--json",
         ]
@@ -72,7 +72,7 @@ class AsyncCreateBackup(Resource):
         backup_command = [
             "restic",
             "-r",
-            f"b2:{repository_name}:/sfbackup",
+            f"rclone:backblaze:{repository_name}:/sfbackup",
             "--verbose",
             "--json",
             "backup",
@@ -128,6 +128,45 @@ class CheckBackupStatus(Resource):
         return backup_process_status
 
 
+class AsyncRestoreBackup(Resource):
+    """Trigger backup restoration process"""
+
+    def put(self):
+        """
+        Start backup restoration
+        ---
+        tags:
+            - Backups
+        security:
+            - bearerAuth: []
+        responses:
+            200:
+                description: Backup restoration process started
+            400:
+                description: Bad request
+            401:
+                description: Unauthorized
+        """
+        backup_restoration_command = ["restic", "-r", "rclone:backblaze:sfbackup", "var", "--json"]
+
+        with open("/tmp/backup.log", "w", encoding="utf-8") as backup_log_file_descriptor:
+            with subprocess.Popen(
+                backup_restoration_command,
+                shell=False,
+                stdout=subprocess.PIPE,
+                stderr=backup_log_file_descriptor,
+            ) as backup_restoration_process_descriptor:
+                backup_restoration_status = (
+                    "Backup restoration procedure started"
+                )
+            
+            return {
+                "status": 0,
+                "message": backup_restoration_status
+            }
+
+
 api.add_resource(ListAllBackups, "/restic/backup/list")
 api.add_resource(AsyncCreateBackup, "/restic/backup/create")
 api.add_resource(CheckBackupStatus, "/restic/backup/status")
+api.add_resource(AsyncRestoreBackup, "/restic/backup/restore")
