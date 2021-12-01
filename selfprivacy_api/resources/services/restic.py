@@ -3,9 +3,10 @@
 import json
 import subprocess
 from flask import request
-from flask_restful import Resource
+from flask_restful import Resource, reqparse
 
 from selfprivacy_api.resources.services import api
+from selfprivacy_api.utils import WriteUserData
 
 
 class ListAllBackups(Resource):
@@ -169,7 +170,59 @@ class AsyncRestoreBackup(Resource):
             return {"status": 0, "message": backup_restoration_status}
 
 
+class BackblazeConfig(Resource):
+    """Backblaze config"""
+
+    def put(self):
+        """
+        Set the new key for backblaze
+        ---
+        tags:
+            - Backups
+        security:
+            - bearerAuth: []
+        parameters:
+            - in: body
+              required: true
+              name: backblazeSettings
+              description: New Backblaze settings
+              schema:
+                type: object
+                required:
+                    - accountId
+                    - accountKey
+                    - bucket
+                properties:
+                    accountId:
+                        type: string
+                    accountKey:
+                        type: string
+                    bucket:
+                        type: string
+        responses:
+            200:
+                description: New Backblaze settings
+            400:
+                description: Bad request
+            401:
+                description: Unauthorized
+        """
+        parser = reqparse.RequestParser()
+        parser.add_argument("accountId", type=str, required=True)
+        parser.add_argument("accountKey", type=str, required=True)
+        parser.add_argument("bucket", type=str, required=True)
+        args = parser.parse_args()
+
+        with WriteUserData() as data:
+            data["backblaze"]["accountId"] = args["accountId"]
+            data["backblaze"]["accountKey"] = args["accountKey"]
+            data["backblaze"]["bucket"] = args["bucket"]
+
+        return "New Backblaze settings saved"
+
+
 api.add_resource(ListAllBackups, "/restic/backup/list")
 api.add_resource(AsyncCreateBackup, "/restic/backup/create")
 api.add_resource(CheckBackupStatus, "/restic/backup/status")
 api.add_resource(AsyncRestoreBackup, "/restic/backup/restore")
+api.add_resource(BackblazeConfig, "/restic/backblaze/config")
