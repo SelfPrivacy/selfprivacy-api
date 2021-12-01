@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """System management module"""
+import os
 import subprocess
 import pytz
 from flask import Blueprint
@@ -281,6 +282,51 @@ class PythonVersion(Resource):
         return subprocess.check_output(["python", "-V"]).decode("utf-8").strip()
 
 
+class PullRepositoryChanges(Resource):
+    def get(self):
+        """
+        Pull Repository Changes
+        ---
+        tags:
+            - System
+        security:
+            - bearerAuth: []
+        responses:
+            200:
+                description: Got update
+            201:
+                description: Nothing to update
+            401:
+                description: Unauthorized
+            500:
+                description: Something went wrong
+        """
+
+        git_pull_command = ["git", "pull"]
+
+        current_working_directory = os.getcwd()
+        os.chdir("/etc/nixos")
+
+        git_pull_process_descriptor = subprocess.Popen(
+            git_pull_command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            shell=False,
+        )
+
+        git_pull_process_descriptor.communicate()[0]
+
+        os.chdir(current_working_directory)
+
+        if git_pull_process_descriptor.returncode == 0:
+            return {"status": 0, "message": "Update completed successfully"}
+        elif git_pull_process_descriptor.returncode > 0:
+            return {
+                "status": git_pull_process_descriptor.returncode,
+                "message": "Something went wrong",
+            }, 500
+
+
 api.add_resource(Timezone, "/configuration/timezone")
 api.add_resource(AutoUpgrade, "/configuration/autoUpgrade")
 api.add_resource(RebuildSystem, "/configuration/apply")
@@ -289,3 +335,4 @@ api.add_resource(UpgradeSystem, "/configuration/upgrade")
 api.add_resource(RebootSystem, "/reboot")
 api.add_resource(SystemVersion, "/version")
 api.add_resource(PythonVersion, "/pythonVersion")
+api.add_resource(PullRepositoryChanges, "/update")
