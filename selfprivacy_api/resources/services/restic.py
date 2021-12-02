@@ -38,19 +38,31 @@ class ListAllBackups(Resource):
             "--json",
         ]
 
+        init_command = [
+            "restic",
+            "-r",
+            f"rclone:backblaze:{bucket}/sfbackup",
+            "init",
+        ]
+
         with subprocess.Popen(
             backup_listing_command,
             shell=False,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         ) as backup_listing_process_descriptor:
-            snapshots_list = backup_listing_process_descriptor.communicate()[0]
+            snapshots_list = backup_listing_process_descriptor.communicate()[0].decode(
+                "utf-8"
+            )
 
         try:
-            json.loads(snapshots_list.decode("utf-8"))
+            json.loads(snapshots_list)
         except ValueError:
-            return {"error": snapshots_list.decode("utf-8")}, 500
-        return json.loads(snapshots_list.decode("utf-8"))
+            if "Is there a repository at the following location?" in snapshots_list:
+                subprocess.call(init_command)
+                return {"error": "Initializating"}, 500
+            return {"error": snapshots_list}, 500
+        return json.loads(snapshots_list)
 
 
 class AsyncCreateBackup(Resource):
@@ -74,13 +86,6 @@ class AsyncCreateBackup(Resource):
         """
         bucket = current_app.config["B2_BUCKET"]
 
-        init_command = [
-            "restic",
-            "-r",
-            f"rclone:backblaze:{bucket}/sfbackup",
-            "init",
-        ]
-
         backup_command = [
             "restic",
             "-r",
@@ -90,8 +95,6 @@ class AsyncCreateBackup(Resource):
             "backup",
             "/var",
         ]
-
-        subprocess.call(init_command)
 
         with open("/tmp/backup.log", "w", encoding="utf-8") as log_file:
             subprocess.Popen(
