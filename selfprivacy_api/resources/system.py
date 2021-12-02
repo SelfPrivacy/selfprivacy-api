@@ -314,16 +314,21 @@ class PullRepositoryChanges(Resource):
             shell=False,
         )
 
-        git_pull_process_descriptor.communicate()[0]
+        data = git_pull_process_descriptor.communicate()[0].decode("utf-8")
 
         os.chdir(current_working_directory)
 
         if git_pull_process_descriptor.returncode == 0:
-            return {"status": 0, "message": "Update completed successfully"}
+            return {
+                "status": 0,
+                "message": "Update completed successfully",
+                "data": data,
+            }
         elif git_pull_process_descriptor.returncode > 0:
             return {
                 "status": git_pull_process_descriptor.returncode,
                 "message": "Something went wrong",
+                "data": data,
             }, 500
 
 
@@ -335,4 +340,4 @@ api.add_resource(UpgradeSystem, "/configuration/upgrade")
 api.add_resource(RebootSystem, "/reboot")
 api.add_resource(SystemVersion, "/version")
 api.add_resource(PythonVersion, "/pythonVersion")
-api.add_resource(PullRepositoryChanges, "/update")
+api.add_resource(PullRepositoryChanges, "/configuration/pull")

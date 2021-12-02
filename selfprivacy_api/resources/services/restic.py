@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Backups management module"""
 import json
+import os
 import subprocess
-from flask import request
+from flask import current_app
 from flask_restful import Resource, reqparse
 
 from selfprivacy_api.resources.services import api
@@ -28,12 +29,11 @@ class ListAllBackups(Resource):
             401:
                 description: Unauthorized
         """
-        repository_name = request.headers.get("X-Repository-Name")
-
+        bucket = current_app.config["B2_BUCKET"]
         backup_listing_command = [
             "restic",
             "-r",
-            f"rclone:backblaze:{repository_name}:/sfbackup",
+            f"rclone:backblaze:{bucket}/sfbackup",
             "snapshots",
             "--json",
         ]
@@ -46,7 +46,11 @@ class ListAllBackups(Resource):
         ) as backup_listing_process_descriptor:
             snapshots_list = backup_listing_process_descriptor.communicate()[0]
 
-        return snapshots_list.decode("utf-8")
+        try:
+            json.loads(snapshots_list.decode("utf-8"))
+        except ValueError:
+            return {"error": snapshots_list.decode("utf-8")}, 500
+        return json.loads(snapshots_list.decode("utf-8"))
 
 
 class AsyncCreateBackup(Resource):
@@ -68,17 +72,26 @@ class AsyncCreateBackup(Resource):
             401:
                 description: Unauthorized
         """
-        repository_name = request.headers.get("X-Repository-Name")
+        bucket = current_app.config["B2_BUCKET"]
+
+        init_command = [
+            "restic",
+            "-r",
+            f"rclone:backblaze:{bucket}/sfbackup",
+            "init",
+        ]
 
         backup_command = [
             "restic",
             "-r",
-            f"rclone:backblaze:{repository_name}:/sfbackup",
+            f"rclone:backblaze:{bucket}/sfbackup",
             "--verbose",
             "--json",
             "backup",
             "/var",
         ]
+
+        subprocess.call(init_command)
 
         with open("/tmp/backup.log", "w", encoding="utf-8") as log_file:
             subprocess.Popen(
@@ -112,6 +125,10 @@ class CheckBackupStatus(Resource):
         """
         backup_status_check_command = ["tail", "-1", "/tmp/backup.log"]
 
+        # If the log file does not exists
+        if os.path.exists("/tmp/backup.log") is False:
+            return {"message_type": "not_started", "message": "Backup not started"}
+
         with subprocess.Popen(
             backup_status_check_command,
             shell=False,
@@ -125,8 +142,8 @@ class CheckBackupStatus(Resource):
         try:
             json.loads(backup_process_status)
         except ValueError:
-            return {"message": backup_process_status}
-        return backup_process_status
+            return {"message_type": "error", "message": backup_process_status}
+        return json.loads(backup_process_status)
 
 
 class AsyncRestoreBackup(Resource):
@@ -140,6 +157,18 @@ class AsyncRestoreBackup(Resource):
             - Backups
         security:
             - bearerAuth: []
+        parameters:
+            - in: body
+              required: true
+              name: backup
+              description: Backup to restore
+              schema:
+                type: object
+                required:
+                    - backupId
+                properties:
+                    backupId:
+                        type: string
         responses:
             200:
                 description: Backup restoration process started
@@ -148,26 +177,32 @@ class AsyncRestoreBackup(Resource):
             401:
                 description: Unauthorized
         """
+        parser = reqparse.RequestParser()
+        parser.add_argument("backupId", type=str, required=True)
+        args = parser.parse_args()
+        bucket = current_app.config["B2_BUCKET"]
+        backup_id = args["backupId"]
+
         backup_restoration_command = [
             "restic",
             "-r",
-            "rclone:backblaze:sfbackup",
-            "var",
+            f"rclone:backblaze:{bucket}/sfbackup",
+            "restore",
+            backup_id,
+            "--target",
+            "/var",
             "--json",
         ]
 
-        with open(
-            "/tmp/backup.log", "w", encoding="utf-8"
-        ) as backup_log_file_descriptor:
-            with subprocess.Popen(
+        with open("/tmp/backup.log", "w", encoding="utf-8") as log_file:
+            subprocess.Popen(
                 backup_restoration_command,
                 shell=False,
-                stdout=subprocess.PIPE,
-                stderr=backup_log_file_descriptor,
-            ) as backup_restoration_process_descriptor:
-                backup_restoration_status = "Backup restoration procedure started"
+                stdout=log_file,
+                stderr=subprocess.STDOUT,
+            )
 
-            return {"status": 0, "message": backup_restoration_status}
+        return {"status": 0, "message": "Backup restoration procedure started"}
 
 
 class BackblazeConfig(Resource):

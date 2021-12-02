@@ -26,6 +26,7 @@ def create_app(test_config=None):
         if app.config["AUTH_TOKEN"] is None:
             raise ValueError("AUTH_TOKEN is not set")
         app.config["ENABLE_SWAGGER"] = os.environ.get("ENABLE_SWAGGER", "0")
+        app.config["B2_BUCKET"] = os.environ.get("B2_BUCKET")
     else:
         app.config.update(test_config)
 
