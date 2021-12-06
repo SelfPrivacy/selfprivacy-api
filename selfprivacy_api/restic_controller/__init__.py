@@ -3,6 +3,7 @@ from datetime import datetime
 import json
 import subprocess
 import os
+from threading import Lock
 from enum import Enum
 import portalocker
 from selfprivacy_api.utils import ReadUserData
@@ -35,12 +36,14 @@ class ResticController:
     """
 
     _instance = None
+    _lock = Lock()
     _initialized = False
 
     def __new__(cls):
         print("new is called!")
         if not cls._instance:
-            cls._instance = super(ResticController, cls).__new__(cls)
+            with cls._lock:
+                cls._instance = super(ResticController, cls).__new__(cls)
         return cls._instance
 
     def __init__(self):
@@ -54,11 +57,11 @@ class ResticController:
         self._repository_name = None
         self.snapshot_list = []
         self.error_message = None
+        self._initialized = True
         print("init is called!")
         self.load_configuration()
         self.write_rclone_config()
         self.load_snapshots()
-        self._initialized = True
 
     def load_configuration(self):
         """Load current configuration from user data to singleton."""
@@ -107,21 +110,22 @@ class ResticController:
             or self.state == ResticStates.RESTORING
         ):
             return
-
+        print("preparing to read snapshots")
         with subprocess.Popen(
             backup_listing_command,
             shell=False,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         ) as backup_listing_process_descriptor:
-            snapshots_list = backup_listing_process_descriptor.communicate()[0].decode(
-                "utf-8"
-            )
+            snapshots_list = backup_listing_process_descriptor.communicate()[
+                0
+            ].decode("utf-8")
         try:
             starting_index = snapshots_list.find("[")
             json.loads(snapshots_list[starting_index:])
             self.snapshot_list = json.loads(snapshots_list[starting_index:])
             self.state = ResticStates.INITIALIZED
+            print(snapshots_list)
         except ValueError:
             if "Is there a repository at the following location?" in snapshots_list:
                 self.state = ResticStates.NOT_INITIALIZED
