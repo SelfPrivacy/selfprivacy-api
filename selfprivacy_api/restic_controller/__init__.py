@@ -3,7 +3,6 @@ from datetime import datetime
 import json
 import subprocess
 import os
-from threading import Lock
 from enum import Enum
 import portalocker
 from selfprivacy_api.utils import ReadUserData
@@ -36,7 +35,6 @@ class ResticController:
     """
 
     _instance = None
-    _lock = Lock()
     _initialized = False
 
     def __new__(cls):
@@ -110,29 +108,28 @@ class ResticController:
         ):
             return
 
-        with self._lock:
-            with subprocess.Popen(
-                backup_listing_command,
-                shell=False,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-            ) as backup_listing_process_descriptor:
-                snapshots_list = backup_listing_process_descriptor.communicate()[
-                    0
-                ].decode("utf-8")
-            try:
-                starting_index = snapshots_list.find("[")
-                json.loads(snapshots_list[starting_index:])
-                self.snapshot_list = json.loads(snapshots_list[starting_index:])
-                self.state = ResticStates.INITIALIZED
-            except ValueError:
-                if "Is there a repository at the following location?" in snapshots_list:
-                    self.state = ResticStates.NOT_INITIALIZED
-                    return
-                else:
-                    self.state = ResticStates.ERROR
-                    self.error_message = snapshots_list
-                    return
+        with subprocess.Popen(
+            backup_listing_command,
+            shell=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        ) as backup_listing_process_descriptor:
+            snapshots_list = backup_listing_process_descriptor.communicate()[0].decode(
+                "utf-8"
+            )
+        try:
+            starting_index = snapshots_list.find("[")
+            json.loads(snapshots_list[starting_index:])
+            self.snapshot_list = json.loads(snapshots_list[starting_index:])
+            self.state = ResticStates.INITIALIZED
+        except ValueError:
+            if "Is there a repository at the following location?" in snapshots_list:
+                self.state = ResticStates.NOT_INITIALIZED
+                return
+            else:
+                self.state = ResticStates.ERROR
+                self.error_message = snapshots_list
+                return
 
     def initialize_repository(self):
         """
@@ -144,23 +141,22 @@ class ResticController:
             f"rclone:backblaze:{self._repository_name}/sfbackup",
             "init",
         ]
-        with self._lock:
-            with subprocess.Popen(
-                initialize_repository_command,
-                shell=False,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-            ) as initialize_repository_process_descriptor:
-                msg = initialize_repository_process_descriptor.communicate()[0].decode(
-                    "utf-8"
-                )
-                if initialize_repository_process_descriptor.returncode == 0:
-                    self.state = ResticStates.INITIALIZED
-                else:
-                    self.state = ResticStates.ERROR
-                    self.error_message = msg
+        with subprocess.Popen(
+            initialize_repository_command,
+            shell=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        ) as initialize_repository_process_descriptor:
+            msg = initialize_repository_process_descriptor.communicate()[0].decode(
+                "utf-8"
+            )
+            if initialize_repository_process_descriptor.returncode == 0:
+                self.state = ResticStates.INITIALIZED
+            else:
+                self.state = ResticStates.ERROR
+                self.error_message = msg
 
-            self.state = ResticStates.INITIALIZED
+        self.state = ResticStates.INITIALIZED
 
     def start_backup(self):
         """
@@ -175,17 +171,16 @@ class ResticController:
             "backup",
             "/var",
         ]
-        with self._lock:
-            with open("/tmp/backup.log", "w", encoding="utf-8") as log_file:
-                subprocess.Popen(
-                    backup_command,
-                    shell=False,
-                    stdout=log_file,
-                    stderr=subprocess.STDOUT,
-                )
+        with open("/tmp/backup.log", "w", encoding="utf-8") as log_file:
+            subprocess.Popen(
+                backup_command,
+                shell=False,
+                stdout=log_file,
+                stderr=subprocess.STDOUT,
+            )
 
-            self.state = ResticStates.BACKING_UP
-            self.progress = 0
+        self.state = ResticStates.BACKING_UP
+        self.progress = 0
 
     def check_progress(self):
         """
@@ -249,7 +244,6 @@ class ResticController:
 
         self.state = ResticStates.RESTORING
 
-        with self._lock:
-            subprocess.run(backup_restoration_command, shell=False)
+        subprocess.run(backup_restoration_command, shell=False)
 
         self.state = ResticStates.INITIALIZED
