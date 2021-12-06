@@ -117,9 +117,9 @@ class ResticController:
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         ) as backup_listing_process_descriptor:
-            snapshots_list = backup_listing_process_descriptor.communicate()[
-                0
-            ].decode("utf-8")
+            snapshots_list = backup_listing_process_descriptor.communicate()[0].decode(
+                "utf-8"
+            )
         try:
             starting_index = snapshots_list.find("[")
             json.loads(snapshots_list[starting_index:])
