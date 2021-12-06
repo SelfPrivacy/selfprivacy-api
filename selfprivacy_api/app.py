@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """SelfPrivacy server management API"""
 import os
+from gevent import monkey
+
+
 from flask import Flask, request, jsonify
 from flask_restful import Api
 from flask_swagger import swagger
@@ -10,6 +13,8 @@ from selfprivacy_api.resources.users import User, Users
 from selfprivacy_api.resources.common import ApiVersion, DecryptDisk
 from selfprivacy_api.resources.system import api_system
 from selfprivacy_api.resources.services import services as api_services
+
+from selfprivacy_api.restic_controller.tasks import huey, init_restic
 
 swagger_blueprint = get_swaggerui_blueprint(
     "/api/docs", "/api/swagger.json", config={"app_name": "SelfPrivacy API"}
@@ -77,5 +82,8 @@ def create_app(test_config=None):
 
 
 if __name__ == "__main__":
+    monkey.patch_all()
     created_app = create_app()
+    huey.start()
+    init_restic()
     created_app.run(port=5050, debug=False)

@@ -2,7 +2,6 @@
 """Various utility functions"""
 import json
 import portalocker
-from flask import current_app
 
 
 USERDATA_FILE = "/etc/nixos/userdata/userdata.json"

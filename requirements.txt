@@ -7,6 +7,8 @@ portalocker
 flask-swagger
 flask-swagger-ui
 pytz
+huey
+gevent
 
 pytest
 coverage
