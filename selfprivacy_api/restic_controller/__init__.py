@@ -99,6 +99,8 @@ class ResticController:
         """
         backup_listing_command = [
             "restic",
+            "-o",
+            "rclone.args=serve restic --stdio",
             "-r",
             f"rclone:backblaze:{self._repository_name}/sfbackup",
             "snapshots",
@@ -141,6 +143,8 @@ class ResticController:
         """
         initialize_repository_command = [
             "restic",
+            "-o",
+            "rclone.args=serve restic --stdio",
             "-r",
             f"rclone:backblaze:{self._repository_name}/sfbackup",
             "init",
@@ -168,6 +172,8 @@ class ResticController:
         """
         backup_command = [
             "restic",
+            "-o",
+            "rclone.args=serve restic --stdio",
             "-r",
             f"rclone:backblaze:{self._repository_name}/sfbackup",
             "--verbose",
@@ -238,6 +244,8 @@ class ResticController:
         """
         backup_restoration_command = [
             "restic",
+            "-o",
+            "rclone.args=serve restic --stdio",
             "-r",
             f"rclone:backblaze:{self._repository_name}/sfbackup",
             "restore",
