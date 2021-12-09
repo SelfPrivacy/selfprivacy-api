@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """SelfPrivacy server management API"""
 import os
+from gevent import monkey
+
+
 from flask import Flask, request, jsonify
 from flask_restful import Api
 from flask_swagger import swagger
@@ -11,18 +14,26 @@ from selfprivacy_api.resources.common import ApiVersion, DecryptDisk
 from selfprivacy_api.resources.system import api_system
 from selfprivacy_api.resources.services import services as api_services
 
+from selfprivacy_api.restic_controller.tasks import huey, init_restic
+
 swagger_blueprint = get_swaggerui_blueprint(
     "/api/docs", "/api/swagger.json", config={"app_name": "SelfPrivacy API"}
 )
 
 
-def create_app():
+def create_app(test_config=None):
     """Initiate Flask app and bind routes"""
     app = Flask(__name__)
     api = Api(app)
 
-    app.config["AUTH_TOKEN"] = os.environ.get("AUTH_TOKEN")
-    app.config["ENABLE_SWAGGER"] = os.environ.get("ENABLE_SWAGGER", "0")
+    if test_config is None:
+        app.config["AUTH_TOKEN"] = os.environ.get("AUTH_TOKEN")
+        if app.config["AUTH_TOKEN"] is None:
+            raise ValueError("AUTH_TOKEN is not set")
+        app.config["ENABLE_SWAGGER"] = os.environ.get("ENABLE_SWAGGER", "0")
+        app.config["B2_BUCKET"] = os.environ.get("B2_BUCKET")
+    else:
+        app.config.update(test_config)
 
     # Check bearer token
     @app.before_request
@@ -49,7 +60,7 @@ def create_app():
     def spec():
         if app.config["ENABLE_SWAGGER"] == "1":
             swag = swagger(app)
-            swag["info"]["version"] = "1.0.0"
+            swag["info"]["version"] = "1.1.0"
             swag["info"]["title"] = "SelfPrivacy API"
             swag["info"]["description"] = "SelfPrivacy API"
             swag["securityDefinitions"] = {
@@ -71,5 +82,8 @@ def create_app():
 
 
 if __name__ == "__main__":
+    monkey.patch_all()
     created_app = create_app()
+    huey.start()
+    init_restic()
     created_app.run(port=5050, debug=False)

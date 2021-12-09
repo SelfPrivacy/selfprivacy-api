@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Backups management module"""
-import json
-import subprocess
-from flask import request
-from flask_restful import Resource
+from flask_restful import Resource, reqparse
 
 from selfprivacy_api.resources.services import api
+from selfprivacy_api.utils import WriteUserData
+from selfprivacy_api.restic_controller import tasks as restic_tasks
+from selfprivacy_api.restic_controller import ResticController, ResticStates
 
 
 class ListAllBackups(Resource):
@@ -27,25 +27,9 @@ class ListAllBackups(Resource):
             401:
                 description: Unauthorized
         """
-        repository_name = request.headers.get("X-Repository-Name")
 
-        backup_listing_command = [
-            "restic",
-            "-r",
-            f"rclone:backblaze:{repository_name}:/sfbackup",
-            "snapshots",
-            "--json",
-        ]
-
-        with subprocess.Popen(
-            backup_listing_command,
-            shell=False,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        ) as backup_listing_process_descriptor:
-            snapshots_list = backup_listing_process_descriptor.communicate()[0]
-
-        return snapshots_list.decode("utf-8")
+        restic = ResticController()
+        return restic.snapshot_list
 
 
 class AsyncCreateBackup(Resource):
@@ -66,24 +50,17 @@ class AsyncCreateBackup(Resource):
                 description: Bad request
             401:
                 description: Unauthorized
+            409:
+                description: Backup already in progress
         """
-        repository_name = request.headers.get("X-Repository-Name")
-
-        backup_command = [
-            "restic",
-            "-r",
-            f"rclone:backblaze:{repository_name}:/sfbackup",
-            "--verbose",
-            "--json",
-            "backup",
-            "/var",
-        ]
-
-        with open("/tmp/backup.log", "w", encoding="utf-8") as log_file:
-            subprocess.Popen(
-                backup_command, shell=False, stdout=log_file, stderr=subprocess.STDOUT
-            )
-
+        restic = ResticController()
+        if restic.state is ResticStates.NO_KEY:
+            return {"error": "No key provided"}, 400
+        if restic.state is ResticStates.INITIALIZING:
+            return {"error": "Backup is initializing"}, 400
+        if restic.state is ResticStates.BACKING_UP:
+            return {"error": "Backup is already running"}, 409
+        restic_tasks.start_backup()
         return {
             "status": 0,
             "message": "Backup creation has started",
@@ -109,23 +86,39 @@ class CheckBackupStatus(Resource):
             401:
                 description: Unauthorized
         """
-        backup_status_check_command = ["tail", "-1", "/tmp/backup.log"]
+        restic = ResticController()
 
-        with subprocess.Popen(
-            backup_status_check_command,
-            shell=False,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        ) as backup_status_check_process_descriptor:
-            backup_process_status = (
-                backup_status_check_process_descriptor.communicate()[0].decode("utf-8")
-            )
+        return {
+            "status": restic.state.name,
+            "progress": restic.progress,
+            "error_message": restic.error_message,
+        }
 
-        try:
-            json.loads(backup_process_status)
-        except ValueError:
-            return {"message": backup_process_status}
-        return backup_process_status
+
+class ForceReloadSnapshots(Resource):
+    """Force reload snapshots"""
+
+    def get(self):
+        """
+        Force reload snapshots
+        ---
+        tags:
+            - Backups
+        security:
+            - bearerAuth: []
+        responses:
+            200:
+                description: Snapshots reloaded
+            400:
+                description: Bad request
+            401:
+                description: Unauthorized
+        """
+        restic_tasks.load_snapshots()
+        return {
+            "status": 0,
+            "message": "Snapshots reload started",
+        }
 
 
 class AsyncRestoreBackup(Resource):
@@ -139,6 +132,18 @@ class AsyncRestoreBackup(Resource):
             - Backups
         security:
             - bearerAuth: []
+        parameters:
+            - in: body
+              required: true
+              name: backup
+              description: Backup to restore
+              schema:
+                type: object
+                required:
+                    - backupId
+                properties:
+                    backupId:
+                        type: string
         responses:
             200:
                 description: Backup restoration process started
@@ -147,26 +152,88 @@ class AsyncRestoreBackup(Resource):
             401:
                 description: Unauthorized
         """
-        backup_restoration_command = ["restic", "-r", "rclone:backblaze:sfbackup", "var", "--json"]
+        parser = reqparse.RequestParser()
+        parser.add_argument("backupId", type=str, required=True)
+        args = parser.parse_args()
 
-        with open("/tmp/backup.log", "w", encoding="utf-8") as backup_log_file_descriptor:
-            with subprocess.Popen(
-                backup_restoration_command,
-                shell=False,
-                stdout=subprocess.PIPE,
-                stderr=backup_log_file_descriptor,
-            ) as backup_restoration_process_descriptor:
-                backup_restoration_status = (
-                    "Backup restoration procedure started"
-                )
-            
-            return {
-                "status": 0,
-                "message": backup_restoration_status
-            }
+        restic = ResticController()
+        if restic.state is ResticStates.NO_KEY:
+            return {"error": "No key provided"}, 400
+        if restic.state is ResticStates.NOT_INITIALIZED:
+            return {"error": "Repository is not initialized"}, 400
+        if restic.state is ResticStates.BACKING_UP:
+            return {"error": "Backup is already running"}, 409
+        if restic.state is ResticStates.INITIALIZING:
+            return {"error": "Repository is initializing"}, 400
+        if restic.state is ResticStates.RESTORING:
+            return {"error": "Restore is already running"}, 409
+        for backup in restic.snapshot_list:
+            if backup["short_id"] == args["backupId"]:
+                restic_tasks.restore_from_backup(args["backupId"])
+                return {
+                    "status": 0,
+                    "message": "Backup restoration procedure started",
+                }
+
+        return {"error": "Backup not found"}, 404
+
+
+class BackblazeConfig(Resource):
+    """Backblaze config"""
+
+    def put(self):
+        """
+        Set the new key for backblaze
+        ---
+        tags:
+            - Backups
+        security:
+            - bearerAuth: []
+        parameters:
+            - in: body
+              required: true
+              name: backblazeSettings
+              description: New Backblaze settings
+              schema:
+                type: object
+                required:
+                    - accountId
+                    - accountKey
+                    - bucket
+                properties:
+                    accountId:
+                        type: string
+                    accountKey:
+                        type: string
+                    bucket:
+                        type: string
+        responses:
+            200:
+                description: New Backblaze settings
+            400:
+                description: Bad request
+            401:
+                description: Unauthorized
+        """
+        parser = reqparse.RequestParser()
+        parser.add_argument("accountId", type=str, required=True)
+        parser.add_argument("accountKey", type=str, required=True)
+        parser.add_argument("bucket", type=str, required=True)
+        args = parser.parse_args()
+
+        with WriteUserData() as data:
+            data["backblaze"]["accountId"] = args["accountId"]
+            data["backblaze"]["accountKey"] = args["accountKey"]
+            data["backblaze"]["bucket"] = args["bucket"]
+
+        restic_tasks.update_keys_from_userdata()
+
+        return "New Backblaze settings saved"
 
 
 api.add_resource(ListAllBackups, "/restic/backup/list")
 api.add_resource(AsyncCreateBackup, "/restic/backup/create")
 api.add_resource(CheckBackupStatus, "/restic/backup/status")
 api.add_resource(AsyncRestoreBackup, "/restic/backup/restore")
+api.add_resource(BackblazeConfig, "/restic/backblaze/config")
+api.add_resource(ForceReloadSnapshots, "/restic/backup/reload")

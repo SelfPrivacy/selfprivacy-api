@@ -1,0 +1,51 @@
+{
+    "backblaze": {
+        "accountId": "ID",
+        "accountKey": "KEY",
+        "bucket": "selfprivacy"
+    },
+    "api": {
+        "token": "TEST_TOKEN",
+        "enableSwagger": false
+    },
+    "bitwarden": {
+        "enable": false
+    },
+    "cloudflare": {
+        "apiKey": "TOKEN"
+    },
+    "databasePassword": "PASSWORD",
+    "domain": "test.tld",
+    "hashedMasterPassword": "HASHED_PASSWORD",
+    "hostname": "test-instance",
+    "nextcloud": {
+        "adminPassword": "ADMIN",
+        "databasePassword": "ADMIN",
+        "enable": true
+    },
+    "resticPassword": "PASS",
+    "ssh": {
+        "enable": true,
+        "passwordAuthentication": true,
+        "rootKeys": [
+            "ssh-ed25519 KEY test@pc"
+        ]
+    },
+    "username": "tester",
+    "gitea": {
+    },
+    "ocserv": {
+        "enable": true
+    },
+    "pleroma": {
+        "enable": true
+    },
+    "autoUpgrade": {
+        "enable": true,
+        "allowReboot": true
+    },
+    "timezone": "Europe/Moscow",
+    "sshKeys": [
+        "ssh-rsa KEY test@pc"
+    ]
+}

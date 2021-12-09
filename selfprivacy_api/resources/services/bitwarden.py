@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """Bitwarden management module"""
-import json
-import portalocker
 from flask_restful import Resource
 
 from selfprivacy_api.resources.services import api
+from selfprivacy_api.utils import WriteUserData
 
 
 class EnableBitwarden(Resource):
@@ -24,20 +23,10 @@ class EnableBitwarden(Resource):
             401:
                 description: Unauthorized
         """
-        with open(
-            "/etc/nixos/userdata/userdata.json", "r+", encoding="utf-8"
-        ) as userdata_file:
-            portalocker.lock(userdata_file, portalocker.LOCK_EX)
-            try:
-                data = json.load(userdata_file)
-                if "bitwarden" not in data:
-                    data["bitwarden"] = {}
-                data["bitwarden"]["enable"] = True
-                userdata_file.seek(0)
-                json.dump(data, userdata_file, indent=4)
-                userdata_file.truncate()
-            finally:
-                portalocker.unlock(userdata_file)
+        with WriteUserData() as data:
+            if "bitwarden" not in data:
+                data["bitwarden"] = {}
+            data["bitwarden"]["enable"] = True
 
         return {
             "status": 0,
@@ -62,20 +51,10 @@ class DisableBitwarden(Resource):
             401:
                 description: Unauthorized
         """
-        with open(
-            "/etc/nixos/userdata/userdata.json", "r+", encoding="utf-8"
-        ) as userdata_file:
-            portalocker.lock(userdata_file, portalocker.LOCK_EX)
-            try:
-                data = json.load(userdata_file)
-                if "bitwarden" not in data:
-                    data["bitwarden"] = {}
-                data["bitwarden"]["enable"] = False
-                userdata_file.seek(0)
-                json.dump(data, userdata_file, indent=4)
-                userdata_file.truncate()
-            finally:
-                portalocker.unlock(userdata_file)
+        with WriteUserData() as data:
+            if "bitwarden" not in data:
+                data["bitwarden"] = {}
+            data["bitwarden"]["enable"] = False
 
         return {
             "status": 0,
