@@ -24,6 +24,7 @@
         "enable": true
     },
     "resticPassword": "PASS",
+    "ssh": {},
     "username": "tester",
     "gitea": {
         "enable": false
@@ -38,5 +39,8 @@
         "enable": true,
         "allowReboot": true
     },
-    "timezone": "Europe/Moscow"
+    "timezone": "Europe/Moscow",
+    "sshKeys": [
+        "ssh-rsa KEY test@pc"
+    ]
 }

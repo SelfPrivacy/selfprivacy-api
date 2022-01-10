@@ -5,11 +5,12 @@ import portalocker
 
 
 USERDATA_FILE = "/etc/nixos/userdata/userdata.json"
+DOMAIN_FILE = "/var/domain"
 
 
 def get_domain():
     """Get domain from /var/domain without trailing new line"""
-    with open("/var/domain", "r", encoding="utf-8") as domain_file:
+    with open(DOMAIN_FILE, "r", encoding="utf-8") as domain_file:
         domain = domain_file.readline().rstrip()
     return domain
 
@@ -56,3 +57,46 @@ def validate_ssh_public_key(key):
         if not key.startswith("ssh-rsa"):
             return False
     return True
+
+
+def is_username_forbidden(username):
+    forbidden_prefixes = ["systemd", "nixbld"]
+
+    forbidden_usernames = [
+        "root",
+        "messagebus",
+        "postfix",
+        "polkituser",
+        "dovecot2",
+        "dovenull",
+        "nginx",
+        "postgres",
+        "prosody",
+        "opendkim",
+        "rspamd",
+        "sshd",
+        "selfprivacy-api",
+        "restic",
+        "redis",
+        "pleroma",
+        "ocserv",
+        "nextcloud",
+        "memcached",
+        "knot-resolver",
+        "gitea",
+        "bitwarden_rs",
+        "vaultwarden",
+        "acme",
+        "virtualMail",
+        "nobody",
+    ]
+
+    for prefix in forbidden_prefixes:
+        if username.startswith(prefix):
+            return True
+
+    for forbidden_username in forbidden_usernames:
+        if username == forbidden_username:
+            return True
+
+    return False

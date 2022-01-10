@@ -10,7 +10,7 @@ from flask_swagger import swagger
 from flask_swagger_ui import get_swaggerui_blueprint
 
 from selfprivacy_api.resources.users import User, Users
-from selfprivacy_api.resources.common import ApiVersion, DecryptDisk
+from selfprivacy_api.resources.common import ApiVersion
 from selfprivacy_api.resources.system import api_system
 from selfprivacy_api.resources.services import services as api_services
 
@@ -51,7 +51,6 @@ def create_app(test_config=None):
     api.add_resource(ApiVersion, "/api/version")
     api.add_resource(Users, "/users")
     api.add_resource(User, "/users/<string:username>")
-    api.add_resource(DecryptDisk, "/decryptDisk")
 
     app.register_blueprint(api_system)
     app.register_blueprint(api_services)

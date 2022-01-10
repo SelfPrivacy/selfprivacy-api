@@ -40,7 +40,6 @@ class ResticController:
     _initialized = False
 
     def __new__(cls):
-        print("new is called!")
         if not cls._instance:
             with cls._lock:
                 cls._instance = super(ResticController, cls).__new__(cls)
@@ -58,7 +57,6 @@ class ResticController:
         self.snapshot_list = []
         self.error_message = None
         self._initialized = True
-        print("init is called!")
         self.load_configuration()
         self.write_rclone_config()
         self.load_snapshots()
@@ -112,7 +110,6 @@ class ResticController:
             or self.state == ResticStates.RESTORING
         ):
             return
-        print("preparing to read snapshots")
         with subprocess.Popen(
             backup_listing_command,
             shell=False,
@@ -181,7 +178,7 @@ class ResticController:
             "backup",
             "/var",
         ]
-        with open("/tmp/backup.log", "w", encoding="utf-8") as log_file:
+        with open("/var/backup.log", "w", encoding="utf-8") as log_file:
             subprocess.Popen(
                 backup_command,
                 shell=False,
@@ -196,7 +193,7 @@ class ResticController:
         """
         Check progress of ongoing backup operation
         """
-        backup_status_check_command = ["tail", "-1", "/tmp/backup.log"]
+        backup_status_check_command = ["tail", "-1", "/var/backup.log"]
 
         if (
             self.state == ResticStates.NO_KEY
@@ -205,7 +202,7 @@ class ResticController:
             return
 
         # If the log file does not exists
-        if os.path.exists("/tmp/backup.log") is False:
+        if os.path.exists("/var/backup.log") is False:
             self.state = ResticStates.INITIALIZED
 
         with subprocess.Popen(

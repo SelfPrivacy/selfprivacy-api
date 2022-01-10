@@ -216,10 +216,10 @@ class SSHKeys(Resource):
                 if "users" not in data:
                     data["users"] = []
                 for user in data["users"]:
-                    if user["name"] == username:
+                    if user["username"] == username:
                         if "sshKeys" not in user:
                             user["sshKeys"] = []
-                        return user["ssh"]["sshKeys"]
+                        return user["sshKeys"]
                 return {
                     "error": "User not found",
                 }, 404

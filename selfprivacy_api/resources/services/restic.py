@@ -222,6 +222,8 @@ class BackblazeConfig(Resource):
         args = parser.parse_args()
 
         with WriteUserData() as data:
+            if "backblaze" not in data:
+                data["backblaze"] = {}
             data["backblaze"]["accountId"] = args["accountId"]
             data["backblaze"]["accountKey"] = args["accountKey"]
             data["backblaze"]["bucket"] = args["bucket"]

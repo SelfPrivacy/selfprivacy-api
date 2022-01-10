@@ -4,7 +4,7 @@ import subprocess
 import re
 from flask_restful import Resource, reqparse
 
-from selfprivacy_api.utils import WriteUserData, ReadUserData
+from selfprivacy_api.utils import WriteUserData, ReadUserData, is_username_forbidden
 
 
 class Users(Resource):
@@ -26,8 +26,9 @@ class Users(Resource):
         """
         with ReadUserData() as data:
             users = []
-            for user in data["users"]:
-                users.append(user["username"])
+            if "users" in data:
+                for user in data["users"]:
+                    users.append(user["username"])
         return users
 
     def post(self):
@@ -71,7 +72,6 @@ class Users(Resource):
         parser.add_argument("username", type=str, required=True)
         parser.add_argument("password", type=str, required=True)
         args = parser.parse_args()
-
         hashing_command = ["mkpasswd", "-m", "sha-512", args["password"]]
         password_hash_process_descriptor = subprocess.Popen(
             hashing_command,
@@ -82,7 +82,9 @@ class Users(Resource):
         hashed_password = password_hash_process_descriptor.communicate()[0]
         hashed_password = hashed_password.decode("ascii")
         hashed_password = hashed_password.rstrip()
-
+        # Check if username is forbidden
+        if is_username_forbidden(args["username"]):
+            return {"message": "Username is forbidden"}, 409
         # Check is username passes regex
         if not re.match(r"^[a-z_][a-z0-9_]+$", args["username"]):
             return {"error": "username must be alphanumeric"}, 400
@@ -137,9 +139,6 @@ class User(Resource):
                 description: User not found
         """
         with WriteUserData() as data:
-            # Return 400 if username is not provided
-            if username is None:
-                return {"error": "username is required"}, 400
             if username == data["username"]:
                 return {"error": "Cannot delete root user"}, 400
             # Return 400 if user does not exist

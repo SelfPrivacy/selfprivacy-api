@@ -4,8 +4,8 @@ import pytest
 
 
 def read_json(file_path):
-    with open(file_path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    with open(file_path, "r", encoding="utf-8") as file:
+        return json.load(file)
 
 
 def call_args_asserts(mocked_object):

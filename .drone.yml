@@ -9,5 +9,11 @@ platform:
 steps:
 - name: test
   commands:
-  - pytest
-  
+  - coverage run -m pytest -q
+  - coverage xml
+- name: bandit
+  commands:
+  - bandit -ll -r selfprivacy_api
+- name: formatting
+  commands:
+  - black --check .
