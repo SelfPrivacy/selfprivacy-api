@@ -19,10 +19,10 @@ def run_migrations():
 
     for migration in migrations:
         if migration.get_migration_name() not in skipped_migrations:
-            if migration.is_migration_needed():
-                try:
+            try:
+                if migration.is_migration_needed():
                     migration.migrate()
-                except Exception as e:
-                    print(f"Error while migrating {migration.get_migration_name()}")
-                    print(e)
-                    print("Skipping this migration")
+            except Exception as e:
+                print(f"Error while migrating {migration.get_migration_name()}")
+                print(e)
+                print("Skipping this migration")
