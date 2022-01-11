@@ -1,9 +1,8 @@
 from selfprivacy_api.utils import ReadUserData
 from selfprivacy_api.migrations.fix_nixos_config_branch import FixNixosConfigBranch
 
-migrations = [
-    FixNixosConfigBranch()
-]
+migrations = [FixNixosConfigBranch()]
+
 
 def run_migrations():
     """

@@ -3,6 +3,7 @@ import subprocess
 
 from selfprivacy_api.migrations.migration import Migration
 
+
 class FixNixosConfigBranch(Migration):
     def get_migration_name(self):
         return "fix_nixos_config_branch"
@@ -16,12 +17,13 @@ class FixNixosConfigBranch(Migration):
 
     def is_migration_needed(self):
         """Check the current branch of /etc/nixos and return True if it is rolling-testing"""
-        nixos_config_branch = subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"], start_new_session=True)
+        nixos_config_branch = subprocess.check_output(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"], start_new_session=True
+        )
         if nixos_config_branch.decode("utf-8").strip() == "rolling-testing":
             return True
         else:
             return False
-        
 
     def migrate(self):
         """Affected server pulled the config with the --single-branch flag.
@@ -32,7 +34,14 @@ class FixNixosConfigBranch(Migration):
         current_working_directory = os.getcwd()
         os.chdir("/etc/nixos")
 
-        subprocess.check_output(["git", "config", "remote.origin.fetch", "+refs/heads/*:refs/remotes/origin/*"])
+        subprocess.check_output(
+            [
+                "git",
+                "config",
+                "remote.origin.fetch",
+                "+refs/heads/*:refs/remotes/origin/*",
+            ]
+        )
         subprocess.check_output(["git", "fetch", "--all"])
         subprocess.check_output(["git", "pull"])
         subprocess.check_output(["git", "checkout", "master"])

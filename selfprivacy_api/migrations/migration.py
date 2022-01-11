@@ -8,6 +8,8 @@ Migration has a function migrate() that does the migration
 Migration has a function get_migration_name() that returns the migration name
 Migration has a function get_migration_description() that returns the migration description
 """
+
+
 class Migration(ABC):
     @abstractmethod
     def get_migration_name(self):
