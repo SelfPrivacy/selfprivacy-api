@@ -17,12 +17,19 @@ class FixNixosConfigBranch(Migration):
 
     def is_migration_needed(self):
         """Check the current branch of /etc/nixos and return True if it is rolling-testing"""
-        nixos_config_branch = subprocess.check_output(
-            ["git", "rev-parse", "--abbrev-ref", "HEAD"], start_new_session=True
-        )
-        if nixos_config_branch.decode("utf-8").strip() == "rolling-testing":
-            return True
-        else:
+        current_working_directory = os.getcwd()
+        try:
+            os.chdir("/etc/nixos")
+            nixos_config_branch = subprocess.check_output(
+                ["git", "rev-parse", "--abbrev-ref", "HEAD"], start_new_session=True
+            )
+            os.chdir(current_working_directory)
+            if nixos_config_branch.decode("utf-8").strip() == "rolling-testing":
+                return True
+            else:
+                return False
+        except subprocess.CalledProcessError:
+            os.chdir(current_working_directory)
             return False
 
     def migrate(self):
@@ -32,19 +39,23 @@ class FixNixosConfigBranch(Migration):
         """
         print("Fixing Nixos config branch")
         current_working_directory = os.getcwd()
-        os.chdir("/etc/nixos")
+        try:
+            os.chdir("/etc/nixos")
 
-        subprocess.check_output(
-            [
-                "git",
-                "config",
-                "remote.origin.fetch",
-                "+refs/heads/*:refs/remotes/origin/*",
-            ]
-        )
-        subprocess.check_output(["git", "fetch", "--all"])
-        subprocess.check_output(["git", "pull"])
-        subprocess.check_output(["git", "checkout", "master"])
+            subprocess.check_output(
+                [
+                    "git",
+                    "config",
+                    "remote.origin.fetch",
+                    "+refs/heads/*:refs/remotes/origin/*",
+                ]
+            )
+            subprocess.check_output(["git", "fetch", "--all"])
+            subprocess.check_output(["git", "pull"])
+            subprocess.check_output(["git", "checkout", "master"])
+            os.chdir(current_working_directory)
+            print("Done")
+        except subprocess.CalledProcessError:
+            os.chdir(current_working_directory)
+            print("Error")
 
-        os.chdir(current_working_directory)
-        print("Done")
