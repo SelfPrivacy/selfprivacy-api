@@ -58,4 +58,3 @@ class FixNixosConfigBranch(Migration):
         except subprocess.CalledProcessError:
             os.chdir(current_working_directory)
             print("Error")
-
