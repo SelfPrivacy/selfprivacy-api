@@ -17,6 +17,9 @@ def run_migrations():
         else:
             skipped_migrations = data["api"].get("skippedMigrations", [])
 
+    if "DISABLE_ALL" in skipped_migrations:
+        return
+
     for migration in migrations:
         if migration.get_migration_name() not in skipped_migrations:
             try:
