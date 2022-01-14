@@ -43,8 +43,6 @@ class AuthorizeDevice(Resource):
         ---
         tags:
             - Tokens
-        security:
-            - bearerAuth: []
         parameters:
             - in: body
                 name: data

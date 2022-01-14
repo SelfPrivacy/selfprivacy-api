@@ -140,8 +140,6 @@ class UseRecoveryToken(Resource):
         ---
         tags:
             - Tokens
-        security:
-            - bearerAuth: []
         parameters:
             - in: body
                 name: data
