@@ -4,10 +4,10 @@ from selfprivacy_api.app import create_app
 
 
 @pytest.fixture
-def app():
+def app(mocker, shared_datadir):
+    mocker.patch("selfprivacy_api.utils.TOKENS_FILE", shared_datadir / "tokens.json")
     app = create_app(
         {
-            "AUTH_TOKEN": "TEST_TOKEN",
             "ENABLE_SWAGGER": "0",
         }
     )

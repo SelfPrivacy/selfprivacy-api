@@ -13,10 +13,13 @@ from selfprivacy_api.resources.users import User, Users
 from selfprivacy_api.resources.common import ApiVersion
 from selfprivacy_api.resources.system import api_system
 from selfprivacy_api.resources.services import services as api_services
+from selfprivacy_api.resources.api_auth import auth as api_auth
 
 from selfprivacy_api.restic_controller.tasks import huey, init_restic
 
 from selfprivacy_api.migrations import run_migrations
+
+from selfprivacy_api.utils.auth import is_token_valid
 
 swagger_blueprint = get_swaggerui_blueprint(
     "/api/docs", "/api/swagger.json", config={"app_name": "SelfPrivacy API"}
@@ -29,9 +32,6 @@ def create_app(test_config=None):
     api = Api(app)
 
     if test_config is None:
-        app.config["AUTH_TOKEN"] = os.environ.get("AUTH_TOKEN")
-        if app.config["AUTH_TOKEN"] is None:
-            raise ValueError("AUTH_TOKEN is not set")
         app.config["ENABLE_SWAGGER"] = os.environ.get("ENABLE_SWAGGER", "0")
         app.config["B2_BUCKET"] = os.environ.get("B2_BUCKET")
     else:
@@ -40,14 +40,20 @@ def create_app(test_config=None):
     # Check bearer token
     @app.before_request
     def check_auth():
-        # Exclude swagger-ui
-        if not request.path.startswith("/api"):
+        # Exclude swagger-ui, /auth/new_device/authorize, /auth/recovery_token/use
+        if request.path.startswith("/api"):
+            pass
+        elif request.path.startswith("/auth/new_device/authorize"):
+            pass
+        elif request.path.startswith("/auth/recovery_token/use"):
+            pass
+        else:
             auth = request.headers.get("Authorization")
             if auth is None:
                 return jsonify({"error": "Missing Authorization header"}), 401
-
-            # Check if token is valid
-            if auth != "Bearer " + app.config["AUTH_TOKEN"]:
+            # Strip Bearer from auth header
+            auth = auth.replace("Bearer ", "")
+            if not is_token_valid(auth):
                 return jsonify({"error": "Invalid token"}), 401
 
     api.add_resource(ApiVersion, "/api/version")
@@ -56,6 +62,7 @@ def create_app(test_config=None):
 
     app.register_blueprint(api_system)
     app.register_blueprint(api_services)
+    app.register_blueprint(api_auth)
 
     @app.route("/api/swagger.json")
     def spec():

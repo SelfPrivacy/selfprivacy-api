@@ -9,6 +9,7 @@ flask-swagger-ui
 pytz
 huey
 gevent
+mnemonic
 
 pytest
 coverage
