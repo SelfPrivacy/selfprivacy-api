@@ -1,7 +1,8 @@
 from selfprivacy_api.utils import ReadUserData
 from selfprivacy_api.migrations.fix_nixos_config_branch import FixNixosConfigBranch
+from selfprivacy_api.migrations.create_tokens_json import CreateTokensJson
 
-migrations = [FixNixosConfigBranch()]
+migrations = [FixNixosConfigBranch(), CreateTokensJson()]
 
 
 def run_migrations():

@@ -35,7 +35,8 @@ class CreateTokensJson(Migration):
 
     def migrate(self):
         try:
-            with ReadUserData(USERDATA_FILE) as userdata:
+            print(f"Creating tokens.json file at {TOKENS_FILE}")
+            with ReadUserData() as userdata:
                 token = userdata["api"]["token"]
             # Touch tokens.json with 0600 permissions
             Path(TOKENS_FILE).touch(mode=0o600)
