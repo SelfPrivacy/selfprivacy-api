@@ -70,10 +70,12 @@ def is_token_valid(token):
         return True
     return False
 
+
 def is_token_name_exists(token_name):
     """Check if token name exists"""
     with ReadUserData(UserDataFiles.TOKENS) as tokens:
         return token_name in [t["name"] for t in tokens["tokens"]]
+
 
 def is_token_name_pair_valid(token_name, token):
     """Check if token name and token pair exists"""
@@ -82,6 +84,7 @@ def is_token_name_pair_valid(token_name, token):
             if t["name"] == token_name and t["token"] == token:
                 return True
         return False
+
 
 def get_tokens_info():
     """Get all tokens info without tokens themselves"""

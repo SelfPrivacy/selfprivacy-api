@@ -66,10 +66,14 @@ class Tokens(Resource):
                 description: Token not found
         """
         parser = reqparse.RequestParser()
-        parser.add_argument("token_name", type=str, required=True, help="Token to delete")
+        parser.add_argument(
+            "token_name", type=str, required=True, help="Token to delete"
+        )
         args = parser.parse_args()
         token_name = args["token"]
-        if is_token_name_pair_valid(token_name, request.headers.get("Authorization").split(" ")[1]):
+        if is_token_name_pair_valid(
+            token_name, request.headers.get("Authorization").split(" ")[1]
+        ):
             return {"message": "Cannot delete caller's token"}, 400
         if not is_token_name_exists(token_name):
             return {"message": "Token not found"}, 404

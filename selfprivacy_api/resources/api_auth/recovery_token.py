@@ -120,7 +120,9 @@ class RecoveryToken(Resource):
         # Convert expiration date to datetime and return 400 if it is not valid
         if args["expiration"]:
             try:
-                expiration = datetime.strptime(args["expiration"], "%Y-%m-%dT%H:%M:%S.%fZ")
+                expiration = datetime.strptime(
+                    args["expiration"], "%Y-%m-%dT%H:%M:%S.%fZ"
+                )
             except ValueError:
                 return {
                     "error": "Invalid expiration date. Use YYYY-MM-DDTHH:MM:SS.SSSZ"

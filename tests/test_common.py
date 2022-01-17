@@ -15,6 +15,7 @@ def test_get_api_version_unauthorized(client):
     assert response.status_code == 200
     assert "version" in response.get_json()
 
+
 def test_get_swagger_json(authorized_client):
     response = authorized_client.get("/api/swagger.json")
     assert response.status_code == 200

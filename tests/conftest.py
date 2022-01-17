@@ -8,7 +8,7 @@ def app(mocker, shared_datadir):
     mocker.patch("selfprivacy_api.utils.TOKENS_FILE", shared_datadir / "tokens.json")
     app = create_app(
         {
-            "ENABLE_SWAGGER": "0",
+            "ENABLE_SWAGGER": "1",
         }
     )
 
