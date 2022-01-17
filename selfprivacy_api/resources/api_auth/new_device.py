@@ -45,18 +45,18 @@ class AuthorizeDevice(Resource):
             - Tokens
         parameters:
             - in: body
-                name: data
-                required: true
-                description: Who is authorizing
-                schema:
-                    type: object
-                    properties:
-                        token:
-                            type: string
-                            description: Mnemonic token to authorize
-                        device:
-                            type: string
-                            description: Device to authorize
+              name: data
+              required: true
+              description: Who is authorizing
+              schema:
+                  type: object
+                  properties:
+                      token:
+                          type: string
+                          description: Mnemonic token to authorize
+                      device:
+                          type: string
+                          description: Device to authorize
         responses:
             200:
                 description: Device authorized

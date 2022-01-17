@@ -87,18 +87,18 @@ class RecoveryToken(Resource):
             - bearerAuth: []
         parameters:
             - in: body
-                name: data
-                required: true
-                description: Token data
-                schema:
-                    type: object
-                    properties:
-                        expiration:
-                            type: string
-                            description: Token expiration date
-                        uses:
-                            type: integer
-                            description: Token uses
+              name: data
+              required: true
+              description: Token data
+              schema:
+                  type: object
+                  properties:
+                      expiration:
+                          type: string
+                          description: Token expiration date
+                      uses:
+                          type: integer
+                          description: Token uses
         responses:
             200:
                 description: Recovery token generated
@@ -113,17 +113,20 @@ class RecoveryToken(Resource):
         """
         parser = reqparse.RequestParser()
         parser.add_argument(
-            "expiration", type=str, required=True, help="Token expiration date"
+            "expiration", type=str, required=False, help="Token expiration date"
         )
-        parser.add_argument("uses", type=int, required=True, help="Token uses")
+        parser.add_argument("uses", type=int, required=False, help="Token uses")
         args = parser.parse_args()
         # Convert expiration date to datetime and return 400 if it is not valid
-        try:
-            expiration = datetime.strptime(args["expiration"], "%Y-%m-%dT%H:%M:%S.%fZ")
-        except ValueError:
-            return {
-                "error": "Invalid expiration date. Use YYYY-MM-DDTHH:MM:SS.SSSZ"
-            }, 400
+        if args["expiration"]:
+            try:
+                expiration = datetime.strptime(args["expiration"], "%Y-%m-%dT%H:%M:%S.%fZ")
+            except ValueError:
+                return {
+                    "error": "Invalid expiration date. Use YYYY-MM-DDTHH:MM:SS.SSSZ"
+                }, 400
+        else:
+            expiration = None
         # Generate recovery token
         token = generate_recovery_token(expiration, args["uses"])
         return {"token": token}
@@ -142,18 +145,18 @@ class UseRecoveryToken(Resource):
             - Tokens
         parameters:
             - in: body
-                name: data
-                required: true
-                description: Token data
-                schema:
-                    type: object
-                    properties:
-                        token:
-                            type: string
-                            description: Mnemonic recovery token
-                        device:
-                            type: string
-                            description: Device to authorize
+              name: data
+              required: true
+              description: Token data
+              schema:
+                  type: object
+                  properties:
+                      token:
+                          type: string
+                          description: Mnemonic recovery token
+                      device:
+                          type: string
+                          description: Device to authorize
         responses:
             200:
                 description: Recovery token used

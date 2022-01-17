@@ -45,7 +45,7 @@ class CreateTokensJson(Migration):
                 "tokens": [
                     {
                         "token": token,
-                        "name": "Master Token",
+                        "name": "primary_token",
                         "date": str(datetime.now()),
                     }
                 ]

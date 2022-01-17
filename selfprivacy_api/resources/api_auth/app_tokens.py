@@ -8,6 +8,8 @@ from selfprivacy_api.utils.auth import (
     delete_token,
     get_tokens_info,
     delete_token,
+    is_token_name_exists,
+    is_token_name_pair_valid,
     refresh_token,
     is_token_valid,
 )
@@ -46,15 +48,15 @@ class Tokens(Resource):
             - bearerAuth: []
         parameters:
             - in: body
-                name: token
-                required: true
-                description: Token to delete
-                schema:
-                    type: object
-                    properties:
-                        token:
-                            type: string
-                            description: Token to delete
+              name: token
+              required: true
+              description: Token's name to delete
+              schema:
+                  type: object
+                  properties:
+                      token:
+                          type: string
+                          description: Token name to delete
         responses:
             200:
                 description: Token deleted
@@ -64,14 +66,14 @@ class Tokens(Resource):
                 description: Token not found
         """
         parser = reqparse.RequestParser()
-        parser.add_argument("token", type=str, required=True, help="Token to delete")
+        parser.add_argument("token_name", type=str, required=True, help="Token to delete")
         args = parser.parse_args()
-        token = args["token"]
-        if request.headers.get("Authorization") == f"Bearer {token}":
+        token_name = args["token"]
+        if is_token_name_pair_valid(token_name, request.headers.get("Authorization").split(" ")[1]):
             return {"message": "Cannot delete caller's token"}, 400
-        if not is_token_valid(token):
+        if not is_token_name_exists(token_name):
             return {"message": "Token not found"}, 404
-        delete_token(token)
+        delete_token(token_name)
         return {"message": "Token deleted"}, 200
 
     def post(self):

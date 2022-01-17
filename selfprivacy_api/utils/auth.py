@@ -70,6 +70,18 @@ def is_token_valid(token):
         return True
     return False
 
+def is_token_name_exists(token_name):
+    """Check if token name exists"""
+    with ReadUserData(UserDataFiles.TOKENS) as tokens:
+        return token_name in [t["name"] for t in tokens["tokens"]]
+
+def is_token_name_pair_valid(token_name, token):
+    """Check if token name and token pair exists"""
+    with ReadUserData(UserDataFiles.TOKENS) as tokens:
+        for t in tokens["tokens"]:
+            if t["name"] == token_name and t["token"] == token:
+                return True
+        return False
 
 def get_tokens_info():
     """Get all tokens info without tokens themselves"""
@@ -90,21 +102,22 @@ def _generate_token():
 def create_token(name):
     """Create new token"""
     token = _generate_token()
+    name = _validate_token_name(name)
     with WriteUserData(UserDataFiles.TOKENS) as tokens:
         tokens["tokens"].append(
             {
                 "token": token,
-                "name": _validate_token_name(name),
+                "name": name,
                 "date": str(datetime.now()),
             }
         )
     return token
 
 
-def delete_token(token):
+def delete_token(token_name):
     """Delete token"""
     with WriteUserData(UserDataFiles.TOKENS) as tokens:
-        tokens["tokens"] = [t for t in tokens["tokens"] if t["token"] != token]
+        tokens["tokens"] = [t for t in tokens["tokens"] if t["name"] != token_name]
 
 
 def refresh_token(token):
@@ -198,6 +211,8 @@ def use_mnemonic_recoverery_token(mnemonic_phrase, name):
     Substract 1 from uses_left if it exists.
     mnemonic_phrase is a string representation of the mnemonic word list.
     """
+    if not is_recovery_token_valid():
+        return None
     recovery_token_str = _get_recovery_token()
     if recovery_token_str is None:
         return None
@@ -208,11 +223,12 @@ def use_mnemonic_recoverery_token(mnemonic_phrase, name):
     if phrase_bytes != recovery_token:
         return None
     token = _generate_token()
+    name = _validate_token_name(name)
     with WriteUserData(UserDataFiles.TOKENS) as tokens:
         tokens["tokens"].append(
             {
                 "token": token,
-                "name": _validate_token_name(name),
+                "name": name,
                 "date": str(datetime.now()),
             }
         )
@@ -226,7 +242,7 @@ def get_new_device_auth_token():
     """Generate a new device auth token which is valid for 10 minutes and return a mnemonic phrase representation
     Write token to the new_device of the tokens.json file.
     """
-    token = secrets.token_bytes(24)
+    token = secrets.token_bytes(16)
     token_str = token.hex()
     with WriteUserData(UserDataFiles.TOKENS) as tokens:
         tokens["new_device"] = {
