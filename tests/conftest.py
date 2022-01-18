@@ -2,10 +2,13 @@ import pytest
 from flask import testing
 from selfprivacy_api.app import create_app
 
+@pytest.fixture
+def tokens_file(mocker, shared_datadir):
+    mock = mocker.patch("selfprivacy_api.utils.TOKENS_FILE", shared_datadir / "tokens.json")
+    return mock
 
 @pytest.fixture
-def app(mocker, shared_datadir):
-    mocker.patch("selfprivacy_api.utils.TOKENS_FILE", shared_datadir / "tokens.json")
+def app():
     app = create_app(
         {
             "ENABLE_SWAGGER": "1",
@@ -16,7 +19,7 @@ def app(mocker, shared_datadir):
 
 
 @pytest.fixture
-def client(app):
+def client(app, tokens_file):
     return app.test_client()
 
 
@@ -45,17 +48,17 @@ class WrongAuthClient(testing.FlaskClient):
 
 
 @pytest.fixture
-def authorized_client(app):
+def authorized_client(app, tokens_file):
     app.test_client_class = AuthorizedClient
     return app.test_client()
 
 
 @pytest.fixture
-def wrong_auth_client(app):
+def wrong_auth_client(app, tokens_file):
     app.test_client_class = WrongAuthClient
     return app.test_client()
 
 
 @pytest.fixture
-def runner(app):
+def runner(app, tokens_file):
     return app.test_cli_runner()

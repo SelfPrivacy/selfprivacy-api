@@ -70,7 +70,7 @@ class Tokens(Resource):
             "token_name", type=str, required=True, help="Token to delete"
         )
         args = parser.parse_args()
-        token_name = args["token"]
+        token_name = args["token_name"]
         if is_token_name_pair_valid(
             token_name, request.headers.get("Authorization").split(" ")[1]
         ):
@@ -100,7 +100,10 @@ class Tokens(Resource):
         token = request.headers.get("Authorization").split(" ")[1]
         if not is_token_valid(token):
             return {"message": "Token not found"}, 404
-        return refresh_token(token)
+        new_token = refresh_token(token)
+        if new_token is None:
+            return {"message": "Token not found"}, 404
+        return {"token": new_token}, 200
 
 
 api.add_resource(Tokens, "/tokens")

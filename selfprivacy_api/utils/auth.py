@@ -125,11 +125,13 @@ def delete_token(token_name):
 
 def refresh_token(token):
     """Change the token field of the existing token"""
+    new_token = _generate_token()
     with WriteUserData(UserDataFiles.TOKENS) as tokens:
         for t in tokens["tokens"]:
             if t["token"] == token:
-                t["token"] = _generate_token()
-                break
+                t["token"] = new_token
+                return new_token
+    return None
 
 
 def is_recovery_token_exists():
