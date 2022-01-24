@@ -146,10 +146,10 @@ def is_recovery_token_valid():
         if "recovery_token" not in tokens:
             return False
         recovery_token = tokens["recovery_token"]
-        if "uses_left" in recovery_token:
+        if "uses_left" in recovery_token and recovery_token["uses_left"] is not None:
             if recovery_token["uses_left"] <= 0:
                 return False
-        if "expiration" not in recovery_token:
+        if "expiration" not in recovery_token or recovery_token["expiration"] is None:
             return True
         return datetime.now() < datetime.strptime(
             recovery_token["expiration"], "%Y-%m-%d %H:%M:%S.%f"
@@ -238,7 +238,10 @@ def use_mnemonic_recoverery_token(mnemonic_phrase, name):
             }
         )
         if "recovery_token" in tokens:
-            if "uses_left" in tokens["recovery_token"]:
+            if (
+                "uses_left" in tokens["recovery_token"]
+                and tokens["recovery_token"]["uses_left"] is not None
+            ):
                 tokens["recovery_token"]["uses_left"] -= 1
     return token
 

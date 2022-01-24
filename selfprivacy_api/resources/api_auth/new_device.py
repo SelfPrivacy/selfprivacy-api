@@ -29,7 +29,8 @@ class NewDevice(Resource):
             400:
                 description: Bad request
         """
-        return get_new_device_auth_token()
+        token = get_new_device_auth_token()
+        return {"token": token}
 
 
 class AuthorizeDevice(Resource):

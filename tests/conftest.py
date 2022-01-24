@@ -2,10 +2,14 @@ import pytest
 from flask import testing
 from selfprivacy_api.app import create_app
 
+
 @pytest.fixture
 def tokens_file(mocker, shared_datadir):
-    mock = mocker.patch("selfprivacy_api.utils.TOKENS_FILE", shared_datadir / "tokens.json")
+    mock = mocker.patch(
+        "selfprivacy_api.utils.TOKENS_FILE", shared_datadir / "tokens.json"
+    )
     return mock
+
 
 @pytest.fixture
 def app():

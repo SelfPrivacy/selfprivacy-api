@@ -98,8 +98,6 @@ class Tokens(Resource):
         """
         # Get token from header
         token = request.headers.get("Authorization").split(" ")[1]
-        if not is_token_valid(token):
-            return {"message": "Token not found"}, 404
         new_token = refresh_token(token)
         if new_token is None:
             return {"message": "Token not found"}, 404
