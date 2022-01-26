@@ -16,6 +16,8 @@ from selfprivacy_api.resources.services import services as api_services
 
 from selfprivacy_api.restic_controller.tasks import huey, init_restic
 
+from selfprivacy_api.migrations import run_migrations
+
 swagger_blueprint = get_swaggerui_blueprint(
     "/api/docs", "/api/swagger.json", config={"app_name": "SelfPrivacy API"}
 )
@@ -59,7 +61,7 @@ def create_app(test_config=None):
     def spec():
         if app.config["ENABLE_SWAGGER"] == "1":
             swag = swagger(app)
-            swag["info"]["version"] = "1.1.0"
+            swag["info"]["version"] = "1.1.1"
             swag["info"]["title"] = "SelfPrivacy API"
             swag["info"]["description"] = "SelfPrivacy API"
             swag["securityDefinitions"] = {
@@ -83,6 +85,7 @@ def create_app(test_config=None):
 if __name__ == "__main__":
     monkey.patch_all()
     created_app = create_app()
+    run_migrations()
     huey.start()
     init_restic()
     created_app.run(port=5050, debug=False)
