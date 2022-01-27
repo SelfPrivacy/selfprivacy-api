@@ -15,6 +15,7 @@ let
     gevent
     mnemonic
     coverage
+    pylint
   ]);
 in
 pkgs.mkShell {
