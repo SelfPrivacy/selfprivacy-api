@@ -114,6 +114,25 @@ def test_get_new_device_auth_token(authorized_client, tokens_file):
     assert read_json(tokens_file)["new_device"]["token"] == token
 
 
+def test_get_and_delete_new_device_token(authorized_client, tokens_file):
+    response = authorized_client.post("/auth/new_device")
+    assert response.status_code == 200
+    assert "token" in response.json
+    token = Mnemonic(language="english").to_entropy(response.json["token"]).hex()
+    assert read_json(tokens_file)["new_device"]["token"] == token
+    response = authorized_client.delete(
+        "/auth/new_device", json={"token": response.json["token"]}
+    )
+    assert response.status_code == 200
+    assert read_json(tokens_file) == TOKENS_FILE_CONTETS
+
+
+def test_delete_token_unauthenticated(client, tokens_file):
+    response = client.delete("/auth/new_device")
+    assert response.status_code == 401
+    assert read_json(tokens_file) == TOKENS_FILE_CONTETS
+
+
 def test_get_and_authorize_new_device(client, authorized_client, tokens_file):
     response = authorized_client.post("/auth/new_device")
     assert response.status_code == 200

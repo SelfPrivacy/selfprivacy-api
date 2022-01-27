@@ -7,6 +7,7 @@ from selfprivacy_api.resources.api_auth import api
 from selfprivacy_api.utils.auth import (
     get_new_device_auth_token,
     use_new_device_auth_token,
+    delete_new_device_auth_token,
 )
 
 
@@ -31,6 +32,23 @@ class NewDevice(Resource):
         """
         token = get_new_device_auth_token()
         return {"token": token}
+
+    def delete(self):
+        """
+        Delete new device token
+        ---
+        tags:
+            - Tokens
+        security:
+            - bearerAuth: []
+        responses:
+            200:
+                description: New device token deleted
+            400:
+                description: Bad request
+        """
+        delete_new_device_auth_token()
+        return {"token": None}
 
 
 class AuthorizeDevice(Resource):
