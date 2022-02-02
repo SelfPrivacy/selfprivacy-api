@@ -57,6 +57,7 @@ class Tokens(Resource):
                       token:
                           type: string
                           description: Token name to delete
+                          required: true
         responses:
             200:
                 description: Token deleted
