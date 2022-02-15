@@ -177,6 +177,7 @@ class ResticController:
             "--json",
             "backup",
             "/var",
+            "/etc/nixos",
         ]
         with open("/var/backup.log", "w", encoding="utf-8") as log_file:
             subprocess.Popen(
@@ -248,7 +249,7 @@ class ResticController:
             "restore",
             snapshot_id,
             "--target",
-            "/",
+            "\"/var " + "/etc/nixos\"",
         ]
 
         self.state = ResticStates.RESTORING
