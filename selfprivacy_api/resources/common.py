@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Unassigned views"""
-import subprocess
-from flask_restful import Resource, reqparse
+from flask_restful import Resource
 
 
 class ApiVersion(Resource):
@@ -24,4 +23,4 @@ class ApiVersion(Resource):
             401:
                 description: Unauthorized
         """
-        return {"version": "1.1.1"}
+        return {"version": "1.2.0"}

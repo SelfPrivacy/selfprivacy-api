@@ -212,17 +212,16 @@ class SSHKeys(Resource):
                 if "sshKeys" not in data:
                     data["sshKeys"] = []
                 return data["sshKeys"]
-            else:
-                if "users" not in data:
-                    data["users"] = []
-                for user in data["users"]:
-                    if user["username"] == username:
-                        if "sshKeys" not in user:
-                            user["sshKeys"] = []
-                        return user["sshKeys"]
-                return {
-                    "error": "User not found",
-                }, 404
+            if "users" not in data:
+                data["users"] = []
+            for user in data["users"]:
+                if user["username"] == username:
+                    if "sshKeys" not in user:
+                        user["sshKeys"] = []
+                    return user["sshKeys"]
+            return {
+                "error": "User not found",
+            }, 404
 
     def post(self, username):
         """

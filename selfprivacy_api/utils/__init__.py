@@ -1,11 +1,20 @@
 #!/usr/bin/env python3
 """Various utility functions"""
+from enum import Enum
 import json
 import portalocker
 
 
 USERDATA_FILE = "/etc/nixos/userdata/userdata.json"
+TOKENS_FILE = "/etc/nixos/userdata/tokens.json"
 DOMAIN_FILE = "/var/domain"
+
+
+class UserDataFiles(Enum):
+    """Enum for userdata files"""
+
+    USERDATA = 0
+    TOKENS = 1
 
 
 def get_domain():
@@ -18,8 +27,13 @@ def get_domain():
 class WriteUserData(object):
     """Write userdata.json with lock"""
 
-    def __init__(self):
-        self.userdata_file = open(USERDATA_FILE, "r+", encoding="utf-8")
+    def __init__(self, file_type=UserDataFiles.USERDATA):
+        if file_type == UserDataFiles.USERDATA:
+            self.userdata_file = open(USERDATA_FILE, "r+", encoding="utf-8")
+        elif file_type == UserDataFiles.TOKENS:
+            self.userdata_file = open(TOKENS_FILE, "r+", encoding="utf-8")
+        else:
+            raise ValueError("Unknown file type")
         portalocker.lock(self.userdata_file, portalocker.LOCK_EX)
         self.data = json.load(self.userdata_file)
 
@@ -38,8 +52,13 @@ class WriteUserData(object):
 class ReadUserData(object):
     """Read userdata.json with lock"""
 
-    def __init__(self):
-        self.userdata_file = open(USERDATA_FILE, "r", encoding="utf-8")
+    def __init__(self, file_type=UserDataFiles.USERDATA):
+        if file_type == UserDataFiles.USERDATA:
+            self.userdata_file = open(USERDATA_FILE, "r", encoding="utf-8")
+        elif file_type == UserDataFiles.TOKENS:
+            self.userdata_file = open(TOKENS_FILE, "r", encoding="utf-8")
+        else:
+            raise ValueError("Unknown file type")
         portalocker.lock(self.userdata_file, portalocker.LOCK_SH)
         self.data = json.load(self.userdata_file)
 

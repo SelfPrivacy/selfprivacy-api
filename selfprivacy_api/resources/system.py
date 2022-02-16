@@ -283,6 +283,8 @@ class PythonVersion(Resource):
 
 
 class PullRepositoryChanges(Resource):
+    """Pull NixOS config repository changes"""
+
     def get(self):
         """
         Pull Repository Changes
@@ -324,12 +326,11 @@ class PullRepositoryChanges(Resource):
                 "message": "Update completed successfully",
                 "data": data,
             }
-        elif git_pull_process_descriptor.returncode > 0:
-            return {
-                "status": git_pull_process_descriptor.returncode,
-                "message": "Something went wrong",
-                "data": data,
-            }, 500
+        return {
+            "status": git_pull_process_descriptor.returncode,
+            "message": "Something went wrong",
+            "data": data,
+        }, 500
 
 
 api.add_resource(Timezone, "/configuration/timezone")

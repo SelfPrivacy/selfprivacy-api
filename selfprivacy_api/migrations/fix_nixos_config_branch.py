@@ -24,10 +24,7 @@ class FixNixosConfigBranch(Migration):
                 ["git", "rev-parse", "--abbrev-ref", "HEAD"], start_new_session=True
             )
             os.chdir(current_working_directory)
-            if nixos_config_branch.decode("utf-8").strip() == "rolling-testing":
-                return True
-            else:
-                return False
+            return nixos_config_branch.decode("utf-8").strip() == "rolling-testing"
         except subprocess.CalledProcessError:
             os.chdir(current_working_directory)
             return False

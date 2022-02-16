@@ -1,7 +1,18 @@
+"""Migrations module.
+Migrations module is introduced in v1.1.1 and provides one-shot
+migrations which cannot be performed from the NixOS configuration file changes.
+These migrations are checked and ran before every start of the API.
+
+You can disable certain migrations if needed by creating an array
+at api.skippedMigrations in userdata.json and populating it
+with IDs of the migrations to skip.
+Adding DISABLE_ALL to that array disables the migrations module entirely.
+"""
 from selfprivacy_api.utils import ReadUserData
 from selfprivacy_api.migrations.fix_nixos_config_branch import FixNixosConfigBranch
+from selfprivacy_api.migrations.create_tokens_json import CreateTokensJson
 
-migrations = [FixNixosConfigBranch()]
+migrations = [FixNixosConfigBranch(), CreateTokensJson()]
 
 
 def run_migrations():
@@ -25,7 +36,7 @@ def run_migrations():
             try:
                 if migration.is_migration_needed():
                     migration.migrate()
-            except Exception as e:
+            except Exception as err:
                 print(f"Error while migrating {migration.get_migration_name()}")
-                print(e)
+                print(err)
                 print("Skipping this migration")

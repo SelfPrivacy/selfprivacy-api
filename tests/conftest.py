@@ -4,11 +4,18 @@ from selfprivacy_api.app import create_app
 
 
 @pytest.fixture
+def tokens_file(mocker, shared_datadir):
+    mock = mocker.patch(
+        "selfprivacy_api.utils.TOKENS_FILE", shared_datadir / "tokens.json"
+    )
+    return mock
+
+
+@pytest.fixture
 def app():
     app = create_app(
         {
-            "AUTH_TOKEN": "TEST_TOKEN",
-            "ENABLE_SWAGGER": "0",
+            "ENABLE_SWAGGER": "1",
         }
     )
 
@@ -16,7 +23,7 @@ def app():
 
 
 @pytest.fixture
-def client(app):
+def client(app, tokens_file):
     return app.test_client()
 
 
@@ -45,17 +52,17 @@ class WrongAuthClient(testing.FlaskClient):
 
 
 @pytest.fixture
-def authorized_client(app):
+def authorized_client(app, tokens_file):
     app.test_client_class = AuthorizedClient
     return app.test_client()
 
 
 @pytest.fixture
-def wrong_auth_client(app):
+def wrong_auth_client(app, tokens_file):
     app.test_client_class = WrongAuthClient
     return app.test_client()
 
 
 @pytest.fixture
-def runner(app):
+def runner(app, tokens_file):
     return app.test_cli_runner()
