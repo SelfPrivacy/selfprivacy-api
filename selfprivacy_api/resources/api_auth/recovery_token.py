@@ -131,6 +131,8 @@ class RecoveryToken(Resource):
                 }, 400
         else:
             expiration = None
+        if args["uses"] != None and args["uses"] < 1:
+            return {"message": "Uses must be greater than 0"}, 400
         # Generate recovery token
         token = generate_recovery_token(expiration, args["uses"])
         return {"token": token}

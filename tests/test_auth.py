@@ -504,3 +504,25 @@ def test_generate_recovery_token_with_limited_uses(
     assert recovery_response.status_code == 404
 
     assert read_json(tokens_file)["recovery_token"]["uses_left"] == 0
+
+def test_generate_recovery_token_with_negative_uses(
+    authorized_client, client, tokens_file
+):
+    # Generate token with limited uses
+    response = authorized_client.post(
+        "/auth/recovery_token",
+        json={"uses": -2},
+    )
+    assert response.status_code == 400
+    assert "recovery_token" not in read_json(tokens_file)
+
+def test_generate_recovery_token_with_zero_uses(
+    authorized_client, client, tokens_file
+):
+    # Generate token with limited uses
+    response = authorized_client.post(
+        "/auth/recovery_token",
+        json={"uses": 0},
+    )
+    assert response.status_code == 400
+    assert "recovery_token" not in read_json(tokens_file)
