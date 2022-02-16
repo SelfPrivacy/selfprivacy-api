@@ -123,6 +123,9 @@ class RecoveryToken(Resource):
                 expiration = datetime.strptime(
                     args["expiration"], "%Y-%m-%dT%H:%M:%S.%fZ"
                 )
+                # Retrun 400 if expiration date is in the past
+                if expiration < datetime.now():
+                    return {"message": "Expiration date cannot be in the past"}, 400
             except ValueError:
                 return {
                     "error": "Invalid expiration date. Use YYYY-MM-DDTHH:MM:SS.SSSZ"

@@ -2,6 +2,7 @@
 # pylint: disable=unused-argument
 import datetime
 import json
+import re
 import pytest
 from mnemonic import Mnemonic
 
@@ -241,18 +242,52 @@ def test_get_recovery_token_status_unauthorized(client, tokens_file):
     assert read_json(tokens_file) == TOKENS_FILE_CONTETS
 
 
+def test_get_recovery_token_when_none_exists(authorized_client, tokens_file):
+    response = authorized_client.get("/auth/recovery_token")
+    assert response.status_code == 200
+    assert response.json == {
+        "exists": False,
+        "valid": False,
+        "date": None,
+        "expiration": None,
+        "uses_left": None,
+    }
+    assert read_json(tokens_file) == TOKENS_FILE_CONTETS
+
+
 def test_generate_recovery_token(authorized_client, client, tokens_file):
     # Generate token without expiration and uses_left
     response = authorized_client.post("/auth/recovery_token")
     assert response.status_code == 200
     assert "token" in response.json
-    token = Mnemonic(language="english").to_entropy(response.json["token"]).hex()
+    mnemonic_token = response.json["token"]
+    token = Mnemonic(language="english").to_entropy(mnemonic_token).hex()
     assert read_json(tokens_file)["recovery_token"]["token"] == token
+
+    time_generated = read_json(tokens_file)["recovery_token"]["date"]
+    assert time_generated is not None
+    # Assert that the token was generated near the current time
+    assert (
+        datetime.datetime.strptime(time_generated, "%Y-%m-%dT%H:%M:%S.%fZ")
+        - datetime.timedelta(seconds=5)
+        < datetime.datetime.now()
+    )
+
+    # Try to get token status
+    response = client.get("/auth/recovery_token")
+    assert response.status_code == 200
+    assert response.json == {
+        "exists": True,
+        "valid": True,
+        "date": time_generated,
+        "expiration": None,
+        "uses_left": None,
+    }
 
     # Try to use the token
     recovery_response = client.post(
         "/auth/recovery_token/use",
-        json={"token": response.json["token"], "device": "recovery_device"},
+        json={"token": mnemonic_token, "device": "recovery_device"},
     )
     assert recovery_response.status_code == 200
     new_token = recovery_response.json["token"]
@@ -262,9 +297,210 @@ def test_generate_recovery_token(authorized_client, client, tokens_file):
     # Try to use token again
     recovery_response = client.post(
         "/auth/recovery_token/use",
-        json={"token": response.json["token"], "device": "recovery_device2"},
+        json={"token": mnemonic_token, "device": "recovery_device2"},
     )
     assert recovery_response.status_code == 200
     new_token = recovery_response.json["token"]
     assert read_json(tokens_file)["tokens"][3]["token"] == new_token
     assert read_json(tokens_file)["tokens"][3]["name"] == "recovery_device2"
+
+
+def test_generate_recovery_token_with_expiration_date(
+    authorized_client, client, tokens_file
+):
+    # Generate token with expiration date
+    # Generate expiration date in the future
+    # Expiration date format is YYYY-MM-DDTHH:MM:SS.SSSZ
+    expiration_date = datetime.datetime.now() + datetime.timedelta(minutes=5)
+    expiration_date_str = expiration_date.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    response = authorized_client.post(
+        "/auth/recovery_token",
+        json={"expiration": expiration_date_str},
+    )
+    assert response.status_code == 200
+    assert "token" in response.json
+    mnemonic_token = response.json["token"]
+    token = Mnemonic(language="english").to_entropy(mnemonic_token).hex()
+    assert read_json(tokens_file)["recovery_token"]["token"] == token
+    assert read_json(tokens_file)["recovery_token"]["expiration"] == expiration_date_str
+
+    time_generated = read_json(tokens_file)["recovery_token"]["date"]
+    assert time_generated is not None
+    # Assert that the token was generated near the current time
+    assert (
+        datetime.datetime.strptime(time_generated, "%Y-%m-%dT%H:%M:%S.%fZ")
+        - datetime.timedelta(seconds=5)
+        < datetime.datetime.now()
+    )
+
+    # Try to get token status
+    response = client.get("/auth/recovery_token")
+    assert response.status_code == 200
+    assert response.json == {
+        "exists": True,
+        "valid": True,
+        "date": time_generated,
+        "expiration": expiration_date_str,
+        "uses_left": None,
+    }
+
+    # Try to use the token
+    recovery_response = client.post(
+        "/auth/recovery_token/use",
+        json={"token": mnemonic_token, "device": "recovery_device"},
+    )
+    assert recovery_response.status_code == 200
+    new_token = recovery_response.json["token"]
+    assert read_json(tokens_file)["tokens"][2]["token"] == new_token
+    assert read_json(tokens_file)["tokens"][2]["name"] == "recovery_device"
+
+    # Try to use token again
+    recovery_response = client.post(
+        "/auth/recovery_token/use",
+        json={"token": mnemonic_token, "device": "recovery_device2"},
+    )
+    assert recovery_response.status_code == 200
+    new_token = recovery_response.json["token"]
+    assert read_json(tokens_file)["tokens"][3]["token"] == new_token
+    assert read_json(tokens_file)["tokens"][3]["name"] == "recovery_device2"
+
+    # Try to use token after expiration date
+    new_data = read_json(tokens_file)
+    new_data["recovery_token"]["expiration"] = datetime.datetime.now().strftime(
+        "%Y-%m-%dT%H:%M:%S.%fZ"
+    )
+    write_json(tokens_file, new_data)
+    recovery_response = client.post(
+        "/auth/recovery_token/use",
+        json={"token": mnemonic_token, "device": "recovery_device3"},
+    )
+    assert recovery_response.status_code == 404
+    # Assert that the token was not created in JSON
+    assert read_json(tokens_file)["tokens"] == new_data["tokens"]
+
+    # Get the status of the token
+    response = client.get("/auth/recovery_token")
+    assert response.status_code == 200
+    assert response.json == {
+        "exists": True,
+        "valid": False,
+        "date": time_generated,
+        "expiration": new_data["recovery_token"]["expiration"],
+        "uses_left": None,
+    }
+
+
+def test_generate_recovery_token_with_expiration_in_the_past(
+    authorized_client, client, tokens_file
+):
+    # Server must return 400 if expiration date is in the past
+    expiration_date = datetime.datetime.now() - datetime.timedelta(minutes=5)
+    expiration_date_str = expiration_date.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    response = authorized_client.post(
+        "/auth/recovery_token",
+        json={"expiration": expiration_date_str},
+    )
+    assert response.status_code == 400
+    assert "recovery_token" not in read_json(tokens_file)
+
+
+def test_generate_recovery_token_with_invalid_time_format(
+    authorized_client, client, tokens_file
+):
+    # Server must return 400 if expiration date is in the past
+    expiration_date = "invalid_time_format"
+    response = authorized_client.post(
+        "/auth/recovery_token",
+        json={"expiration": expiration_date},
+    )
+    assert response.status_code == 400
+    assert "recovery_token" not in read_json(tokens_file)
+
+
+def test_generate_recovery_token_with_limited_uses(
+    authorized_client, client, tokens_file
+):
+    # Generate token with limited uses
+    response = authorized_client.post(
+        "/auth/recovery_token",
+        json={"uses": 2},
+    )
+    assert response.status_code == 200
+    assert "token" in response.json
+    mnemonic_token = response.json["token"]
+    token = Mnemonic(language="english").to_entropy(mnemonic_token).hex()
+    assert read_json(tokens_file)["recovery_token"]["token"] == token
+    assert read_json(tokens_file)["recovery_token"]["uses_left"] == 2
+
+    # Get the date of the token
+    time_generated = read_json(tokens_file)["recovery_token"]["date"]
+    assert time_generated is not None
+    assert (
+        datetime.datetime.strptime(time_generated, "%Y-%m-%dT%H:%M:%S.%fZ")
+        - datetime.timedelta(seconds=5)
+        < datetime.datetime.now()
+    )
+
+    # Try to get token status
+    response = client.get("/auth/recovery_token")
+    assert response.status_code == 200
+    assert response.json == {
+        "exists": True,
+        "valid": True,
+        "date": time_generated,
+        "expiration": None,
+        "uses_left": 2,
+    }
+
+    # Try to use the token
+    recovery_response = client.post(
+        "/auth/recovery_token/use",
+        json={"token": mnemonic_token, "device": "recovery_device"},
+    )
+    assert recovery_response.status_code == 200
+    new_token = recovery_response.json["token"]
+    assert read_json(tokens_file)["tokens"][2]["token"] == new_token
+    assert read_json(tokens_file)["tokens"][2]["name"] == "recovery_device"
+
+    assert read_json(tokens_file)["recovery_token"]["uses_left"] == 1
+
+    # Get the status of the token
+    response = client.get("/auth/recovery_token")
+    assert response.status_code == 200
+    assert response.json == {
+        "exists": True,
+        "valid": True,
+        "date": time_generated,
+        "expiration": None,
+        "uses_left": 1,
+    }
+
+    # Try to use token again
+    recovery_response = client.post(
+        "/auth/recovery_token/use",
+        json={"token": mnemonic_token, "device": "recovery_device2"},
+    )
+    assert recovery_response.status_code == 200
+    new_token = recovery_response.json["token"]
+    assert read_json(tokens_file)["tokens"][3]["token"] == new_token
+    assert read_json(tokens_file)["tokens"][3]["name"] == "recovery_device2"
+
+    # Get the status of the token
+    response = client.get("/auth/recovery_token")
+    assert response.status_code == 200
+    assert response.json == {
+        "exists": True,
+        "valid": False,
+        "date": time_generated,
+        "expiration": None,
+        "uses_left": 0,
+    }
+
+    # Try to use token after limited uses
+    recovery_response = client.post(
+        "/auth/recovery_token/use",
+        json={"token": mnemonic_token, "device": "recovery_device3"},
+    )
+    assert recovery_response.status_code == 404
+
+    assert read_json(tokens_file)["recovery_token"]["uses_left"] == 0

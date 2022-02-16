@@ -161,7 +161,7 @@ def is_recovery_token_valid():
         if "expiration" not in recovery_token or recovery_token["expiration"] is None:
             return True
         return datetime.now() < datetime.strptime(
-            recovery_token["expiration"], "%Y-%m-%d %H:%M:%S.%f"
+            recovery_token["expiration"], "%Y-%m-%dT%H:%M:%S.%fZ"
         )
 
 
@@ -210,8 +210,10 @@ def generate_recovery_token(expiration=None, uses_left=None):
     with WriteUserData(UserDataFiles.TOKENS) as tokens:
         tokens["recovery_token"] = {
             "token": recovery_token_str,
-            "date": str(datetime.now()),
-            "expiration": expiration if expiration is not None else None,
+            "date": str(datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")),
+            "expiration": expiration.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            if expiration is not None
+            else None,
             "uses_left": uses_left if uses_left is not None else None,
         }
     return Mnemonic(language="english").to_mnemonic(recovery_token)
