@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """New device auth module"""
-from flask import request
 from flask_restful import Resource, reqparse
 
 from selfprivacy_api.resources.api_auth import api

@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 from selfprivacy_api.migrations.migration import Migration
-from selfprivacy_api.utils import USERDATA_FILE, TOKENS_FILE, ReadUserData
+from selfprivacy_api.utils import TOKENS_FILE, ReadUserData
 
 
 class CreateTokensJson(Migration):
@@ -50,7 +50,7 @@ class CreateTokensJson(Migration):
                     }
                 ]
             }
-            with open(TOKENS_FILE, "w") as tokens:
+            with open(TOKENS_FILE, "w", encoding="utf-8") as tokens:
                 json.dump(structure, tokens, indent=4)
             print("Done")
         except Exception as e:

@@ -105,10 +105,7 @@ class ResticController:
             "--json",
         ]
 
-        if (
-            self.state == ResticStates.BACKING_UP
-            or self.state == ResticStates.RESTORING
-        ):
+        if self.state in (ResticStates.BACKING_UP, ResticStates.RESTORING):
             return
         with subprocess.Popen(
             backup_listing_command,
@@ -129,10 +126,9 @@ class ResticController:
             if "Is there a repository at the following location?" in snapshots_list:
                 self.state = ResticStates.NOT_INITIALIZED
                 return
-            else:
-                self.state = ResticStates.ERROR
-                self.error_message = snapshots_list
-                return
+            self.state = ResticStates.ERROR
+            self.error_message = snapshots_list
+            return
 
     def initialize_repository(self):
         """
@@ -195,10 +191,7 @@ class ResticController:
         """
         backup_status_check_command = ["tail", "-1", "/var/backup.log"]
 
-        if (
-            self.state == ResticStates.NO_KEY
-            or self.state == ResticStates.NOT_INITIALIZED
-        ):
+        if self.state in (ResticStates.NO_KEY, ResticStates.NOT_INITIALIZED):
             return
 
         # If the log file does not exists

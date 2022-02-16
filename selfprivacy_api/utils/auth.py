@@ -222,7 +222,8 @@ def generate_recovery_token(expiration=None, uses_left=None):
 def use_mnemonic_recoverery_token(mnemonic_phrase, name):
     """Use the recovery token by converting the mnemonic word list to a byte array.
     If the recovery token if invalid itself, return None
-    If the binary representation of phrase not matches the byte array of the recovery token, return None.
+    If the binary representation of phrase not matches
+    the byte array of the recovery token, return None.
     If the mnemonic phrase is valid then generate a device token and return it.
     Substract 1 from uses_left if it exists.
     mnemonic_phrase is a string representation of the mnemonic word list.
@@ -258,7 +259,8 @@ def use_mnemonic_recoverery_token(mnemonic_phrase, name):
 
 
 def get_new_device_auth_token():
-    """Generate a new device auth token which is valid for 10 minutes and return a mnemonic phrase representation
+    """Generate a new device auth token which is valid for 10 minutes
+    and return a mnemonic phrase representation
     Write token to the new_device of the tokens.json file.
     """
     token = secrets.token_bytes(16)

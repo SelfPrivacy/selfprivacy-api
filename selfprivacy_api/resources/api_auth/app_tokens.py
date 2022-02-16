@@ -7,7 +7,6 @@ from selfprivacy_api.resources.api_auth import api
 from selfprivacy_api.utils.auth import (
     delete_token,
     get_tokens_info,
-    delete_token,
     is_token_name_exists,
     is_token_name_pair_valid,
     refresh_token,
