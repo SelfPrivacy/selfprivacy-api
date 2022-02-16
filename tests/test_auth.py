@@ -36,8 +36,12 @@ def test_get_tokens_info(authorized_client, tokens_file):
     response = authorized_client.get("/auth/tokens")
     assert response.status_code == 200
     assert response.json == [
-        {"name": "test_token", "date": "2022-01-14 08:31:10.789314"},
-        {"name": "test_token2", "date": "2022-01-14 08:31:10.789314"},
+        {"name": "test_token", "date": "2022-01-14 08:31:10.789314", "is_caller": True},
+        {
+            "name": "test_token2",
+            "date": "2022-01-14 08:31:10.789314",
+            "is_caller": False,
+        },
     ]
 
 

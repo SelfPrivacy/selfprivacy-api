@@ -11,7 +11,7 @@ from selfprivacy_api.utils.auth import (
     is_token_name_exists,
     is_token_name_pair_valid,
     refresh_token,
-    is_token_valid,
+    get_token_name,
 )
 
 
@@ -36,7 +36,18 @@ class Tokens(Resource):
             400:
                 description: Bad request
         """
-        return get_tokens_info()
+        caller_name = get_token_name(request.headers.get("Authorization").split(" ")[1])
+        tokens = get_tokens_info()
+        # Retrun a list of tokens and if it is the caller's token
+        # it will be marked with a flag
+        return [
+            {
+                "name": token["name"],
+                "date": token["date"],
+                "is_caller": token["name"] == caller_name,
+            }
+            for token in tokens
+        ]
 
     def delete(self):
         """

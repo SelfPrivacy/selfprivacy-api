@@ -86,6 +86,15 @@ def is_token_name_pair_valid(token_name, token):
         return False
 
 
+def get_token_name(token):
+    """Return the name of the token provided"""
+    with ReadUserData(UserDataFiles.TOKENS) as tokens:
+        for t in tokens["tokens"]:
+            if t["token"] == token:
+                return t["name"]
+        return None
+
+
 def get_tokens_info():
     """Get all tokens info without tokens themselves"""
     with ReadUserData(UserDataFiles.TOKENS) as tokens:
