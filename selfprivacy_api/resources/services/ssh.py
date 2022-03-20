@@ -357,6 +357,9 @@ class SSHKeys(Resource):
                 for key in data["ssh"]["rootKeys"]:
                     if key == args["public_key"]:
                         data["ssh"]["rootKeys"].remove(key)
+                        # If rootKeys became zero length, add empty string
+                        if len(data["ssh"]["rootKeys"]) == 0:
+                            data["ssh"]["rootKeys"].append("")
                         return {
                             "message": "SSH key deleted",
                         }, 200
