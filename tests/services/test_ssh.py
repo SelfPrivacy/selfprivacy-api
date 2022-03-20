@@ -305,9 +305,12 @@ def test_delete_root_key(authorized_client, root_and_admin_have_keys):
         "/services/ssh/keys/root", json={"public_key": "ssh-ed25519 KEY test@pc"}
     )
     assert response.status_code == 200
-    assert read_json(root_and_admin_have_keys / "root_and_admin_have_keys.json")["ssh"][
+    assert (
         "rootKeys"
-    ] == [""]
+        not in read_json(root_and_admin_have_keys / "root_and_admin_have_keys.json")[
+            "ssh"
+        ]
+    )
 
 
 def test_delete_root_nonexistent_key(authorized_client, root_and_admin_have_keys):
