@@ -1,6 +1,9 @@
 # pylint: disable=redefined-outer-name
 # pylint: disable=unused-argument
+# pylint: disable=missing-function-docstring
+
 import json
+import os
 import pytest
 from selfprivacy_api.utils import get_domain
 
@@ -73,6 +76,12 @@ class BrokenServiceMock(ProcessMock):
 @pytest.fixture
 def mock_subprocess_popen(mocker):
     mock = mocker.patch("subprocess.Popen", autospec=True, return_value=ProcessMock)
+    return mock
+
+
+@pytest.fixture
+def mock_os_chdir(mocker):
+    mock = mocker.patch("os.chdir", autospec=True)
     return mock
 
 
@@ -384,14 +393,22 @@ def test_pull_system_unauthorized(client, mock_subprocess_popen):
     assert mock_subprocess_popen.call_count == 0
 
 
-def test_pull_system(authorized_client, mock_subprocess_popen):
+def test_pull_system(authorized_client, mock_subprocess_popen, mock_os_chdir):
+    current_dir = os.getcwd()
     response = authorized_client.get("/system/configuration/pull")
     assert response.status_code == 200
     assert mock_subprocess_popen.call_count == 1
     assert mock_subprocess_popen.call_args[0][0] == ["git", "pull"]
+    assert mock_os_chdir.call_count == 2
+    assert mock_os_chdir.call_args_list[0][0][0] == "/etc/nixos"
+    assert mock_os_chdir.call_args_list[1][0][0] == current_dir
 
 
-def test_pull_system_broken_repo(authorized_client, mock_broken_service):
+def test_pull_system_broken_repo(authorized_client, mock_broken_service, mock_os_chdir):
+    current_dir = os.getcwd()
     response = authorized_client.get("/system/configuration/pull")
     assert response.status_code == 500
     assert mock_broken_service.call_count == 1
+    assert mock_os_chdir.call_count == 2
+    assert mock_os_chdir.call_args_list[0][0][0] == "/etc/nixos"
+    assert mock_os_chdir.call_args_list[1][0][0] == current_dir
