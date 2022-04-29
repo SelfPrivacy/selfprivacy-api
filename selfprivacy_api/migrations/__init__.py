@@ -11,8 +11,9 @@ Adding DISABLE_ALL to that array disables the migrations module entirely.
 from selfprivacy_api.utils import ReadUserData
 from selfprivacy_api.migrations.fix_nixos_config_branch import FixNixosConfigBranch
 from selfprivacy_api.migrations.create_tokens_json import CreateTokensJson
+from selfprivacy_api.migrations.migrate_to_selfprivacy_channel import MigrateToSelfprivacyChannel
 
-migrations = [FixNixosConfigBranch(), CreateTokensJson()]
+migrations = [FixNixosConfigBranch(), CreateTokensJson(), MigrateToSelfprivacyChannel()]
 
 
 def run_migrations():
