@@ -89,7 +89,7 @@ class Users(Resource):
         if not re.match(r"^[a-z_][a-z0-9_]+$", args["username"]):
             return {"error": "username must be alphanumeric"}, 400
         # Check if username less than 32 characters
-        if len(args["username"]) > 32:
+        if len(args["username"]) >= 32:
             return {"error": "username must be less than 32 characters"}, 400
 
         with WriteUserData() as data:

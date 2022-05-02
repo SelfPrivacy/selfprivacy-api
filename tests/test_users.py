@@ -213,7 +213,7 @@ def test_post_user_to_undefined_users(
 
 def test_post_very_long_username(authorized_client, one_user, mock_subprocess_popen):
     response = authorized_client.post(
-        "/users", json={"username": "a" * 100, "password": "password"}
+        "/users", json={"username": "a" * 32, "password": "password"}
     )
     assert response.status_code == 400
 
