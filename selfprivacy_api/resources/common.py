@@ -23,4 +23,4 @@ class ApiVersion(Resource):
             401:
                 description: Unauthorized
         """
-        return {"version": "1.2.2"}
+        return {"version": "1.2.3"}
