@@ -6,6 +6,7 @@ from selfprivacy_api.migrations.migration import Migration
 
 class MigrateToSelfprivacyChannel(Migration):
     """Migrate to selfprivacy Nix channel."""
+
     def get_migration_name(self):
         return "migrate_to_selfprivacy_channel"
 
