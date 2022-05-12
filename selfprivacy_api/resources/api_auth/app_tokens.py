@@ -64,7 +64,7 @@ class Tokens(Resource):
               schema:
                   type: object
                   properties:
-                      token:
+                      token_name:
                           type: string
                           description: Token name to delete
                           required: true

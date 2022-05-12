@@ -24,8 +24,15 @@ class Users(Resource):
             401:
                 description: Unauthorized
         """
+        parser = reqparse.RequestParser(bundle_errors=True)
+        parser.add_argument("withMainUser", type=bool, required=False)
+        args = parser.parse_args()
+        with_main_user = False if args["withMainUser"] is None else args["withMainUser"]
+
         with ReadUserData() as data:
             users = []
+            if with_main_user:
+                users.append(data["username"])
             if "users" in data:
                 for user in data["users"]:
                     users.append(user["username"])
@@ -96,7 +103,10 @@ class Users(Resource):
             if "users" not in data:
                 data["users"] = []
 
-            # Return 400 if user already exists
+            # Return 409 if user already exists
+            if data["username"] == args["username"]:
+                return {"error": "User already exists"}, 409
+
             for user in data["users"]:
                 if user["username"] == args["username"]:
                     return {"error": "User already exists"}, 409

@@ -130,10 +130,22 @@ def test_get_one_user(authorized_client, one_user, mock_subprocess_popen):
     assert response.json == ["user1"]
 
 
+def test_get_one_user_with_main(authorized_client, one_user, mock_subprocess_popen):
+    response = authorized_client.get("/users?withMainUser=true")
+    assert response.status_code == 200
+    assert response.json == ["tester", "user1"]
+
+
 def test_get_no_users(authorized_client, no_users, mock_subprocess_popen):
     response = authorized_client.get("/users")
     assert response.status_code == 200
     assert response.json == []
+
+
+def test_get_no_users_with_main(authorized_client, no_users, mock_subprocess_popen):
+    response = authorized_client.get("/users?withMainUser=true")
+    assert response.status_code == 200
+    assert response.json == ["tester"]
 
 
 def test_get_undefined_users(
@@ -195,6 +207,13 @@ def test_post_system_user(authorized_client, one_user, mock_subprocess_popen, us
 def test_post_existing_user(authorized_client, one_user, mock_subprocess_popen):
     response = authorized_client.post(
         "/users", json={"username": "user1", "password": "password"}
+    )
+    assert response.status_code == 409
+
+
+def test_post_existing_main_user(authorized_client, one_user, mock_subprocess_popen):
+    response = authorized_client.post(
+        "/users", json={"username": "tester", "password": "password"}
     )
     assert response.status_code == 409
 
