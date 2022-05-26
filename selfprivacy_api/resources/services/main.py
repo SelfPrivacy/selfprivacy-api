@@ -55,7 +55,7 @@ class ServiceStatus(Resource):
         http_service = subprocess.Popen(["systemctl", "status", "nginx.service"])
         http_service.communicate()[0]
         bitwarden_service = subprocess.Popen(
-            ["systemctl", "status", "bitwarden_rs.service"]
+            ["systemctl", "status", "vaultwarden.service"]
         )
         bitwarden_service.communicate()[0]
         gitea_service = subprocess.Popen(["systemctl", "status", "gitea.service"])

@@ -28,7 +28,7 @@ def call_args_asserts(mocked_object):
     assert mocked_object.call_args_list[3][0][0] == [
         "systemctl",
         "status",
-        "bitwarden_rs.service",
+        "vaultwarden.service",
     ]
     assert mocked_object.call_args_list[4][0][0] == [
         "systemctl",
