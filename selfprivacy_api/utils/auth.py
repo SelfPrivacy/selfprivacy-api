@@ -120,7 +120,7 @@ def create_token(name):
             {
                 "token": token,
                 "name": name,
-                "date": str(datetime.now()),
+                "date": str(datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")),
             }
         )
     return token
@@ -282,9 +282,15 @@ def _get_new_device_auth_token():
         new_device = tokens["new_device"]
         if "expiration" not in new_device:
             return None
-        if datetime.now() > datetime.strptime(
-            new_device["expiration"], "%Y-%m-%d %H:%M:%S.%f"
-        ):
+        if new_device["expiration"].endswith("Z"):
+            expiration = datetime.strptime(
+                new_device["expiration"], "%Y-%m-%dT%H:%M:%S.%fZ"
+            )
+        else:
+            expiration = datetime.strptime(
+                new_device["expiration"], "%Y-%m-%d %H:%M:%S.%f"
+            )
+        if datetime.now() > expiration:
             return None
         return new_device["token"]
 
