@@ -10,6 +10,9 @@ from selfprivacy_api.graphql.queries.api import Api
 class Query:
     """Root schema for queries"""
     system: System
-    api: Api
+    @strawberry.field
+    def api(self) -> Api:
+        """API access status"""
+        return Api()
 
 schema = strawberry.Schema(query=Query)

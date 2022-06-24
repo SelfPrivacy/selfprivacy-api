@@ -60,6 +60,16 @@ class RecoveryToken(Resource):
                 "uses_left": None,
             }
         status = get_recovery_token_status()
+        # check if status is None
+        if status is None:
+            return {
+                "exists": False,
+                "valid": False,
+                "date": None,
+                "expiration": None,
+                "uses_left": None,
+            }
+
         if not is_recovery_token_valid():
             return {
                 "exists": True,
