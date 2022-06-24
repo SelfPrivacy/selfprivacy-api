@@ -22,7 +22,7 @@ def get_api_version() -> str:
 
 def get_devices() -> typing.List[ApiDevice]:
     """Get list of devices"""
-    caller_name = get_token_name(request.headers.get("Authorization").split(" ")[1])
+    caller_name = get_token_name(request.headers.get("Authorization").split(" ")[1] if request.headers.get("Authorization") is not None else None)
     tokens = get_tokens_info()
     return [
         ApiDevice(
@@ -47,7 +47,7 @@ def get_recovery_key_status() -> ApiRecoveryKeyStatus:
     return ApiRecoveryKeyStatus(
         exists=True,
         valid=is_recovery_token_valid(),
-        creation_date=datetime.datetime.strptime(status["creation_date"], "%Y-%m-%dT%H:%M:%S.%fZ"),
-        expiration_date=datetime.datetime.strptime(status["expiration_date"], "%Y-%m-%dT%H:%M:%S.%fZ") if status["expiration_date"] is not None else None,
+        creation_date=datetime.datetime.strptime(status["date"], "%Y-%m-%dT%H:%M:%S.%fZ"),
+        expiration_date=datetime.datetime.strptime(status["expiration"], "%Y-%m-%dT%H:%M:%S.%fZ") if status["expiration"] is not None else None,
         uses_left=status["uses_left"] if status["uses_left"] is not None else None,
     )
