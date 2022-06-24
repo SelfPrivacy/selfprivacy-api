@@ -4,7 +4,7 @@ import datetime
 import typing
 import strawberry
 
-from selfprivacy_api.resolve_functions.api import get_api_version
+from selfprivacy_api.resolvers.api import get_api_version
 
 @strawberry.type
 class ApiDevice:
