@@ -4,6 +4,7 @@ import datetime
 import typing
 from flask import request
 import strawberry
+from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.utils import parse_date
 
 from selfprivacy_api.utils.auth import (
@@ -74,5 +75,5 @@ def get_recovery_key_status() -> ApiRecoveryKeyStatus:
 class Api:
     """API access status"""
     version: str = strawberry.field(resolver=get_api_version)
-    devices: typing.List[ApiDevice] = strawberry.field(resolver=get_devices)
-    recovery_key: ApiRecoveryKeyStatus = strawberry.field(resolver=get_recovery_key_status)
+    devices: typing.List[ApiDevice] = strawberry.field(resolver=get_devices, permission_classes=[IsAuthenticated])
+    recovery_key: ApiRecoveryKeyStatus = strawberry.field(resolver=get_recovery_key_status, permission_classes=[IsAuthenticated])
