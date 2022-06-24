@@ -8,6 +8,7 @@ from flask import Flask, request, jsonify
 from flask_restful import Api
 from flask_swagger import swagger
 from flask_swagger_ui import get_swaggerui_blueprint
+from flask_cors import CORS
 
 from strawberry.flask.views import AsyncGraphQLView
 
@@ -34,6 +35,7 @@ def create_app(test_config=None):
     """Initiate Flask app and bind routes"""
     app = Flask(__name__)
     api = Api(app)
+    CORS(app)
 
     if test_config is None:
         app.config["ENABLE_SWAGGER"] = os.environ.get("ENABLE_SWAGGER", "0")
