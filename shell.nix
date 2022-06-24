@@ -16,6 +16,30 @@ let
     mnemonic
     coverage
     pylint
+    pydantic
+    typing-extensions
+    (buildPythonPackage rec {
+      pname = "strawberry-graphql";
+      version = "0.114.5";
+      format = "pyproject";
+      patches = [
+        ./strawberry-graphql.patch
+      ];
+      propagatedBuildInputs = [
+        typing-extensions
+        graphql-core
+        python-multipart
+        python-dateutil
+        flask
+        pydantic
+        pygments
+        poetry
+      ];
+      src = fetchPypi {
+        inherit pname version;
+        sha256 = "b6e007281cf29a66eeba66a512744853d8aa53b4ca2525befb6f350bb7b24df6";
+      };
+    })
   ]);
 in
 pkgs.mkShell {
