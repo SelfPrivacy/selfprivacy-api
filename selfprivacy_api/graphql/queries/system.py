@@ -4,7 +4,7 @@ import subprocess
 import typing
 import strawberry
 
-from selfprivacy_api.graphql.queries.common import Alert
+from selfprivacy_api.graphql.queries.common import Alert, Severity
 from selfprivacy_api.graphql.queries.providers import DnsProvider, ServerProvider
 from selfprivacy_api.utils import ReadUserData
 
@@ -150,9 +150,14 @@ class System:
     Base system type which represents common system status
     """
 
-    status: Alert
+    status: Alert = strawberry.field(resolver=lambda: Alert(
+        severity=Severity.INFO,
+        title="Test message",
+        message="Test message",
+        timestamp=None
+    ))
     domain: SystemDomainInfo = strawberry.field(resolver=get_system_domain_info)
-    settings: SystemSettings
-    info: SystemInfo
+    settings: SystemSettings = SystemSettings()
+    info: SystemInfo = SystemInfo()
     provider: SystemProviderInfo = strawberry.field(resolver=get_system_provider_info)
     busy: bool = False

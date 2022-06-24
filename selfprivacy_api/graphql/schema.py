@@ -11,7 +11,10 @@ from selfprivacy_api.graphql.queries.system import System
 class Query:
     """Root schema for queries"""
 
-    system: System
+    @strawberry.field
+    def system(self) -> System:
+        """System queries"""
+        return System()
 
     @strawberry.field
     def api(self) -> Api:
