@@ -7,42 +7,57 @@ index 3283fce..89d3e8c 100644
  aiohttp = {version = "^3.7.4.post0", optional = true}
  fastapi = {version = ">=0.65.2", optional = true}
 -"backports.cached-property" = "^1.0.1"
-
+ 
  [tool.poetry.dev-dependencies]
  pytest = "^7.1"
 diff --git a/strawberry/field.py b/strawberry/field.py
-index 4e7ee4b..7272188 100644
+index 4e7ee4b..06c2044 100644
 --- a/strawberry/field.py
 +++ b/strawberry/field.py
-@@ -18,7 +18,6 @@ from typing import (
+@@ -1,5 +1,6 @@
+ import builtins
+ import dataclasses
++from functools import cached_property
+ import inspect
+ import sys
+ from typing import (
+@@ -18,7 +19,6 @@ from typing import (
      overload,
  )
-
+ 
 -from backports.cached_property import cached_property
  from typing_extensions import Literal
-
+ 
  from strawberry.annotation import StrawberryAnnotation
 diff --git a/strawberry/types/fields/resolver.py b/strawberry/types/fields/resolver.py
-index 0409233..be97594 100644
+index 0409233..f4fbe9a 100644
 --- a/strawberry/types/fields/resolver.py
 +++ b/strawberry/types/fields/resolver.py
-@@ -6,8 +6,6 @@ import sys
+@@ -1,13 +1,12 @@
+ from __future__ import annotations as _
+ 
+ import builtins
++from functools import cached_property
+ import inspect
+ import sys
  from inspect import isasyncgenfunction, iscoroutinefunction
  from typing import Callable, Dict, Generic, List, Mapping, Optional, TypeVar, Union
-
+ 
 -from backports.cached_property import cached_property
 -
  from strawberry.annotation import StrawberryAnnotation
  from strawberry.arguments import StrawberryArgument
  from strawberry.exceptions import MissingArgumentsAnnotationsError
 diff --git a/strawberry/types/info.py b/strawberry/types/info.py
-index a172c04..6bbb578 100644
+index a172c04..475a3ee 100644
 --- a/strawberry/types/info.py
 +++ b/strawberry/types/info.py
-@@ -2,8 +2,6 @@ import dataclasses
+@@ -1,9 +1,8 @@
+ import dataclasses
++from functools import cached_property
  import warnings
  from typing import TYPE_CHECKING, Any, Dict, Generic, List, Optional, TypeVar, Union
-
+ 
 -from backports.cached_property import cached_property
 -
  from graphql import GraphQLResolveInfo, OperationDefinitionNode
