@@ -16,6 +16,11 @@ from selfprivacy_api.utils.auth import (
     get_token_name,
 )
 
+def parse_date(date_str: str) -> datetime.datetime:
+    """Parse date string which can be in
+    %Y-%m-%dT%H:%M:%S.%fZ or %Y-%m-%d %H:%M:%S.%f format"""
+    return datetime.datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S.%fZ") if date_str.endswith("Z") else datetime.datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S.%f")
+
 def get_api_version() -> str:
     """Get API version"""
     return "1.2.7"
@@ -27,7 +32,7 @@ def get_devices() -> typing.List[ApiDevice]:
     return [
         ApiDevice(
             name=token["name"],
-            creation_date=datetime.datetime.strptime(token["date"], "%Y-%m-%dT%H:%M:%S.%fZ"),
+            creation_date=parse_date(token["date"]),
             is_caller=token["name"] == caller_name,
         )
         for token in tokens
@@ -47,7 +52,7 @@ def get_recovery_key_status() -> ApiRecoveryKeyStatus:
     return ApiRecoveryKeyStatus(
         exists=True,
         valid=is_recovery_token_valid(),
-        creation_date=datetime.datetime.strptime(status["date"], "%Y-%m-%dT%H:%M:%S.%fZ"),
-        expiration_date=datetime.datetime.strptime(status["expiration"], "%Y-%m-%dT%H:%M:%S.%fZ") if status["expiration"] is not None else None,
+        creation_date=parse_date(status["date"]),
+        expiration_date=parse_date(status["expiration"]) if status["expiration"] is not None else None,
         uses_left=status["uses_left"] if status["uses_left"] is not None else None,
     )
