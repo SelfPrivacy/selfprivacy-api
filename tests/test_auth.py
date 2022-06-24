@@ -6,6 +6,8 @@ import re
 import pytest
 from mnemonic import Mnemonic
 
+from .common import read_json, write_json
+
 
 TOKENS_FILE_CONTETS = {
     "tokens": [
@@ -21,16 +23,6 @@ TOKENS_FILE_CONTETS = {
         },
     ]
 }
-
-
-def read_json(file_path):
-    with open(file_path, "r", encoding="utf-8") as file:
-        return json.load(file)
-
-
-def write_json(file_path, data):
-    with open(file_path, "w", encoding="utf-8") as file:
-        json.dump(data, file, indent=4)
 
 
 def test_get_tokens_info(authorized_client, tokens_file):

@@ -5,6 +5,10 @@ import subprocess
 import pytz
 from flask import Blueprint
 from flask_restful import Resource, Api, reqparse
+from selfprivacy_api.graphql.queries.system import (
+    get_python_version,
+    get_system_version,
+)
 
 from selfprivacy_api.utils import WriteUserData, ReadUserData
 
@@ -256,9 +260,7 @@ class SystemVersion(Resource):
                 description: Unauthorized
         """
         return {
-            "system_version": subprocess.check_output(["uname", "-a"])
-            .decode("utf-8")
-            .strip()
+            "system_version": get_system_version(),
         }
 
 
@@ -279,7 +281,7 @@ class PythonVersion(Resource):
             401:
                 description: Unauthorized
         """
-        return subprocess.check_output(["python", "-V"]).decode("utf-8").strip()
+        return get_python_version()
 
 
 class PullRepositoryChanges(Resource):

@@ -121,7 +121,12 @@ def is_username_forbidden(username):
 
     return False
 
+
 def parse_date(date_str: str) -> datetime.datetime:
     """Parse date string which can be in
     %Y-%m-%dT%H:%M:%S.%fZ or %Y-%m-%d %H:%M:%S.%f format"""
-    return datetime.datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S.%fZ") if date_str.endswith("Z") else datetime.datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S.%f")
+    return (
+        datetime.datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S.%fZ")
+        if date_str.endswith("Z")
+        else datetime.datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S.%f")
+    )

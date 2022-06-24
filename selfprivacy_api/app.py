@@ -93,10 +93,7 @@ def create_app(test_config=None):
         return jsonify({}), 404
 
     app.add_url_rule(
-        "/graphql",
-        view_func=AsyncGraphQLView.as_view(
-            "graphql", schema=schema
-        )
+        "/graphql", view_func=AsyncGraphQLView.as_view("graphql", schema=schema)
     )
 
     if app.config["ENABLE_SWAGGER"] == "1":

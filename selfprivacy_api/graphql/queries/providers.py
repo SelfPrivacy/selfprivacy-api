@@ -4,9 +4,11 @@ import datetime
 import typing
 import strawberry
 
+
 @strawberry.enum
 class DnsProvider(Enum):
     CLOUDFLARE = "CLOUDFLARE"
+
 
 @strawberry.enum
 class ServerProvider(Enum):

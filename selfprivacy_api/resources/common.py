@@ -3,6 +3,7 @@
 from flask_restful import Resource
 from selfprivacy_api.graphql.queries.api import get_api_version
 
+
 class ApiVersion(Resource):
     """SelfPrivacy API version"""
 
