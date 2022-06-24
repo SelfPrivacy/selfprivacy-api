@@ -3,7 +3,7 @@ import datetime
 import typing
 from flask import request
 
-from selfprivacy_api.graphql.queries.api import ApiDevice, ApiRecoveryKeyStatus
+from selfprivacy_api.graphql.queries.api_fields import ApiDevice, ApiRecoveryKeyStatus
 
 from selfprivacy_api.utils.auth import (
     get_recovery_token_status,

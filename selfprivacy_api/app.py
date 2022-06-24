@@ -23,7 +23,7 @@ from selfprivacy_api.migrations import run_migrations
 
 from selfprivacy_api.utils.auth import is_token_valid
 
-from selfprivacy_api.graphql import schema
+from selfprivacy_api.graphql.query import schema
 
 swagger_blueprint = get_swaggerui_blueprint(
     "/api/docs", "/api/swagger.json", config={"app_name": "SelfPrivacy API"}
