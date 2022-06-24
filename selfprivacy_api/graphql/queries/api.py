@@ -1,8 +1,11 @@
 """API access status"""
+# pylint: disable=too-few-public-methods
 import datetime
 import string
 import typing
 import strawberry
+
+from selfprivacy_api.resolvers.api import get_api_version
 
 @strawberry.type
 class ApiDevice:
@@ -20,6 +23,6 @@ class ApiRecoveryKeyStatus:
 
 @strawberry.type
 class Api:
-    version: str
+    version: str = strawberry.field(resolver=get_api_version)
     devices: typing.List[ApiDevice]
     recovery_key: ApiRecoveryKeyStatus

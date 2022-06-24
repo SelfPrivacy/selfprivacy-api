@@ -9,6 +9,8 @@ from flask_restful import Api
 from flask_swagger import swagger
 from flask_swagger_ui import get_swaggerui_blueprint
 
+from strawberry.flask.views import AsyncGraphQLView
+
 from selfprivacy_api.resources.users import User, Users
 from selfprivacy_api.resources.common import ApiVersion
 from selfprivacy_api.resources.system import api_system
@@ -20,6 +22,8 @@ from selfprivacy_api.restic_controller.tasks import huey, init_restic
 from selfprivacy_api.migrations import run_migrations
 
 from selfprivacy_api.utils.auth import is_token_valid
+
+from selfprivacy_api.graphql import schema
 
 swagger_blueprint = get_swaggerui_blueprint(
     "/api/docs", "/api/swagger.json", config={"app_name": "SelfPrivacy API"}
@@ -82,6 +86,13 @@ def create_app(test_config=None):
 
             return jsonify(swag)
         return jsonify({}), 404
+
+    app.add_url_rule(
+        "/graphql",
+        view_func=AsyncGraphQLView.as_view(
+            "graphql", shema=schema
+        )
+    )
 
     if app.config["ENABLE_SWAGGER"] == "1":
         app.register_blueprint(swagger_blueprint, url_prefix="/api/docs")

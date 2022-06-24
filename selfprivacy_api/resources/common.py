@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Unassigned views"""
 from flask_restful import Resource
-
+from selfprivacy_api.resolvers.api import get_api_version
 
 class ApiVersion(Resource):
     """SelfPrivacy API version"""
@@ -23,4 +23,4 @@ class ApiVersion(Resource):
             401:
                 description: Unauthorized
         """
-        return {"version": "1.2.7"}
+        return {"version": get_api_version()}
