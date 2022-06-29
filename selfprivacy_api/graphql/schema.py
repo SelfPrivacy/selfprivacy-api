@@ -2,8 +2,10 @@
 # pylint: disable=too-few-public-methods
 import typing
 import strawberry
+from selfprivacy_api.graphql import IsAuthenticated
+from selfprivacy_api.graphql.mutations.api_mutations import ApiMutations
 
-from selfprivacy_api.graphql.queries.api import Api
+from selfprivacy_api.graphql.queries.api_queries import Api
 from selfprivacy_api.graphql.queries.system import System
 
 
@@ -11,7 +13,7 @@ from selfprivacy_api.graphql.queries.system import System
 class Query:
     """Root schema for queries"""
 
-    @strawberry.field
+    @strawberry.field(permission_classes=[IsAuthenticated])
     def system(self) -> System:
         """System queries"""
         return System()
@@ -21,5 +23,9 @@ class Query:
         """API access status"""
         return Api()
 
+@strawberry.type
+class Mutation(ApiMutations):
+    """Root schema for mutations"""
+    pass
 
-schema = strawberry.Schema(query=Query)
+schema = strawberry.Schema(query=Query, mutation=Mutation)

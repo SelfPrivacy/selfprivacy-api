@@ -3,6 +3,7 @@
 import secrets
 from datetime import datetime, timedelta
 import re
+import typing
 
 from mnemonic import Mnemonic
 
@@ -190,7 +191,7 @@ def _get_recovery_token():
         return tokens["recovery_token"]["token"]
 
 
-def generate_recovery_token(expiration=None, uses_left=None):
+def generate_recovery_token(expiration: typing.Optional[datetime], uses_left: typing.Optional[int]) -> str:
     """Generate a 24 bytes recovery token and return a mneomnic word list.
     Write a string representation of the recovery token to the tokens.json file.
     """

@@ -1,5 +1,6 @@
 # pylint: disable=redefined-outer-name
 # pylint: disable=unused-argument
+# pylint: disable=missing-function-docstring
 import datetime
 import json
 import re
@@ -383,7 +384,7 @@ def test_generate_recovery_token_with_expiration_date(
 
 
 def test_generate_recovery_token_with_expiration_in_the_past(
-    authorized_client, client, tokens_file
+    authorized_client, tokens_file
 ):
     # Server must return 400 if expiration date is in the past
     expiration_date = datetime.datetime.now() - datetime.timedelta(minutes=5)
@@ -397,7 +398,7 @@ def test_generate_recovery_token_with_expiration_in_the_past(
 
 
 def test_generate_recovery_token_with_invalid_time_format(
-    authorized_client, client, tokens_file
+    authorized_client, tokens_file
 ):
     # Server must return 400 if expiration date is in the past
     expiration_date = "invalid_time_format"
