@@ -13,5 +13,8 @@ def write_json(file_path, data):
 def generate_api_query(query_array):
     return "query TestApi {\n api {" + "\n".join(query_array) + "}\n}"
 
+def generate_system_query(query_array):
+    return "query TestSystem {\n system {" + "\n".join(query_array) + "}\n}"
+
 def mnemonic_to_hex(mnemonic):
     return Mnemonic(language="english").to_entropy(mnemonic).hex()

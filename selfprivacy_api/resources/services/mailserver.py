@@ -7,7 +7,7 @@ from flask_restful import Resource
 
 from selfprivacy_api.resources.services import api
 
-from selfprivacy_api.utils import get_domain
+from selfprivacy_api.utils import get_dkim_key, get_domain
 
 
 class DKIMKey(Resource):
@@ -31,15 +31,11 @@ class DKIMKey(Resource):
         """
         domain = get_domain()
 
-        if os.path.exists("/var/dkim/" + domain + ".selector.txt"):
-            cat_process = subprocess.Popen(
-                ["cat", "/var/dkim/" + domain + ".selector.txt"], stdout=subprocess.PIPE
-            )
-            dkim = cat_process.communicate()[0]
-            dkim = base64.b64encode(dkim)
-            dkim = str(dkim, "utf-8")
-            return dkim
-        return "DKIM file not found", 404
+        dkim = get_dkim_key(domain)
+        if dkim is None:
+           return "DKIM file not found", 404
+        dkim = base64.b64encode(dkim.encode("utf-8")).decode("utf-8")
+        return dkim
 
 
 api.add_resource(DKIMKey, "/mailserver/dkim")
