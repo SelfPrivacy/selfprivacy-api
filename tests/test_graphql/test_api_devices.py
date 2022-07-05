@@ -2,8 +2,6 @@
 # pylint: disable=unused-argument
 # pylint: disable=missing-function-docstring
 import datetime
-import json
-import pytest
 from mnemonic import Mnemonic
 
 from tests.common import generate_api_query, read_json, write_json

@@ -127,7 +127,7 @@ def test_graphql_wrong_auth(wrong_auth_client):
     assert response.json.get("data") is None
 
 API_GET_DOMAIN_INFO = """
-domainInfo {
+domainInfo() {
     domain
     hostname
     provider
@@ -155,6 +155,12 @@ def dns_record(type="A", name="test.tld", content=None, ttl=3600, priority=None)
         "priority": priority,
     }
 
+def is_dns_record_in_array(records, dns_record) -> bool:
+    for record in records:
+        if record["type"] == dns_record["type"] and record["name"] == dns_record["name"] and record["content"] == dns_record["content"] and record["ttl"] == dns_record["ttl"] and record["priority"] == dns_record["priority"]:
+            return True
+    return False
+
 def test_graphql_get_domain(authorized_client, domain_file, mock_get_ip4, mock_get_ip6, turned_on):
     """Test get domain"""
     response = authorized_client.get(
@@ -168,28 +174,29 @@ def test_graphql_get_domain(authorized_client, domain_file, mock_get_ip4, mock_g
     assert response.json["data"]["system"]["domainInfo"]["domain"] == "test.tld"
     assert response.json["data"]["system"]["domainInfo"]["hostname"] == "test-instance"
     assert response.json["data"]["system"]["domainInfo"]["provider"] == "HETZNER"
-    assert response.json["data"]["system"]["domainInfo"]["requiredDnsRecords"] == [
-        dns_record(),
-        dns_record(type="AAAA"),
-        dns_record(name="api.test.tld"),
-        dns_record(name="api.test.tld", type="AAAA"),
-        dns_record(name="cloud.test.tld"),
-        dns_record(name="cloud.test.tld", type="AAAA"),
-        dns_record(name="git.test.tld"),
-        dns_record(name="git.test.tld", type="AAAA"),
-        dns_record(name="meet.test.tld"),
-        dns_record(name="meet.test.tld", type="AAAA"),
-        dns_record(name="password.test.tld"),
-        dns_record(name="password.test.tld", type="AAAA"),
-        dns_record(name="social.test.tld"),
-        dns_record(name="social.test.tld", type="AAAA"),
-        dns_record(name="vpn.test.tld"),
-        dns_record(name="vpn.test.tld", type="AAAA"),
-        dns_record(name="test.tld", type="MX", content="test.tld", priority=10),
-        dns_record(name="_dmarc.test.tld", type="TXT", content="v=DMARC1; p=none", ttl=18000),
-        dns_record(name="test.tld", type="TXT", content="v=spf1 a mx ip4:157.90.247.192 -all", ttl=18000),
-        dns_record(name="selector._domainkey.test.tld", type="TXT", content="I am a DKIM key", ttl=18000),
-    ]
+    dns_records = response.json["data"]["system"]["domainInfo"]["requiredDnsRecords"]
+    assert is_dns_record_in_array(dns_records, dns_record())
+    assert is_dns_record_in_array(dns_records, dns_record(type="AAAA"))
+    assert is_dns_record_in_array(dns_records, dns_record(name="api.test.tld"))
+    assert is_dns_record_in_array(dns_records, dns_record(name="api.test.tld", type="AAAA"))
+    assert is_dns_record_in_array(dns_records, dns_record(name="cloud.test.tld"))
+    assert is_dns_record_in_array(dns_records, dns_record(name="cloud.test.tld", type="AAAA"))
+    assert is_dns_record_in_array(dns_records, dns_record(name="git.test.tld"))
+    assert is_dns_record_in_array(dns_records, dns_record(name="git.test.tld", type="AAAA"))
+    assert is_dns_record_in_array(dns_records, dns_record(name="meet.test.tld"))
+    assert is_dns_record_in_array(dns_records, dns_record(name="meet.test.tld", type="AAAA"))
+    assert is_dns_record_in_array(dns_records, dns_record(name="password.test.tld"))
+    assert is_dns_record_in_array(dns_records, dns_record(name="password.test.tld", type="AAAA"))
+    assert is_dns_record_in_array(dns_records, dns_record(name="social.test.tld"))
+    assert is_dns_record_in_array(dns_records, dns_record(name="social.test.tld", type="AAAA"))
+    assert is_dns_record_in_array(dns_records, dns_record(name="vpn.test.tld"))
+    assert is_dns_record_in_array(dns_records, dns_record(name="vpn.test.tld", type="AAAA"))
+    assert is_dns_record_in_array(dns_records, dns_record(name="test.tld", type="MX", content="test.tld", priority=10))
+    assert is_dns_record_in_array(dns_records, dns_record(name="_dmarc.test.tld", type="TXT", content="v=DMARC1; p=none", ttl=18000))
+    assert is_dns_record_in_array(dns_records, dns_record(name="test.tld", type="TXT", content="v=spf1 a mx ip4:157.90.247.192 -all", ttl=18000))
+    assert is_dns_record_in_array(dns_records, dns_record(name="selector._domainkey.test.tld", type="TXT", content="I am a DKIM key", ttl=18000))
+
+def test_graphql
 
 API_GET_TIMEZONE = """
 settings {
