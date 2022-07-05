@@ -96,12 +96,12 @@ def mock_subprocess_check_output(mocker):
 
 @pytest.fixture
 def mock_get_ip4(mocker):
-    mock = mocker.patch("selfprivacy_api.utils.get_ip4", autospec=True, return_value="157.90.247.192")
+    mock = mocker.patch("selfprivacy_api.utils.network.get_ip4", autospec=True, return_value="157.90.247.192")
     return mock
 
 @pytest.fixture
 def mock_get_ip6(mocker):
-    mock = mocker.patch("selfprivacy_api.utils.get_ip6", autospec=True, return_value="fe80::9400:ff:fef1:34ae")
+    mock = mocker.patch("selfprivacy_api.utils.network.get_ip6", autospec=True, return_value="fe80::9400:ff:fef1:34ae")
     return mock
 
 @pytest.fixture
@@ -197,9 +197,9 @@ settings {
 }
 """
 
-def test_graphql_get_timezone_unauthorized(unauthorized_client, turned_on):
+def test_graphql_get_timezone_unauthorized(client, turned_on):
     """Test get timezone"""
-    response = unauthorized_client.get(
+    response = client.get(
         "/graphql",
         json={
             "query": generate_system_query([API_GET_TIMEZONE]),

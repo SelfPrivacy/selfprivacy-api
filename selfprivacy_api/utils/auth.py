@@ -133,7 +133,7 @@ def delete_token(token_name):
         tokens["tokens"] = [t for t in tokens["tokens"] if t["name"] != token_name]
 
 
-def refresh_token(token):
+def refresh_token(token: str) -> typing.Optional[str]:
     """Change the token field of the existing token"""
     new_token = _generate_token()
     with WriteUserData(UserDataFiles.TOKENS) as tokens:
@@ -259,7 +259,7 @@ def use_mnemonic_recoverery_token(mnemonic_phrase, name):
     return token
 
 
-def get_new_device_auth_token():
+def get_new_device_auth_token() -> str:
     """Generate a new device auth token which is valid for 10 minutes
     and return a mnemonic phrase representation
     Write token to the new_device of the tokens.json file.
