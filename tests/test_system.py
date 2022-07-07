@@ -60,14 +60,15 @@ class ProcessMock:
         self.args = args
         self.kwargs = kwargs
 
-    def communicate():
+    def communicate(self):
         return (b"", None)
 
     returncode = 0
 
 
 class BrokenServiceMock(ProcessMock):
-    def communicate():
+    """Mock subprocess.Popen"""
+    def communicate(self):
         return (b"Testing error", None)
 
     returncode = 3

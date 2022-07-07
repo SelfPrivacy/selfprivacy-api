@@ -54,14 +54,15 @@ class ProcessMock:
         self.args = args
         self.kwargs = kwargs
 
-    def communicate():
+    def communicate(self):
         return (b"", None)
 
     returncode = 0
 
 
 class BrokenServiceMock(ProcessMock):
-    def communicate():
+    """Mock subprocess.Popen for broken service"""
+    def communicate(self):
         return (b"Testing error", None)
 
     returncode = 3
@@ -114,7 +115,6 @@ info {
 }
 """
 
-
 def test_graphql_wrong_auth(wrong_auth_client):
     """Test wrong auth"""
     response = wrong_auth_client.get(
@@ -127,7 +127,7 @@ def test_graphql_wrong_auth(wrong_auth_client):
     assert response.json.get("data") is None
 
 API_GET_DOMAIN_INFO = """
-domainInfo() {
+domainInfo {
     domain
     hostname
     provider
@@ -196,8 +196,6 @@ def test_graphql_get_domain(authorized_client, domain_file, mock_get_ip4, mock_g
     assert is_dns_record_in_array(dns_records, dns_record(name="test.tld", type="TXT", content="v=spf1 a mx ip4:157.90.247.192 -all", ttl=18000))
     assert is_dns_record_in_array(dns_records, dns_record(name="selector._domainkey.test.tld", type="TXT", content="I am a DKIM key", ttl=18000))
 
-def test_graphql
-
 API_GET_TIMEZONE = """
 settings {
     timezone
@@ -205,7 +203,7 @@ settings {
 """
 
 def test_graphql_get_timezone_unauthorized(client, turned_on):
-    """Test get timezone"""
+    """Test get timezone without auth"""
     response = client.get(
         "/graphql",
         json={
@@ -227,8 +225,53 @@ def test_graphql_get_timezone(authorized_client, turned_on):
     assert response.json.get("data") is not None
     assert response.json["data"]["system"]["settings"]["timezone"] == "Europe/Moscow"
 
-API_GET_PYTHON_VERSION = """
-info {
-    pythonVersion
+def test_graphql_get_timezone_on_undefined(authorized_client, undefiened_config):
+    """Test get timezone when none is defined in config"""
+    response = authorized_client.get(
+        "/graphql",
+        json={
+            "query": generate_system_query([API_GET_TIMEZONE]),
+        },
+    )
+    assert response.status_code == 200
+    assert response.json.get("data") is not None
+    assert response.json["data"]["system"]["settings"]["timezone"] == "Europe/Uzhgorod"
+
+
+API_CHANGE_TIMEZONE_MUTATION = """
+mutation changeTimezone($timezone: String!) {
+    changeTimezone(timezone: $timezone) {
+        success
+        message
+        code
+        timezone
+    }
+}
+"""
+
+def test_graphql_change_timezone_unauthorized(client, turned_on):
+    """Test change timezone without auth"""
+    response = client.post(
+        "/graphql",
+        json={
+            "query": API_CHANGE_TIMEZONE_MUTATION,
+            "variables": {
+                "timezone": "Europe/Moscow",
+            },
+        },
+    )
+    assert response.status_code == 200
+    assert response.json.get("data") is None
+
+
+API_CHANGE_SERVER_SETTINGS = """
+mutation changeServerSettings($settings: SystemSettingsInput!) {
+    changeAutoUpgradeSettings(settings: $settings) {
+        success
+        message
+        code
+        enableAutoUpgrade
+        allowReboot
+    }
 }
 """
