@@ -7,6 +7,7 @@ import datetime
 
 from tests.common import generate_system_query, read_json, write_json
 
+
 @pytest.fixture
 def domain_file(mocker, datadir):
     mocker.patch("selfprivacy_api.utils.DOMAIN_FILE", datadir / "domain")
@@ -54,7 +55,7 @@ class ProcessMock:
         self.args = args
         self.kwargs = kwargs
 
-    def communicate(self):
+    def communicate():
         return (b"", None)
 
     returncode = 0
@@ -62,7 +63,8 @@ class ProcessMock:
 
 class BrokenServiceMock(ProcessMock):
     """Mock subprocess.Popen for broken service"""
-    def communicate(self):
+
+    def communicate():
         return (b"Testing error", None)
 
     returncode = 3
@@ -95,25 +97,42 @@ def mock_subprocess_check_output(mocker):
     )
     return mock
 
+
 @pytest.fixture
 def mock_get_ip4(mocker):
-    mock = mocker.patch("selfprivacy_api.utils.network.get_ip4", autospec=True, return_value="157.90.247.192")
+    mock = mocker.patch(
+        "selfprivacy_api.utils.network.get_ip4",
+        autospec=True,
+        return_value="157.90.247.192",
+    )
     return mock
+
 
 @pytest.fixture
 def mock_get_ip6(mocker):
-    mock = mocker.patch("selfprivacy_api.utils.network.get_ip6", autospec=True, return_value="fe80::9400:ff:fef1:34ae")
+    mock = mocker.patch(
+        "selfprivacy_api.utils.network.get_ip6",
+        autospec=True,
+        return_value="fe80::9400:ff:fef1:34ae",
+    )
     return mock
+
 
 @pytest.fixture
 def mock_dkim_key(mocker):
-    mock = mocker.patch("selfprivacy_api.utils.get_dkim_key", autospec=True, return_value="I am a DKIM key")
+    mock = mocker.patch(
+        "selfprivacy_api.utils.get_dkim_key",
+        autospec=True,
+        return_value="I am a DKIM key",
+    )
+
 
 API_PYTHON_VERSION_INFO = """
 info {
     pythonVersion
 }
 """
+
 
 def test_graphql_wrong_auth(wrong_auth_client):
     """Test wrong auth"""
@@ -125,6 +144,7 @@ def test_graphql_wrong_auth(wrong_auth_client):
     )
     assert response.status_code == 200
     assert response.json.get("data") is None
+
 
 API_GET_DOMAIN_INFO = """
 domainInfo {
@@ -141,6 +161,7 @@ domainInfo {
 }
 """
 
+
 def dns_record(type="A", name="test.tld", content=None, ttl=3600, priority=None):
     if content is None:
         if type == "A":
@@ -155,13 +176,23 @@ def dns_record(type="A", name="test.tld", content=None, ttl=3600, priority=None)
         "priority": priority,
     }
 
+
 def is_dns_record_in_array(records, dns_record) -> bool:
     for record in records:
-        if record["type"] == dns_record["type"] and record["name"] == dns_record["name"] and record["content"] == dns_record["content"] and record["ttl"] == dns_record["ttl"] and record["priority"] == dns_record["priority"]:
+        if (
+            record["type"] == dns_record["type"]
+            and record["name"] == dns_record["name"]
+            and record["content"] == dns_record["content"]
+            and record["ttl"] == dns_record["ttl"]
+            and record["priority"] == dns_record["priority"]
+        ):
             return True
     return False
 
-def test_graphql_get_domain(authorized_client, domain_file, mock_get_ip4, mock_get_ip6, turned_on):
+
+def test_graphql_get_domain(
+    authorized_client, domain_file, mock_get_ip4, mock_get_ip6, turned_on
+):
     """Test get domain"""
     response = authorized_client.get(
         "/graphql",
@@ -178,29 +209,69 @@ def test_graphql_get_domain(authorized_client, domain_file, mock_get_ip4, mock_g
     assert is_dns_record_in_array(dns_records, dns_record())
     assert is_dns_record_in_array(dns_records, dns_record(type="AAAA"))
     assert is_dns_record_in_array(dns_records, dns_record(name="api.test.tld"))
-    assert is_dns_record_in_array(dns_records, dns_record(name="api.test.tld", type="AAAA"))
+    assert is_dns_record_in_array(
+        dns_records, dns_record(name="api.test.tld", type="AAAA")
+    )
     assert is_dns_record_in_array(dns_records, dns_record(name="cloud.test.tld"))
-    assert is_dns_record_in_array(dns_records, dns_record(name="cloud.test.tld", type="AAAA"))
+    assert is_dns_record_in_array(
+        dns_records, dns_record(name="cloud.test.tld", type="AAAA")
+    )
     assert is_dns_record_in_array(dns_records, dns_record(name="git.test.tld"))
-    assert is_dns_record_in_array(dns_records, dns_record(name="git.test.tld", type="AAAA"))
+    assert is_dns_record_in_array(
+        dns_records, dns_record(name="git.test.tld", type="AAAA")
+    )
     assert is_dns_record_in_array(dns_records, dns_record(name="meet.test.tld"))
-    assert is_dns_record_in_array(dns_records, dns_record(name="meet.test.tld", type="AAAA"))
+    assert is_dns_record_in_array(
+        dns_records, dns_record(name="meet.test.tld", type="AAAA")
+    )
     assert is_dns_record_in_array(dns_records, dns_record(name="password.test.tld"))
-    assert is_dns_record_in_array(dns_records, dns_record(name="password.test.tld", type="AAAA"))
+    assert is_dns_record_in_array(
+        dns_records, dns_record(name="password.test.tld", type="AAAA")
+    )
     assert is_dns_record_in_array(dns_records, dns_record(name="social.test.tld"))
-    assert is_dns_record_in_array(dns_records, dns_record(name="social.test.tld", type="AAAA"))
+    assert is_dns_record_in_array(
+        dns_records, dns_record(name="social.test.tld", type="AAAA")
+    )
     assert is_dns_record_in_array(dns_records, dns_record(name="vpn.test.tld"))
-    assert is_dns_record_in_array(dns_records, dns_record(name="vpn.test.tld", type="AAAA"))
-    assert is_dns_record_in_array(dns_records, dns_record(name="test.tld", type="MX", content="test.tld", priority=10))
-    assert is_dns_record_in_array(dns_records, dns_record(name="_dmarc.test.tld", type="TXT", content="v=DMARC1; p=none", ttl=18000))
-    assert is_dns_record_in_array(dns_records, dns_record(name="test.tld", type="TXT", content="v=spf1 a mx ip4:157.90.247.192 -all", ttl=18000))
-    assert is_dns_record_in_array(dns_records, dns_record(name="selector._domainkey.test.tld", type="TXT", content="I am a DKIM key", ttl=18000))
+    assert is_dns_record_in_array(
+        dns_records, dns_record(name="vpn.test.tld", type="AAAA")
+    )
+    assert is_dns_record_in_array(
+        dns_records,
+        dns_record(name="test.tld", type="MX", content="test.tld", priority=10),
+    )
+    assert is_dns_record_in_array(
+        dns_records,
+        dns_record(
+            name="_dmarc.test.tld", type="TXT", content="v=DMARC1; p=none", ttl=18000
+        ),
+    )
+    assert is_dns_record_in_array(
+        dns_records,
+        dns_record(
+            name="test.tld",
+            type="TXT",
+            content="v=spf1 a mx ip4:157.90.247.192 -all",
+            ttl=18000,
+        ),
+    )
+    assert is_dns_record_in_array(
+        dns_records,
+        dns_record(
+            name="selector._domainkey.test.tld",
+            type="TXT",
+            content="I am a DKIM key",
+            ttl=18000,
+        ),
+    )
+
 
 API_GET_TIMEZONE = """
 settings {
     timezone
 }
 """
+
 
 def test_graphql_get_timezone_unauthorized(client, turned_on):
     """Test get timezone without auth"""
@@ -212,6 +283,7 @@ def test_graphql_get_timezone_unauthorized(client, turned_on):
     )
     assert response.status_code == 200
     assert response.json.get("data") is None
+
 
 def test_graphql_get_timezone(authorized_client, turned_on):
     """Test get timezone"""
@@ -225,7 +297,8 @@ def test_graphql_get_timezone(authorized_client, turned_on):
     assert response.json.get("data") is not None
     assert response.json["data"]["system"]["settings"]["timezone"] == "Europe/Moscow"
 
-def test_graphql_get_timezone_on_undefined(authorized_client, undefiened_config):
+
+def test_graphql_get_timezone_on_undefined(authorized_client, undefined_config):
     """Test get timezone when none is defined in config"""
     response = authorized_client.get(
         "/graphql",
@@ -248,6 +321,7 @@ mutation changeTimezone($timezone: String!) {
     }
 }
 """
+
 
 def test_graphql_change_timezone_unauthorized(client, turned_on):
     """Test change timezone without auth"""

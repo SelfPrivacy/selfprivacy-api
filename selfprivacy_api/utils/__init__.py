@@ -133,6 +133,7 @@ def parse_date(date_str: str) -> datetime.datetime:
         else datetime.datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S.%f")
     )
 
+
 def get_dkim_key(domain):
     """Get DKIM key from /var/dkim/<domain>.selector.txt"""
     if os.path.exists("/var/dkim/" + domain + ".selector.txt"):

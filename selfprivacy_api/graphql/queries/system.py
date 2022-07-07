@@ -150,12 +150,14 @@ class System:
     Base system type which represents common system status
     """
 
-    status: Alert = strawberry.field(resolver=lambda: Alert(
-        severity=Severity.INFO,
-        title="Test message",
-        message="Test message",
-        timestamp=None
-    ))
+    status: Alert = strawberry.field(
+        resolver=lambda: Alert(
+            severity=Severity.INFO,
+            title="Test message",
+            message="Test message",
+            timestamp=None,
+        )
+    )
     domain: SystemDomainInfo = strawberry.field(resolver=get_system_domain_info)
     settings: SystemSettings = SystemSettings()
     info: SystemInfo = SystemInfo()

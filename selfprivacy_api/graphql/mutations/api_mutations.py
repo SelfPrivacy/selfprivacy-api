@@ -5,7 +5,10 @@ import typing
 from flask import request
 import strawberry
 from selfprivacy_api.graphql import IsAuthenticated
-from selfprivacy_api.graphql.mutations.mutation_interface import GenericMutationReturn, MutationReturnInterface
+from selfprivacy_api.graphql.mutations.mutation_interface import (
+    GenericMutationReturn,
+    MutationReturnInterface,
+)
 
 from selfprivacy_api.utils.auth import (
     delete_new_device_auth_token,
@@ -16,39 +19,50 @@ from selfprivacy_api.utils.auth import (
     is_token_name_pair_valid,
     refresh_token,
     use_mnemonic_recoverery_token,
-    use_new_device_auth_token
+    use_new_device_auth_token,
 )
+
 
 @strawberry.type
 class ApiKeyMutationReturn(MutationReturnInterface):
     key: typing.Optional[str]
 
+
 @strawberry.type
 class DeviceApiTokenMutationReturn(MutationReturnInterface):
     token: typing.Optional[str]
 
+
 @strawberry.input
 class RecoveryKeyLimitsInput:
     """Recovery key limits input"""
+
     expiration_date: typing.Optional[datetime.datetime]
     uses: typing.Optional[int]
+
 
 @strawberry.input
 class UseRecoveryKeyInput:
     """Use recovery key input"""
+
     key: str
     deviceName: str
+
 
 @strawberry.input
 class UseNewDeviceKeyInput:
     """Use new device key input"""
+
     key: str
     deviceName: str
+
 
 @strawberry.type
 class ApiMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def get_new_recovery_api_key(self, limits: RecoveryKeyLimitsInput) -> ApiKeyMutationReturn:
+    def get_new_recovery_api_key(
+        self, limits: RecoveryKeyLimitsInput
+    ) -> ApiKeyMutationReturn:
         """Generate recovery key"""
         if limits.expiration_date is not None:
             if limits.expiration_date < datetime.datetime.now():
@@ -75,7 +89,9 @@ class ApiMutations:
         )
 
     @strawberry.mutation()
-    def use_recovery_api_key(self, input: UseRecoveryKeyInput) -> DeviceApiTokenMutationReturn:
+    def use_recovery_api_key(
+        self, input: UseRecoveryKeyInput
+    ) -> DeviceApiTokenMutationReturn:
         """Use recovery key"""
         token = use_mnemonic_recoverery_token(input.key, input.deviceName)
         if token is None:
@@ -89,13 +105,17 @@ class ApiMutations:
             success=True,
             message="Recovery key used",
             code=200,
-            token=None,
+            token=token,
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def refresh_device_api_token(self) -> DeviceApiTokenMutationReturn:
         """Refresh device api token"""
-        token = request.headers.get("Authorization").split(" ")[1] if request.headers.get("Authorization") is not None else None
+        token = (
+            request.headers.get("Authorization").split(" ")[1]
+            if request.headers.get("Authorization") is not None
+            else None
+        )
         if token is None:
             return DeviceApiTokenMutationReturn(
                 success=False,
@@ -121,7 +141,11 @@ class ApiMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def delete_device_api_token(self, device: str) -> GenericMutationReturn:
         """Delete device api token"""
-        self_token = request.headers.get("Authorization").split(" ")[1] if request.headers.get("Authorization") is not None else None
+        self_token = (
+            request.headers.get("Authorization").split(" ")[1]
+            if request.headers.get("Authorization") is not None
+            else None
+        )
         if self_token is not None and is_token_name_pair_valid(device, self_token):
             return GenericMutationReturn(
                 success=False,
@@ -163,7 +187,9 @@ class ApiMutations:
         )
 
     @strawberry.mutation()
-    def authorize_with_new_device_api_key(self, input: UseNewDeviceKeyInput) -> DeviceApiTokenMutationReturn:
+    def authorize_with_new_device_api_key(
+        self, input: UseNewDeviceKeyInput
+    ) -> DeviceApiTokenMutationReturn:
         """Authorize with new device api key"""
         token = use_new_device_auth_token(input.key, input.deviceName)
         if token is None:

@@ -23,9 +23,12 @@ class Query:
         """API access status"""
         return Api()
 
+
 @strawberry.type
 class Mutation(ApiMutations):
     """Root schema for mutations"""
+
     pass
+
 
 schema = strawberry.Schema(query=Query, mutation=Mutation)

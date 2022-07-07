@@ -35,6 +35,7 @@ def client(app, tokens_file):
 
 class AuthorizedClient(testing.FlaskClient):
     """Flask authorized test client."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.token = "TEST_TOKEN"
@@ -48,6 +49,7 @@ class AuthorizedClient(testing.FlaskClient):
 
 class WrongAuthClient(testing.FlaskClient):
     """Flask client with wrong token"""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.token = "WRONG_TOKEN"

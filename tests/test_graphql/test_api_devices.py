@@ -29,33 +29,38 @@ devices {
 }
 """
 
+
 def test_graphql_tokens_info(authorized_client, tokens_file):
     response = authorized_client.get(
         "/graphql",
-        json={
-            "query": generate_api_query([API_DEVICES_QUERY])
-        },
+        json={"query": generate_api_query([API_DEVICES_QUERY])},
     )
     assert response.status_code == 200
     assert response.json.get("data") is not None
     assert response.json["data"]["api"]["devices"] is not None
     assert len(response.json["data"]["api"]["devices"]) == 2
-    assert response.json["data"]["api"]["devices"][0]["creationDate"] == "2022-01-14T08:31:10.789314"
+    assert (
+        response.json["data"]["api"]["devices"][0]["creationDate"]
+        == "2022-01-14T08:31:10.789314"
+    )
     assert response.json["data"]["api"]["devices"][0]["isCaller"] is True
     assert response.json["data"]["api"]["devices"][0]["name"] == "test_token"
-    assert response.json["data"]["api"]["devices"][1]["creationDate"] == "2022-01-14T08:31:10.789314"
+    assert (
+        response.json["data"]["api"]["devices"][1]["creationDate"]
+        == "2022-01-14T08:31:10.789314"
+    )
     assert response.json["data"]["api"]["devices"][1]["isCaller"] is False
     assert response.json["data"]["api"]["devices"][1]["name"] == "test_token2"
+
 
 def test_graphql_tokens_info_unauthorized(client, tokens_file):
     response = client.get(
         "/graphql",
-        json={
-            "query": generate_api_query([API_DEVICES_QUERY])
-        },
+        json={"query": generate_api_query([API_DEVICES_QUERY])},
     )
     assert response.status_code == 200
     assert response.json["data"] is None
+
 
 DELETE_TOKEN_MUTATION = """
 mutation DeleteToken($device: String!) {
@@ -66,6 +71,7 @@ mutation DeleteToken($device: String!) {
     }
 }
 """
+
 
 def test_graphql_delete_token_unauthorized(client, tokens_file):
     response = client.post(
@@ -79,6 +85,7 @@ def test_graphql_delete_token_unauthorized(client, tokens_file):
     )
     assert response.status_code == 200
     assert response.json["data"] is None
+
 
 def test_graphql_delete_token(authorized_client, tokens_file):
     response = authorized_client.post(
@@ -105,6 +112,7 @@ def test_graphql_delete_token(authorized_client, tokens_file):
         ]
     }
 
+
 def test_graphql_delete_self_token(authorized_client, tokens_file):
     response = authorized_client.post(
         "/graphql",
@@ -121,6 +129,7 @@ def test_graphql_delete_self_token(authorized_client, tokens_file):
     assert response.json["data"]["deleteDeviceApiToken"]["message"] is not None
     assert response.json["data"]["deleteDeviceApiToken"]["code"] == 400
     assert read_json(tokens_file) == TOKENS_FILE_CONTETS
+
 
 def test_graphql_delete_nonexistent_token(authorized_client, tokens_file):
     response = authorized_client.post(
@@ -139,6 +148,7 @@ def test_graphql_delete_nonexistent_token(authorized_client, tokens_file):
     assert response.json["data"]["deleteDeviceApiToken"]["code"] == 404
     assert read_json(tokens_file) == TOKENS_FILE_CONTETS
 
+
 REFRESH_TOKEN_MUTATION = """
 mutation RefreshToken {
     refreshDeviceApiToken {
@@ -150,22 +160,20 @@ mutation RefreshToken {
 }
 """
 
+
 def test_graphql_refresh_token_unauthorized(client, tokens_file):
     response = client.post(
         "/graphql",
-        json={
-            "query": REFRESH_TOKEN_MUTATION
-        },
+        json={"query": REFRESH_TOKEN_MUTATION},
     )
     assert response.status_code == 200
     assert response.json["data"] is None
 
+
 def test_graphql_refresh_token(authorized_client, tokens_file):
     response = authorized_client.post(
         "/graphql",
-        json={
-            "query": REFRESH_TOKEN_MUTATION
-        },
+        json={"query": REFRESH_TOKEN_MUTATION},
     )
     assert response.status_code == 200
     assert response.json.get("data") is not None
@@ -178,6 +186,7 @@ def test_graphql_refresh_token(authorized_client, tokens_file):
         "date": "2022-01-14 08:31:10.789314",
     }
 
+
 NEW_DEVICE_KEY_MUTATION = """
 mutation NewDeviceKey {
     getNewDeviceApiKey {
@@ -189,22 +198,20 @@ mutation NewDeviceKey {
 }
 """
 
+
 def test_graphql_get_new_device_auth_key_unauthorized(client, tokens_file):
     response = client.post(
         "/graphql",
-        json={
-            "query": NEW_DEVICE_KEY_MUTATION
-        },
+        json={"query": NEW_DEVICE_KEY_MUTATION},
     )
     assert response.status_code == 200
     assert response.json["data"] is None
 
+
 def test_graphql_get_new_device_auth_key(authorized_client, tokens_file):
     response = authorized_client.post(
         "/graphql",
-        json={
-            "query": NEW_DEVICE_KEY_MUTATION
-        },
+        json={"query": NEW_DEVICE_KEY_MUTATION},
     )
     assert response.status_code == 200
     assert response.json.get("data") is not None
@@ -212,8 +219,13 @@ def test_graphql_get_new_device_auth_key(authorized_client, tokens_file):
     assert response.json["data"]["getNewDeviceApiKey"]["message"] is not None
     assert response.json["data"]["getNewDeviceApiKey"]["code"] == 200
     assert response.json["data"]["getNewDeviceApiKey"]["key"].split(" ").__len__() == 12
-    token = Mnemonic(language="english").to_entropy(response.json["data"]["getNewDeviceApiKey"]["key"]).hex()
+    token = (
+        Mnemonic(language="english")
+        .to_entropy(response.json["data"]["getNewDeviceApiKey"]["key"])
+        .hex()
+    )
     assert read_json(tokens_file)["new_device"]["token"] == token
+
 
 INVALIDATE_NEW_DEVICE_KEY_MUTATION = """
 mutation InvalidateNewDeviceKey {
@@ -224,6 +236,7 @@ mutation InvalidateNewDeviceKey {
     }
 }
 """
+
 
 def test_graphql_invalidate_new_device_token_unauthorized(client, tokens_file):
     response = client.post(
@@ -238,12 +251,11 @@ def test_graphql_invalidate_new_device_token_unauthorized(client, tokens_file):
     assert response.status_code == 200
     assert response.json["data"] is None
 
+
 def test_graphql_get_and_delete_new_device_key(authorized_client, tokens_file):
     response = authorized_client.post(
         "/graphql",
-        json={
-            "query": NEW_DEVICE_KEY_MUTATION
-        },
+        json={"query": NEW_DEVICE_KEY_MUTATION},
     )
     assert response.status_code == 200
     assert response.json.get("data") is not None
@@ -251,13 +263,15 @@ def test_graphql_get_and_delete_new_device_key(authorized_client, tokens_file):
     assert response.json["data"]["getNewDeviceApiKey"]["message"] is not None
     assert response.json["data"]["getNewDeviceApiKey"]["code"] == 200
     assert response.json["data"]["getNewDeviceApiKey"]["key"].split(" ").__len__() == 12
-    token = Mnemonic(language="english").to_entropy(response.json["data"]["getNewDeviceApiKey"]["key"]).hex()
+    token = (
+        Mnemonic(language="english")
+        .to_entropy(response.json["data"]["getNewDeviceApiKey"]["key"])
+        .hex()
+    )
     assert read_json(tokens_file)["new_device"]["token"] == token
     response = authorized_client.post(
         "/graphql",
-        json={
-            "query": INVALIDATE_NEW_DEVICE_KEY_MUTATION
-        },
+        json={"query": INVALIDATE_NEW_DEVICE_KEY_MUTATION},
     )
     assert response.status_code == 200
     assert response.json.get("data") is not None
@@ -265,6 +279,7 @@ def test_graphql_get_and_delete_new_device_key(authorized_client, tokens_file):
     assert response.json["data"]["invalidateNewDeviceApiKey"]["message"] is not None
     assert response.json["data"]["invalidateNewDeviceApiKey"]["code"] == 200
     assert read_json(tokens_file) == TOKENS_FILE_CONTETS
+
 
 AUTHORIZE_WITH_NEW_DEVICE_KEY_MUTATION = """
 mutation AuthorizeWithNewDeviceKey($input: UseNewDeviceKeyInput!) {
@@ -277,12 +292,11 @@ mutation AuthorizeWithNewDeviceKey($input: UseNewDeviceKeyInput!) {
 }
 """
 
+
 def test_graphql_get_and_authorize_new_device(client, authorized_client, tokens_file):
     response = authorized_client.post(
         "/graphql",
-        json={
-            "query": NEW_DEVICE_KEY_MUTATION
-        },
+        json={"query": NEW_DEVICE_KEY_MUTATION},
     )
     assert response.status_code == 200
     assert response.json.get("data") is not None
@@ -314,6 +328,7 @@ def test_graphql_get_and_authorize_new_device(client, authorized_client, tokens_
     assert read_json(tokens_file)["tokens"][2]["token"] == token
     assert read_json(tokens_file)["tokens"][2]["name"] == "new_device"
 
+
 def test_graphql_authorize_new_device_with_invalid_key(client, tokens_file):
     response = client.post(
         "/graphql",
@@ -334,12 +349,11 @@ def test_graphql_authorize_new_device_with_invalid_key(client, tokens_file):
     assert response.json["data"]["authorizeWithNewDeviceApiKey"]["code"] == 404
     assert read_json(tokens_file) == TOKENS_FILE_CONTETS
 
+
 def test_graphql_get_and_authorize_used_key(client, authorized_client, tokens_file):
     response = authorized_client.post(
         "/graphql",
-        json={
-            "query": NEW_DEVICE_KEY_MUTATION
-        },
+        json={"query": NEW_DEVICE_KEY_MUTATION},
     )
     assert response.status_code == 200
     assert response.json.get("data") is not None
@@ -367,7 +381,10 @@ def test_graphql_get_and_authorize_used_key(client, authorized_client, tokens_fi
     assert response.json["data"]["authorizeWithNewDeviceApiKey"]["success"] is True
     assert response.json["data"]["authorizeWithNewDeviceApiKey"]["message"] is not None
     assert response.json["data"]["authorizeWithNewDeviceApiKey"]["code"] == 200
-    assert read_json(tokens_file)["tokens"][2]["token"] == response.json["data"]["authorizeWithNewDeviceApiKey"]["token"]
+    assert (
+        read_json(tokens_file)["tokens"][2]["token"]
+        == response.json["data"]["authorizeWithNewDeviceApiKey"]["token"]
+    )
     assert read_json(tokens_file)["tokens"][2]["name"] == "new_token"
 
     response = client.post(
@@ -389,12 +406,13 @@ def test_graphql_get_and_authorize_used_key(client, authorized_client, tokens_fi
     assert response.json["data"]["authorizeWithNewDeviceApiKey"]["code"] == 404
     assert read_json(tokens_file)["tokens"].__len__() == 3
 
-def test_graphql_get_and_authorize_key_after_12_minutes(client, authorized_client, tokens_file):
+
+def test_graphql_get_and_authorize_key_after_12_minutes(
+    client, authorized_client, tokens_file
+):
     response = authorized_client.post(
         "/graphql",
-        json={
-            "query": NEW_DEVICE_KEY_MUTATION
-        },
+        json={"query": NEW_DEVICE_KEY_MUTATION},
     )
     assert response.status_code == 200
     assert response.json.get("data") is not None
@@ -402,7 +420,11 @@ def test_graphql_get_and_authorize_key_after_12_minutes(client, authorized_clien
     assert response.json["data"]["getNewDeviceApiKey"]["message"] is not None
     assert response.json["data"]["getNewDeviceApiKey"]["code"] == 200
     assert response.json["data"]["getNewDeviceApiKey"]["key"].split(" ").__len__() == 12
-    key = Mnemonic(language="english").to_entropy(response.json["data"]["getNewDeviceApiKey"]["key"]).hex()
+    key = (
+        Mnemonic(language="english")
+        .to_entropy(response.json["data"]["getNewDeviceApiKey"]["key"])
+        .hex()
+    )
     assert read_json(tokens_file)["new_device"]["token"] == key
 
     file_data = read_json(tokens_file)
@@ -428,6 +450,7 @@ def test_graphql_get_and_authorize_key_after_12_minutes(client, authorized_clien
     assert response.json["data"]["authorizeWithNewDeviceApiKey"]["success"] is False
     assert response.json["data"]["authorizeWithNewDeviceApiKey"]["message"] is not None
     assert response.json["data"]["authorizeWithNewDeviceApiKey"]["code"] == 404
+
 
 def test_graphql_authorize_without_token(client, tokens_file):
     response = client.post(

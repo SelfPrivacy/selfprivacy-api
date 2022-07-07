@@ -21,15 +21,20 @@ FAILED_OUTPUT_STRING = b"""
 Device "eth0" does not exist.
 """
 
+
 @pytest.fixture
 def ip_process_mock(mocker):
-    mock = mocker.patch("subprocess.check_output", autospec=True, return_value=OUTPUT_STRING)
+    mock = mocker.patch(
+        "subprocess.check_output", autospec=True, return_value=OUTPUT_STRING
+    )
     return mock
+
 
 def test_get_ip4(ip_process_mock):
     """Test get IPv4 address"""
     ip4 = get_ip4()
     assert ip4 == "157.90.247.192"
+
 
 def test_get_ip6(ip_process_mock):
     """Test get IPv6 address"""

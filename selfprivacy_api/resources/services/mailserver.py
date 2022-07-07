@@ -33,7 +33,7 @@ class DKIMKey(Resource):
 
         dkim = get_dkim_key(domain)
         if dkim is None:
-           return "DKIM file not found", 404
+            return "DKIM file not found", 404
         dkim = base64.b64encode(dkim.encode("utf-8")).decode("utf-8")
         return dkim
 

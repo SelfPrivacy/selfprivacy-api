@@ -23,11 +23,14 @@ TOKENS_FILE_CONTETS = {
     ]
 }
 
+
 def test_graphql_get_entire_api_data(authorized_client, tokens_file):
     response = authorized_client.get(
         "/graphql",
         json={
-            "query": generate_api_query([API_VERSION_QUERY, API_DEVICES_QUERY, API_RECOVERY_QUERY])
+            "query": generate_api_query(
+                [API_VERSION_QUERY, API_DEVICES_QUERY, API_RECOVERY_QUERY]
+            )
         },
     )
     assert response.status_code == 200
@@ -35,10 +38,16 @@ def test_graphql_get_entire_api_data(authorized_client, tokens_file):
     assert "version" in response.get_json()["data"]["api"]
     assert response.json["data"]["api"]["devices"] is not None
     assert len(response.json["data"]["api"]["devices"]) == 2
-    assert response.json["data"]["api"]["devices"][0]["creationDate"] == "2022-01-14T08:31:10.789314"
+    assert (
+        response.json["data"]["api"]["devices"][0]["creationDate"]
+        == "2022-01-14T08:31:10.789314"
+    )
     assert response.json["data"]["api"]["devices"][0]["isCaller"] is True
     assert response.json["data"]["api"]["devices"][0]["name"] == "test_token"
-    assert response.json["data"]["api"]["devices"][1]["creationDate"] == "2022-01-14T08:31:10.789314"
+    assert (
+        response.json["data"]["api"]["devices"][1]["creationDate"]
+        == "2022-01-14T08:31:10.789314"
+    )
     assert response.json["data"]["api"]["devices"][1]["isCaller"] is False
     assert response.json["data"]["api"]["devices"][1]["name"] == "test_token2"
     assert response.json["data"]["api"]["recoveryKey"] is not None
