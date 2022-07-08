@@ -125,13 +125,29 @@ def is_username_forbidden(username):
 
 
 def parse_date(date_str: str) -> datetime.datetime:
-    """Parse date string which can be in
-    %Y-%m-%dT%H:%M:%S.%fZ or %Y-%m-%d %H:%M:%S.%f format"""
-    return (
-        datetime.datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S.%fZ")
-        if date_str.endswith("Z")
-        else datetime.datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S.%f")
-    )
+    """Parse date string which can be in one of these formats:
+    - %Y-%m-%dT%H:%M:%S.%fZ
+    - %Y-%m-%dT%H:%M:%S.%f
+    - %Y-%m-%d %H:%M:%S.%fZ
+    - %Y-%m-%d %H:%M:%S.%f
+    """
+    try:
+        return datetime.datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S.%fZ")
+    except ValueError:
+        pass
+    try:
+        return datetime.datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S.%f")
+    except ValueError:
+        pass
+    try:
+        return datetime.datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S.%fZ")
+    except ValueError:
+        pass
+    try:
+        return datetime.datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S.%f")
+    except ValueError:
+        pass
+    raise ValueError("Invalid date string")
 
 
 def get_dkim_key(domain):

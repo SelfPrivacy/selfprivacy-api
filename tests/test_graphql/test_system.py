@@ -338,8 +338,170 @@ def test_graphql_change_timezone_unauthorized(client, turned_on):
     assert response.json.get("data") is None
 
 
-API_CHANGE_SERVER_SETTINGS = """
-mutation changeServerSettings($settings: SystemSettingsInput!) {
+def test_graphql_change_timezone(authorized_client, turned_on):
+    """Test change timezone"""
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_CHANGE_TIMEZONE_MUTATION,
+            "variables": {
+                "timezone": "Europe/Helsinki",
+            },
+        },
+    )
+    assert response.status_code == 200
+    assert response.json.get("data") is not None
+    assert response.json["data"]["changeTimezone"]["success"] is True
+    assert response.json["data"]["changeTimezone"]["message"] is not None
+    assert response.json["data"]["changeTimezone"]["code"] == 200
+    assert response.json["data"]["changeTimezone"]["timezone"] == "Europe/Helsinki"
+    assert read_json(turned_on / "turned_on.json")["timezone"] == "Europe/Helsinki"
+
+
+def test_graphql_change_timezone_on_undefined(authorized_client, undefined_config):
+    """Test change timezone when none is defined in config"""
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_CHANGE_TIMEZONE_MUTATION,
+            "variables": {
+                "timezone": "Europe/Helsinki",
+            },
+        },
+    )
+    assert response.status_code == 200
+    assert response.json.get("data") is not None
+    assert response.json["data"]["changeTimezone"]["success"] is True
+    assert response.json["data"]["changeTimezone"]["message"] is not None
+    assert response.json["data"]["changeTimezone"]["code"] == 200
+    assert response.json["data"]["changeTimezone"]["timezone"] == "Europe/Helsinki"
+    assert (
+        read_json(undefined_config / "undefined.json")["timezone"] == "Europe/Helsinki"
+    )
+
+
+def test_graphql_change_timezone_without_timezone(authorized_client, turned_on):
+    """Test change timezone without timezone"""
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_CHANGE_TIMEZONE_MUTATION,
+            "variables": {
+                "timezone": "",
+            },
+        },
+    )
+    assert response.status_code == 200
+    assert response.json.get("data") is not None
+    assert response.json["data"]["changeTimezone"]["success"] is False
+    assert response.json["data"]["changeTimezone"]["message"] is not None
+    assert response.json["data"]["changeTimezone"]["code"] == 400
+    assert response.json["data"]["changeTimezone"]["timezone"] is None
+    assert read_json(turned_on / "turned_on.json")["timezone"] == "Europe/Moscow"
+
+
+def test_graphql_change_timezone_with_invalid_timezone(authorized_client, turned_on):
+    """Test change timezone with invalid timezone"""
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_CHANGE_TIMEZONE_MUTATION,
+            "variables": {
+                "timezone": "Invlaid/Timezone",
+            },
+        },
+    )
+    assert response.status_code == 200
+    assert response.json.get("data") is not None
+    assert response.json["data"]["changeTimezone"]["success"] is False
+    assert response.json["data"]["changeTimezone"]["message"] is not None
+    assert response.json["data"]["changeTimezone"]["code"] == 400
+    assert response.json["data"]["changeTimezone"]["timezone"] is None
+    assert read_json(turned_on / "turned_on.json")["timezone"] == "Europe/Moscow"
+
+
+API_GET_AUTO_UPGRADE_SETTINGS_QUERY = """
+settings {
+    autoUpgrade {
+        enableAutoUpgrade
+        allowReboot
+    }
+}
+"""
+
+
+def test_graphql_get_auto_upgrade_unauthorized(client, turned_on):
+    """Test get auto upgrade settings without auth"""
+    response = client.get(
+        "/graphql",
+        json={
+            "query": API_GET_AUTO_UPGRADE_SETTINGS_QUERY,
+        },
+    )
+    assert response.status_code == 200
+    assert response.json.get("data") is None
+
+
+def test_graphql_get_auto_upgrade(authorized_client, turned_on):
+    """Test get auto upgrade settings"""
+    response = authorized_client.get(
+        "/graphql",
+        json={
+            "query": API_GET_AUTO_UPGRADE_SETTINGS_QUERY,
+        },
+    )
+    assert response.status_code == 200
+    assert response.json.get("data") is not None
+    assert response.json["data"]["settings"]["autoUpgrade"]["enableAutoUpgrade"] is True
+    assert response.json["data"]["settings"]["autoUpgrade"]["allowReboot"] is True
+
+
+def test_graphql_get_auto_upgrade_on_undefined(authorized_client, undefined_config):
+    """Test get auto upgrade settings when none is defined in config"""
+    response = authorized_client.get(
+        "/graphql",
+        json={
+            "query": API_GET_AUTO_UPGRADE_SETTINGS_QUERY,
+        },
+    )
+    assert response.status_code == 200
+    assert response.json.get("data") is not None
+    assert response.json["data"]["settings"]["autoUpgrade"]["enableAutoUpgrade"] is True
+    assert response.json["data"]["settings"]["autoUpgrade"]["allowReboot"] is False
+
+
+def test_graphql_get_auto_upgrade_without_vlaues(authorized_client, no_values):
+    """Test get auto upgrade settings without values"""
+    response = authorized_client.get(
+        "/graphql",
+        json={
+            "query": API_GET_AUTO_UPGRADE_SETTINGS_QUERY,
+        },
+    )
+    assert response.status_code == 200
+    assert response.json.get("data") is not None
+    assert response.json["data"]["settings"]["autoUpgrade"]["enableAutoUpgrade"] is True
+    assert response.json["data"]["settings"]["autoUpgrade"]["allowReboot"] is False
+
+
+def test_graphql_get_auto_upgrade_turned_off(authorized_client, turned_off):
+    """Test get auto upgrade settings when turned off"""
+    response = authorized_client.get(
+        "/graphql",
+        json={
+            "query": API_GET_AUTO_UPGRADE_SETTINGS_QUERY,
+        },
+    )
+    assert response.status_code == 200
+    assert response.json.get("data") is not None
+    assert (
+        response.json["data"]["settings"]["autoUpgrade"]["enableAutoUpgrade"] is False
+    )
+    assert response.json["data"]["settings"]["autoUpgrade"]["allowReboot"] is False
+
+
+API_CHANGE_AUTO_UPGRADE_SETTINGS = """
+mutation changeServerSettings($settings: AutoUpgradeSettingsInput!) {
     changeAutoUpgradeSettings(settings: $settings) {
         success
         message
@@ -349,3 +511,355 @@ mutation changeServerSettings($settings: SystemSettingsInput!) {
     }
 }
 """
+
+
+def test_graphql_change_auto_upgrade_unauthorized(client, turned_on):
+    """Test change auto upgrade settings without auth"""
+    response = client.post(
+        "/graphql",
+        json={
+            "query": API_CHANGE_AUTO_UPGRADE_SETTINGS,
+            "variables": {
+                "settings": {
+                    "enableAutoUpgrade": True,
+                    "allowReboot": True,
+                },
+            },
+        },
+    )
+    assert response.status_code == 200
+    assert response.json.get("data") is None
+
+
+def test_graphql_change_auto_upgrade(authorized_client, turned_on):
+    """Test change auto upgrade settings"""
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_CHANGE_AUTO_UPGRADE_SETTINGS,
+            "variables": {
+                "settings": {
+                    "enableAutoUpgrade": False,
+                    "allowReboot": True,
+                },
+            },
+        },
+    )
+    assert response.status_code == 200
+    assert response.json.get("data") is not None
+    assert response.json["data"]["changeAutoUpgradeSettings"]["success"] is True
+    assert response.json["data"]["changeAutoUpgradeSettings"]["message"] is not None
+    assert response.json["data"]["changeAutoUpgradeSettings"]["code"] == 200
+    assert (
+        response.json["data"]["changeAutoUpgradeSettings"]["enableAutoUpgrade"] is False
+    )
+    assert response.json["data"]["changeAutoUpgradeSettings"]["allowReboot"] is True
+    assert read_json(turned_on / "turned_on.json")["autoUpgrade"]["enable"] is False
+    assert read_json(turned_on / "turned_on.json")["autoUpgrade"]["allowReboot"] is True
+
+
+def test_graphql_change_auto_upgrade_on_undefined(authorized_client, undefined_config):
+    """Test change auto upgrade settings when none is defined in config"""
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_CHANGE_AUTO_UPGRADE_SETTINGS,
+            "variables": {
+                "settings": {
+                    "enableAutoUpgrade": False,
+                    "allowReboot": True,
+                },
+            },
+        },
+    )
+    assert response.status_code == 200
+    assert response.json.get("data") is not None
+    assert response.json["data"]["changeAutoUpgradeSettings"]["success"] is True
+    assert response.json["data"]["changeAutoUpgradeSettings"]["message"] is not None
+    assert response.json["data"]["changeAutoUpgradeSettings"]["code"] == 200
+    assert (
+        response.json["data"]["changeAutoUpgradeSettings"]["enableAutoUpgrade"] is False
+    )
+    assert response.json["data"]["changeAutoUpgradeSettings"]["allowReboot"] is True
+    assert (
+        read_json(undefined_config / "undefined.json")["autoUpgrade"]["enable"] is False
+    )
+    assert (
+        read_json(undefined_config / "undefined.json")["autoUpgrade"]["allowReboot"]
+        is True
+    )
+
+
+def test_graphql_change_auto_upgrade_without_vlaues(authorized_client, no_values):
+    """Test change auto upgrade settings without values"""
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_CHANGE_AUTO_UPGRADE_SETTINGS,
+            "variables": {
+                "settings": {
+                    "enableAutoUpgrade": True,
+                    "allowReboot": True,
+                },
+            },
+        },
+    )
+    assert response.status_code == 200
+    assert response.json.get("data") is not None
+    assert response.json["data"]["changeAutoUpgradeSettings"]["success"] is True
+    assert response.json["data"]["changeAutoUpgradeSettings"]["message"] is not None
+    assert response.json["data"]["changeAutoUpgradeSettings"]["code"] == 200
+    assert (
+        response.json["data"]["changeAutoUpgradeSettings"]["enableAutoUpgrade"] is True
+    )
+    assert response.json["data"]["changeAutoUpgradeSettings"]["allowReboot"] is True
+    assert read_json(no_values / "no_values.json")["autoUpgrade"]["enable"] is True
+    assert read_json(no_values / "no_values.json")["autoUpgrade"]["allowReboot"] is True
+
+
+def test_graphql_change_auto_upgrade_turned_off(authorized_client, turned_off):
+    """Test change auto upgrade settings when turned off"""
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_CHANGE_AUTO_UPGRADE_SETTINGS,
+            "variables": {
+                "settings": {
+                    "enableAutoUpgrade": True,
+                    "allowReboot": True,
+                },
+            },
+        },
+    )
+    assert response.status_code == 200
+    assert response.json.get("data") is not None
+    assert response.json["data"]["changeAutoUpgradeSettings"]["success"] is True
+    assert response.json["data"]["changeAutoUpgradeSettings"]["message"] is not None
+    assert response.json["data"]["changeAutoUpgradeSettings"]["code"] == 200
+    assert (
+        response.json["data"]["changeAutoUpgradeSettings"]["enableAutoUpgrade"] is True
+    )
+    assert response.json["data"]["changeAutoUpgradeSettings"]["allowReboot"] is True
+    assert read_json(turned_off / "turned_off.json")["autoUpgrade"]["enable"] is True
+    assert (
+        read_json(turned_off / "turned_off.json")["autoUpgrade"]["allowReboot"] is True
+    )
+
+
+def test_grphql_change_auto_upgrade_without_enable(authorized_client, turned_off):
+    """Test change auto upgrade settings without enable"""
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_CHANGE_AUTO_UPGRADE_SETTINGS,
+            "variables": {
+                "settings": {
+                    "allowReboot": True,
+                },
+            },
+        },
+    )
+    assert response.status_code == 200
+    assert response.json.get("data") is not None
+    assert response.json["data"]["changeAutoUpgradeSettings"]["success"] is True
+    assert response.json["data"]["changeAutoUpgradeSettings"]["message"] is not None
+    assert response.json["data"]["changeAutoUpgradeSettings"]["code"] == 200
+    assert (
+        response.json["data"]["changeAutoUpgradeSettings"]["enableAutoUpgrade"] is False
+    )
+    assert response.json["data"]["changeAutoUpgradeSettings"]["allowReboot"] is True
+    assert read_json(turned_off / "turned_off.json")["autoUpgrade"]["enable"] is False
+    assert (
+        read_json(turned_off / "turned_off.json")["autoUpgrade"]["allowReboot"] is True
+    )
+
+
+def test_graphql_change_auto_upgrade_without_allow_reboot(
+    authorized_client, turned_off
+):
+    """Test change auto upgrade settings without allow reboot"""
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_CHANGE_AUTO_UPGRADE_SETTINGS,
+            "variables": {
+                "settings": {
+                    "enableAutoUpgrade": True,
+                },
+            },
+        },
+    )
+    assert response.status_code == 200
+    assert response.json.get("data") is not None
+    assert response.json["data"]["changeAutoUpgradeSettings"]["success"] is True
+    assert response.json["data"]["changeAutoUpgradeSettings"]["message"] is not None
+    assert response.json["data"]["changeAutoUpgradeSettings"]["code"] == 200
+    assert (
+        response.json["data"]["changeAutoUpgradeSettings"]["enableAutoUpgrade"] is True
+    )
+    assert response.json["data"]["changeAutoUpgradeSettings"]["allowReboot"] is False
+    assert read_json(turned_off / "turned_off.json")["autoUpgrade"]["enable"] is True
+    assert (
+        read_json(turned_off / "turned_off.json")["autoUpgrade"]["allowReboot"] is False
+    )
+
+
+def test_graphql_change_auto_upgrade_with_empty_input(authorized_client, turned_off):
+    """Test change auto upgrade settings with empty input"""
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_CHANGE_AUTO_UPGRADE_SETTINGS,
+            "variables": {
+                "settings": {},
+            },
+        },
+    )
+    assert response.status_code == 200
+    assert response.json.get("data") is None
+    assert response.json["data"]["changeAutoUpgradeSettings"]["success"] is True
+    assert response.json["data"]["changeAutoUpgradeSettings"]["message"] is not None
+    assert response.json["data"]["changeAutoUpgradeSettings"]["code"] == 200
+    assert (
+        response.json["data"]["changeAutoUpgradeSettings"]["enableAutoUpgrade"] is False
+    )
+    assert response.json["data"]["changeAutoUpgradeSettings"]["allowReboot"] is False
+    assert read_json(turned_off / "turned_off.json")["autoUpgrade"]["enable"] is False
+    assert (
+        read_json(turned_off / "turned_off.json")["autoUpgrade"]["allowReboot"] is False
+    )
+
+
+API_REBUILD_SYSTEM_MUTATION = """
+mutation rebuildSystem() {
+    runSystemRebuild {
+        success
+        message
+        code
+    }
+}
+"""
+
+
+def test_graphql_system_rebuild_unauthorized(client, mock_subprocess_popen):
+    """Test system rebuild without authorization"""
+    response = client.post(
+        "/graphql",
+        json={
+            "query": API_REBUILD_SYSTEM_MUTATION,
+        },
+    )
+    assert response.status_code == 200
+    assert response.json.get("data") is None
+    assert mock_subprocess_popen.call_count == 0
+
+
+def test_graphql_system_rebuild(authorized_client, mock_subprocess_popen):
+    """Test system rebuild"""
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_REBUILD_SYSTEM_MUTATION,
+        },
+    )
+    assert response.status_code == 200
+    assert response.json.get("data") is not None
+    assert response.json["data"]["runSystemRebuild"]["success"] is True
+    assert response.json["data"]["runSystemRebuild"]["message"] is not None
+    assert response.json["data"]["runSystemRebuild"]["code"] == 200
+    assert mock_subprocess_popen.call_count == 1
+    assert mock_subprocess_popen.call_args[0][0] == [
+        "systemctl",
+        "start",
+        "sp-nixos-rebuild.service",
+    ]
+
+
+API_UPGRADE_SYSTEM_MUTATION = """
+mutation upgradeSystem() {
+    runSystemUpgrade {
+        success
+        message
+        code
+    }
+}
+"""
+
+
+def test_graphql_system_upgrade_unauthorized(client, mock_subprocess_popen):
+    """Test system upgrade without authorization"""
+    response = client.post(
+        "/graphql",
+        json={
+            "query": API_UPGRADE_SYSTEM_MUTATION,
+        },
+    )
+    assert response.status_code == 200
+    assert response.json.get("data") is None
+    assert mock_subprocess_popen.call_count == 0
+
+
+def test_graphql_system_upgrade(authorized_client, mock_subprocess_popen):
+    """Test system upgrade"""
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_UPGRADE_SYSTEM_MUTATION,
+        },
+    )
+    assert response.status_code == 200
+    assert response.json.get("data") is not None
+    assert response.json["data"]["runSystemUpgrade"]["success"] is True
+    assert response.json["data"]["runSystemUpgrade"]["message"] is not None
+    assert response.json["data"]["runSystemUpgrade"]["code"] == 200
+    assert mock_subprocess_popen.call_count == 1
+    assert mock_subprocess_popen.call_args[0][0] == [
+        "systemctl",
+        "start",
+        "sp-nixos-upgrade.service",
+    ]
+
+
+API_ROLLBACK_SYSTEM_MUTATION = """
+mutation rollbackSystem() {
+    runSystemRollback {
+        success
+        message
+        code
+    }
+}
+"""
+
+
+def test_graphql_system_rollback_unauthorized(client, mock_subprocess_popen):
+    """Test system rollback without authorization"""
+    response = client.post(
+        "/graphql",
+        json={
+            "query": API_ROLLBACK_SYSTEM_MUTATION,
+        },
+    )
+    assert response.status_code == 200
+    assert response.json.get("data") is None
+    assert mock_subprocess_popen.call_count == 0
+
+
+def test_graphql_system_rollback(authorized_client, mock_subprocess_popen):
+    """Test system rollback"""
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_ROLLBACK_SYSTEM_MUTATION,
+        },
+    )
+    assert response.status_code == 200
+    assert response.json.get("data") is not None
+    assert response.json["data"]["runSystemRollback"]["success"] is True
+    assert response.json["data"]["runSystemRollback"]["message"] is not None
+    assert response.json["data"]["runSystemRollback"]["code"] == 200
+    assert mock_subprocess_popen.call_count == 1
+    assert mock_subprocess_popen.call_args[0][0] == [
+        "systemctl",
+        "start",
+        "sp-nixos-rollback.service",
+    ]

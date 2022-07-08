@@ -2,6 +2,7 @@
 # pylint: disable=unused-argument
 # pylint: disable=missing-function-docstring
 import json
+from time import strftime
 import pytest
 import datetime
 
@@ -58,7 +59,7 @@ def test_graphql_recovery_key_status_when_none_exists(authorized_client, tokens_
 
 
 API_RECOVERY_KEY_GENERATE_MUTATION = """
-mutation TestGenerateRecoveryKey($limits: RecoveryKeyLimitsInput!) {
+mutation TestGenerateRecoveryKey($limits: RecoveryKeyLimitsInput) {
     getNewRecoveryApiKey(limits: $limits) {
         success
         message
@@ -85,12 +86,6 @@ def test_graphql_generate_recovery_key(client, authorized_client, tokens_file):
         "/graphql",
         json={
             "query": API_RECOVERY_KEY_GENERATE_MUTATION,
-            "variables": {
-                "limits": {
-                    "uses": None,
-                    "expirationDate": None,
-                },
-            },
         },
     )
     assert response.status_code == 200
@@ -107,7 +102,7 @@ def test_graphql_generate_recovery_key(client, authorized_client, tokens_file):
     assert time_generated is not None
     key = response.json["data"]["getNewRecoveryApiKey"]["key"]
     assert (
-        datetime.datetime.strptime(time_generated, "%Y-%m-%dT%H:%M:%S.%fZ")
+        datetime.datetime.strptime(time_generated, "%Y-%m-%dT%H:%M:%S.%f")
         - datetime.timedelta(seconds=5)
         < datetime.datetime.now()
     )
@@ -122,7 +117,9 @@ def test_graphql_generate_recovery_key(client, authorized_client, tokens_file):
     assert response.json["data"]["api"]["recoveryKey"] is not None
     assert response.json["data"]["api"]["recoveryKey"]["exists"] is True
     assert response.json["data"]["api"]["recoveryKey"]["valid"] is True
-    assert response.json["data"]["api"]["recoveryKey"]["creationDate"] == time_generated
+    assert response.json["data"]["api"]["recoveryKey"][
+        "creationDate"
+    ] == time_generated.replace("Z", "")
     assert response.json["data"]["api"]["recoveryKey"]["expirationDate"] is None
     assert response.json["data"]["api"]["recoveryKey"]["usesLeft"] is None
 
@@ -134,7 +131,7 @@ def test_graphql_generate_recovery_key(client, authorized_client, tokens_file):
             "variables": {
                 "input": {
                     "key": key,
-                    "deviceName": "test_token",
+                    "deviceName": "new_test_token",
                 },
             },
         },
@@ -149,7 +146,7 @@ def test_graphql_generate_recovery_key(client, authorized_client, tokens_file):
         response.json["data"]["useRecoveryApiKey"]["token"]
         == read_json(tokens_file)["tokens"][2]["token"]
     )
-    assert read_json(tokens_file)["tokens"][2]["name"] == "test_token"
+    assert read_json(tokens_file)["tokens"][2]["name"] == "new_test_token"
 
     # Try to use token again
     response = client.post(
@@ -159,7 +156,7 @@ def test_graphql_generate_recovery_key(client, authorized_client, tokens_file):
             "variables": {
                 "input": {
                     "key": key,
-                    "deviceName": "test_token2",
+                    "deviceName": "new_test_token2",
                 },
             },
         },
@@ -174,7 +171,7 @@ def test_graphql_generate_recovery_key(client, authorized_client, tokens_file):
         response.json["data"]["useRecoveryApiKey"]["token"]
         == read_json(tokens_file)["tokens"][3]["token"]
     )
-    assert read_json(tokens_file)["tokens"][3]["name"] == "test_token2"
+    assert read_json(tokens_file)["tokens"][3]["name"] == "new_test_token2"
 
 
 def test_graphql_generate_recovery_key_with_expiration_date(
@@ -188,7 +185,6 @@ def test_graphql_generate_recovery_key_with_expiration_date(
             "query": API_RECOVERY_KEY_GENERATE_MUTATION,
             "variables": {
                 "limits": {
-                    "uses": None,
                     "expirationDate": expiration_date_str,
                 },
             },
@@ -212,7 +208,7 @@ def test_graphql_generate_recovery_key_with_expiration_date(
     time_generated = read_json(tokens_file)["recovery_token"]["date"]
     assert time_generated is not None
     assert (
-        datetime.datetime.strptime(time_generated, "%Y-%m-%dT%H:%M:%S.%fZ")
+        datetime.datetime.strptime(time_generated, "%Y-%m-%dT%H:%M:%S.%f")
         - datetime.timedelta(seconds=5)
         < datetime.datetime.now()
     )
@@ -227,7 +223,9 @@ def test_graphql_generate_recovery_key_with_expiration_date(
     assert response.json["data"]["api"]["recoveryKey"] is not None
     assert response.json["data"]["api"]["recoveryKey"]["exists"] is True
     assert response.json["data"]["api"]["recoveryKey"]["valid"] is True
-    assert response.json["data"]["api"]["recoveryKey"]["creationDate"] == time_generated
+    assert response.json["data"]["api"]["recoveryKey"][
+        "creationDate"
+    ] == time_generated.replace("Z", "")
     assert (
         response.json["data"]["api"]["recoveryKey"]["expirationDate"]
         == expiration_date_str
@@ -242,7 +240,7 @@ def test_graphql_generate_recovery_key_with_expiration_date(
             "variables": {
                 "input": {
                     "key": key,
-                    "deviceName": "test_token",
+                    "deviceName": "new_test_token",
                 },
             },
         },
@@ -266,7 +264,7 @@ def test_graphql_generate_recovery_key_with_expiration_date(
             "variables": {
                 "input": {
                     "key": key,
-                    "deviceName": "test_token2",
+                    "deviceName": "new_test_token2",
                 },
             },
         },
@@ -284,9 +282,9 @@ def test_graphql_generate_recovery_key_with_expiration_date(
 
     # Try to use token after expiration date
     new_data = read_json(tokens_file)
-    new_data["recovery_token"][
-        "expirationDate"
-    ] = datetime.datetime.now() - datetime.timedelta(minutes=5)
+    new_data["recovery_token"]["expiration"] = (
+        datetime.datetime.now() - datetime.timedelta(minutes=5)
+    ).strftime("%Y-%m-%dT%H:%M:%S.%f")
     write_json(tokens_file, new_data)
     response = authorized_client.post(
         "/graphql",
@@ -295,7 +293,7 @@ def test_graphql_generate_recovery_key_with_expiration_date(
             "variables": {
                 "input": {
                     "key": key,
-                    "deviceName": "test_token3",
+                    "deviceName": "new_test_token3",
                 },
             },
         },
@@ -339,7 +337,6 @@ def test_graphql_generate_recovery_key_with_expiration_in_the_past(
             "query": API_RECOVERY_KEY_GENERATE_MUTATION,
             "variables": {
                 "limits": {
-                    "uses": None,
                     "expirationDate": expiration_date_str,
                 },
             },
@@ -366,7 +363,6 @@ def test_graphql_generate_recovery_key_with_invalid_time_format(
             "query": API_RECOVERY_KEY_GENERATE_MUTATION,
             "variables": {
                 "limits": {
-                    "uses": None,
                     "expirationDate": expiration_date_str,
                 },
             },
@@ -521,7 +517,6 @@ def test_graphql_generate_recovery_key_with_negative_uses(
             "variables": {
                 "limits": {
                     "uses": -1,
-                    "expirationDate": None,
                 },
             },
         },
@@ -543,7 +538,6 @@ def test_graphql_generate_recovery_key_with_zero_uses(authorized_client, tokens_
             "variables": {
                 "limits": {
                     "uses": 0,
-                    "expirationDate": None,
                 },
             },
         },

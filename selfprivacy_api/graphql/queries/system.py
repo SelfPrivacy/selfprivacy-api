@@ -158,7 +158,7 @@ class System:
             timestamp=None,
         )
     )
-    domain: SystemDomainInfo = strawberry.field(resolver=get_system_domain_info)
+    domain_info: SystemDomainInfo = strawberry.field(resolver=get_system_domain_info)
     settings: SystemSettings = SystemSettings()
     info: SystemInfo = SystemInfo()
     provider: SystemProviderInfo = strawberry.field(resolver=get_system_provider_info)

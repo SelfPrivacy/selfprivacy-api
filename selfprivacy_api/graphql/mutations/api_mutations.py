@@ -37,8 +37,8 @@ class DeviceApiTokenMutationReturn(MutationReturnInterface):
 class RecoveryKeyLimitsInput:
     """Recovery key limits input"""
 
-    expiration_date: typing.Optional[datetime.datetime]
-    uses: typing.Optional[int]
+    expiration_date: typing.Optional[datetime.datetime] = None
+    uses: typing.Optional[int] = None
 
 
 @strawberry.input
@@ -61,26 +61,30 @@ class UseNewDeviceKeyInput:
 class ApiMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def get_new_recovery_api_key(
-        self, limits: RecoveryKeyLimitsInput
+        self, limits: typing.Optional[RecoveryKeyLimitsInput] = None
     ) -> ApiKeyMutationReturn:
         """Generate recovery key"""
-        if limits.expiration_date is not None:
-            if limits.expiration_date < datetime.datetime.now():
-                return ApiKeyMutationReturn(
-                    success=False,
-                    message="Expiration date must be in the future",
-                    code=400,
-                    key=None,
-                )
-        if limits.uses is not None:
-            if limits.uses < 1:
-                return ApiKeyMutationReturn(
-                    success=False,
-                    message="Uses must be greater than 0",
-                    code=400,
-                    key=None,
-                )
-        key = generate_recovery_token(limits.expiration_date, limits.uses)
+        if limits is not None:
+            if limits.expiration_date is not None:
+                if limits.expiration_date < datetime.datetime.now():
+                    return ApiKeyMutationReturn(
+                        success=False,
+                        message="Expiration date must be in the future",
+                        code=400,
+                        key=None,
+                    )
+            if limits.uses is not None:
+                if limits.uses < 1:
+                    return ApiKeyMutationReturn(
+                        success=False,
+                        message="Uses must be greater than 0",
+                        code=400,
+                        key=None,
+                    )
+        if limits is not None:
+            key = generate_recovery_token(limits.expiration_date, limits.uses)
+        else:
+            key = generate_recovery_token(None, None)
         return ApiKeyMutationReturn(
             success=True,
             message="Recovery key generated",

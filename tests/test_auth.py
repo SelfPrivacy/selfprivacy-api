@@ -25,6 +25,13 @@ TOKENS_FILE_CONTETS = {
     ]
 }
 
+DATE_FORMATS = [
+    "%Y-%m-%dT%H:%M:%S.%fZ",
+    "%Y-%m-%dT%H:%M:%S.%f",
+    "%Y-%m-%d %H:%M:%S.%fZ",
+    "%Y-%m-%d %H:%M:%S.%f",
+]
+
 
 def test_get_tokens_info(authorized_client, tokens_file):
     response = authorized_client.get("/auth/tokens")
@@ -261,7 +268,7 @@ def test_generate_recovery_token(authorized_client, client, tokens_file):
     assert time_generated is not None
     # Assert that the token was generated near the current time
     assert (
-        datetime.datetime.strptime(time_generated, "%Y-%m-%dT%H:%M:%S.%fZ")
+        datetime.datetime.strptime(time_generated, "%Y-%m-%dT%H:%M:%S.%f")
         - datetime.timedelta(seconds=5)
         < datetime.datetime.now()
     )
@@ -298,14 +305,14 @@ def test_generate_recovery_token(authorized_client, client, tokens_file):
     assert read_json(tokens_file)["tokens"][3]["name"] == "recovery_device2"
 
 
+@pytest.mark.parametrize("timeformat", DATE_FORMATS)
 def test_generate_recovery_token_with_expiration_date(
-    authorized_client, client, tokens_file
+    authorized_client, client, tokens_file, timeformat
 ):
     # Generate token with expiration date
     # Generate expiration date in the future
-    # Expiration date format is YYYY-MM-DDTHH:MM:SS.SSSZ
     expiration_date = datetime.datetime.now() + datetime.timedelta(minutes=5)
-    expiration_date_str = expiration_date.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    expiration_date_str = expiration_date.strftime(timeformat)
     response = authorized_client.post(
         "/auth/recovery_token",
         json={"expiration": expiration_date_str},
@@ -315,13 +322,15 @@ def test_generate_recovery_token_with_expiration_date(
     mnemonic_token = response.json["token"]
     token = Mnemonic(language="english").to_entropy(mnemonic_token).hex()
     assert read_json(tokens_file)["recovery_token"]["token"] == token
-    assert read_json(tokens_file)["recovery_token"]["expiration"] == expiration_date_str
+    assert datetime.datetime.strptime(
+        read_json(tokens_file)["recovery_token"]["expiration"], "%Y-%m-%dT%H:%M:%S.%f"
+    ) == datetime.datetime.strptime(expiration_date_str, timeformat)
 
     time_generated = read_json(tokens_file)["recovery_token"]["date"]
     assert time_generated is not None
     # Assert that the token was generated near the current time
     assert (
-        datetime.datetime.strptime(time_generated, "%Y-%m-%dT%H:%M:%S.%fZ")
+        datetime.datetime.strptime(time_generated, "%Y-%m-%dT%H:%M:%S.%f")
         - datetime.timedelta(seconds=5)
         < datetime.datetime.now()
     )
@@ -333,7 +342,7 @@ def test_generate_recovery_token_with_expiration_date(
         "exists": True,
         "valid": True,
         "date": time_generated,
-        "expiration": expiration_date_str,
+        "expiration": expiration_date.strftime("%Y-%m-%dT%H:%M:%S.%f"),
         "uses_left": None,
     }
 
@@ -360,7 +369,7 @@ def test_generate_recovery_token_with_expiration_date(
     # Try to use token after expiration date
     new_data = read_json(tokens_file)
     new_data["recovery_token"]["expiration"] = datetime.datetime.now().strftime(
-        "%Y-%m-%dT%H:%M:%S.%fZ"
+        "%Y-%m-%dT%H:%M:%S.%f"
     )
     write_json(tokens_file, new_data)
     recovery_response = client.post(
@@ -383,12 +392,13 @@ def test_generate_recovery_token_with_expiration_date(
     }
 
 
+@pytest.mark.parametrize("timeformat", DATE_FORMATS)
 def test_generate_recovery_token_with_expiration_in_the_past(
-    authorized_client, tokens_file
+    authorized_client, tokens_file, timeformat
 ):
     # Server must return 400 if expiration date is in the past
     expiration_date = datetime.datetime.now() - datetime.timedelta(minutes=5)
-    expiration_date_str = expiration_date.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    expiration_date_str = expiration_date.strftime(timeformat)
     response = authorized_client.post(
         "/auth/recovery_token",
         json={"expiration": expiration_date_str},
@@ -429,7 +439,7 @@ def test_generate_recovery_token_with_limited_uses(
     time_generated = read_json(tokens_file)["recovery_token"]["date"]
     assert time_generated is not None
     assert (
-        datetime.datetime.strptime(time_generated, "%Y-%m-%dT%H:%M:%S.%fZ")
+        datetime.datetime.strptime(time_generated, "%Y-%m-%dT%H:%M:%S.%f")
         - datetime.timedelta(seconds=5)
         < datetime.datetime.now()
     )

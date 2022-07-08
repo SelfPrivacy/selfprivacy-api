@@ -7,7 +7,7 @@ import typing
 
 from mnemonic import Mnemonic
 
-from . import ReadUserData, UserDataFiles, WriteUserData
+from . import ReadUserData, UserDataFiles, WriteUserData, parse_date
 
 """
 Token are stored in the tokens.json file.
@@ -121,7 +121,7 @@ def create_token(name):
             {
                 "token": token,
                 "name": name,
-                "date": str(datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")),
+                "date": str(datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")),
             }
         )
     return token
@@ -161,9 +161,7 @@ def is_recovery_token_valid():
                 return False
         if "expiration" not in recovery_token or recovery_token["expiration"] is None:
             return True
-        return datetime.now() < datetime.strptime(
-            recovery_token["expiration"], "%Y-%m-%dT%H:%M:%S.%fZ"
-        )
+        return datetime.now() < parse_date(recovery_token["expiration"])
 
 
 def get_recovery_token_status():
@@ -213,8 +211,8 @@ def generate_recovery_token(
     with WriteUserData(UserDataFiles.TOKENS) as tokens:
         tokens["recovery_token"] = {
             "token": recovery_token_str,
-            "date": str(datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")),
-            "expiration": expiration.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            "date": str(datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")),
+            "expiration": expiration.strftime("%Y-%m-%dT%H:%M:%S.%f")
             if expiration is not None
             else None,
             "uses_left": uses_left if uses_left is not None else None,
@@ -285,14 +283,7 @@ def _get_new_device_auth_token():
         new_device = tokens["new_device"]
         if "expiration" not in new_device:
             return None
-        if new_device["expiration"].endswith("Z"):
-            expiration = datetime.strptime(
-                new_device["expiration"], "%Y-%m-%dT%H:%M:%S.%fZ"
-            )
-        else:
-            expiration = datetime.strptime(
-                new_device["expiration"], "%Y-%m-%d %H:%M:%S.%f"
-            )
+        expiration = parse_date(new_device["expiration"])
         if datetime.now() > expiration:
             return None
         return new_device["token"]

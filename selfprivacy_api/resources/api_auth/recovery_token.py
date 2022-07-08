@@ -4,6 +4,7 @@ from datetime import datetime
 from flask_restful import Resource, reqparse
 
 from selfprivacy_api.resources.api_auth import api
+from selfprivacy_api.utils import parse_date
 from selfprivacy_api.utils.auth import (
     is_recovery_token_exists,
     is_recovery_token_valid,
@@ -129,19 +130,17 @@ class RecoveryToken(Resource):
         # Convert expiration date to datetime and return 400 if it is not valid
         if args["expiration"]:
             try:
-                expiration = datetime.strptime(
-                    args["expiration"], "%Y-%m-%dT%H:%M:%S.%fZ"
-                )
+                expiration = parse_date(args["expiration"])
                 # Retrun 400 if expiration date is in the past
                 if expiration < datetime.now():
                     return {"message": "Expiration date cannot be in the past"}, 400
             except ValueError:
                 return {
-                    "error": "Invalid expiration date. Use YYYY-MM-DDTHH:MM:SS.SSSZ"
+                    "error": "Invalid expiration date. Use YYYY-MM-DDTHH:MM:SS.SSS"
                 }, 400
         else:
             expiration = None
-        if args["uses"] != None and args["uses"] < 1:
+        if args["uses"] is not None and args["uses"] < 1:
             return {"message": "Uses must be greater than 0"}, 400
         # Generate recovery token
         token = generate_recovery_token(expiration, args["uses"])
