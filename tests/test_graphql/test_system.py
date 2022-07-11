@@ -2,6 +2,7 @@
 # pylint: disable=unused-argument
 # pylint: disable=missing-function-docstring
 import json
+import os
 import pytest
 import datetime
 
@@ -134,7 +135,9 @@ info {
 """
 
 
-def test_graphql_wrong_auth(wrong_auth_client):
+def test_graphql_get_python_version_wrong_auth(
+    wrong_auth_client, mock_subprocess_check_output
+):
     """Test wrong auth"""
     response = wrong_auth_client.get(
         "/graphql",
@@ -144,6 +147,62 @@ def test_graphql_wrong_auth(wrong_auth_client):
     )
     assert response.status_code == 200
     assert response.json.get("data") is None
+
+
+def test_graphql_get_python_version(authorized_client, mock_subprocess_check_output):
+    """Test get python version"""
+    response = authorized_client.get(
+        "/graphql",
+        json={
+            "query": generate_system_query([API_PYTHON_VERSION_INFO]),
+        },
+    )
+    assert response.status_code == 200
+    assert response.json.get("data") is not None
+    assert response.json["data"]["system"]["info"]["pythonVersion"] == "Testing Linux"
+    assert mock_subprocess_check_output.call_count == 1
+    assert mock_subprocess_check_output.call_args[0][0] == ["python", "-V"]
+
+
+API_SYSTEM_VERSION_INFO = """
+info {
+    systemVersion
+}
+"""
+
+
+def test_graphql_get_system_version_unauthorized(
+    wrong_auth_client, mock_subprocess_check_output
+):
+    """Test wrong auth"""
+    response = wrong_auth_client.get(
+        "/graphql",
+        json={
+            "query": generate_system_query([API_SYSTEM_VERSION_INFO]),
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json.get("data") is None
+
+    assert mock_subprocess_check_output.call_count == 0
+
+
+def test_graphql_get_system_version(authorized_client, mock_subprocess_check_output):
+    """Test get system version"""
+    response = authorized_client.get(
+        "/graphql",
+        json={
+            "query": generate_system_query([API_SYSTEM_VERSION_INFO]),
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json.get("data") is not None
+
+    assert response.json["data"]["sytem"]["info"]["systemVersion"] == "Testing Linux"
+    assert mock_subprocess_check_output.call_count == 1
+    assert mock_subprocess_check_output.call_args[0][0] == ["uname", "-a"]
 
 
 API_GET_DOMAIN_INFO = """
@@ -730,9 +789,9 @@ def test_graphql_change_auto_upgrade_with_empty_input(authorized_client, turned_
     )
 
 
-API_REBUILD_SYSTEM_MUTATION = """
-mutation rebuildSystem() {
-    runSystemRebuild {
+API_PULL_SYSTEM_CONFIGURATION_MUTATION = """
+mutation testPullSystemConfiguration() {
+    pullRepositoryChanges {
         success
         message
         code
@@ -741,125 +800,62 @@ mutation rebuildSystem() {
 """
 
 
-def test_graphql_system_rebuild_unauthorized(client, mock_subprocess_popen):
-    """Test system rebuild without authorization"""
+def test_graphql_pull_system_configuration_unauthorized(client, mock_subprocess_popen):
     response = client.post(
         "/graphql",
         json={
-            "query": API_REBUILD_SYSTEM_MUTATION,
+            "query": API_PULL_SYSTEM_CONFIGURATION_MUTATION,
         },
     )
+
     assert response.status_code == 200
     assert response.json.get("data") is None
     assert mock_subprocess_popen.call_count == 0
 
 
-def test_graphql_system_rebuild(authorized_client, mock_subprocess_popen):
-    """Test system rebuild"""
+def test_graphql_pull_system_configuration(
+    authorized_client, mock_subprocess_popen, mock_os_chdir
+):
+    current_dir = os.getcwd()
     response = authorized_client.post(
         "/graphql",
         json={
-            "query": API_REBUILD_SYSTEM_MUTATION,
+            "query": API_PULL_SYSTEM_CONFIGURATION_MUTATION,
         },
     )
+
     assert response.status_code == 200
     assert response.json.get("data") is not None
-    assert response.json["data"]["runSystemRebuild"]["success"] is True
-    assert response.json["data"]["runSystemRebuild"]["message"] is not None
-    assert response.json["data"]["runSystemRebuild"]["code"] == 200
+    assert response.json["data"]["pullRepositoryChanges"]["success"] is True
+    assert response.json["data"]["pullRepositoryChanges"]["message"] is not None
+    assert response.json["data"]["pullRepositoryChanges"]["code"] == 200
+
     assert mock_subprocess_popen.call_count == 1
-    assert mock_subprocess_popen.call_args[0][0] == [
-        "systemctl",
-        "start",
-        "sp-nixos-rebuild.service",
-    ]
+    assert mock_subprocess_popen.call_args[0][0] == ["git", "pull"]
+    assert mock_os_chdir.call_count == 2
+    assert mock_os_chdir.call_args_list[0][0][0] == "/etc/nixos"
+    assert mock_os_chdir.call_args_list[1][0][0] == current_dir
 
 
-API_UPGRADE_SYSTEM_MUTATION = """
-mutation upgradeSystem() {
-    runSystemUpgrade {
-        success
-        message
-        code
-    }
-}
-"""
+def test_graphql_pull_system_broken_repo(
+    authorized_client, mock_broken_service, mock_os_chdir
+):
+    current_dir = os.getcwd()
 
-
-def test_graphql_system_upgrade_unauthorized(client, mock_subprocess_popen):
-    """Test system upgrade without authorization"""
-    response = client.post(
-        "/graphql",
-        json={
-            "query": API_UPGRADE_SYSTEM_MUTATION,
-        },
-    )
-    assert response.status_code == 200
-    assert response.json.get("data") is None
-    assert mock_subprocess_popen.call_count == 0
-
-
-def test_graphql_system_upgrade(authorized_client, mock_subprocess_popen):
-    """Test system upgrade"""
     response = authorized_client.post(
         "/graphql",
         json={
-            "query": API_UPGRADE_SYSTEM_MUTATION,
+            "query": API_PULL_SYSTEM_CONFIGURATION_MUTATION,
         },
     )
+
     assert response.status_code == 200
     assert response.json.get("data") is not None
-    assert response.json["data"]["runSystemUpgrade"]["success"] is True
-    assert response.json["data"]["runSystemUpgrade"]["message"] is not None
-    assert response.json["data"]["runSystemUpgrade"]["code"] == 200
-    assert mock_subprocess_popen.call_count == 1
-    assert mock_subprocess_popen.call_args[0][0] == [
-        "systemctl",
-        "start",
-        "sp-nixos-upgrade.service",
-    ]
+    assert response.json["data"]["pullRepositoryChanges"]["success"] is False
+    assert response.json["data"]["pullRepositoryChanges"]["message"] is not None
+    assert response.json["data"]["pullRepositoryChanges"]["code"] == 500
 
-
-API_ROLLBACK_SYSTEM_MUTATION = """
-mutation rollbackSystem() {
-    runSystemRollback {
-        success
-        message
-        code
-    }
-}
-"""
-
-
-def test_graphql_system_rollback_unauthorized(client, mock_subprocess_popen):
-    """Test system rollback without authorization"""
-    response = client.post(
-        "/graphql",
-        json={
-            "query": API_ROLLBACK_SYSTEM_MUTATION,
-        },
-    )
-    assert response.status_code == 200
-    assert response.json.get("data") is None
-    assert mock_subprocess_popen.call_count == 0
-
-
-def test_graphql_system_rollback(authorized_client, mock_subprocess_popen):
-    """Test system rollback"""
-    response = authorized_client.post(
-        "/graphql",
-        json={
-            "query": API_ROLLBACK_SYSTEM_MUTATION,
-        },
-    )
-    assert response.status_code == 200
-    assert response.json.get("data") is not None
-    assert response.json["data"]["runSystemRollback"]["success"] is True
-    assert response.json["data"]["runSystemRollback"]["message"] is not None
-    assert response.json["data"]["runSystemRollback"]["code"] == 200
-    assert mock_subprocess_popen.call_count == 1
-    assert mock_subprocess_popen.call_args[0][0] == [
-        "systemctl",
-        "start",
-        "sp-nixos-rollback.service",
-    ]
+    assert mock_broken_service.call_count == 1
+    assert mock_os_chdir.call_count == 2
+    assert mock_os_chdir.call_args_list[0][0][0] == "/etc/nixos"
+    assert mock_os_chdir.call_args_list[1][0][0] == current_dir
