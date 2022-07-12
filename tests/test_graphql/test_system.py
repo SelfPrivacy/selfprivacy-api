@@ -200,7 +200,7 @@ def test_graphql_get_system_version(authorized_client, mock_subprocess_check_out
     assert response.status_code == 200
     assert response.json.get("data") is not None
 
-    assert response.json["data"]["sytem"]["info"]["systemVersion"] == "Testing Linux"
+    assert response.json["data"]["system"]["info"]["systemVersion"] == "Testing Linux"
     assert mock_subprocess_check_output.call_count == 1
     assert mock_subprocess_check_output.call_args[0][0] == ["uname", "-a"]
 
@@ -775,7 +775,7 @@ def test_graphql_change_auto_upgrade_with_empty_input(authorized_client, turned_
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is None
+    assert response.json.get("data") is not None
     assert response.json["data"]["changeAutoUpgradeSettings"]["success"] is True
     assert response.json["data"]["changeAutoUpgradeSettings"]["message"] is not None
     assert response.json["data"]["changeAutoUpgradeSettings"]["code"] == 200

@@ -4,6 +4,7 @@ import typing
 import strawberry
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.mutations.api_mutations import ApiMutations
+from selfprivacy_api.graphql.mutations.system_mutations import SystemMutations
 
 from selfprivacy_api.graphql.queries.api_queries import Api
 from selfprivacy_api.graphql.queries.system import System
@@ -25,7 +26,7 @@ class Query:
 
 
 @strawberry.type
-class Mutation(ApiMutations):
+class Mutation(ApiMutations, SystemMutations):
     """Root schema for mutations"""
 
     pass
