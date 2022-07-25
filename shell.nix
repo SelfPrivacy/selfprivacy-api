@@ -19,6 +19,8 @@ let
     pydantic
     typing-extensions
     flask-cors
+    psutil
+    black
     (buildPythonPackage rec {
       pname = "strawberry-graphql";
       version = "0.114.5";

@@ -65,7 +65,7 @@ class ReadUserData(object):
         portalocker.lock(self.userdata_file, portalocker.LOCK_SH)
         self.data = json.load(self.userdata_file)
 
-    def __enter__(self):
+    def __enter__(self) -> dict:
         return self.data
 
     def __exit__(self, *args):
