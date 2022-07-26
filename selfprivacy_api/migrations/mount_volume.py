@@ -38,7 +38,7 @@ class MountVolume(Migration):
                 userdata["volumes"] = []
                 if is_there_a_volume:
                     userdata["volumes"].append({
-                        "device": "/etc/sdb",
+                        "device": "/dev/sdb",
                         "mountPoint": "/volumes/sdb",
                         "fsType": "ext4",
                     })
