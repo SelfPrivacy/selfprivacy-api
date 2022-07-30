@@ -14,8 +14,8 @@ class StorageVolume:
     used_space: str
     root: bool
     name: str
-    model: str
-    serial: str
+    model: typing.Optional[str]
+    serial: typing.Optional[str]
     type: str
 
 
