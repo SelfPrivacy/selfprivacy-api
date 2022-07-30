@@ -5,6 +5,7 @@ from selfprivacy_api.migrations.migration import Migration
 from selfprivacy_api.utils import ReadUserData, WriteUserData
 from selfprivacy_api.utils.block_devices import BlockDevices
 
+
 class MountVolume(Migration):
     """Mount volume."""
 
@@ -37,11 +38,13 @@ class MountVolume(Migration):
             with WriteUserData() as userdata:
                 userdata["volumes"] = []
                 if is_there_a_volume:
-                    userdata["volumes"].append({
-                        "device": "/dev/sdb",
-                        "mountPoint": "/volumes/sdb",
-                        "fsType": "ext4",
-                    })
+                    userdata["volumes"].append(
+                        {
+                            "device": "/dev/sdb",
+                            "mountPoint": "/volumes/sdb",
+                            "fsType": "ext4",
+                        }
+                    )
             print("Done")
         except Exception as e:
             print(e)

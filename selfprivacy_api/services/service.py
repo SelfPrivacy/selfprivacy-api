@@ -1,6 +1,7 @@
 """Abstract class for a service running on a server"""
 from abc import ABC, abstractmethod
 from enum import Enum
+import typing
 
 
 class ServiceStatus(Enum):
@@ -11,6 +12,14 @@ class ServiceStatus(Enum):
     ERROR = "ERROR"
     STOPPED = "STOPPED"
     OFF = "OFF"
+
+
+class ServiceDnsRecord:
+    type: str
+    name: str
+    content: str
+    ttl: int
+    priority: typing.Optional[int]
 
 
 class Service(ABC):
@@ -77,4 +86,8 @@ class Service(ABC):
 
     @abstractmethod
     def get_storage_usage(self):
+        pass
+
+    @abstractmethod
+    def get_dns_records(self) -> typing.List[ServiceDnsRecord]:
         pass

@@ -3,6 +3,8 @@ import subprocess
 import json
 import typing
 
+from selfprivacy_api.utils import WriteUserData
+
 
 def get_block_device(device_name):
     """
@@ -14,7 +16,7 @@ def get_block_device(device_name):
             "-J",
             "-b",
             "-o",
-            "NAME,PATH,FSAVAIL,FSSIZE,FSTYPE,FSUSED,MOUNTPOINT,LABEL,UUID,SIZE",
+            "NAME,PATH,FSAVAIL,FSSIZE,FSTYPE,FSUSED,MOUNTPOINT,LABEL,UUID,SIZE, MODEL,SERIAL,TYPE",
             device_name,
         ]
     )
@@ -49,6 +51,9 @@ class BlockDevice:
         self.label = block_device["label"]
         self.uuid = block_device["uuid"]
         self.size = block_device["size"]
+        self.model = block_device["model"]
+        self.serial = block_device["serial"]
+        self.type = block_device["type"]
         self.locked = False
 
     def __str__(self):
@@ -76,6 +81,9 @@ class BlockDevice:
         self.label = device["label"]
         self.uuid = device["uuid"]
         self.size = device["size"]
+        self.model = device["model"]
+        self.serial = device["serial"]
+        self.type = device["type"]
 
         return {
             "name": self.name,
@@ -88,6 +96,9 @@ class BlockDevice:
             "label": self.label,
             "uuid": self.uuid,
             "size": self.size,
+            "model": self.model,
+            "serial": self.serial,
+            "type": self.type,
         }
 
     def resize(self):
@@ -98,6 +109,40 @@ class BlockDevice:
             self.locked = True
             resize_block_device(self.path)
             self.locked = False
+
+    def mount(self) -> bool:
+        """
+        Mount the block device.
+        """
+        with WriteUserData() as user_data:
+            if "volumes" not in user_data:
+                user_data["volumes"] = []
+            # Check if the volume is already mounted
+            for volume in user_data["volumes"]:
+                if volume["device"] == self.path:
+                    return False
+            user_data["volumes"].append(
+                {
+                    "device": self.path,
+                    "mountPoint": f"/volumes/{self.name}",
+                    "fsType": self.fstype,
+                }
+            )
+        return True
+
+    def unmount(self) -> bool:
+        """
+        Unmount the block device.
+        """
+        with WriteUserData() as user_data:
+            if "volumes" not in user_data:
+                user_data["volumes"] = []
+            # Check if the volume is already mounted
+            for volume in user_data["volumes"]:
+                if volume["device"] == self.path:
+                    user_data["volumes"].remove(volume)
+                    return True
+        return False
 
 
 class BlockDevices:
@@ -125,12 +170,15 @@ class BlockDevices:
                 "-J",
                 "-b",
                 "-o",
-                "NAME,PATH,FSAVAIL,FSSIZE,FSTYPE,FSUSED,MOUNTPOINT,LABEL,UUID,SIZE",
+                "NAME,PATH,FSAVAIL,FSSIZE,FSTYPE,FSUSED,MOUNTPOINT,LABEL,UUID,SIZE,MODEL,SERIAL,TYPE",
             ]
         )
         lsblk_output = lsblk_output.decode("utf-8")
         lsblk_output = json.loads(lsblk_output)
         for device in lsblk_output["blockdevices"]:
+            # Ignore devices with type "rom"
+            if device["type"] == "rom":
+                continue
             if device["fstype"] is None:
                 if "children" in device:
                     for child in device["children"]:
