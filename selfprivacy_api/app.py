@@ -53,7 +53,6 @@ def create_app(test_config=None):
             pass
         elif request.path.startswith("/auth/recovery_token/use"):
             pass
-        # TODO: REMOVE THIS
         elif request.path.startswith("/graphql"):
             pass
         else:

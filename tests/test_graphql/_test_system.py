@@ -1,12 +1,10 @@
 # pylint: disable=redefined-outer-name
 # pylint: disable=unused-argument
 # pylint: disable=missing-function-docstring
-import json
 import os
 import pytest
-import datetime
 
-from tests.common import generate_system_query, read_json, write_json
+from tests.common import generate_system_query, read_json
 
 
 @pytest.fixture
@@ -56,7 +54,7 @@ class ProcessMock:
         self.args = args
         self.kwargs = kwargs
 
-    def communicate():
+    def communicate():  # pylint: disable=no-method-argument
         return (b"", None)
 
     returncode = 0
@@ -65,7 +63,7 @@ class ProcessMock:
 class BrokenServiceMock(ProcessMock):
     """Mock subprocess.Popen for broken service"""
 
-    def communicate():
+    def communicate():  # pylint: disable=no-method-argument
         return (b"Testing error", None)
 
     returncode = 3

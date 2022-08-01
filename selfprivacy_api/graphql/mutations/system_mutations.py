@@ -7,7 +7,7 @@ from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.mutations.mutation_interface import (
     MutationReturnInterface,
 )
-from selfprivacy_api.utils import ReadUserData, WriteUserData
+from selfprivacy_api.utils import WriteUserData
 
 
 @strawberry.type

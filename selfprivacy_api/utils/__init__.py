@@ -159,3 +159,17 @@ def get_dkim_key(domain):
         dkim = cat_process.communicate()[0]
         return str(dkim, "utf-8")
     return None
+
+
+def hash_password(password):
+    hashing_command = ["mkpasswd", "-m", "sha-512", password]
+    password_hash_process_descriptor = subprocess.Popen(
+        hashing_command,
+        shell=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
+    hashed_password = password_hash_process_descriptor.communicate()[0]
+    hashed_password = hashed_password.decode("ascii")
+    hashed_password = hashed_password.rstrip()
+    return hashed_password

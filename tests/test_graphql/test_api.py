@@ -1,7 +1,6 @@
 # pylint: disable=redefined-outer-name
 # pylint: disable=unused-argument
 # pylint: disable=missing-function-docstring
-import pytest
 
 from tests.common import generate_api_query
 from tests.test_graphql.test_api_devices import API_DEVICES_QUERY

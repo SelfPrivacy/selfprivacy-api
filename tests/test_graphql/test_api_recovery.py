@@ -1,9 +1,6 @@
 # pylint: disable=redefined-outer-name
 # pylint: disable=unused-argument
 # pylint: disable=missing-function-docstring
-import json
-from time import strftime
-import pytest
 import datetime
 
 from tests.common import generate_api_query, mnemonic_to_hex, read_json, write_json

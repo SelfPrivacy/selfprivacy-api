@@ -20,5 +20,9 @@ def generate_system_query(query_array):
     return "query TestSystem {\n system {" + "\n".join(query_array) + "}\n}"
 
 
+def generate_users_query(query_array):
+    return "query TestUsers {\n users {" + "\n".join(query_array) + "}\n}"
+
+
 def mnemonic_to_hex(mnemonic):
     return Mnemonic(language="english").to_entropy(mnemonic).hex()
