@@ -1,4 +1,4 @@
-{ pkgs ? import <nixpkgs> {} }:
+{ pkgs ? import <nixpkgs> { } }:
 let
   sp-python = pkgs.python39.withPackages (p: with p; [
     flask
@@ -23,14 +23,13 @@ let
     black
     (buildPythonPackage rec {
       pname = "strawberry-graphql";
-      version = "0.114.5";
+      version = "0.123.0";
       format = "pyproject";
       patches = [
         ./strawberry-graphql.patch
       ];
       propagatedBuildInputs = [
         typing-extensions
-        graphql-core
         python-multipart
         python-dateutil
         flask
@@ -38,10 +37,27 @@ let
         pygments
         poetry
         flask-cors
+        (buildPythonPackage rec {
+          pname = "graphql-core";
+          version = "3.2.0";
+          format = "setuptools";
+          src = fetchPypi {
+            inherit pname version;
+            sha256 = "sha256-huKgvgCL/eGe94OI3opyWh2UKpGQykMcJKYIN5c4A84=";
+          };
+          checkInputs = [
+            pytest-asyncio
+            pytest-benchmark
+            pytestCheckHook
+          ];
+          pythonImportsCheck = [
+            "graphql"
+          ];
+        })
       ];
       src = fetchPypi {
         inherit pname version;
-        sha256 = "b6e007281cf29a66eeba66a512744853d8aa53b4ca2525befb6f350bb7b24df6";
+        sha256 = "KsmZ5Xv8tUg6yBxieAEtvoKoRG60VS+iVGV0X6oCExo=";
       };
     })
   ]);
