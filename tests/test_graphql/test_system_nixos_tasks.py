@@ -53,7 +53,7 @@ def mock_subprocess_check_output(mocker):
 
 
 API_REBUILD_SYSTEM_MUTATION = """
-mutation rebuildSystem() {
+mutation rebuildSystem {
     runSystemRebuild {
         success
         message
@@ -98,7 +98,7 @@ def test_graphql_system_rebuild(authorized_client, mock_subprocess_popen):
 
 
 API_UPGRADE_SYSTEM_MUTATION = """
-mutation upgradeSystem() {
+mutation upgradeSystem {
     runSystemUpgrade {
         success
         message
@@ -143,7 +143,7 @@ def test_graphql_system_upgrade(authorized_client, mock_subprocess_popen):
 
 
 API_ROLLBACK_SYSTEM_MUTATION = """
-mutation rollbackSystem() {
+mutation rollbackSystem {
     runSystemRollback {
         success
         message

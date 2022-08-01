@@ -1,10 +1,12 @@
 """System management mutations"""
 # pylint: disable=too-few-public-methods
+import subprocess
 import typing
 import pytz
 import strawberry
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.mutations.mutation_interface import (
+    GenericMutationReturn,
     MutationReturnInterface,
 )
 from selfprivacy_api.utils import WriteUserData
@@ -83,4 +85,49 @@ class SystemMutations:
             code=200,
             enableAutoUpgrade=auto_upgrade,
             allowReboot=allow_reboot,
+        )
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    def run_system_rebuild(self) -> GenericMutationReturn:
+        rebuild_result = subprocess.Popen(
+            ["systemctl", "start", "sp-nixos-rebuild.service"], start_new_session=True
+        )
+        rebuild_result.communicate()[0]
+        return GenericMutationReturn(
+            success=True,
+            message="Starting rebuild system",
+            code=200,
+        )
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    def run_system_rollback(self) -> GenericMutationReturn:
+        rollback_result = subprocess.Popen(
+            ["systemctl", "start", "sp-nixos-rollback.service"], start_new_session=True
+        )
+        rollback_result.communicate()[0]
+        return GenericMutationReturn(
+            success=True,
+            message="Starting rebuild system",
+            code=200,
+        )
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    def run_system_upgrade(self) -> GenericMutationReturn:
+        upgrade_result = subprocess.Popen(
+            ["systemctl", "start", "sp-nixos-upgrade.service"], start_new_session=True
+        )
+        upgrade_result.communicate()[0]
+        return GenericMutationReturn(
+            success=True,
+            message="Starting rebuild system",
+            code=200,
+        )
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    def reboot_system(self) -> GenericMutationReturn:
+        subprocess.Popen(["reboot"], start_new_session=True)
+        return GenericMutationReturn(
+            success=True,
+            message="System reboot has started",
+            code=200,
         )
