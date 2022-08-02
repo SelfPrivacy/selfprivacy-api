@@ -15,6 +15,7 @@ from selfprivacy_api.graphql.queries.system import System
 
 from selfprivacy_api.graphql.mutations.users_mutations import UserMutations
 from selfprivacy_api.graphql.queries.users import Users
+from selfprivacy_api.graphql.subscriptions.jobs import JobSubscription
 from selfprivacy_api.jobs.test import test_job
 
 
@@ -66,4 +67,4 @@ class Mutation(
     pass
 
 
-schema = strawberry.Schema(query=Query, mutation=Mutation)
+schema = strawberry.Schema(query=Query, mutation=Mutation, subscription=JobSubscription)
