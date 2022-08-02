@@ -16,7 +16,7 @@ def get_block_device(device_name):
             "-J",
             "-b",
             "-o",
-            "NAME,PATH,FSAVAIL,FSSIZE,FSTYPE,FSUSED,MOUNTPOINT,LABEL,UUID,SIZE, MODEL,SERIAL,TYPE",
+            "NAME,PATH,FSAVAIL,FSSIZE,FSTYPE,FSUSED,MOUNTPOINTS,LABEL,UUID,SIZE, MODEL,SERIAL,TYPE",
             device_name,
         ]
     )
@@ -47,7 +47,7 @@ class BlockDevice:
         self.fssize = block_device["fssize"]
         self.fstype = block_device["fstype"]
         self.fsused = block_device["fsused"]
-        self.mountpoint = block_device["mountpoint"]
+        self.mountpoints = block_device["mountpoints"]
         self.label = block_device["label"]
         self.uuid = block_device["uuid"]
         self.size = block_device["size"]
@@ -60,7 +60,7 @@ class BlockDevice:
         return self.name
 
     def __repr__(self):
-        return f"<BlockDevice {self.name} of size {self.size} mounted at {self.mountpoint}>"
+        return f"<BlockDevice {self.name} of size {self.size} mounted at {self.mountpoints}>"
 
     def __eq__(self, other):
         return self.name == other.name
@@ -77,7 +77,7 @@ class BlockDevice:
         self.fssize = device["fssize"]
         self.fstype = device["fstype"]
         self.fsused = device["fsused"]
-        self.mountpoint = device["mountpoint"]
+        self.mountpoints = device["mountpoints"]
         self.label = device["label"]
         self.uuid = device["uuid"]
         self.size = device["size"]
@@ -92,7 +92,7 @@ class BlockDevice:
             "fssize": self.fssize,
             "fstype": self.fstype,
             "fsused": self.fsused,
-            "mountpoint": self.mountpoint,
+            "mountpoints": self.mountpoints,
             "label": self.label,
             "uuid": self.uuid,
             "size": self.size,
@@ -219,6 +219,6 @@ class BlockDevices:
         """
         block_devices = []
         for block_device in self.block_devices:
-            if block_device.mountpoint == mountpoint:
+            if mountpoint in block_device.mountpoints:
                 block_devices.append(block_device)
         return block_devices

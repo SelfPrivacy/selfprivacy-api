@@ -18,7 +18,8 @@ from selfprivacy_api.resources.system import api_system
 from selfprivacy_api.resources.services import services as api_services
 from selfprivacy_api.resources.api_auth import auth as api_auth
 
-from selfprivacy_api.restic_controller.tasks import huey, init_restic
+from selfprivacy_api.utils.huey import huey
+from selfprivacy_api.restic_controller.tasks import init_restic
 
 from selfprivacy_api.migrations import run_migrations
 

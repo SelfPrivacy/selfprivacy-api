@@ -1,10 +1,16 @@
 """Class representing Nextcloud service."""
 import base64
 import subprocess
+import time
+import typing
 import psutil
-from selfprivacy_api.services.service import Service, ServiceStatus
+import pathlib
+import shutil
+from selfprivacy_api.jobs import Job, JobStatus, Jobs
+from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
 from selfprivacy_api.utils import ReadUserData, WriteUserData
-
+from selfprivacy_api.utils.block_devices import BlockDevice
+from selfprivacy_api.utils.huey import huey
 
 class Nextcloud(Service):
     """Class representing Nextcloud service."""
@@ -92,5 +98,206 @@ class Nextcloud(Service):
         """Return Nextcloud logs."""
         return ""
 
-    def get_storage_usage(self):
-        return psutil.disk_usage("/var/lib/nextcloud").used
+    def get_storage_usage(self) -> int:
+        """
+        Calculate the real storage usage of /var/lib/nextcloud and all subdirectories.
+        Calculate using pathlib.
+        Do not follow symlinks.
+        """
+        storage_usage = 0
+        for path in pathlib.Path("/var/lib/nextcloud").rglob("**/*"):
+            if path.is_dir():
+                continue
+            storage_usage += path.stat().st_size
+        return storage_usage
+
+    def get_location(self) -> str:
+        """Get the name of disk where Nextcloud is installed."""
+        with ReadUserData() as user_data:
+            if user_data.get("useBinds", False):
+                return user_data.get("nextcloud", {}).get("location", "sda1")
+            else:
+                return "sda1"
+
+    def get_dns_records(self) -> typing.List[ServiceDnsRecord]:
+        return super().get_dns_records()
+
+    def move_to_volume(self, volume: BlockDevice):
+        job = Jobs().add(
+            name="services.nextcloud.move",
+            description=f"Moving Nextcloud to volume {volume.name}",
+        )
+        move_nextcloud(self, volume, job)
+        return job
+
+
+@huey.task()
+def move_nextcloud(nextcloud: Nextcloud, volume: BlockDevice, job: Job):
+    """Move Nextcloud to another volume."""
+    job = Jobs().update(
+        job=job,
+        status_text="Performing pre-move checks...",
+        status=JobStatus.RUNNING,
+    )
+    with ReadUserData() as user_data:
+        if not user_data.get("useBinds", False):
+            Jobs().update(
+                job=job,
+                status=JobStatus.ERROR,
+                error="Server is not using binds.",
+            )
+            return
+    # Check if we are on the same volume
+    old_location = nextcloud.get_location()
+    if old_location == volume.name:
+        Jobs().update(
+            job=job,
+            status=JobStatus.ERROR,
+            error="Nextcloud is already on this volume.",
+        )
+        return
+    # Check if there is enough space on the new volume
+    if volume.fsavail < nextcloud.get_storage_usage():
+        Jobs().update(
+            job=job,
+            status=JobStatus.ERROR,
+            error="Not enough space on the new volume.",
+        )
+        return
+    # Make sure the volume is mounted
+    if f"/volumes/{volume.name}" not in volume.mountpoints:
+        Jobs().update(
+            job=job,
+            status=JobStatus.ERROR,
+            error="Volume is not mounted.",
+        )
+        return
+    # Make sure current actual directory exists
+    if not pathlib.Path(f"/volumes/{old_location}/nextcloud").exists():
+        Jobs().update(
+            job=job,
+            status=JobStatus.ERROR,
+            error="Nextcloud is not found.",
+        )
+        return
+
+    # Stop Nextcloud
+    Jobs().update(
+        job=job,
+        status=JobStatus.RUNNING,
+        status_text="Stopping Nextcloud...",
+        progress=5,
+    )
+    nextcloud.stop()
+    # Wait for Nextcloud to stop, check every second
+    # If it does not stop in 30 seconds, abort
+    for _ in range(30):
+        if nextcloud.get_status() != ServiceStatus.RUNNING:
+            break
+        time.sleep(1)
+    else:
+        Jobs().update(
+            job=job,
+            status=JobStatus.ERROR,
+            error="Nextcloud did not stop in 30 seconds.",
+        )
+        return
+
+    # Unmount old volume
+    Jobs().update(
+        job=job,
+        status_text="Unmounting old folder...",
+        status=JobStatus.RUNNING,
+        progress=10,
+    )
+    try:
+        subprocess.run(["umount", "/var/lib/nextcloud"], check=True)
+    except subprocess.CalledProcessError:
+        Jobs().update(
+            job=job,
+            status=JobStatus.ERROR,
+            error="Unable to unmount old volume.",
+        )
+        return
+    # Move data to new volume and set correct permissions
+    Jobs().update(
+        job=job,
+        status_text="Moving data to new volume...",
+        status=JobStatus.RUNNING,
+        progress=20,
+    )
+    shutil.move(
+        f"/volumes/{old_location}/nextcloud", f"/volumes/{volume.name}/nextcloud"
+    )
+
+    Jobs().update(
+        job=job,
+        status_text="Making sure Nextcloud owns its files...",
+        status=JobStatus.RUNNING,
+        progress=70,
+    )
+    try:
+        subprocess.run(
+            [
+                "chown",
+                "-R",
+                "nextcloud:nextcloud",
+                f"/volumes/{volume.name}/nextcloud",
+            ],
+            check=True,
+        )
+    except subprocess.CalledProcessError as error:
+        print(error.output)
+        Jobs().update(
+            job=job,
+            status=JobStatus.RUNNING,
+            error="Unable to set ownership of new volume. Nextcloud may not be able to access its files. Continuing anyway.",
+        )
+        return
+
+    # Mount new volume
+    Jobs().update(
+        job=job,
+        status_text="Mounting Nextcloud data...",
+        status=JobStatus.RUNNING,
+        progress=90,
+    )
+    try:
+        subprocess.run(
+            [
+                "mount",
+                "--bind",
+                f"/volumes/{volume.name}/nextcloud",
+                "/var/lib/nextcloud",
+            ],
+            check=True,
+        )
+    except subprocess.CalledProcessError as error:
+        print(error.output)
+        Jobs().update(
+            job=job,
+            status=JobStatus.ERROR,
+            error="Unable to mount new volume.",
+        )
+        return
+
+    # Update userdata
+    Jobs().update(
+        job=job,
+        status_text="Finishing move...",
+        status=JobStatus.RUNNING,
+        progress=95,
+    )
+    with WriteUserData() as user_data:
+        if "nextcloud" not in user_data:
+            user_data["nextcloud"] = {}
+        user_data["nextcloud"]["location"] = volume.name
+    # Start Nextcloud
+    nextcloud.start()
+    Jobs().update(
+        job=job,
+        status=JobStatus.FINISHED,
+        result="Nextcloud moved successfully.",
+        status_text="Starting Nextcloud...",
+        progress=100,
+    )

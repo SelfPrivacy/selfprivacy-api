@@ -16,6 +16,7 @@ A job is a dictionary with the following keys:
 """
 import typing
 import datetime
+import asyncio
 import json
 import os
 import time
@@ -44,6 +45,8 @@ class Job:
         name: str,
         description: str,
         status: JobStatus,
+        status_text: typing.Optional[str],
+        progress: typing.Optional[int],
         created_at: datetime.datetime,
         updated_at: datetime.datetime,
         finished_at: typing.Optional[datetime.datetime],
@@ -54,45 +57,25 @@ class Job:
         self.name = name
         self.description = description
         self.status = status
+        self.status_text = status_text or ""
+        self.progress = progress or 0
         self.created_at = created_at
         self.updated_at = updated_at
         self.finished_at = finished_at
         self.error = error
         self.result = result
 
-    def to_dict(self) -> dict:
-        """
-        Convert the job to a dictionary.
-        """
-        return {
-            "id": self.id,
-            "name": self.name,
-            "description": self.description,
-            "status": self.status,
-            "created_at": self.created_at,
-            "updated_at": self.updated_at,
-            "finished_at": self.finished_at,
-            "error": self.error,
-            "result": self.result,
-        }
-
-    def to_json(self) -> str:
-        """
-        Convert the job to a JSON string.
-        """
-        return json.dumps(self.to_dict())
-
     def __str__(self) -> str:
         """
         Convert the job to a string.
         """
-        return self.to_json()
+        return f"{self.name} - {self.status}"
 
     def __repr__(self) -> str:
         """
         Convert the job to a string.
         """
-        return self.to_json()
+        return f"{self.name} - {self.status}"
 
 
 class Jobs:
@@ -120,9 +103,30 @@ class Jobs:
         else:
             Jobs.__instance = self
         self.jobs = []
+        # Observers of the jobs list.
+        self.observers = []
+
+    def add_observer(self, observer: typing.Callable[[typing.List[Job]], None]) -> None:
+        """
+        Add an observer to the jobs list.
+        """
+        self.observers.append(observer)
+
+    def remove_observer(self, observer: typing.Callable[[typing.List[Job]], None]) -> None:
+        """
+        Remove an observer from the jobs list.
+        """
+        self.observers.remove(observer)
+
+    def _notify_observers(self) -> None:
+        """
+        Notify the observers of the jobs list.
+        """
+        for observer in self.observers:
+            observer(self.jobs)
 
     def add(
-        self, name: str, description: str, status: JobStatus = JobStatus.CREATED
+        self, name: str, description: str, status: JobStatus = JobStatus.CREATED, status_text: str = "", progress: int = 0
     ) -> Job:
         """
         Add a job to the jobs list.
@@ -131,6 +135,8 @@ class Jobs:
             name=name,
             description=description,
             status=status,
+            status_text=status_text,
+            progress=progress,
             created_at=datetime.datetime.now(),
             updated_at=datetime.datetime.now(),
             finished_at=None,
@@ -138,6 +144,9 @@ class Jobs:
             result=None,
         )
         self.jobs.append(job)
+        # Notify the observers.
+        self._notify_observers()
+
         return job
 
     def remove(self, job: Job) -> None:
@@ -145,15 +154,19 @@ class Jobs:
         Remove a job from the jobs list.
         """
         self.jobs.remove(job)
+        # Notify the observers.
+        self._notify_observers()
 
     def update(
         self,
         job: Job,
-        name: typing.Optional[str],
-        description: typing.Optional[str],
         status: JobStatus,
-        error: typing.Optional[str],
-        result: typing.Optional[str],
+        status_text: typing.Optional[str] = None,
+        progress: typing.Optional[int] = None,
+        name: typing.Optional[str] = None,
+        description: typing.Optional[str] = None,
+        error: typing.Optional[str] = None,
+        result: typing.Optional[str] = None,
     ) -> Job:
         """
         Update a job in the jobs list.
@@ -162,10 +175,20 @@ class Jobs:
             job.name = name
         if description is not None:
             job.description = description
+        if status_text is not None:
+            job.status_text = status_text
+        if progress is not None:
+            job.progress = progress
         job.status = status
         job.updated_at = datetime.datetime.now()
         job.error = error
         job.result = result
+        if status == JobStatus.FINISHED or status == JobStatus.ERROR:
+            job.finished_at = datetime.datetime.now()
+
+        # Notify the observers.
+        self._notify_observers()
+
         return job
 
     def get_job(self, id: str) -> typing.Optional[Job]:
@@ -177,7 +200,7 @@ class Jobs:
                 return job
         return None
 
-    def get_jobs(self) -> list:
+    def get_jobs(self) -> typing.List[Job]:
         """
         Get the jobs list.
         """

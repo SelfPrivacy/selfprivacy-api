@@ -3,6 +3,8 @@ from abc import ABC, abstractmethod
 from enum import Enum
 import typing
 
+from selfprivacy_api.utils.block_devices import BlockDevice
+
 
 class ServiceStatus(Enum):
     """Enum for service status"""
@@ -85,9 +87,17 @@ class Service(ABC):
         pass
 
     @abstractmethod
-    def get_storage_usage(self):
+    def get_storage_usage(self) -> int:
         pass
 
     @abstractmethod
     def get_dns_records(self) -> typing.List[ServiceDnsRecord]:
+        pass
+
+    @abstractmethod
+    def get_location(self) -> str:
+        pass
+
+    @abstractmethod
+    def move_to_volume(self, volume: BlockDevice):
         pass
