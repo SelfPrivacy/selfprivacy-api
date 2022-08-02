@@ -25,6 +25,12 @@ class ApiJob:
 
 @strawberry.type
 class JobSubscription:
+    @strawberry.subscription
+    async def count(self, target: int = 100) -> AsyncGenerator[int, None]:
+        for i in range(target):
+            yield i
+            await asyncio.sleep(0.5)
+
     @strawberry.subscription()
     async def job_subscription(self) -> AsyncGenerator[typing.List[ApiJob], None]:
         is_updated = True
@@ -34,7 +40,7 @@ class JobSubscription:
             is_updated = True
 
         print("Subscribing to job updates...")
-        Jobs().add_observer(callback)
+        Jobs.get_instance().add_observer(callback)
         yield [
             ApiJob(
                 name=job.name,
@@ -48,7 +54,7 @@ class JobSubscription:
                 error=job.error,
                 result=job.result,
             )
-            for job in Jobs().get_jobs()
+            for job in Jobs.get_instance().get_jobs()
         ]
         while True:
             if is_updated:
@@ -66,5 +72,5 @@ class JobSubscription:
                         error=job.error,
                         result=job.result,
                     )
-                    for job in Jobs().get_jobs()
+                    for job in Jobs.get_instance().get_jobs()
                 ]

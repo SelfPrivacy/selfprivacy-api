@@ -123,7 +123,7 @@ class Nextcloud(Service):
         return super().get_dns_records()
 
     def move_to_volume(self, volume: BlockDevice):
-        job = Jobs().add(
+        job = Jobs.get_instance().add(
             name="services.nextcloud.move",
             description=f"Moving Nextcloud to volume {volume.name}",
         )
@@ -134,14 +134,14 @@ class Nextcloud(Service):
 @huey.task()
 def move_nextcloud(nextcloud: Nextcloud, volume: BlockDevice, job: Job):
     """Move Nextcloud to another volume."""
-    job = Jobs().update(
+    job = Jobs.get_instance().update(
         job=job,
         status_text="Performing pre-move checks...",
         status=JobStatus.RUNNING,
     )
     with ReadUserData() as user_data:
         if not user_data.get("useBinds", False):
-            Jobs().update(
+            Jobs.get_instance().update(
                 job=job,
                 status=JobStatus.ERROR,
                 error="Server is not using binds.",
@@ -150,7 +150,7 @@ def move_nextcloud(nextcloud: Nextcloud, volume: BlockDevice, job: Job):
     # Check if we are on the same volume
     old_location = nextcloud.get_location()
     if old_location == volume.name:
-        Jobs().update(
+        Jobs.get_instance().update(
             job=job,
             status=JobStatus.ERROR,
             error="Nextcloud is already on this volume.",
@@ -158,7 +158,7 @@ def move_nextcloud(nextcloud: Nextcloud, volume: BlockDevice, job: Job):
         return
     # Check if there is enough space on the new volume
     if volume.fsavail < nextcloud.get_storage_usage():
-        Jobs().update(
+        Jobs.get_instance().update(
             job=job,
             status=JobStatus.ERROR,
             error="Not enough space on the new volume.",
@@ -166,7 +166,7 @@ def move_nextcloud(nextcloud: Nextcloud, volume: BlockDevice, job: Job):
         return
     # Make sure the volume is mounted
     if f"/volumes/{volume.name}" not in volume.mountpoints:
-        Jobs().update(
+        Jobs.get_instance().update(
             job=job,
             status=JobStatus.ERROR,
             error="Volume is not mounted.",
@@ -174,7 +174,7 @@ def move_nextcloud(nextcloud: Nextcloud, volume: BlockDevice, job: Job):
         return
     # Make sure current actual directory exists
     if not pathlib.Path(f"/volumes/{old_location}/nextcloud").exists():
-        Jobs().update(
+        Jobs.get_instance().update(
             job=job,
             status=JobStatus.ERROR,
             error="Nextcloud is not found.",
@@ -182,7 +182,7 @@ def move_nextcloud(nextcloud: Nextcloud, volume: BlockDevice, job: Job):
         return
 
     # Stop Nextcloud
-    Jobs().update(
+    Jobs.get_instance().update(
         job=job,
         status=JobStatus.RUNNING,
         status_text="Stopping Nextcloud...",
@@ -196,7 +196,7 @@ def move_nextcloud(nextcloud: Nextcloud, volume: BlockDevice, job: Job):
             break
         time.sleep(1)
     else:
-        Jobs().update(
+        Jobs.get_instance().update(
             job=job,
             status=JobStatus.ERROR,
             error="Nextcloud did not stop in 30 seconds.",
@@ -204,7 +204,7 @@ def move_nextcloud(nextcloud: Nextcloud, volume: BlockDevice, job: Job):
         return
 
     # Unmount old volume
-    Jobs().update(
+    Jobs.get_instance().update(
         job=job,
         status_text="Unmounting old folder...",
         status=JobStatus.RUNNING,
@@ -213,14 +213,14 @@ def move_nextcloud(nextcloud: Nextcloud, volume: BlockDevice, job: Job):
     try:
         subprocess.run(["umount", "/var/lib/nextcloud"], check=True)
     except subprocess.CalledProcessError:
-        Jobs().update(
+        Jobs.get_instance().update(
             job=job,
             status=JobStatus.ERROR,
             error="Unable to unmount old volume.",
         )
         return
     # Move data to new volume and set correct permissions
-    Jobs().update(
+    Jobs.get_instance().update(
         job=job,
         status_text="Moving data to new volume...",
         status=JobStatus.RUNNING,
@@ -230,7 +230,7 @@ def move_nextcloud(nextcloud: Nextcloud, volume: BlockDevice, job: Job):
         f"/volumes/{old_location}/nextcloud", f"/volumes/{volume.name}/nextcloud"
     )
 
-    Jobs().update(
+    Jobs.get_instance().update(
         job=job,
         status_text="Making sure Nextcloud owns its files...",
         status=JobStatus.RUNNING,
@@ -248,7 +248,7 @@ def move_nextcloud(nextcloud: Nextcloud, volume: BlockDevice, job: Job):
         )
     except subprocess.CalledProcessError as error:
         print(error.output)
-        Jobs().update(
+        Jobs.get_instance().update(
             job=job,
             status=JobStatus.RUNNING,
             error="Unable to set ownership of new volume. Nextcloud may not be able to access its files. Continuing anyway.",
@@ -256,7 +256,7 @@ def move_nextcloud(nextcloud: Nextcloud, volume: BlockDevice, job: Job):
         return
 
     # Mount new volume
-    Jobs().update(
+    Jobs.get_instance().update(
         job=job,
         status_text="Mounting Nextcloud data...",
         status=JobStatus.RUNNING,
@@ -274,7 +274,7 @@ def move_nextcloud(nextcloud: Nextcloud, volume: BlockDevice, job: Job):
         )
     except subprocess.CalledProcessError as error:
         print(error.output)
-        Jobs().update(
+        Jobs.get_instance().update(
             job=job,
             status=JobStatus.ERROR,
             error="Unable to mount new volume.",
@@ -282,7 +282,7 @@ def move_nextcloud(nextcloud: Nextcloud, volume: BlockDevice, job: Job):
         return
 
     # Update userdata
-    Jobs().update(
+    Jobs.get_instance().update(
         job=job,
         status_text="Finishing move...",
         status=JobStatus.RUNNING,
@@ -294,7 +294,7 @@ def move_nextcloud(nextcloud: Nextcloud, volume: BlockDevice, job: Job):
         user_data["nextcloud"]["location"] = volume.name
     # Start Nextcloud
     nextcloud.start()
-    Jobs().update(
+    Jobs.get_instance().update(
         job=job,
         status=JobStatus.FINISHED,
         result="Nextcloud moved successfully.",

@@ -92,7 +92,11 @@ class Jobs:
         """
         if Jobs.__instance is None:
             Jobs()
-        return Jobs.__instance
+            if Jobs.__instance is None:
+                raise Exception("Couldn't init Jobs singleton!")
+            return Jobs.__instance
+        else:
+            return Jobs.__instance
 
     def __init__(self):
         """
@@ -102,7 +106,20 @@ class Jobs:
             raise Exception("This class is a singleton!")
         else:
             Jobs.__instance = self
-        self.jobs = []
+        self.jobs = [
+            Job(
+                name="Init job",
+                description="Initial job",
+                status=JobStatus.FINISHED,
+                status_text="",
+                progress=100,
+                created_at=datetime.datetime.now(),
+                updated_at=datetime.datetime.now(),
+                finished_at=datetime.datetime.now(),
+                error=None,
+                result=None,
+            )
+        ]
         # Observers of the jobs list.
         self.observers = []
 
