@@ -1,6 +1,8 @@
 import time
-from selfprivacy_api.utils.huey import huey
+from selfprivacy_api.utils.huey import Huey
 from selfprivacy_api.jobs import JobStatus, Jobs
+
+huey = Huey()
 
 
 @huey.task()

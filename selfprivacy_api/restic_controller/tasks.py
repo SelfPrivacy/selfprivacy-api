@@ -1,7 +1,9 @@
 """Tasks for the restic controller."""
 from huey import crontab
-from selfprivacy_api.utils.huey import huey
+from selfprivacy_api.utils.huey import Huey
 from . import ResticController, ResticStates
+
+huey = Huey()
 
 
 @huey.task()

@@ -36,11 +36,11 @@ DATE_FORMATS = [
 def test_get_tokens_info(authorized_client, tokens_file):
     response = authorized_client.get("/auth/tokens")
     assert response.status_code == 200
-    assert response.json == [
-        {"name": "test_token", "date": "2022-01-14 08:31:10.789314", "is_caller": True},
+    assert response.json() == [
+        {"name": "test_token", "date": "2022-01-14T08:31:10.789314", "is_caller": True},
         {
             "name": "test_token2",
-            "date": "2022-01-14 08:31:10.789314",
+            "date": "2022-01-14T08:31:10.789314",
             "is_caller": False,
         },
     ]
@@ -98,7 +98,7 @@ def test_refresh_token_unauthorized(client, tokens_file):
 def test_refresh_token(authorized_client, tokens_file):
     response = authorized_client.post("/auth/tokens")
     assert response.status_code == 200
-    new_token = response.json["token"]
+    new_token = response.json()["token"]
     assert read_json(tokens_file)["tokens"][0]["token"] == new_token
 
 
@@ -106,7 +106,7 @@ def test_refresh_token(authorized_client, tokens_file):
 
 
 def test_get_new_device_auth_token_unauthorized(client, tokens_file):
-    response = client.get("/auth/new_device")
+    response = client.post("/auth/new_device")
     assert response.status_code == 401
     assert read_json(tokens_file) == TOKENS_FILE_CONTETS
 
@@ -114,19 +114,19 @@ def test_get_new_device_auth_token_unauthorized(client, tokens_file):
 def test_get_new_device_auth_token(authorized_client, tokens_file):
     response = authorized_client.post("/auth/new_device")
     assert response.status_code == 200
-    assert "token" in response.json
-    token = Mnemonic(language="english").to_entropy(response.json["token"]).hex()
+    assert "token" in response.json()
+    token = Mnemonic(language="english").to_entropy(response.json()["token"]).hex()
     assert read_json(tokens_file)["new_device"]["token"] == token
 
 
 def test_get_and_delete_new_device_token(authorized_client, tokens_file):
     response = authorized_client.post("/auth/new_device")
     assert response.status_code == 200
-    assert "token" in response.json
-    token = Mnemonic(language="english").to_entropy(response.json["token"]).hex()
+    assert "token" in response.json()
+    token = Mnemonic(language="english").to_entropy(response.json()["token"]).hex()
     assert read_json(tokens_file)["new_device"]["token"] == token
     response = authorized_client.delete(
-        "/auth/new_device", json={"token": response.json["token"]}
+        "/auth/new_device", json={"token": response.json()["token"]}
     )
     assert response.status_code == 200
     assert read_json(tokens_file) == TOKENS_FILE_CONTETS
@@ -141,15 +141,15 @@ def test_delete_token_unauthenticated(client, tokens_file):
 def test_get_and_authorize_new_device(client, authorized_client, tokens_file):
     response = authorized_client.post("/auth/new_device")
     assert response.status_code == 200
-    assert "token" in response.json
-    token = Mnemonic(language="english").to_entropy(response.json["token"]).hex()
+    assert "token" in response.json()
+    token = Mnemonic(language="english").to_entropy(response.json()["token"]).hex()
     assert read_json(tokens_file)["new_device"]["token"] == token
     response = client.post(
         "/auth/new_device/authorize",
-        json={"token": response.json["token"], "device": "new_device"},
+        json={"token": response.json()["token"], "device": "new_device"},
     )
     assert response.status_code == 200
-    assert read_json(tokens_file)["tokens"][2]["token"] == response.json["token"]
+    assert read_json(tokens_file)["tokens"][2]["token"] == response.json()["token"]
     assert read_json(tokens_file)["tokens"][2]["name"] == "new_device"
 
 
@@ -165,19 +165,19 @@ def test_authorize_new_device_with_invalid_token(client, tokens_file):
 def test_get_and_authorize_used_token(client, authorized_client, tokens_file):
     response = authorized_client.post("/auth/new_device")
     assert response.status_code == 200
-    assert "token" in response.json
-    token = Mnemonic(language="english").to_entropy(response.json["token"]).hex()
+    assert "token" in response.json()
+    token = Mnemonic(language="english").to_entropy(response.json()["token"]).hex()
     assert read_json(tokens_file)["new_device"]["token"] == token
     response = client.post(
         "/auth/new_device/authorize",
-        json={"token": response.json["token"], "device": "new_device"},
+        json={"token": response.json()["token"], "device": "new_device"},
     )
     assert response.status_code == 200
-    assert read_json(tokens_file)["tokens"][2]["token"] == response.json["token"]
+    assert read_json(tokens_file)["tokens"][2]["token"] == response.json()["token"]
     assert read_json(tokens_file)["tokens"][2]["name"] == "new_device"
     response = client.post(
         "/auth/new_device/authorize",
-        json={"token": response.json["token"], "device": "new_device"},
+        json={"token": response.json()["token"], "device": "new_device"},
     )
     assert response.status_code == 404
 
@@ -187,8 +187,8 @@ def test_get_and_authorize_token_after_12_minutes(
 ):
     response = authorized_client.post("/auth/new_device")
     assert response.status_code == 200
-    assert "token" in response.json
-    token = Mnemonic(language="english").to_entropy(response.json["token"]).hex()
+    assert "token" in response.json()
+    token = Mnemonic(language="english").to_entropy(response.json()["token"]).hex()
     assert read_json(tokens_file)["new_device"]["token"] == token
 
     file_data = read_json(tokens_file)
@@ -199,7 +199,7 @@ def test_get_and_authorize_token_after_12_minutes(
 
     response = client.post(
         "/auth/new_device/authorize",
-        json={"token": response.json["token"], "device": "new_device"},
+        json={"token": response.json()["token"], "device": "new_device"},
     )
     assert response.status_code == 404
 
@@ -209,7 +209,7 @@ def test_authorize_without_token(client, tokens_file):
         "/auth/new_device/authorize",
         json={"device": "new_device"},
     )
-    assert response.status_code == 400
+    assert response.status_code == 422
     assert read_json(tokens_file) == TOKENS_FILE_CONTETS
 
 
@@ -245,7 +245,7 @@ def test_get_recovery_token_status_unauthorized(client, tokens_file):
 def test_get_recovery_token_when_none_exists(authorized_client, tokens_file):
     response = authorized_client.get("/auth/recovery_token")
     assert response.status_code == 200
-    assert response.json == {
+    assert response.json() == {
         "exists": False,
         "valid": False,
         "date": None,
@@ -259,8 +259,8 @@ def test_generate_recovery_token(authorized_client, client, tokens_file):
     # Generate token without expiration and uses_left
     response = authorized_client.post("/auth/recovery_token")
     assert response.status_code == 200
-    assert "token" in response.json
-    mnemonic_token = response.json["token"]
+    assert "token" in response.json()
+    mnemonic_token = response.json()["token"]
     token = Mnemonic(language="english").to_entropy(mnemonic_token).hex()
     assert read_json(tokens_file)["recovery_token"]["token"] == token
 
@@ -274,9 +274,9 @@ def test_generate_recovery_token(authorized_client, client, tokens_file):
     )
 
     # Try to get token status
-    response = client.get("/auth/recovery_token")
+    response = authorized_client.get("/auth/recovery_token")
     assert response.status_code == 200
-    assert response.json == {
+    assert response.json() == {
         "exists": True,
         "valid": True,
         "date": time_generated,
@@ -290,7 +290,7 @@ def test_generate_recovery_token(authorized_client, client, tokens_file):
         json={"token": mnemonic_token, "device": "recovery_device"},
     )
     assert recovery_response.status_code == 200
-    new_token = recovery_response.json["token"]
+    new_token = recovery_response.json()["token"]
     assert read_json(tokens_file)["tokens"][2]["token"] == new_token
     assert read_json(tokens_file)["tokens"][2]["name"] == "recovery_device"
 
@@ -300,7 +300,7 @@ def test_generate_recovery_token(authorized_client, client, tokens_file):
         json={"token": mnemonic_token, "device": "recovery_device2"},
     )
     assert recovery_response.status_code == 200
-    new_token = recovery_response.json["token"]
+    new_token = recovery_response.json()["token"]
     assert read_json(tokens_file)["tokens"][3]["token"] == new_token
     assert read_json(tokens_file)["tokens"][3]["name"] == "recovery_device2"
 
@@ -318,8 +318,8 @@ def test_generate_recovery_token_with_expiration_date(
         json={"expiration": expiration_date_str},
     )
     assert response.status_code == 200
-    assert "token" in response.json
-    mnemonic_token = response.json["token"]
+    assert "token" in response.json()
+    mnemonic_token = response.json()["token"]
     token = Mnemonic(language="english").to_entropy(mnemonic_token).hex()
     assert read_json(tokens_file)["recovery_token"]["token"] == token
     assert datetime.datetime.strptime(
@@ -336,9 +336,9 @@ def test_generate_recovery_token_with_expiration_date(
     )
 
     # Try to get token status
-    response = client.get("/auth/recovery_token")
+    response = authorized_client.get("/auth/recovery_token")
     assert response.status_code == 200
-    assert response.json == {
+    assert response.json() == {
         "exists": True,
         "valid": True,
         "date": time_generated,
@@ -352,7 +352,7 @@ def test_generate_recovery_token_with_expiration_date(
         json={"token": mnemonic_token, "device": "recovery_device"},
     )
     assert recovery_response.status_code == 200
-    new_token = recovery_response.json["token"]
+    new_token = recovery_response.json()["token"]
     assert read_json(tokens_file)["tokens"][2]["token"] == new_token
     assert read_json(tokens_file)["tokens"][2]["name"] == "recovery_device"
 
@@ -362,7 +362,7 @@ def test_generate_recovery_token_with_expiration_date(
         json={"token": mnemonic_token, "device": "recovery_device2"},
     )
     assert recovery_response.status_code == 200
-    new_token = recovery_response.json["token"]
+    new_token = recovery_response.json()["token"]
     assert read_json(tokens_file)["tokens"][3]["token"] == new_token
     assert read_json(tokens_file)["tokens"][3]["name"] == "recovery_device2"
 
@@ -381,9 +381,9 @@ def test_generate_recovery_token_with_expiration_date(
     assert read_json(tokens_file)["tokens"] == new_data["tokens"]
 
     # Get the status of the token
-    response = client.get("/auth/recovery_token")
+    response = authorized_client.get("/auth/recovery_token")
     assert response.status_code == 200
-    assert response.json == {
+    assert response.json() == {
         "exists": True,
         "valid": False,
         "date": time_generated,
@@ -397,7 +397,7 @@ def test_generate_recovery_token_with_expiration_in_the_past(
     authorized_client, tokens_file, timeformat
 ):
     # Server must return 400 if expiration date is in the past
-    expiration_date = datetime.datetime.now() - datetime.timedelta(minutes=5)
+    expiration_date = datetime.datetime.utcnow() - datetime.timedelta(minutes=5)
     expiration_date_str = expiration_date.strftime(timeformat)
     response = authorized_client.post(
         "/auth/recovery_token",
@@ -416,7 +416,7 @@ def test_generate_recovery_token_with_invalid_time_format(
         "/auth/recovery_token",
         json={"expiration": expiration_date},
     )
-    assert response.status_code == 400
+    assert response.status_code == 422
     assert "recovery_token" not in read_json(tokens_file)
 
 
@@ -429,8 +429,8 @@ def test_generate_recovery_token_with_limited_uses(
         json={"uses": 2},
     )
     assert response.status_code == 200
-    assert "token" in response.json
-    mnemonic_token = response.json["token"]
+    assert "token" in response.json()
+    mnemonic_token = response.json()["token"]
     token = Mnemonic(language="english").to_entropy(mnemonic_token).hex()
     assert read_json(tokens_file)["recovery_token"]["token"] == token
     assert read_json(tokens_file)["recovery_token"]["uses_left"] == 2
@@ -445,9 +445,9 @@ def test_generate_recovery_token_with_limited_uses(
     )
 
     # Try to get token status
-    response = client.get("/auth/recovery_token")
+    response = authorized_client.get("/auth/recovery_token")
     assert response.status_code == 200
-    assert response.json == {
+    assert response.json() == {
         "exists": True,
         "valid": True,
         "date": time_generated,
@@ -461,16 +461,16 @@ def test_generate_recovery_token_with_limited_uses(
         json={"token": mnemonic_token, "device": "recovery_device"},
     )
     assert recovery_response.status_code == 200
-    new_token = recovery_response.json["token"]
+    new_token = recovery_response.json()["token"]
     assert read_json(tokens_file)["tokens"][2]["token"] == new_token
     assert read_json(tokens_file)["tokens"][2]["name"] == "recovery_device"
 
     assert read_json(tokens_file)["recovery_token"]["uses_left"] == 1
 
     # Get the status of the token
-    response = client.get("/auth/recovery_token")
+    response = authorized_client.get("/auth/recovery_token")
     assert response.status_code == 200
-    assert response.json == {
+    assert response.json() == {
         "exists": True,
         "valid": True,
         "date": time_generated,
@@ -484,14 +484,14 @@ def test_generate_recovery_token_with_limited_uses(
         json={"token": mnemonic_token, "device": "recovery_device2"},
     )
     assert recovery_response.status_code == 200
-    new_token = recovery_response.json["token"]
+    new_token = recovery_response.json()["token"]
     assert read_json(tokens_file)["tokens"][3]["token"] == new_token
     assert read_json(tokens_file)["tokens"][3]["name"] == "recovery_device2"
 
     # Get the status of the token
-    response = client.get("/auth/recovery_token")
+    response = authorized_client.get("/auth/recovery_token")
     assert response.status_code == 200
-    assert response.json == {
+    assert response.json() == {
         "exists": True,
         "valid": False,
         "date": time_generated,

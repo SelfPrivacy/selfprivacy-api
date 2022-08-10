@@ -2,9 +2,10 @@
 """Network utils"""
 import subprocess
 import re
+from typing import Optional
 
 
-def get_ip4():
+def get_ip4() -> Optional[str]:
     """Get IPv4 address"""
     try:
         ip4 = subprocess.check_output(["ip", "addr", "show", "dev", "eth0"]).decode(
@@ -16,7 +17,7 @@ def get_ip4():
     return ip4.group(1) if ip4 else None
 
 
-def get_ip6():
+def get_ip6() -> Optional[str]:
     """Get IPv6 address"""
     try:
         ip6 = subprocess.check_output(["ip", "addr", "show", "dev", "eth0"]).decode(

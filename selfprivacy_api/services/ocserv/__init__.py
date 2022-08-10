@@ -1,0 +1,99 @@
+"""Class representing ocserv service."""
+import base64
+import subprocess
+import typing
+from selfprivacy_api.jobs import Jobs
+from selfprivacy_api.services.generic_service_mover import FolderMoveNames, move_service
+from selfprivacy_api.services.generic_size_counter import get_storage_usage
+from selfprivacy_api.services.generic_status_getter import get_service_status
+from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
+from selfprivacy_api.utils import ReadUserData, WriteUserData
+from selfprivacy_api.utils.block_devices import BlockDevice
+from selfprivacy_api.utils.network import get_ip4
+
+
+class Ocserv(Service):
+    """Class representing ocserv service."""
+
+    @staticmethod
+    def get_id() -> str:
+        return "ocserv"
+
+    @staticmethod
+    def get_display_name() -> str:
+        return "OpenConnect VPN"
+
+    @staticmethod
+    def get_description() -> str:
+        return "OpenConnect VPN to connect your devices and access the internet."
+
+    @staticmethod
+    def get_svg_icon() -> str:
+        with open("selfprivacy_api/services/ocserv/ocserv.svg", "rb") as f:
+            return base64.b64encode(f.read()).decode("utf-8")
+
+    @staticmethod
+    def is_movable() -> bool:
+        return False
+
+    @staticmethod
+    def is_required() -> bool:
+        return False
+
+    @staticmethod
+    def is_enabled() -> bool:
+        with ReadUserData() as user_data:
+            return user_data.get("ocserv", {}).get("enable", False)
+
+    @staticmethod
+    def get_status() -> ServiceStatus:
+        return get_service_status("ocserv.service")
+
+    @staticmethod
+    def enable():
+        with WriteUserData() as user_data:
+            if "ocserv" not in user_data:
+                user_data["ocserv"] = {}
+            user_data["ocserv"]["enable"] = True
+
+    @staticmethod
+    def disable():
+        with WriteUserData() as user_data:
+            if "ocserv" not in user_data:
+                user_data["ocserv"] = {}
+            user_data["ocserv"]["enable"] = False
+
+    @staticmethod
+    def stop():
+        subprocess.run(["systemctl", "stop", "ocserv.service"])
+
+    @staticmethod
+    def start():
+        subprocess.run(["systemctl", "start", "ocserv.service"])
+
+    @staticmethod
+    def restart():
+        subprocess.run(["systemctl", "restart", "ocserv.service"])
+
+    @staticmethod
+    def get_configuration():
+        return {}
+
+    @staticmethod
+    def get_logs():
+        return ""
+
+    @staticmethod
+    def get_location() -> str:
+        return "sda1"
+
+    @staticmethod
+    def get_dns_records() -> typing.List[ServiceDnsRecord]:
+        return []
+
+    @staticmethod
+    def get_storage_usage() -> int:
+        return 0
+
+    def move_to_volume(self, volume: BlockDevice):
+        raise NotImplementedError("ocserv service is not movable")

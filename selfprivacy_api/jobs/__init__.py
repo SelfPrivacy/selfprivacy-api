@@ -129,7 +129,9 @@ class Jobs:
         """
         self.observers.append(observer)
 
-    def remove_observer(self, observer: typing.Callable[[typing.List[Job]], None]) -> None:
+    def remove_observer(
+        self, observer: typing.Callable[[typing.List[Job]], None]
+    ) -> None:
         """
         Remove an observer from the jobs list.
         """
@@ -143,7 +145,12 @@ class Jobs:
             observer(self.jobs)
 
     def add(
-        self, name: str, description: str, status: JobStatus = JobStatus.CREATED, status_text: str = "", progress: int = 0
+        self,
+        name: str,
+        description: str,
+        status: JobStatus = JobStatus.CREATED,
+        status_text: str = "",
+        progress: int = 0,
     ) -> Job:
         """
         Add a job to the jobs list.

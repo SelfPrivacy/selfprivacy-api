@@ -2,20 +2,16 @@
 # pylint: disable=too-few-public-methods
 import datetime
 import typing
-from flask import request
 import strawberry
+from strawberry.types import Info
+from selfprivacy_api.actions.api_tokens import get_api_tokens_with_caller_flag
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.utils import parse_date
 
 from selfprivacy_api.utils.auth import (
     get_recovery_token_status,
-    get_tokens_info,
     is_recovery_token_exists,
     is_recovery_token_valid,
-    is_token_name_exists,
-    is_token_name_pair_valid,
-    refresh_token,
-    get_token_name,
 )
 
 
@@ -31,24 +27,6 @@ class ApiDevice:
     name: str
     creation_date: datetime.datetime
     is_caller: bool
-
-
-def get_devices() -> typing.List[ApiDevice]:
-    """Get list of devices"""
-    caller_name = get_token_name(
-        request.headers.get("Authorization").split(" ")[1]
-        if request.headers.get("Authorization") is not None
-        else None
-    )
-    tokens = get_tokens_info()
-    return [
-        ApiDevice(
-            name=token["name"],
-            creation_date=parse_date(token["date"]),
-            is_caller=token["name"] == caller_name,
-        )
-        for token in tokens
-    ]
 
 
 @strawberry.type
@@ -97,9 +75,18 @@ class Api:
     """API access status"""
 
     version: str = strawberry.field(resolver=get_api_version)
-    devices: typing.List[ApiDevice] = strawberry.field(
-        resolver=get_devices, permission_classes=[IsAuthenticated]
-    )
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    def devices(self, info: Info) -> typing.List[ApiDevice]:
+        return [
+            ApiDevice(
+                name=device.name,
+                creation_date=device.date,
+                is_caller=device.is_caller,
+            )
+            for device in get_api_tokens_with_caller_flag(info.context.auth_token)
+        ]
+
     recovery_key: ApiRecoveryKeyStatus = strawberry.field(
         resolver=get_recovery_key_status, permission_classes=[IsAuthenticated]
     )

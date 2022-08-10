@@ -25,7 +25,7 @@ class NoFileMock(ProcessMock):
 def mock_subproccess_popen(mocker):
     mock = mocker.patch("subprocess.Popen", autospec=True, return_value=ProcessMock)
     mocker.patch(
-        "selfprivacy_api.resources.services.mailserver.get_domain",
+        "selfprivacy_api.rest.services.get_domain",
         autospec=True,
         return_value="example.com",
     )
@@ -37,7 +37,7 @@ def mock_subproccess_popen(mocker):
 def mock_no_file(mocker):
     mock = mocker.patch("subprocess.Popen", autospec=True, return_value=NoFileMock)
     mocker.patch(
-        "selfprivacy_api.resources.services.mailserver.get_domain",
+        "selfprivacy_api.rest.services.get_domain",
         autospec=True,
         return_value="example.com",
     )
@@ -67,7 +67,7 @@ def test_dkim_key(authorized_client, mock_subproccess_popen):
     """Test DKIM key"""
     response = authorized_client.get("/services/mailserver/dkim")
     assert response.status_code == 200
-    assert base64.b64decode(response.data) == b"I am a DKIM key"
+    assert base64.b64decode(response.text) == b"I am a DKIM key"
     assert mock_subproccess_popen.call_args[0][0] == [
         "cat",
         "/var/dkim/example.com.selector.txt",

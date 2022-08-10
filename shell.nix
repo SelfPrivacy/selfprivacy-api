@@ -1,12 +1,8 @@
 { pkgs ? import <nixpkgs> { } }:
 let
   sp-python = pkgs.python39.withPackages (p: with p; [
-    flask
-    flask-restful
     setuptools
     portalocker
-    flask-swagger
-    flask-swagger-ui
     pytz
     pytest
     pytest-mock
@@ -18,9 +14,10 @@ let
     pylint
     pydantic
     typing-extensions
-    flask-cors
     psutil
     black
+    fastapi
+    uvicorn
     (buildPythonPackage rec {
       pname = "strawberry-graphql";
       version = "0.123.0";
@@ -32,11 +29,11 @@ let
         typing-extensions
         python-multipart
         python-dateutil
-        flask
+        # flask
         pydantic
         pygments
         poetry
-        flask-cors
+        # flask-cors
         (buildPythonPackage rec {
           pname = "graphql-core";
           version = "3.2.0";

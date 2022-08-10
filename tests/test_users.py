@@ -121,31 +121,31 @@ def test_get_users_unauthorized(client, some_users, mock_subprocess_popen):
 def test_get_some_users(authorized_client, some_users, mock_subprocess_popen):
     response = authorized_client.get("/users")
     assert response.status_code == 200
-    assert response.json == ["user1", "user2", "user3"]
+    assert response.json() == ["user1", "user2", "user3"]
 
 
 def test_get_one_user(authorized_client, one_user, mock_subprocess_popen):
     response = authorized_client.get("/users")
     assert response.status_code == 200
-    assert response.json == ["user1"]
+    assert response.json() == ["user1"]
 
 
 def test_get_one_user_with_main(authorized_client, one_user, mock_subprocess_popen):
     response = authorized_client.get("/users?withMainUser=true")
     assert response.status_code == 200
-    assert response.json == ["tester", "user1"]
+    assert response.json().sort() == ["tester", "user1"].sort()
 
 
 def test_get_no_users(authorized_client, no_users, mock_subprocess_popen):
     response = authorized_client.get("/users")
     assert response.status_code == 200
-    assert response.json == []
+    assert response.json() == []
 
 
 def test_get_no_users_with_main(authorized_client, no_users, mock_subprocess_popen):
     response = authorized_client.get("/users?withMainUser=true")
     assert response.status_code == 200
-    assert response.json == ["tester"]
+    assert response.json() == ["tester"]
 
 
 def test_get_undefined_users(
@@ -153,7 +153,7 @@ def test_get_undefined_users(
 ):
     response = authorized_client.get("/users")
     assert response.status_code == 200
-    assert response.json == []
+    assert response.json() == []
 
 
 def test_post_users_unauthorized(client, some_users, mock_subprocess_popen):
@@ -174,6 +174,7 @@ def test_post_one_user(authorized_client, one_user, mock_subprocess_popen):
         },
         {
             "username": "user4",
+            "sshKeys": [],
             "hashedPassword": "NEW_HASHED",
         },
     ]
@@ -181,19 +182,19 @@ def test_post_one_user(authorized_client, one_user, mock_subprocess_popen):
 
 def test_post_without_username(authorized_client, one_user, mock_subprocess_popen):
     response = authorized_client.post("/users", json={"password": "password"})
-    assert response.status_code == 400
+    assert response.status_code == 422
 
 
 def test_post_without_password(authorized_client, one_user, mock_subprocess_popen):
     response = authorized_client.post("/users", json={"username": "user4"})
-    assert response.status_code == 400
+    assert response.status_code == 422
 
 
 def test_post_without_username_and_password(
     authorized_client, one_user, mock_subprocess_popen
 ):
     response = authorized_client.post("/users", json={})
-    assert response.status_code == 400
+    assert response.status_code == 422
 
 
 @pytest.mark.parametrize("username", invalid_usernames)
@@ -226,7 +227,7 @@ def test_post_user_to_undefined_users(
     )
     assert response.status_code == 201
     assert read_json(undefined_settings / "undefined.json")["users"] == [
-        {"username": "user4", "hashedPassword": "NEW_HASHED"}
+        {"username": "user4", "sshKeys": [], "hashedPassword": "NEW_HASHED"}
     ]
 
 
@@ -277,11 +278,6 @@ def test_delete_system_user(
 def test_delete_main_user(authorized_client, some_users, mock_subprocess_popen):
     response = authorized_client.delete("/users/tester")
     assert response.status_code == 400
-
-
-def test_delete_without_argument(authorized_client, some_users, mock_subprocess_popen):
-    response = authorized_client.delete("/users/")
-    assert response.status_code == 404
 
 
 def test_delete_just_delete(authorized_client, some_users, mock_subprocess_popen):

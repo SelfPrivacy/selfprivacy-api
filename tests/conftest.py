@@ -2,8 +2,7 @@
 # pylint: disable=redefined-outer-name
 # pylint: disable=unused-argument
 import pytest
-from flask import testing
-from selfprivacy_api.app import create_app
+from fastapi.testclient import TestClient
 
 
 @pytest.fixture
@@ -16,66 +15,36 @@ def tokens_file(mocker, shared_datadir):
 
 
 @pytest.fixture
-def app():
-    """Flask application."""
-    app = create_app(
-        {
-            "ENABLE_SWAGGER": "1",
-        }
+def huey_database(mocker, shared_datadir):
+    """Mock huey database."""
+    mock = mocker.patch(
+        "selfprivacy_api.utils.huey.HUEY_DATABASE", shared_datadir / "huey.db"
     )
-
-    yield app
-
-
-@pytest.fixture
-def client(app, tokens_file):
-    """Flask unauthorized test client."""
-    return app.test_client()
-
-
-class AuthorizedClient(testing.FlaskClient):
-    """Flask authorized test client."""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.token = "TEST_TOKEN"
-
-    def open(self, *args, **kwargs):
-        if "headers" not in kwargs:
-            kwargs["headers"] = {}
-        kwargs["headers"]["Authorization"] = f"Bearer {self.token}"
-        return super().open(*args, **kwargs)
-
-
-class WrongAuthClient(testing.FlaskClient):
-    """Flask client with wrong token"""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.token = "WRONG_TOKEN"
-
-    def open(self, *args, **kwargs):
-        if "headers" not in kwargs:
-            kwargs["headers"] = {}
-        kwargs["headers"]["Authorization"] = f"Bearer {self.token}"
-        return super().open(*args, **kwargs)
+    return mock
 
 
 @pytest.fixture
-def authorized_client(app, tokens_file):
+def client(tokens_file, huey_database):
+    from selfprivacy_api.app import app
+
+    return TestClient(app)
+
+
+@pytest.fixture
+def authorized_client(tokens_file, huey_database):
     """Authorized test client fixture."""
-    app.test_client_class = AuthorizedClient
-    return app.test_client()
+    from selfprivacy_api.app import app
+
+    client = TestClient(app)
+    client.headers.update({"Authorization": "Bearer TEST_TOKEN"})
+    return client
 
 
 @pytest.fixture
-def wrong_auth_client(app, tokens_file):
+def wrong_auth_client(tokens_file, huey_database):
     """Wrong token test client fixture."""
-    app.test_client_class = WrongAuthClient
-    return app.test_client()
+    from selfprivacy_api.app import app
 
-
-@pytest.fixture
-def runner(app, tokens_file):
-    """Flask test runner."""
-    return app.test_cli_runner()
+    client = TestClient(app)
+    client.headers.update({"Authorization": "Bearer WRONG_TOKEN"})
+    return client

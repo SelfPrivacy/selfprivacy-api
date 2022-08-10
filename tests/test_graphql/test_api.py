@@ -24,7 +24,7 @@ TOKENS_FILE_CONTETS = {
 
 
 def test_graphql_get_entire_api_data(authorized_client, tokens_file):
-    response = authorized_client.get(
+    response = authorized_client.post(
         "/graphql",
         json={
             "query": generate_api_query(
@@ -33,25 +33,25 @@ def test_graphql_get_entire_api_data(authorized_client, tokens_file):
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is not None
-    assert "version" in response.get_json()["data"]["api"]
-    assert response.json["data"]["api"]["devices"] is not None
-    assert len(response.json["data"]["api"]["devices"]) == 2
+    assert response.json().get("data") is not None
+    assert "version" in response.json()["data"]["api"]
+    assert response.json()["data"]["api"]["devices"] is not None
+    assert len(response.json()["data"]["api"]["devices"]) == 2
     assert (
-        response.json["data"]["api"]["devices"][0]["creationDate"]
+        response.json()["data"]["api"]["devices"][0]["creationDate"]
         == "2022-01-14T08:31:10.789314"
     )
-    assert response.json["data"]["api"]["devices"][0]["isCaller"] is True
-    assert response.json["data"]["api"]["devices"][0]["name"] == "test_token"
+    assert response.json()["data"]["api"]["devices"][0]["isCaller"] is True
+    assert response.json()["data"]["api"]["devices"][0]["name"] == "test_token"
     assert (
-        response.json["data"]["api"]["devices"][1]["creationDate"]
+        response.json()["data"]["api"]["devices"][1]["creationDate"]
         == "2022-01-14T08:31:10.789314"
     )
-    assert response.json["data"]["api"]["devices"][1]["isCaller"] is False
-    assert response.json["data"]["api"]["devices"][1]["name"] == "test_token2"
-    assert response.json["data"]["api"]["recoveryKey"] is not None
-    assert response.json["data"]["api"]["recoveryKey"]["exists"] is False
-    assert response.json["data"]["api"]["recoveryKey"]["valid"] is False
-    assert response.json["data"]["api"]["recoveryKey"]["creationDate"] is None
-    assert response.json["data"]["api"]["recoveryKey"]["expirationDate"] is None
-    assert response.json["data"]["api"]["recoveryKey"]["usesLeft"] is None
+    assert response.json()["data"]["api"]["devices"][1]["isCaller"] is False
+    assert response.json()["data"]["api"]["devices"][1]["name"] == "test_token2"
+    assert response.json()["data"]["api"]["recoveryKey"] is not None
+    assert response.json()["data"]["api"]["recoveryKey"]["exists"] is False
+    assert response.json()["data"]["api"]["recoveryKey"]["valid"] is False
+    assert response.json()["data"]["api"]["recoveryKey"]["creationDate"] is None
+    assert response.json()["data"]["api"]["recoveryKey"]["expirationDate"] is None
+    assert response.json()["data"]["api"]["recoveryKey"]["usesLeft"] is None

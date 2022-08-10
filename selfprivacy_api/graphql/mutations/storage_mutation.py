@@ -1,5 +1,4 @@
 """Storage devices mutations"""
-import typing
 import strawberry
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.utils.block_devices import BlockDevices

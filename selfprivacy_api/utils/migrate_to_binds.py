@@ -7,10 +7,12 @@ from selfprivacy_api.services.nextcloud import Nextcloud
 from selfprivacy_api.utils import WriteUserData
 from selfprivacy_api.utils.block_devices import BlockDevices
 
+
 class BindMigrationConfig:
     """Config for bind migration.
     For each service provide block device name.
     """
+
     email_block_device: str
     bitwarden_block_device: str
     gitea_block_device: str
@@ -23,7 +25,7 @@ def migrate_to_binds(config: BindMigrationConfig):
 
     # Get block devices.
     block_devices = BlockDevices().get_block_devices()
-    block_device_names = [ device.name for device in block_devices ]
+    block_device_names = [device.name for device in block_devices]
 
     # Get all unique required block devices
     required_block_devices = []
@@ -80,7 +82,9 @@ def migrate_to_binds(config: BindMigrationConfig):
     # Move data from /var/lib/nextcloud to /volumes/<block_device_name>/nextcloud.
     # /var/lib/nextcloud is removed and /volumes/<block_device_name>/nextcloud is mounted as bind mount.
     nextcloud_data_path = pathlib.Path("/var/lib/nextcloud")
-    nextcloud_bind_path = pathlib.Path(f"/volumes/{config.nextcloud_block_device}/nextcloud")
+    nextcloud_bind_path = pathlib.Path(
+        f"/volumes/{config.nextcloud_block_device}/nextcloud"
+    )
     if nextcloud_data_path.exists():
         shutil.move(str(nextcloud_data_path), str(nextcloud_bind_path))
     else:
@@ -94,10 +98,15 @@ def migrate_to_binds(config: BindMigrationConfig):
     shutil.chown(nextcloud_data_path, user="nextcloud", group="nextcloud")
 
     # Mount nextcloud bind mount.
-    subprocess.run(["mount","--bind", str(nextcloud_bind_path), str(nextcloud_data_path)], check=True)
+    subprocess.run(
+        ["mount", "--bind", str(nextcloud_bind_path), str(nextcloud_data_path)],
+        check=True,
+    )
 
     # Recursively chown all files in nextcloud bind mount.
-    subprocess.run(["chown", "-R", "nextcloud:nextcloud", str(nextcloud_data_path)], check=True)
+    subprocess.run(
+        ["chown", "-R", "nextcloud:nextcloud", str(nextcloud_data_path)], check=True
+    )
 
     # Start Nextcloud
     Nextcloud().start()

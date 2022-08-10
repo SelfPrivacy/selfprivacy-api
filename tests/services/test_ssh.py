@@ -95,11 +95,15 @@ def some_users(mocker, datadir):
 ## TEST 401 ######################################################
 
 
-@pytest.mark.parametrize(
-    "endpoint", ["ssh", "ssh/enable", "ssh/key/send", "ssh/keys/user"]
-)
+@pytest.mark.parametrize("endpoint", ["ssh/enable", "ssh/keys/user"])
 def test_unauthorized(client, ssh_off, endpoint):
     response = client.post(f"/services/{endpoint}")
+    assert response.status_code == 401
+
+
+@pytest.mark.parametrize("endpoint", ["ssh", "ssh/key/send"])
+def test_unauthorized_put(client, ssh_off, endpoint):
+    response = client.put(f"/services/{endpoint}")
     assert response.status_code == 401
 
 
@@ -133,31 +137,31 @@ def test_legacy_enable_when_enabled(authorized_client, ssh_on):
 def test_get_current_settings_ssh_off(authorized_client, ssh_off):
     response = authorized_client.get("/services/ssh")
     assert response.status_code == 200
-    assert response.json == {"enable": False, "passwordAuthentication": True}
+    assert response.json() == {"enable": False, "passwordAuthentication": True}
 
 
 def test_get_current_settings_ssh_on(authorized_client, ssh_on):
     response = authorized_client.get("/services/ssh")
     assert response.status_code == 200
-    assert response.json == {"enable": True, "passwordAuthentication": True}
+    assert response.json() == {"enable": True, "passwordAuthentication": True}
 
 
 def test_get_current_settings_all_off(authorized_client, all_off):
     response = authorized_client.get("/services/ssh")
     assert response.status_code == 200
-    assert response.json == {"enable": False, "passwordAuthentication": False}
+    assert response.json() == {"enable": False, "passwordAuthentication": False}
 
 
 def test_get_current_settings_undefined(authorized_client, undefined_settings):
     response = authorized_client.get("/services/ssh")
     assert response.status_code == 200
-    assert response.json == {"enable": True, "passwordAuthentication": True}
+    assert response.json() == {"enable": True, "passwordAuthentication": True}
 
 
 def test_get_current_settings_mostly_undefined(authorized_client, undefined_values):
     response = authorized_client.get("/services/ssh")
     assert response.status_code == 200
-    assert response.json == {"enable": True, "passwordAuthentication": True}
+    assert response.json() == {"enable": True, "passwordAuthentication": True}
 
 
 ## PUT ON /ssh ######################################################
@@ -275,29 +279,22 @@ def test_add_invalid_root_key(authorized_client, ssh_on):
 ## /ssh/keys/{user} ######################################################
 
 
-def test_add_root_key_via_wrong_endpoint(authorized_client, ssh_on):
-    response = authorized_client.post(
-        "/services/ssh/keys/root", json={"public_key": "ssh-rsa KEY test@pc"}
-    )
-    assert response.status_code == 400
-
-
 def test_get_root_key(authorized_client, root_and_admin_have_keys):
     response = authorized_client.get("/services/ssh/keys/root")
     assert response.status_code == 200
-    assert response.json == ["ssh-ed25519 KEY test@pc"]
+    assert response.json() == ["ssh-ed25519 KEY test@pc"]
 
 
 def test_get_root_key_when_none(authorized_client, ssh_on):
     response = authorized_client.get("/services/ssh/keys/root")
     assert response.status_code == 200
-    assert response.json == []
+    assert response.json() == []
 
 
 def test_get_root_key_on_undefined(authorized_client, undefined_settings):
     response = authorized_client.get("/services/ssh/keys/root")
     assert response.status_code == 200
-    assert response.json == []
+    assert response.json() == []
 
 
 def test_delete_root_key(authorized_client, root_and_admin_have_keys):
@@ -310,6 +307,10 @@ def test_delete_root_key(authorized_client, root_and_admin_have_keys):
         not in read_json(root_and_admin_have_keys / "root_and_admin_have_keys.json")[
             "ssh"
         ]
+        or read_json(root_and_admin_have_keys / "root_and_admin_have_keys.json")["ssh"][
+            "rootKeys"
+        ]
+        == []
     )
 
 
@@ -330,19 +331,19 @@ def test_delete_root_key_on_undefined(authorized_client, undefined_settings):
         "/services/ssh/keys/root", json={"public_key": "ssh-ed25519 KEY test@pc"}
     )
     assert response.status_code == 404
-    assert read_json(undefined_settings / "undefined.json")["ssh"]["rootKeys"] == []
+    assert "ssh" not in read_json(undefined_settings / "undefined.json")
 
 
 def test_get_admin_key(authorized_client, root_and_admin_have_keys):
     response = authorized_client.get("/services/ssh/keys/tester")
     assert response.status_code == 200
-    assert response.json == ["ssh-rsa KEY test@pc"]
+    assert response.json() == ["ssh-rsa KEY test@pc"]
 
 
 def test_get_admin_key_when_none(authorized_client, ssh_on):
     response = authorized_client.get("/services/ssh/keys/tester")
     assert response.status_code == 200
-    assert response.json == []
+    assert response.json() == []
 
 
 def test_delete_admin_key(authorized_client, root_and_admin_have_keys):
@@ -371,7 +372,7 @@ def test_delete_admin_key_on_undefined(authorized_client, undefined_settings):
         "/services/ssh/keys/tester", json={"public_key": "ssh-rsa KEY test@pc"}
     )
     assert response.status_code == 404
-    assert read_json(undefined_settings / "undefined.json")["sshKeys"] == []
+    assert "sshKeys" not in read_json(undefined_settings / "undefined.json")
 
 
 def test_add_admin_key(authorized_client, ssh_on):
@@ -418,9 +419,9 @@ def test_get_user_key(authorized_client, some_users, user):
     response = authorized_client.get(f"/services/ssh/keys/user{user}")
     assert response.status_code == 200
     if user == 1:
-        assert response.json == ["ssh-rsa KEY user1@pc"]
+        assert response.json() == ["ssh-rsa KEY user1@pc"]
     else:
-        assert response.json == []
+        assert response.json() == []
 
 
 def test_get_keys_of_nonexistent_user(authorized_client, some_users):
@@ -483,7 +484,13 @@ def test_delete_nonexistent_user_key(authorized_client, some_users, user):
         f"/services/ssh/keys/user{user}", json={"public_key": "ssh-rsa KEY user1@pc"}
     )
     assert response.status_code == 404
-    assert read_json(some_users / "some_users.json")["users"][user - 1]["sshKeys"] == []
+    if user == 2:
+        assert (
+            read_json(some_users / "some_users.json")["users"][user - 1]["sshKeys"]
+            == []
+        )
+    if user == 3:
+        "sshKeys" not in read_json(some_users / "some_users.json")["users"][user - 1]
 
 
 def test_add_keys_of_nonexistent_user(authorized_client, some_users):

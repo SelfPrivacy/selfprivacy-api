@@ -43,7 +43,7 @@ class ResticControllerMock:
 @pytest.fixture
 def mock_restic_controller(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.resources.services.restic.ResticController",
+        "selfprivacy_api.rest.services.ResticController",
         autospec=True,
         return_value=ResticControllerMock,
     )
@@ -60,7 +60,7 @@ class ResticControllerMockNoKey:
 @pytest.fixture
 def mock_restic_controller_no_key(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.resources.services.restic.ResticController",
+        "selfprivacy_api.rest.services.ResticController",
         autospec=True,
         return_value=ResticControllerMockNoKey,
     )
@@ -77,7 +77,7 @@ class ResticControllerNotInitialized:
 @pytest.fixture
 def mock_restic_controller_not_initialized(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.resources.services.restic.ResticController",
+        "selfprivacy_api.rest.services.ResticController",
         autospec=True,
         return_value=ResticControllerNotInitialized,
     )
@@ -94,7 +94,7 @@ class ResticControllerInitializing:
 @pytest.fixture
 def mock_restic_controller_initializing(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.resources.services.restic.ResticController",
+        "selfprivacy_api.rest.services.ResticController",
         autospec=True,
         return_value=ResticControllerInitializing,
     )
@@ -111,7 +111,7 @@ class ResticControllerBackingUp:
 @pytest.fixture
 def mock_restic_controller_backing_up(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.resources.services.restic.ResticController",
+        "selfprivacy_api.rest.services.ResticController",
         autospec=True,
         return_value=ResticControllerBackingUp,
     )
@@ -128,7 +128,7 @@ class ResticControllerError:
 @pytest.fixture
 def mock_restic_controller_error(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.resources.services.restic.ResticController",
+        "selfprivacy_api.rest.services.ResticController",
         autospec=True,
         return_value=ResticControllerError,
     )
@@ -145,7 +145,7 @@ class ResticControllerRestoring:
 @pytest.fixture
 def mock_restic_controller_restoring(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.resources.services.restic.ResticController",
+        "selfprivacy_api.rest.services.ResticController",
         autospec=True,
         return_value=ResticControllerRestoring,
     )
@@ -154,9 +154,7 @@ def mock_restic_controller_restoring(mocker):
 
 @pytest.fixture
 def mock_restic_tasks(mocker):
-    mock = mocker.patch(
-        "selfprivacy_api.resources.services.restic.restic_tasks", autospec=True
-    )
+    mock = mocker.patch("selfprivacy_api.rest.services.restic_tasks", autospec=True)
     return mock
 
 
@@ -197,7 +195,7 @@ def test_get_snapshots_unauthorized(client, mock_restic_controller, mock_restic_
 def test_get_snapshots(authorized_client, mock_restic_controller, mock_restic_tasks):
     response = authorized_client.get("/services/restic/backup/list")
     assert response.status_code == 200
-    assert response.get_json() == MOCKED_SNAPSHOTS
+    assert response.json() == MOCKED_SNAPSHOTS
 
 
 def test_create_backup_unauthorized(client, mock_restic_controller, mock_restic_tasks):
@@ -247,7 +245,7 @@ def test_check_backup_status(
 ):
     response = authorized_client.get("/services/restic/backup/status")
     assert response.status_code == 200
-    assert response.get_json() == {
+    assert response.json() == {
         "status": "INITIALIZED",
         "progress": 0,
         "error_message": None,
@@ -259,7 +257,7 @@ def test_check_backup_status_no_key(
 ):
     response = authorized_client.get("/services/restic/backup/status")
     assert response.status_code == 200
-    assert response.get_json() == {
+    assert response.json() == {
         "status": "NO_KEY",
         "progress": 0,
         "error_message": None,
@@ -271,7 +269,7 @@ def test_check_backup_status_not_initialized(
 ):
     response = authorized_client.get("/services/restic/backup/status")
     assert response.status_code == 200
-    assert response.get_json() == {
+    assert response.json() == {
         "status": "NOT_INITIALIZED",
         "progress": 0,
         "error_message": None,
@@ -283,7 +281,7 @@ def test_check_backup_status_initializing(
 ):
     response = authorized_client.get("/services/restic/backup/status")
     assert response.status_code == 200
-    assert response.get_json() == {
+    assert response.json() == {
         "status": "INITIALIZING",
         "progress": 0,
         "error_message": None,
@@ -295,7 +293,7 @@ def test_check_backup_status_backing_up(
 ):
     response = authorized_client.get("/services/restic/backup/status")
     assert response.status_code == 200
-    assert response.get_json() == {
+    assert response.json() == {
         "status": "BACKING_UP",
         "progress": 0.42,
         "error_message": None,
@@ -307,7 +305,7 @@ def test_check_backup_status_error(
 ):
     response = authorized_client.get("/services/restic/backup/status")
     assert response.status_code == 200
-    assert response.get_json() == {
+    assert response.json() == {
         "status": "ERROR",
         "progress": 0,
         "error_message": "Error message",
@@ -319,7 +317,7 @@ def test_check_backup_status_restoring(
 ):
     response = authorized_client.get("/services/restic/backup/status")
     assert response.status_code == 200
-    assert response.get_json() == {
+    assert response.json() == {
         "status": "RESTORING",
         "progress": 0,
         "error_message": None,
@@ -346,7 +344,7 @@ def test_backup_restore_without_backup_id(
     authorized_client, mock_restic_controller, mock_restic_tasks
 ):
     response = authorized_client.put("/services/restic/backup/restore", json={})
-    assert response.status_code == 400
+    assert response.status_code == 422
     assert mock_restic_tasks.restore_from_backup.call_count == 0
 
 
@@ -440,7 +438,7 @@ def test_set_backblaze_config_without_arguments(
     authorized_client, mock_restic_controller, mock_restic_tasks, some_settings
 ):
     response = authorized_client.put("/services/restic/backblaze/config")
-    assert response.status_code == 400
+    assert response.status_code == 422
     assert mock_restic_tasks.update_keys_from_userdata.call_count == 0
 
 
@@ -451,7 +449,7 @@ def test_set_backblaze_config_without_all_values(
         "/services/restic/backblaze/config",
         json={"accountId": "123", "applicationKey": "456"},
     )
-    assert response.status_code == 400
+    assert response.status_code == 422
     assert mock_restic_tasks.update_keys_from_userdata.call_count == 0
 
 

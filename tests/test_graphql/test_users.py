@@ -119,53 +119,53 @@ allUsers {
 
 def test_graphql_get_users_unauthorized(client, some_users, mock_subprocess_popen):
     """Test wrong auth"""
-    response = client.get(
+    response = client.post(
         "/graphql",
         json={
             "query": generate_users_query([API_USERS_INFO]),
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is None
+    assert response.json().get("data") is None
 
 
 def test_graphql_get_some_users(authorized_client, some_users, mock_subprocess_popen):
-    response = authorized_client.get(
+    response = authorized_client.post(
         "/graphql",
         json={
             "query": generate_users_query([API_USERS_INFO]),
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is not None
-    assert len(response.json["data"]["users"]["allUsers"]) == 4
-    assert response.json["data"]["users"]["allUsers"][0]["username"] == "user1"
-    assert response.json["data"]["users"]["allUsers"][0]["sshKeys"] == [
+    assert response.json().get("data") is not None
+    assert len(response.json()["data"]["users"]["allUsers"]) == 4
+    assert response.json()["data"]["users"]["allUsers"][0]["username"] == "user1"
+    assert response.json()["data"]["users"]["allUsers"][0]["sshKeys"] == [
         "ssh-rsa KEY user1@pc"
     ]
 
-    assert response.json["data"]["users"]["allUsers"][1]["username"] == "user2"
-    assert response.json["data"]["users"]["allUsers"][1]["sshKeys"] == []
+    assert response.json()["data"]["users"]["allUsers"][1]["username"] == "user2"
+    assert response.json()["data"]["users"]["allUsers"][1]["sshKeys"] == []
 
-    assert response.json["data"]["users"]["allUsers"][3]["username"] == "tester"
-    assert response.json["data"]["users"]["allUsers"][3]["sshKeys"] == [
+    assert response.json()["data"]["users"]["allUsers"][3]["username"] == "tester"
+    assert response.json()["data"]["users"]["allUsers"][3]["sshKeys"] == [
         "ssh-rsa KEY test@pc"
     ]
 
 
 def test_graphql_get_no_users(authorized_client, no_users, mock_subprocess_popen):
-    response = authorized_client.get(
+    response = authorized_client.post(
         "/graphql",
         json={
             "query": generate_users_query([API_USERS_INFO]),
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is not None
+    assert response.json().get("data") is not None
 
-    assert len(response.json["data"]["users"]["allUsers"]) == 1
-    assert response.json["data"]["users"]["allUsers"][0]["username"] == "tester"
-    assert response.json["data"]["users"]["allUsers"][0]["sshKeys"] == [
+    assert len(response.json()["data"]["users"]["allUsers"]) == 1
+    assert response.json()["data"]["users"]["allUsers"][0]["username"] == "tester"
+    assert response.json()["data"]["users"]["allUsers"][0]["sshKeys"] == [
         "ssh-rsa KEY test@pc"
     ]
 
@@ -183,7 +183,7 @@ query TestUsers($username: String!) {
 
 
 def test_graphql_get_one_user_unauthorized(client, one_user, mock_subprocess_popen):
-    response = client.get(
+    response = client.post(
         "/graphql",
         json={
             "query": API_GET_USERS,
@@ -193,12 +193,12 @@ def test_graphql_get_one_user_unauthorized(client, one_user, mock_subprocess_pop
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is None
+    assert response.json().get("data") is None
 
 
 def test_graphql_get_one_user(authorized_client, one_user, mock_subprocess_popen):
 
-    response = authorized_client.get(
+    response = authorized_client.post(
         "/graphql",
         json={
             "query": API_GET_USERS,
@@ -208,17 +208,17 @@ def test_graphql_get_one_user(authorized_client, one_user, mock_subprocess_popen
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is not None
+    assert response.json().get("data") is not None
 
-    assert len(response.json["data"]["users"]["getUser"]) == 2
-    assert response.json["data"]["users"]["getUser"]["username"] == "user1"
-    assert response.json["data"]["users"]["getUser"]["sshKeys"] == [
+    assert len(response.json()["data"]["users"]["getUser"]) == 2
+    assert response.json()["data"]["users"]["getUser"]["username"] == "user1"
+    assert response.json()["data"]["users"]["getUser"]["sshKeys"] == [
         "ssh-rsa KEY user1@pc"
     ]
 
 
 def test_graphql_get_some_user(authorized_client, some_users, mock_subprocess_popen):
-    response = authorized_client.get(
+    response = authorized_client.post(
         "/graphql",
         json={
             "query": API_GET_USERS,
@@ -228,15 +228,15 @@ def test_graphql_get_some_user(authorized_client, some_users, mock_subprocess_po
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is not None
+    assert response.json().get("data") is not None
 
-    assert len(response.json["data"]["users"]["getUser"]) == 2
-    assert response.json["data"]["users"]["getUser"]["username"] == "user2"
-    assert response.json["data"]["users"]["getUser"]["sshKeys"] == []
+    assert len(response.json()["data"]["users"]["getUser"]) == 2
+    assert response.json()["data"]["users"]["getUser"]["username"] == "user2"
+    assert response.json()["data"]["users"]["getUser"]["sshKeys"] == []
 
 
 def test_graphql_get_root_user(authorized_client, some_users, mock_subprocess_popen):
-    response = authorized_client.get(
+    response = authorized_client.post(
         "/graphql",
         json={
             "query": API_GET_USERS,
@@ -246,17 +246,17 @@ def test_graphql_get_root_user(authorized_client, some_users, mock_subprocess_po
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is not None
+    assert response.json().get("data") is not None
 
-    assert len(response.json["data"]["users"]["getUser"]) == 2
-    assert response.json["data"]["users"]["getUser"]["username"] == "root"
-    assert response.json["data"]["users"]["getUser"]["sshKeys"] == [
+    assert len(response.json()["data"]["users"]["getUser"]) == 2
+    assert response.json()["data"]["users"]["getUser"]["username"] == "root"
+    assert response.json()["data"]["users"]["getUser"]["sshKeys"] == [
         "ssh-ed25519 KEY test@pc"
     ]
 
 
 def test_graphql_get_main_user(authorized_client, one_user, mock_subprocess_popen):
-    response = authorized_client.get(
+    response = authorized_client.post(
         "/graphql",
         json={
             "query": API_GET_USERS,
@@ -266,11 +266,11 @@ def test_graphql_get_main_user(authorized_client, one_user, mock_subprocess_pope
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is not None
+    assert response.json().get("data") is not None
 
-    assert len(response.json["data"]["users"]["getUser"]) == 2
-    assert response.json["data"]["users"]["getUser"]["username"] == "tester"
-    assert response.json["data"]["users"]["getUser"]["sshKeys"] == [
+    assert len(response.json()["data"]["users"]["getUser"]) == 2
+    assert response.json()["data"]["users"]["getUser"]["username"] == "tester"
+    assert response.json()["data"]["users"]["getUser"]["sshKeys"] == [
         "ssh-rsa KEY test@pc"
     ]
 
@@ -278,7 +278,7 @@ def test_graphql_get_main_user(authorized_client, one_user, mock_subprocess_pope
 def test_graphql_get_nonexistent_user(
     authorized_client, one_user, mock_subprocess_popen
 ):
-    response = authorized_client.get(
+    response = authorized_client.post(
         "/graphql",
         json={
             "query": API_GET_USERS,
@@ -288,9 +288,9 @@ def test_graphql_get_nonexistent_user(
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is not None
+    assert response.json().get("data") is not None
 
-    assert response.json["data"]["users"]["getUser"] is None
+    assert response.json()["data"]["users"]["getUser"] is None
 
 
 API_CREATE_USERS_MUTATION = """
@@ -322,7 +322,7 @@ def test_graphql_add_user_unauthorize(client, one_user, mock_subprocess_popen):
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is None
+    assert response.json().get("data") is None
 
 
 def test_graphql_add_user(authorized_client, one_user, mock_subprocess_popen):
@@ -339,14 +339,14 @@ def test_graphql_add_user(authorized_client, one_user, mock_subprocess_popen):
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is not None
+    assert response.json().get("data") is not None
 
-    assert response.json["data"]["createUser"]["message"] is not None
-    assert response.json["data"]["createUser"]["code"] == 201
-    assert response.json["data"]["createUser"]["success"] is True
+    assert response.json()["data"]["createUser"]["message"] is not None
+    assert response.json()["data"]["createUser"]["code"] == 201
+    assert response.json()["data"]["createUser"]["success"] is True
 
-    assert response.json["data"]["createUser"]["user"]["username"] == "user2"
-    assert response.json["data"]["createUser"]["user"]["sshKeys"] == []
+    assert response.json()["data"]["createUser"]["user"]["username"] == "user2"
+    assert response.json()["data"]["createUser"]["user"]["sshKeys"] == []
 
 
 def test_graphql_add_undefined_settings(
@@ -365,14 +365,14 @@ def test_graphql_add_undefined_settings(
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is not None
+    assert response.json().get("data") is not None
 
-    assert response.json["data"]["createUser"]["message"] is not None
-    assert response.json["data"]["createUser"]["code"] == 201
-    assert response.json["data"]["createUser"]["success"] is True
+    assert response.json()["data"]["createUser"]["message"] is not None
+    assert response.json()["data"]["createUser"]["code"] == 201
+    assert response.json()["data"]["createUser"]["success"] is True
 
-    assert response.json["data"]["createUser"]["user"]["username"] == "user2"
-    assert response.json["data"]["createUser"]["user"]["sshKeys"] == []
+    assert response.json()["data"]["createUser"]["user"]["username"] == "user2"
+    assert response.json()["data"]["createUser"]["user"]["sshKeys"] == []
 
 
 def test_graphql_add_without_password(
@@ -391,13 +391,13 @@ def test_graphql_add_without_password(
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is not None
+    assert response.json().get("data") is not None
 
-    assert response.json["data"]["createUser"]["message"] is not None
-    assert response.json["data"]["createUser"]["code"] == 400
-    assert response.json["data"]["createUser"]["success"] is False
+    assert response.json()["data"]["createUser"]["message"] is not None
+    assert response.json()["data"]["createUser"]["code"] == 400
+    assert response.json()["data"]["createUser"]["success"] is False
 
-    assert response.json["data"]["createUser"]["user"] is None
+    assert response.json()["data"]["createUser"]["user"] is None
 
 
 def test_graphql_add_without_both(authorized_client, one_user, mock_subprocess_popen):
@@ -414,13 +414,13 @@ def test_graphql_add_without_both(authorized_client, one_user, mock_subprocess_p
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is not None
+    assert response.json().get("data") is not None
 
-    assert response.json["data"]["createUser"]["message"] is not None
-    assert response.json["data"]["createUser"]["code"] == 400
-    assert response.json["data"]["createUser"]["success"] is False
+    assert response.json()["data"]["createUser"]["message"] is not None
+    assert response.json()["data"]["createUser"]["code"] == 400
+    assert response.json()["data"]["createUser"]["success"] is False
 
-    assert response.json["data"]["createUser"]["user"] is None
+    assert response.json()["data"]["createUser"]["user"] is None
 
 
 @pytest.mark.parametrize("username", invalid_usernames)
@@ -440,13 +440,13 @@ def test_graphql_add_system_username(
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is not None
+    assert response.json().get("data") is not None
 
-    assert response.json["data"]["createUser"]["message"] is not None
-    assert response.json["data"]["createUser"]["code"] == 409
-    assert response.json["data"]["createUser"]["success"] is False
+    assert response.json()["data"]["createUser"]["message"] is not None
+    assert response.json()["data"]["createUser"]["code"] == 409
+    assert response.json()["data"]["createUser"]["success"] is False
 
-    assert response.json["data"]["createUser"]["user"] is None
+    assert response.json()["data"]["createUser"]["user"] is None
 
 
 def test_graphql_add_existing_user(authorized_client, one_user, mock_subprocess_popen):
@@ -463,15 +463,15 @@ def test_graphql_add_existing_user(authorized_client, one_user, mock_subprocess_
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is not None
+    assert response.json().get("data") is not None
 
-    assert response.json["data"]["createUser"]["message"] is not None
-    assert response.json["data"]["createUser"]["code"] == 409
-    assert response.json["data"]["createUser"]["success"] is False
+    assert response.json()["data"]["createUser"]["message"] is not None
+    assert response.json()["data"]["createUser"]["code"] == 409
+    assert response.json()["data"]["createUser"]["success"] is False
 
-    assert response.json["data"]["createUser"]["user"]["username"] == "user1"
+    assert response.json()["data"]["createUser"]["user"]["username"] == "user1"
     assert (
-        response.json["data"]["createUser"]["user"]["sshKeys"][0]
+        response.json()["data"]["createUser"]["user"]["sshKeys"][0]
         == "ssh-rsa KEY user1@pc"
     )
 
@@ -490,15 +490,15 @@ def test_graphql_add_main_user(authorized_client, one_user, mock_subprocess_pope
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is not None
+    assert response.json().get("data") is not None
 
-    assert response.json["data"]["createUser"]["message"] is not None
-    assert response.json["data"]["createUser"]["code"] == 409
-    assert response.json["data"]["createUser"]["success"] is False
+    assert response.json()["data"]["createUser"]["message"] is not None
+    assert response.json()["data"]["createUser"]["code"] == 409
+    assert response.json()["data"]["createUser"]["success"] is False
 
-    assert response.json["data"]["createUser"]["user"]["username"] == "tester"
+    assert response.json()["data"]["createUser"]["user"]["username"] == "tester"
     assert (
-        response.json["data"]["createUser"]["user"]["sshKeys"][0]
+        response.json()["data"]["createUser"]["user"]["sshKeys"][0]
         == "ssh-rsa KEY test@pc"
     )
 
@@ -517,13 +517,13 @@ def test_graphql_add_long_username(authorized_client, one_user, mock_subprocess_
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is not None
+    assert response.json().get("data") is not None
 
-    assert response.json["data"]["createUser"]["message"] is not None
-    assert response.json["data"]["createUser"]["code"] == 400
-    assert response.json["data"]["createUser"]["success"] is False
+    assert response.json()["data"]["createUser"]["message"] is not None
+    assert response.json()["data"]["createUser"]["code"] == 400
+    assert response.json()["data"]["createUser"]["success"] is False
 
-    assert response.json["data"]["createUser"]["user"] is None
+    assert response.json()["data"]["createUser"]["user"] is None
 
 
 @pytest.mark.parametrize("username", ["", "1", "фыр", "user1@", "^-^"])
@@ -543,13 +543,13 @@ def test_graphql_add_invalid_username(
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is not None
+    assert response.json().get("data") is not None
 
-    assert response.json["data"]["createUser"]["message"] is not None
-    assert response.json["data"]["createUser"]["code"] == 400
-    assert response.json["data"]["createUser"]["success"] is False
+    assert response.json()["data"]["createUser"]["message"] is not None
+    assert response.json()["data"]["createUser"]["code"] == 400
+    assert response.json()["data"]["createUser"]["success"] is False
 
-    assert response.json["data"]["createUser"]["user"] is None
+    assert response.json()["data"]["createUser"]["user"] is None
 
 
 API_DELETE_USER_MUTATION = """
@@ -572,7 +572,7 @@ def test_graphql_delete_user_unauthorized(client, some_users, mock_subprocess_po
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is None
+    assert response.json().get("data") is None
 
 
 def test_graphql_delete_user(authorized_client, some_users, mock_subprocess_popen):
@@ -584,11 +584,11 @@ def test_graphql_delete_user(authorized_client, some_users, mock_subprocess_pope
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is not None
+    assert response.json().get("data") is not None
 
-    assert response.json["data"]["deleteUser"]["code"] == 200
-    assert response.json["data"]["deleteUser"]["message"] is not None
-    assert response.json["data"]["deleteUser"]["success"] is True
+    assert response.json()["data"]["deleteUser"]["code"] == 200
+    assert response.json()["data"]["deleteUser"]["message"] is not None
+    assert response.json()["data"]["deleteUser"]["success"] is True
 
 
 @pytest.mark.parametrize("username", ["", "def"])
@@ -603,11 +603,11 @@ def test_graphql_delete_nonexistent_users(
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is not None
+    assert response.json().get("data") is not None
 
-    assert response.json["data"]["deleteUser"]["code"] == 404
-    assert response.json["data"]["deleteUser"]["message"] is not None
-    assert response.json["data"]["deleteUser"]["success"] is False
+    assert response.json()["data"]["deleteUser"]["code"] == 404
+    assert response.json()["data"]["deleteUser"]["message"] is not None
+    assert response.json()["data"]["deleteUser"]["success"] is False
 
 
 @pytest.mark.parametrize("username", invalid_usernames)
@@ -622,14 +622,14 @@ def test_graphql_delete_system_users(
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is not None
+    assert response.json().get("data") is not None
 
     assert (
-        response.json["data"]["deleteUser"]["code"] == 404
-        or response.json["data"]["deleteUser"]["code"] == 400
+        response.json()["data"]["deleteUser"]["code"] == 404
+        or response.json()["data"]["deleteUser"]["code"] == 400
     )
-    assert response.json["data"]["deleteUser"]["message"] is not None
-    assert response.json["data"]["deleteUser"]["success"] is False
+    assert response.json()["data"]["deleteUser"]["message"] is not None
+    assert response.json()["data"]["deleteUser"]["success"] is False
 
 
 def test_graphql_delete_main_user(authorized_client, some_users, mock_subprocess_popen):
@@ -641,11 +641,11 @@ def test_graphql_delete_main_user(authorized_client, some_users, mock_subprocess
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is not None
+    assert response.json().get("data") is not None
 
-    assert response.json["data"]["deleteUser"]["code"] == 400
-    assert response.json["data"]["deleteUser"]["message"] is not None
-    assert response.json["data"]["deleteUser"]["success"] is False
+    assert response.json()["data"]["deleteUser"]["code"] == 400
+    assert response.json()["data"]["deleteUser"]["message"] is not None
+    assert response.json()["data"]["deleteUser"]["success"] is False
 
 
 API_UPDATE_USER_MUTATION = """
@@ -677,7 +677,7 @@ def test_graphql_update_user_unauthorized(client, some_users, mock_subprocess_po
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is None
+    assert response.json().get("data") is None
 
 
 def test_graphql_update_user(authorized_client, some_users, mock_subprocess_popen):
@@ -694,14 +694,14 @@ def test_graphql_update_user(authorized_client, some_users, mock_subprocess_pope
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is not None
+    assert response.json().get("data") is not None
 
-    assert response.json["data"]["updateUser"]["code"] == 200
-    assert response.json["data"]["updateUser"]["message"] is not None
-    assert response.json["data"]["updateUser"]["success"] is True
+    assert response.json()["data"]["updateUser"]["code"] == 200
+    assert response.json()["data"]["updateUser"]["message"] is not None
+    assert response.json()["data"]["updateUser"]["success"] is True
 
-    assert response.json["data"]["updateUser"]["user"]["username"] == "user1"
-    assert response.json["data"]["updateUser"]["user"]["sshKeys"] == [
+    assert response.json()["data"]["updateUser"]["user"]["username"] == "user1"
+    assert response.json()["data"]["updateUser"]["user"]["sshKeys"] == [
         "ssh-rsa KEY user1@pc"
     ]
     assert mock_subprocess_popen.call_count == 1
@@ -723,11 +723,11 @@ def test_graphql_update_nonexistent_user(
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is not None
+    assert response.json().get("data") is not None
 
-    assert response.json["data"]["updateUser"]["code"] == 404
-    assert response.json["data"]["updateUser"]["message"] is not None
-    assert response.json["data"]["updateUser"]["success"] is False
+    assert response.json()["data"]["updateUser"]["code"] == 404
+    assert response.json()["data"]["updateUser"]["message"] is not None
+    assert response.json()["data"]["updateUser"]["success"] is False
 
-    assert response.json["data"]["updateUser"]["user"] is None
+    assert response.json()["data"]["updateUser"]["user"] is None
     assert mock_subprocess_popen.call_count == 1

@@ -9,7 +9,7 @@ def read_json(file_path):
 
 
 def call_args_asserts(mocked_object):
-    assert mocked_object.call_count == 8
+    assert mocked_object.call_count == 7
     assert mocked_object.call_args_list[0][0][0] == [
         "systemctl",
         "status",
@@ -23,29 +23,24 @@ def call_args_asserts(mocked_object):
     assert mocked_object.call_args_list[2][0][0] == [
         "systemctl",
         "status",
-        "nginx.service",
+        "vaultwarden.service",
     ]
     assert mocked_object.call_args_list[3][0][0] == [
         "systemctl",
         "status",
-        "vaultwarden.service",
+        "gitea.service",
     ]
     assert mocked_object.call_args_list[4][0][0] == [
         "systemctl",
         "status",
-        "gitea.service",
+        "phpfpm-nextcloud.service",
     ]
     assert mocked_object.call_args_list[5][0][0] == [
         "systemctl",
         "status",
-        "phpfpm-nextcloud.service",
-    ]
-    assert mocked_object.call_args_list[6][0][0] == [
-        "systemctl",
-        "status",
         "ocserv.service",
     ]
-    assert mocked_object.call_args_list[7][0][0] == [
+    assert mocked_object.call_args_list[6][0][0] == [
         "systemctl",
         "status",
         "pleroma.service",
@@ -104,7 +99,7 @@ def test_illegal_methods(authorized_client, mock_subproccess_popen):
 def test_dkim_key(authorized_client, mock_subproccess_popen):
     response = authorized_client.get("/services/status")
     assert response.status_code == 200
-    assert response.get_json() == {
+    assert response.json() == {
         "imap": 0,
         "smtp": 0,
         "http": 0,
@@ -120,10 +115,10 @@ def test_dkim_key(authorized_client, mock_subproccess_popen):
 def test_no_dkim_key(authorized_client, mock_broken_service):
     response = authorized_client.get("/services/status")
     assert response.status_code == 200
-    assert response.get_json() == {
+    assert response.json() == {
         "imap": 3,
         "smtp": 3,
-        "http": 3,
+        "http": 0,
         "bitwarden": 3,
         "gitea": 3,
         "nextcloud": 3,

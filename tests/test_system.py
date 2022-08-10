@@ -123,13 +123,13 @@ def test_get_timezone_unauthorized(client, turned_on):
 def test_get_timezone(authorized_client, turned_on):
     response = authorized_client.get("/system/configuration/timezone")
     assert response.status_code == 200
-    assert response.get_json() == "Europe/Moscow"
+    assert response.json() == "Europe/Moscow"
 
 
 def test_get_timezone_on_undefined(authorized_client, undefined_config):
     response = authorized_client.get("/system/configuration/timezone")
     assert response.status_code == 200
-    assert response.get_json() == "Europe/Uzhgorod"
+    assert response.json() == "Europe/Uzhgorod"
 
 
 def test_put_timezone_unauthorized(client, turned_on):
@@ -159,7 +159,7 @@ def test_put_timezone_on_undefined(authorized_client, undefined_config):
 
 def test_put_timezone_without_timezone(authorized_client, turned_on):
     response = authorized_client.put("/system/configuration/timezone", json={})
-    assert response.status_code == 400
+    assert response.status_code == 422
     assert read_json(turned_on / "turned_on.json")["timezone"] == "Europe/Moscow"
 
 
@@ -182,7 +182,7 @@ def test_get_auto_upgrade_unauthorized(client, turned_on):
 def test_get_auto_upgrade(authorized_client, turned_on):
     response = authorized_client.get("/system/configuration/autoUpgrade")
     assert response.status_code == 200
-    assert response.get_json() == {
+    assert response.json() == {
         "enable": True,
         "allowReboot": True,
     }
@@ -191,7 +191,7 @@ def test_get_auto_upgrade(authorized_client, turned_on):
 def test_get_auto_upgrade_on_undefined(authorized_client, undefined_config):
     response = authorized_client.get("/system/configuration/autoUpgrade")
     assert response.status_code == 200
-    assert response.get_json() == {
+    assert response.json() == {
         "enable": True,
         "allowReboot": False,
     }
@@ -200,7 +200,7 @@ def test_get_auto_upgrade_on_undefined(authorized_client, undefined_config):
 def test_get_auto_upgrade_without_values(authorized_client, no_values):
     response = authorized_client.get("/system/configuration/autoUpgrade")
     assert response.status_code == 200
-    assert response.get_json() == {
+    assert response.json() == {
         "enable": True,
         "allowReboot": False,
     }
@@ -209,7 +209,7 @@ def test_get_auto_upgrade_without_values(authorized_client, no_values):
 def test_get_auto_upgrade_turned_off(authorized_client, turned_off):
     response = authorized_client.get("/system/configuration/autoUpgrade")
     assert response.status_code == 200
-    assert response.get_json() == {
+    assert response.json() == {
         "enable": False,
         "allowReboot": False,
     }
@@ -357,7 +357,7 @@ def test_get_system_version_unauthorized(client, mock_subprocess_check_output):
 def test_get_system_version(authorized_client, mock_subprocess_check_output):
     response = authorized_client.get("/system/version")
     assert response.status_code == 200
-    assert response.get_json() == {"system_version": "Testing Linux"}
+    assert response.json() == {"system_version": "Testing Linux"}
     assert mock_subprocess_check_output.call_count == 1
     assert mock_subprocess_check_output.call_args[0][0] == ["uname", "-a"]
 
@@ -384,7 +384,7 @@ def test_get_python_version_unauthorized(client, mock_subprocess_check_output):
 def test_get_python_version(authorized_client, mock_subprocess_check_output):
     response = authorized_client.get("/system/pythonVersion")
     assert response.status_code == 200
-    assert response.get_json() == "Testing Linux"
+    assert response.json() == "Testing Linux"
     assert mock_subprocess_check_output.call_count == 1
     assert mock_subprocess_check_output.call_args[0][0] == ["python", "-V"]
 

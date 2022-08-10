@@ -1,12 +1,13 @@
 """Common system information and settings"""
 # pylint: disable=too-few-public-methods
-import subprocess
 import typing
 import strawberry
 
 from selfprivacy_api.graphql.queries.common import Alert, Severity
 from selfprivacy_api.graphql.queries.providers import DnsProvider, ServerProvider
 from selfprivacy_api.utils import ReadUserData
+import selfprivacy_api.actions.system as system_actions
+import selfprivacy_api.actions.ssh as ssh_actions
 
 
 @strawberry.type
@@ -52,17 +53,11 @@ class AutoUpgradeOptions:
 
 def get_auto_upgrade_options() -> AutoUpgradeOptions:
     """Get automatic upgrade options"""
-    with ReadUserData() as user_data:
-        if "autoUpgrade" not in user_data:
-            return AutoUpgradeOptions(enable=True, allow_reboot=False)
-        if "enable" not in user_data["autoUpgrade"]:
-            user_data["autoUpgrade"]["enable"] = True
-        if "allowReboot" not in user_data["autoUpgrade"]:
-            user_data["autoUpgrade"]["allowReboot"] = False
-        return AutoUpgradeOptions(
-            enable=user_data["autoUpgrade"]["enable"],
-            allow_reboot=user_data["autoUpgrade"]["allowReboot"],
-        )
+    settings = system_actions.get_auto_upgrade_settings()
+    return AutoUpgradeOptions(
+        enable=settings.enable,
+        allow_reboot=settings.allowReboot,
+    )
 
 
 @strawberry.type
@@ -76,30 +71,18 @@ class SshSettings:
 
 def get_ssh_settings() -> SshSettings:
     """Get SSH settings"""
-    with ReadUserData() as user_data:
-        if "ssh" not in user_data:
-            return SshSettings(
-                enable=False, password_authentication=False, root_ssh_keys=[]
-            )
-        if "enable" not in user_data["ssh"]:
-            user_data["ssh"]["enable"] = False
-        if "passwordAuthentication" not in user_data["ssh"]:
-            user_data["ssh"]["passwordAuthentication"] = False
-        if "rootKeys" not in user_data["ssh"]:
-            user_data["ssh"]["rootKeys"] = []
-        return SshSettings(
-            enable=user_data["ssh"]["enable"],
-            password_authentication=user_data["ssh"]["passwordAuthentication"],
-            root_ssh_keys=user_data["ssh"]["rootKeys"],
-        )
+    settings = ssh_actions.get_ssh_settings()
+    return SshSettings(
+        enable=settings.enable,
+        password_authentication=settings.passwordAuthentication,
+        root_ssh_keys=settings.rootSshKeys,
+    )
 
 
 def get_system_timezone() -> str:
     """Get system timezone"""
     with ReadUserData() as user_data:
-        if "timezone" not in user_data:
-            return "Europe/Uzhgorod"
-        return user_data["timezone"]
+        return system_actions.get_timezone()
 
 
 @strawberry.type
@@ -115,12 +98,12 @@ class SystemSettings:
 
 def get_system_version() -> str:
     """Get system version"""
-    return subprocess.check_output(["uname", "-a"]).decode("utf-8").strip()
+    return system_actions.get_system_version()
 
 
 def get_python_version() -> str:
     """Get Python version"""
-    return subprocess.check_output(["python", "-V"]).decode("utf-8").strip()
+    return system_actions.get_python_version()
 
 
 @strawberry.type

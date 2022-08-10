@@ -47,6 +47,14 @@ class Service(ABC):
         pass
 
     @abstractmethod
+    def is_movable() -> bool:
+        pass
+
+    @abstractmethod
+    def is_required() -> bool:
+        pass
+
+    @abstractmethod
     def is_enabled(self) -> bool:
         pass
 
