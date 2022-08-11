@@ -35,7 +35,7 @@ class Bitwarden(Service):
         return "Bitwarden is a password manager."
 
     @staticmethod
-    def get_svg_icon(self) -> str:
+    def get_svg_icon() -> str:
         """Read SVG icon from file and return it as base64 encoded string."""
         with open("selfprivacy_api/services/bitwarden/bitwarden.svg", "rb") as f:
             return base64.b64encode(f.read()).decode("utf-8")

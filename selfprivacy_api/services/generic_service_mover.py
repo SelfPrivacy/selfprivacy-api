@@ -1,9 +1,7 @@
 """Generic handler for moving services"""
 
-import base64
 import subprocess
 import time
-import typing
 import pathlib
 import shutil
 
@@ -149,7 +147,7 @@ def move_service(
         progress=20,
     )
     current_progress = 20
-    folder_percentage = 50 / len(folder_names)
+    folder_percentage = 50 // len(folder_names)
     for folder in folder_names:
         shutil.move(
             f"/volumes/{old_volume}/{folder.name}",

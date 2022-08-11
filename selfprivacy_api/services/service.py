@@ -3,6 +3,8 @@ from abc import ABC, abstractmethod
 from enum import Enum
 import typing
 
+from pydantic import BaseModel
+
 from selfprivacy_api.utils.block_devices import BlockDevice
 
 
@@ -16,12 +18,12 @@ class ServiceStatus(Enum):
     OFF = "OFF"
 
 
-class ServiceDnsRecord:
+class ServiceDnsRecord(BaseModel):
     type: str
     name: str
     content: str
     ttl: int
-    priority: typing.Optional[int]
+    priority: typing.Optional[int] = None
 
 
 class Service(ABC):
@@ -30,80 +32,99 @@ class Service(ABC):
     can be installed, configured and used by a user.
     """
 
+    @staticmethod
     @abstractmethod
-    def get_id(self) -> str:
+    def get_id() -> str:
         pass
 
+    @staticmethod
     @abstractmethod
-    def get_display_name(self) -> str:
+    def get_display_name() -> str:
         pass
 
+    @staticmethod
     @abstractmethod
-    def get_description(self) -> str:
+    def get_description() -> str:
         pass
 
+    @staticmethod
     @abstractmethod
-    def get_svg_icon(self) -> str:
+    def get_svg_icon() -> str:
         pass
 
+    @staticmethod
     @abstractmethod
     def is_movable() -> bool:
         pass
 
+    @staticmethod
     @abstractmethod
     def is_required() -> bool:
         pass
 
+    @staticmethod
     @abstractmethod
-    def is_enabled(self) -> bool:
+    def is_enabled() -> bool:
         pass
 
+    @staticmethod
     @abstractmethod
-    def get_status(self) -> ServiceStatus:
+    def get_status() -> ServiceStatus:
         pass
 
+    @staticmethod
     @abstractmethod
-    def enable(self):
+    def enable():
         pass
 
+    @staticmethod
     @abstractmethod
-    def disable(self):
+    def disable():
         pass
 
+    @staticmethod
     @abstractmethod
-    def stop(self):
+    def stop():
         pass
 
+    @staticmethod
     @abstractmethod
-    def start(self):
+    def start():
         pass
 
+    @staticmethod
     @abstractmethod
-    def restart(self):
+    def restart():
         pass
 
+    @staticmethod
     @abstractmethod
-    def get_configuration(self):
+    def get_configuration():
         pass
 
+    @staticmethod
     @abstractmethod
-    def set_configuration(self, config_items):
+    def set_configuration(config_items):
         pass
 
+    @staticmethod
     @abstractmethod
-    def get_logs(self):
+    def get_logs():
         pass
 
+    @staticmethod
     @abstractmethod
-    def get_storage_usage(self) -> int:
+    def get_storage_usage() -> int:
         pass
 
+    @staticmethod
     @abstractmethod
-    def get_dns_records(self) -> typing.List[ServiceDnsRecord]:
+    def get_dns_records() -> typing.List[ServiceDnsRecord]:
         pass
 
+    @staticmethod
     @abstractmethod
-    def get_location(self) -> str:
+    def get_location() -> str:
         pass
 
     @abstractmethod

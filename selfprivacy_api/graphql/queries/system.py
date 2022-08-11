@@ -75,14 +75,13 @@ def get_ssh_settings() -> SshSettings:
     return SshSettings(
         enable=settings.enable,
         password_authentication=settings.passwordAuthentication,
-        root_ssh_keys=settings.rootSshKeys,
+        root_ssh_keys=settings.rootKeys,
     )
 
 
 def get_system_timezone() -> str:
     """Get system timezone"""
-    with ReadUserData() as user_data:
-        return system_actions.get_timezone()
+    return system_actions.get_timezone()
 
 
 @strawberry.type

@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel
 
+
 from selfprivacy_api.utils.auth import (
     delete_token,
     generate_recovery_token,
@@ -42,13 +43,9 @@ def get_api_tokens_with_caller_flag(caller_token: str) -> list[TokenInfoWithIsCa
 class NotFoundException(Exception):
     """Not found exception"""
 
-    pass
-
 
 class CannotDeleteCallerException(Exception):
     """Cannot delete caller exception"""
-
-    pass
 
 
 def delete_api_token(caller_token: str, token_name: str) -> None:
@@ -98,13 +95,9 @@ def get_api_recovery_token_status() -> RecoveryTokenStatus:
 class InvalidExpirationDate(Exception):
     """Invalid expiration date exception"""
 
-    pass
-
 
 class InvalidUsesLeft(Exception):
     """Invalid uses left exception"""
-
-    pass
 
 
 def get_new_api_recovery_key(

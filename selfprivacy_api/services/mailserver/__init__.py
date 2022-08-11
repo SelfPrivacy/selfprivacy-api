@@ -120,8 +120,8 @@ class MailServer(Service):
 
     @staticmethod
     def get_dns_records() -> typing.List[ServiceDnsRecord]:
-        dkim_record = get_dkim_key()
         domain = get_domain()
+        dkim_record = get_dkim_key(domain)
         ip4 = get_ip4()
 
         if dkim_record is None:
@@ -129,16 +129,16 @@ class MailServer(Service):
 
         return [
             ServiceDnsRecord(
-                type="MX", name=domain, data=domain, ttl=3600, priority=10
+                type="MX", name=domain, content=domain, ttl=3600, priority=10
             ),
             ServiceDnsRecord(
-                type="TXT", name="_dmarc", data=f"v=DMARC1; p=none", ttl=3600
+                type="TXT", name="_dmarc", content=f"v=DMARC1; p=none", ttl=3600
             ),
             ServiceDnsRecord(
-                type="TXT", name=domain, data=f"v=spf1 a mx ip4:{ip4} -all", ttl=3600
+                type="TXT", name=domain, content=f"v=spf1 a mx ip4:{ip4} -all", ttl=3600
             ),
             ServiceDnsRecord(
-                type="TXT", name="selector._domainkey", data=dkim_record, ttl=3600
+                type="TXT", name="selector._domainkey", content=dkim_record, ttl=3600
             ),
         ]
 
