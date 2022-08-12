@@ -7,6 +7,7 @@ from selfprivacy_api.services import get_service_by_id, get_services_by_location
 from selfprivacy_api.services import Service as ServiceInterface
 from selfprivacy_api.utils.block_devices import BlockDevices
 
+
 def get_usages(root: "StorageVolume") -> list["StorageUsageInterface"]:
     """Get usages of a volume"""
     return [
@@ -18,6 +19,7 @@ def get_usages(root: "StorageVolume") -> list["StorageUsageInterface"]:
         )
         for service in get_services_by_location(root.name)
     ]
+
 
 @strawberry.type
 class StorageVolume:
@@ -32,7 +34,6 @@ class StorageVolume:
     serial: typing.Optional[str]
     type: str
     usages: list["StorageUsageInterface"] = strawberry.field(resolver=get_usages)
-
 
 
 @strawberry.interface
@@ -132,13 +133,4 @@ def get_volume_by_id(volume_id: str) -> typing.Optional[StorageVolume]:
         model=volume.model,
         serial=volume.serial,
         type=volume.type,
-        usages=[
-            ServiceStorageUsage(
-                service=service_to_graphql_service(service),
-                title=service.get_display_name(),
-                used_space=str(service.get_storage_usage()),
-                volume=get_volume_by_id(service.get_location()),
-            )
-            for service in get_services_by_location(volume.name)
-        ],
     )
