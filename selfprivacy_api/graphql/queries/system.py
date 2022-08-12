@@ -136,6 +136,7 @@ class System:
     info: SystemInfo = SystemInfo()
     provider: SystemProviderInfo = strawberry.field(resolver=get_system_provider_info)
     busy: bool = False
+
     @strawberry.field
     def working_directory(self) -> str:
         """Get working directory"""

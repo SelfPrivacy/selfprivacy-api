@@ -2,7 +2,15 @@
 # pylint: disable=too-few-public-methods
 import typing
 import strawberry
-from selfprivacy_api.graphql.common_types.storage_usage import StorageVolume
+from selfprivacy_api.graphql.common_types.service import (
+    service_to_graphql_service,
+    get_volume_by_id,
+)
+from selfprivacy_api.graphql.common_types.storage_usage import (
+    ServiceStorageUsage,
+    StorageVolume,
+)
+from selfprivacy_api.services import get_services_by_location
 from selfprivacy_api.utils.block_devices import BlockDevices
 
 
@@ -25,7 +33,15 @@ class Storage:
                 model=volume.model,
                 serial=volume.serial,
                 type=volume.type,
-                usages=[],
+                usages=[
+                    ServiceStorageUsage(
+                        service=service_to_graphql_service(service),
+                        title=service.get_display_name(),
+                        used_space=str(service.get_storage_usage()),
+                        volume=get_volume_by_id(service.get_location()),
+                    )
+                    for service in get_services_by_location(volume.name)
+                ],
             )
             for volume in BlockDevices().get_block_devices()
         ]

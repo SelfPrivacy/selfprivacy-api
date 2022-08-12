@@ -10,7 +10,7 @@ from selfprivacy_api.services.ocserv import Ocserv
 from selfprivacy_api.services.service import Service
 
 
-services = [
+services: list[Service] = [
     Bitwarden(),
     Gitea(),
     MailServer(),
@@ -37,3 +37,7 @@ def get_enabled_services() -> typing.List[Service]:
 
 def get_disabled_services() -> typing.List[Service]:
     return [service for service in services if not service.is_enabled()]
+
+
+def get_services_by_location(location: str) -> typing.List[Service]:
+    return [service for service in services if service.get_location() == location]
