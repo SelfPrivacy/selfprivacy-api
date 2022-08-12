@@ -3,13 +3,43 @@ import typing
 import strawberry
 from selfprivacy_api.graphql.common_types.dns import DnsRecord
 
-from selfprivacy_api.graphql.common_types.storage_usage import (
-    StorageUsageInterface,
-    StorageVolume,
-)
 from selfprivacy_api.services import get_service_by_id, get_services_by_location
 from selfprivacy_api.services import Service as ServiceInterface
 from selfprivacy_api.utils.block_devices import BlockDevices
+
+def get_usages(root: "StorageVolume") -> list["StorageUsageInterface"]:
+    """Get usages of a volume"""
+    return [
+        ServiceStorageUsage(
+            service=service_to_graphql_service(service),
+            title=service.get_display_name(),
+            used_space=str(service.get_storage_usage()),
+            volume=get_volume_by_id(service.get_location()),
+        )
+        for service in get_services_by_location(root.name)
+    ]
+
+@strawberry.type
+class StorageVolume:
+    """Stats and basic info about a volume or a system disk."""
+
+    total_space: str
+    free_space: str
+    used_space: str
+    root: bool
+    name: str
+    model: typing.Optional[str]
+    serial: typing.Optional[str]
+    type: str
+    usages: list["StorageUsageInterface"] = strawberry.field(resolver=get_usages)
+
+
+
+@strawberry.interface
+class StorageUsageInterface:
+    used_space: str
+    volume: typing.Optional[StorageVolume]
+    title: str
 
 
 @strawberry.type

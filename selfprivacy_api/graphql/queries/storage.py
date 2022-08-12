@@ -7,7 +7,7 @@ from selfprivacy_api.graphql.common_types.service import (
     service_to_graphql_service,
     get_volume_by_id,
 )
-from selfprivacy_api.graphql.common_types.storage_usage import (
+from selfprivacy_api.graphql.common_types.service import (
     StorageVolume,
 )
 from selfprivacy_api.services import get_services_by_location
@@ -33,15 +33,6 @@ class Storage:
                 model=volume.model,
                 serial=volume.serial,
                 type=volume.type,
-                usages=[
-                    ServiceStorageUsage(
-                        service=service_to_graphql_service(service),
-                        title=service.get_display_name(),
-                        used_space=str(service.get_storage_usage()),
-                        volume=get_volume_by_id(service.get_location()),
-                    )
-                    for service in get_services_by_location(volume.name)
-                ],
             )
             for volume in BlockDevices().get_block_devices()
         ]
