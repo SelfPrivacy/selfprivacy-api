@@ -5,6 +5,8 @@ from fastapi import FastAPI, Depends, Request, WebSocket, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from strawberry.fastapi import BaseContext, GraphQLRouter
 
+import uvicorn
+
 from selfprivacy_api.dependencies import get_api_version, get_graphql_context
 from selfprivacy_api.graphql.schema import schema
 from selfprivacy_api.migrations import run_migrations
@@ -49,3 +51,6 @@ async def get_version():
 async def startup():
     run_migrations()
     init_restic()
+
+if __name__ == "__main__":
+    uvicorn.run("app:app", host="0.0.0.0", port=5050, log_level="info")
