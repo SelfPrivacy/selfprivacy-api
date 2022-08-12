@@ -170,7 +170,7 @@ class BlockDevices:
                 "-J",
                 "-b",
                 "-o",
-                "NAME,PATH,FSAVAIL,FSSIZE,FSTYPE,FSUSED,MOUNTPOINT,LABEL,UUID,SIZE,MODEL,SERIAL,TYPE",
+                "NAME,PATH,FSAVAIL,FSSIZE,FSTYPE,FSUSED,MOUNTPOINTS,LABEL,UUID,SIZE,MODEL,SERIAL,TYPE",
             ]
         )
         lsblk_output = lsblk_output.decode("utf-8")
