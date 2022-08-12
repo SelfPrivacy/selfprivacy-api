@@ -3,11 +3,11 @@
 import typing
 import strawberry
 from selfprivacy_api.graphql.common_types.service import (
+    ServiceStorageUsage,
     service_to_graphql_service,
     get_volume_by_id,
 )
 from selfprivacy_api.graphql.common_types.storage_usage import (
-    ServiceStorageUsage,
     StorageVolume,
 )
 from selfprivacy_api.services import get_services_by_location

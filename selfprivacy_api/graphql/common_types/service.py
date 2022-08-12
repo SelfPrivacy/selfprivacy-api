@@ -4,13 +4,19 @@ import strawberry
 from selfprivacy_api.graphql.common_types.dns import DnsRecord
 
 from selfprivacy_api.graphql.common_types.storage_usage import (
-    ServiceStorageUsage,
+    StorageUsageInterface,
     StorageVolume,
 )
-from selfprivacy_api.graphql.queries.services import get_volume_by_id
 from selfprivacy_api.services import get_service_by_id, get_services_by_location
 from selfprivacy_api.services import Service as ServiceInterface
 from selfprivacy_api.utils.block_devices import BlockDevices
+
+
+@strawberry.type
+class ServiceStorageUsage(StorageUsageInterface):
+    """Storage usage for a service"""
+
+    service: typing.Optional["Service"]
 
 
 @strawberry.enum
