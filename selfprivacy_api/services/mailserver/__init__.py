@@ -14,6 +14,7 @@ from selfprivacy_api.utils import huey
 from selfprivacy_api.utils.block_devices import BlockDevice
 from selfprivacy_api.utils.huey import huey
 from selfprivacy_api.utils.network import get_ip4
+from selfprivacy_api.services.mailserver.icon import MAILSERVER_ICON
 
 
 class MailServer(Service):
@@ -33,8 +34,7 @@ class MailServer(Service):
 
     @staticmethod
     def get_svg_icon() -> str:
-        with open("selfprivacy_api/services/mailserver/mailserver.svg", "rb") as f:
-            return base64.b64encode(f.read()).decode("utf-8")
+        return base64.b64encode(MAILSERVER_ICON.encode("utf-8")).decode("utf-8")
 
     @staticmethod
     def get_url() -> typing.Optional[str]:

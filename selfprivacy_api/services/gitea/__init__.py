@@ -12,6 +12,7 @@ from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
 from selfprivacy_api.utils.block_devices import BlockDevice
 from selfprivacy_api.utils.huey import huey
 from selfprivacy_api.utils.network import get_ip4
+from selfprivacy_api.services.gitea.icon import GITEA_ICON
 
 
 class Gitea(Service):
@@ -35,8 +36,7 @@ class Gitea(Service):
     @staticmethod
     def get_svg_icon() -> str:
         """Read SVG icon from file and return it as base64 encoded string."""
-        with open("selfprivacy_api/services/gitea/gitea.svg", "rb") as f:
-            return base64.b64encode(f.read()).decode("utf-8")
+        return base64.b64encode(GITEA_ICON.encode("utf-8")).decode("utf-8")
 
     @staticmethod
     def get_url() -> typing.Optional[str]:

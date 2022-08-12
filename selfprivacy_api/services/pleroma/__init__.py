@@ -10,6 +10,7 @@ from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceS
 from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
 from selfprivacy_api.utils.block_devices import BlockDevice
 from selfprivacy_api.utils.network import get_ip4
+from selfprivacy_api.services.pleroma.icon import PLEROMA_ICON
 
 
 class Pleroma(Service):
@@ -29,8 +30,7 @@ class Pleroma(Service):
 
     @staticmethod
     def get_svg_icon() -> str:
-        with open("selfprivacy_api/services/pleroma/pleroma.svg", "rb") as f:
-            return base64.b64encode(f.read()).decode("utf-8")
+        return base64.b64encode(PLEROMA_ICON.encode("utf-8")).decode("utf-8")
 
     @staticmethod
     def get_url() -> typing.Optional[str]:

@@ -10,6 +10,7 @@ from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceS
 from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
 from selfprivacy_api.utils.block_devices import BlockDevice
 from selfprivacy_api.utils.network import get_ip4
+from selfprivacy_api.services.nextcloud.icon import NEXTCLOUD_ICON
 
 
 class Nextcloud(Service):
@@ -33,8 +34,7 @@ class Nextcloud(Service):
     @staticmethod
     def get_svg_icon() -> str:
         """Read SVG icon from file and return it as base64 encoded string."""
-        with open("selfprivacy_api/services/nextcloud/nextcloud.svg", "rb") as f:
-            return base64.b64encode(f.read()).decode("utf-8")
+        return base64.b64encode(NEXTCLOUD_ICON.encode("utf-8")).decode("utf-8")
 
     @staticmethod
     def get_url() -> typing.Optional[str]:
