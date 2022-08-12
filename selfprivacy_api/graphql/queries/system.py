@@ -1,5 +1,6 @@
 """Common system information and settings"""
 # pylint: disable=too-few-public-methods
+import os
 import typing
 import strawberry
 from selfprivacy_api.graphql.common_types.dns import DnsRecord
@@ -135,3 +136,7 @@ class System:
     info: SystemInfo = SystemInfo()
     provider: SystemProviderInfo = strawberry.field(resolver=get_system_provider_info)
     busy: bool = False
+    @strawberry.field
+    def working_directory(self) -> str:
+        """Get working directory"""
+        return os.getcwd()
