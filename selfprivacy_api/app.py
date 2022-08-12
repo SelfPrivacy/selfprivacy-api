@@ -53,4 +53,4 @@ async def startup():
     init_restic()
 
 if __name__ == "__main__":
-    uvicorn.run("app:app", host="0.0.0.0", port=5050, log_level="info")
+    uvicorn.run("selfprivacy_api.app:app", host="0.0.0.0", port=5050, log_level="info")
