@@ -7,7 +7,7 @@ from selfprivacy_api.services.generic_service_mover import FolderMoveNames, move
 from selfprivacy_api.services.generic_size_counter import get_storage_usage
 from selfprivacy_api.services.generic_status_getter import get_service_status
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
-from selfprivacy_api.utils import ReadUserData, WriteUserData
+from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
 from selfprivacy_api.utils.block_devices import BlockDevice
 from selfprivacy_api.utils.network import get_ip4
 
@@ -31,6 +31,12 @@ class Pleroma(Service):
     def get_svg_icon() -> str:
         with open("selfprivacy_api/services/pleroma/pleroma.svg", "rb") as f:
             return base64.b64encode(f.read()).decode("utf-8")
+
+    @staticmethod
+    def get_url() -> typing.Optional[str]:
+        """Return service url."""
+        domain = get_domain()
+        return f"https://social.{domain}"
 
     @staticmethod
     def is_movable() -> bool:

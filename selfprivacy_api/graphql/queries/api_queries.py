@@ -7,6 +7,7 @@ from strawberry.types import Info
 from selfprivacy_api.actions.api_tokens import get_api_tokens_with_caller_flag
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.utils import parse_date
+from selfprivacy_api.dependencies import get_api_version as get_api_version_dependency
 
 from selfprivacy_api.utils.auth import (
     get_recovery_token_status,
@@ -17,7 +18,7 @@ from selfprivacy_api.utils.auth import (
 
 def get_api_version() -> str:
     """Get API version"""
-    return "1.2.7"
+    return get_api_version_dependency()
 
 
 @strawberry.type

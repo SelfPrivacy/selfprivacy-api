@@ -54,6 +54,11 @@ class Service(ABC):
 
     @staticmethod
     @abstractmethod
+    def get_url() -> typing.Optional[str]:
+        pass
+
+    @staticmethod
+    @abstractmethod
     def is_movable() -> bool:
         pass
 

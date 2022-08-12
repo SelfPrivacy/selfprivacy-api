@@ -2,23 +2,13 @@
 # pylint: disable=too-few-public-methods
 import typing
 import strawberry
+from selfprivacy_api.graphql.common_types.dns import DnsRecord
 
 from selfprivacy_api.graphql.queries.common import Alert, Severity
 from selfprivacy_api.graphql.queries.providers import DnsProvider, ServerProvider
 from selfprivacy_api.utils import ReadUserData
 import selfprivacy_api.actions.system as system_actions
 import selfprivacy_api.actions.ssh as ssh_actions
-
-
-@strawberry.type
-class DnsRecord:
-    """DNS record"""
-
-    recordType: str
-    name: str
-    content: str
-    ttl: int
-    priority: typing.Optional[int]
 
 
 @strawberry.type

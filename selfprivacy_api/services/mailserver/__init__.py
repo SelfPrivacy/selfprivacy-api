@@ -12,10 +12,8 @@ from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceS
 from selfprivacy_api.utils import ReadUserData, WriteUserData, get_dkim_key, get_domain
 from selfprivacy_api.utils import huey
 from selfprivacy_api.utils.block_devices import BlockDevice
-from selfprivacy_api.utils.huey import Huey
+from selfprivacy_api.utils.huey import huey
 from selfprivacy_api.utils.network import get_ip4
-
-huey = Huey()
 
 
 class MailServer(Service):
@@ -37,6 +35,11 @@ class MailServer(Service):
     def get_svg_icon() -> str:
         with open("selfprivacy_api/services/mailserver/mailserver.svg", "rb") as f:
             return base64.b64encode(f.read()).decode("utf-8")
+
+    @staticmethod
+    def get_url() -> typing.Optional[str]:
+        """Return service url."""
+        return None
 
     @staticmethod
     def is_movable() -> bool:

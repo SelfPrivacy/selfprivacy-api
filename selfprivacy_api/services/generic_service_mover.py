@@ -7,12 +7,10 @@ import shutil
 
 from pydantic import BaseModel
 from selfprivacy_api.jobs import Job, JobStatus, Jobs
-from selfprivacy_api.utils.huey import Huey
+from selfprivacy_api.utils.huey import huey
 from selfprivacy_api.utils.block_devices import BlockDevice
 from selfprivacy_api.utils import ReadUserData, WriteUserData
-from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
-
-huey = Huey()
+from selfprivacy_api.services.service import Service, ServiceStatus
 
 
 class FolderMoveNames(BaseModel):

@@ -33,6 +33,11 @@ class Ocserv(Service):
             return base64.b64encode(f.read()).decode("utf-8")
 
     @staticmethod
+    def get_url() -> typing.Optional[str]:
+        """Return service url."""
+        return None
+
+    @staticmethod
     def is_movable() -> bool:
         return False
 
@@ -78,6 +83,10 @@ class Ocserv(Service):
     @staticmethod
     def get_configuration():
         return {}
+
+    @staticmethod
+    def set_configuration(config_items):
+        return super().set_configuration(config_items)
 
     @staticmethod
     def get_logs():

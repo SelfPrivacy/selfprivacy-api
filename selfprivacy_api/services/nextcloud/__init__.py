@@ -7,7 +7,7 @@ from selfprivacy_api.services.generic_service_mover import FolderMoveNames, move
 from selfprivacy_api.services.generic_size_counter import get_storage_usage
 from selfprivacy_api.services.generic_status_getter import get_service_status
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
-from selfprivacy_api.utils import ReadUserData, WriteUserData
+from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
 from selfprivacy_api.utils.block_devices import BlockDevice
 from selfprivacy_api.utils.network import get_ip4
 
@@ -16,7 +16,7 @@ class Nextcloud(Service):
     """Class representing Nextcloud service."""
 
     @staticmethod
-    def get_id(self) -> str:
+    def get_id() -> str:
         """Return service id."""
         return "nextcloud"
 
@@ -35,6 +35,12 @@ class Nextcloud(Service):
         """Read SVG icon from file and return it as base64 encoded string."""
         with open("selfprivacy_api/services/nextcloud/nextcloud.svg", "rb") as f:
             return base64.b64encode(f.read()).decode("utf-8")
+
+    @staticmethod
+    def get_url() -> typing.Optional[str]:
+        """Return service url."""
+        domain = get_domain()
+        return f"https://cloud.{domain}"
 
     @staticmethod
     def is_movable() -> bool:
