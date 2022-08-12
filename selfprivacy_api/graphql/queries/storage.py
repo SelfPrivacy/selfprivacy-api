@@ -2,15 +2,10 @@
 # pylint: disable=too-few-public-methods
 import typing
 import strawberry
-from selfprivacy_api.graphql.common_types.service import (
-    ServiceStorageUsage,
-    service_to_graphql_service,
-    get_volume_by_id,
-)
+
 from selfprivacy_api.graphql.common_types.service import (
     StorageVolume,
 )
-from selfprivacy_api.services import get_services_by_location
 from selfprivacy_api.utils.block_devices import BlockDevices
 
 

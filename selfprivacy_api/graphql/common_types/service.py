@@ -33,7 +33,10 @@ class StorageVolume:
     model: typing.Optional[str]
     serial: typing.Optional[str]
     type: str
-    usages: list["StorageUsageInterface"] = strawberry.field(resolver=get_usages)
+    @strawberry.field
+    def usages(self) -> list["StorageUsageInterface"]:
+        """Get usages of a volume"""
+        return get_usages(self)
 
 
 @strawberry.interface
@@ -79,7 +82,6 @@ def get_storage_usage(root: "Service") -> ServiceStorageUsage:
 
 @strawberry.type
 class Service:
-    storage_usage: ServiceStorageUsage = strawberry.field(resolver=get_storage_usage)
     id: str
     display_name: str
     description: str
@@ -90,7 +92,10 @@ class Service:
     status: ServiceStatusEnum
     url: typing.Optional[str]
     dns_records: typing.Optional[typing.List[DnsRecord]]
-
+    @strawberry.field
+    def storage_usage(self) -> ServiceStorageUsage:
+        """Get storage usage for a service"""
+        return get_storage_usage(self)
 
 def service_to_graphql_service(service: ServiceInterface) -> Service:
     """Convert service to graphql service"""
