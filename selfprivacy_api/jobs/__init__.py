@@ -130,7 +130,10 @@ class Jobs:
         with WriteUserData(UserDataFiles.JOBS) as user_data:
             if "jobs" not in user_data:
                 user_data["jobs"] = []
-            user_data["jobs"] = [x for x in user_data["jobs"] if x["uid"] != str(job.uid)]
+            for i, j in enumerate(user_data["jobs"]):
+                if j["uid"] == str(job.uid):
+                    del user_data["jobs"][i]
+                    break
 
     def update(
         self,
@@ -164,8 +167,10 @@ class Jobs:
         with WriteUserData(UserDataFiles.JOBS) as user_data:
             if "jobs" not in user_data:
                 user_data["jobs"] = []
-            user_data["jobs"] = [x for x in user_data["jobs"] if x["uid"] != str(job.uid)]
-            user_data["jobs"].append(json.loads(job.json()))
+            for i, j in enumerate(user_data["jobs"]):
+                if j["uid"] == str(job.uid):
+                    user_data["jobs"][i] = json.loads(job.json())
+                    break
 
         return job
 
