@@ -127,7 +127,7 @@ class Jobs:
         Remove a job from the jobs list.
         """
         with WriteUserData(UserDataFiles.JOBS) as user_data:
-            user_data = [x for x in user_data if x["uid"] != job.uid]
+            user_data = [x for x in user_data if x["uid"] != job.uid.urn]
 
     def update(
         self,
@@ -159,7 +159,7 @@ class Jobs:
             job.finished_at = datetime.datetime.now()
 
         with WriteUserData(UserDataFiles.JOBS) as user_data:
-            user_data = [x for x in user_data if x["uid"] != job.uid]
+            user_data = [x for x in user_data if x["uid"] != job.uid.urn]
             user_data.append(json.loads(job.json()))
 
         return job
