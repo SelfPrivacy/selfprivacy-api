@@ -69,6 +69,10 @@ class ReadUserData(object):
         elif file_type == UserDataFiles.TOKENS:
             self.userdata_file = open(TOKENS_FILE, "r", encoding="utf-8")
         elif file_type == UserDataFiles.JOBS:
+            # Make sure file exists
+            if not os.path.isfile(JOBS_FILE):
+                with open(JOBS_FILE, "w", encoding="utf-8") as jobs_file:
+                    jobs_file.write("[]")
             self.userdata_file = open(JOBS_FILE, "r", encoding="utf-8")
         else:
             raise ValueError("Unknown file type")
