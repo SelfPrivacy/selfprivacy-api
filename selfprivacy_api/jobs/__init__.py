@@ -45,7 +45,7 @@ class Job(BaseModel):
     Job class.
     """
 
-    uid: UUID = uuid.uuid4()
+    uid: str = uuid.uuid4().urn
     name: str
     description: str
     status: JobStatus
