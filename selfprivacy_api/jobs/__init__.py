@@ -16,12 +16,17 @@ A job is a dictionary with the following keys:
 """
 import typing
 import datetime
+from uuid import UUID
 import asyncio
 import json
 import os
 import time
 import uuid
 from enum import Enum
+
+from pydantic import BaseModel
+
+from selfprivacy_api.utils import ReadUserData, UserDataFiles, WriteUserData
 
 
 class JobStatus(Enum):
@@ -35,47 +40,22 @@ class JobStatus(Enum):
     ERROR = "ERROR"
 
 
-class Job:
+class Job(BaseModel):
     """
     Job class.
     """
 
-    def __init__(
-        self,
-        name: str,
-        description: str,
-        status: JobStatus,
-        status_text: typing.Optional[str],
-        progress: typing.Optional[int],
-        created_at: datetime.datetime,
-        updated_at: datetime.datetime,
-        finished_at: typing.Optional[datetime.datetime],
-        error: typing.Optional[str],
-        result: typing.Optional[str],
-    ):
-        self.id = str(uuid.uuid4())
-        self.name = name
-        self.description = description
-        self.status = status
-        self.status_text = status_text or ""
-        self.progress = progress or 0
-        self.created_at = created_at
-        self.updated_at = updated_at
-        self.finished_at = finished_at
-        self.error = error
-        self.result = result
-
-    def __str__(self) -> str:
-        """
-        Convert the job to a string.
-        """
-        return f"{self.name} - {self.status}"
-
-    def __repr__(self) -> str:
-        """
-        Convert the job to a string.
-        """
-        return f"{self.name} - {self.status}"
+    uid: UUID = uuid.uuid4()
+    name: str
+    description: str
+    status: JobStatus
+    status_text: typing.Optional[str]
+    progress: typing.Optional[int]
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
+    finished_at: typing.Optional[datetime.datetime]
+    error: typing.Optional[str]
+    result: typing.Optional[str]
 
 
 class Jobs:
@@ -95,8 +75,7 @@ class Jobs:
             if Jobs.__instance is None:
                 raise Exception("Couldn't init Jobs singleton!")
             return Jobs.__instance
-        else:
-            return Jobs.__instance
+        return Jobs.__instance
 
     def __init__(self):
         """
@@ -106,43 +85,13 @@ class Jobs:
             raise Exception("This class is a singleton!")
         else:
             Jobs.__instance = self
-        self.jobs = [
-            Job(
-                name="Init job",
-                description="Initial job",
-                status=JobStatus.FINISHED,
-                status_text="",
-                progress=100,
-                created_at=datetime.datetime.now(),
-                updated_at=datetime.datetime.now(),
-                finished_at=datetime.datetime.now(),
-                error=None,
-                result=None,
-            )
-        ]
-        # Observers of the jobs list.
-        self.observers = []
 
-    def add_observer(self, observer: typing.Callable[[typing.List[Job]], None]) -> None:
+    def reset(self) -> None:
         """
-        Add an observer to the jobs list.
+        Reset the jobs list.
         """
-        self.observers.append(observer)
-
-    def remove_observer(
-        self, observer: typing.Callable[[typing.List[Job]], None]
-    ) -> None:
-        """
-        Remove an observer from the jobs list.
-        """
-        self.observers.remove(observer)
-
-    def _notify_observers(self) -> None:
-        """
-        Notify the observers of the jobs list.
-        """
-        for observer in self.observers:
-            observer(self.jobs)
+        with WriteUserData(UserDataFiles.JOBS) as user_data:
+            user_data = []
 
     def add(
         self,
@@ -167,19 +116,20 @@ class Jobs:
             error=None,
             result=None,
         )
-        self.jobs.append(job)
-        # Notify the observers.
-        self._notify_observers()
-
+        with WriteUserData(UserDataFiles.JOBS) as user_data:
+            try:
+                user_data.append(job.dict())
+            except json.decoder.JSONDecodeError:
+                user_data = []
+                user_data.append(job.dict())
         return job
 
     def remove(self, job: Job) -> None:
         """
         Remove a job from the jobs list.
         """
-        self.jobs.remove(job)
-        # Notify the observers.
-        self._notify_observers()
+        with WriteUserData(UserDataFiles.JOBS) as user_data:
+            user_data = [x for x in user_data if x["uid"] != job.uid]
 
     def update(
         self,
@@ -207,11 +157,12 @@ class Jobs:
         job.updated_at = datetime.datetime.now()
         job.error = error
         job.result = result
-        if status == JobStatus.FINISHED or status == JobStatus.ERROR:
+        if status in (JobStatus.FINISHED, JobStatus.ERROR):
             job.finished_at = datetime.datetime.now()
 
-        # Notify the observers.
-        self._notify_observers()
+        with WriteUserData(UserDataFiles.JOBS) as user_data:
+            user_data = [x for x in user_data if x["uid"] != job.uid]
+            user_data.append(job.dict())
 
         return job
 
@@ -219,13 +170,18 @@ class Jobs:
         """
         Get a job from the jobs list.
         """
-        for job in self.jobs:
-            if job.id == id:
-                return job
+        with ReadUserData(UserDataFiles.JOBS) as user_data:
+            for job in user_data:
+                if job["uid"] == id:
+                    return Job(**job)
         return None
 
     def get_jobs(self) -> typing.List[Job]:
         """
         Get the jobs list.
         """
-        return self.jobs
+        with ReadUserData(UserDataFiles.JOBS) as user_data:
+            try:
+                return [Job(**job) for job in user_data]
+            except json.decoder.JSONDecodeError:
+                return []
