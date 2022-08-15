@@ -33,7 +33,6 @@ class JobStatus(Enum):
     """
     Status of a job.
     """
-
     CREATED = "CREATED"
     RUNNING = "RUNNING"
     FINISHED = "FINISHED"
@@ -44,8 +43,7 @@ class Job(BaseModel):
     """
     Job class.
     """
-
-    uid: str = uuid.uuid4().urn
+    uid: UUID = uuid.uuid4()
     name: str
     description: str
     status: JobStatus
@@ -118,10 +116,10 @@ class Jobs:
         )
         with WriteUserData(UserDataFiles.JOBS) as user_data:
             try:
-                user_data.append(job.dict())
+                user_data.append(json.loads(job.json()))
             except json.decoder.JSONDecodeError:
                 user_data = []
-                user_data.append(job.dict())
+                user_data.append(json.loads(job.json()))
         return job
 
     def remove(self, job: Job) -> None:
@@ -162,7 +160,7 @@ class Jobs:
 
         with WriteUserData(UserDataFiles.JOBS) as user_data:
             user_data = [x for x in user_data if x["uid"] != job.uid]
-            user_data.append(job.dict())
+            user_data.append(json.loads(job.json()))
 
         return job
 
