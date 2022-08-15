@@ -41,7 +41,7 @@ class WriteUserData(object):
             # Make sure file exists
             if not os.path.isfile(JOBS_FILE):
                 with open(JOBS_FILE, "w", encoding="utf-8") as jobs_file:
-                    jobs_file.write("[]")
+                    jobs_file.write("{}")
             self.userdata_file = open(JOBS_FILE, "r+", encoding="utf-8")
         else:
             raise ValueError("Unknown file type")
@@ -72,7 +72,7 @@ class ReadUserData(object):
             # Make sure file exists
             if not os.path.isfile(JOBS_FILE):
                 with open(JOBS_FILE, "w", encoding="utf-8") as jobs_file:
-                    jobs_file.write("[]")
+                    jobs_file.write("{}")
             self.userdata_file = open(JOBS_FILE, "r", encoding="utf-8")
         else:
             raise ValueError("Unknown file type")

@@ -89,7 +89,7 @@ class Jobs:
         Reset the jobs list.
         """
         with WriteUserData(UserDataFiles.JOBS) as user_data:
-            user_data = []
+            user_data["jobs"] = []
 
     def add(
         self,
@@ -116,10 +116,11 @@ class Jobs:
         )
         with WriteUserData(UserDataFiles.JOBS) as user_data:
             try:
-                user_data.append(json.loads(job.json()))
+                if "jobs" not in user_data:
+                    user_data["jobs"] = []
+                user_data["jobs"].append(json.loads(job.json()))
             except json.decoder.JSONDecodeError:
-                user_data = []
-                user_data.append(json.loads(job.json()))
+                user_data["jobs"] = [json.loads(job.json())]
         return job
 
     def remove(self, job: Job) -> None:
@@ -127,7 +128,9 @@ class Jobs:
         Remove a job from the jobs list.
         """
         with WriteUserData(UserDataFiles.JOBS) as user_data:
-            user_data = [x for x in user_data if x["uid"] != job.uid.urn]
+            if "jobs" not in user_data:
+                user_data["jobs"] = []
+            user_data["jobs"] = [x for x in user_data["jobs"] if x["uid"] != str(job.uid)]
 
     def update(
         self,
@@ -159,8 +162,10 @@ class Jobs:
             job.finished_at = datetime.datetime.now()
 
         with WriteUserData(UserDataFiles.JOBS) as user_data:
-            user_data = [x for x in user_data if x["uid"] != job.uid.urn]
-            user_data.append(json.loads(job.json()))
+            if "jobs" not in user_data:
+                user_data["jobs"] = []
+            user_data["jobs"] = [x for x in user_data["jobs"] if x["uid"] != str(job.uid)]
+            user_data["jobs"].append(json.loads(job.json()))
 
         return job
 
@@ -169,7 +174,9 @@ class Jobs:
         Get a job from the jobs list.
         """
         with ReadUserData(UserDataFiles.JOBS) as user_data:
-            for job in user_data:
+            if "jobs" not in user_data:
+                user_data["jobs"] = []
+            for job in user_data["jobs"]:
                 if job["uid"] == id:
                     return Job(**job)
         return None
@@ -180,6 +187,8 @@ class Jobs:
         """
         with ReadUserData(UserDataFiles.JOBS) as user_data:
             try:
-                return [Job(**job) for job in user_data]
+                if "jobs" not in user_data:
+                    user_data["jobs"] = []
+                return [Job(**job) for job in user_data["jobs"]]
             except json.decoder.JSONDecodeError:
                 return []
