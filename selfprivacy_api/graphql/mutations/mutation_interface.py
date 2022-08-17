@@ -1,4 +1,7 @@
 import strawberry
+import typing
+
+from selfprivacy_api.graphql.common_types.jobs import ApiJob
 
 
 @strawberry.interface
@@ -11,3 +14,8 @@ class MutationReturnInterface:
 @strawberry.type
 class GenericMutationReturn(MutationReturnInterface):
     pass
+
+
+@strawberry.type
+class GenericJobButationReturn(MutationReturnInterface):
+    job: typing.Optional[ApiJob] = None

@@ -137,9 +137,10 @@ class Bitwarden(Service):
             ),
         ]
 
-    def move_to_volume(self, volume: BlockDevice):
+    def move_to_volume(self, volume: BlockDevice) -> Job:
         job = Jobs.get_instance().add(
-            name="services.bitwarden.move",
+            type_id="services.bitwarden.move",
+            name="Move Bitwarden",
             description=f"Moving Bitwarden data to {volume.name}",
         )
 
@@ -155,7 +156,7 @@ class Bitwarden(Service):
                     owner="vaultwarden",
                 ),
                 FolderMoveNames(
-                    name="bitwarden",
+                    name="bitwarden_rs",
                     bind_location="/var/lib/bitwarden_rs",
                     group="vaultwarden",
                     owner="vaultwarden",

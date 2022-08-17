@@ -7,6 +7,8 @@ from selfprivacy_api.graphql.common_types.dns import DnsRecord
 
 from selfprivacy_api.graphql.queries.common import Alert, Severity
 from selfprivacy_api.graphql.queries.providers import DnsProvider, ServerProvider
+from selfprivacy_api.jobs import Jobs
+from selfprivacy_api.jobs.migrate_to_binds import is_bind_migrated
 from selfprivacy_api.utils import ReadUserData
 import selfprivacy_api.actions.system as system_actions
 import selfprivacy_api.actions.ssh as ssh_actions
@@ -103,6 +105,11 @@ class SystemInfo:
     system_version: str = strawberry.field(resolver=get_system_version)
     python_version: str = strawberry.field(resolver=get_python_version)
 
+    @strawberry.field
+    def using_binds(self) -> bool:
+        """Check if the system is using BINDs"""
+        return is_bind_migrated()
+
 
 @strawberry.type
 class SystemProviderInfo:
@@ -135,7 +142,7 @@ class System:
     settings: SystemSettings = SystemSettings()
     info: SystemInfo = SystemInfo()
     provider: SystemProviderInfo = strawberry.field(resolver=get_system_provider_info)
-    busy: bool = False
+    busy: bool = Jobs.is_busy()
 
     @strawberry.field
     def working_directory(self) -> str:

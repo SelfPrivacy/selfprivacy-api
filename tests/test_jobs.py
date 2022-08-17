@@ -6,11 +6,13 @@ import pytest
 from selfprivacy_api.utils import WriteUserData, ReadUserData
 from selfprivacy_api.jobs import Jobs, JobStatus
 
+
 def test_jobs(jobs_file, shared_datadir):
     jobs = Jobs()
     assert jobs.get_jobs() == []
 
     test_job = jobs.add(
+        type_id="test",
         name="Test job",
         description="This is a test job.",
         status=JobStatus.CREATED,

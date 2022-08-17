@@ -4,6 +4,7 @@ from enum import Enum
 import typing
 
 from pydantic import BaseModel
+from selfprivacy_api.jobs import Job
 
 from selfprivacy_api.utils.block_devices import BlockDevice
 
@@ -133,5 +134,5 @@ class Service(ABC):
         pass
 
     @abstractmethod
-    def move_to_volume(self, volume: BlockDevice):
+    def move_to_volume(self, volume: BlockDevice) -> Job:
         pass

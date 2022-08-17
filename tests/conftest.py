@@ -13,13 +13,13 @@ def tokens_file(mocker, shared_datadir):
     )
     return mock
 
+
 @pytest.fixture
 def jobs_file(mocker, shared_datadir):
     """Mock tokens file."""
-    mock = mocker.patch(
-        "selfprivacy_api.utils.JOBS_FILE", shared_datadir / "jobs.json"
-    )
+    mock = mocker.patch("selfprivacy_api.utils.JOBS_FILE", shared_datadir / "jobs.json")
     return mock
+
 
 @pytest.fixture
 def huey_database(mocker, shared_datadir):

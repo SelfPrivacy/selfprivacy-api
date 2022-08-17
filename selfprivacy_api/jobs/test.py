@@ -6,6 +6,7 @@ from selfprivacy_api.jobs import JobStatus, Jobs
 @huey.task()
 def test_job():
     job = Jobs.get_instance().add(
+        type_id="test",
         name="Test job",
         description="This is a test job.",
         status=JobStatus.CREATED,

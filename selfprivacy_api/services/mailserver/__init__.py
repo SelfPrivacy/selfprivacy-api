@@ -145,9 +145,10 @@ class MailServer(Service):
             ),
         ]
 
-    def move_to_volume(self, volume: BlockDevice):
+    def move_to_volume(self, volume: BlockDevice) -> Job:
         job = Jobs.get_instance().add(
-            name="services.mailserver.move",
+            type_id="services.mailserver.move",
+            name="Move Mail Server",
             description=f"Moving mailserver data to {volume.name}",
         )
 

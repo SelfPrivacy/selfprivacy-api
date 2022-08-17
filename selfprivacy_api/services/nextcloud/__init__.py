@@ -2,7 +2,7 @@
 import base64
 import subprocess
 import typing
-from selfprivacy_api.jobs import Jobs
+from selfprivacy_api.jobs import Job, Jobs
 from selfprivacy_api.services.generic_service_mover import FolderMoveNames, move_service
 from selfprivacy_api.services.generic_size_counter import get_storage_usage
 from selfprivacy_api.services.generic_status_getter import get_service_status
@@ -142,9 +142,10 @@ class Nextcloud(Service):
             ),
         ]
 
-    def move_to_volume(self, volume: BlockDevice):
+    def move_to_volume(self, volume: BlockDevice) -> Job:
         job = Jobs.get_instance().add(
-            name="services.nextcloud.move",
+            type_id="services.nextcloud.move",
+            name="Move Nextcloud",
             description=f"Moving Nextcloud to volume {volume.name}",
         )
         move_service(

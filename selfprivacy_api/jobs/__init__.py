@@ -33,6 +33,7 @@ class JobStatus(Enum):
     """
     Status of a job.
     """
+
     CREATED = "CREATED"
     RUNNING = "RUNNING"
     FINISHED = "FINISHED"
@@ -43,7 +44,9 @@ class Job(BaseModel):
     """
     Job class.
     """
+
     uid: UUID = uuid.uuid4()
+    type_id: str
     name: str
     description: str
     status: JobStatus
@@ -84,16 +87,18 @@ class Jobs:
         else:
             Jobs.__instance = self
 
-    def reset(self) -> None:
+    @staticmethod
+    def reset() -> None:
         """
         Reset the jobs list.
         """
         with WriteUserData(UserDataFiles.JOBS) as user_data:
             user_data["jobs"] = []
 
+    @staticmethod
     def add(
-        self,
         name: str,
+        type_id: str,
         description: str,
         status: JobStatus = JobStatus.CREATED,
         status_text: str = "",
@@ -104,6 +109,7 @@ class Jobs:
         """
         job = Job(
             name=name,
+            type_id=type_id,
             description=description,
             status=status,
             status_text=status_text,
@@ -135,8 +141,8 @@ class Jobs:
                     del user_data["jobs"][i]
                     break
 
+    @staticmethod
     def update(
-        self,
         job: Job,
         status: JobStatus,
         status_text: typing.Optional[str] = None,
@@ -174,7 +180,8 @@ class Jobs:
 
         return job
 
-    def get_job(self, id: str) -> typing.Optional[Job]:
+    @staticmethod
+    def get_job(uid: str) -> typing.Optional[Job]:
         """
         Get a job from the jobs list.
         """
@@ -182,11 +189,12 @@ class Jobs:
             if "jobs" not in user_data:
                 user_data["jobs"] = []
             for job in user_data["jobs"]:
-                if job["uid"] == id:
+                if job["uid"] == uid:
                     return Job(**job)
         return None
 
-    def get_jobs(self) -> typing.List[Job]:
+    @staticmethod
+    def get_jobs() -> typing.List[Job]:
         """
         Get the jobs list.
         """
@@ -197,3 +205,16 @@ class Jobs:
                 return [Job(**job) for job in user_data["jobs"]]
             except json.decoder.JSONDecodeError:
                 return []
+
+    @staticmethod
+    def is_busy() -> bool:
+        """
+        Check if there is a job running.
+        """
+        with ReadUserData(UserDataFiles.JOBS) as user_data:
+            if "jobs" not in user_data:
+                user_data["jobs"] = []
+            for job in user_data["jobs"]:
+                if job["status"] == JobStatus.RUNNING.value:
+                    return True
+        return False
