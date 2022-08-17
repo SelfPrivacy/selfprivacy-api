@@ -85,7 +85,7 @@ def undefined_devices_in_userdata(mocker, datadir):
     return datadir
 
 
-def test_create_block_device_object(lsblk_singular_mock):
+def test_create_block_device_object(lsblk_singular_mock, authorized_client):
     output = get_block_device("sda1")
     assert lsblk_singular_mock.call_count == 1
     assert lsblk_singular_mock.call_args[0][0] == [
@@ -99,7 +99,7 @@ def test_create_block_device_object(lsblk_singular_mock):
     assert output == json.loads(SINGLE_LSBLK_OUTPUT)["blockdevices"][0]
 
 
-def test_resize_block_device(lsblk_singular_mock):
+def test_resize_block_device(lsblk_singular_mock, authorized_client):
     result = resize_block_device("sdb")
     assert result is True
     assert lsblk_singular_mock.call_count == 1
@@ -109,7 +109,7 @@ def test_resize_block_device(lsblk_singular_mock):
     ]
 
 
-def test_resize_block_device_failed(failed_check_output_mock):
+def test_resize_block_device_failed(failed_check_output_mock, authorized_client):
     result = resize_block_device("sdb")
     assert result is False
     assert failed_check_output_mock.call_count == 1
@@ -144,7 +144,7 @@ VOLUME_LSBLK_OUTPUT = b"""
 """
 
 
-def test_create_block_device(lsblk_singular_mock):
+def test_create_block_device(lsblk_singular_mock, authorized_client):
     block_device = BlockDevice(json.loads(VOLUME_LSBLK_OUTPUT)["blockdevices"][0])
 
     assert block_device.name == "sdb"
@@ -169,7 +169,7 @@ def test_create_block_device(lsblk_singular_mock):
     assert hash(block_device) == hash("sdb")
 
 
-def test_block_devices_equal(lsblk_singular_mock):
+def test_block_devices_equal(lsblk_singular_mock, authorized_client):
     block_device = BlockDevice(json.loads(VOLUME_LSBLK_OUTPUT)["blockdevices"][0])
     block_device2 = BlockDevice(json.loads(VOLUME_LSBLK_OUTPUT)["blockdevices"][0])
 
@@ -186,7 +186,7 @@ def resize_block_mock(mocker):
     return mock
 
 
-def test_call_resize_from_block_device(lsblk_singular_mock, resize_block_mock):
+def test_call_resize_from_block_device(lsblk_singular_mock, resize_block_mock, authorized_client):
     block_device = BlockDevice(json.loads(VOLUME_LSBLK_OUTPUT)["blockdevices"][0])
     block_device.resize()
     assert resize_block_mock.call_count == 1
@@ -194,7 +194,7 @@ def test_call_resize_from_block_device(lsblk_singular_mock, resize_block_mock):
     assert lsblk_singular_mock.call_count == 0
 
 
-def test_get_stats_from_block_device(lsblk_singular_mock):
+def test_get_stats_from_block_device(lsblk_singular_mock, authorized_client):
     block_device = BlockDevice(json.loads(SINGLE_LSBLK_OUTPUT)["blockdevices"][0])
     stats = block_device.stats()
     assert stats == {
@@ -223,7 +223,7 @@ def test_get_stats_from_block_device(lsblk_singular_mock):
     ]
 
 
-def test_mount_block_device(lsblk_singular_mock, only_root_in_userdata):
+def test_mount_block_device(lsblk_singular_mock, only_root_in_userdata, authorized_client):
     block_device = BlockDevice(json.loads(SINGLE_LSBLK_OUTPUT)["blockdevices"][0])
     result = block_device.mount()
     assert result is False
@@ -245,7 +245,7 @@ def test_mount_block_device(lsblk_singular_mock, only_root_in_userdata):
 
 
 def test_mount_block_device_when_undefined(
-    lsblk_singular_mock, undefined_devices_in_userdata
+    lsblk_singular_mock, undefined_devices_in_userdata, authorized_client
 ):
     block_device = BlockDevice(json.loads(SINGLE_LSBLK_OUTPUT)["blockdevices"][0])
     result = block_device.mount()
@@ -270,7 +270,7 @@ def test_mount_block_device_when_undefined(
     )
 
 
-def test_unmount_block_device(lsblk_singular_mock, only_root_in_userdata):
+def test_unmount_block_device(lsblk_singular_mock, only_root_in_userdata, authorized_client):
     block_device = BlockDevice(json.loads(SINGLE_LSBLK_OUTPUT)["blockdevices"][0])
     result = block_device.unmount()
     assert result is True
@@ -281,7 +281,7 @@ def test_unmount_block_device(lsblk_singular_mock, only_root_in_userdata):
 
 
 def test_unmount_block_device_when_undefined(
-    lsblk_singular_mock, undefined_devices_in_userdata
+    lsblk_singular_mock, undefined_devices_in_userdata, authorized_client
 ):
     block_device = BlockDevice(json.loads(SINGLE_LSBLK_OUTPUT)["blockdevices"][0])
     result = block_device.unmount()
@@ -407,7 +407,7 @@ def lsblk_full_mock(mocker):
     return mock
 
 
-def test_get_block_devices(lsblk_full_mock):
+def test_get_block_devices(lsblk_full_mock, authorized_client):
     block_devices = BlockDevices().get_block_devices()
     assert len(block_devices) == 2
     assert block_devices[0].name == "sda1"
@@ -438,7 +438,7 @@ def test_get_block_devices(lsblk_full_mock):
     assert block_devices[1].type == "disk"
 
 
-def test_get_block_device(lsblk_full_mock):
+def test_get_block_device(lsblk_full_mock, authorized_client):
     block_device = BlockDevices().get_block_device("sda1")
     assert block_device is not None
     assert block_device.name == "sda1"
@@ -456,12 +456,12 @@ def test_get_block_device(lsblk_full_mock):
     assert block_device.type == "part"
 
 
-def test_get_nonexistent_block_device(lsblk_full_mock):
+def test_get_nonexistent_block_device(lsblk_full_mock, authorized_client):
     block_device = BlockDevices().get_block_device("sda2")
     assert block_device is None
 
 
-def test_get_block_devices_by_mountpoint(lsblk_full_mock):
+def test_get_block_devices_by_mountpoint(lsblk_full_mock, authorized_client):
     block_devices = BlockDevices().get_block_devices_by_mountpoint("/nix/store")
     assert len(block_devices) == 1
     assert block_devices[0].name == "sda1"
@@ -479,6 +479,6 @@ def test_get_block_devices_by_mountpoint(lsblk_full_mock):
     assert block_devices[0].type == "part"
 
 
-def test_get_block_devices_by_mountpoint_no_match(lsblk_full_mock):
+def test_get_block_devices_by_mountpoint_no_match(lsblk_full_mock, authorized_client):
     block_devices = BlockDevices().get_block_devices_by_mountpoint("/foo")
     assert len(block_devices) == 0

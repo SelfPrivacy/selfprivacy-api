@@ -7,7 +7,7 @@ from selfprivacy_api.utils import WriteUserData, ReadUserData
 from selfprivacy_api.jobs import Jobs, JobStatus
 
 
-def test_jobs(jobs_file, shared_datadir):
+def test_jobs(authorized_client, jobs_file, shared_datadir):
     jobs = Jobs()
     assert jobs.get_jobs() == []
 
