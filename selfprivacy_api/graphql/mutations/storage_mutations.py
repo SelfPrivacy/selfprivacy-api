@@ -78,6 +78,7 @@ class StorageMutations:
             success=False, code=409, message="Volume not unmounted (already unmounted?)"
         )
 
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def migrate_to_binds(self, input: MigrateToBindsInput) -> GenericJobButationReturn:
         """Migrate to binds"""
         if not is_bind_migrated():
