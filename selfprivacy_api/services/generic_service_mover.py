@@ -53,7 +53,7 @@ def move_service(
         )
         return
     # Check if there is enough space on the new volume
-    if volume.fsavail < service.get_storage_usage():
+    if int(volume.fsavail) < service.get_storage_usage():
         Jobs.get_instance().update(
             job=job,
             status=JobStatus.ERROR,
