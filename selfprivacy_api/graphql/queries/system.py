@@ -142,7 +142,10 @@ class System:
     settings: SystemSettings = SystemSettings()
     info: SystemInfo = SystemInfo()
     provider: SystemProviderInfo = strawberry.field(resolver=get_system_provider_info)
-    busy: bool = Jobs.is_busy()
+    @strawberry.field
+    def busy(self) -> bool:
+        """Check if the system is busy"""
+        return Jobs.is_busy()
 
     @strawberry.field
     def working_directory(self) -> str:
