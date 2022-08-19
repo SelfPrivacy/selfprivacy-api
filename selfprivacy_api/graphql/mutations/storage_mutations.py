@@ -81,7 +81,7 @@ class StorageMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def migrate_to_binds(self, input: MigrateToBindsInput) -> GenericJobButationReturn:
         """Migrate to binds"""
-        if not is_bind_migrated():
+        if is_bind_migrated():
             return GenericJobButationReturn(
                 success=False, code=409, message="Already migrated to binds"
             )
