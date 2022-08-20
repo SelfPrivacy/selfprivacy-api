@@ -12,68 +12,78 @@ def call_args_asserts(mocked_object):
     assert mocked_object.call_count == 7
     assert mocked_object.call_args_list[0][0][0] == [
         "systemctl",
-        "status",
+        "show",
         "dovecot2.service",
     ]
     assert mocked_object.call_args_list[1][0][0] == [
         "systemctl",
-        "status",
+        "show",
         "postfix.service",
     ]
     assert mocked_object.call_args_list[2][0][0] == [
         "systemctl",
-        "status",
+        "show",
         "vaultwarden.service",
     ]
     assert mocked_object.call_args_list[3][0][0] == [
         "systemctl",
-        "status",
+        "show",
         "gitea.service",
     ]
     assert mocked_object.call_args_list[4][0][0] == [
         "systemctl",
-        "status",
+        "show",
         "phpfpm-nextcloud.service",
     ]
     assert mocked_object.call_args_list[5][0][0] == [
         "systemctl",
-        "status",
+        "show",
         "ocserv.service",
     ]
     assert mocked_object.call_args_list[6][0][0] == [
         "systemctl",
-        "status",
+        "show",
         "pleroma.service",
     ]
 
 
-class ProcessMock:
-    """Mock subprocess.Popen"""
+SUCCESSFUL_STATUS = b"""
+Type=oneshot
+ExitType=main
+Restart=no
+NotifyAccess=none
+RestartUSec=100ms
+LoadState=loaded
+ActiveState=active
+FreezerState=running
+SubState=exited
+"""
 
-    def __init__(self, args, **kwargs):
-        self.args = args
-        self.kwargs = kwargs
-
-    def communicate():
-        return (b"", None)
-
-    returncode = 0
-
-
-class BrokenServiceMock(ProcessMock):
-    returncode = 3
+FAILED_STATUS = b"""
+Type=oneshot
+ExitType=main
+Restart=no
+NotifyAccess=none
+RestartUSec=100ms
+LoadState=loaded
+ActiveState=failed
+FreezerState=running
+SubState=exited
+"""
 
 
 @pytest.fixture
 def mock_subproccess_popen(mocker):
-    mock = mocker.patch("subprocess.Popen", autospec=True, return_value=ProcessMock)
+    mock = mocker.patch(
+        "subprocess.check_output", autospec=True, return_value=SUCCESSFUL_STATUS
+    )
     return mock
 
 
 @pytest.fixture
 def mock_broken_service(mocker):
     mock = mocker.patch(
-        "subprocess.Popen", autospec=True, return_value=BrokenServiceMock
+        "subprocess.check_output", autospec=True, return_value=FAILED_STATUS
     )
     return mock
 
@@ -116,13 +126,13 @@ def test_no_dkim_key(authorized_client, mock_broken_service):
     response = authorized_client.get("/services/status")
     assert response.status_code == 200
     assert response.json() == {
-        "imap": 3,
-        "smtp": 3,
+        "imap": 1,
+        "smtp": 1,
         "http": 0,
-        "bitwarden": 3,
-        "gitea": 3,
-        "nextcloud": 3,
-        "ocserv": 3,
-        "pleroma": 3,
+        "bitwarden": 1,
+        "gitea": 1,
+        "nextcloud": 1,
+        "ocserv": 1,
+        "pleroma": 1,
     }
     call_args_asserts(mock_broken_service)

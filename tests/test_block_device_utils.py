@@ -186,7 +186,9 @@ def resize_block_mock(mocker):
     return mock
 
 
-def test_call_resize_from_block_device(lsblk_singular_mock, resize_block_mock, authorized_client):
+def test_call_resize_from_block_device(
+    lsblk_singular_mock, resize_block_mock, authorized_client
+):
     block_device = BlockDevice(json.loads(VOLUME_LSBLK_OUTPUT)["blockdevices"][0])
     block_device.resize()
     assert resize_block_mock.call_count == 1
@@ -223,7 +225,9 @@ def test_get_stats_from_block_device(lsblk_singular_mock, authorized_client):
     ]
 
 
-def test_mount_block_device(lsblk_singular_mock, only_root_in_userdata, authorized_client):
+def test_mount_block_device(
+    lsblk_singular_mock, only_root_in_userdata, authorized_client
+):
     block_device = BlockDevice(json.loads(SINGLE_LSBLK_OUTPUT)["blockdevices"][0])
     result = block_device.mount()
     assert result is False
@@ -270,7 +274,9 @@ def test_mount_block_device_when_undefined(
     )
 
 
-def test_unmount_block_device(lsblk_singular_mock, only_root_in_userdata, authorized_client):
+def test_unmount_block_device(
+    lsblk_singular_mock, only_root_in_userdata, authorized_client
+):
     block_device = BlockDevice(json.loads(SINGLE_LSBLK_OUTPUT)["blockdevices"][0])
     result = block_device.unmount()
     assert result is True

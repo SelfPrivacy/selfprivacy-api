@@ -2,12 +2,10 @@
 # pylint: disable=unused-argument
 # pylint: disable=missing-function-docstring
 import datetime
-import json
-import re
 import pytest
 from mnemonic import Mnemonic
 
-from .common import read_json, write_json
+from tests.common import read_json, write_json
 
 
 TOKENS_FILE_CONTETS = {

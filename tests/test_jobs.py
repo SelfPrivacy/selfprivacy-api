@@ -30,3 +30,21 @@ def test_jobs(authorized_client, jobs_file, shared_datadir):
     )
 
     assert jobs.get_jobs() == [test_job]
+
+
+@pytest.fixture
+def mock_subprocess_run(mocker):
+    mock = mocker.patch("subprocess.run", autospec=True)
+    return mock
+
+
+@pytest.fixture
+def mock_shutil_move(mocker):
+    mock = mocker.patch("shutil.move", autospec=True)
+    return mock
+
+
+@pytest.fixture
+def mock_shutil_chown(mocker):
+    mock = mocker.patch("shutil.chown", autospec=True)
+    return mock

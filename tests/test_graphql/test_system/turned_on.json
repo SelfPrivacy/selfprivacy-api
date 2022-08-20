@@ -33,7 +33,7 @@
     },
     "username": "tester",
     "gitea": {
-        "enable": false
+        "enable": true
     },
     "ocserv": {
         "enable": true
