@@ -111,3 +111,18 @@ class SystemMutations:
             message="System reboot has started",
             code=200,
         )
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    def pull_repository_changes(self) -> GenericMutationReturn:
+        result = system_actions.pull_repository_changes()
+        if result.status == 0:
+            return GenericMutationReturn(
+                success=True,
+                message="Repository changes pulled",
+                code=200,
+            )
+        return GenericMutationReturn(
+            success=False,
+            message=f"Failed to pull repository changes:\n{result.data}",
+            code=500,
+        )
