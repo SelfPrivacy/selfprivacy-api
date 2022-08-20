@@ -103,10 +103,13 @@ def move_service(
         progress=5,
     )
     service.stop()
-    # Wait for Nextcloud to stop, check every second
+    # Wait for the service to stop, check every second
     # If it does not stop in 30 seconds, abort
     for _ in range(30):
-        if service.get_status() != ServiceStatus.RUNNING:
+        if service.get_status() not in (
+            ServiceStatus.ACTIVATING,
+            ServiceStatus.DEACTIVATING,
+        ):
             break
         time.sleep(1)
     else:

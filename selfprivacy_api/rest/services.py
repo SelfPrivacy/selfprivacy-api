@@ -36,11 +36,13 @@ router = APIRouter(
 
 
 def service_status_to_return_code(status: ServiceStatus):
-    if status == ServiceStatus.RUNNING:
+    """Converts service status object to return code for
+    compatibility with legacy api"""
+    if status == ServiceStatus.ACTIVE:
         return 0
-    elif status == ServiceStatus.ERROR:
+    elif status == ServiceStatus.FAILED:
         return 1
-    elif status == ServiceStatus.STOPPED:
+    elif status == ServiceStatus.INACTIVE:
         return 3
     elif status == ServiceStatus.OFF:
         return 4
@@ -317,13 +319,13 @@ async def rest_send_ssh_key(input: SshKeyInput):
     """Send the SSH key"""
     try:
         create_ssh_key("root", input.public_key)
-    except KeyAlreadyExists:
-        raise HTTPException(status_code=409, detail="Key already exists")
-    except InvalidPublicKey:
+    except KeyAlreadyExists as error:
+        raise HTTPException(status_code=409, detail="Key already exists") from error
+    except InvalidPublicKey as error:
         raise HTTPException(
             status_code=400,
             detail="Invalid key type. Only ssh-ed25519 and ssh-rsa are supported",
-        )
+        ) from error
 
     return {
         "status": 0,
@@ -345,15 +347,15 @@ async def rest_get_ssh_keys(username: str):
 async def rest_add_ssh_key(username: str, input: SshKeyInput):
     try:
         create_ssh_key(username, input.public_key)
-    except KeyAlreadyExists:
-        raise HTTPException(status_code=409, detail="Key already exists")
-    except InvalidPublicKey:
+    except KeyAlreadyExists as error:
+        raise HTTPException(status_code=409, detail="Key already exists") from error
+    except InvalidPublicKey as error:
         raise HTTPException(
             status_code=400,
             detail="Invalid key type. Only ssh-ed25519 and ssh-rsa are supported",
-        )
-    except UserNotFound:
-        raise HTTPException(status_code=404, detail="User not found")
+        ) from error
+    except UserNotFound as error:
+        raise HTTPException(status_code=404, detail="User not found") from error
 
     return {
         "message": "New SSH key successfully written",
@@ -364,8 +366,8 @@ async def rest_add_ssh_key(username: str, input: SshKeyInput):
 async def rest_delete_ssh_key(username: str, input: SshKeyInput):
     try:
         remove_ssh_key(username, input.public_key)
-    except KeyNotFound:
-        raise HTTPException(status_code=404, detail="Key not found")
-    except UserNotFound:
-        raise HTTPException(status_code=404, detail="User not found")
+    except KeyNotFound as error:
+        raise HTTPException(status_code=404, detail="Key not found") from error
+    except UserNotFound as error:
+        raise HTTPException(status_code=404, detail="User not found") from error
     return {"message": "SSH key deleted"}

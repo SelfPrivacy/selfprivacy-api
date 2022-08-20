@@ -1,6 +1,5 @@
 """Generic service status fetcher using systemctl"""
 import subprocess
-import typing
 
 from selfprivacy_api.services.service import ServiceStatus
 
@@ -8,22 +7,22 @@ from selfprivacy_api.services.service import ServiceStatus
 def get_service_status(service: str) -> ServiceStatus:
     """
     Return service status from systemd.
-    Use command return code to determine status.
-
-    Return code 0 means service is running.
-    Return code 1 or 2 means service is in error stat.
-    Return code 3 means service is stopped.
-    Return code 4 means service is off.
+    Use systemctl show to get the status of a service.
+    Get ActiveState from the output.
     """
-    service_status = subprocess.Popen(["systemctl", "status", service])
-    service_status.communicate()[0]
-    if service_status.returncode == 0:
-        return ServiceStatus.RUNNING
-    elif service_status.returncode == 1 or service_status.returncode == 2:
-        return ServiceStatus.ERROR
-    elif service_status.returncode == 3:
-        return ServiceStatus.STOPPED
-    elif service_status.returncode == 4:
+    service_status = subprocess.check_output(["systemctl", "show", service])
+    if b"LoadState=not-found" in service_status:
         return ServiceStatus.OFF
-    else:
-        return ServiceStatus.DEGRADED
+    if b"ActiveState=active" in service_status:
+        return ServiceStatus.ACTIVE
+    if b"ActiveState=inactive" in service_status:
+        return ServiceStatus.INACTIVE
+    if b"ActiveState=activating" in service_status:
+        return ServiceStatus.ACTIVATING
+    if b"ActiveState=deactivating" in service_status:
+        return ServiceStatus.DEACTIVATING
+    if b"ActiveState=failed" in service_status:
+        return ServiceStatus.FAILED
+    if b"ActiveState=reloading" in service_status:
+        return ServiceStatus.RELOADING
+    return ServiceStatus.OFF

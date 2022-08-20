@@ -56,10 +56,12 @@ class ServiceStorageUsage(StorageUsageInterface):
 
 @strawberry.enum
 class ServiceStatusEnum(Enum):
-    RUNNING = "RUNNING"
-    DEGRADED = "DEGRADED"
-    ERROR = "ERROR"
-    STOPPED = "STOPPED"
+    ACTIVE = "ACTIVE"
+    RELOADING = "RELOADING"
+    INACTIVE = "INACTIVE"
+    FAILED = "FAILED"
+    ACTIVATING = "ACTIVATING"
+    DEACTIVATING = "DEACTIVATING"
     OFF = "OFF"
 
 

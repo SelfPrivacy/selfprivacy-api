@@ -12,10 +12,12 @@ from selfprivacy_api.utils.block_devices import BlockDevice
 class ServiceStatus(Enum):
     """Enum for service status"""
 
-    RUNNING = "RUNNING"
-    DEGRADED = "DEGRADED"
-    ERROR = "ERROR"
-    STOPPED = "STOPPED"
+    ACTIVE = "ACTIVE"
+    RELOADING = "RELOADING"
+    INACTIVE = "INACTIVE"
+    FAILED = "FAILED"
+    ACTIVATING = "ACTIVATING"
+    DEACTIVATING = "DEACTIVATING"
     OFF = "OFF"
 
 
