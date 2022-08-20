@@ -1,6 +1,5 @@
 """Function to perform migration of app data to binds."""
 import subprocess
-import psutil
 import pathlib
 import shutil
 
@@ -261,6 +260,13 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         bind_path=pathlib.Path(f"/volumes/{config.pleroma_block_device}/pleroma"),
         user="pleroma",
         group="pleroma",
+    )
+
+    move_folder(
+        data_path=pathlib.Path("/var/lib/postgresql"),
+        bind_path=pathlib.Path(f"/volumes/{config.pleroma_block_device}/postgresql"),
+        user="postgres",
+        group="postgres",
     )
 
     Pleroma().start()
