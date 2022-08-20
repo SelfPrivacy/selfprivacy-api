@@ -9,7 +9,7 @@ from selfprivacy_api.services.generic_status_getter import get_service_status
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
 from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
 from selfprivacy_api.utils.block_devices import BlockDevice
-from selfprivacy_api.utils.network import get_ip4
+import selfprivacy_api.utils.network as network_utils
 from selfprivacy_api.services.nextcloud.icon import NEXTCLOUD_ICON
 
 
@@ -137,7 +137,13 @@ class Nextcloud(Service):
             ServiceDnsRecord(
                 type="A",
                 name="cloud",
-                content=get_ip4(),
+                content=network_utils.get_ip4(),
+                ttl=3600,
+            ),
+            ServiceDnsRecord(
+                type="AAAA",
+                name="cloud",
+                content=network_utils.get_ip6(),
                 ttl=3600,
             ),
         ]

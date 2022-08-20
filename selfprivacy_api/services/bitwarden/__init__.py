@@ -11,7 +11,7 @@ from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceS
 from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
 from selfprivacy_api.utils.block_devices import BlockDevice
 from selfprivacy_api.utils.huey import huey
-from selfprivacy_api.utils.network import get_ip4
+import selfprivacy_api.utils.network as network_utils
 from selfprivacy_api.services.bitwarden.icon import BITWARDEN_ICON
 
 
@@ -132,7 +132,13 @@ class Bitwarden(Service):
             ServiceDnsRecord(
                 type="A",
                 name="password",
-                content=get_ip4(),
+                content=network_utils.get_ip4(),
+                ttl=3600,
+            ),
+            ServiceDnsRecord(
+                type="AAAA",
+                name="password",
+                content=network_utils.get_ip6(),
                 ttl=3600,
             ),
         ]

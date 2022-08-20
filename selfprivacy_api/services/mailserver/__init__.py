@@ -9,11 +9,10 @@ from selfprivacy_api.services.generic_service_mover import FolderMoveNames, move
 from selfprivacy_api.services.generic_size_counter import get_storage_usage
 from selfprivacy_api.services.generic_status_getter import get_service_status
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
-from selfprivacy_api.utils import ReadUserData, WriteUserData, get_dkim_key, get_domain
-from selfprivacy_api.utils import huey
+import selfprivacy_api.utils as utils
 from selfprivacy_api.utils.block_devices import BlockDevice
 from selfprivacy_api.utils.huey import huey
-from selfprivacy_api.utils.network import get_ip4
+import selfprivacy_api.utils.network as network_utils
 from selfprivacy_api.services.mailserver.icon import MAILSERVER_ICON
 
 
@@ -58,21 +57,34 @@ class MailServer(Service):
         imap_status = get_service_status("dovecot2.service")
         smtp_status = get_service_status("postfix.service")
 
-        if (
-            imap_status == ServiceStatus.RUNNING
-            and smtp_status == ServiceStatus.RUNNING
-        ):
-            return ServiceStatus.RUNNING
-        elif imap_status == ServiceStatus.ERROR or smtp_status == ServiceStatus.ERROR:
-            return ServiceStatus.ERROR
+        if imap_status == ServiceStatus.ACTIVE and smtp_status == ServiceStatus.ACTIVE:
+            return ServiceStatus.ACTIVE
+        elif imap_status == ServiceStatus.FAILED or smtp_status == ServiceStatus.FAILED:
+            return ServiceStatus.FAILED
         elif (
-            imap_status == ServiceStatus.STOPPED or smtp_status == ServiceStatus.STOPPED
+            imap_status == ServiceStatus.RELOADING
+            or smtp_status == ServiceStatus.RELOADING
         ):
-            return ServiceStatus.STOPPED
+            return ServiceStatus.RELOADING
+        elif (
+            imap_status == ServiceStatus.ACTIVATING
+            or smtp_status == ServiceStatus.ACTIVATING
+        ):
+            return ServiceStatus.ACTIVATING
+        elif (
+            imap_status == ServiceStatus.DEACTIVATING
+            or smtp_status == ServiceStatus.DEACTIVATING
+        ):
+            return ServiceStatus.DEACTIVATING
+        elif (
+            imap_status == ServiceStatus.INACTIVE
+            or smtp_status == ServiceStatus.INACTIVE
+        ):
+            return ServiceStatus.INACTIVE
         elif imap_status == ServiceStatus.OFF or smtp_status == ServiceStatus.OFF:
             return ServiceStatus.OFF
         else:
-            return ServiceStatus.DEGRADED
+            return ServiceStatus.FAILED
 
     @staticmethod
     def enable():
@@ -115,7 +127,7 @@ class MailServer(Service):
 
     @staticmethod
     def get_location() -> str:
-        with ReadUserData() as user_data:
+        with utils.ReadUserData() as user_data:
             if user_data.get("useBinds", False):
                 return user_data.get("mailserver", {}).get("location", "sda1")
             else:
@@ -123,25 +135,38 @@ class MailServer(Service):
 
     @staticmethod
     def get_dns_records() -> typing.List[ServiceDnsRecord]:
-        domain = get_domain()
-        dkim_record = get_dkim_key(domain)
-        ip4 = get_ip4()
+        domain = utils.get_domain()
+        dkim_record = utils.get_dkim_key(domain)
+        ip4 = network_utils.get_ip4()
+        ip6 = network_utils.get_ip6()
 
         if dkim_record is None:
             return []
 
         return [
             ServiceDnsRecord(
+                type="A",
+                name=domain,
+                content=ip4,
+                ttl=3600,
+            ),
+            ServiceDnsRecord(
+                type="AAAA",
+                name=domain,
+                content=ip6,
+                ttl=3600,
+            ),
+            ServiceDnsRecord(
                 type="MX", name=domain, content=domain, ttl=3600, priority=10
             ),
             ServiceDnsRecord(
-                type="TXT", name="_dmarc", content=f"v=DMARC1; p=none", ttl=3600
+                type="TXT", name="_dmarc", content=f"v=DMARC1; p=none", ttl=18000
             ),
             ServiceDnsRecord(
-                type="TXT", name=domain, content=f"v=spf1 a mx ip4:{ip4} -all", ttl=3600
+                type="TXT", name=domain, content=f"v=spf1 a mx ip4:{ip4} -all", ttl=18000
             ),
             ServiceDnsRecord(
-                type="TXT", name="selector._domainkey", content=dkim_record, ttl=3600
+                type="TXT", name="selector._domainkey", content=dkim_record, ttl=18000
             ),
         ]
 

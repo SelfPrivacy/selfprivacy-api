@@ -9,6 +9,7 @@ from selfprivacy_api.graphql.queries.common import Alert, Severity
 from selfprivacy_api.graphql.queries.providers import DnsProvider, ServerProvider
 from selfprivacy_api.jobs import Jobs
 from selfprivacy_api.jobs.migrate_to_binds import is_bind_migrated
+from selfprivacy_api.services import get_all_required_dns_records
 from selfprivacy_api.utils import ReadUserData
 import selfprivacy_api.actions.system as system_actions
 import selfprivacy_api.actions.ssh as ssh_actions
@@ -21,7 +22,20 @@ class SystemDomainInfo:
     domain: str
     hostname: str
     provider: DnsProvider
-    required_dns_records: typing.List[DnsRecord]
+    @strawberry.field
+    def required_dns_records(self) -> typing.List[DnsRecord]:
+        """Collect all required DNS records for all services"""
+        return [
+            DnsRecord(
+                record_type=record.type,
+                name=record.name,
+                content=record.content,
+                ttl=record.ttl,
+                priority=record.priority,
+            )
+            for record in get_all_required_dns_records()
+        ]
+
 
 
 def get_system_domain_info() -> SystemDomainInfo:
@@ -31,8 +45,6 @@ def get_system_domain_info() -> SystemDomainInfo:
             domain=user_data["domain"],
             hostname=user_data["hostname"],
             provider=DnsProvider.CLOUDFLARE,
-            # TODO: get ip somehow
-            required_dns_records=[],
         )
 
 
@@ -142,6 +154,7 @@ class System:
     settings: SystemSettings = SystemSettings()
     info: SystemInfo = SystemInfo()
     provider: SystemProviderInfo = strawberry.field(resolver=get_system_provider_info)
+
     @strawberry.field
     def busy(self) -> bool:
         """Check if the system is busy"""

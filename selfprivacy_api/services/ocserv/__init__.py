@@ -9,8 +9,8 @@ from selfprivacy_api.services.generic_status_getter import get_service_status
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
 from selfprivacy_api.utils import ReadUserData, WriteUserData
 from selfprivacy_api.utils.block_devices import BlockDevice
-from selfprivacy_api.utils.network import get_ip4
 from selfprivacy_api.services.ocserv.icon import OCSERV_ICON
+import selfprivacy_api.utils.network as network_utils
 
 
 class Ocserv(Service):
@@ -98,7 +98,20 @@ class Ocserv(Service):
 
     @staticmethod
     def get_dns_records() -> typing.List[ServiceDnsRecord]:
-        return []
+        return [
+            ServiceDnsRecord(
+                type="A",
+                name="vpn",
+                content=network_utils.get_ip4(),
+                ttl=3600,
+            ),
+            ServiceDnsRecord(
+                type="AAAA",
+                name="vpn",
+                content=network_utils.get_ip6(),
+                ttl=3600,
+            ),
+        ]
 
     @staticmethod
     def get_storage_usage() -> int:
