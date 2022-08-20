@@ -1,8 +1,13 @@
 """Tests configuration."""
 # pylint: disable=redefined-outer-name
 # pylint: disable=unused-argument
+import os
 import pytest
 from fastapi.testclient import TestClient
+
+
+def pytest_generate_tests(metafunc):
+    os.environ["TEST_MODE"] = "true"
 
 
 @pytest.fixture
@@ -17,10 +22,7 @@ def tokens_file(mocker, shared_datadir):
 @pytest.fixture
 def jobs_file(mocker, shared_datadir):
     """Mock tokens file."""
-    mock = mocker.patch(
-        "selfprivacy_api.utils.JOBS_FILE",
-        shared_datadir / "jobs.json"
-    )
+    mock = mocker.patch("selfprivacy_api.utils.JOBS_FILE", shared_datadir / "jobs.json")
     return mock
 
 

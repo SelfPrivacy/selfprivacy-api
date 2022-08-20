@@ -1,6 +1,7 @@
 # pylint: disable=redefined-outer-name
 # pylint: disable=unused-argument
 import json
+import os
 import pytest
 
 from selfprivacy_api.utils import WriteUserData, ReadUserData
@@ -28,3 +29,12 @@ def test_write_invalid_user_data():
     with pytest.raises(ValueError):
         with WriteUserData("invalid") as user_data:
             pass
+
+
+@pytest.fixture
+def test_mode():
+    return os.environ.get("TEST_MODE")
+
+
+def test_the_test_mode(test_mode):
+    assert test_mode == "true"
