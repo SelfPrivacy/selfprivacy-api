@@ -163,7 +163,10 @@ class MailServer(Service):
                 type="TXT", name="_dmarc", content=f"v=DMARC1; p=none", ttl=18000
             ),
             ServiceDnsRecord(
-                type="TXT", name=domain, content=f"v=spf1 a mx ip4:{ip4} -all", ttl=18000
+                type="TXT",
+                name=domain,
+                content=f"v=spf1 a mx ip4:{ip4} -all",
+                ttl=18000,
             ),
             ServiceDnsRecord(
                 type="TXT", name="selector._domainkey", content=dkim_record, ttl=18000

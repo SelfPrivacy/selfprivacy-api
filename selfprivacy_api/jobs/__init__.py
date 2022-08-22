@@ -133,13 +133,20 @@ class Jobs:
         """
         Remove a job from the jobs list.
         """
+        self.remove_by_uuid(str(job.uid))
+
+    def remove_by_uuid(self, job_uuid: str) -> bool:
+        """
+        Remove a job from the jobs list.
+        """
         with WriteUserData(UserDataFiles.JOBS) as user_data:
             if "jobs" not in user_data:
                 user_data["jobs"] = []
             for i, j in enumerate(user_data["jobs"]):
-                if j["uid"] == str(job.uid):
+                if j["uid"] == job_uuid:
                     del user_data["jobs"][i]
-                    break
+                    return True
+        return False
 
     @staticmethod
     def update(

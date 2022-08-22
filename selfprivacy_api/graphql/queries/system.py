@@ -22,6 +22,7 @@ class SystemDomainInfo:
     domain: str
     hostname: str
     provider: DnsProvider
+
     @strawberry.field
     def required_dns_records(self) -> typing.List[DnsRecord]:
         """Collect all required DNS records for all services"""
@@ -35,7 +36,6 @@ class SystemDomainInfo:
             )
             for record in get_all_required_dns_records()
         ]
-
 
 
 def get_system_domain_info() -> SystemDomainInfo:

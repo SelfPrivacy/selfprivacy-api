@@ -42,34 +42,35 @@ def get_disabled_services() -> list[Service]:
 def get_services_by_location(location: str) -> list[Service]:
     return [service for service in services if service.get_location() == location]
 
+
 def get_all_required_dns_records() -> list[ServiceDnsRecord]:
     ip4 = network_utils.get_ip4()
     ip6 = network_utils.get_ip6()
     dns_records: list[ServiceDnsRecord] = [
-            ServiceDnsRecord(
-                type="A",
-                name="api",
-                content=ip4,
-                ttl=3600,
-            ),
-            ServiceDnsRecord(
-                type="AAAA",
-                name="api",
-                content=ip6,
-                ttl=3600,
-            ),
-            ServiceDnsRecord(
-                type="A",
-                name="meet",
-                content=ip4,
-                ttl=3600,
-            ),
-            ServiceDnsRecord(
-                type="AAAA",
-                name="meet",
-                content=ip6,
-                ttl=3600,
-            ),
+        ServiceDnsRecord(
+            type="A",
+            name="api",
+            content=ip4,
+            ttl=3600,
+        ),
+        ServiceDnsRecord(
+            type="AAAA",
+            name="api",
+            content=ip6,
+            ttl=3600,
+        ),
+        ServiceDnsRecord(
+            type="A",
+            name="meet",
+            content=ip4,
+            ttl=3600,
+        ),
+        ServiceDnsRecord(
+            type="AAAA",
+            name="meet",
+            content=ip6,
+            ttl=3600,
+        ),
     ]
     for service in get_enabled_services():
         dns_records += service.get_dns_records()

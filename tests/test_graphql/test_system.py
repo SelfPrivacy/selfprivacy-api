@@ -220,7 +220,9 @@ domainInfo {
 """
 
 
-def dns_record(record_type="A", name="test-domain.tld", content=None, ttl=3600, priority=None):
+def dns_record(
+    record_type="A", name="test-domain.tld", content=None, ttl=3600, priority=None
+):
     if content is None:
         if record_type == "A":
             content = "157.90.247.192"
@@ -298,7 +300,12 @@ def test_graphql_get_domain(
     )
     assert is_dns_record_in_array(
         dns_records,
-        dns_record(name="test-domain.tld", record_type="MX", content="test-domain.tld", priority=10),
+        dns_record(
+            name="test-domain.tld",
+            record_type="MX",
+            content="test-domain.tld",
+            priority=10,
+        ),
     )
     assert is_dns_record_in_array(
         dns_records,
@@ -517,7 +524,10 @@ def test_graphql_get_auto_upgrade(authorized_client, turned_on):
     assert (
         response.json()["data"]["system"]["settings"]["autoUpgrade"]["enable"] is True
     )
-    assert response.json()["data"]["system"]["settings"]["autoUpgrade"]["allowReboot"] is True
+    assert (
+        response.json()["data"]["system"]["settings"]["autoUpgrade"]["allowReboot"]
+        is True
+    )
 
 
 def test_graphql_get_auto_upgrade_on_undefined(authorized_client, undefined_config):
@@ -533,7 +543,10 @@ def test_graphql_get_auto_upgrade_on_undefined(authorized_client, undefined_conf
     assert (
         response.json()["data"]["system"]["settings"]["autoUpgrade"]["enable"] is True
     )
-    assert response.json()["data"]["system"]["settings"]["autoUpgrade"]["allowReboot"] is False
+    assert (
+        response.json()["data"]["system"]["settings"]["autoUpgrade"]["allowReboot"]
+        is False
+    )
 
 
 def test_graphql_get_auto_upgrade_without_vlaues(authorized_client, no_values):
@@ -549,7 +562,10 @@ def test_graphql_get_auto_upgrade_without_vlaues(authorized_client, no_values):
     assert (
         response.json()["data"]["system"]["settings"]["autoUpgrade"]["enable"] is True
     )
-    assert response.json()["data"]["system"]["settings"]["autoUpgrade"]["allowReboot"] is False
+    assert (
+        response.json()["data"]["system"]["settings"]["autoUpgrade"]["allowReboot"]
+        is False
+    )
 
 
 def test_graphql_get_auto_upgrade_turned_off(authorized_client, turned_off):
@@ -565,7 +581,10 @@ def test_graphql_get_auto_upgrade_turned_off(authorized_client, turned_off):
     assert (
         response.json()["data"]["system"]["settings"]["autoUpgrade"]["enable"] is False
     )
-    assert response.json()["data"]["system"]["settings"]["autoUpgrade"]["allowReboot"] is False
+    assert (
+        response.json()["data"]["system"]["settings"]["autoUpgrade"]["allowReboot"]
+        is False
+    )
 
 
 API_CHANGE_AUTO_UPGRADE_SETTINGS = """
