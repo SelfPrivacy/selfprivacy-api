@@ -6,6 +6,7 @@ from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.mutations.api_mutations import ApiMutations
 from selfprivacy_api.graphql.mutations.job_mutations import JobMutations
 from selfprivacy_api.graphql.mutations.mutation_interface import GenericMutationReturn
+from selfprivacy_api.graphql.mutations.services_mutations import ServicesMutations
 from selfprivacy_api.graphql.mutations.ssh_mutations import SshMutations
 from selfprivacy_api.graphql.mutations.storage_mutations import StorageMutations
 from selfprivacy_api.graphql.mutations.system_mutations import SystemMutations
@@ -63,6 +64,7 @@ class Mutation(
     UserMutations,
     SshMutations,
     StorageMutations,
+    ServicesMutations,
     JobMutations,
 ):
     """Root schema for mutations"""
