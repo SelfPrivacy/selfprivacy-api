@@ -1,6 +1,8 @@
 """GraphQL API for SelfPrivacy."""
 # pylint: disable=too-few-public-methods
 
+import asyncio
+from typing import AsyncGenerator
 import strawberry
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.mutations.api_mutations import ApiMutations
@@ -69,7 +71,7 @@ class Mutation(
 ):
     """Root schema for mutations"""
 
-    @strawberry.mutation
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def test_mutation(self) -> GenericMutationReturn:
         """Test mutation"""
         test_job()
@@ -82,4 +84,15 @@ class Mutation(
     pass
 
 
-schema = strawberry.Schema(query=Query, mutation=Mutation)
+@strawberry.type
+class Subscription:
+    """Root schema for subscriptions"""
+
+    @strawberry.subscription(permission_classes=[IsAuthenticated])
+    async def count(self, target: int = 100) -> AsyncGenerator[int, None]:
+        for i in range(target):
+            yield i
+            await asyncio.sleep(0.5)
+
+
+schema = strawberry.Schema(query=Query, mutation=Mutation, subscription=Subscription)

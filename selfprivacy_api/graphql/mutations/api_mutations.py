@@ -116,7 +116,11 @@ class ApiMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def refresh_device_api_token(self, info: Info) -> DeviceApiTokenMutationReturn:
         """Refresh device api token"""
-        token = info.context.auth_token
+        token = (
+            info.context["request"]
+            .headers.get("Authorization", "")
+            .replace("Bearer ", "")
+        )
         if token is None:
             return DeviceApiTokenMutationReturn(
                 success=False,
@@ -142,7 +146,11 @@ class ApiMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def delete_device_api_token(self, device: str, info: Info) -> GenericMutationReturn:
         """Delete device api token"""
-        self_token = info.context.auth_token
+        self_token = (
+            info.context["request"]
+            .headers.get("Authorization", "")
+            .replace("Bearer ", "")
+        )
         try:
             delete_api_token(self_token, device)
         except NotFoundException:

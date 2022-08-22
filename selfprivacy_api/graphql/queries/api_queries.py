@@ -85,7 +85,11 @@ class Api:
                 creation_date=device.date,
                 is_caller=device.is_caller,
             )
-            for device in get_api_tokens_with_caller_flag(info.context.auth_token)
+            for device in get_api_tokens_with_caller_flag(
+                info.context["request"]
+                .headers.get("Authorization", "")
+                .replace("Bearer ", "")
+            )
         ]
 
     recovery_key: ApiRecoveryKeyStatus = strawberry.field(

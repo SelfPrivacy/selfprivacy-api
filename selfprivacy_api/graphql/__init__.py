@@ -13,4 +13,8 @@ class IsAuthenticated(BasePermission):
     message = "You must be authenticated to access this resource."
 
     def has_permission(self, source: typing.Any, info: Info, **kwargs) -> bool:
-        return info.context.is_authenticated
+        return is_token_valid(
+            info.context["request"]
+            .headers.get("Authorization", "")
+            .replace("Bearer ", "")
+        )

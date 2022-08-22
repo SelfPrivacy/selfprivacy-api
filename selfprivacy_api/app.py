@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """SelfPrivacy server management API"""
-import os
-from fastapi import FastAPI, Depends, Request, WebSocket, BackgroundTasks
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from strawberry.fastapi import BaseContext, GraphQLRouter
+from strawberry.fastapi import GraphQLRouter
 
 import uvicorn
 
-from selfprivacy_api.dependencies import get_api_version, get_graphql_context
+from selfprivacy_api.dependencies import get_api_version
 from selfprivacy_api.graphql.schema import schema
 from selfprivacy_api.migrations import run_migrations
 from selfprivacy_api.restic_controller.tasks import init_restic
@@ -20,9 +19,9 @@ from selfprivacy_api.rest import (
 )
 
 app = FastAPI()
+
 graphql_app = GraphQLRouter(
     schema,
-    context_getter=get_graphql_context,
 )
 
 app.add_middleware(
