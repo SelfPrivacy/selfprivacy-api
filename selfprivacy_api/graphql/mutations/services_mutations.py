@@ -2,6 +2,7 @@
 # pylint: disable=too-few-public-methods
 import typing
 import strawberry
+from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.common_types.jobs import job_to_api_job
 
 from selfprivacy_api.graphql.common_types.service import (
@@ -43,7 +44,7 @@ class ServiceJobMutationReturn(GenericJobButationReturn):
 class ServicesMutations:
     """Services mutations."""
 
-    @strawberry.mutation
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def enable_service(self, service_id: str) -> ServiceMutationReturn:
         """Enable service."""
         service = get_service_by_id(service_id)
@@ -61,7 +62,7 @@ class ServicesMutations:
             service=service_to_graphql_service(service),
         )
 
-    @strawberry.mutation
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def disable_service(self, service_id: str) -> ServiceMutationReturn:
         """Disable service."""
         service = get_service_by_id(service_id)
@@ -79,7 +80,7 @@ class ServicesMutations:
             service=service_to_graphql_service(service),
         )
 
-    @strawberry.mutation
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def stop_service(self, service_id: str) -> ServiceMutationReturn:
         """Stop service."""
         service = get_service_by_id(service_id)
@@ -97,7 +98,7 @@ class ServicesMutations:
             service=service_to_graphql_service(service),
         )
 
-    @strawberry.mutation
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def start_service(self, service_id: str) -> ServiceMutationReturn:
         """Start service."""
         service = get_service_by_id(service_id)
@@ -115,7 +116,7 @@ class ServicesMutations:
             service=service_to_graphql_service(service),
         )
 
-    @strawberry.mutation
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def restart_service(self, service_id: str) -> ServiceMutationReturn:
         """Restart service."""
         service = get_service_by_id(service_id)
@@ -133,7 +134,7 @@ class ServicesMutations:
             service=service_to_graphql_service(service),
         )
 
-    @strawberry.mutation
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def move_service(self, input: MoveServiceInput) -> ServiceJobMutationReturn:
         """Move service."""
         service = get_service_by_id(input.service_id)
