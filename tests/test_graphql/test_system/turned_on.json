@@ -41,6 +41,9 @@
     "pleroma": {
         "enable": true
     },
+    "jitsi": {
+        "enable": true
+    },
     "autoUpgrade": {
         "enable": true,
         "allowReboot": true

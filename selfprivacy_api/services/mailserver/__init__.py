@@ -7,7 +7,10 @@ import typing
 from selfprivacy_api.jobs import Job, JobStatus, Jobs
 from selfprivacy_api.services.generic_service_mover import FolderMoveNames, move_service
 from selfprivacy_api.services.generic_size_counter import get_storage_usage
-from selfprivacy_api.services.generic_status_getter import get_service_status
+from selfprivacy_api.services.generic_status_getter import (
+    get_service_status,
+    get_service_status_from_several_units,
+)
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
 import selfprivacy_api.utils as utils
 from selfprivacy_api.utils.block_devices import BlockDevice
@@ -54,37 +57,9 @@ class MailServer(Service):
 
     @staticmethod
     def get_status() -> ServiceStatus:
-        imap_status = get_service_status("dovecot2.service")
-        smtp_status = get_service_status("postfix.service")
-
-        if imap_status == ServiceStatus.ACTIVE and smtp_status == ServiceStatus.ACTIVE:
-            return ServiceStatus.ACTIVE
-        elif imap_status == ServiceStatus.FAILED or smtp_status == ServiceStatus.FAILED:
-            return ServiceStatus.FAILED
-        elif (
-            imap_status == ServiceStatus.RELOADING
-            or smtp_status == ServiceStatus.RELOADING
-        ):
-            return ServiceStatus.RELOADING
-        elif (
-            imap_status == ServiceStatus.ACTIVATING
-            or smtp_status == ServiceStatus.ACTIVATING
-        ):
-            return ServiceStatus.ACTIVATING
-        elif (
-            imap_status == ServiceStatus.DEACTIVATING
-            or smtp_status == ServiceStatus.DEACTIVATING
-        ):
-            return ServiceStatus.DEACTIVATING
-        elif (
-            imap_status == ServiceStatus.INACTIVE
-            or smtp_status == ServiceStatus.INACTIVE
-        ):
-            return ServiceStatus.INACTIVE
-        elif imap_status == ServiceStatus.OFF or smtp_status == ServiceStatus.OFF:
-            return ServiceStatus.OFF
-        else:
-            return ServiceStatus.FAILED
+        return get_service_status_from_several_units(
+            ["dovecot2.service", "postfix.service"]
+        )
 
     @staticmethod
     def enable():
