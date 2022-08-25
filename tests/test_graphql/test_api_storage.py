@@ -43,6 +43,6 @@ def test_graphql_get_nonexistent_block_device(authorized_client, mock_get_block_
     assert response.status_code == 200
     assert response.json().get("data") is not None
 
-    assert response.json()["data"]["addSshKey"]["code"] == 404
-    assert response.json()["data"]["addSshKey"]["message"] is not None
-    assert response.json()["data"]["addSshKey"]["success"] is False
+    assert response.json()["data"]["resizeVolume"]["code"] == 404
+    assert response.json()["data"]["resizeVolume"]["message"] is not None
+    assert response.json()["data"]["resizeVolume"]["success"] is False
