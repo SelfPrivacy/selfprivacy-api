@@ -3,6 +3,7 @@
 import strawberry
 
 from selfprivacy_api.graphql.mutations.mutation_interface import GenericMutationReturn
+from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.jobs import Jobs
 
 
@@ -10,7 +11,7 @@ from selfprivacy_api.jobs import Jobs
 class JobMutations:
     """Mutations related to jobs"""
 
-    @strawberry.mutation
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def remove_job(self, job_id: str) -> GenericMutationReturn:
         """Remove a job from the queue"""
         result = Jobs().remove_by_uuid(job_id)
