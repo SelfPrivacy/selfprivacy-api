@@ -16,13 +16,13 @@ def get_block_device(device_name):
             "-J",
             "-b",
             "-o",
-            "NAME,PATH,FSAVAIL,FSSIZE,FSTYPE,FSUSED,MOUNTPOINT,LABEL,UUID,SIZE, MODEL,SERIAL,TYPE",
-            device_name,
+            "NAME,PATH,FSAVAIL,FSSIZE,FSTYPE,FSUSED,MOUNTPOINTS,LABEL,UUID,SIZE,MODEL,SERIAL,TYPE",
+            f"/dev/{device_name}",
         ]
     )
     lsblk_output = lsblk_output.decode("utf-8")
     lsblk_output = json.loads(lsblk_output)
-    return lsblk_output["blockdevices"]
+    return lsblk_output["blockdevices"][0]
 
 
 def resize_block_device(block_device) -> bool:
@@ -30,9 +30,11 @@ def resize_block_device(block_device) -> bool:
     Resize a block device. Return True if successful.
     """
     resize_command = ["resize2fs", block_device]
-    resize_process = subprocess.Popen(resize_command, shell=False)
-    resize_process.communicate()
-    return resize_process.returncode == 0
+    try:
+        subprocess.check_output(resize_command, shell=False)
+    except subprocess.CalledProcessError:
+        return False
+    return True
 
 
 class BlockDevice:
@@ -43,14 +45,14 @@ class BlockDevice:
     def __init__(self, block_device):
         self.name = block_device["name"]
         self.path = block_device["path"]
-        self.fsavail = block_device["fsavail"]
-        self.fssize = block_device["fssize"]
+        self.fsavail = str(block_device["fsavail"])
+        self.fssize = str(block_device["fssize"])
         self.fstype = block_device["fstype"]
-        self.fsused = block_device["fsused"]
-        self.mountpoint = block_device["mountpoint"]
+        self.fsused = str(block_device["fsused"])
+        self.mountpoints = block_device["mountpoints"]
         self.label = block_device["label"]
         self.uuid = block_device["uuid"]
-        self.size = block_device["size"]
+        self.size = str(block_device["size"])
         self.model = block_device["model"]
         self.serial = block_device["serial"]
         self.type = block_device["type"]
@@ -60,7 +62,7 @@ class BlockDevice:
         return self.name
 
     def __repr__(self):
-        return f"<BlockDevice {self.name} of size {self.size} mounted at {self.mountpoint}>"
+        return f"<BlockDevice {self.name} of size {self.size} mounted at {self.mountpoints}>"
 
     def __eq__(self, other):
         return self.name == other.name
@@ -73,14 +75,14 @@ class BlockDevice:
         Update current data and return a dictionary of stats.
         """
         device = get_block_device(self.name)
-        self.fsavail = device["fsavail"]
-        self.fssize = device["fssize"]
+        self.fsavail = str(device["fsavail"])
+        self.fssize = str(device["fssize"])
         self.fstype = device["fstype"]
-        self.fsused = device["fsused"]
-        self.mountpoint = device["mountpoint"]
+        self.fsused = str(device["fsused"])
+        self.mountpoints = device["mountpoints"]
         self.label = device["label"]
         self.uuid = device["uuid"]
-        self.size = device["size"]
+        self.size = str(device["size"])
         self.model = device["model"]
         self.serial = device["serial"]
         self.type = device["type"]
@@ -92,7 +94,7 @@ class BlockDevice:
             "fssize": self.fssize,
             "fstype": self.fstype,
             "fsused": self.fsused,
-            "mountpoint": self.mountpoint,
+            "mountpoints": self.mountpoints,
             "label": self.label,
             "uuid": self.uuid,
             "size": self.size,
@@ -170,7 +172,7 @@ class BlockDevices:
                 "-J",
                 "-b",
                 "-o",
-                "NAME,PATH,FSAVAIL,FSSIZE,FSTYPE,FSUSED,MOUNTPOINT,LABEL,UUID,SIZE,MODEL,SERIAL,TYPE",
+                "NAME,PATH,FSAVAIL,FSSIZE,FSTYPE,FSUSED,MOUNTPOINTS,LABEL,UUID,SIZE,MODEL,SERIAL,TYPE",
             ]
         )
         lsblk_output = lsblk_output.decode("utf-8")
@@ -219,6 +221,6 @@ class BlockDevices:
         """
         block_devices = []
         for block_device in self.block_devices:
-            if block_device.mountpoint == mountpoint:
+            if mountpoint in block_device.mountpoints:
                 block_devices.append(block_device)
         return block_devices

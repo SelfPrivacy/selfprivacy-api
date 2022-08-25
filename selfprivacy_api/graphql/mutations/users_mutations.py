@@ -10,11 +10,7 @@ from selfprivacy_api.graphql.common_types.user import (
 from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericMutationReturn,
 )
-from selfprivacy_api.graphql.mutations.users_utils import (
-    create_user,
-    delete_user,
-    update_user,
-)
+import selfprivacy_api.actions.users as users_actions
 
 
 @strawberry.input
@@ -31,35 +27,91 @@ class UserMutations:
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def create_user(self, user: UserMutationInput) -> UserMutationReturn:
-
-        success, message, code = create_user(user.username, user.password)
+        try:
+            users_actions.create_user(user.username, user.password)
+        except users_actions.PasswordIsEmpty as e:
+            return UserMutationReturn(
+                success=False,
+                message=str(e),
+                code=400,
+            )
+        except users_actions.UsernameForbidden as e:
+            return UserMutationReturn(
+                success=False,
+                message=str(e),
+                code=409,
+            )
+        except users_actions.UsernameNotAlphanumeric as e:
+            return UserMutationReturn(
+                success=False,
+                message=str(e),
+                code=400,
+            )
+        except users_actions.UsernameTooLong as e:
+            return UserMutationReturn(
+                success=False,
+                message=str(e),
+                code=400,
+            )
+        except users_actions.UserAlreadyExists as e:
+            return UserMutationReturn(
+                success=False,
+                message=str(e),
+                code=409,
+                user=get_user_by_username(user.username),
+            )
 
         return UserMutationReturn(
-            success=success,
-            message=message,
-            code=code,
+            success=True,
+            message="User created",
+            code=201,
             user=get_user_by_username(user.username),
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def delete_user(self, username: str) -> GenericMutationReturn:
-        success, message, code = delete_user(username)
+        try:
+            users_actions.delete_user(username)
+        except users_actions.UserNotFound as e:
+            return GenericMutationReturn(
+                success=False,
+                message=str(e),
+                code=404,
+            )
+        except users_actions.UserIsProtected as e:
+            return GenericMutationReturn(
+                success=False,
+                message=str(e),
+                code=400,
+            )
 
         return GenericMutationReturn(
-            success=success,
-            message=message,
-            code=code,
+            success=True,
+            message="User deleted",
+            code=200,
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def update_user(self, user: UserMutationInput) -> UserMutationReturn:
         """Update user mutation"""
-
-        success, message, code = update_user(user.username, user.password)
+        try:
+            users_actions.update_user(user.username, user.password)
+        except users_actions.PasswordIsEmpty as e:
+            return UserMutationReturn(
+                success=False,
+                message=str(e),
+                code=400,
+            )
+        except users_actions.UserNotFound as e:
+            return UserMutationReturn(
+                success=False,
+                message=str(e),
+                code=404,
+            )
 
         return UserMutationReturn(
-            success=success,
-            message=message,
-            code=code,
+            success=True,
+            message="User updated",
+            code=200,
             user=get_user_by_username(user.username),
         )

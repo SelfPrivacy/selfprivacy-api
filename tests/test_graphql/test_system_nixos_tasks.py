@@ -72,7 +72,7 @@ def test_graphql_system_rebuild_unauthorized(client, mock_subprocess_popen):
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is None
+    assert response.json().get("data") is None
     assert mock_subprocess_popen.call_count == 0
 
 
@@ -85,10 +85,10 @@ def test_graphql_system_rebuild(authorized_client, mock_subprocess_popen):
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is not None
-    assert response.json["data"]["runSystemRebuild"]["success"] is True
-    assert response.json["data"]["runSystemRebuild"]["message"] is not None
-    assert response.json["data"]["runSystemRebuild"]["code"] == 200
+    assert response.json().get("data") is not None
+    assert response.json()["data"]["runSystemRebuild"]["success"] is True
+    assert response.json()["data"]["runSystemRebuild"]["message"] is not None
+    assert response.json()["data"]["runSystemRebuild"]["code"] == 200
     assert mock_subprocess_popen.call_count == 1
     assert mock_subprocess_popen.call_args[0][0] == [
         "systemctl",
@@ -117,7 +117,7 @@ def test_graphql_system_upgrade_unauthorized(client, mock_subprocess_popen):
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is None
+    assert response.json().get("data") is None
     assert mock_subprocess_popen.call_count == 0
 
 
@@ -130,10 +130,10 @@ def test_graphql_system_upgrade(authorized_client, mock_subprocess_popen):
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is not None
-    assert response.json["data"]["runSystemUpgrade"]["success"] is True
-    assert response.json["data"]["runSystemUpgrade"]["message"] is not None
-    assert response.json["data"]["runSystemUpgrade"]["code"] == 200
+    assert response.json().get("data") is not None
+    assert response.json()["data"]["runSystemUpgrade"]["success"] is True
+    assert response.json()["data"]["runSystemUpgrade"]["message"] is not None
+    assert response.json()["data"]["runSystemUpgrade"]["code"] == 200
     assert mock_subprocess_popen.call_count == 1
     assert mock_subprocess_popen.call_args[0][0] == [
         "systemctl",
@@ -162,7 +162,7 @@ def test_graphql_system_rollback_unauthorized(client, mock_subprocess_popen):
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is None
+    assert response.json().get("data") is None
     assert mock_subprocess_popen.call_count == 0
 
 
@@ -175,10 +175,10 @@ def test_graphql_system_rollback(authorized_client, mock_subprocess_popen):
         },
     )
     assert response.status_code == 200
-    assert response.json.get("data") is not None
-    assert response.json["data"]["runSystemRollback"]["success"] is True
-    assert response.json["data"]["runSystemRollback"]["message"] is not None
-    assert response.json["data"]["runSystemRollback"]["code"] == 200
+    assert response.json().get("data") is not None
+    assert response.json()["data"]["runSystemRollback"]["success"] is True
+    assert response.json()["data"]["runSystemRollback"]["message"] is not None
+    assert response.json()["data"]["runSystemRollback"]["code"] == 200
     assert mock_subprocess_popen.call_count == 1
     assert mock_subprocess_popen.call_args[0][0] == [
         "systemctl",
@@ -207,7 +207,7 @@ def test_graphql_reboot_system_unauthorized(client, mock_subprocess_popen):
     )
 
     assert response.status_code == 200
-    assert response.json.get("data") is None
+    assert response.json().get("data") is None
 
     assert mock_subprocess_popen.call_count == 0
 
@@ -221,11 +221,11 @@ def test_graphql_reboot_system(authorized_client, mock_subprocess_popen):
     )
 
     assert response.status_code == 200
-    assert response.json.get("data") is not None
+    assert response.json().get("data") is not None
 
-    assert response.json["data"]["rebootSystem"]["success"] is True
-    assert response.json["data"]["rebootSystem"]["message"] is not None
-    assert response.json["data"]["rebootSystem"]["code"] == 200
+    assert response.json()["data"]["rebootSystem"]["success"] is True
+    assert response.json()["data"]["rebootSystem"]["message"] is not None
+    assert response.json()["data"]["rebootSystem"]["code"] == 200
 
     assert mock_subprocess_popen.call_count == 1
     assert mock_subprocess_popen.call_args[0][0] == ["reboot"]

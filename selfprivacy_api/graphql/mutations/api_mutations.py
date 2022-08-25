@@ -2,8 +2,16 @@
 # pylint: disable=too-few-public-methods
 import datetime
 import typing
-from flask import request
 import strawberry
+from strawberry.types import Info
+from selfprivacy_api.actions.api_tokens import (
+    CannotDeleteCallerException,
+    InvalidExpirationDate,
+    InvalidUsesLeft,
+    NotFoundException,
+    delete_api_token,
+    get_new_api_recovery_key,
+)
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericMutationReturn,
@@ -12,11 +20,7 @@ from selfprivacy_api.graphql.mutations.mutation_interface import (
 
 from selfprivacy_api.utils.auth import (
     delete_new_device_auth_token,
-    delete_token,
-    generate_recovery_token,
     get_new_device_auth_token,
-    is_token_name_exists,
-    is_token_name_pair_valid,
     refresh_token,
     use_mnemonic_recoverery_token,
     use_new_device_auth_token,
@@ -64,27 +68,24 @@ class ApiMutations:
         self, limits: typing.Optional[RecoveryKeyLimitsInput] = None
     ) -> ApiKeyMutationReturn:
         """Generate recovery key"""
-        if limits is not None:
-            if limits.expiration_date is not None:
-                if limits.expiration_date < datetime.datetime.now():
-                    return ApiKeyMutationReturn(
-                        success=False,
-                        message="Expiration date must be in the future",
-                        code=400,
-                        key=None,
-                    )
-            if limits.uses is not None:
-                if limits.uses < 1:
-                    return ApiKeyMutationReturn(
-                        success=False,
-                        message="Uses must be greater than 0",
-                        code=400,
-                        key=None,
-                    )
-        if limits is not None:
-            key = generate_recovery_token(limits.expiration_date, limits.uses)
-        else:
-            key = generate_recovery_token(None, None)
+        if limits is None:
+            limits = RecoveryKeyLimitsInput()
+        try:
+            key = get_new_api_recovery_key(limits.expiration_date, limits.uses)
+        except InvalidExpirationDate:
+            return ApiKeyMutationReturn(
+                success=False,
+                message="Expiration date must be in the future",
+                code=400,
+                key=None,
+            )
+        except InvalidUsesLeft:
+            return ApiKeyMutationReturn(
+                success=False,
+                message="Uses must be greater than 0",
+                code=400,
+                key=None,
+            )
         return ApiKeyMutationReturn(
             success=True,
             message="Recovery key generated",
@@ -113,12 +114,12 @@ class ApiMutations:
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def refresh_device_api_token(self) -> DeviceApiTokenMutationReturn:
+    def refresh_device_api_token(self, info: Info) -> DeviceApiTokenMutationReturn:
         """Refresh device api token"""
         token = (
-            request.headers.get("Authorization").split(" ")[1]
-            if request.headers.get("Authorization") is not None
-            else None
+            info.context["request"]
+            .headers.get("Authorization", "")
+            .replace("Bearer ", "")
         )
         if token is None:
             return DeviceApiTokenMutationReturn(
@@ -143,26 +144,33 @@ class ApiMutations:
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def delete_device_api_token(self, device: str) -> GenericMutationReturn:
+    def delete_device_api_token(self, device: str, info: Info) -> GenericMutationReturn:
         """Delete device api token"""
         self_token = (
-            request.headers.get("Authorization").split(" ")[1]
-            if request.headers.get("Authorization") is not None
-            else None
+            info.context["request"]
+            .headers.get("Authorization", "")
+            .replace("Bearer ", "")
         )
-        if self_token is not None and is_token_name_pair_valid(device, self_token):
-            return GenericMutationReturn(
-                success=False,
-                message="Cannot delete caller's token",
-                code=400,
-            )
-        if not is_token_name_exists(device):
+        try:
+            delete_api_token(self_token, device)
+        except NotFoundException:
             return GenericMutationReturn(
                 success=False,
                 message="Token not found",
                 code=404,
             )
-        delete_token(device)
+        except CannotDeleteCallerException:
+            return GenericMutationReturn(
+                success=False,
+                message="Cannot delete caller token",
+                code=400,
+            )
+        except Exception as e:
+            return GenericMutationReturn(
+                success=False,
+                message=str(e),
+                code=500,
+            )
         return GenericMutationReturn(
             success=True,
             message="Token deleted",

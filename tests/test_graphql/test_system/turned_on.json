@@ -33,12 +33,15 @@
     },
     "username": "tester",
     "gitea": {
-        "enable": false
+        "enable": true
     },
     "ocserv": {
         "enable": true
     },
     "pleroma": {
+        "enable": true
+    },
+    "jitsi": {
         "enable": true
     },
     "autoUpgrade": {

@@ -2,6 +2,7 @@
 # pylint: disable=redefined-outer-name
 # pylint: disable=unused-argument
 # pylint: disable=missing-function-docstring
+import subprocess
 import pytest
 
 from selfprivacy_api.utils.network import get_ip4, get_ip6
@@ -30,6 +31,28 @@ def ip_process_mock(mocker):
     return mock
 
 
+@pytest.fixture
+def failed_ip_process_mock(mocker):
+    mock = mocker.patch(
+        "subprocess.check_output",
+        autospec=True,
+        return_value=FAILED_OUTPUT_STRING,
+    )
+    return mock
+
+
+@pytest.fixture
+def failed_subprocess_call(mocker):
+    mock = mocker.patch(
+        "subprocess.check_output",
+        autospec=True,
+        side_effect=subprocess.CalledProcessError(
+            returncode=1, cmd=["ip", "addr", "show", "dev", "eth0"]
+        ),
+    )
+    return mock
+
+
 def test_get_ip4(ip_process_mock):
     """Test get IPv4 address"""
     ip4 = get_ip4()
@@ -40,3 +63,23 @@ def test_get_ip6(ip_process_mock):
     """Test get IPv6 address"""
     ip6 = get_ip6()
     assert ip6 == "fe80::9400:ff:fef1:34ae"
+
+
+def test_failed_get_ip4(failed_ip_process_mock):
+    ip4 = get_ip4()
+    assert ip4 is ""
+
+
+def test_failed_get_ip6(failed_ip_process_mock):
+    ip6 = get_ip6()
+    assert ip6 is ""
+
+
+def test_failed_subprocess_get_ip4(failed_subprocess_call):
+    ip4 = get_ip4()
+    assert ip4 is ""
+
+
+def test_failed_subprocess_get_ip6(failed_subprocess_call):
+    ip6 = get_ip6()
+    assert ip6 is ""

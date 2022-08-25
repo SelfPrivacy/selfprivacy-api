@@ -2,21 +2,11 @@
 # pylint: disable=too-few-public-methods
 import typing
 import strawberry
+
+from selfprivacy_api.graphql.common_types.service import (
+    StorageVolume,
+)
 from selfprivacy_api.utils.block_devices import BlockDevices
-
-
-@strawberry.type
-class StorageVolume:
-    """Stats and basic info about a volume or a system disk."""
-
-    total_space: str
-    free_space: str
-    used_space: str
-    root: bool
-    name: str
-    model: typing.Optional[str]
-    serial: typing.Optional[str]
-    type: str
 
 
 @strawberry.type

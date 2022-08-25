@@ -10,6 +10,7 @@ import portalocker
 
 USERDATA_FILE = "/etc/nixos/userdata/userdata.json"
 TOKENS_FILE = "/etc/nixos/userdata/tokens.json"
+JOBS_FILE = "/etc/nixos/userdata/jobs.json"
 DOMAIN_FILE = "/var/domain"
 
 
@@ -18,6 +19,7 @@ class UserDataFiles(Enum):
 
     USERDATA = 0
     TOKENS = 1
+    JOBS = 2
 
 
 def get_domain():
@@ -35,6 +37,12 @@ class WriteUserData(object):
             self.userdata_file = open(USERDATA_FILE, "r+", encoding="utf-8")
         elif file_type == UserDataFiles.TOKENS:
             self.userdata_file = open(TOKENS_FILE, "r+", encoding="utf-8")
+        elif file_type == UserDataFiles.JOBS:
+            # Make sure file exists
+            if not os.path.exists(JOBS_FILE):
+                with open(JOBS_FILE, "w", encoding="utf-8") as jobs_file:
+                    jobs_file.write("{}")
+            self.userdata_file = open(JOBS_FILE, "r+", encoding="utf-8")
         else:
             raise ValueError("Unknown file type")
         portalocker.lock(self.userdata_file, portalocker.LOCK_EX)
@@ -60,6 +68,12 @@ class ReadUserData(object):
             self.userdata_file = open(USERDATA_FILE, "r", encoding="utf-8")
         elif file_type == UserDataFiles.TOKENS:
             self.userdata_file = open(TOKENS_FILE, "r", encoding="utf-8")
+        elif file_type == UserDataFiles.JOBS:
+            # Make sure file exists
+            if not os.path.exists(JOBS_FILE):
+                with open(JOBS_FILE, "w", encoding="utf-8") as jobs_file:
+                    jobs_file.write("{}")
+            self.userdata_file = open(JOBS_FILE, "r", encoding="utf-8")
         else:
             raise ValueError("Unknown file type")
         portalocker.lock(self.userdata_file, portalocker.LOCK_SH)

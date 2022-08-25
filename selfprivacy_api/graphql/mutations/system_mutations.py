@@ -1,15 +1,14 @@
 """System management mutations"""
 # pylint: disable=too-few-public-methods
-import subprocess
 import typing
-import pytz
 import strawberry
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericMutationReturn,
     MutationReturnInterface,
 )
-from selfprivacy_api.utils import WriteUserData
+
+import selfprivacy_api.actions.system as system_actions
 
 
 @strawberry.type
@@ -42,15 +41,15 @@ class SystemMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def change_timezone(self, timezone: str) -> TimezoneMutationReturn:
         """Change the timezone of the server. Timezone is a tzdatabase name."""
-        if timezone not in pytz.all_timezones:
+        try:
+            system_actions.change_timezone(timezone)
+        except system_actions.InvalidTimezone as e:
             return TimezoneMutationReturn(
                 success=False,
-                message="Invalid timezone",
+                message=str(e),
                 code=400,
                 timezone=None,
             )
-        with WriteUserData() as data:
-            data["timezone"] = timezone
         return TimezoneMutationReturn(
             success=True,
             message="Timezone changed",
@@ -63,36 +62,23 @@ class SystemMutations:
         self, settings: AutoUpgradeSettingsInput
     ) -> AutoUpgradeSettingsMutationReturn:
         """Change auto upgrade settings of the server."""
-        with WriteUserData() as data:
-            if "autoUpgrade" not in data:
-                data["autoUpgrade"] = {}
-            if "enable" not in data["autoUpgrade"]:
-                data["autoUpgrade"]["enable"] = True
-            if "allowReboot" not in data["autoUpgrade"]:
-                data["autoUpgrade"]["allowReboot"] = False
+        system_actions.set_auto_upgrade_settings(
+            settings.enableAutoUpgrade, settings.allowReboot
+        )
 
-            if settings.enableAutoUpgrade is not None:
-                data["autoUpgrade"]["enable"] = settings.enableAutoUpgrade
-            if settings.allowReboot is not None:
-                data["autoUpgrade"]["allowReboot"] = settings.allowReboot
-
-            auto_upgrade = data["autoUpgrade"]["enable"]
-            allow_reboot = data["autoUpgrade"]["allowReboot"]
+        new_settings = system_actions.get_auto_upgrade_settings()
 
         return AutoUpgradeSettingsMutationReturn(
             success=True,
             message="Auto-upgrade settings changed",
             code=200,
-            enableAutoUpgrade=auto_upgrade,
-            allowReboot=allow_reboot,
+            enableAutoUpgrade=new_settings.enable,
+            allowReboot=new_settings.allowReboot,
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def run_system_rebuild(self) -> GenericMutationReturn:
-        rebuild_result = subprocess.Popen(
-            ["systemctl", "start", "sp-nixos-rebuild.service"], start_new_session=True
-        )
-        rebuild_result.communicate()[0]
+        system_actions.rebuild_system()
         return GenericMutationReturn(
             success=True,
             message="Starting rebuild system",
@@ -101,10 +87,7 @@ class SystemMutations:
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def run_system_rollback(self) -> GenericMutationReturn:
-        rollback_result = subprocess.Popen(
-            ["systemctl", "start", "sp-nixos-rollback.service"], start_new_session=True
-        )
-        rollback_result.communicate()[0]
+        system_actions.rollback_system()
         return GenericMutationReturn(
             success=True,
             message="Starting rebuild system",
@@ -113,10 +96,7 @@ class SystemMutations:
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def run_system_upgrade(self) -> GenericMutationReturn:
-        upgrade_result = subprocess.Popen(
-            ["systemctl", "start", "sp-nixos-upgrade.service"], start_new_session=True
-        )
-        upgrade_result.communicate()[0]
+        system_actions.upgrade_system()
         return GenericMutationReturn(
             success=True,
             message="Starting rebuild system",
@@ -125,9 +105,24 @@ class SystemMutations:
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def reboot_system(self) -> GenericMutationReturn:
-        subprocess.Popen(["reboot"], start_new_session=True)
+        system_actions.reboot_system()
         return GenericMutationReturn(
             success=True,
             message="System reboot has started",
             code=200,
+        )
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    def pull_repository_changes(self) -> GenericMutationReturn:
+        result = system_actions.pull_repository_changes()
+        if result.status == 0:
+            return GenericMutationReturn(
+                success=True,
+                message="Repository changes pulled",
+                code=200,
+            )
+        return GenericMutationReturn(
+            success=False,
+            message=f"Failed to pull repository changes:\n{result.data}",
+            code=500,
         )

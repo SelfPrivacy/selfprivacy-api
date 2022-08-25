@@ -1,6 +1,7 @@
 # pylint: disable=redefined-outer-name
 # pylint: disable=unused-argument
 import json
+import os
 import pytest
 
 from selfprivacy_api.utils import WriteUserData, ReadUserData
@@ -9,19 +10,13 @@ from selfprivacy_api.utils import WriteUserData, ReadUserData
 def test_get_api_version(authorized_client):
     response = authorized_client.get("/api/version")
     assert response.status_code == 200
-    assert "version" in response.get_json()
+    assert "version" in response.json()
 
 
 def test_get_api_version_unauthorized(client):
     response = client.get("/api/version")
     assert response.status_code == 200
-    assert "version" in response.get_json()
-
-
-def test_get_swagger_json(authorized_client):
-    response = authorized_client.get("/api/swagger.json")
-    assert response.status_code == 200
-    assert "swagger" in response.get_json()
+    assert "version" in response.json()
 
 
 def test_read_invalid_user_data():
@@ -34,3 +29,12 @@ def test_write_invalid_user_data():
     with pytest.raises(ValueError):
         with WriteUserData("invalid") as user_data:
             pass
+
+
+@pytest.fixture
+def test_mode():
+    return os.environ.get("TEST_MODE")
+
+
+def test_the_test_mode(test_mode):
+    assert test_mode == "true"

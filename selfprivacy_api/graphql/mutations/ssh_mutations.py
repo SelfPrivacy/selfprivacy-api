@@ -3,9 +3,13 @@
 # pylint: disable=too-few-public-methods
 
 import strawberry
+from selfprivacy_api.actions.users import UserNotFound
 
 from selfprivacy_api.graphql import IsAuthenticated
-from selfprivacy_api.graphql.mutations.ssh_utils import (
+from selfprivacy_api.actions.ssh import (
+    InvalidPublicKey,
+    KeyAlreadyExists,
+    KeyNotFound,
     create_ssh_key,
     remove_ssh_key,
 )
@@ -31,12 +35,37 @@ class SshMutations:
     def add_ssh_key(self, ssh_input: SshMutationInput) -> UserMutationReturn:
         """Add a new ssh key"""
 
-        success, message, code = create_ssh_key(ssh_input.username, ssh_input.ssh_key)
+        try:
+            create_ssh_key(ssh_input.username, ssh_input.ssh_key)
+        except KeyAlreadyExists:
+            return UserMutationReturn(
+                success=False,
+                message="Key already exists",
+                code=409,
+            )
+        except InvalidPublicKey:
+            return UserMutationReturn(
+                success=False,
+                message="Invalid key type. Only ssh-ed25519 and ssh-rsa are supported",
+                code=400,
+            )
+        except UserNotFound:
+            return UserMutationReturn(
+                success=False,
+                message="User not found",
+                code=404,
+            )
+        except Exception as e:
+            return UserMutationReturn(
+                success=False,
+                message=str(e),
+                code=500,
+            )
 
         return UserMutationReturn(
-            success=success,
-            message=message,
-            code=code,
+            success=True,
+            message="New SSH key successfully written",
+            code=201,
             user=get_user_by_username(ssh_input.username),
         )
 
@@ -44,11 +73,30 @@ class SshMutations:
     def remove_ssh_key(self, ssh_input: SshMutationInput) -> UserMutationReturn:
         """Remove ssh key from user"""
 
-        success, message, code = remove_ssh_key(ssh_input.username, ssh_input.ssh_key)
+        try:
+            remove_ssh_key(ssh_input.username, ssh_input.ssh_key)
+        except KeyNotFound:
+            return UserMutationReturn(
+                success=False,
+                message="Key not found",
+                code=404,
+            )
+        except UserNotFound:
+            return UserMutationReturn(
+                success=False,
+                message="User not found",
+                code=404,
+            )
+        except Exception as e:
+            return UserMutationReturn(
+                success=False,
+                message=str(e),
+                code=500,
+            )
 
         return UserMutationReturn(
-            success=success,
-            message=message,
-            code=code,
+            success=True,
+            message="SSH key successfully removed",
+            code=200,
             user=get_user_by_username(ssh_input.username),
         )

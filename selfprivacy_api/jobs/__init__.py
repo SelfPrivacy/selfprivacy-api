@@ -16,11 +16,17 @@ A job is a dictionary with the following keys:
 """
 import typing
 import datetime
+from uuid import UUID
+import asyncio
 import json
 import os
 import time
 import uuid
 from enum import Enum
+
+from pydantic import BaseModel
+
+from selfprivacy_api.utils import ReadUserData, UserDataFiles, WriteUserData
 
 
 class JobStatus(Enum):
@@ -34,65 +40,23 @@ class JobStatus(Enum):
     ERROR = "ERROR"
 
 
-class Job:
+class Job(BaseModel):
     """
     Job class.
     """
 
-    def __init__(
-        self,
-        name: str,
-        description: str,
-        status: JobStatus,
-        created_at: datetime.datetime,
-        updated_at: datetime.datetime,
-        finished_at: typing.Optional[datetime.datetime],
-        error: typing.Optional[str],
-        result: typing.Optional[str],
-    ):
-        self.id = str(uuid.uuid4())
-        self.name = name
-        self.description = description
-        self.status = status
-        self.created_at = created_at
-        self.updated_at = updated_at
-        self.finished_at = finished_at
-        self.error = error
-        self.result = result
-
-    def to_dict(self) -> dict:
-        """
-        Convert the job to a dictionary.
-        """
-        return {
-            "id": self.id,
-            "name": self.name,
-            "description": self.description,
-            "status": self.status,
-            "created_at": self.created_at,
-            "updated_at": self.updated_at,
-            "finished_at": self.finished_at,
-            "error": self.error,
-            "result": self.result,
-        }
-
-    def to_json(self) -> str:
-        """
-        Convert the job to a JSON string.
-        """
-        return json.dumps(self.to_dict())
-
-    def __str__(self) -> str:
-        """
-        Convert the job to a string.
-        """
-        return self.to_json()
-
-    def __repr__(self) -> str:
-        """
-        Convert the job to a string.
-        """
-        return self.to_json()
+    uid: UUID = uuid.uuid4()
+    type_id: str
+    name: str
+    description: str
+    status: JobStatus
+    status_text: typing.Optional[str]
+    progress: typing.Optional[int]
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
+    finished_at: typing.Optional[datetime.datetime]
+    error: typing.Optional[str]
+    result: typing.Optional[str]
 
 
 class Jobs:
@@ -109,6 +73,9 @@ class Jobs:
         """
         if Jobs.__instance is None:
             Jobs()
+            if Jobs.__instance is None:
+                raise Exception("Couldn't init Jobs singleton!")
+            return Jobs.__instance
         return Jobs.__instance
 
     def __init__(self):
@@ -119,41 +86,78 @@ class Jobs:
             raise Exception("This class is a singleton!")
         else:
             Jobs.__instance = self
-        self.jobs = []
 
+    @staticmethod
+    def reset() -> None:
+        """
+        Reset the jobs list.
+        """
+        with WriteUserData(UserDataFiles.JOBS) as user_data:
+            user_data["jobs"] = []
+
+    @staticmethod
     def add(
-        self, name: str, description: str, status: JobStatus = JobStatus.CREATED
+        name: str,
+        type_id: str,
+        description: str,
+        status: JobStatus = JobStatus.CREATED,
+        status_text: str = "",
+        progress: int = 0,
     ) -> Job:
         """
         Add a job to the jobs list.
         """
         job = Job(
             name=name,
+            type_id=type_id,
             description=description,
             status=status,
+            status_text=status_text,
+            progress=progress,
             created_at=datetime.datetime.now(),
             updated_at=datetime.datetime.now(),
             finished_at=None,
             error=None,
             result=None,
         )
-        self.jobs.append(job)
+        with WriteUserData(UserDataFiles.JOBS) as user_data:
+            try:
+                if "jobs" not in user_data:
+                    user_data["jobs"] = []
+                user_data["jobs"].append(json.loads(job.json()))
+            except json.decoder.JSONDecodeError:
+                user_data["jobs"] = [json.loads(job.json())]
         return job
 
     def remove(self, job: Job) -> None:
         """
         Remove a job from the jobs list.
         """
-        self.jobs.remove(job)
+        self.remove_by_uuid(str(job.uid))
 
+    def remove_by_uuid(self, job_uuid: str) -> bool:
+        """
+        Remove a job from the jobs list.
+        """
+        with WriteUserData(UserDataFiles.JOBS) as user_data:
+            if "jobs" not in user_data:
+                user_data["jobs"] = []
+            for i, j in enumerate(user_data["jobs"]):
+                if j["uid"] == job_uuid:
+                    del user_data["jobs"][i]
+                    return True
+        return False
+
+    @staticmethod
     def update(
-        self,
         job: Job,
-        name: typing.Optional[str],
-        description: typing.Optional[str],
         status: JobStatus,
-        error: typing.Optional[str],
-        result: typing.Optional[str],
+        status_text: typing.Optional[str] = None,
+        progress: typing.Optional[int] = None,
+        name: typing.Optional[str] = None,
+        description: typing.Optional[str] = None,
+        error: typing.Optional[str] = None,
+        result: typing.Optional[str] = None,
     ) -> Job:
         """
         Update a job in the jobs list.
@@ -162,23 +166,62 @@ class Jobs:
             job.name = name
         if description is not None:
             job.description = description
+        if status_text is not None:
+            job.status_text = status_text
+        if progress is not None:
+            job.progress = progress
         job.status = status
         job.updated_at = datetime.datetime.now()
         job.error = error
         job.result = result
+        if status in (JobStatus.FINISHED, JobStatus.ERROR):
+            job.finished_at = datetime.datetime.now()
+
+        with WriteUserData(UserDataFiles.JOBS) as user_data:
+            if "jobs" not in user_data:
+                user_data["jobs"] = []
+            for i, j in enumerate(user_data["jobs"]):
+                if j["uid"] == str(job.uid):
+                    user_data["jobs"][i] = json.loads(job.json())
+                    break
+
         return job
 
-    def get_job(self, id: str) -> typing.Optional[Job]:
+    @staticmethod
+    def get_job(uid: str) -> typing.Optional[Job]:
         """
         Get a job from the jobs list.
         """
-        for job in self.jobs:
-            if job.id == id:
-                return job
+        with ReadUserData(UserDataFiles.JOBS) as user_data:
+            if "jobs" not in user_data:
+                user_data["jobs"] = []
+            for job in user_data["jobs"]:
+                if job["uid"] == uid:
+                    return Job(**job)
         return None
 
-    def get_jobs(self) -> list:
+    @staticmethod
+    def get_jobs() -> typing.List[Job]:
         """
         Get the jobs list.
         """
-        return self.jobs
+        with ReadUserData(UserDataFiles.JOBS) as user_data:
+            try:
+                if "jobs" not in user_data:
+                    user_data["jobs"] = []
+                return [Job(**job) for job in user_data["jobs"]]
+            except json.decoder.JSONDecodeError:
+                return []
+
+    @staticmethod
+    def is_busy() -> bool:
+        """
+        Check if there is a job running.
+        """
+        with ReadUserData(UserDataFiles.JOBS) as user_data:
+            if "jobs" not in user_data:
+                user_data["jobs"] = []
+            for job in user_data["jobs"]:
+                if job["status"] == JobStatus.RUNNING.value:
+                    return True
+        return False

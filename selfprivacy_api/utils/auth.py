@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import re
 import typing
 
+from pydantic import BaseModel
 from mnemonic import Mnemonic
 
 from . import ReadUserData, UserDataFiles, WriteUserData, parse_date
@@ -87,7 +88,7 @@ def is_token_name_pair_valid(token_name, token):
         return False
 
 
-def get_token_name(token):
+def get_token_name(token: str) -> typing.Optional[str]:
     """Return the name of the token provided"""
     with ReadUserData(UserDataFiles.TOKENS) as tokens:
         for t in tokens["tokens"]:
@@ -96,11 +97,22 @@ def get_token_name(token):
         return None
 
 
+class BasicTokenInfo(BaseModel):
+    """Token info"""
+
+    name: str
+    date: datetime
+
+
 def get_tokens_info():
     """Get all tokens info without tokens themselves"""
     with ReadUserData(UserDataFiles.TOKENS) as tokens:
         return [
-            {"name": token["name"], "date": token["date"]} for token in tokens["tokens"]
+            BasicTokenInfo(
+                name=t["name"],
+                date=parse_date(t["date"]),
+            )
+            for t in tokens["tokens"]
         ]
 
 

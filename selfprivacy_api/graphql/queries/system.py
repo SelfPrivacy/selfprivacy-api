@@ -1,23 +1,18 @@
 """Common system information and settings"""
 # pylint: disable=too-few-public-methods
-import subprocess
+import os
 import typing
 import strawberry
+from selfprivacy_api.graphql.common_types.dns import DnsRecord
 
 from selfprivacy_api.graphql.queries.common import Alert, Severity
 from selfprivacy_api.graphql.queries.providers import DnsProvider, ServerProvider
+from selfprivacy_api.jobs import Jobs
+from selfprivacy_api.jobs.migrate_to_binds import is_bind_migrated
+from selfprivacy_api.services import get_all_required_dns_records
 from selfprivacy_api.utils import ReadUserData
-
-
-@strawberry.type
-class DnsRecord:
-    """DNS record"""
-
-    recordType: str
-    name: str
-    content: str
-    ttl: int
-    priority: typing.Optional[int]
+import selfprivacy_api.actions.system as system_actions
+import selfprivacy_api.actions.ssh as ssh_actions
 
 
 @strawberry.type
@@ -27,7 +22,20 @@ class SystemDomainInfo:
     domain: str
     hostname: str
     provider: DnsProvider
-    required_dns_records: typing.List[DnsRecord]
+
+    @strawberry.field
+    def required_dns_records(self) -> typing.List[DnsRecord]:
+        """Collect all required DNS records for all services"""
+        return [
+            DnsRecord(
+                record_type=record.type,
+                name=record.name,
+                content=record.content,
+                ttl=record.ttl,
+                priority=record.priority,
+            )
+            for record in get_all_required_dns_records()
+        ]
 
 
 def get_system_domain_info() -> SystemDomainInfo:
@@ -37,8 +45,6 @@ def get_system_domain_info() -> SystemDomainInfo:
             domain=user_data["domain"],
             hostname=user_data["hostname"],
             provider=DnsProvider.CLOUDFLARE,
-            # TODO: get ip somehow
-            required_dns_records=[],
         )
 
 
@@ -52,17 +58,11 @@ class AutoUpgradeOptions:
 
 def get_auto_upgrade_options() -> AutoUpgradeOptions:
     """Get automatic upgrade options"""
-    with ReadUserData() as user_data:
-        if "autoUpgrade" not in user_data:
-            return AutoUpgradeOptions(enable=True, allow_reboot=False)
-        if "enable" not in user_data["autoUpgrade"]:
-            user_data["autoUpgrade"]["enable"] = True
-        if "allowReboot" not in user_data["autoUpgrade"]:
-            user_data["autoUpgrade"]["allowReboot"] = False
-        return AutoUpgradeOptions(
-            enable=user_data["autoUpgrade"]["enable"],
-            allow_reboot=user_data["autoUpgrade"]["allowReboot"],
-        )
+    settings = system_actions.get_auto_upgrade_settings()
+    return AutoUpgradeOptions(
+        enable=settings.enable,
+        allow_reboot=settings.allowReboot,
+    )
 
 
 @strawberry.type
@@ -76,30 +76,17 @@ class SshSettings:
 
 def get_ssh_settings() -> SshSettings:
     """Get SSH settings"""
-    with ReadUserData() as user_data:
-        if "ssh" not in user_data:
-            return SshSettings(
-                enable=False, password_authentication=False, root_ssh_keys=[]
-            )
-        if "enable" not in user_data["ssh"]:
-            user_data["ssh"]["enable"] = False
-        if "passwordAuthentication" not in user_data["ssh"]:
-            user_data["ssh"]["passwordAuthentication"] = False
-        if "rootKeys" not in user_data["ssh"]:
-            user_data["ssh"]["rootKeys"] = []
-        return SshSettings(
-            enable=user_data["ssh"]["enable"],
-            password_authentication=user_data["ssh"]["passwordAuthentication"],
-            root_ssh_keys=user_data["ssh"]["rootKeys"],
-        )
+    settings = ssh_actions.get_ssh_settings()
+    return SshSettings(
+        enable=settings.enable,
+        password_authentication=settings.passwordAuthentication,
+        root_ssh_keys=settings.rootKeys,
+    )
 
 
 def get_system_timezone() -> str:
     """Get system timezone"""
-    with ReadUserData() as user_data:
-        if "timezone" not in user_data:
-            return "Europe/Uzhgorod"
-        return user_data["timezone"]
+    return system_actions.get_timezone()
 
 
 @strawberry.type
@@ -115,12 +102,12 @@ class SystemSettings:
 
 def get_system_version() -> str:
     """Get system version"""
-    return subprocess.check_output(["uname", "-a"]).decode("utf-8").strip()
+    return system_actions.get_system_version()
 
 
 def get_python_version() -> str:
     """Get Python version"""
-    return subprocess.check_output(["python", "-V"]).decode("utf-8").strip()
+    return system_actions.get_python_version()
 
 
 @strawberry.type
@@ -129,6 +116,11 @@ class SystemInfo:
 
     system_version: str = strawberry.field(resolver=get_system_version)
     python_version: str = strawberry.field(resolver=get_python_version)
+
+    @strawberry.field
+    def using_binds(self) -> bool:
+        """Check if the system is using BINDs"""
+        return is_bind_migrated()
 
 
 @strawberry.type
@@ -162,4 +154,13 @@ class System:
     settings: SystemSettings = SystemSettings()
     info: SystemInfo = SystemInfo()
     provider: SystemProviderInfo = strawberry.field(resolver=get_system_provider_info)
-    busy: bool = False
+
+    @strawberry.field
+    def busy(self) -> bool:
+        """Check if the system is busy"""
+        return Jobs.is_busy()
+
+    @strawberry.field
+    def working_directory(self) -> str:
+        """Get working directory"""
+        return os.getcwd()
