@@ -1,0 +1,96 @@
+diff --git a/pyproject.toml b/pyproject.toml
+index 0cbf2ef..7736e92 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -51,7 +51,6 @@ python-multipart = "^0.0.5"
+ sanic = {version = ">=20.12.2,<22.0.0", optional = true}
+ aiohttp = {version = "^3.7.4.post0", optional = true}
+ fastapi = {version = ">=0.65.2", optional = true}
+-"backports.cached-property" = "^1.0.1"
+ 
+ [tool.poetry.dev-dependencies]
+ pytest = "^7.1"
+diff --git a/strawberry/directive.py b/strawberry/directive.py
+index 491e390..26ba345 100644
+--- a/strawberry/directive.py
++++ b/strawberry/directive.py
+@@ -1,10 +1,10 @@
+ from __future__ import annotations
+ 
+ import dataclasses
++from functools import cached_property
+ import inspect
+ from typing import Any, Callable, List, Optional, TypeVar
+ 
+-from backports.cached_property import cached_property
+ from typing_extensions import Annotated
+ 
+ from graphql import DirectiveLocation
+diff --git a/strawberry/extensions/tracing/datadog.py b/strawberry/extensions/tracing/datadog.py
+index 01fba20..7c06950 100644
+--- a/strawberry/extensions/tracing/datadog.py
++++ b/strawberry/extensions/tracing/datadog.py
+@@ -1,8 +1,8 @@
+ import hashlib
++from functools import cached_property
+ from inspect import isawaitable
+ from typing import Optional
+ 
+-from backports.cached_property import cached_property
+ from ddtrace import tracer
+ 
+ from strawberry.extensions import Extension
+diff --git a/strawberry/field.py b/strawberry/field.py
+index 80ed12a..f1bf2e9 100644
+--- a/strawberry/field.py
++++ b/strawberry/field.py
+@@ -1,5 +1,6 @@
+ import builtins
+ import dataclasses
++from functools import cached_property
+ import inspect
+ import sys
+ from typing import (
+@@ -18,7 +19,6 @@ from typing import (
+     overload,
+ )
+ 
+-from backports.cached_property import cached_property
+ from typing_extensions import Literal
+ 
+ from strawberry.annotation import StrawberryAnnotation
+diff --git a/strawberry/types/fields/resolver.py b/strawberry/types/fields/resolver.py
+index c5b3edd..f4112ce 100644
+--- a/strawberry/types/fields/resolver.py
++++ b/strawberry/types/fields/resolver.py
+@@ -1,6 +1,7 @@
+ from __future__ import annotations as _
+ 
+ import builtins
++from functools import cached_property
+ import inspect
+ import sys
+ import warnings
+@@ -22,7 +23,6 @@ from typing import (  # type: ignore[attr-defined]
+     _eval_type,
+ )
+ 
+-from backports.cached_property import cached_property
+ from typing_extensions import Annotated, Protocol, get_args, get_origin
+ 
+ from strawberry.annotation import StrawberryAnnotation
+diff --git a/strawberry/types/info.py b/strawberry/types/info.py
+index a172c04..475a3ee 100644
+--- a/strawberry/types/info.py
++++ b/strawberry/types/info.py
+@@ -1,9 +1,8 @@
+ import dataclasses
++from functools import cached_property
+ import warnings
+ from typing import TYPE_CHECKING, Any, Dict, Generic, List, Optional, TypeVar, Union
+ 
+-from backports.cached_property import cached_property
+-
+ from graphql import GraphQLResolveInfo, OperationDefinitionNode
+ from graphql.language import FieldNode
+ from graphql.pyutils.path import Path

@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 """Various utility functions"""
+import datetime
 from enum import Enum
 import json
+import os
+import subprocess
 import portalocker
 
 
 USERDATA_FILE = "/etc/nixos/userdata/userdata.json"
 TOKENS_FILE = "/etc/nixos/userdata/tokens.json"
+JOBS_FILE = "/etc/nixos/userdata/jobs.json"
 DOMAIN_FILE = "/var/domain"
 
 
@@ -15,6 +19,7 @@ class UserDataFiles(Enum):
 
     USERDATA = 0
     TOKENS = 1
+    JOBS = 2
 
 
 def get_domain():
@@ -32,6 +37,12 @@ class WriteUserData(object):
             self.userdata_file = open(USERDATA_FILE, "r+", encoding="utf-8")
         elif file_type == UserDataFiles.TOKENS:
             self.userdata_file = open(TOKENS_FILE, "r+", encoding="utf-8")
+        elif file_type == UserDataFiles.JOBS:
+            # Make sure file exists
+            if not os.path.exists(JOBS_FILE):
+                with open(JOBS_FILE, "w", encoding="utf-8") as jobs_file:
+                    jobs_file.write("{}")
+            self.userdata_file = open(JOBS_FILE, "r+", encoding="utf-8")
         else:
             raise ValueError("Unknown file type")
         portalocker.lock(self.userdata_file, portalocker.LOCK_EX)
@@ -57,12 +68,18 @@ class ReadUserData(object):
             self.userdata_file = open(USERDATA_FILE, "r", encoding="utf-8")
         elif file_type == UserDataFiles.TOKENS:
             self.userdata_file = open(TOKENS_FILE, "r", encoding="utf-8")
+        elif file_type == UserDataFiles.JOBS:
+            # Make sure file exists
+            if not os.path.exists(JOBS_FILE):
+                with open(JOBS_FILE, "w", encoding="utf-8") as jobs_file:
+                    jobs_file.write("{}")
+            self.userdata_file = open(JOBS_FILE, "r", encoding="utf-8")
         else:
             raise ValueError("Unknown file type")
         portalocker.lock(self.userdata_file, portalocker.LOCK_SH)
         self.data = json.load(self.userdata_file)
 
-    def __enter__(self):
+    def __enter__(self) -> dict:
         return self.data
 
     def __exit__(self, *args):
@@ -119,3 +136,54 @@ def is_username_forbidden(username):
             return True
 
     return False
+
+
+def parse_date(date_str: str) -> datetime.datetime:
+    """Parse date string which can be in one of these formats:
+    - %Y-%m-%dT%H:%M:%S.%fZ
+    - %Y-%m-%dT%H:%M:%S.%f
+    - %Y-%m-%d %H:%M:%S.%fZ
+    - %Y-%m-%d %H:%M:%S.%f
+    """
+    try:
+        return datetime.datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S.%fZ")
+    except ValueError:
+        pass
+    try:
+        return datetime.datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S.%f")
+    except ValueError:
+        pass
+    try:
+        return datetime.datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S.%fZ")
+    except ValueError:
+        pass
+    try:
+        return datetime.datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S.%f")
+    except ValueError:
+        pass
+    raise ValueError("Invalid date string")
+
+
+def get_dkim_key(domain):
+    """Get DKIM key from /var/dkim/<domain>.selector.txt"""
+    if os.path.exists("/var/dkim/" + domain + ".selector.txt"):
+        cat_process = subprocess.Popen(
+            ["cat", "/var/dkim/" + domain + ".selector.txt"], stdout=subprocess.PIPE
+        )
+        dkim = cat_process.communicate()[0]
+        return str(dkim, "utf-8")
+    return None
+
+
+def hash_password(password):
+    hashing_command = ["mkpasswd", "-m", "sha-512", password]
+    password_hash_process_descriptor = subprocess.Popen(
+        hashing_command,
+        shell=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
+    hashed_password = password_hash_process_descriptor.communicate()[0]
+    hashed_password = hashed_password.decode("ascii")
+    hashed_password = hashed_password.rstrip()
+    return hashed_password

@@ -15,20 +15,16 @@ class MigrateToSelfprivacyChannel(Migration):
 
     def is_migration_needed(self):
         try:
-            print("Checking if migration is needed")
             output = subprocess.check_output(
                 ["nix-channel", "--list"], start_new_session=True
             )
             output = output.decode("utf-8")
-            print(output)
             first_line = output.split("\n", maxsplit=1)[0]
-            print(first_line)
             return first_line.startswith("nixos") and (
                 first_line.endswith("nixos-21.11") or first_line.endswith("nixos-21.05")
             )
         except subprocess.CalledProcessError:
             return False
-        return False
 
     def migrate(self):
         # Change the channel and update them.

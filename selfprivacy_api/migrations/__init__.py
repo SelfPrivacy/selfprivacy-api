@@ -14,8 +14,14 @@ from selfprivacy_api.migrations.create_tokens_json import CreateTokensJson
 from selfprivacy_api.migrations.migrate_to_selfprivacy_channel import (
     MigrateToSelfprivacyChannel,
 )
+from selfprivacy_api.migrations.mount_volume import MountVolume
 
-migrations = [FixNixosConfigBranch(), CreateTokensJson(), MigrateToSelfprivacyChannel()]
+migrations = [
+    FixNixosConfigBranch(),
+    CreateTokensJson(),
+    MigrateToSelfprivacyChannel(),
+    MountVolume(),
+]
 
 
 def run_migrations():

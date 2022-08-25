@@ -3,10 +3,12 @@
 import secrets
 from datetime import datetime, timedelta
 import re
+import typing
 
+from pydantic import BaseModel
 from mnemonic import Mnemonic
 
-from . import ReadUserData, UserDataFiles, WriteUserData
+from . import ReadUserData, UserDataFiles, WriteUserData, parse_date
 
 """
 Token are stored in the tokens.json file.
@@ -86,7 +88,7 @@ def is_token_name_pair_valid(token_name, token):
         return False
 
 
-def get_token_name(token):
+def get_token_name(token: str) -> typing.Optional[str]:
     """Return the name of the token provided"""
     with ReadUserData(UserDataFiles.TOKENS) as tokens:
         for t in tokens["tokens"]:
@@ -95,11 +97,22 @@ def get_token_name(token):
         return None
 
 
+class BasicTokenInfo(BaseModel):
+    """Token info"""
+
+    name: str
+    date: datetime
+
+
 def get_tokens_info():
     """Get all tokens info without tokens themselves"""
     with ReadUserData(UserDataFiles.TOKENS) as tokens:
         return [
-            {"name": token["name"], "date": token["date"]} for token in tokens["tokens"]
+            BasicTokenInfo(
+                name=t["name"],
+                date=parse_date(t["date"]),
+            )
+            for t in tokens["tokens"]
         ]
 
 
@@ -120,7 +133,7 @@ def create_token(name):
             {
                 "token": token,
                 "name": name,
-                "date": str(datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")),
+                "date": str(datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")),
             }
         )
     return token
@@ -132,7 +145,7 @@ def delete_token(token_name):
         tokens["tokens"] = [t for t in tokens["tokens"] if t["name"] != token_name]
 
 
-def refresh_token(token):
+def refresh_token(token: str) -> typing.Optional[str]:
     """Change the token field of the existing token"""
     new_token = _generate_token()
     with WriteUserData(UserDataFiles.TOKENS) as tokens:
@@ -160,9 +173,7 @@ def is_recovery_token_valid():
                 return False
         if "expiration" not in recovery_token or recovery_token["expiration"] is None:
             return True
-        return datetime.now() < datetime.strptime(
-            recovery_token["expiration"], "%Y-%m-%dT%H:%M:%S.%fZ"
-        )
+        return datetime.now() < parse_date(recovery_token["expiration"])
 
 
 def get_recovery_token_status():
@@ -190,7 +201,9 @@ def _get_recovery_token():
         return tokens["recovery_token"]["token"]
 
 
-def generate_recovery_token(expiration=None, uses_left=None):
+def generate_recovery_token(
+    expiration: typing.Optional[datetime], uses_left: typing.Optional[int]
+) -> str:
     """Generate a 24 bytes recovery token and return a mneomnic word list.
     Write a string representation of the recovery token to the tokens.json file.
     """
@@ -210,8 +223,8 @@ def generate_recovery_token(expiration=None, uses_left=None):
     with WriteUserData(UserDataFiles.TOKENS) as tokens:
         tokens["recovery_token"] = {
             "token": recovery_token_str,
-            "date": str(datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")),
-            "expiration": expiration.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            "date": str(datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")),
+            "expiration": expiration.strftime("%Y-%m-%dT%H:%M:%S.%f")
             if expiration is not None
             else None,
             "uses_left": uses_left if uses_left is not None else None,
@@ -258,7 +271,7 @@ def use_mnemonic_recoverery_token(mnemonic_phrase, name):
     return token
 
 
-def get_new_device_auth_token():
+def get_new_device_auth_token() -> str:
     """Generate a new device auth token which is valid for 10 minutes
     and return a mnemonic phrase representation
     Write token to the new_device of the tokens.json file.
@@ -282,14 +295,7 @@ def _get_new_device_auth_token():
         new_device = tokens["new_device"]
         if "expiration" not in new_device:
             return None
-        if new_device["expiration"].endswith("Z"):
-            expiration = datetime.strptime(
-                new_device["expiration"], "%Y-%m-%dT%H:%M:%S.%fZ"
-            )
-        else:
-            expiration = datetime.strptime(
-                new_device["expiration"], "%Y-%m-%d %H:%M:%S.%f"
-            )
+        expiration = parse_date(new_device["expiration"])
         if datetime.now() > expiration:
             return None
         return new_device["token"]
