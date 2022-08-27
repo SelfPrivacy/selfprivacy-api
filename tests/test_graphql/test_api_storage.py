@@ -17,15 +17,12 @@ class BlockDevicesMockReturnNone:
     returncode = 0
 
 
-class BlockDevicesMock:
+class BlockDevicesMockReturnTrue:
     """Mock BlockDevices"""
 
     def __init__(self, args, **kwargs):
         self.args = args
         self.kwargs = kwargs
-
-    def get_block_device(self, name: str):
-        return 0
 
     def mount(self):
         return True
