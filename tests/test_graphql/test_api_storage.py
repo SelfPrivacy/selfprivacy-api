@@ -60,7 +60,7 @@ class BlockDevicesMockReturnFalse:
 @pytest.fixture
 def mock_block_device_return_none(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.graphql.mutations.storage_mutation.BlockDevices", autospec=True
+        "selfprivacy_api.graphql.mutations.storage_mutation.BlockDevices", autospec=True, return_value=BlockDevicesMockReturnNone
     )
     return mock
 
@@ -68,7 +68,7 @@ def mock_block_device_return_none(mocker):
 @pytest.fixture
 def mock_block_device_return_true(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.graphql.mutations.storage_mutation.BlockDevices", autospec=True
+        "selfprivacy_api.graphql.mutations.storage_mutation.BlockDevices", autospec=True, return_value=BlockDevicesMockReturnTrue
     )
     return mock
 
@@ -76,7 +76,7 @@ def mock_block_device_return_true(mocker):
 @pytest.fixture
 def mock_block_device_return_false(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.graphql.mutations.storage_mutation.BlockDevices", autospec=True
+        "selfprivacy_api.graphql.mutations.storage_mutation.BlockDevices", autospec=True, return_value=BlockDevicesMockReturnFalse
     )
     return mock
 
