@@ -13,6 +13,16 @@ def service_to_graphql_service_mock():
     pass
 
 
+class BlockDevicesMock:
+    def get_block_device(self, name: str):
+        pass
+
+
+class BlockDevicesReturnNoneMock:
+    def get_block_device(self, name: str):
+        return None
+
+
 class NextcloudMock:
     def __init__(self, args, **kwargs):
         self.args = args
@@ -25,6 +35,35 @@ class NextcloudMock:
         pass
 
     def stop(self):
+        pass
+
+    def is_movable(self):
+        return True
+
+    def move_to_volume(self):
+        pass
+
+    returncode = 0
+
+
+class NextcloudReturnFalseMock:
+    def __init__(self, args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+
+    def enable(self):
+        pass
+
+    def disable(self):
+        pass
+
+    def stop(self):
+        pass
+
+    def is_movable(self):
+        return False
+
+    def move_to_volume(self):
         pass
 
     returncode = 0
@@ -46,6 +85,36 @@ def mock_nextcloud(mocker):
         "selfprivacy_api.services.nextcloud.__init__.Nextcloud",
         autospec=True,
         return_value=NextcloudMock,
+    )
+    return mock
+
+
+@pytest.fixture
+def mock_block_devices_return_none(mocker):
+    mock = mocker.patch(
+        "selfprivacy_api.utils.block_devices.BlockDevices",
+        autospec=True,
+        return_value=BlockDevicesReturnNoneMock,
+    )
+    return mock
+
+
+@pytest.fixture
+def mock_block_devices(mocker):
+    mock = mocker.patch(
+        "selfprivacy_api.utils.block_devices.BlockDevices",
+        autospec=True,
+        return_value=BlockDevicesMock,
+    )
+    return mock
+
+
+@pytest.fixture
+def mock_nextcloud_return_false(mocker):
+    mock = mocker.patch(
+        "selfprivacy_api.services.nextcloud.__init__.Nextcloud",
+        autospec=True,
+        return_value=NextcloudReturnFalseMock,
     )
     return mock
 
@@ -384,7 +453,7 @@ def test_graphql_restart_not_found_service(
     assert response.json()["data"]["restartService"]["success"] is False
 
 
-def test_graphql_restart_services(
+def test_graphql_restart_service(
     authorized_client,
     mock_get_service_by_id,
     mock_nextcloud,
@@ -405,86 +474,125 @@ def test_graphql_restart_services(
     assert response.json()["data"]["restartService"]["success"] is True
 
 
-# API_MOVE_SERVICE_MUTATION = """
-# mutation moveService($input: MoveServiceInput!) {
-#     moveService(input: $input) {
-#         success
-#         message
-#         code
-#     }
-# }
-# """
+API_MOVE_SERVICE_MUTATION = """
+mutation moveService($input: MoveServiceInput!) {
+    moveService(input: $input) {
+        success
+        message
+        code
+    }
+}
+"""
 
 
-# def test_graphql_restart_service_unathorized_client(
-#     client,
-#     mock_get_service_by_id_return_none,
-#     mock_nextcloud,
-#     mock_service_to_graphql_service,
-# ):
-#     response = client.post(
-#         "/graphql",
-#         json={
-#             "query": API_MOVE_SERVICE_MUTATION,
-#             "variables": {
-#                 "input": {
-#                     "service_id": "nextcloud",
-#                     "location": "sdx"
-#                 },
-#             },
-#         },
-#     )
-#     assert response.status_code == 200
-#     assert response.json().get("data") is None
+def test_graphql_move_service_unathorized_client(
+    client,
+    mock_get_service_by_id_return_none,
+    mock_nextcloud,
+    mock_service_to_graphql_service,
+):
+    response = client.post(
+        "/graphql",
+        json={
+            "query": API_MOVE_SERVICE_MUTATION,
+            "variables": {
+                "input": {"service_id": "nextcloud", "location": "sdx"},
+            },
+        },
+    )
+    assert response.status_code == 200
+    assert response.json().get("data") is None
 
 
-# def test_graphql_restart_not_found_service(
-#     authorized_client,
-#     mock_get_service_by_id_return_none,
-#     mock_nextcloud,
-#     mock_service_to_graphql_service,
-# ):
-#     response = authorized_client.post(
-#         "/graphql",
-#         json={
-#             "query": API_MOVE_SERVICE_MUTATION,
-#             "variables": {
-#                 "input": {
-#                     "service_id": "nextcloud",
-#                     "location": "sdx"
-#                 },
-#             },
-#         },
-#     )
-#     assert response.status_code == 200
-#     assert response.json().get("data") is not None
+def test_graphql_move_not_found_service(
+    authorized_client,
+    mock_get_service_by_id_return_none,
+    mock_nextcloud,
+    mock_service_to_graphql_service,
+):
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_MOVE_SERVICE_MUTATION,
+            "variables": {
+                "input": {"service_id": "nextcloud", "location": "sdx"},
+            },
+        },
+    )
+    assert response.status_code == 200
+    assert response.json().get("data") is not None
 
-#     assert response.json()["data"]["moveService"]["code"] == 404
-#     assert response.json()["data"]["moveService"]["message"] is not None
-#     assert response.json()["data"]["moveService"]["success"] is False
+    assert response.json()["data"]["moveService"]["code"] == 404
+    assert response.json()["data"]["moveService"]["message"] is not None
+    assert response.json()["data"]["moveService"]["success"] is False
 
 
-# def test_graphql_restart_services(
-#     authorized_client,
-#     mock_get_service_by_id,
-#     mock_nextcloud,
-#     mock_service_to_graphql_service,
-# ):
-#     response = authorized_client.post(
-#         "/graphql",
-#         json={
-#             "query": API_MOVE_SERVICE_MUTATION,
-#             "variables": {
-#                 "input": {
-#                     "service_id": "nextcloud",
-#                     "location": "sdx"
-#                 },
-#             },
-#         },
-#     )
-#     assert response.status_code == 200
-#     assert response.json().get("data") is not None
+def test_graphql_move_not_moveble_service(
+    authorized_client,
+    mock_get_service_by_id,
+    mock_nextcloud_return_false,
+    mock_service_to_graphql_service,
+):
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_MOVE_SERVICE_MUTATION,
+            "variables": {
+                "input": {"service_id": "nextcloud", "location": "sdx"},
+            },
+        },
+    )
+    assert response.status_code == 200
+    assert response.json().get("data") is not None
 
-#     assert response.json()["data"]["moveService"]["code"] == 200
-#     assert response.json()["data"]["moveService"]["message"] is not None
-#     assert response.json()["data"]["moveService"]["success"] is True
+    assert response.json()["data"]["moveService"]["code"] == 400
+    assert response.json()["data"]["moveService"]["message"] is not None
+    assert response.json()["data"]["moveService"]["success"] is False
+
+
+def test_graphql_move_service_volume_not_found(
+    authorized_client,
+    mock_get_service_by_id,
+    mock_nextcloud,
+    mock_service_to_graphql_service,
+    mock_block_devices_return_none,
+):
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_MOVE_SERVICE_MUTATION,
+            "variables": {
+                "input": {"service_id": "nextcloud", "location": "sdx"},
+            },
+        },
+    )
+    assert response.status_code == 200
+    assert response.json().get("data") is not None
+
+    assert response.json()["data"]["moveService"]["code"] == 400
+    assert response.json()["data"]["moveService"]["message"] is not None
+    assert response.json()["data"]["moveService"]["success"] is False
+
+
+def test_graphql_move_service(
+    authorized_client,
+    mock_get_service_by_id,
+    mock_nextcloud,
+    mock_service_to_graphql_service,
+    mock_block_devices,
+):
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_MOVE_SERVICE_MUTATION,
+            "variables": {
+                "input": {"service_id": "nextcloud", "location": "sdx"},
+            },
+        },
+    )
+    assert response.status_code == 200
+    assert response.json().get("data") is not None
+
+    assert response.json()["data"]["moveService"]["code"] == 200
+    assert response.json()["data"]["moveService"]["message"] is not None
+    assert response.json()["data"]["moveService"]["success"] is True
