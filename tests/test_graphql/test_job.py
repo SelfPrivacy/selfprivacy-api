@@ -51,7 +51,7 @@ mutation removeJob($sshInput: SshMutationInput!) {
 """
 
 
-def test_graphql_remove_job_unauthorized(client, some_users, mock_subprocess_popen, mock_jobs):
+def test_graphql_remove_job_unauthorized(client, mock_subprocess_popen, mock_jobs):
     response = client.post(
         "/graphql",
         json={
@@ -68,7 +68,7 @@ def test_graphql_remove_job_unauthorized(client, some_users, mock_subprocess_pop
     assert response.json().get("data") is None
 
 
-def test_graphql_remove_job(authorized_client, some_users, mock_subprocess_popen, mock_jobs):
+def test_graphql_remove_job(authorized_client, mock_subprocess_popen, mock_jobs):
     response = authorized_client.post(
         "/graphql",
         json={
@@ -85,7 +85,7 @@ def test_graphql_remove_job(authorized_client, some_users, mock_subprocess_popen
     assert response.json()["data"]["removeJob"]["message"] is not None
     assert response.json()["data"]["removeJob"]["success"] is True
 
-def test_graphql_remove_job_not_found(authorized_client, some_users, mock_subprocess_popen, mock_jobs_return_false):
+def test_graphql_remove_job_not_found(authorized_client, mock_subprocess_popen, mock_jobs_return_false):
     response = authorized_client.post(
         "/graphql",
         json={
