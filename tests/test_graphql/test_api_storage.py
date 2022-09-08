@@ -1,4 +1,7 @@
 import pytest
+from selfprivacy_api.graphql.mutations.mutation_interface import (
+    GenericMutationReturn,
+)
 
 
 class BlockDeviceMockReturnNone:
@@ -8,8 +11,14 @@ class BlockDeviceMockReturnNone:
         self.args = args
         self.kwargs = kwargs
 
+    def mount(self):
+        return None
+
+    def unmount(self):
+        return None
+
     def resize(self):
-        pass
+        return None
 
     returncode = 0
 
@@ -20,7 +29,6 @@ class BlockDeviceMockReturnTrue:
     def __init__(self, args, **kwargs):
         self.args = args
         self.kwargs = kwargs
-        self.name = "sdx"
 
     def mount(self):
         return True
@@ -29,7 +37,7 @@ class BlockDeviceMockReturnTrue:
         return True
 
     def resize(self):
-        pass
+        return True
 
     returncode = 0
 
@@ -48,9 +56,51 @@ class BlockDeviceMockReturnFalse:
         return False
 
     def resize(self):
-        pass
+        return False
 
     returncode = 0
+
+
+class BlockDevicesMockReturnTrue:
+    def get_block_device(self, name: str):
+        return True
+
+    def __new__(cls, *args, **kwargs):
+        pass
+
+    def __init__(self):
+        pass
+
+
+class BlockDevicesMockReturnNone:
+    def get_block_device(self, name: str):
+        return None
+
+    def __new__(cls, *args, **kwargs):
+        pass
+
+    def __init__(self):
+        pass
+
+
+@pytest.fixture
+def mock_block_devices_return_true(mocker):
+    mock = mocker.patch(
+        "selfprivacy_api.utils.block_devices.BlockDevices",
+        autospec=True,
+        return_value=BlockDevicesMockReturnTrue,
+    )
+    return mock
+
+
+@pytest.fixture
+def mock_block_devices_return_none(mocker):
+    mock = mocker.patch(
+        "selfprivacy_api.utils.block_devices.BlockDevices",
+        autospec=True,
+        return_value=BlockDevicesMockReturnNone,
+    )
+    return mock
 
 
 @pytest.fixture
@@ -95,7 +145,7 @@ mutation resizeVolume($name: String!) {
 
 
 def test_graphql_resize_volumea_unathorized_client(
-    client, mock_block_device_return_true
+    client, mock_block_devices_return_true
 ):
     response = client.post(
         "/graphql",
@@ -109,7 +159,7 @@ def test_graphql_resize_volumea_unathorized_client(
 
 
 def test_graphql_resize_volume_nonexistent_block_device(
-    authorized_client, mock_block_device_return_none
+    authorized_client, mock_block_devices_return_none
 ):
     response = authorized_client.post(
         "/graphql",
@@ -126,7 +176,7 @@ def test_graphql_resize_volume_nonexistent_block_device(
     assert response.json()["data"]["resizeVolume"]["success"] is False
 
 
-def test_graphql_resize_volume(authorized_client, mock_block_device_return_true):
+def test_graphql_resize_volume(authorized_client, mock_block_devices_return_true):
     response = authorized_client.post(
         "/graphql",
         json={
@@ -166,7 +216,7 @@ def test_graphql_mount_volume_unathorized_client(client, mock_block_device_retur
 
 
 def test_graphql_mount_already_mounted_volume(
-    authorized_client, mock_block_device_return_false
+    authorized_client, mock_block_devices_return_none
 ):
     response = authorized_client.post(
         "/graphql",
@@ -178,13 +228,13 @@ def test_graphql_mount_already_mounted_volume(
     assert response.status_code == 200
     assert response.json().get("data") is not None
 
-    assert response.json()["data"]["mountVolume"]["code"] == 409
+    assert response.json()["data"]["mountVolume"]["code"] == 404
     assert response.json()["data"]["mountVolume"]["message"] is not None
     assert response.json()["data"]["mountVolume"]["success"] is False
 
 
 def test_graphql_mount_not_found_volume(
-    authorized_client, mock_block_device_return_none
+    authorized_client, mock_block_devices_return_none
 ):
     response = authorized_client.post(
         "/graphql",
@@ -196,12 +246,12 @@ def test_graphql_mount_not_found_volume(
     assert response.status_code == 200
     assert response.json().get("data") is not None
 
-    assert response.json()["data"]["mountVolume"]["code"] == 409
+    assert response.json()["data"]["mountVolume"]["code"] == 404
     assert response.json()["data"]["mountVolume"]["message"] is not None
     assert response.json()["data"]["mountVolume"]["success"] is False
 
 
-def test_graphql_mount_volume(authorized_client, mock_block_device_return_true):
+def test_graphql_mount_volume(authorized_client, mock_block_devices_return_true):
     response = authorized_client.post(
         "/graphql",
         json={
@@ -229,7 +279,7 @@ mutation unmountVolume($name: String!) {
 
 
 def test_graphql_unmount_volume_unathorized_client(
-    client, mock_block_device_return_true
+    client, mock_block_devices_return_true
 ):
     response = client.post(
         "/graphql",
@@ -243,7 +293,7 @@ def test_graphql_unmount_volume_unathorized_client(
 
 
 def test_graphql_unmount_not_fount_volume(
-    authorized_client, mock_block_device_return_none
+    authorized_client, mock_block_devices_return_none
 ):
     response = authorized_client.post(
         "/graphql",
@@ -261,7 +311,7 @@ def test_graphql_unmount_not_fount_volume(
 
 
 def test_graphql_unmount_volume_false(
-    authorized_client, mock_block_device_return_false
+    authorized_client, mock_block_devices_return_none
 ):
     response = authorized_client.post(
         "/graphql",
@@ -273,12 +323,12 @@ def test_graphql_unmount_volume_false(
     assert response.status_code == 200
     assert response.json().get("data") is not None
 
-    assert response.json()["data"]["unmountVolume"]["code"] == 409
+    assert response.json()["data"]["unmountVolume"]["code"] == 404
     assert response.json()["data"]["unmountVolume"]["message"] is not None
     assert response.json()["data"]["unmountVolume"]["success"] is False
 
 
-def test_graphql_unmount_volume(authorized_client, mock_block_device_return_true):
+def test_graphql_unmount_volume(authorized_client, mock_block_devices_return_none):
     response = authorized_client.post(
         "/graphql",
         json={

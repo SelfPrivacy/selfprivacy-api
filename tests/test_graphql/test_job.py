@@ -18,6 +18,7 @@ class JobsMock:
     def remove_by_uuid(self, job_uuid: str):
         return True
 
+
 class JobsMockReturnFalse:
     def remove_by_uuid(self, job_uuid: str):
         return False
@@ -31,12 +32,17 @@ def mock_subprocess_popen(mocker):
 
 @pytest.fixture
 def mock_jobs(mocker):
-    mock = mocker.patch("selfprivacy_api.jobs.__init__.Jobs", autospec=True, return_value=JobsMock)
+    mock = mocker.patch(
+        "selfprivacy_api.jobs.__init__.Jobs", autospec=True, return_value=JobsMock
+    )
     return mock
+
 
 @pytest.fixture
 def mock_jobs_return_false(mocker):
-    mock = mocker.patch("selfprivacy_api.jobs.__init__.Jobs", autospec=True, return_value=JobsMock)
+    mock = mocker.patch(
+        "selfprivacy_api.jobs.__init__.Jobs", autospec=True, return_value=JobsMock
+    )
     return mock
 
 
@@ -85,7 +91,10 @@ def test_graphql_remove_job(authorized_client, mock_subprocess_popen, mock_jobs)
     assert response.json()["data"]["removeJob"]["message"] is not None
     assert response.json()["data"]["removeJob"]["success"] is True
 
-def test_graphql_remove_job_not_found(authorized_client, mock_subprocess_popen, mock_jobs_return_false):
+
+def test_graphql_remove_job_not_found(
+    authorized_client, mock_subprocess_popen, mock_jobs_return_false
+):
     response = authorized_client.post(
         "/graphql",
         json={
