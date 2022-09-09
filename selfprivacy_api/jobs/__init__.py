@@ -45,7 +45,7 @@ class Job(BaseModel):
     Job class.
     """
 
-    uid: UUID = uuid.uuid4()
+    uid: UUID
     type_id: str
     name: str
     description: str
@@ -108,6 +108,7 @@ class Jobs:
         Add a job to the jobs list.
         """
         job = Job(
+            uid=uuid.uuid4(),
             name=name,
             type_id=type_id,
             description=description,
@@ -133,9 +134,9 @@ class Jobs:
         """
         Remove a job from the jobs list.
         """
-        self.remove_by_uuid(str(job.uid))
+        self.remove_by_uid(str(job.uid))
 
-    def remove_by_uuid(self, job_uuid: str) -> bool:
+    def remove_by_uid(self, job_uuid: str) -> bool:
         """
         Remove a job from the jobs list.
         """
