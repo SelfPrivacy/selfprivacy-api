@@ -1,4 +1,5 @@
 import pytest
+from selfprivacy_api.jobs.__init__ import Job
 
 
 class ProcessMock:
@@ -14,12 +15,18 @@ class ProcessMock:
     returncode = 0
 
 
-class JobsMock:
+class JobsMockReturnTrue:
+    def __init__(self):
+        pass
+
     def remove_by_uuid(self, job_uuid: str):
         return True
 
 
 class JobsMockReturnFalse:
+    def __init__(self):
+        pass
+
     def remove_by_uuid(self, job_uuid: str):
         return False
 
@@ -31,9 +38,11 @@ def mock_subprocess_popen(mocker):
 
 
 @pytest.fixture
-def mock_jobs(mocker):
+def mock_jobs_return_true(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.jobs.__init__.Jobs", autospec=True, return_value=JobsMock
+        "selfprivacy_api.jobs.__init__.Jobs",
+        autospec=True,
+        return_value=JobsMockReturnTrue,
     )
     return mock
 
@@ -41,14 +50,16 @@ def mock_jobs(mocker):
 @pytest.fixture
 def mock_jobs_return_false(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.jobs.__init__.Jobs", autospec=True, return_value=JobsMock
+        "selfprivacy_api.jobs.__init__.Jobs",
+        autospec=True,
+        return_value=JobsMockReturnTrue,
     )
     return mock
 
 
 API_REMOVE_JOB_MUTATION = """
-mutation removeJob($sshInput: SshMutationInput!) {
-    removeJob(sshInput: $sshInput) {
+mutation removeJob($job: Job!) {
+    removeJob(job: $job) {
         success
         message
         code
@@ -57,15 +68,16 @@ mutation removeJob($sshInput: SshMutationInput!) {
 """
 
 
-def test_graphql_remove_job_unauthorized(client, mock_subprocess_popen, mock_jobs):
+def test_graphql_remove_job_unauthorized(
+    client, mock_subprocess_popen, mock_jobs_return_true
+):
     response = client.post(
         "/graphql",
         json={
             "query": API_REMOVE_JOB_MUTATION,
             "variables": {
-                "sshInput": {
-                    "username": "user1",
-                    "sshKey": "ssh-rsa KEY test_key@pc",
+                "Job": {
+                    "uid": "12345",
                 },
             },
         },
@@ -74,16 +86,23 @@ def test_graphql_remove_job_unauthorized(client, mock_subprocess_popen, mock_job
     assert response.json().get("data") is None
 
 
-def test_graphql_remove_job(authorized_client, mock_subprocess_popen, mock_jobs):
+def test_graphql_remove_job(
+    authorized_client, mock_subprocess_popen, mock_jobs_return_true
+):
     response = authorized_client.post(
         "/graphql",
         json={
             "query": API_REMOVE_JOB_MUTATION,
             "variables": {
-                "job_id": "3301",
+                "Job": {
+                    "uid": "12345",
+                },
             },
         },
     )
+    assert response.status_code == 200
+    assert response.json().get("data") is None
+
     assert response.status_code == 200
     assert response.json().get("data") is not None
 
