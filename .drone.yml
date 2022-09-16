@@ -2,18 +2,23 @@ kind: pipeline
 type: exec
 name: default
 
-platform:
-  os: linux
-  arch: amd64
-  
 steps:
-- name: test
+- name: Run Tests and Generate Coverage Report
   commands:
   - coverage run -m pytest -q
   - coverage xml
-- name: bandit
+  - sonar-scanner -Dsonar.projectKey=SelfPrivacy-REST-API -Dsonar.sources=. -Dsonar.host.url=http://analyzer.lan:9000 -Dsonar.login="$SONARQUBE_TOKEN"
+  environment:
+    SONARQUBE_TOKEN:
+      from_secret: SONARQUBE_TOKEN
+
+- name: Run Bandit Checks
   commands:
   - bandit -ll -r selfprivacy_api
-- name: formatting
+
+- name: Run Code Formatting Checks
   commands:
   - black --check .
+
+node:
+  server: builder
