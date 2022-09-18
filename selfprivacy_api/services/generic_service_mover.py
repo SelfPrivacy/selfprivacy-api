@@ -231,6 +231,6 @@ def move_service(
         job=job,
         status=JobStatus.FINISHED,
         result=f"{service_name} moved successfully.",
-        status_text=f"Starting {service}...",
+        status_text=f"Starting {service_name}...",
         progress=100,
     )
