@@ -185,7 +185,6 @@ def move_service(
                 status=JobStatus.RUNNING,
                 error=f"Unable to set ownership of new volume. {service_name} may not be able to access its files. Continuing anyway.",
             )
-            return
 
     # Mount new volume
     Jobs.get_instance().update(
