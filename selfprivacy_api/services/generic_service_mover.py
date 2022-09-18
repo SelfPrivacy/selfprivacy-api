@@ -61,7 +61,7 @@ def move_service(
         )
         return
     # Make sure the volume is mounted
-    if f"/volumes/{volume.name}" not in volume.mountpoints:
+    if volume.name != "sda1" and f"/volumes/{volume.name}" not in volume.mountpoints:
         Jobs.get_instance().update(
             job=job,
             status=JobStatus.ERROR,
