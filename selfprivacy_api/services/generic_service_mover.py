@@ -173,7 +173,7 @@ def move_service(
                 [
                     "chown",
                     "-R",
-                    f"{folder.owner}:f{folder.group}",
+                    f"{folder.owner}:{folder.group}",
                     f"/volumes/{volume.name}/{folder.name}",
                 ],
                 check=True,
