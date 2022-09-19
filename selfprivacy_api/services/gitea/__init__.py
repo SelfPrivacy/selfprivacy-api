@@ -159,7 +159,7 @@ class Gitea(Service):
                     owner="gitea",
                 ),
             ],
-            "bitwarden",
+            "gitea",
         )
 
         return job
