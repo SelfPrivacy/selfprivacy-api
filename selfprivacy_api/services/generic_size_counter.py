@@ -12,5 +12,10 @@ def get_storage_usage(path: str) -> int:
     for iter_path in pathlib.Path(path).rglob("**/*"):
         if iter_path.is_dir():
             continue
-        storage_usage += iter_path.stat().st_size
+        try:
+            storage_usage += iter_path.stat().st_size
+        except FileNotFoundError:
+            pass
+        except Exception as error:
+            print(error)
     return storage_usage
