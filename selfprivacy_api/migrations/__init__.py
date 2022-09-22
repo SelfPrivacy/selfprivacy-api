@@ -8,6 +8,7 @@ at api.skippedMigrations in userdata.json and populating it
 with IDs of the migrations to skip.
 Adding DISABLE_ALL to that array disables the migrations module entirely.
 """
+from selfprivacy_api.migrations.check_for_failed_binds_migration import CheckForFailedBindsMigration
 from selfprivacy_api.utils import ReadUserData
 from selfprivacy_api.migrations.fix_nixos_config_branch import FixNixosConfigBranch
 from selfprivacy_api.migrations.create_tokens_json import CreateTokensJson
@@ -21,6 +22,7 @@ migrations = [
     CreateTokensJson(),
     MigrateToSelfprivacyChannel(),
     MountVolume(),
+    CheckForFailedBindsMigration(),
 ]
 
 
