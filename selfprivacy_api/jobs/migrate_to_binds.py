@@ -65,14 +65,27 @@ def move_folder(
     else:
         return
 
-    data_path.mkdir(mode=0o750, parents=True, exist_ok=True)
+    try:
+        data_path.mkdir(mode=0o750, parents=True, exist_ok=True)
+    except Exception as e:
+        print(f"Error creating data path: {e}")
+        return
 
-    shutil.chown(str(bind_path), user=user, group=group)
-    shutil.chown(str(data_path), user=user, group=group)
+    try:
+        shutil.chown(str(bind_path), user=user, group=group)
+        shutil.chown(str(data_path), user=user, group=group)
+    except LookupError:
+        pass
 
-    subprocess.run(["mount", "--bind", str(bind_path), str(data_path)], check=True)
+    try:
+        subprocess.run(["mount", "--bind", str(bind_path), str(data_path)], check=True)
+    except subprocess.CalledProcessError as error:
+        print(error)
 
-    subprocess.run(["chown", "-R", f"{user}:{group}", str(data_path)], check=True)
+    try:
+        subprocess.run(["chown", "-R", f"{user}:{group}", str(data_path)], check=True)
+    except subprocess.CalledProcessError as error:
+        print(error)
 
 
 @huey.task()
@@ -157,12 +170,17 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
 
     Nextcloud().stop()
 
-    move_folder(
-        data_path=pathlib.Path("/var/lib/nextcloud"),
-        bind_path=pathlib.Path(f"/volumes/{config.nextcloud_block_device}/nextcloud"),
-        user="nextcloud",
-        group="nextcloud",
-    )
+    # If /volumes/sda1/nextcloud or /volumes/sdb/nextcloud exists, skip it.
+    if not pathlib.Path("/volumes/sda1/nextcloud").exists():
+        if not pathlib.Path("/volumes/sdb/nextcloud").exists():
+            move_folder(
+                data_path=pathlib.Path("/var/lib/nextcloud"),
+                bind_path=pathlib.Path(
+                    f"/volumes/{config.nextcloud_block_device}/nextcloud"
+                ),
+                user="nextcloud",
+                group="nextcloud",
+            )
 
     # Start Nextcloud
     Nextcloud().start()
@@ -178,21 +196,27 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
 
     Bitwarden().stop()
 
-    move_folder(
-        data_path=pathlib.Path("/var/lib/bitwarden"),
-        bind_path=pathlib.Path(f"/volumes/{config.bitwarden_block_device}/bitwarden"),
-        user="vaultwarden",
-        group="vaultwarden",
-    )
+    if not pathlib.Path("/volumes/sda1/bitwarden").exists():
+        if not pathlib.Path("/volumes/sdb/bitwarden").exists():
+            move_folder(
+                data_path=pathlib.Path("/var/lib/bitwarden"),
+                bind_path=pathlib.Path(
+                    f"/volumes/{config.bitwarden_block_device}/bitwarden"
+                ),
+                user="vaultwarden",
+                group="vaultwarden",
+            )
 
-    move_folder(
-        data_path=pathlib.Path("/var/lib/bitwarden_rs"),
-        bind_path=pathlib.Path(
-            f"/volumes/{config.bitwarden_block_device}/bitwarden_rs"
-        ),
-        user="vaultwarden",
-        group="vaultwarden",
-    )
+    if not pathlib.Path("/volumes/sda1/bitwarden_rs").exists():
+        if not pathlib.Path("/volumes/sdb/bitwarden_rs").exists():
+            move_folder(
+                data_path=pathlib.Path("/var/lib/bitwarden_rs"),
+                bind_path=pathlib.Path(
+                    f"/volumes/{config.bitwarden_block_device}/bitwarden_rs"
+                ),
+                user="vaultwarden",
+                group="vaultwarden",
+            )
 
     # Start Bitwarden
     Bitwarden().start()
@@ -208,12 +232,14 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
 
     Gitea().stop()
 
-    move_folder(
-        data_path=pathlib.Path("/var/lib/gitea"),
-        bind_path=pathlib.Path(f"/volumes/{config.gitea_block_device}/gitea"),
-        user="gitea",
-        group="gitea",
-    )
+    if not pathlib.Path("/volumes/sda1/gitea").exists():
+        if not pathlib.Path("/volumes/sdb/gitea").exists():
+            move_folder(
+                data_path=pathlib.Path("/var/lib/gitea"),
+                bind_path=pathlib.Path(f"/volumes/{config.gitea_block_device}/gitea"),
+                user="gitea",
+                group="gitea",
+            )
 
     Gitea().start()
 
@@ -228,19 +254,23 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
 
     MailServer().stop()
 
-    move_folder(
-        data_path=pathlib.Path("/var/vmail"),
-        bind_path=pathlib.Path(f"/volumes/{config.email_block_device}/vmail"),
-        user="virtualMail",
-        group="virtualMail",
-    )
+    if not pathlib.Path("/volumes/sda1/vmail").exists():
+        if not pathlib.Path("/volumes/sdb/vmail").exists():
+            move_folder(
+                data_path=pathlib.Path("/var/vmail"),
+                bind_path=pathlib.Path(f"/volumes/{config.email_block_device}/vmail"),
+                user="virtualMail",
+                group="virtualMail",
+            )
 
-    move_folder(
-        data_path=pathlib.Path("/var/sieve"),
-        bind_path=pathlib.Path(f"/volumes/{config.email_block_device}/sieve"),
-        user="virtualMail",
-        group="virtualMail",
-    )
+    if not pathlib.Path("/volumes/sda1/sieve").exists():
+        if not pathlib.Path("/volumes/sdb/sieve").exists():
+            move_folder(
+                data_path=pathlib.Path("/var/sieve"),
+                bind_path=pathlib.Path(f"/volumes/{config.email_block_device}/sieve"),
+                user="virtualMail",
+                group="virtualMail",
+            )
 
     MailServer().start()
 
@@ -255,19 +285,27 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
 
     Pleroma().stop()
 
-    move_folder(
-        data_path=pathlib.Path("/var/lib/pleroma"),
-        bind_path=pathlib.Path(f"/volumes/{config.pleroma_block_device}/pleroma"),
-        user="pleroma",
-        group="pleroma",
-    )
+    if not pathlib.Path("/volumes/sda1/pleroma").exists():
+        if not pathlib.Path("/volumes/sdb/pleroma").exists():
+            move_folder(
+                data_path=pathlib.Path("/var/lib/pleroma"),
+                bind_path=pathlib.Path(
+                    f"/volumes/{config.pleroma_block_device}/pleroma"
+                ),
+                user="pleroma",
+                group="pleroma",
+            )
 
-    move_folder(
-        data_path=pathlib.Path("/var/lib/postgresql"),
-        bind_path=pathlib.Path(f"/volumes/{config.pleroma_block_device}/postgresql"),
-        user="postgres",
-        group="postgres",
-    )
+    if not pathlib.Path("/volumes/sda1/postgresql").exists():
+        if not pathlib.Path("/volumes/sdb/postgresql").exists():
+            move_folder(
+                data_path=pathlib.Path("/var/lib/postgresql"),
+                bind_path=pathlib.Path(
+                    f"/volumes/{config.pleroma_block_device}/postgresql"
+                ),
+                user="postgres",
+                group="postgres",
+            )
 
     Pleroma().start()
 
