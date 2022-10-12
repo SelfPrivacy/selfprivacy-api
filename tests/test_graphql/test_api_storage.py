@@ -1,13 +1,10 @@
 import pytest
-from selfprivacy_api.graphql.mutations.mutation_interface import (
-    GenericMutationReturn,
-)
 
 
 class BlockDeviceMockReturnNone:
     """Mock BlockDevices"""
 
-    def __init__(self, args, **kwargs):
+    def __init__(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
 
@@ -26,7 +23,7 @@ class BlockDeviceMockReturnNone:
 class BlockDeviceMockReturnTrue:
     """Mock BlockDevices"""
 
-    def __init__(self, args, **kwargs):
+    def __init__(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
 
@@ -45,7 +42,7 @@ class BlockDeviceMockReturnTrue:
 class BlockDeviceMockReturnFalse:
     """Mock BlockDevices"""
 
-    def __init__(self, args, **kwargs):
+    def __init__(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
 
@@ -62,8 +59,8 @@ class BlockDeviceMockReturnFalse:
 
 
 class BlockDevicesMockReturnTrue:
-    def get_block_device(self, name: str):
-        return True
+    def get_block_device(name: str):  # type: ignore
+        return BlockDeviceMockReturnTrue()
 
     def __new__(cls, *args, **kwargs):
         pass
@@ -73,7 +70,7 @@ class BlockDevicesMockReturnTrue:
 
 
 class BlockDevicesMockReturnNone:
-    def get_block_device(self, name: str):
+    def get_block_device(name: str):  # type: ignore
         return None
 
     def __new__(cls, *args, **kwargs):
@@ -86,7 +83,8 @@ class BlockDevicesMockReturnNone:
 @pytest.fixture
 def mock_block_devices_return_true(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.utils.block_devices.BlockDevices",
+        "selfprivacy_api.graphql.mutations.storage_mutations.BlockDevices",
+        # "selfprivacy_api.utils.block_devices.BlockDevices",
         autospec=True,
         return_value=BlockDevicesMockReturnTrue,
     )
@@ -328,7 +326,7 @@ def test_graphql_unmount_volume_false(
     assert response.json()["data"]["unmountVolume"]["success"] is False
 
 
-def test_graphql_unmount_volume(authorized_client, mock_block_devices_return_none):
+def test_graphql_unmount_volume(authorized_client, mock_block_devices_return_true):
     response = authorized_client.post(
         "/graphql",
         json={

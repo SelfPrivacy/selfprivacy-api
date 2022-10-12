@@ -94,11 +94,9 @@ def test_graphql_remove_job(
         json={
             "query": API_REMOVE_JOB_MUTATION,
             "variables": {
-                "Job": {
-                    "uid": "12345",
+                    "jobId": "12345",
                 },
             },
-        },
     )
     assert response.status_code == 200
     assert response.json().get("data") is None
