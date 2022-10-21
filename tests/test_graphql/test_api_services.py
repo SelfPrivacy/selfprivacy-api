@@ -1,100 +1,99 @@
+# pylint: disable=redefined-outer-name
+# pylint: disable=unused-argument
 import pytest
 
-
-def get_service_by_id_return_none_mock():
-    return None
+from tests.common import read_json
 
 
-def get_service_by_id_mock():
-    return "nextcloud"
-
-
-def service_to_graphql_service_mock():
-    pass
-
-
-class BlockDevicesMock:
-    def get_block_device(self, name: str):
-        pass
-
-
-class BlockDevicesReturnNoneMock:
-    def get_block_device(self, name: str):
-        return None
-
-
-class NextcloudMock:
+class NextcloudMockReturnTrue:
     def __init__(self, args, **kwargs):
         self.args = args
         self.kwargs = kwargs
 
-    def enable(self):
+    def enable():
         pass
 
-    def disable(self):
+    def disable():
         pass
 
-    def stop(self):
+    def stop():
         pass
 
-    def is_movable(self):
+    def is_movable():
         return True
 
-    def move_to_volume(self):
+    def move_to_volume(what):
+        return None
+
+    def start():
+        pass
+
+    def restart():
         pass
 
     returncode = 0
 
 
-class NextcloudReturnFalseMock:
+class BlockDevices:
+    def get_block_device(location):
+        return True
+
+class ProcessMock:
+    """Mock subprocess.Popen"""
+
     def __init__(self, args, **kwargs):
         self.args = args
         self.kwargs = kwargs
 
-    def enable(self):
-        pass
-
-    def disable(self):
-        pass
-
-    def stop(self):
-        pass
-
-    def is_movable(self):
-        return False
-
-    def move_to_volume(self):
-        pass
+    def communicate():  # pylint: disable=no-method-argument
+        return (b"", None)
 
     returncode = 0
+
+
+@pytest.fixture
+def mock_subprocess_popen(mocker):
+    mock = mocker.patch("subprocess.Popen", autospec=True, return_value=ProcessMock)
+    return mock
+
+
+@pytest.fixture
+def one_user(mocker, datadir):
+    mocker.patch("selfprivacy_api.utils.USERDATA_FILE", new=datadir / "one_user.json")
+    assert read_json(datadir / "one_user.json")["users"] == [
+        {
+            "username": "user1",
+            "hashedPassword": "HASHED_PASSWORD_1",
+            "sshKeys": ["ssh-rsa KEY user1@pc"],
+        }
+    ]
+    return datadir
 
 
 @pytest.fixture
 def mock_service_to_graphql_service(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.graphql.common_types.service.service_to_graphql_service",
+        "selfprivacy_api.graphql.mutations.services_mutations.service_to_graphql_service",
         autospec=True,
-        return_value=service_to_graphql_service_mock,
+        return_value=None,
     )
     return mock
-
 
 @pytest.fixture
-def mock_nextcloud(mocker):
+def mock_job_to_api_job(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.services.nextcloud.__init__.Nextcloud",
+        "selfprivacy_api.graphql.mutations.services_mutations.job_to_api_job",
         autospec=True,
-        return_value=NextcloudMock,
+        return_value=None,
     )
     return mock
-
 
 @pytest.fixture
 def mock_block_devices_return_none(mocker):
     mock = mocker.patch(
         "selfprivacy_api.utils.block_devices.BlockDevices",
         autospec=True,
-        return_value=BlockDevicesReturnNoneMock,
+        return_value=None,
     )
     return mock
 
@@ -102,19 +101,9 @@ def mock_block_devices_return_none(mocker):
 @pytest.fixture
 def mock_block_devices(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.utils.block_devices.BlockDevices",
+        "selfprivacy_api.graphql.mutations.services_mutations.BlockDevices",
         autospec=True,
-        return_value=BlockDevicesMock,
-    )
-    return mock
-
-
-@pytest.fixture
-def mock_nextcloud_return_false(mocker):
-    mock = mocker.patch(
-        "selfprivacy_api.services.nextcloud.__init__.Nextcloud",
-        autospec=True,
-        return_value=NextcloudReturnFalseMock,
+        return_value=BlockDevices,
     )
     return mock
 
@@ -122,9 +111,9 @@ def mock_nextcloud_return_false(mocker):
 @pytest.fixture
 def mock_get_service_by_id_return_none(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.services.__init__.get_service_by_id",
+        "selfprivacy_api.graphql.mutations.services_mutations.get_service_by_id",
         autospec=True,
-        return_value=mock_get_service_by_id_return_none,
+        return_value=None,
     )
     return mock
 
@@ -132,9 +121,9 @@ def mock_get_service_by_id_return_none(mocker):
 @pytest.fixture
 def mock_get_service_by_id(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.services.__init__.get_service_by_id",
+        "selfprivacy_api.graphql.mutations.services_mutations.get_service_by_id",
         autospec=True,
-        return_value=mock_get_service_by_id,
+        return_value=NextcloudMockReturnTrue,
     )
     return mock
 
@@ -143,8 +132,8 @@ def mock_get_service_by_id(mocker):
 
 
 API_ENABLE_SERVICE_MUTATION = """
-mutation enableService($service_id: String!) {
-    enableService(service_id: $service_id) {
+mutation enableService($serviceId: String!) {
+    enableService(serviceId: $serviceId) {
         success
         message
         code
@@ -154,13 +143,13 @@ mutation enableService($service_id: String!) {
 
 
 def test_graphql_enable_service_unathorized_client(
-    client, mock_get_service_by_id_return_none, mock_nextcloud
+    client, mock_get_service_by_id_return_none, mock_subprocess_popen
 ):
     response = client.post(
         "/graphql",
         json={
             "query": API_ENABLE_SERVICE_MUTATION,
-            "variables": {"service_id": "nextcloud"},
+            "variables": {"serviceId": "nextcloud"},
         },
     )
     assert response.status_code == 200
@@ -168,13 +157,17 @@ def test_graphql_enable_service_unathorized_client(
 
 
 def test_graphql_enable_not_found_service(
-    authorized_client, mock_get_service_by_id_return_none, mock_nextcloud
+    authorized_client,
+    mock_get_service_by_id_return_none,
+    mock_subprocess_popen,
+    one_user,
+    mock_service_to_graphql_service,
 ):
     response = authorized_client.post(
         "/graphql",
         json={
             "query": API_ENABLE_SERVICE_MUTATION,
-            "variables": {"service_id": "nextcloud"},
+            "variables": {"serviceId": "nextcloud"},
         },
     )
     assert response.status_code == 200
@@ -186,13 +179,17 @@ def test_graphql_enable_not_found_service(
 
 
 def test_graphql_enable_service(
-    authorized_client, mock_get_service_by_id, mock_nextcloud
+    authorized_client,
+    mock_get_service_by_id,
+    mock_subprocess_popen,
+    one_user,
+    mock_service_to_graphql_service,
 ):
     response = authorized_client.post(
         "/graphql",
         json={
             "query": API_ENABLE_SERVICE_MUTATION,
-            "variables": {"service_id": "nextcloud"},
+            "variables": {"serviceId": "nextcloud"},
         },
     )
     assert response.status_code == 200
@@ -204,8 +201,8 @@ def test_graphql_enable_service(
 
 
 API_DISABLE_SERVICE_MUTATION = """
-mutation disableService($service_id: String!) {
-    disableService(service_id: $service_id) {
+mutation disableService($serviceId: String!) {
+    disableService(serviceId: $serviceId) {
         success
         message
         code
@@ -215,13 +212,17 @@ mutation disableService($service_id: String!) {
 
 
 def test_graphql_disable_service_unathorized_client(
-    client, mock_get_service_by_id_return_none, mock_nextcloud
+    client,
+    mock_get_service_by_id_return_none,
+    mock_subprocess_popen,
+    one_user,
+    mock_service_to_graphql_service,
 ):
     response = client.post(
         "/graphql",
         json={
             "query": API_DISABLE_SERVICE_MUTATION,
-            "variables": {"service_id": "nextcloud"},
+            "variables": {"serviceId": "nextcloud"},
         },
     )
     assert response.status_code == 200
@@ -229,13 +230,17 @@ def test_graphql_disable_service_unathorized_client(
 
 
 def test_graphql_disable_not_found_service(
-    authorized_client, mock_get_service_by_id_return_none, mock_nextcloud
+    authorized_client,
+    mock_get_service_by_id_return_none,
+    mock_subprocess_popen,
+    one_user,
+    mock_service_to_graphql_service,
 ):
     response = authorized_client.post(
         "/graphql",
         json={
             "query": API_DISABLE_SERVICE_MUTATION,
-            "variables": {"service_id": "nextcloud"},
+            "variables": {"serviceId": "nextcloud"},
         },
     )
     assert response.status_code == 200
@@ -247,13 +252,17 @@ def test_graphql_disable_not_found_service(
 
 
 def test_graphql_disable_services(
-    authorized_client, mock_get_service_by_id, mock_nextcloud
+    authorized_client,
+    mock_get_service_by_id,
+    mock_subprocess_popen,
+    one_user,
+    mock_service_to_graphql_service,
 ):
     response = authorized_client.post(
         "/graphql",
         json={
             "query": API_DISABLE_SERVICE_MUTATION,
-            "variables": {"service_id": "nextcloud"},
+            "variables": {"serviceId": "nextcloud"},
         },
     )
     assert response.status_code == 200
@@ -265,8 +274,8 @@ def test_graphql_disable_services(
 
 
 API_STOP_SERVICE_MUTATION = """
-mutation stopService($service_id: String!) {
-    stopService(service_id: $service_id) {
+mutation stopService($serviceId: String!) {
+    stopService(serviceId: $serviceId) {
         success
         message
         code
@@ -278,14 +287,15 @@ mutation stopService($service_id: String!) {
 def test_graphql_stop_service_unathorized_client(
     client,
     mock_get_service_by_id_return_none,
-    mock_nextcloud,
     mock_service_to_graphql_service,
+    mock_subprocess_popen,
+    one_user,
 ):
     response = client.post(
         "/graphql",
         json={
             "query": API_STOP_SERVICE_MUTATION,
-            "variables": {"service_id": "nextcloud"},
+            "variables": {"serviceId": "nextcloud"},
         },
     )
     assert response.status_code == 200
@@ -295,14 +305,15 @@ def test_graphql_stop_service_unathorized_client(
 def test_graphql_stop_not_found_service(
     authorized_client,
     mock_get_service_by_id_return_none,
-    mock_nextcloud,
     mock_service_to_graphql_service,
+    mock_subprocess_popen,
+    one_user,
 ):
     response = authorized_client.post(
         "/graphql",
         json={
             "query": API_STOP_SERVICE_MUTATION,
-            "variables": {"service_id": "nextcloud"},
+            "variables": {"serviceId": "nextcloud"},
         },
     )
     assert response.status_code == 200
@@ -316,14 +327,15 @@ def test_graphql_stop_not_found_service(
 def test_graphql_stop_services(
     authorized_client,
     mock_get_service_by_id,
-    mock_nextcloud,
     mock_service_to_graphql_service,
+    mock_subprocess_popen,
+    one_user,
 ):
     response = authorized_client.post(
         "/graphql",
         json={
             "query": API_STOP_SERVICE_MUTATION,
-            "variables": {"service_id": "nextcloud"},
+            "variables": {"serviceId": "nextcloud"},
         },
     )
     assert response.status_code == 200
@@ -335,8 +347,8 @@ def test_graphql_stop_services(
 
 
 API_START_SERVICE_MUTATION = """
-mutation startService($service_id: String!) {
-    startService(service_id: $service_id) {
+mutation startService($serviceId: String!) {
+    startService(serviceId: $serviceId) {
         success
         message
         code
@@ -348,14 +360,15 @@ mutation startService($service_id: String!) {
 def test_graphql_start_service_unathorized_client(
     client,
     mock_get_service_by_id_return_none,
-    mock_nextcloud,
     mock_service_to_graphql_service,
+    mock_subprocess_popen,
+    one_user,
 ):
     response = client.post(
         "/graphql",
         json={
             "query": API_START_SERVICE_MUTATION,
-            "variables": {"service_id": "nextcloud"},
+            "variables": {"serviceId": "nextcloud"},
         },
     )
     assert response.status_code == 200
@@ -365,14 +378,15 @@ def test_graphql_start_service_unathorized_client(
 def test_graphql_start_not_found_service(
     authorized_client,
     mock_get_service_by_id_return_none,
-    mock_nextcloud,
     mock_service_to_graphql_service,
+    mock_subprocess_popen,
+    one_user,
 ):
     response = authorized_client.post(
         "/graphql",
         json={
             "query": API_START_SERVICE_MUTATION,
-            "variables": {"service_id": "nextcloud"},
+            "variables": {"serviceId": "nextcloud"},
         },
     )
     assert response.status_code == 200
@@ -386,14 +400,15 @@ def test_graphql_start_not_found_service(
 def test_graphql_start_services(
     authorized_client,
     mock_get_service_by_id,
-    mock_nextcloud,
     mock_service_to_graphql_service,
+    mock_subprocess_popen,
+    one_user,
 ):
     response = authorized_client.post(
         "/graphql",
         json={
             "query": API_START_SERVICE_MUTATION,
-            "variables": {"service_id": "nextcloud"},
+            "variables": {"serviceId": "nextcloud"},
         },
     )
     assert response.status_code == 200
@@ -405,8 +420,8 @@ def test_graphql_start_services(
 
 
 API_RESTART_SERVICE_MUTATION = """
-mutation restartService($service_id: String!) {
-    restartService(service_id: $service_id) {
+mutation restartService($serviceId: String!) {
+    restartService(serviceId: $serviceId) {
         success
         message
         code
@@ -418,14 +433,15 @@ mutation restartService($service_id: String!) {
 def test_graphql_restart_service_unathorized_client(
     client,
     mock_get_service_by_id_return_none,
-    mock_nextcloud,
     mock_service_to_graphql_service,
+    mock_subprocess_popen,
+    one_user,
 ):
     response = client.post(
         "/graphql",
         json={
             "query": API_RESTART_SERVICE_MUTATION,
-            "variables": {"service_id": "nextcloud"},
+            "variables": {"serviceId": "nextcloud"},
         },
     )
     assert response.status_code == 200
@@ -435,14 +451,15 @@ def test_graphql_restart_service_unathorized_client(
 def test_graphql_restart_not_found_service(
     authorized_client,
     mock_get_service_by_id_return_none,
-    mock_nextcloud,
     mock_service_to_graphql_service,
+    mock_subprocess_popen,
+    one_user,
 ):
     response = authorized_client.post(
         "/graphql",
         json={
             "query": API_RESTART_SERVICE_MUTATION,
-            "variables": {"service_id": "nextcloud"},
+            "variables": {"serviceId": "nextcloud"},
         },
     )
     assert response.status_code == 200
@@ -456,14 +473,15 @@ def test_graphql_restart_not_found_service(
 def test_graphql_restart_service(
     authorized_client,
     mock_get_service_by_id,
-    mock_nextcloud,
     mock_service_to_graphql_service,
+    mock_subprocess_popen,
+    one_user,
 ):
     response = authorized_client.post(
         "/graphql",
         json={
             "query": API_RESTART_SERVICE_MUTATION,
-            "variables": {"service_id": "nextcloud"},
+            "variables": {"serviceId": "nextcloud"},
         },
     )
     assert response.status_code == 200
@@ -488,15 +506,16 @@ mutation moveService($input: MoveServiceInput!) {
 def test_graphql_move_service_unathorized_client(
     client,
     mock_get_service_by_id_return_none,
-    mock_nextcloud,
     mock_service_to_graphql_service,
+    mock_subprocess_popen,
+    one_user,
 ):
     response = client.post(
         "/graphql",
         json={
             "query": API_MOVE_SERVICE_MUTATION,
             "variables": {
-                "input": {"service_id": "nextcloud", "location": "sdx"},
+                "input": {"serviceId": "nextcloud", "location": "sdx"},
             },
         },
     )
@@ -507,15 +526,16 @@ def test_graphql_move_service_unathorized_client(
 def test_graphql_move_not_found_service(
     authorized_client,
     mock_get_service_by_id_return_none,
-    mock_nextcloud,
     mock_service_to_graphql_service,
+    mock_subprocess_popen,
+    one_user,
 ):
     response = authorized_client.post(
         "/graphql",
         json={
             "query": API_MOVE_SERVICE_MUTATION,
             "variables": {
-                "input": {"service_id": "nextcloud", "location": "sdx"},
+                "input": {"serviceId": "nextcloud", "location": "sdx"},
             },
         },
     )
@@ -529,47 +549,50 @@ def test_graphql_move_not_found_service(
 
 def test_graphql_move_not_moveble_service(
     authorized_client,
-    mock_get_service_by_id,
-    mock_nextcloud_return_false,
+    mock_get_service_by_id_return_none,
     mock_service_to_graphql_service,
+    mock_subprocess_popen,
+    one_user,
 ):
     response = authorized_client.post(
         "/graphql",
         json={
             "query": API_MOVE_SERVICE_MUTATION,
             "variables": {
-                "input": {"service_id": "nextcloud", "location": "sdx"},
+                "input": {"serviceId": "nextcloud", "location": "sdx"},
             },
         },
     )
     assert response.status_code == 200
     assert response.json().get("data") is not None
 
-    assert response.json()["data"]["moveService"]["code"] == 400
+    assert response.json()["data"]["moveService"]["code"] == 404
     assert response.json()["data"]["moveService"]["message"] is not None
     assert response.json()["data"]["moveService"]["success"] is False
 
 
 def test_graphql_move_service_volume_not_found(
     authorized_client,
-    mock_get_service_by_id,
-    mock_nextcloud,
+    mock_get_service_by_id_return_none,
     mock_service_to_graphql_service,
     mock_block_devices_return_none,
+    mock_subprocess_popen,
+    one_user,
 ):
     response = authorized_client.post(
         "/graphql",
         json={
             "query": API_MOVE_SERVICE_MUTATION,
             "variables": {
-                "input": {"service_id": "nextcloud", "location": "sdx"},
+                "input": {"serviceId": "nextcloud", "location": "sdx"},
             },
         },
     )
+
     assert response.status_code == 200
     assert response.json().get("data") is not None
 
-    assert response.json()["data"]["moveService"]["code"] == 400
+    assert response.json()["data"]["moveService"]["code"] == 404
     assert response.json()["data"]["moveService"]["message"] is not None
     assert response.json()["data"]["moveService"]["success"] is False
 
@@ -577,16 +600,18 @@ def test_graphql_move_service_volume_not_found(
 def test_graphql_move_service(
     authorized_client,
     mock_get_service_by_id,
-    mock_nextcloud,
     mock_service_to_graphql_service,
     mock_block_devices,
+    mock_subprocess_popen,
+    one_user,
+    mock_job_to_api_job,
 ):
     response = authorized_client.post(
         "/graphql",
         json={
             "query": API_MOVE_SERVICE_MUTATION,
             "variables": {
-                "input": {"service_id": "nextcloud", "location": "sdx"},
+                "input": {"serviceId": "nextcloud", "location": "sdx"},
             },
         },
     )
