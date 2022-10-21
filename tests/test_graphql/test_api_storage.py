@@ -291,7 +291,7 @@ def test_graphql_unmount_volume_unathorized_client(
 
 
 def test_graphql_unmount_not_fount_volume(
-    authorized_client, mock_block_devices_return_true
+    authorized_client, mock_block_devices_return_none
 ):
     response = authorized_client.post(
         "/graphql",
@@ -309,7 +309,7 @@ def test_graphql_unmount_not_fount_volume(
 
 
 def test_graphql_unmount_volume_false(
-    authorized_client, mock_block_devices_return_true
+    authorized_client, mock_block_devices_return_none
 ):
     response = authorized_client.post(
         "/graphql",
