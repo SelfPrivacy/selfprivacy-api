@@ -38,6 +38,7 @@ class BlockDevices:
     def get_block_device(location):
         return True
 
+
 class ProcessMock:
     """Mock subprocess.Popen"""
 
@@ -79,6 +80,7 @@ def mock_service_to_graphql_service(mocker):
     )
     return mock
 
+
 @pytest.fixture
 def mock_job_to_api_job(mocker):
     mock = mocker.patch(
@@ -87,6 +89,7 @@ def mock_job_to_api_job(mocker):
         return_value=None,
     )
     return mock
+
 
 @pytest.fixture
 def mock_block_devices_return_none(mocker):
@@ -142,7 +145,7 @@ mutation enableService($serviceId: String!) {
 """
 
 
-def test_graphql_enable_service_unathorized_client(
+def test_graphql_enable_service_unauthorized_client(
     client, mock_get_service_by_id_return_none, mock_subprocess_popen
 ):
     response = client.post(
@@ -211,7 +214,7 @@ mutation disableService($serviceId: String!) {
 """
 
 
-def test_graphql_disable_service_unathorized_client(
+def test_graphql_disable_service_unauthorized_client(
     client,
     mock_get_service_by_id_return_none,
     mock_subprocess_popen,
@@ -284,7 +287,7 @@ mutation stopService($serviceId: String!) {
 """
 
 
-def test_graphql_stop_service_unathorized_client(
+def test_graphql_stop_service_unauthorized_client(
     client,
     mock_get_service_by_id_return_none,
     mock_service_to_graphql_service,
@@ -324,7 +327,7 @@ def test_graphql_stop_not_found_service(
     assert response.json()["data"]["stopService"]["success"] is False
 
 
-def test_graphql_stop_services(
+def test_graphql_stop_service(
     authorized_client,
     mock_get_service_by_id,
     mock_service_to_graphql_service,
@@ -357,7 +360,7 @@ mutation startService($serviceId: String!) {
 """
 
 
-def test_graphql_start_service_unathorized_client(
+def test_graphql_start_service_unauthorized_client(
     client,
     mock_get_service_by_id_return_none,
     mock_service_to_graphql_service,
@@ -397,7 +400,7 @@ def test_graphql_start_not_found_service(
     assert response.json()["data"]["startService"]["success"] is False
 
 
-def test_graphql_start_services(
+def test_graphql_start_service(
     authorized_client,
     mock_get_service_by_id,
     mock_service_to_graphql_service,
@@ -430,7 +433,7 @@ mutation restartService($serviceId: String!) {
 """
 
 
-def test_graphql_restart_service_unathorized_client(
+def test_graphql_restart_service_unauthorized_client(
     client,
     mock_get_service_by_id_return_none,
     mock_service_to_graphql_service,
@@ -503,7 +506,7 @@ mutation moveService($input: MoveServiceInput!) {
 """
 
 
-def test_graphql_move_service_unathorized_client(
+def test_graphql_move_service_unauthorized_client(
     client,
     mock_get_service_by_id_return_none,
     mock_service_to_graphql_service,
@@ -547,7 +550,7 @@ def test_graphql_move_not_found_service(
     assert response.json()["data"]["moveService"]["success"] is False
 
 
-def test_graphql_move_not_moveble_service(
+def test_graphql_move_not_movable_service(
     authorized_client,
     mock_get_service_by_id_return_none,
     mock_service_to_graphql_service,

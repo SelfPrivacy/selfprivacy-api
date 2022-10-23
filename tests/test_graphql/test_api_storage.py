@@ -1,25 +1,6 @@
 import pytest
 
 
-class BlockDeviceMockReturnNone:
-    """Mock BlockDevices"""
-
-    def __init__(self, *args, **kwargs):
-        self.args = args
-        self.kwargs = kwargs
-
-    def mount(self):
-        return None
-
-    def unmount(self):
-        return None
-
-    def resize(self):
-        return None
-
-    returncode = 0
-
-
 class BlockDeviceMockReturnTrue:
     """Mock BlockDevices"""
 
@@ -35,25 +16,6 @@ class BlockDeviceMockReturnTrue:
 
     def resize(self):
         return True
-
-    returncode = 0
-
-
-class BlockDeviceMockReturnFalse:
-    """Mock BlockDevices"""
-
-    def __init__(self, *args, **kwargs):
-        self.args = args
-        self.kwargs = kwargs
-
-    def mount(self):
-        return False
-
-    def unmount(self):
-        return False
-
-    def resize(self):
-        return False
 
     returncode = 0
 
@@ -102,31 +64,11 @@ def mock_block_devices_return_none(mocker):
 
 
 @pytest.fixture
-def mock_block_device_return_none(mocker):
-    mock = mocker.patch(
-        "selfprivacy_api.utils.block_devices.BlockDevice",
-        autospec=True,
-        return_value=BlockDeviceMockReturnNone,
-    )
-    return mock
-
-
-@pytest.fixture
 def mock_block_device_return_true(mocker):
     mock = mocker.patch(
         "selfprivacy_api.utils.block_devices.BlockDevice",
         autospec=True,
         return_value=BlockDeviceMockReturnTrue,
-    )
-    return mock
-
-
-@pytest.fixture
-def mock_block_device_return_false(mocker):
-    mock = mocker.patch(
-        "selfprivacy_api.utils.block_devices.BlockDevice",
-        autospec=True,
-        return_value=BlockDeviceMockReturnFalse,
     )
     return mock
 
@@ -142,7 +84,7 @@ mutation resizeVolume($name: String!) {
 """
 
 
-def test_graphql_resize_volumea_unathorized_client(
+def test_graphql_resize_volume_unauthorized_client(
     client, mock_block_devices_return_true
 ):
     response = client.post(
@@ -201,7 +143,9 @@ mutation mountVolume($name: String!) {
 """
 
 
-def test_graphql_mount_volume_unathorized_client(client, mock_block_device_return_true):
+def test_graphql_mount_volume_unauthorized_client(
+    client, mock_block_device_return_true
+):
     response = client.post(
         "/graphql",
         json={
@@ -276,7 +220,7 @@ mutation unmountVolume($name: String!) {
 """
 
 
-def test_graphql_unmount_volume_unathorized_client(
+def test_graphql_unmount_volume_unauthorized_client(
     client, mock_block_devices_return_true
 ):
     response = client.post(
@@ -290,25 +234,7 @@ def test_graphql_unmount_volume_unathorized_client(
     assert response.json().get("data") is None
 
 
-def test_graphql_unmount_not_fount_volume(
-    authorized_client, mock_block_devices_return_none
-):
-    response = authorized_client.post(
-        "/graphql",
-        json={
-            "query": API_UNMOUNT_VOLUME_MUTATION,
-            "variables": {"name": "sdx"},
-        },
-    )
-    assert response.status_code == 200
-    assert response.json().get("data") is not None
-
-    assert response.json()["data"]["unmountVolume"]["code"] == 404
-    assert response.json()["data"]["unmountVolume"]["message"] is not None
-    assert response.json()["data"]["unmountVolume"]["success"] is False
-
-
-def test_graphql_unmount_volume_false(
+def test_graphql_unmount_not_found_volume(
     authorized_client, mock_block_devices_return_none
 ):
     response = authorized_client.post(
