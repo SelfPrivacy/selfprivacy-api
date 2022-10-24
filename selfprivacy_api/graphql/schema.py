@@ -101,9 +101,9 @@ class Subscription:
                 async with async_timeout.timeout(1):
                     message = await pubsub.get_message()
                     if message:
-                        if message['data'] == 'set':
-                            await r.get('api_test')
-                            yield int(await r.get('api_test'))
+                        if message['data'] == b'set':
+                            retrieved_value = await r.get('api_test')
+                            yield int(retrieved_value)
                     else:
                         await asyncio.sleep(0.01)
             except asyncio.TimeoutError:
