@@ -16,6 +16,7 @@ let
     typing-extensions
     psutil
     black
+    redis
     fastapi
     uvicorn
     (buildPythonPackage rec {
@@ -33,6 +34,7 @@ let
         pydantic
         pygments
         poetry
+        redis
         # flask-cors
         (buildPythonPackage rec {
           pname = "graphql-core";
