@@ -15,7 +15,7 @@ class CheckForFailedBindsMigration(Migration):
 
     def is_migration_needed(self):
         try:
-            jobs = Jobs.get_instance().get_jobs()
+            jobs = Jobs.get_jobs()
             # If there is a job with type_id "migrations.migrate_to_binds" and status is not "FINISHED",
             # then migration is needed and job is deleted
             for job in jobs:
@@ -33,13 +33,13 @@ class CheckForFailedBindsMigration(Migration):
         # Get info about existing volumes
         # Write info about volumes to userdata.json
         try:
-            jobs = Jobs.get_instance().get_jobs()
+            jobs = Jobs.get_jobs()
             for job in jobs:
                 if (
                     job.type_id == "migrations.migrate_to_binds"
                     and job.status != JobStatus.FINISHED
                 ):
-                    Jobs.get_instance().remove(job)
+                    Jobs.remove(job)
             with WriteUserData() as userdata:
                 userdata["useBinds"] = False
             print("Done")

@@ -17,10 +17,7 @@ A job is a dictionary with the following keys:
 import typing
 import datetime
 from uuid import UUID
-import asyncio
 import json
-import os
-import time
 import uuid
 from enum import Enum
 
@@ -63,29 +60,6 @@ class Jobs:
     """
     Jobs class.
     """
-
-    __instance = None
-
-    @staticmethod
-    def get_instance():
-        """
-        Singleton method.
-        """
-        if Jobs.__instance is None:
-            Jobs()
-            if Jobs.__instance is None:
-                raise Exception("Couldn't init Jobs singleton!")
-            return Jobs.__instance
-        return Jobs.__instance
-
-    def __init__(self):
-        """
-        Initialize the jobs list.
-        """
-        if Jobs.__instance is not None:
-            raise Exception("This class is a singleton!")
-        else:
-            Jobs.__instance = self
 
     @staticmethod
     def reset() -> None:
@@ -130,13 +104,15 @@ class Jobs:
                 user_data["jobs"] = [json.loads(job.json())]
         return job
 
-    def remove(self, job: Job) -> None:
+    @staticmethod
+    def remove(job: Job) -> None:
         """
         Remove a job from the jobs list.
         """
-        self.remove_by_uid(str(job.uid))
+        Jobs.remove_by_uid(str(job.uid))
 
-    def remove_by_uid(self, job_uuid: str) -> bool:
+    @staticmethod
+    def remove_by_uid(job_uuid: str) -> bool:
         """
         Remove a job from the jobs list.
         """
