@@ -18,6 +18,7 @@ from selfprivacy_api.migrations.migrate_to_selfprivacy_channel import (
     MigrateToSelfprivacyChannel,
 )
 from selfprivacy_api.migrations.mount_volume import MountVolume
+from selfprivacy_api.migrations.providers import CreateProviderFields
 
 migrations = [
     FixNixosConfigBranch(),
@@ -25,6 +26,7 @@ migrations = [
     MigrateToSelfprivacyChannel(),
     MountVolume(),
     CheckForFailedBindsMigration(),
+    CreateProviderFields(),
 ]
 
 
