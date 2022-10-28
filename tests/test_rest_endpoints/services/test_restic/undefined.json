@@ -62,5 +62,18 @@
             "username": "user3",
             "hashedPassword": "HASHED_PASSWORD_3"
         }
-    ]
+    ],
+    "dns": {
+        "provider": "CLOUDFLARE",
+        "apiKey": "TOKEN"
+    },
+    "server": {
+        "provider": "HETZNER"
+    },
+    "backup": {
+        "provider": "BACKBLAZE",
+        "accountId": "ID",
+        "accountKey": "KEY",
+        "bucket": "bucket"
+    }
 }

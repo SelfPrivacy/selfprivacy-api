@@ -42,5 +42,18 @@
         "enable": true,
         "allowReboot": true
     },
-    "timezone": "Europe/Moscow"
+    "timezone": "Europe/Moscow",
+    "dns": {
+        "provider": "CLOUDFLARE",
+        "apiKey": "TOKEN"
+    },
+    "server": {
+        "provider": "HETZNER"
+    },
+    "backup": {
+        "provider": "BACKBLAZE",
+        "accountId": "ID",
+        "accountKey": "KEY",
+        "bucket": "bucket"
+    }
 }
