@@ -25,7 +25,7 @@ class CreateProviderFields(Migration):
             with WriteUserData() as userdata:
                 userdata["dns"] = {
                     "provider": "CLOUDFLARE",
-                    "apiToken": userdata["cloudflare"]["apiToken"],
+                    "apiKey": userdata["cloudflare"]["apiKey"],
                 }
                 userdata["server"] = {
                     "provider": "HETZNER",
