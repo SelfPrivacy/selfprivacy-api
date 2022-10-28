@@ -18,6 +18,7 @@ let
     black
     fastapi
     uvicorn
+    redis
     (buildPythonPackage rec {
       pname = "strawberry-graphql";
       version = "0.123.0";
