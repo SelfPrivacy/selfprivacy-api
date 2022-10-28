@@ -44,7 +44,7 @@ def get_system_domain_info() -> SystemDomainInfo:
         return SystemDomainInfo(
             domain=user_data["domain"],
             hostname=user_data["hostname"],
-            provider=DnsProvider.CLOUDFLARE,
+            provider=user_data["dns"]["provider"],
         )
 
 
