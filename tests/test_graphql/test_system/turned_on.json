@@ -52,5 +52,14 @@
     "dns": {
         "provider": "CLOUDFLARE",
         "apiKey": "TOKEN"
+    },
+    "server": {
+        "provider": "HETZNER"
+    },
+    "backup": {
+        "provider": "BACKBLAZE",
+        "accountId": "ID",
+        "accountKey": "KEY",
+        "bucket": "bucket"
     }
 }
