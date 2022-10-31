@@ -54,6 +54,6 @@
         "provider": "BACKBLAZE",
         "accountId": "ID",
         "accountKey": "KEY",
-        "bucket": "bucket"
+        "bucket": "selfprivacy"
     }
 }
