@@ -66,11 +66,5 @@
     },
     "server": {
         "provider": "HETZNER"
-    },
-    "backup": {
-        "provider": "BACKBLAZE",
-        "accountId": "ID",
-        "accountKey": "KEY",
-        "bucket": "selfprivacy"
     }
 }

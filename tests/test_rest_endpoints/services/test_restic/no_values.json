@@ -1,6 +1,4 @@
 {
-    "backblaze": {
-    },
     "api": {
         "token": "TEST_TOKEN",
         "enableSwagger": false
@@ -70,9 +68,5 @@
         "provider": "HETZNER"
     },
     "backup": {
-        "provider": "BACKBLAZE",
-        "accountId": "ID",
-        "accountKey": "KEY",
-        "bucket": "selfprivacy"
     }
 }

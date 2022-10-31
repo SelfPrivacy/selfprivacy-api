@@ -257,24 +257,25 @@ async def restore_restic_backup(backup: BackupRestoreInput):
     raise HTTPException(status_code=404, detail="Backup not found")
 
 
-class BackblazeConfigInput(BaseModel):
+class BackupConfigInput(BaseModel):
     accountId: str
     accountKey: str
     bucket: str
 
 
 @router.put("/restic/backblaze/config")
-async def set_backblaze_config(backblaze_config: BackblazeConfigInput):
+async def set_backblaze_config(backup_config: BackupConfigInput):
     with WriteUserData() as data:
-        if "backblaze" not in data:
-            data["backblaze"] = {}
-        data["backblaze"]["accountId"] = backblaze_config.accountId
-        data["backblaze"]["accountKey"] = backblaze_config.accountKey
-        data["backblaze"]["bucket"] = backblaze_config.bucket
+        if "backup" not in data:
+            data["backup"] = {}
+        data["backup"]["provider"] = "BACKBLAZE"
+        data["backup"]["accountId"] = backup_config.accountId
+        data["backup"]["accountKey"] = backup_config.accountKey
+        data["backup"]["bucket"] = backup_config.bucket
 
     restic_tasks.update_keys_from_userdata()
 
-    return "New Backblaze settings saved"
+    return "New backup settings saved"
 
 
 @router.post("/ssh/enable")

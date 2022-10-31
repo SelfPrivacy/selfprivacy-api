@@ -1,9 +1,4 @@
 {
-    "backblaze": {
-        "accountId": "ID",
-        "accountKey": "KEY",
-        "bucket": "selfprivacy"
-    },
     "api": {
         "token": "TEST_TOKEN",
         "enableSwagger": false
