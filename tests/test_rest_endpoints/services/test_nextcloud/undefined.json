@@ -8,9 +8,6 @@
         "token": "TEST_TOKEN",
         "enableSwagger": false
     },
-    "cloudflare": {
-        "apiKey": "TOKEN"
-    },
     "databasePassword": "PASSWORD",
     "domain": "test.tld",
     "hashedMasterPassword": "HASHED_PASSWORD",

@@ -6,9 +6,6 @@
     "bitwarden": {
         "enable": false
     },
-    "cloudflare": {
-        "apiKey": "TOKEN"
-    },
     "databasePassword": "PASSWORD",
     "domain": "test.tld",
     "hashedMasterPassword": "HASHED_PASSWORD",
