@@ -9,6 +9,21 @@ Useful plugins for IDEs:
 - [VSCode](https://marketplace.visualstudio.com/items?itemName=vivaxy.vscode-conventional-commits)
 - [IntelliJ](https://plugins.jetbrains.com/plugin/13389-conventional-commit)
 
+### Track your time
+
+If you are working on a task, please track your time and add it to the commit message. For example:
+
+```
+feat: add new feature
+
+- did some work
+- did some more work
+
+fixes #4, spent @1h30m
+```
+
+[Timewarrior](https://timewarrior.net/) is a good tool for tracking time.
+
 ## Code style
 
 We use [Black](
