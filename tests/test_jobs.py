@@ -1,14 +1,13 @@
 # pylint: disable=redefined-outer-name
 # pylint: disable=unused-argument
-import json
 import pytest
 
-from selfprivacy_api.utils import WriteUserData, ReadUserData
 from selfprivacy_api.jobs import Jobs, JobStatus
 
 
 def test_jobs(authorized_client, jobs_file, shared_datadir):
     jobs = Jobs()
+    jobs.reset()
     assert jobs.get_jobs() == []
 
     test_job = jobs.add(
