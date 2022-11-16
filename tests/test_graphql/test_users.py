@@ -516,7 +516,6 @@ def test_graphql_add_long_username(authorized_client, one_user, mock_subprocess_
             },
         },
     )
-    assert response.status_code == 200
     assert response.json().get("data") is not None
 
     assert response.json()["data"]["createUser"]["message"] is not None
