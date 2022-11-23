@@ -23,10 +23,6 @@ from enum import Enum
 from pydantic import BaseModel
 
 from selfprivacy_api.utils.redis_pool import RedisPool
-import asyncio
-
-
-loop = asyncio.get_event_loop()
 
 
 class JobStatus(Enum):
@@ -72,8 +68,8 @@ class Jobs:
         r = RedisPool().get_connection()
         jobs = Jobs.get_jobs()
         for job in jobs:
-            loop.run_until_complete(r.delete(redis_key_from_uuid(job.uid)))
-        loop.run_until_complete(r.delete("jobs"))
+            r.delete(redis_key_from_uuid(job.uid))
+        r.delete("jobs")
 
     @staticmethod
     def add(
@@ -103,8 +99,7 @@ class Jobs:
         )
         r = RedisPool().get_connection()
         store_job_as_hash(r, redis_key_from_uuid(job.uid), job)
-        coroutine = r.lpush("jobs", redis_key_from_uuid(job.uid))
-        loop.run_until_complete(coroutine)
+        r.lpush("jobs", redis_key_from_uuid(job.uid))
         return job
 
     @staticmethod
@@ -121,8 +116,8 @@ class Jobs:
         """
         r = RedisPool().get_connection()
         key = redis_key_from_uuid(job_uuid)
-        loop.run_until_complete(r.delete(key))
-        loop.run_until_complete(r.lrem("jobs", 0, key))
+        r.delete(key)
+        r.lrem("jobs", 0, key)
         return False
 
     @staticmethod
@@ -178,7 +173,7 @@ class Jobs:
         Get the jobs list.
         """
         r = RedisPool().get_connection()
-        jobs = loop.run_until_complete(r.lrange("jobs", 0, -1))
+        jobs = r.lrange("jobs", 0, -1)
         return [job_from_hash(r, job_key) for job_key in jobs]
 
     @staticmethod
@@ -204,13 +199,12 @@ def store_job_as_hash(r, redis_key, model):
             value = value.isoformat()
         if isinstance(value, JobStatus):
             value = value.value
-        coroutine = r.hset(redis_key, key, str(value))
-        loop.run_until_complete(coroutine)
+        r.hset(redis_key, key, str(value))
 
 
 def job_from_hash(r, redis_key):
     if exists_sync(r, redis_key):
-        job_dict = loop.run_until_complete(r.hgetall(redis_key))
+        job_dict = r.hgetall(redis_key)
         for date in [
             "created_at",
             "updated_at",
@@ -227,4 +221,4 @@ def job_from_hash(r, redis_key):
 
 
 def exists_sync(r, key):
-    return loop.run_until_complete(r.exists(key))
+    return r.exists(key)
