@@ -24,6 +24,8 @@ from pydantic import BaseModel
 
 from selfprivacy_api.utils.redis_pool import RedisPool
 
+JOB_EXPIRATION_SECONDS = 10 * 24 * 60 * 60  # ten days
+
 
 class JobStatus(Enum):
     """
@@ -150,6 +152,8 @@ class Jobs:
         key = redis_key_from_uuid(job.uid)
         if r.exists(key):
             store_job_as_hash(r, key, job)
+            if status in (JobStatus.FINISHED, JobStatus.ERROR):
+                r.expire(key, JOB_EXPIRATION_SECONDS)
 
         return job
 
