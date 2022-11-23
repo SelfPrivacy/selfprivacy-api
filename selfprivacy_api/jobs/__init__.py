@@ -69,7 +69,6 @@ class Jobs:
         jobs = Jobs.get_jobs()
         for job in jobs:
             r.delete(redis_key_from_uuid(job.uid))
-        r.delete("jobs")
 
     @staticmethod
     def add(
@@ -99,7 +98,6 @@ class Jobs:
         )
         r = RedisPool().get_connection()
         store_job_as_hash(r, redis_key_from_uuid(job.uid), job)
-        r.lpush("jobs", redis_key_from_uuid(job.uid))
         return job
 
     @staticmethod
@@ -117,7 +115,6 @@ class Jobs:
         r = RedisPool().get_connection()
         key = redis_key_from_uuid(job_uuid)
         r.delete(key)
-        r.lrem("jobs", 0, key)
         return False
 
     @staticmethod
@@ -151,7 +148,7 @@ class Jobs:
 
         r = RedisPool().get_connection()
         key = redis_key_from_uuid(job.uid)
-        if exists_sync(r, key):
+        if r.exists(key):
             store_job_as_hash(r, key, job)
 
         return job
@@ -163,7 +160,7 @@ class Jobs:
         """
         r = RedisPool().get_connection()
         key = redis_key_from_uuid(uid)
-        if exists_sync(r, key):
+        if r.exists(key):
             return job_from_hash(r, key)
         return None
 
@@ -173,7 +170,7 @@ class Jobs:
         Get the jobs list.
         """
         r = RedisPool().get_connection()
-        jobs = r.lrange("jobs", 0, -1)
+        jobs = r.keys("jobs:*")
         return [job_from_hash(r, job_key) for job_key in jobs]
 
     @staticmethod
@@ -203,7 +200,7 @@ def store_job_as_hash(r, redis_key, model):
 
 
 def job_from_hash(r, redis_key):
-    if exists_sync(r, redis_key):
+    if r.exists(redis_key):
         job_dict = r.hgetall(redis_key)
         for date in [
             "created_at",
@@ -218,7 +215,3 @@ def job_from_hash(r, redis_key):
 
         return Job(**job_dict)
     return None
-
-
-def exists_sync(r, key):
-    return r.exists(key)
