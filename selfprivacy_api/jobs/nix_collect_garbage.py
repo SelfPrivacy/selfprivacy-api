@@ -15,7 +15,7 @@ def nix_collect_garbage(job: Job):
         status_text="Start cleaning.",
     )
 
-    output = subprocess.check_output("nix-collect-garbage -d")
+    output = subprocess.check_output(["nix-collect-garbage", "-d"])
 
     pat = re.compile(r"linking saves ([+-]?\d+\.\d+ \w+).+?([+-]?\d+\.\d+ \w+) freed")
     match = re.search(
