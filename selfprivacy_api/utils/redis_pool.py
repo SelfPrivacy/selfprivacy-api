@@ -1,7 +1,7 @@
 """
 Redis pool module for selfprivacy_api
 """
-import redis.asyncio as redis
+import redis
 from selfprivacy_api.utils.singleton_metaclass import SingletonMetaclass
 
 REDIS_SOCKET = "/run/redis-sp-api/redis.sock"

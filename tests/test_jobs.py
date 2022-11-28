@@ -1,14 +1,14 @@
 # pylint: disable=redefined-outer-name
 # pylint: disable=unused-argument
-import json
 import pytest
 
-from selfprivacy_api.utils import WriteUserData, ReadUserData
 from selfprivacy_api.jobs import Jobs, JobStatus
+import selfprivacy_api.jobs as jobsmodule
 
 
 def test_jobs(authorized_client, jobs_file, shared_datadir):
     jobs = Jobs()
+    jobs.reset()
     assert jobs.get_jobs() == []
 
     test_job = jobs.add(
@@ -30,6 +30,19 @@ def test_jobs(authorized_client, jobs_file, shared_datadir):
     )
 
     assert jobs.get_jobs() == [test_job]
+
+    backup = jobsmodule.JOB_EXPIRATION_SECONDS
+    jobsmodule.JOB_EXPIRATION_SECONDS = 0
+
+    jobs.update(
+        job=test_job,
+        status=JobStatus.FINISHED,
+        status_text="Yaaay!",
+        progress=100,
+    )
+
+    assert jobs.get_jobs() == []
+    jobsmodule.JOB_EXPIRATION_SECONDS = backup
 
 
 @pytest.fixture
