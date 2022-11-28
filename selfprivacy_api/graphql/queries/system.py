@@ -136,7 +136,7 @@ def get_system_provider_info() -> SystemProviderInfo:
     with ReadUserData() as user_data:
         return SystemProviderInfo(
             provider=user_data["server"]["provider"],
-            id="UNKNOWN"
+            id="UNKNOWN",
         )
 
 
