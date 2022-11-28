@@ -64,9 +64,14 @@ pkgs.mkShell {
   buildInputs = [
     sp-python
     pkgs.black
+    pkgs.redis
   ];
   shellHook = ''
     PYTHONPATH=${sp-python}/${sp-python.sitePackages}
+    # envs set with export and as attributes are treated differently.
+    # for example. printenv <Name> will not fetch the value of an attribute.
+    export USE_REDIS_PORT=6379
+    redis-server --port $USE_REDIS_PORT >/dev/null & 
     # maybe set more env-vars
   '';
 }
