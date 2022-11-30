@@ -6,10 +6,21 @@ from selfprivacy_api.jobs import Jobs, JobStatus
 import selfprivacy_api.jobs as jobsmodule
 
 
-def test_jobs(authorized_client, jobs_file, shared_datadir):
-    jobs = Jobs()
+def test_add_reset(jobs):
+    test_job = jobs.add(
+        type_id="test",
+        name="Test job",
+        description="This is a test job.",
+        status=JobStatus.CREATED,
+        status_text="Status text",
+        progress=0,
+    )
+    assert jobs.get_jobs() == [test_job]
     jobs.reset()
     assert jobs.get_jobs() == []
+
+
+def test_jobs(jobs):
 
     test_job = jobs.add(
         type_id="test",
@@ -19,7 +30,6 @@ def test_jobs(authorized_client, jobs_file, shared_datadir):
         status_text="Status text",
         progress=0,
     )
-
     assert jobs.get_jobs() == [test_job]
 
     jobs.update(
@@ -46,18 +56,9 @@ def test_jobs(authorized_client, jobs_file, shared_datadir):
 
 
 @pytest.fixture
-def mock_subprocess_run(mocker):
-    mock = mocker.patch("subprocess.run", autospec=True)
-    return mock
-
-
-@pytest.fixture
-def mock_shutil_move(mocker):
-    mock = mocker.patch("shutil.move", autospec=True)
-    return mock
-
-
-@pytest.fixture
-def mock_shutil_chown(mocker):
-    mock = mocker.patch("shutil.chown", autospec=True)
-    return mock
+def jobs():
+    j = Jobs()
+    j.reset()
+    assert j.get_jobs() == []
+    yield j
+    j.reset()
