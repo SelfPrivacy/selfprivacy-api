@@ -39,6 +39,16 @@ def test_remove_update_nonexistent(jobs_with_one_job):
     assert result == test_job  # even though we might consider changing this behavior
 
 
+def test_remove_get_nonexistent(jobs_with_one_job):
+    test_job = jobs_with_one_job.get_jobs()[0]
+    uid_str = str(test_job.uid)
+    assert jobs_with_one_job.get_job(uid_str) == test_job
+
+    jobs_with_one_job.remove(test_job)
+
+    assert jobs_with_one_job.get_job(uid_str) is None
+
+
 def test_jobs(jobs_with_one_job):
     jobs = jobs_with_one_job
     test_job = jobs_with_one_job.get_jobs()[0]
