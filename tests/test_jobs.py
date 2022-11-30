@@ -11,6 +11,15 @@ def test_add_reset(jobs_with_one_job):
     assert jobs_with_one_job.get_jobs() == []
 
 
+def test_minimal_update(jobs_with_one_job):
+    jobs = jobs_with_one_job
+    test_job = jobs_with_one_job.get_jobs()[0]
+
+    jobs.update(job=test_job, status=JobStatus.ERROR)
+
+    assert jobs.get_jobs() == [test_job]
+
+
 def test_jobs(jobs_with_one_job):
     jobs = jobs_with_one_job
     test_job = jobs_with_one_job.get_jobs()[0]
