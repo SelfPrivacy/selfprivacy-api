@@ -67,10 +67,9 @@ class Jobs:
         """
         Reset the jobs list.
         """
-        r = RedisPool().get_connection()
         jobs = Jobs.get_jobs()
         for job in jobs:
-            r.delete(redis_key_from_uuid(job.uid))
+            Jobs.remove(job)
 
     @staticmethod
     def add(
