@@ -20,6 +20,15 @@ def test_minimal_update(jobs_with_one_job):
     assert jobs.get_jobs() == [test_job]
 
 
+def test_remove_by_uid(jobs_with_one_job):
+    test_job = jobs_with_one_job.get_jobs()[0]
+    uid_str = str(test_job.uid)
+
+    assert jobs_with_one_job.remove_by_uid(uid_str)
+    assert jobs_with_one_job.get_jobs() == []
+    assert not jobs_with_one_job.remove_by_uid(uid_str)
+
+
 def test_remove_update_nonexistent(jobs_with_one_job):
     test_job = jobs_with_one_job.get_jobs()[0]
 

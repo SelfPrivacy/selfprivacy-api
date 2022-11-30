@@ -115,7 +115,9 @@ class Jobs:
         """
         r = RedisPool().get_connection()
         key = _redis_key_from_uuid(job_uuid)
-        r.delete(key)
+        if (r.exists(key)):
+            r.delete(key)
+            return True
         return False
 
     @staticmethod
