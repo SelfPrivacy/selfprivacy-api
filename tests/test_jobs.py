@@ -26,6 +26,8 @@ def test_jobs(jobs_with_one_job):
 
     jobs.update(
         job=test_job,
+        name="Write Tests",
+        description="An oddly satisfying experience",
         status=JobStatus.RUNNING,
         status_text="Status text",
         progress=50,
