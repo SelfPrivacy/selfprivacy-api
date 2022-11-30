@@ -71,7 +71,8 @@ pkgs.mkShell {
     # envs set with export and as attributes are treated differently.
     # for example. printenv <Name> will not fetch the value of an attribute.
     export USE_REDIS_PORT=6379
-    redis-server --port $USE_REDIS_PORT >/dev/null & 
+    pkill redis-server
+    redis-server --bind 127.0.0.1 --port $USE_REDIS_PORT >/dev/null & 
     # maybe set more env-vars
   '';
 }
