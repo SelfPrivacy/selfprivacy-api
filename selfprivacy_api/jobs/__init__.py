@@ -182,7 +182,7 @@ class Jobs:
         Check if there is a job running.
         """
         for job in Jobs.get_jobs():
-            if job["status"] == JobStatus.RUNNING.value:
+            if job.status == JobStatus.RUNNING:
                 return True
         return False
 

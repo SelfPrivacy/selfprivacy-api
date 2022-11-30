@@ -33,6 +33,7 @@ def test_remove_update_nonexistent(jobs_with_one_job):
 def test_jobs(jobs_with_one_job):
     jobs = jobs_with_one_job
     test_job = jobs_with_one_job.get_jobs()[0]
+    assert not jobs.is_busy()
 
     jobs.update(
         job=test_job,
@@ -44,6 +45,7 @@ def test_jobs(jobs_with_one_job):
     )
 
     assert jobs.get_jobs() == [test_job]
+    assert jobs.is_busy()
 
     backup = jobsmodule.JOB_EXPIRATION_SECONDS
     jobsmodule.JOB_EXPIRATION_SECONDS = 0
