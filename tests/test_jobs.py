@@ -20,6 +20,16 @@ def test_minimal_update(jobs_with_one_job):
     assert jobs.get_jobs() == [test_job]
 
 
+def test_remove_update_nonexistent(jobs_with_one_job):
+    test_job = jobs_with_one_job.get_jobs()[0]
+
+    jobs_with_one_job.remove(test_job)
+    assert jobs_with_one_job.get_jobs() == []
+
+    result = jobs_with_one_job.update(job=test_job, status=JobStatus.ERROR)
+    assert result == test_job  # even though we might consider changing this behavior
+
+
 def test_jobs(jobs_with_one_job):
     jobs = jobs_with_one_job
     test_job = jobs_with_one_job.get_jobs()[0]
