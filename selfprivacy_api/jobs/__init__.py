@@ -67,10 +67,9 @@ class Jobs:
         """
         Reset the jobs list.
         """
-        r = RedisPool().get_connection()
         jobs = Jobs.get_jobs()
         for job in jobs:
-            r.delete(redis_key_from_uuid(job.uid))
+            Jobs.remove(job)
 
     @staticmethod
     def add(
@@ -99,7 +98,7 @@ class Jobs:
             result=None,
         )
         r = RedisPool().get_connection()
-        store_job_as_hash(r, redis_key_from_uuid(job.uid), job)
+        _store_job_as_hash(r, _redis_key_from_uuid(job.uid), job)
         return job
 
     @staticmethod
@@ -115,8 +114,10 @@ class Jobs:
         Remove a job from the jobs list.
         """
         r = RedisPool().get_connection()
-        key = redis_key_from_uuid(job_uuid)
-        r.delete(key)
+        key = _redis_key_from_uuid(job_uuid)
+        if (r.exists(key)):
+            r.delete(key)
+            return True
         return False
 
     @staticmethod
@@ -149,9 +150,9 @@ class Jobs:
             job.finished_at = datetime.datetime.now()
 
         r = RedisPool().get_connection()
-        key = redis_key_from_uuid(job.uid)
+        key = _redis_key_from_uuid(job.uid)
         if r.exists(key):
-            store_job_as_hash(r, key, job)
+            _store_job_as_hash(r, key, job)
             if status in (JobStatus.FINISHED, JobStatus.ERROR):
                 r.expire(key, JOB_EXPIRATION_SECONDS)
 
@@ -163,9 +164,9 @@ class Jobs:
         Get a job from the jobs list.
         """
         r = RedisPool().get_connection()
-        key = redis_key_from_uuid(uid)
+        key = _redis_key_from_uuid(uid)
         if r.exists(key):
-            return job_from_hash(r, key)
+            return _job_from_hash(r, key)
         return None
 
     @staticmethod
@@ -175,7 +176,7 @@ class Jobs:
         """
         r = RedisPool().get_connection()
         jobs = r.keys("jobs:*")
-        return [job_from_hash(r, job_key) for job_key in jobs]
+        return [_job_from_hash(r, job_key) for job_key in jobs]
 
     @staticmethod
     def is_busy() -> bool:
@@ -183,16 +184,16 @@ class Jobs:
         Check if there is a job running.
         """
         for job in Jobs.get_jobs():
-            if job["status"] == JobStatus.RUNNING.value:
+            if job.status == JobStatus.RUNNING:
                 return True
         return False
 
 
-def redis_key_from_uuid(uuid):
+def _redis_key_from_uuid(uuid):
     return "jobs:" + str(uuid)
 
 
-def store_job_as_hash(r, redis_key, model):
+def _store_job_as_hash(r, redis_key, model):
     for key, value in model.dict().items():
         if isinstance(value, uuid.UUID):
             value = str(value)
@@ -203,7 +204,7 @@ def store_job_as_hash(r, redis_key, model):
         r.hset(redis_key, key, str(value))
 
 
-def job_from_hash(r, redis_key):
+def _job_from_hash(r, redis_key):
     if r.exists(redis_key):
         job_dict = r.hgetall(redis_key)
         for date in [
