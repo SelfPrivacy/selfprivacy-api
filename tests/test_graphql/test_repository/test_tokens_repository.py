@@ -269,13 +269,9 @@ def test_delete_not_found_token(some_tokens_repo):
     assert repo.get_tokens() == tokens
 
 
-def test_refresh_token(tokens, mock_token_generate):
-    repo = JsonTokensRepository()
-    input_token = Token(
-        token="KG9ni-B-CMPk327Zv1qC7YBQaUGaBUcgdkvMvQ2atFI",
-        device_name="primary_token",
-        created_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
-    )
+def test_refresh_token(some_tokens_repo, mock_token_generate):
+    repo = some_tokens_repo
+    input_token = some_tokens_repo.get_tokens()[0]
 
     assert repo.refresh_token(input_token) == Token(
         token="ZuLNKtnxDeq6w2dpOJhbB3iat_sJLPTPl_rN5uc5MvM",
