@@ -255,8 +255,9 @@ def test_create_token(empty_repo, mock_token_generate):
     ]
 
 
-def test_delete_not_found_token(tokens):
-    repo = JsonTokensRepository()
+def test_delete_not_found_token(some_tokens_repo):
+    repo = some_tokens_repo
+    tokens = repo.get_tokens()
     input_token = Token(
         token="imbadtoken",
         device_name="primary_token",
@@ -265,7 +266,7 @@ def test_delete_not_found_token(tokens):
     with pytest.raises(TokenNotFound):
         assert repo.delete_token(input_token) is None
 
-    # assert read_json(tokens / "tokens.json")["tokens"] == ORIGINAL_TOKEN_CONTENT
+    assert repo.get_tokens() == tokens
 
 
 def test_refresh_token(tokens, mock_token_generate):
