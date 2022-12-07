@@ -129,7 +129,7 @@ def mock_get_recovery_key_return_not_valid(mocker):
 @pytest.fixture
 def mock_token_generate(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.repositories.tokens.json_tokens_repository.Token.generate",
+        "selfprivacy_api.models.tokens.token.Token.generate",
         autospec=True,
         return_value=Token(
             token="ZuLNKtnxDeq6w2dpOJhbB3iat_sJLPTPl_rN5uc5MvM",
@@ -238,26 +238,21 @@ def test_get_tokens(some_tokens_repo):
         assert token.created_at.day == datetime.today().day
 
 
-def test_get_tokens_when_one(empty_keys):
-    repo = JsonTokensRepository()
-
-    assert repo.get_tokens() == [
-        Token(
-            token="KG9ni-B-CMPk327Zv1qC7YBQaUGaBUcgdkvMvQ2atFI",
-            device_name="primary_token",
-            created_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
-        )
-    ]
-
-
-def test_create_token(tokens, mock_token_generate):
-    repo = JsonTokensRepository()
+def test_create_token(empty_repo, mock_token_generate):
+    repo = empty_repo
 
     assert repo.create_token(device_name="IamNewDevice") == Token(
         token="ZuLNKtnxDeq6w2dpOJhbB3iat_sJLPTPl_rN5uc5MvM",
         device_name="IamNewDevice",
         created_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
     )
+    assert repo.get_tokens() == [
+        Token(
+            token="ZuLNKtnxDeq6w2dpOJhbB3iat_sJLPTPl_rN5uc5MvM",
+            device_name="IamNewDevice",
+            created_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
+        )
+    ]
 
 
 def test_delete_not_found_token(tokens):
