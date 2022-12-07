@@ -213,19 +213,15 @@ def test_get_token_by_non_existent_token_string(some_tokens_repo):
         assert repo.get_token_by_token_string(token_string="iamBadtoken") is None
 
 
-def test_get_token_by_name(tokens):
-    repo = JsonTokensRepository()
+def test_get_token_by_name(some_tokens_repo):
+    repo = some_tokens_repo
 
     assert repo.get_token_by_name(token_name="primary_token") is not None
-    assert repo.get_token_by_name(token_name="primary_token") == Token(
-        token="KG9ni-B-CMPk327Zv1qC7YBQaUGaBUcgdkvMvQ2atFI",
-        device_name="primary_token",
-        created_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
-    )
+    assert repo.get_token_by_name(token_name="primary_token") == repo.get_tokens()[0]
 
 
-def test_get_token_by_non_existent_name(tokens):
-    repo = JsonTokensRepository()
+def test_get_token_by_non_existent_name(some_tokens_repo):
+    repo = some_tokens_repo
 
     with pytest.raises(TokenNotFound):
         assert repo.get_token_by_name(token_name="badname") is None
