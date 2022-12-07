@@ -83,11 +83,6 @@ def null_keys(mocker, datadir):
     return datadir
 
 
-class RecoveryKeyMockReturnNotValid:
-    def is_valid() -> bool:
-        return False
-
-
 @pytest.fixture
 def mock_new_device_key_generate(mocker):
     mock = mocker.patch(
@@ -117,11 +112,16 @@ def mock_generate_token(mocker):
 
 
 @pytest.fixture
-def mock_get_recovery_key_return_not_valid(mocker):
+def mock_recovery_key_generate_invalid(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.repositories.tokens.json_tokens_repository.JsonTokensRepository.get_recovery_key",
+        "selfprivacy_api.models.tokens.recovery_key.RecoveryKey.generate",
         autospec=True,
-        return_value=RecoveryKeyMockReturnNotValid,
+        return_value=RecoveryKey(
+            key="889bf49c1d3199d71a2e704718772bd53a422020334db051",
+            created_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
+            expires_at=None,
+            uses_left=0,
+        ),
     )
     return mock
 
@@ -315,10 +315,8 @@ def test_create_get_recovery_key(some_tokens_repo, mock_recovery_key_generate):
     )
 
 
-def test_use_mnemonic_recovery_key_when_empty(
-    empty_keys, mock_recovery_key_generate, mock_token_generate
-):
-    repo = JsonTokensRepository()
+def test_use_mnemonic_recovery_key_when_empty(empty_repo):
+    repo = empty_repo
 
     with pytest.raises(RecoveryKeyNotFound):
         assert (
@@ -331,9 +329,10 @@ def test_use_mnemonic_recovery_key_when_empty(
 
 
 def test_use_mnemonic_not_valid_recovery_key(
-    tokens, mock_get_recovery_key_return_not_valid
+    some_tokens_repo, mock_recovery_key_generate_invalid
 ):
-    repo = JsonTokensRepository()
+    repo = some_tokens_repo
+    assert repo.create_recovery_key(uses_left=0, expiration=None) is not None
 
     with pytest.raises(RecoveryKeyNotFound):
         assert (
@@ -345,8 +344,9 @@ def test_use_mnemonic_not_valid_recovery_key(
         )
 
 
-def test_use_mnemonic_not_mnemonic_recovery_key(tokens):
-    repo = JsonTokensRepository()
+def test_use_mnemonic_not_mnemonic_recovery_key(some_tokens_repo):
+    repo = some_tokens_repo
+    assert repo.create_recovery_key(uses_left=1, expiration=None) is not None
 
     with pytest.raises(InvalidMnemonic):
         assert (
@@ -358,8 +358,9 @@ def test_use_mnemonic_not_mnemonic_recovery_key(tokens):
         )
 
 
-def test_use_not_mnemonic_recovery_key(tokens):
-    repo = JsonTokensRepository()
+def test_use_not_mnemonic_recovery_key(some_tokens_repo):
+    repo = some_tokens_repo
+    assert repo.create_recovery_key(uses_left=1, expiration=None) is not None
 
     with pytest.raises(InvalidMnemonic):
         assert (
@@ -371,8 +372,9 @@ def test_use_not_mnemonic_recovery_key(tokens):
         )
 
 
-def test_use_not_found_mnemonic_recovery_key(tokens):
-    repo = JsonTokensRepository()
+def test_use_not_found_mnemonic_recovery_key(some_tokens_repo):
+    repo = some_tokens_repo
+    assert repo.create_recovery_key(uses_left=1, expiration=None) is not None
 
     with pytest.raises(RecoveryKeyNotFound):
         assert (
@@ -384,8 +386,8 @@ def test_use_not_found_mnemonic_recovery_key(tokens):
         )
 
 
-def test_use_menemonic_recovery_key_when_empty(empty_keys):
-    repo = JsonTokensRepository()
+def test_use_mnemonic_recovery_key_when_empty(empty_repo):
+    repo = empty_repo
 
     with pytest.raises(RecoveryKeyNotFound):
         assert (
