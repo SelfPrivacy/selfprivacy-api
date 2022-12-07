@@ -156,6 +156,21 @@ def mock_recovery_key_generate(mocker):
 
 
 @pytest.fixture
+def mock_recovery_key_generate_for_mnemonic(mocker):
+    mock = mocker.patch(
+        "selfprivacy_api.models.tokens.recovery_key.RecoveryKey.generate",
+        autospec=True,
+        return_value=RecoveryKey(
+            key="ed653e4b8b042b841d285fa7a682fa09e925ddb2d8906f54",
+            created_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
+            expires_at=None,
+            uses_left=1,
+        ),
+    )
+    return mock
+
+
+@pytest.fixture
 def empty_json_repo(empty_keys):
     repo = JsonTokensRepository()
     for token in repo.get_tokens():
@@ -400,52 +415,33 @@ def test_use_mnemonic_recovery_key_when_empty(empty_repo):
 
 
 # agnostic test mixed with an implementation test
-def test_use_mnemonic_recovery_key(tokens, mock_generate_token):
-    repo = JsonTokensRepository()
+def test_use_mnemonic_recovery_key(
+    some_tokens_repo, mock_recovery_key_generate_for_mnemonic, mock_generate_token
+):
+    repo = some_tokens_repo
+    assert repo.create_recovery_key(uses_left=1, expiration=None) is not None
 
-    assert repo.use_mnemonic_recovery_key(
-        mnemonic_phrase="uniform clarify napkin bid dress search input armor police cross salon because myself uphold slice bamboo hungry park",
-        device_name="newdevice",
-    ) == Token(
+    test_token = Token(
         token="ur71mC4aiI6FIYAN--cTL-38rPHS5D6NuB1bgN_qKF4",
         device_name="newdevice",
         created_at=datetime(2022, 11, 14, 6, 6, 32, 777123),
     )
 
-    # assert read_json(tokens / "tokens.json")["tokens"] == [
-    #     {
-    #         "date": "2022-07-15 17:41:31.675698",
-    #         "name": "primary_token",
-    #         "token": "KG9ni-B-CMPk327Zv1qC7YBQaUGaBUcgdkvMvQ2atFI",
-    #     },
-    #     {
-    #         "token": "3JKgLOtFu6ZHgE4OU-R-VdW47IKpg-YQL0c6n7bol68",
-    #         "name": "second_token",
-    #         "date": "2022-07-15 17:41:31.675698Z",
-    #     },
-    #     {
-    #         "token": "LYiwFDekvALKTQSjk7vtMQuNP_6wqKuV-9AyMKytI_8",
-    #         "name": "third_token",
-    #         "date": "2022-07-15T17:41:31.675698Z",
-    #     },
-    #     {
-    #         "token": "dD3CFPcEZvapscgzWb7JZTLog7OMkP7NzJeu2fAazXM",
-    #         "name": "forth_token",
-    #         "date": "2022-07-15T17:41:31.675698",
-    #     },
-    #     {
-    #         "date": "2022-11-14T06:06:32.777123",
-    #         "name": "newdevice",
-    #         "token": "ur71mC4aiI6FIYAN--cTL-38rPHS5D6NuB1bgN_qKF4",
-    #     },
-    # ]
+    assert (
+        repo.use_mnemonic_recovery_key(
+            mnemonic_phrase="uniform clarify napkin bid dress search input armor police cross salon because myself uphold slice bamboo hungry park",
+            device_name="newdevice",
+        )
+        == test_token
+    )
 
-    # assert read_json(tokens / "tokens.json")["recovery_token"] == {
-    #     "date": "2022-11-11T11:48:54.228038",
-    #     "expiration": None,
-    #     "token": "ed653e4b8b042b841d285fa7a682fa09e925ddb2d8906f54",
-    #     "uses_left": 1,
-    # }
+    assert test_token in repo.get_tokens()
+    assert repo.get_recovery_key() == RecoveryKey(
+        key="ed653e4b8b042b841d285fa7a682fa09e925ddb2d8906f54",
+        created_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
+        expires_at=None,
+        uses_left=0,
+    )
 
 
 ##################
