@@ -143,7 +143,7 @@ def mock_token_generate(mocker):
 @pytest.fixture
 def mock_recovery_key_generate(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.repositories.tokens.json_tokens_repository.RecoveryKey.generate",
+        "selfprivacy_api.models.tokens.recovery_key.RecoveryKey.generate",
         autospec=True,
         return_value=RecoveryKey(
             key="889bf49c1d3199d71a2e704718772bd53a422020334db051",
@@ -156,7 +156,7 @@ def mock_recovery_key_generate(mocker):
 
 
 @pytest.fixture
-def empty_json_repo(tokens):
+def empty_json_repo(empty_keys):
     repo = JsonTokensRepository()
     for token in repo.get_tokens():
         repo.delete_token(token)
@@ -297,33 +297,22 @@ def test_refresh_not_found_token(some_tokens_repo, mock_token_generate):
 ################
 
 
-def test_get_recovery_key(tokens):
-    repo = JsonTokensRepository()
-
-    assert repo.get_recovery_key() == RecoveryKey(
-        key="ed653e4b8b042b841d285fa7a682fa09e925ddb2d8906f54",
-        created_at=datetime(2022, 11, 11, 11, 48, 54, 228038),
-        expires_at=None,
-        uses_left=2,
-    )
-
-
-def test_get_recovery_key_when_empty(empty_keys):
-    repo = JsonTokensRepository()
+def test_get_recovery_key_when_empty(empty_repo):
+    repo = empty_repo
 
     assert repo.get_recovery_key() is None
 
 
-def test_create_recovery_key(tokens, mock_recovery_key_generate):
-    repo = JsonTokensRepository()
+def test_create_get_recovery_key(some_tokens_repo, mock_recovery_key_generate):
+    repo = some_tokens_repo
 
     assert repo.create_recovery_key(uses_left=1, expiration=None) is not None
-    # assert read_json(tokens / "tokens.json")["recovery_token"] == {
-    #     "token": "889bf49c1d3199d71a2e704718772bd53a422020334db051",
-    #     "date": "2022-07-15T17:41:31.675698",
-    #     "expiration": None,
-    #     "uses_left": 1,
-    # }
+    assert repo.get_recovery_key() == RecoveryKey(
+        key="889bf49c1d3199d71a2e704718772bd53a422020334db051",
+        created_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
+        expires_at=None,
+        uses_left=1,
+    )
 
 
 def test_use_mnemonic_recovery_key_when_empty(
