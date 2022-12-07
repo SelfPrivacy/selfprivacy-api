@@ -13,6 +13,7 @@ from datetime import datetime
 from selfprivacy_api.models.tokens.token import Token
 from selfprivacy_api.repositories.tokens.exceptions import (
     TokenNotFound,
+    RecoveryKeyNotFound,
 )
 from selfprivacy_api.repositories.tokens.json_tokens_repository import (
     JsonTokensRepository,
@@ -26,6 +27,7 @@ from test_tokens_repository import (
     mock_generate_token,
     mock_new_device_key_generate,
     empty_keys,
+    null_keys,
 )
 
 
@@ -80,6 +82,19 @@ def test_create_recovery_key(tokens, mock_recovery_key_generate):
         "expiration": None,
         "uses_left": 1,
     }
+
+
+def test_use_mnemonic_recovery_key_when_null(null_keys):
+    repo = JsonTokensRepository()
+
+    with pytest.raises(RecoveryKeyNotFound):
+        assert (
+            repo.use_mnemonic_recovery_key(
+                mnemonic_phrase="captain ribbon toddler settle symbol minute step broccoli bless universe divide bulb",
+                device_name="primary_token",
+            )
+            is None
+        )
 
 
 def test_use_mnemonic_recovery_key(tokens, mock_generate_token):

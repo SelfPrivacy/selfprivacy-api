@@ -399,19 +399,6 @@ def test_use_mnemonic_recovery_key_when_empty(empty_repo):
         )
 
 
-def test_use_menemonic_recovery_key_when_null(null_keys):
-    repo = JsonTokensRepository()
-
-    with pytest.raises(RecoveryKeyNotFound):
-        assert (
-            repo.use_mnemonic_recovery_key(
-                mnemonic_phrase="captain ribbon toddler settle symbol minute step broccoli bless universe divide bulb",
-                device_name="primary_token",
-            )
-            is None
-        )
-
-
 # agnostic test mixed with an implementation test
 def test_use_mnemonic_recovery_key(tokens, mock_generate_token):
     repo = JsonTokensRepository()
