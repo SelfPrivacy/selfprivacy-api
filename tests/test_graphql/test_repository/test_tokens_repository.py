@@ -280,8 +280,8 @@ def test_refresh_token(some_tokens_repo, mock_token_generate):
     )
 
 
-def test_refresh_not_found_token(tokens, mock_token_generate):
-    repo = JsonTokensRepository()
+def test_refresh_not_found_token(some_tokens_repo, mock_token_generate):
+    repo = some_tokens_repo
     input_token = Token(
         token="idontknowwhoiam",
         device_name="tellmewhoiam?",
