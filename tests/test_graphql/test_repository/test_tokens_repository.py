@@ -231,7 +231,7 @@ def test_get_tokens(some_tokens_repo):
     repo = some_tokens_repo
     tokenstrings = []
     # we cannot insert tokens directly via api, so we check meta-properties instead
-    for token in some_tokens_repo.get_tokens():
+    for token in repo.get_tokens():
         len(token.token) == 43  # assuming secrets.token_urlsafe
         assert token.token not in tokenstrings
         tokenstrings.append(token.token)
