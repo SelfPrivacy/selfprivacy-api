@@ -227,31 +227,15 @@ def test_get_token_by_non_existent_name(some_tokens_repo):
         assert repo.get_token_by_name(token_name="badname") is None
 
 
-def test_get_tokens(tokens):
-    repo = JsonTokensRepository()
-
-    assert repo.get_tokens() == [
-        Token(
-            token="KG9ni-B-CMPk327Zv1qC7YBQaUGaBUcgdkvMvQ2atFI",
-            device_name="primary_token",
-            created_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
-        ),
-        Token(
-            token="3JKgLOtFu6ZHgE4OU-R-VdW47IKpg-YQL0c6n7bol68",
-            device_name="second_token",
-            created_at=datetime(2022, 7, 15, 17, 41, 31, 675698, tzinfo=timezone.utc),
-        ),
-        Token(
-            token="LYiwFDekvALKTQSjk7vtMQuNP_6wqKuV-9AyMKytI_8",
-            device_name="third_token",
-            created_at=datetime(2022, 7, 15, 17, 41, 31, 675698, tzinfo=timezone.utc),
-        ),
-        Token(
-            token="dD3CFPcEZvapscgzWb7JZTLog7OMkP7NzJeu2fAazXM",
-            device_name="forth_token",
-            created_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
-        ),
-    ]
+def test_get_tokens(some_tokens_repo):
+    repo = some_tokens_repo
+    tokenstrings = []
+    # we cannot insert tokens directly via api, so we check meta-properties instead
+    for token in some_tokens_repo.get_tokens():
+        len(token.token) == 43  # assuming secrets.token_urlsafe
+        assert token.token not in tokenstrings
+        tokenstrings.append(token.token)
+        assert token.created_at.day == datetime.today().day
 
 
 def test_get_tokens_when_one(empty_keys):
