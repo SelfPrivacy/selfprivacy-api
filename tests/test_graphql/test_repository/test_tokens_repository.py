@@ -487,9 +487,10 @@ def test_use_invalid_mnemonic_new_device_key(some_tokens_repo):
 
 
 def test_use_not_exists_mnemonic_new_device_key(
-    tokens, mock_new_device_key_generate, mock_token_generate
+    empty_repo, mock_new_device_key_generate
 ):
-    repo = JsonTokensRepository()
+    repo = empty_repo
+    assert repo.get_new_device_key() is not None
 
     with pytest.raises(NewDeviceKeyNotFound):
         assert (
