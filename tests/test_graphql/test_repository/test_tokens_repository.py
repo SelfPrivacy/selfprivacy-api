@@ -206,6 +206,7 @@ def some_tokens_repo(empty_repo):
     assert len(empty_repo.get_tokens()) == len(ORIGINAL_DEVICE_NAMES)
     for i, t in enumerate(empty_repo.get_tokens()):
         assert t.device_name == ORIGINAL_DEVICE_NAMES[i]
+    assert empty_repo.get_new_device_key() is not None
     return empty_repo
 
 
@@ -459,18 +460,17 @@ def test_get_new_device_key(some_tokens_repo, mock_new_device_key_generate):
     )
 
 
-def test_delete_new_device_key(tokens):
-    repo = JsonTokensRepository()
+def test_delete_new_device_key(some_tokens_repo):
+    repo = some_tokens_repo
 
     assert repo.delete_new_device_key() is None
-    # assert "new_device" not in read_json(tokens / "tokens.json")
+    # we cannot say if there is ot not without creating it?
 
 
-def test_delete_new_device_key_when_empty(empty_keys):
-    repo = JsonTokensRepository()
+def test_delete_new_device_key_when_empty(empty_repo):
+    repo = empty_repo
 
-    repo.delete_new_device_key()
-    # assert "new_device" not in read_json(empty_keys / "empty_keys.json")
+    assert repo.delete_new_device_key() is None
 
 
 def test_use_invalid_mnemonic_new_device_key(
