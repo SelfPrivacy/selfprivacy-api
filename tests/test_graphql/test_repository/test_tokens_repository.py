@@ -248,6 +248,20 @@ def test_create_token(empty_repo, mock_token_generate):
     ]
 
 
+def test_delete_token(some_tokens_repo):
+    repo = some_tokens_repo
+    original_tokens = repo.get_tokens()
+    input_token = original_tokens[1]
+
+    repo.delete_token(input_token)
+
+    tokens_after_delete = repo.get_tokens()
+    for token in original_tokens:
+        if token != input_token:
+            assert token in tokens_after_delete
+    assert len(original_tokens) == len(tokens_after_delete) + 1
+
+
 def test_delete_not_found_token(some_tokens_repo):
     repo = some_tokens_repo
     tokens = repo.get_tokens()
