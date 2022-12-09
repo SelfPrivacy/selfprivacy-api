@@ -97,6 +97,21 @@ def mock_new_device_key_generate(mocker):
     return mock
 
 
+# mnemonic_phrase="captain ribbon toddler settle symbol minute step broccoli bless universe divide bulb",
+@pytest.fixture
+def mock_new_device_key_generate_for_mnemonic(mocker):
+    mock = mocker.patch(
+        "selfprivacy_api.models.tokens.new_device_key.NewDeviceKey.generate",
+        autospec=True,
+        return_value=NewDeviceKey(
+            key="2237238de23dc71ab558e317bdb8ff8e",
+            created_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
+            expires_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
+        ),
+    )
+    return mock
+
+
 @pytest.fixture
 def mock_generate_token(mocker):
     mock = mocker.patch(
@@ -503,9 +518,10 @@ def test_use_not_exists_mnemonic_new_device_key(
 
 
 def test_use_mnemonic_new_device_key(
-    tokens, mock_new_device_key_generate, mock_token_generate
+    empty_repo, mock_new_device_key_generate_for_mnemonic
 ):
-    repo = JsonTokensRepository()
+    repo = empty_repo
+    assert repo.get_new_device_key() is not None
 
     assert (
         repo.use_mnemonic_new_device_key(
@@ -514,7 +530,16 @@ def test_use_mnemonic_new_device_key(
         )
         is not None
     )
-    # assert read_json(datadir / "tokens.json")["new_device"] == []
+
+    # we must delete the key after use
+    with pytest.raises(NewDeviceKeyNotFound):
+        assert (
+            repo.use_mnemonic_new_device_key(
+                device_name="imnew",
+                mnemonic_phrase="captain ribbon toddler settle symbol minute step broccoli bless universe divide bulb",
+            )
+            is None
+        )
 
 
 def test_use_mnemonic_new_device_key_when_empty(empty_keys):
