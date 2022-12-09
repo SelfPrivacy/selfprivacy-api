@@ -2,7 +2,7 @@
 # pylint: disable=unused-argument
 # pylint: disable=missing-function-docstring
 
-from datetime import datetime, timezone
+from datetime import datetime
 
 import pytest
 
