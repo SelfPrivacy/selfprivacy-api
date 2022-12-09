@@ -473,10 +473,8 @@ def test_delete_new_device_key_when_empty(empty_repo):
     assert repo.delete_new_device_key() is None
 
 
-def test_use_invalid_mnemonic_new_device_key(
-    tokens, mock_new_device_key_generate, datadir, mock_token_generate
-):
-    repo = JsonTokensRepository()
+def test_use_invalid_mnemonic_new_device_key(some_tokens_repo):
+    repo = some_tokens_repo
 
     with pytest.raises(InvalidMnemonic):
         assert (
