@@ -86,7 +86,7 @@ def null_keys(mocker, datadir):
 @pytest.fixture
 def mock_new_device_key_generate(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.repositories.tokens.json_tokens_repository.NewDeviceKey.generate",
+        "selfprivacy_api.models.tokens.new_device_key.NewDeviceKey.generate",
         autospec=True,
         return_value=NewDeviceKey(
             key="43478d05b35e4781598acd76e33832bb",
@@ -449,15 +449,14 @@ def test_use_mnemonic_recovery_key(
 ##################
 
 
-def test_get_new_device_key(tokens, mock_new_device_key_generate):
-    repo = JsonTokensRepository()
+def test_get_new_device_key(some_tokens_repo, mock_new_device_key_generate):
+    repo = some_tokens_repo
 
-    assert repo.get_new_device_key() is not None
-    # assert read_json(tokens / "tokens.json")["new_device"] == {
-    #     "date": "2022-07-15T17:41:31.675698",
-    #     "expiration": "2022-07-15T17:41:31.675698",
-    #     "token": "43478d05b35e4781598acd76e33832bb",
-    # }
+    assert repo.get_new_device_key() == NewDeviceKey(
+        key="43478d05b35e4781598acd76e33832bb",
+        created_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
+        expires_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
+    )
 
 
 def test_delete_new_device_key(tokens):
