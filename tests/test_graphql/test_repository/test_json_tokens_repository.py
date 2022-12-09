@@ -14,6 +14,7 @@ from selfprivacy_api.models.tokens.token import Token
 from selfprivacy_api.repositories.tokens.exceptions import (
     TokenNotFound,
     RecoveryKeyNotFound,
+    NewDeviceKeyNotFound,
 )
 from selfprivacy_api.repositories.tokens.json_tokens_repository import (
     JsonTokensRepository,
@@ -167,3 +168,16 @@ def test_delete_new_device_key_when_empty(empty_keys):
 
     repo.delete_new_device_key()
     assert "new_device" not in read_json(empty_keys / "empty_keys.json")
+
+
+def test_use_mnemonic_new_device_key_when_null(null_keys):
+    repo = JsonTokensRepository()
+
+    with pytest.raises(NewDeviceKeyNotFound):
+        assert (
+            repo.use_mnemonic_new_device_key(
+                device_name="imnew",
+                mnemonic_phrase="captain ribbon toddler settle symbol minute step broccoli bless universe divide bulb",
+            )
+            is None
+        )

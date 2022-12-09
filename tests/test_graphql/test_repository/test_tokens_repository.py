@@ -553,16 +553,3 @@ def test_use_mnemonic_new_device_key_when_empty(empty_repo):
             )
             is None
         )
-
-
-def test_use_mnemonic_new_device_key_when_null(null_keys):
-    repo = JsonTokensRepository()
-
-    with pytest.raises(NewDeviceKeyNotFound):
-        assert (
-            repo.use_mnemonic_new_device_key(
-                device_name="imnew",
-                mnemonic_phrase="captain ribbon toddler settle symbol minute step broccoli bless universe divide bulb",
-            )
-            is None
-        )
