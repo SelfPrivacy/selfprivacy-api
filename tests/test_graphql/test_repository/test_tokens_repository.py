@@ -100,7 +100,7 @@ def mock_new_device_key_generate(mocker):
 @pytest.fixture
 def mock_generate_token(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.repositories.tokens.json_tokens_repository.Token.generate",
+        "selfprivacy_api.models.tokens.token.Token.generate",
         autospec=True,
         return_value=Token(
             token="ur71mC4aiI6FIYAN--cTL-38rPHS5D6NuB1bgN_qKF4",
