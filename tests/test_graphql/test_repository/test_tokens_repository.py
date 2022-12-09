@@ -24,29 +24,6 @@ from selfprivacy_api.repositories.tokens.redis_tokens_repository import (
 from tests.common import read_json
 
 
-ORIGINAL_TOKEN_CONTENT = [
-    {
-        "token": "KG9ni-B-CMPk327Zv1qC7YBQaUGaBUcgdkvMvQ2atFI",
-        "name": "primary_token",
-        "date": "2022-07-15 17:41:31.675698",
-    },
-    {
-        "token": "3JKgLOtFu6ZHgE4OU-R-VdW47IKpg-YQL0c6n7bol68",
-        "name": "second_token",
-        "date": "2022-07-15 17:41:31.675698Z",
-    },
-    {
-        "token": "LYiwFDekvALKTQSjk7vtMQuNP_6wqKuV-9AyMKytI_8",
-        "name": "third_token",
-        "date": "2022-07-15T17:41:31.675698Z",
-    },
-    {
-        "token": "dD3CFPcEZvapscgzWb7JZTLog7OMkP7NzJeu2fAazXM",
-        "name": "forth_token",
-        "date": "2022-07-15T17:41:31.675698",
-    },
-]
-
 ORIGINAL_DEVICE_NAMES = [
     "primary_token",
     "second_token",
