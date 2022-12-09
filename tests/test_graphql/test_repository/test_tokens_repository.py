@@ -56,13 +56,6 @@ ORIGINAL_DEVICE_NAMES = [
 
 
 @pytest.fixture
-def tokens(mocker, datadir):
-    mocker.patch("selfprivacy_api.utils.TOKENS_FILE", new=datadir / "tokens.json")
-    assert read_json(datadir / "tokens.json")["tokens"] == ORIGINAL_TOKEN_CONTENT
-    return datadir
-
-
-@pytest.fixture
 def empty_keys(mocker, datadir):
     mocker.patch("selfprivacy_api.utils.TOKENS_FILE", new=datadir / "empty_keys.json")
     assert read_json(datadir / "empty_keys.json")["tokens"] == [
@@ -72,14 +65,6 @@ def empty_keys(mocker, datadir):
             "date": "2022-07-15 17:41:31.675698",
         }
     ]
-    return datadir
-
-
-@pytest.fixture
-def null_keys(mocker, datadir):
-    mocker.patch("selfprivacy_api.utils.TOKENS_FILE", new=datadir / "null_keys.json")
-    assert read_json(datadir / "null_keys.json")["recovery_token"] is None
-    assert read_json(datadir / "null_keys.json")["new_device"] is None
     return datadir
 
 

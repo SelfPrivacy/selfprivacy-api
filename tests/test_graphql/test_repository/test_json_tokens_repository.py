@@ -23,13 +23,26 @@ from tests.common import read_json
 
 from test_tokens_repository import ORIGINAL_TOKEN_CONTENT
 from test_tokens_repository import (
-    tokens,
     mock_recovery_key_generate,
     mock_generate_token,
     mock_new_device_key_generate,
     empty_keys,
-    null_keys,
 )
+
+
+@pytest.fixture
+def tokens(mocker, datadir):
+    mocker.patch("selfprivacy_api.utils.TOKENS_FILE", new=datadir / "tokens.json")
+    assert read_json(datadir / "tokens.json")["tokens"] == ORIGINAL_TOKEN_CONTENT
+    return datadir
+
+
+@pytest.fixture
+def null_keys(mocker, datadir):
+    mocker.patch("selfprivacy_api.utils.TOKENS_FILE", new=datadir / "null_keys.json")
+    assert read_json(datadir / "null_keys.json")["recovery_token"] is None
+    assert read_json(datadir / "null_keys.json")["new_device"] is None
+    return datadir
 
 
 def test_delete_token(tokens):
