@@ -43,6 +43,11 @@ class JsonTokensRepository(AbstractTokensRepository):
         """Create new token"""
         new_token = Token.generate(device_name)
 
+        self.__store_token(new_token)
+
+        return new_token
+
+    def __store_token(self, new_token: Token):
         with WriteUserData(UserDataFiles.TOKENS) as tokens_file:
             tokens_file["tokens"].append(
                 {
@@ -51,7 +56,6 @@ class JsonTokensRepository(AbstractTokensRepository):
                     "date": new_token.created_at.strftime(DATETIME_FORMAT),
                 }
             )
-        return new_token
 
     def delete_token(self, input_token: Token) -> None:
         """Delete the token"""
