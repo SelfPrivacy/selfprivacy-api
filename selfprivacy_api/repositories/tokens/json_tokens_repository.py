@@ -102,41 +102,31 @@ class JsonTokensRepository(AbstractTokensRepository):
         self, mnemonic_phrase: str, device_name: str
     ) -> Token:
         """Use the mnemonic recovery key and create a new token with the given name"""
-        recovery_key = self.get_recovery_key()
-
-        if recovery_key is None:
+        if not self.is_recovery_key_valid():
             raise RecoveryKeyNotFound("Recovery key not found")
 
-        if not recovery_key.is_valid():
+        recovery_hex_key = self.get_recovery_key().key
+        if not self._assert_mnemonic(recovery_hex_key, mnemonic_phrase):
             raise RecoveryKeyNotFound("Recovery key not found")
 
-        recovery_token = bytes.fromhex(recovery_key.key)
+        new_token = self.create_token(device_name=device_name)
 
+        self._decrement_recovery_token()
+
+        return new_token
+
+    def _decrement_recovery_token(self):
+        if self.is_recovery_key_valid():
+            with WriteUserData(UserDataFiles.TOKENS) as tokens:
+                tokens["recovery_token"]["uses_left"] -= 1
+
+    def _assert_mnemonic(self, hex_key: str, mnemonic_phrase: str):
+        recovery_token = bytes.fromhex(hex_key)
         if not Mnemonic(language="english").check(mnemonic_phrase):
             raise InvalidMnemonic("Phrase is not mnemonic!")
 
         phrase_bytes = Mnemonic(language="english").to_entropy(mnemonic_phrase)
-        if phrase_bytes != recovery_token:
-            raise RecoveryKeyNotFound("Recovery key not found")
-
-        new_token = Token.generate(device_name=device_name)
-
-        with WriteUserData(UserDataFiles.TOKENS) as tokens:
-            tokens["tokens"].append(
-                {
-                    "token": new_token.token,
-                    "name": new_token.device_name,
-                    "date": new_token.created_at.strftime(DATETIME_FORMAT),
-                }
-            )
-
-            if "recovery_token" in tokens:
-                if (
-                    "uses_left" in tokens["recovery_token"]
-                    and tokens["recovery_token"]["uses_left"] is not None
-                ):
-                    tokens["recovery_token"]["uses_left"] -= 1
-        return new_token
+        return phrase_bytes == recovery_token
 
     def get_new_device_key(self) -> NewDeviceKey:
         """Creates and returns the new device key"""
