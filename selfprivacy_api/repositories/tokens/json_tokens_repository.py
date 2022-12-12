@@ -71,16 +71,10 @@ class JsonTokensRepository(AbstractTokensRepository):
         """Change the token field of the existing token"""
         new_token = Token.generate(device_name=input_token.device_name)
 
-        with WriteUserData(UserDataFiles.TOKENS) as tokens_file:
-            for userdata_token in tokens_file["tokens"]:
-
-                if userdata_token["name"] == input_token.device_name:
-                    userdata_token["token"] = new_token.token
-                    userdata_token["date"] = (
-                        new_token.created_at.strftime(DATETIME_FORMAT),
-                    )
-
-                    return new_token
+        if input_token in self.get_tokens():
+            self.delete_token(input_token)
+            self.__store_token(new_token)
+            return new_token
 
         raise TokenNotFound("Token not found!")
 
