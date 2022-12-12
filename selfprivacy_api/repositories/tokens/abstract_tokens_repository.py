@@ -8,6 +8,7 @@ from selfprivacy_api.repositories.tokens.exceptions import (
     TokenNotFound,
     InvalidMnemonic,
     RecoveryKeyNotFound,
+    NewDeviceKeyNotFound,
 )
 from selfprivacy_api.models.tokens.recovery_key import RecoveryKey
 from selfprivacy_api.models.tokens.new_device_key import NewDeviceKey
@@ -124,11 +125,21 @@ class AbstractTokensRepository(ABC):
     def delete_new_device_key(self) -> None:
         """Delete the new device key"""
 
-    @abstractmethod
     def use_mnemonic_new_device_key(
         self, mnemonic_phrase: str, device_name: str
     ) -> Token:
         """Use the mnemonic new device key"""
+        new_device_key = self._get_stored_new_device_key()
+        if not new_device_key:
+            raise NewDeviceKeyNotFound
+
+        if not self._assert_mnemonic(new_device_key.key, mnemonic_phrase):
+            raise NewDeviceKeyNotFound("Phrase is not token!")
+
+        new_token = self.create_token(device_name=device_name)
+        self.delete_new_device_key()
+
+        return new_token
 
     @abstractmethod
     def _store_token(self, new_token: Token):
@@ -137,6 +148,10 @@ class AbstractTokensRepository(ABC):
     @abstractmethod
     def _decrement_recovery_token(self):
         """Decrement recovery key use count by one"""
+
+    @abstractmethod
+    def _get_stored_new_device_key(self) -> Optional[NewDeviceKey]:
+        """Retrieves new device key that is already stored."""
 
     # TODO: find a proper place for it
     def _assert_mnemonic(self, hex_key: str, mnemonic_phrase: str):

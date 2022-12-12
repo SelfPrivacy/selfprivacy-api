@@ -3,7 +3,6 @@ temporary legacy
 """
 from typing import Optional
 from datetime import datetime
-from mnemonic import Mnemonic
 
 from selfprivacy_api.utils import UserDataFiles, WriteUserData, ReadUserData
 from selfprivacy_api.models.tokens.token import Token
@@ -11,8 +10,6 @@ from selfprivacy_api.models.tokens.recovery_key import RecoveryKey
 from selfprivacy_api.models.tokens.new_device_key import NewDeviceKey
 from selfprivacy_api.repositories.tokens.exceptions import (
     TokenNotFound,
-    InvalidMnemonic,
-    NewDeviceKeyNotFound,
 )
 from selfprivacy_api.repositories.tokens.abstract_tokens_repository import (
     AbstractTokensRepository,
@@ -135,19 +132,3 @@ class JsonTokensRepository(AbstractTokensRepository):
                 expires_at=tokens_file["new_device"]["expiration"],
             )
             return new_device_key
-
-    def use_mnemonic_new_device_key(
-        self, mnemonic_phrase: str, device_name: str
-    ) -> Token:
-        """Use the mnemonic new device key"""
-        new_device_key = self._get_stored_new_device_key()
-        if not new_device_key:
-            raise NewDeviceKeyNotFound
-
-        if not self._assert_mnemonic(new_device_key.key, mnemonic_phrase):
-            raise NewDeviceKeyNotFound("Phrase is not token!")
-
-        new_token = self.create_token(device_name=device_name)
-        self.delete_new_device_key()
-
-        return new_token
