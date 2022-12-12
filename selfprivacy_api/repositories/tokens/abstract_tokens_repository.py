@@ -31,9 +31,13 @@ class AbstractTokensRepository(ABC):
     def get_tokens(self) -> list[Token]:
         """Get the tokens"""
 
-    @abstractmethod
     def create_token(self, device_name: str) -> Token:
         """Create new token"""
+        new_token = Token.generate(device_name)
+
+        self._store_token(new_token)
+
+        return new_token
 
     @abstractmethod
     def delete_token(self, input_token: Token) -> None:
@@ -102,3 +106,7 @@ class AbstractTokensRepository(ABC):
         self, mnemonic_phrase: str, device_name: str
     ) -> Token:
         """Use the mnemonic new device key"""
+
+    @abstractmethod
+    def _store_token(self, new_token: Token):
+        """Store a token directly"""

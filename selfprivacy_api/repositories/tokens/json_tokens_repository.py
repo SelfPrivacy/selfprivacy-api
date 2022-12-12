@@ -39,15 +39,8 @@ class JsonTokensRepository(AbstractTokensRepository):
 
         return tokens_list
 
-    def create_token(self, device_name: str) -> Token:
-        """Create new token"""
-        new_token = Token.generate(device_name)
-
-        self.__store_token(new_token)
-
-        return new_token
-
-    def __store_token(self, new_token: Token):
+    def _store_token(self, new_token: Token):
+        """Store a token directly"""
         with WriteUserData(UserDataFiles.TOKENS) as tokens_file:
             tokens_file["tokens"].append(
                 {
@@ -73,7 +66,7 @@ class JsonTokensRepository(AbstractTokensRepository):
 
         if input_token in self.get_tokens():
             self.delete_token(input_token)
-            self.__store_token(new_token)
+            self._store_token(new_token)
             return new_token
 
         raise TokenNotFound("Token not found!")
