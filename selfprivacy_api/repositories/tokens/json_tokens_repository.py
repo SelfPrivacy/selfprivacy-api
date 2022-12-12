@@ -23,24 +23,6 @@ DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
 
 
 class JsonTokensRepository(AbstractTokensRepository):
-    def get_token_by_token_string(self, token_string: str) -> Optional[Token]:
-        """Get the token by token"""
-        tokens = self.get_tokens()
-        for token in tokens:
-            if token.token == token_string:
-                return token
-
-        raise TokenNotFound("Token not found!")
-
-    def get_token_by_name(self, token_name: str) -> Optional[Token]:
-        """Get the token by name"""
-        tokens = self.get_tokens()
-        for token in tokens:
-            if token.device_name == token_name:
-                return token
-
-        raise TokenNotFound("Token not found!")
-
     def get_tokens(self) -> list[Token]:
         """Get the tokens"""
         tokens_list = []

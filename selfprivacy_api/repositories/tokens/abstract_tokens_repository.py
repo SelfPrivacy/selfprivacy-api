@@ -3,18 +3,29 @@ from datetime import datetime
 from typing import Optional
 
 from selfprivacy_api.models.tokens.token import Token
+from selfprivacy_api.repositories.tokens.exceptions import TokenNotFound
 from selfprivacy_api.models.tokens.recovery_key import RecoveryKey
 from selfprivacy_api.models.tokens.new_device_key import NewDeviceKey
 
 
 class AbstractTokensRepository(ABC):
-    @abstractmethod
     def get_token_by_token_string(self, token_string: str) -> Optional[Token]:
         """Get the token by token"""
+        tokens = self.get_tokens()
+        for token in tokens:
+            if token.token == token_string:
+                return token
 
-    @abstractmethod
+        raise TokenNotFound("Token not found!")
+
     def get_token_by_name(self, token_name: str) -> Optional[Token]:
         """Get the token by name"""
+        tokens = self.get_tokens()
+        for token in tokens:
+            if token.device_name == token_name:
+                return token
+
+        raise TokenNotFound("Token not found!")
 
     @abstractmethod
     def get_tokens(self) -> list[Token]:
