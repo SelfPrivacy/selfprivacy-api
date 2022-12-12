@@ -123,33 +123,31 @@ class JsonTokensRepository(AbstractTokensRepository):
                 del tokens_file["new_device"]
                 return
 
-    def use_mnemonic_new_device_key(
-        self, mnemonic_phrase: str, device_name: str
-    ) -> Token:
-        """Use the mnemonic new device key"""
-
+    def _get_stored_new_device_key(self) -> Optional[NewDeviceKey]:
+        """Retrieves new device key that is already stored."""
         with ReadUserData(UserDataFiles.TOKENS) as tokens_file:
             if "new_device" not in tokens_file or tokens_file["new_device"] is None:
-                raise NewDeviceKeyNotFound("New device key not found")
+                return
 
             new_device_key = NewDeviceKey(
                 key=tokens_file["new_device"]["token"],
                 created_at=tokens_file["new_device"]["date"],
                 expires_at=tokens_file["new_device"]["expiration"],
             )
+            return new_device_key
 
-        token = bytes.fromhex(new_device_key.key)
+    def use_mnemonic_new_device_key(
+        self, mnemonic_phrase: str, device_name: str
+    ) -> Token:
+        """Use the mnemonic new device key"""
+        new_device_key = self._get_stored_new_device_key()
+        if not new_device_key:
+            raise NewDeviceKeyNotFound
 
-        if not Mnemonic(language="english").check(mnemonic_phrase):
-            raise InvalidMnemonic("Phrase is not mnemonic!")
-
-        phrase_bytes = Mnemonic(language="english").to_entropy(mnemonic_phrase)
-        if bytes(phrase_bytes) != bytes(token):
+        if not self._assert_mnemonic(new_device_key.key, mnemonic_phrase):
             raise NewDeviceKeyNotFound("Phrase is not token!")
 
         new_token = Token.generate(device_name=device_name)
-        with WriteUserData(UserDataFiles.TOKENS) as tokens:
-            if "new_device" in tokens:
-                del tokens["new_device"]
+        self.delete_new_device_key()
 
         return new_token
