@@ -60,17 +60,6 @@ class JsonTokensRepository(AbstractTokensRepository):
 
         raise TokenNotFound("Token not found!")
 
-    def refresh_token(self, input_token: Token) -> Token:
-        """Change the token field of the existing token"""
-        new_token = Token.generate(device_name=input_token.device_name)
-
-        if input_token in self.get_tokens():
-            self.delete_token(input_token)
-            self._store_token(new_token)
-            return new_token
-
-        raise TokenNotFound("Token not found!")
-
     def get_recovery_key(self) -> Optional[RecoveryKey]:
         """Get the recovery key"""
         with ReadUserData(UserDataFiles.TOKENS) as tokens_file:

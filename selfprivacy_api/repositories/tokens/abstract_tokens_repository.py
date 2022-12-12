@@ -43,9 +43,16 @@ class AbstractTokensRepository(ABC):
     def delete_token(self, input_token: Token) -> None:
         """Delete the token"""
 
-    @abstractmethod
     def refresh_token(self, input_token: Token) -> Token:
-        """Refresh the token"""
+        """Change the token field of the existing token"""
+        new_token = Token.generate(device_name=input_token.device_name)
+
+        if input_token in self.get_tokens():
+            self.delete_token(input_token)
+            self._store_token(new_token)
+            return new_token
+
+        raise TokenNotFound("Token not found!")
 
     def is_token_valid(self, token_string: str) -> bool:
         """Check if the token is valid"""
