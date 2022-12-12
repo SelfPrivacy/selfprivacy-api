@@ -147,7 +147,7 @@ class JsonTokensRepository(AbstractTokensRepository):
         if not self._assert_mnemonic(new_device_key.key, mnemonic_phrase):
             raise NewDeviceKeyNotFound("Phrase is not token!")
 
-        new_token = Token.generate(device_name=device_name)
+        new_token = self.create_token(device_name=device_name)
         self.delete_new_device_key()
 
         return new_token

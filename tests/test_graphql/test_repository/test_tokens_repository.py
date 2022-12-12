@@ -499,13 +499,13 @@ def test_use_mnemonic_new_device_key(
     repo = empty_repo
     assert repo.get_new_device_key() is not None
 
-    assert (
-        repo.use_mnemonic_new_device_key(
-            device_name="imnew",
-            mnemonic_phrase="captain ribbon toddler settle symbol minute step broccoli bless universe divide bulb",
-        )
-        is not None
+    new_token = repo.use_mnemonic_new_device_key(
+        device_name="imnew",
+        mnemonic_phrase="captain ribbon toddler settle symbol minute step broccoli bless universe divide bulb",
     )
+
+    assert new_token.device_name == "imnew"
+    assert new_token in repo.get_tokens()
 
     # we must delete the key after use
     with pytest.raises(NewDeviceKeyNotFound):
