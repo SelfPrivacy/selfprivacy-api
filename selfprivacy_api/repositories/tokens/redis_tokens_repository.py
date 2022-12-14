@@ -23,6 +23,7 @@ class RedisTokensRepository(AbstractTokensRepository):
     def __init__(self):
         self.connection = RedisPool().get_connection()
 
+    @staticmethod
     def token_key_for_device(device_name: str):
         return TOKENS_PREFIX + str(hash(device_name))
 
@@ -58,7 +59,8 @@ class RedisTokensRepository(AbstractTokensRepository):
 
     def _store_token(self, new_token: Token):
         """Store a token directly"""
-        raise NotImplementedError
+        key = RedisTokensRepository.token_key_for_device(new_token.device_name)
+        self._store_token_as_hash(key, new_token)
 
     def _decrement_recovery_token(self):
         """Decrement recovery key use count by one"""
@@ -76,7 +78,7 @@ class RedisTokensRepository(AbstractTokensRepository):
                 "created_at",
             ]:
                 if token_dict[date] != "None":
-                    token_dict[date] = datetime.datetime.fromisoformat(token_dict[date])
+                    token_dict[date] = datetime.fromisoformat(token_dict[date])
             for key in token_dict.keys():
                 if token_dict[key] == "None":
                     token_dict[key] = None
@@ -84,3 +86,9 @@ class RedisTokensRepository(AbstractTokensRepository):
             return Token(**token_dict)
         return None
 
+    def _store_token_as_hash(self, redis_key, model):
+        r = self.connection
+        for key, value in model.dict().items():
+            if isinstance(value, datetime):
+                value = value.isoformat()
+            r.hset(redis_key, key, str(value))
