@@ -87,12 +87,17 @@ class RedisTokensRepository(AbstractTokensRepository):
             if d[key] == "None":
                 d[key] = None
 
-    def _token_from_hash(self, redis_key: str) -> Token:
+    def _model_dict_from_hash(self, redis_key: str) -> Optional[dict]:
         r = self.connection
         if r.exists(redis_key):
             token_dict = r.hgetall(redis_key)
             RedisTokensRepository._prepare_model_dict(token_dict)
+            return token_dict
+        return None
 
+    def _token_from_hash(self, redis_key: str) -> Optional[Token]:
+        token_dict = self._model_dict_from_hash(redis_key)
+        if token_dict is not None:
             return Token(**token_dict)
         return None
 
