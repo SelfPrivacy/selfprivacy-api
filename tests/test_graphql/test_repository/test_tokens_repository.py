@@ -265,7 +265,7 @@ def test_delete_token(some_tokens_repo):
 
 def test_delete_not_found_token(some_tokens_repo):
     repo = some_tokens_repo
-    tokens = repo.get_tokens()
+    initial_tokens = repo.get_tokens()
     input_token = Token(
         token="imbadtoken",
         device_name="primary_token",
@@ -274,7 +274,10 @@ def test_delete_not_found_token(some_tokens_repo):
     with pytest.raises(TokenNotFound):
         assert repo.delete_token(input_token) is None
 
-    assert repo.get_tokens() == tokens
+    new_tokens = repo.get_tokens()
+    assert len(new_tokens) == len(initial_tokens)
+    for token in initial_tokens:
+        assert token in new_tokens
 
 
 def test_refresh_token(some_tokens_repo, mock_token_generate):
