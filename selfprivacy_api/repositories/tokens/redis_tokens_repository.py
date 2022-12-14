@@ -15,6 +15,7 @@ from selfprivacy_api.repositories.tokens.exceptions import TokenNotFound
 
 TOKENS_PREFIX = "token_repo:tokens:"
 NEW_DEVICE_KEY_REDIS_KEY = "token_repo:new_device_key"
+RECOVERY_KEY_REDIS_KEY = "token_repo:recovery_key"
 
 
 class RedisTokensRepository(AbstractTokensRepository):
@@ -49,7 +50,10 @@ class RedisTokensRepository(AbstractTokensRepository):
 
     def get_recovery_key(self) -> Optional[RecoveryKey]:
         """Get the recovery key"""
-        raise NotImplementedError
+        r = self.connection
+        if r.exists(RECOVERY_KEY_REDIS_KEY):
+            return self._recovery_key_from_hash(RECOVERY_KEY_REDIS_KEY)
+        return None
 
     def create_recovery_key(
         self,
@@ -90,6 +94,7 @@ class RedisTokensRepository(AbstractTokensRepository):
     def _is_date_key(key: str):
         return key in [
             "created_at",
+            "expires_at",
         ]
 
     @staticmethod
@@ -114,6 +119,12 @@ class RedisTokensRepository(AbstractTokensRepository):
         token_dict = self._model_dict_from_hash(redis_key)
         if token_dict is not None:
             return Token(**token_dict)
+        return None
+
+    def _recovery_key_from_hash(self, redis_key: str) -> Optional[RecoveryKey]:
+        token_dict = self._model_dict_from_hash(redis_key)
+        if token_dict is not None:
+            return RecoveryKey(**token_dict)
         return None
 
     def _store_model_as_hash(self, redis_key, model):
