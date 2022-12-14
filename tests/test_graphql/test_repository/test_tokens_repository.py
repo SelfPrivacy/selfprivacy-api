@@ -159,8 +159,7 @@ def empty_json_repo(empty_keys):
 @pytest.fixture
 def empty_redis_repo():
     repo = RedisTokensRepository()
-    for token in repo.get_tokens():
-        repo.delete_token(token)
+    repo.reset()
     assert repo.get_tokens() == []
     return repo
 

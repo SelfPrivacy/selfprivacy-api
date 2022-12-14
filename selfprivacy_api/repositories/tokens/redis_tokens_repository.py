@@ -11,6 +11,7 @@ from selfprivacy_api.utils.redis_pool import RedisPool
 from selfprivacy_api.models.tokens.token import Token
 from selfprivacy_api.models.tokens.recovery_key import RecoveryKey
 from selfprivacy_api.models.tokens.new_device_key import NewDeviceKey
+from selfprivacy_api.repositories.tokens.exceptions import TokenNotFound
 
 TOKENS_PREFIX = "token_repo:tokens:"
 NEW_DEVICE_KEY_REDIS_KEY = "token_repo:new_device_key"
@@ -39,6 +40,10 @@ class RedisTokensRepository(AbstractTokensRepository):
         r = self.connection
         key = RedisTokensRepository._token_redis_key(input_token)
         r.delete(key)
+
+    def reset(self):
+        for token in self.get_tokens():
+            self.delete_token(token)
 
     def get_recovery_key(self) -> Optional[RecoveryKey]:
         """Get the recovery key"""
