@@ -39,6 +39,8 @@ class RedisTokensRepository(AbstractTokensRepository):
         """Delete the token"""
         r = self.connection
         key = RedisTokensRepository._token_redis_key(input_token)
+        if input_token not in self.get_tokens():
+            raise TokenNotFound
         r.delete(key)
 
     def reset(self):
