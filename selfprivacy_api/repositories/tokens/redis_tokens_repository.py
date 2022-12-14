@@ -90,7 +90,10 @@ class RedisTokensRepository(AbstractTokensRepository):
 
     def _decrement_recovery_token(self):
         """Decrement recovery key use count by one"""
-        raise NotImplementedError
+        if self.is_recovery_key_valid():
+            uses_left = self.get_recovery_key().uses_left
+            r = self.connection
+            r.hset(RECOVERY_KEY_REDIS_KEY, "uses_left", uses_left - 1)
 
     def _get_stored_new_device_key(self) -> Optional[NewDeviceKey]:
         """Retrieves new device key that is already stored."""
