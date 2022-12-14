@@ -181,8 +181,8 @@ def some_tokens_repo(empty_repo):
     for name in ORIGINAL_DEVICE_NAMES:
         empty_repo.create_token(name)
     assert len(empty_repo.get_tokens()) == len(ORIGINAL_DEVICE_NAMES)
-    for i, t in enumerate(empty_repo.get_tokens()):
-        assert t.device_name == ORIGINAL_DEVICE_NAMES[i]
+    for name in ORIGINAL_DEVICE_NAMES:
+        assert empty_repo.get_token_by_name(name) is not None
     assert empty_repo.get_new_device_key() is not None
     return empty_repo
 
@@ -209,8 +209,10 @@ def test_get_token_by_non_existent_token_string(some_tokens_repo):
 def test_get_token_by_name(some_tokens_repo):
     repo = some_tokens_repo
 
-    assert repo.get_token_by_name(token_name="primary_token") is not None
-    assert repo.get_token_by_name(token_name="primary_token") == repo.get_tokens()[0]
+    token = repo.get_token_by_name(token_name="primary_token")
+    assert token is not None
+    assert token.device_name == "primary_token"
+    assert token in repo.get_tokens()
 
 
 def test_get_token_by_non_existent_name(some_tokens_repo):
