@@ -64,7 +64,9 @@ class RedisTokensRepository(AbstractTokensRepository):
         uses_left: Optional[int],
     ) -> RecoveryKey:
         """Create the recovery key"""
-        raise NotImplementedError
+        recovery_key = RecoveryKey.generate(expiration=expiration, uses_left=uses_left)
+        self._store_model_as_hash(RECOVERY_KEY_REDIS_KEY, recovery_key)
+        return recovery_key
 
     def get_new_device_key(self) -> NewDeviceKey:
         """Creates and returns the new device key"""
