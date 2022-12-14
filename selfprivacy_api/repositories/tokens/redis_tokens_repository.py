@@ -57,9 +57,13 @@ class RedisTokensRepository(AbstractTokensRepository):
         """Delete the new device key"""
         raise NotImplementedError
 
+    @staticmethod
+    def _token_redis_key(token: Token) -> str:
+        return RedisTokensRepository.token_key_for_device(token.device_name)
+
     def _store_token(self, new_token: Token):
         """Store a token directly"""
-        key = RedisTokensRepository.token_key_for_device(new_token.device_name)
+        key = RedisTokensRepository._token_redis_key(new_token)
         self._store_token_as_hash(key, new_token)
 
     def _decrement_recovery_token(self):
