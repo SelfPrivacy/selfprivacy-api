@@ -13,6 +13,7 @@ from selfprivacy_api.models.tokens.recovery_key import RecoveryKey
 from selfprivacy_api.models.tokens.new_device_key import NewDeviceKey
 
 TOKENS_PREFIX = "token_repo:tokens:"
+NEW_DEVICE_KEY_REDIS_KEY = "token_repo:new_device_key"
 
 
 class RedisTokensRepository(AbstractTokensRepository):
@@ -53,7 +54,9 @@ class RedisTokensRepository(AbstractTokensRepository):
 
     def get_new_device_key(self) -> NewDeviceKey:
         """Creates and returns the new device key"""
-        raise NotImplementedError
+        new_device_key = NewDeviceKey.generate()
+        self._store_model_as_hash(NEW_DEVICE_KEY_REDIS_KEY, new_device_key)
+        return NewDeviceKey
 
     def delete_new_device_key(self) -> None:
         """Delete the new device key"""
@@ -66,7 +69,7 @@ class RedisTokensRepository(AbstractTokensRepository):
     def _store_token(self, new_token: Token):
         """Store a token directly"""
         key = RedisTokensRepository._token_redis_key(new_token)
-        self._store_token_as_hash(key, new_token)
+        self._store_model_as_hash(key, new_token)
 
     def _decrement_recovery_token(self):
         """Decrement recovery key use count by one"""
@@ -101,7 +104,7 @@ class RedisTokensRepository(AbstractTokensRepository):
             return Token(**token_dict)
         return None
 
-    def _store_token_as_hash(self, redis_key, model):
+    def _store_model_as_hash(self, redis_key, model):
         r = self.connection
         for key, value in model.dict().items():
             if isinstance(value, datetime):
