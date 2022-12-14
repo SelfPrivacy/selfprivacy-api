@@ -47,6 +47,9 @@ class RedisTokensRepository(AbstractTokensRepository):
     def reset(self):
         for token in self.get_tokens():
             self.delete_token(token)
+        self.delete_new_device_key()
+        r = self.connection
+        r.delete(RECOVERY_KEY_REDIS_KEY)
 
     def get_recovery_key(self) -> Optional[RecoveryKey]:
         """Get the recovery key"""
@@ -71,7 +74,8 @@ class RedisTokensRepository(AbstractTokensRepository):
 
     def delete_new_device_key(self) -> None:
         """Delete the new device key"""
-        raise NotImplementedError
+        r = self.connection
+        r.delete(NEW_DEVICE_KEY_REDIS_KEY)
 
     @staticmethod
     def _token_redis_key(token: Token) -> str:
