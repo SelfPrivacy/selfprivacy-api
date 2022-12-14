@@ -28,7 +28,9 @@ class RedisTokensRepository(AbstractTokensRepository):
 
     def get_tokens(self) -> list[Token]:
         """Get the tokens"""
-        raise NotImplementedError
+        r = self.connection
+        token_keys = r.keys(TOKENS_PREFIX + "*")
+        return [self._token_from_hash(key) for key in token_keys]
 
     def delete_token(self, input_token: Token) -> None:
         """Delete the token"""
@@ -65,3 +67,20 @@ class RedisTokensRepository(AbstractTokensRepository):
     def _get_stored_new_device_key(self) -> Optional[NewDeviceKey]:
         """Retrieves new device key that is already stored."""
         raise NotImplementedError
+
+    def _token_from_hash(self, redis_key: str) -> Token:
+        r = self.connection
+        if r.exists(redis_key):
+            token_dict = r.hgetall(redis_key)
+            for date in [
+                "created_at",
+            ]:
+                if token_dict[date] != "None":
+                    token_dict[date] = datetime.datetime.fromisoformat(token_dict[date])
+            for key in token_dict.keys():
+                if token_dict[key] == "None":
+                    token_dict[key] = None
+
+            return Token(**token_dict)
+        return None
+
