@@ -76,18 +76,22 @@ class RedisTokensRepository(AbstractTokensRepository):
         """Retrieves new device key that is already stored."""
         raise NotImplementedError
 
+    @staticmethod
+    def _prepare_model_dict(d: dict):
+        for date in [
+            "created_at",
+        ]:
+            if d[date] != "None":
+                d[date] = datetime.fromisoformat(d[date])
+        for key in d.keys():
+            if d[key] == "None":
+                d[key] = None
+
     def _token_from_hash(self, redis_key: str) -> Token:
         r = self.connection
         if r.exists(redis_key):
             token_dict = r.hgetall(redis_key)
-            for date in [
-                "created_at",
-            ]:
-                if token_dict[date] != "None":
-                    token_dict[date] = datetime.fromisoformat(token_dict[date])
-            for key in token_dict.keys():
-                if token_dict[key] == "None":
-                    token_dict[key] = None
+            RedisTokensRepository._prepare_model_dict(token_dict)
 
             return Token(**token_dict)
         return None
