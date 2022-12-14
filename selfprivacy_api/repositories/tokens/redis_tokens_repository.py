@@ -87,10 +87,15 @@ class RedisTokensRepository(AbstractTokensRepository):
         raise NotImplementedError
 
     @staticmethod
-    def _prepare_model_dict(d: dict):
-        for date in [
+    def _is_date_key(key: str):
+        return key in [
             "created_at",
-        ]:
+        ]
+
+    @staticmethod
+    def _prepare_model_dict(d: dict):
+        date_keys = [key for key in d.keys() if RedisTokensRepository._is_date_key(key)]
+        for date in date_keys:
             if d[date] != "None":
                 d[date] = datetime.fromisoformat(d[date])
         for key in d.keys():
