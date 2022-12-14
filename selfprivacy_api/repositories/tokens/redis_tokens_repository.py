@@ -124,17 +124,17 @@ class RedisTokensRepository(AbstractTokensRepository):
             return token_dict
         return None
 
-    def _token_from_hash(self, redis_key: str) -> Optional[Token]:
+    def _hash_as_model(self, redis_key: str, model_class):
         token_dict = self._model_dict_from_hash(redis_key)
         if token_dict is not None:
-            return Token(**token_dict)
+            return model_class(**token_dict)
         return None
 
+    def _token_from_hash(self, redis_key: str) -> Optional[Token]:
+        return self._hash_as_model(redis_key, Token)
+
     def _recovery_key_from_hash(self, redis_key: str) -> Optional[RecoveryKey]:
-        token_dict = self._model_dict_from_hash(redis_key)
-        if token_dict is not None:
-            return RecoveryKey(**token_dict)
-        return None
+        return self._hash_as_model(redis_key, RecoveryKey)
 
     def _store_model_as_hash(self, redis_key, model):
         r = self.connection
