@@ -166,12 +166,12 @@ def empty_redis_repo():
 
 
 @pytest.fixture(params=["json", "redis"])
-def empty_repo(request, empty_json_repo):
+def empty_repo(request, empty_json_repo, empty_redis_repo):
     if request.param == "json":
         return empty_json_repo
     if request.param == "redis":
-        # return empty_redis_repo
-        return empty_json_repo
+        return empty_redis_repo
+        # return empty_json_repo
     else:
         raise NotImplementedError
 
