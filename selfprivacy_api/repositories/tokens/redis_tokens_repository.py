@@ -35,7 +35,9 @@ class RedisTokensRepository(AbstractTokensRepository):
 
     def delete_token(self, input_token: Token) -> None:
         """Delete the token"""
-        raise NotImplementedError
+        r = self.connection
+        key = RedisTokensRepository._token_redis_key(input_token)
+        r.delete(key)
 
     def get_recovery_key(self) -> Optional[RecoveryKey]:
         """Get the recovery key"""
