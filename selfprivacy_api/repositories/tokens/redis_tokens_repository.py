@@ -97,7 +97,7 @@ class RedisTokensRepository(AbstractTokensRepository):
 
     def _get_stored_new_device_key(self) -> Optional[NewDeviceKey]:
         """Retrieves new device key that is already stored."""
-        raise NotImplementedError
+        return self._new_device_key_from_hash(NEW_DEVICE_KEY_REDIS_KEY)
 
     @staticmethod
     def _is_date_key(key: str):
@@ -135,6 +135,9 @@ class RedisTokensRepository(AbstractTokensRepository):
 
     def _recovery_key_from_hash(self, redis_key: str) -> Optional[RecoveryKey]:
         return self._hash_as_model(redis_key, RecoveryKey)
+
+    def _new_device_key_from_hash(self, redis_key: str) -> Optional[NewDeviceKey]:
+        return self._hash_as_model(redis_key, NewDeviceKey)
 
     def _store_model_as_hash(self, redis_key, model):
         r = self.connection
