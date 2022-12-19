@@ -3,6 +3,7 @@
 # pylint: disable=missing-function-docstring
 
 from datetime import datetime
+from mnemonic import Mnemonic
 
 import pytest
 
@@ -124,21 +125,6 @@ def mock_recovery_key_generate(mocker):
         autospec=True,
         return_value=RecoveryKey(
             key="889bf49c1d3199d71a2e704718772bd53a422020334db051",
-            created_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
-            expires_at=None,
-            uses_left=1,
-        ),
-    )
-    return mock
-
-
-@pytest.fixture
-def mock_recovery_key_generate_for_mnemonic(mocker):
-    mock = mocker.patch(
-        "selfprivacy_api.models.tokens.recovery_key.RecoveryKey.generate",
-        autospec=True,
-        return_value=RecoveryKey(
-            key="ed653e4b8b042b841d285fa7a682fa09e925ddb2d8906f54",
             created_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
             expires_at=None,
             uses_left=1,
@@ -397,46 +383,40 @@ def test_use_not_found_mnemonic_recovery_key(some_tokens_repo):
         )
 
 
-def test_use_mnemonic_recovery_key_when_empty(empty_repo):
-    repo = empty_repo
-
-    with pytest.raises(RecoveryKeyNotFound):
-        assert (
-            repo.use_mnemonic_recovery_key(
-                mnemonic_phrase="captain ribbon toddler settle symbol minute step broccoli bless universe divide bulb",
-                device_name="primary_token",
-            )
-            is None
-        )
+@pytest.fixture(params=["recovery_uses_1", "recovery_eternal"])
+def recovery_key_uses_left(request):
+    if request.param == "recovery_uses_1":
+        return 1
+    if request.param == "recovery_eternal":
+        return None
 
 
-# agnostic test mixed with an implementation test
-def test_use_mnemonic_recovery_key(
-    some_tokens_repo, mock_recovery_key_generate_for_mnemonic, mock_generate_token
-):
+def test_use_mnemonic_recovery_key(some_tokens_repo, recovery_key_uses_left):
     repo = some_tokens_repo
-    assert repo.create_recovery_key(uses_left=1, expiration=None) is not None
-
-    test_token = Token(
-        token="ur71mC4aiI6FIYAN--cTL-38rPHS5D6NuB1bgN_qKF4",
-        device_name="newdevice",
-        created_at=datetime(2022, 11, 14, 6, 6, 32, 777123),
-    )
-
     assert (
-        repo.use_mnemonic_recovery_key(
-            mnemonic_phrase="uniform clarify napkin bid dress search input armor police cross salon because myself uphold slice bamboo hungry park",
-            device_name="newdevice",
-        )
-        == test_token
+        repo.create_recovery_key(uses_left=recovery_key_uses_left, expiration=None)
+        is not None
+    )
+    assert repo.is_recovery_key_valid()
+    recovery_key = repo.get_recovery_key()
+
+    token = repo.use_mnemonic_recovery_key(
+        mnemonic_phrase=Mnemonic(language="english").to_mnemonic(
+            bytes.fromhex(recovery_key.key)
+        ),
+        device_name="newdevice",
     )
 
-    assert test_token in repo.get_tokens()
+    assert token.device_name == "newdevice"
+    assert token in repo.get_tokens()
+    new_uses = None
+    if recovery_key_uses_left is not None:
+        new_uses = recovery_key_uses_left - 1
     assert repo.get_recovery_key() == RecoveryKey(
-        key="ed653e4b8b042b841d285fa7a682fa09e925ddb2d8906f54",
-        created_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
+        key=recovery_key.key,
+        created_at=recovery_key.created_at,
         expires_at=None,
-        uses_left=0,
+        uses_left=new_uses,
     )
 
 

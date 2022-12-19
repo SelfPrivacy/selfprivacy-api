@@ -98,7 +98,8 @@ class JsonTokensRepository(AbstractTokensRepository):
         """Decrement recovery key use count by one"""
         if self.is_recovery_key_valid():
             with WriteUserData(UserDataFiles.TOKENS) as tokens:
-                tokens["recovery_token"]["uses_left"] -= 1
+                if tokens["recovery_token"]["uses_left"] is not None:
+                    tokens["recovery_token"]["uses_left"] -= 1
 
     def get_new_device_key(self) -> NewDeviceKey:
         """Creates and returns the new device key"""
