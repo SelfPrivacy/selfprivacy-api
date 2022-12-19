@@ -2,7 +2,7 @@
 # pylint: disable=unused-argument
 # pylint: disable=missing-function-docstring
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from mnemonic import Mnemonic
 
 import pytest
@@ -338,6 +338,25 @@ def test_use_mnemonic_not_valid_recovery_key(
                 device_name="primary_token",
             )
             is None
+        )
+
+
+def test_use_mnemonic_expired_recovery_key(
+    some_tokens_repo,
+):
+    repo = some_tokens_repo
+    expiration = datetime.now() - timedelta(minutes=5)
+    assert repo.create_recovery_key(uses_left=2, expiration=expiration) is not None
+    recovery_key = repo.get_recovery_key()
+    assert recovery_key.expires_at == expiration
+    assert not repo.is_recovery_key_valid()
+
+    with pytest.raises(RecoveryKeyNotFound):
+        token = repo.use_mnemonic_recovery_key(
+            mnemonic_phrase=Mnemonic(language="english").to_mnemonic(
+                bytes.fromhex(recovery_key.key)
+            ),
+            device_name="newdevice",
         )
 
 

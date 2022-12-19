@@ -69,7 +69,7 @@ class JsonTokensRepository(AbstractTokensRepository):
             recovery_key = RecoveryKey(
                 key=tokens_file["recovery_token"].get("token"),
                 created_at=tokens_file["recovery_token"].get("date"),
-                expires_at=tokens_file["recovery_token"].get("expitation"),
+                expires_at=tokens_file["recovery_token"].get("expiration"),
                 uses_left=tokens_file["recovery_token"].get("uses_left"),
             )
 
@@ -85,10 +85,13 @@ class JsonTokensRepository(AbstractTokensRepository):
         recovery_key = RecoveryKey.generate(expiration, uses_left)
 
         with WriteUserData(UserDataFiles.TOKENS) as tokens_file:
+            expiration = recovery_key.expires_at
+            if expiration is not None:
+                expiration = expiration.strftime(DATETIME_FORMAT)
             tokens_file["recovery_token"] = {
                 "token": recovery_key.key,
                 "date": recovery_key.created_at.strftime(DATETIME_FORMAT),
-                "expiration": recovery_key.expires_at,
+                "expiration": expiration,
                 "uses_left": recovery_key.uses_left,
             }
 
