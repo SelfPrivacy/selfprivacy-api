@@ -215,6 +215,13 @@ def test_is_token_name_pair_valid(some_tokens_repo):
     assert not repo.is_token_name_pair_valid("gibberish", token.token)
 
 
+def test_is_token_name_exists(some_tokens_repo):
+    repo = some_tokens_repo
+    token = repo.get_tokens()[0]
+    assert repo.is_token_name_exists(token.device_name)
+    assert not repo.is_token_name_exists("gibberish")
+
+
 def test_get_tokens(some_tokens_repo):
     repo = some_tokens_repo
     tokenstrings = []
