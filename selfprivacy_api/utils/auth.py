@@ -73,12 +73,6 @@ def is_token_valid(token):
     return False
 
 
-def is_token_name_exists(token_name):
-    """Check if token name exists"""
-    with ReadUserData(UserDataFiles.TOKENS) as tokens:
-        return token_name in [t["name"] for t in tokens["tokens"]]
-
-
 def get_token_name(token: str) -> typing.Optional[str]:
     """Return the name of the token provided"""
     with ReadUserData(UserDataFiles.TOKENS) as tokens:
