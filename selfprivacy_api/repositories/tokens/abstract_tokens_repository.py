@@ -77,8 +77,11 @@ class AbstractTokensRepository(ABC):
 
     def is_token_name_pair_valid(self, token_name: str, token_string: str) -> bool:
         """Check if the token name and token are valid"""
-        token = self.get_token_by_name(token_name)
-        if token is None:
+        try:
+            token = self.get_token_by_name(token_name)
+            if token is None:
+                return False
+        except TokenNotFound:
             return False
         return token.token == token_string
 
