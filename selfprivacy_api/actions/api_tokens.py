@@ -12,7 +12,6 @@ from selfprivacy_api.utils.auth import (
     is_recovery_token_exists,
     is_recovery_token_valid,
     is_token_name_exists,
-    is_token_name_pair_valid,
     get_token_name,
 )
 
@@ -56,7 +55,7 @@ class CannotDeleteCallerException(Exception):
 
 def delete_api_token(caller_token: str, token_name: str) -> None:
     """Delete the token"""
-    if is_token_name_pair_valid(token_name, caller_token):
+    if TOKEN_REPO.is_token_name_pair_valid(token_name, caller_token):
         raise CannotDeleteCallerException("Cannot delete caller's token")
     if not is_token_name_exists(token_name):
         raise NotFoundException("Token not found")
