@@ -22,9 +22,18 @@ from selfprivacy_api.utils.auth import (
     delete_new_device_auth_token,
     get_new_device_auth_token,
     refresh_token,
-    use_mnemonic_recoverery_token,
     use_new_device_auth_token,
 )
+
+from selfprivacy_api.repositories.tokens.json_tokens_repository import (
+    JsonTokensRepository,
+)
+from selfprivacy_api.repositories.tokens.exceptions import (
+    RecoveryKeyNotFound,
+    InvalidMnemonic,
+)
+
+TOKEN_REPO = JsonTokensRepository()
 
 
 @strawberry.type
@@ -98,20 +107,21 @@ class ApiMutations:
         self, input: UseRecoveryKeyInput
     ) -> DeviceApiTokenMutationReturn:
         """Use recovery key"""
-        token = use_mnemonic_recoverery_token(input.key, input.deviceName)
-        if token is None:
+        try:
+            token = TOKEN_REPO.use_mnemonic_recovery_key(input.key, input.deviceName)
+            return DeviceApiTokenMutationReturn(
+                success=True,
+                message="Recovery key used",
+                code=200,
+                token=token.token,
+            )
+        except (RecoveryKeyNotFound, InvalidMnemonic):
             return DeviceApiTokenMutationReturn(
                 success=False,
                 message="Recovery key not found",
                 code=404,
                 token=None,
             )
-        return DeviceApiTokenMutationReturn(
-            success=True,
-            message="Recovery key used",
-            code=200,
-            token=token,
-        )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def refresh_device_api_token(self, info: Info) -> DeviceApiTokenMutationReturn:
