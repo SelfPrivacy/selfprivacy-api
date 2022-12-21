@@ -13,13 +13,13 @@ from selfprivacy_api.utils.auth import (
     is_recovery_token_valid,
     is_token_name_exists,
     is_token_name_pair_valid,
-    refresh_token,
     get_token_name,
 )
 
 from selfprivacy_api.repositories.tokens.json_tokens_repository import (
     JsonTokensRepository,
 )
+from selfprivacy_api.repositories.tokens.exceptions import TokenNotFound
 
 TOKEN_REPO = JsonTokensRepository()
 
@@ -65,10 +65,12 @@ def delete_api_token(caller_token: str, token_name: str) -> None:
 
 def refresh_api_token(caller_token: str) -> str:
     """Refresh the token"""
-    new_token = refresh_token(caller_token)
-    if new_token is None:
+    try:
+        old_token = TOKEN_REPO.get_token_by_token_string(caller_token)
+        new_token = TOKEN_REPO.refresh_token(old_token)
+    except TokenNotFound:
         raise NotFoundException("Token not found")
-    return new_token
+    return new_token.token
 
 
 class RecoveryTokenStatus(BaseModel):

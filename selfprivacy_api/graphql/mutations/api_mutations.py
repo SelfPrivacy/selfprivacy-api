@@ -11,6 +11,7 @@ from selfprivacy_api.actions.api_tokens import (
     NotFoundException,
     delete_api_token,
     get_new_api_recovery_key,
+    refresh_api_token,
 )
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.mutations.mutation_interface import (
@@ -139,15 +140,14 @@ class ApiMutations:
             )
 
         try:
-            old_token = TOKEN_REPO.get_token_by_token_string(token_string)
-            new_token = TOKEN_REPO.refresh_token(old_token)
+            new_token = refresh_api_token(token_string)
             return DeviceApiTokenMutationReturn(
                 success=True,
                 message="Token refreshed",
                 code=200,
-                token=new_token.token,
+                token=new_token,
             )
-        except:
+        except NotFoundException:
             return DeviceApiTokenMutationReturn(
                 success=False,
                 message="Token not found",
