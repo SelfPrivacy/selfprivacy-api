@@ -2,11 +2,11 @@
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel
+from mnemonic import Mnemonic
 
 
 from selfprivacy_api.utils.auth import (
     delete_token,
-    generate_recovery_token,
     get_recovery_token_status,
     get_tokens_info,
     is_recovery_token_exists,
@@ -16,6 +16,12 @@ from selfprivacy_api.utils.auth import (
     refresh_token,
     get_token_name,
 )
+
+from selfprivacy_api.repositories.tokens.json_tokens_repository import (
+    JsonTokensRepository,
+)
+
+TOKEN_REPO = JsonTokensRepository()
 
 
 class TokenInfoWithIsCaller(BaseModel):
@@ -112,5 +118,6 @@ def get_new_api_recovery_key(
         if uses_left <= 0:
             raise InvalidUsesLeft("Uses must be greater than 0")
 
-    key = generate_recovery_token(expiration_date, uses_left)
-    return key
+    key = TOKEN_REPO.create_recovery_key(expiration_date, uses_left)
+    mnemonic_phrase = Mnemonic(language="english").to_mnemonic(bytes.fromhex(key.key))
+    return mnemonic_phrase
