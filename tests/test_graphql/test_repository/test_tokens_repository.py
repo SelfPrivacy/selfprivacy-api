@@ -266,15 +266,17 @@ def test_delete_not_found_token(some_tokens_repo):
         assert token in new_tokens
 
 
-def test_refresh_token(some_tokens_repo, mock_token_generate):
+def test_refresh_token(some_tokens_repo):
     repo = some_tokens_repo
     input_token = some_tokens_repo.get_tokens()[0]
 
-    assert repo.refresh_token(input_token) == Token(
-        token="ZuLNKtnxDeq6w2dpOJhbB3iat_sJLPTPl_rN5uc5MvM",
-        device_name="IamNewDevice",
-        created_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
-    )
+    output_token = repo.refresh_token(input_token)
+
+    assert output_token.token != input_token.token
+    assert output_token.device_name == input_token.device_name
+    assert output_token.created_at == input_token.created_at
+
+    assert output_token in repo.get_tokens()
 
 
 def test_refresh_not_found_token(some_tokens_repo, mock_token_generate):

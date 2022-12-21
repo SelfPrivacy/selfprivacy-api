@@ -52,6 +52,7 @@ class AbstractTokensRepository(ABC):
     def refresh_token(self, input_token: Token) -> Token:
         """Change the token field of the existing token"""
         new_token = Token.generate(device_name=input_token.device_name)
+        new_token.created_at = input_token.created_at
 
         if input_token in self.get_tokens():
             self.delete_token(input_token)
