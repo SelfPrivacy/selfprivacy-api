@@ -4,12 +4,6 @@ from typing import Optional
 from pydantic import BaseModel
 from mnemonic import Mnemonic
 
-
-from selfprivacy_api.utils.auth import (
-    get_tokens_info,
-    get_token_name,
-)
-
 from selfprivacy_api.repositories.tokens.json_tokens_repository import (
     JsonTokensRepository,
 )
@@ -28,13 +22,13 @@ class TokenInfoWithIsCaller(BaseModel):
 
 def get_api_tokens_with_caller_flag(caller_token: str) -> list[TokenInfoWithIsCaller]:
     """Get the tokens info"""
-    caller_name = get_token_name(caller_token)
-    tokens = get_tokens_info()
+    caller_name = TOKEN_REPO.get_token_by_token_string(caller_token).device_name
+    tokens = TOKEN_REPO.get_tokens()
     return [
         TokenInfoWithIsCaller(
-            name=token.name,
-            date=token.date,
-            is_caller=token.name == caller_name,
+            name=token.device_name,
+            date=token.created_at,
+            is_caller=token.device_name == caller_name,
         )
         for token in tokens
     ]
