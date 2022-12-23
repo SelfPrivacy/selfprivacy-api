@@ -124,12 +124,6 @@ def create_token(name):
     return token
 
 
-def delete_token(token_name):
-    """Delete token"""
-    with WriteUserData(UserDataFiles.TOKENS) as tokens:
-        tokens["tokens"] = [t for t in tokens["tokens"] if t["name"] != token_name]
-
-
 def is_recovery_token_exists():
     """Check if recovery token exists"""
     with ReadUserData(UserDataFiles.TOKENS) as tokens:

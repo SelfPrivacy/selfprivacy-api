@@ -6,7 +6,6 @@ from mnemonic import Mnemonic
 
 
 from selfprivacy_api.utils.auth import (
-    delete_token,
     get_recovery_token_status,
     get_tokens_info,
     is_recovery_token_exists,
@@ -58,7 +57,8 @@ def delete_api_token(caller_token: str, token_name: str) -> None:
         raise CannotDeleteCallerException("Cannot delete caller's token")
     if not TOKEN_REPO.is_token_name_exists(token_name):
         raise NotFoundException("Token not found")
-    delete_token(token_name)
+    token = TOKEN_REPO.get_token_by_name(token_name)
+    TOKEN_REPO.delete_token(token)
 
 
 def refresh_api_token(caller_token: str) -> str:
