@@ -89,18 +89,6 @@ class BasicTokenInfo(BaseModel):
     date: datetime
 
 
-def get_tokens_info():
-    """Get all tokens info without tokens themselves"""
-    with ReadUserData(UserDataFiles.TOKENS) as tokens:
-        return [
-            BasicTokenInfo(
-                name=t["name"],
-                date=parse_date(t["date"]),
-            )
-            for t in tokens["tokens"]
-        ]
-
-
 def _generate_token():
     """Generates new token and makes sure it is unique"""
     token = secrets.token_urlsafe(32)
