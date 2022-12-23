@@ -6,10 +6,7 @@ from mnemonic import Mnemonic
 
 
 from selfprivacy_api.utils.auth import (
-    get_recovery_token_status,
     get_tokens_info,
-    is_recovery_token_exists,
-    is_recovery_token_valid,
     get_token_name,
 )
 
@@ -83,18 +80,16 @@ class RecoveryTokenStatus(BaseModel):
 
 def get_api_recovery_token_status() -> RecoveryTokenStatus:
     """Get the recovery token status"""
-    if not is_recovery_token_exists():
+    token = TOKEN_REPO.get_recovery_key()
+    if token is None:
         return RecoveryTokenStatus(exists=False, valid=False)
-    status = get_recovery_token_status()
-    if status is None:
-        return RecoveryTokenStatus(exists=False, valid=False)
-    is_valid = is_recovery_token_valid()
+    is_valid = TOKEN_REPO.is_recovery_key_valid()
     return RecoveryTokenStatus(
         exists=True,
         valid=is_valid,
-        date=status["date"],
-        expiration=status["expiration"],
-        uses_left=status["uses_left"],
+        date=token.created_at,
+        expiration=token.expires_at,
+        uses_left=token.uses_left,
     )
 
 
