@@ -104,18 +104,13 @@ class JsonTokensRepository(AbstractTokensRepository):
                 if tokens["recovery_token"]["uses_left"] is not None:
                     tokens["recovery_token"]["uses_left"] -= 1
 
-    def get_new_device_key(self) -> NewDeviceKey:
-        """Creates and returns the new device key"""
-        new_device_key = NewDeviceKey.generate()
-
+    def _store_new_device_key(self, new_device_key: NewDeviceKey) -> None:
         with WriteUserData(UserDataFiles.TOKENS) as tokens_file:
             tokens_file["new_device"] = {
                 "token": new_device_key.key,
                 "date": new_device_key.created_at.strftime(DATETIME_FORMAT),
                 "expiration": new_device_key.expires_at.strftime(DATETIME_FORMAT),
             }
-
-        return new_device_key
 
     def delete_new_device_key(self) -> None:
         """Delete the new device key"""

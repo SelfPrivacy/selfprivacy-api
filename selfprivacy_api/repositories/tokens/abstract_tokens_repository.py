@@ -118,9 +118,15 @@ class AbstractTokensRepository(ABC):
             return False
         return recovery_key.is_valid()
 
-    @abstractmethod
     def get_new_device_key(self) -> NewDeviceKey:
         """Creates and returns the new device key"""
+        new_device_key = NewDeviceKey.generate()
+        self._store_new_device_key(new_device_key)
+
+        return new_device_key
+
+    def _store_new_device_key(self, new_device_key: NewDeviceKey) -> None:
+        """Store new device key directly"""
 
     @abstractmethod
     def delete_new_device_key(self) -> None:

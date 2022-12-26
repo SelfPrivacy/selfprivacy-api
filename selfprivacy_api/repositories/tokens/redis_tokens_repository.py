@@ -68,11 +68,9 @@ class RedisTokensRepository(AbstractTokensRepository):
         self._store_model_as_hash(RECOVERY_KEY_REDIS_KEY, recovery_key)
         return recovery_key
 
-    def get_new_device_key(self) -> NewDeviceKey:
-        """Creates and returns the new device key"""
-        new_device_key = NewDeviceKey.generate()
+    def _store_new_device_key(self, new_device_key: NewDeviceKey) -> None:
+        """Store new device key directly"""
         self._store_model_as_hash(NEW_DEVICE_KEY_REDIS_KEY, new_device_key)
-        return new_device_key
 
     def delete_new_device_key(self) -> None:
         """Delete the new device key"""
