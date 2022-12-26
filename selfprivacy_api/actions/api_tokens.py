@@ -39,6 +39,11 @@ def get_api_tokens_with_caller_flag(caller_token: str) -> list[TokenInfoWithIsCa
     ]
 
 
+def is_token_valid(token) -> bool:
+    """Check if token is valid"""
+    return TOKEN_REPO.is_token_valid(token)
+
+
 class NotFoundException(Exception):
     """Not found exception"""
 

@@ -66,13 +66,6 @@ def _validate_token_name(name):
     return name
 
 
-def is_token_valid(token):
-    """Check if token is valid"""
-    if token in _get_tokens():
-        return True
-    return False
-
-
 class BasicTokenInfo(BaseModel):
     """Token info"""
 
