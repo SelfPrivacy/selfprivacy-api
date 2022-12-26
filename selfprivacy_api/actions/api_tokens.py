@@ -114,3 +114,11 @@ def get_new_api_recovery_key(
 
 def delete_new_device_auth_token() -> None:
     TOKEN_REPO.delete_new_device_key()
+
+
+def get_new_device_auth_token() -> str:
+    """Generate and store a new device auth token which is valid for 10 minutes
+    and return a mnemonic phrase representation
+    """
+    key = TOKEN_REPO.get_new_device_key()
+    return Mnemonic(language="english").to_mnemonic(bytes.fromhex(key.key))

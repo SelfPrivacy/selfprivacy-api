@@ -227,22 +227,6 @@ def use_mnemonic_recoverery_token(mnemonic_phrase, name):
     return token
 
 
-def get_new_device_auth_token() -> str:
-    """Generate a new device auth token which is valid for 10 minutes
-    and return a mnemonic phrase representation
-    Write token to the new_device of the tokens.json file.
-    """
-    token = secrets.token_bytes(16)
-    token_str = token.hex()
-    with WriteUserData(UserDataFiles.TOKENS) as tokens:
-        tokens["new_device"] = {
-            "token": token_str,
-            "date": str(datetime.now()),
-            "expiration": str(datetime.now() + timedelta(minutes=10)),
-        }
-    return Mnemonic(language="english").to_mnemonic(token)
-
-
 def _get_new_device_auth_token():
     """Get new device auth token. If it is expired, return None"""
     with ReadUserData(UserDataFiles.TOKENS) as tokens:
