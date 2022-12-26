@@ -120,37 +120,6 @@ def _get_recovery_token():
         return tokens["recovery_token"]["token"]
 
 
-def generate_recovery_token(
-    expiration: typing.Optional[datetime], uses_left: typing.Optional[int]
-) -> str:
-    """Generate a 24 bytes recovery token and return a mneomnic word list.
-    Write a string representation of the recovery token to the tokens.json file.
-    """
-    # expires must be a date or None
-    # uses_left must be an integer or None
-    if expiration is not None:
-        if not isinstance(expiration, datetime):
-            raise TypeError("expires must be a datetime object")
-    if uses_left is not None:
-        if not isinstance(uses_left, int):
-            raise TypeError("uses_left must be an integer")
-        if uses_left <= 0:
-            raise ValueError("uses_left must be greater than 0")
-
-    recovery_token = secrets.token_bytes(24)
-    recovery_token_str = recovery_token.hex()
-    with WriteUserData(UserDataFiles.TOKENS) as tokens:
-        tokens["recovery_token"] = {
-            "token": recovery_token_str,
-            "date": str(datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")),
-            "expiration": expiration.strftime("%Y-%m-%dT%H:%M:%S.%f")
-            if expiration is not None
-            else None,
-            "uses_left": uses_left if uses_left is not None else None,
-        }
-    return Mnemonic(language="english").to_mnemonic(recovery_token)
-
-
 def _get_new_device_auth_token():
     """Get new device auth token. If it is expired, return None"""
     with ReadUserData(UserDataFiles.TOKENS) as tokens:
