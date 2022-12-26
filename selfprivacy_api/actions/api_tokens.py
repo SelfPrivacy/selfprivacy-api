@@ -110,3 +110,7 @@ def get_new_api_recovery_key(
     key = TOKEN_REPO.create_recovery_key(expiration_date, uses_left)
     mnemonic_phrase = Mnemonic(language="english").to_mnemonic(bytes.fromhex(key.key))
     return mnemonic_phrase
+
+
+def delete_new_device_auth_token() -> None:
+    TOKEN_REPO.delete_new_device_key()

@@ -12,6 +12,7 @@ from selfprivacy_api.actions.api_tokens import (
     delete_api_token,
     get_new_api_recovery_key,
     refresh_api_token,
+    delete_new_device_auth_token,
 )
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.mutations.mutation_interface import (
@@ -20,7 +21,6 @@ from selfprivacy_api.graphql.mutations.mutation_interface import (
 )
 
 from selfprivacy_api.utils.auth import (
-    delete_new_device_auth_token,
     get_new_device_auth_token,
     use_new_device_auth_token,
 )

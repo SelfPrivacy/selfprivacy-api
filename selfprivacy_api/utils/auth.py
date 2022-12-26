@@ -257,13 +257,6 @@ def _get_new_device_auth_token():
         return new_device["token"]
 
 
-def delete_new_device_auth_token():
-    """Delete new device auth token"""
-    with WriteUserData(UserDataFiles.TOKENS) as tokens:
-        if "new_device" in tokens:
-            del tokens["new_device"]
-
-
 def use_new_device_auth_token(mnemonic_phrase, name):
     """Use the new device auth token by converting the mnemonic string to a byte array.
     If the mnemonic phrase is valid then generate a device token and return it.
