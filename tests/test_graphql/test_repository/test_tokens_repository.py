@@ -207,6 +207,13 @@ def test_get_token_by_non_existent_name(some_tokens_repo):
         assert repo.get_token_by_name(token_name="badname") is None
 
 
+def test_is_token_valid(some_tokens_repo):
+    repo = some_tokens_repo
+    token = repo.get_tokens()[0]
+    assert repo.is_token_valid(token.token)
+    assert not repo.is_token_valid("gibberish")
+
+
 def test_is_token_name_pair_valid(some_tokens_repo):
     repo = some_tokens_repo
     token = repo.get_tokens()[0]

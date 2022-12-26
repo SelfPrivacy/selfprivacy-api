@@ -63,10 +63,7 @@ class AbstractTokensRepository(ABC):
 
     def is_token_valid(self, token_string: str) -> bool:
         """Check if the token is valid"""
-        token = self.get_token_by_token_string(token_string)
-        if token is None:
-            return False
-        return True
+        return token_string in [token.token for token in self.get_tokens()]
 
     def is_token_name_exists(self, token_name: str) -> bool:
         """Check if the token name exists"""
