@@ -513,15 +513,20 @@ def test_use_not_exists_mnemonic_new_device_key(
         )
 
 
-def test_use_mnemonic_new_device_key(
-    empty_repo, mock_new_device_key_generate_for_mnemonic
-):
+def mnemonic_from_hex(hexkey):
+    return Mnemonic(language="english").to_mnemonic(bytes.fromhex(hexkey))
+
+
+def test_use_mnemonic_new_device_key(empty_repo):
     repo = empty_repo
-    assert repo.get_new_device_key() is not None
+    key = repo.get_new_device_key()
+    assert key is not None
+
+    mnemonic_phrase = mnemonic_from_hex(key.key)
 
     new_token = repo.use_mnemonic_new_device_key(
         device_name="imnew",
-        mnemonic_phrase="captain ribbon toddler settle symbol minute step broccoli bless universe divide bulb",
+        mnemonic_phrase=mnemonic_phrase,
     )
 
     assert new_token.device_name == "imnew"
@@ -532,9 +537,29 @@ def test_use_mnemonic_new_device_key(
         assert (
             repo.use_mnemonic_new_device_key(
                 device_name="imnew",
-                mnemonic_phrase="captain ribbon toddler settle symbol minute step broccoli bless universe divide bulb",
+                mnemonic_phrase=mnemonic_phrase,
             )
             is None
+        )
+
+
+def test_use_mnemonic_expired_new_device_key(
+    some_tokens_repo,
+):
+    repo = some_tokens_repo
+    expiration = datetime.now() - timedelta(minutes=5)
+
+    key = repo.get_new_device_key()
+    assert key is not None
+    assert key.expires_at is not None
+    key.expires_at = expiration
+    assert not key.is_valid()
+    repo._store_new_device_key(key)
+
+    with pytest.raises(NewDeviceKeyNotFound):
+        token = repo.use_mnemonic_new_device_key(
+            mnemonic_phrase=mnemonic_from_hex(key.key),
+            device_name="imnew",
         )
 
 

@@ -140,6 +140,9 @@ class AbstractTokensRepository(ABC):
         if not new_device_key:
             raise NewDeviceKeyNotFound
 
+        if not new_device_key.is_valid():
+            raise NewDeviceKeyNotFound
+
         if not self._assert_mnemonic(new_device_key.key, mnemonic_phrase):
             raise NewDeviceKeyNotFound("Phrase is not token!")
 
