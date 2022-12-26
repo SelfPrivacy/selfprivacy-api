@@ -24,17 +24,6 @@ from selfprivacy_api.graphql.mutations.mutation_interface import (
 )
 
 
-from selfprivacy_api.repositories.tokens.json_tokens_repository import (
-    JsonTokensRepository,
-)
-from selfprivacy_api.repositories.tokens.exceptions import (
-    RecoveryKeyNotFound,
-    InvalidMnemonic,
-)
-
-TOKEN_REPO = JsonTokensRepository()
-
-
 @strawberry.type
 class ApiKeyMutationReturn(MutationReturnInterface):
     key: typing.Optional[str]
