@@ -97,21 +97,6 @@ def _generate_token():
     return token
 
 
-def create_token(name):
-    """Create new token"""
-    token = _generate_token()
-    name = _validate_token_name(name)
-    with WriteUserData(UserDataFiles.TOKENS) as tokens:
-        tokens["tokens"].append(
-            {
-                "token": token,
-                "name": name,
-                "date": str(datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")),
-            }
-        )
-    return token
-
-
 def _get_recovery_token():
     """Get recovery token"""
     with ReadUserData(UserDataFiles.TOKENS) as tokens:
