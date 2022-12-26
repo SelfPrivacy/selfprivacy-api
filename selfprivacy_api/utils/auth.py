@@ -73,15 +73,6 @@ def is_token_valid(token):
     return False
 
 
-def get_token_name(token: str) -> typing.Optional[str]:
-    """Return the name of the token provided"""
-    with ReadUserData(UserDataFiles.TOKENS) as tokens:
-        for t in tokens["tokens"]:
-            if t["token"] == token:
-                return t["name"]
-        return None
-
-
 class BasicTokenInfo(BaseModel):
     """Token info"""
 
