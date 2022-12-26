@@ -200,24 +200,3 @@ def _get_new_device_auth_token():
         if datetime.now() > expiration:
             return None
         return new_device["token"]
-
-
-def use_new_device_auth_token(mnemonic_phrase, name):
-    """Use the new device auth token by converting the mnemonic string to a byte array.
-    If the mnemonic phrase is valid then generate a device token and return it.
-    New device auth token must be deleted.
-    """
-    token_str = _get_new_device_auth_token()
-    if token_str is None:
-        return None
-    token = bytes.fromhex(token_str)
-    if not Mnemonic(language="english").check(mnemonic_phrase):
-        return None
-    phrase_bytes = Mnemonic(language="english").to_entropy(mnemonic_phrase)
-    if phrase_bytes != token:
-        return None
-    token = create_token(name)
-    with WriteUserData(UserDataFiles.TOKENS) as tokens:
-        if "new_device" in tokens:
-            del tokens["new_device"]
-    return token

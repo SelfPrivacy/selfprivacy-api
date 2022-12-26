@@ -11,6 +11,7 @@ from selfprivacy_api.repositories.tokens.exceptions import (
     TokenNotFound,
     RecoveryKeyNotFound,
     InvalidMnemonic,
+    NewDeviceKeyNotFound,
 )
 
 TOKEN_REPO = JsonTokensRepository()
@@ -142,3 +143,15 @@ def get_new_device_auth_token() -> str:
     """
     key = TOKEN_REPO.get_new_device_key()
     return Mnemonic(language="english").to_mnemonic(bytes.fromhex(key.key))
+
+
+def use_new_device_auth_token(mnemonic_phrase, name) -> str:
+    """Use the new device auth token by converting the mnemonic string to a byte array.
+    If the mnemonic phrase is valid then generate a device token and return it.
+    New device auth token must be deleted.
+    """
+    try:
+        token = TOKEN_REPO.use_mnemonic_new_device_key(mnemonic_phrase, name)
+        return token.token
+    except (NewDeviceKeyNotFound, InvalidMnemonic):
+        return None

@@ -15,13 +15,11 @@ from selfprivacy_api.actions.api_tokens import (
     use_mnemonic_recovery_token,
     delete_new_device_auth_token,
     get_new_device_auth_token,
+    use_new_device_auth_token,
 )
 
 from selfprivacy_api.dependencies import TokenHeader, get_token_header
 
-from selfprivacy_api.utils.auth import (
-    use_new_device_auth_token,
-)
 
 router = APIRouter(
     prefix="/auth",
