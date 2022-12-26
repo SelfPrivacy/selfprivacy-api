@@ -257,6 +257,17 @@ def test_create_token(empty_repo, mock_token_generate):
     ]
 
 
+def test_create_token_existing(some_tokens_repo):
+    repo = some_tokens_repo
+    old_token = repo.get_tokens()[0]
+
+    new_token = repo.create_token(device_name=old_token.device_name)
+    assert new_token.device_name != old_token.device_name
+
+    assert old_token in repo.get_tokens()
+    assert new_token in repo.get_tokens()
+
+
 def test_delete_token(some_tokens_repo):
     repo = some_tokens_repo
     original_tokens = repo.get_tokens()
