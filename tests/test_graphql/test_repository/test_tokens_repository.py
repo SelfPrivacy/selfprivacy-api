@@ -33,6 +33,10 @@ ORIGINAL_DEVICE_NAMES = [
 ]
 
 
+def mnemonic_from_hex(hexkey):
+    return Mnemonic(language="english").to_mnemonic(bytes.fromhex(hexkey))
+
+
 @pytest.fixture
 def empty_keys(mocker, datadir):
     mocker.patch("selfprivacy_api.utils.TOKENS_FILE", new=datadir / "empty_keys.json")
@@ -388,9 +392,7 @@ def test_use_mnemonic_expired_recovery_key(
 
     with pytest.raises(RecoveryKeyNotFound):
         token = repo.use_mnemonic_recovery_key(
-            mnemonic_phrase=Mnemonic(language="english").to_mnemonic(
-                bytes.fromhex(recovery_key.key)
-            ),
+            mnemonic_phrase=mnemonic_from_hex(recovery_key.key),
             device_name="newdevice",
         )
 
@@ -455,9 +457,7 @@ def test_use_mnemonic_recovery_key(some_tokens_repo, recovery_key_uses_left):
     recovery_key = repo.get_recovery_key()
 
     token = repo.use_mnemonic_recovery_key(
-        mnemonic_phrase=Mnemonic(language="english").to_mnemonic(
-            bytes.fromhex(recovery_key.key)
-        ),
+        mnemonic_phrase=mnemonic_from_hex(recovery_key.key),
         device_name="newdevice",
     )
 
@@ -529,10 +529,6 @@ def test_use_not_exists_mnemonic_new_device_key(
             )
             is None
         )
-
-
-def mnemonic_from_hex(hexkey):
-    return Mnemonic(language="english").to_mnemonic(bytes.fromhex(hexkey))
 
 
 def test_use_mnemonic_new_device_key(empty_repo):
