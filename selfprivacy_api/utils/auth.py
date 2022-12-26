@@ -188,45 +188,6 @@ def generate_recovery_token(
     return Mnemonic(language="english").to_mnemonic(recovery_token)
 
 
-def use_mnemonic_recoverery_token(mnemonic_phrase, name):
-    """Use the recovery token by converting the mnemonic word list to a byte array.
-    If the recovery token if invalid itself, return None
-    If the binary representation of phrase not matches
-    the byte array of the recovery token, return None.
-    If the mnemonic phrase is valid then generate a device token and return it.
-    Substract 1 from uses_left if it exists.
-    mnemonic_phrase is a string representation of the mnemonic word list.
-    """
-    if not is_recovery_token_valid():
-        return None
-    recovery_token_str = _get_recovery_token()
-    if recovery_token_str is None:
-        return None
-    recovery_token = bytes.fromhex(recovery_token_str)
-    if not Mnemonic(language="english").check(mnemonic_phrase):
-        return None
-    phrase_bytes = Mnemonic(language="english").to_entropy(mnemonic_phrase)
-    if phrase_bytes != recovery_token:
-        return None
-    token = _generate_token()
-    name = _validate_token_name(name)
-    with WriteUserData(UserDataFiles.TOKENS) as tokens:
-        tokens["tokens"].append(
-            {
-                "token": token,
-                "name": name,
-                "date": str(datetime.now()),
-            }
-        )
-        if "recovery_token" in tokens:
-            if (
-                "uses_left" in tokens["recovery_token"]
-                and tokens["recovery_token"]["uses_left"] is not None
-            ):
-                tokens["recovery_token"]["uses_left"] -= 1
-    return token
-
-
 def _get_new_device_auth_token():
     """Get new device auth token. If it is expired, return None"""
     with ReadUserData(UserDataFiles.TOKENS) as tokens:

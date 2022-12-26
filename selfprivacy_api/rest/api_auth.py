@@ -8,10 +8,11 @@ from selfprivacy_api.actions.api_tokens import (
     InvalidUsesLeft,
     NotFoundException,
     delete_api_token,
+    refresh_api_token,
     get_api_recovery_token_status,
     get_api_tokens_with_caller_flag,
     get_new_api_recovery_key,
-    refresh_api_token,
+    use_mnemonic_recovery_token,
     delete_new_device_auth_token,
     get_new_device_auth_token,
 )
@@ -19,7 +20,6 @@ from selfprivacy_api.actions.api_tokens import (
 from selfprivacy_api.dependencies import TokenHeader, get_token_header
 
 from selfprivacy_api.utils.auth import (
-    use_mnemonic_recoverery_token,
     use_new_device_auth_token,
 )
 
@@ -99,7 +99,7 @@ class UseTokenInput(BaseModel):
 
 @router.post("/recovery_token/use")
 async def rest_use_recovery_token(input: UseTokenInput):
-    token = use_mnemonic_recoverery_token(input.token, input.device)
+    token = use_mnemonic_recovery_token(input.token, input.device)
     if token is None:
         raise HTTPException(status_code=404, detail="Token not found")
     return {"token": token}

@@ -11,6 +11,7 @@ from selfprivacy_api.actions.api_tokens import (
     NotFoundException,
     delete_api_token,
     get_new_api_recovery_key,
+    use_mnemonic_recovery_token,
     refresh_api_token,
     delete_new_device_auth_token,
     get_new_device_auth_token,
@@ -107,15 +108,15 @@ class ApiMutations:
         self, input: UseRecoveryKeyInput
     ) -> DeviceApiTokenMutationReturn:
         """Use recovery key"""
-        try:
-            token = TOKEN_REPO.use_mnemonic_recovery_key(input.key, input.deviceName)
+        token = use_mnemonic_recovery_token(input.key, input.deviceName)
+        if token is not None:
             return DeviceApiTokenMutationReturn(
                 success=True,
                 message="Recovery key used",
                 code=200,
-                token=token.token,
+                token=token,
             )
-        except (RecoveryKeyNotFound, InvalidMnemonic):
+        else:
             return DeviceApiTokenMutationReturn(
                 success=False,
                 message="Recovery key not found",

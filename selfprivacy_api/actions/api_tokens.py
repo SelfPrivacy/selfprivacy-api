@@ -7,7 +7,11 @@ from mnemonic import Mnemonic
 from selfprivacy_api.repositories.tokens.json_tokens_repository import (
     JsonTokensRepository,
 )
-from selfprivacy_api.repositories.tokens.exceptions import TokenNotFound
+from selfprivacy_api.repositories.tokens.exceptions import (
+    TokenNotFound,
+    RecoveryKeyNotFound,
+    InvalidMnemonic,
+)
 
 TOKEN_REPO = JsonTokensRepository()
 
@@ -110,6 +114,22 @@ def get_new_api_recovery_key(
     key = TOKEN_REPO.create_recovery_key(expiration_date, uses_left)
     mnemonic_phrase = Mnemonic(language="english").to_mnemonic(bytes.fromhex(key.key))
     return mnemonic_phrase
+
+
+def use_mnemonic_recovery_token(mnemonic_phrase, name):
+    """Use the recovery token by converting the mnemonic word list to a byte array.
+    If the recovery token if invalid itself, return None
+    If the binary representation of phrase not matches
+    the byte array of the recovery token, return None.
+    If the mnemonic phrase is valid then generate a device token and return it.
+    Substract 1 from uses_left if it exists.
+    mnemonic_phrase is a string representation of the mnemonic word list.
+    """
+    try:
+        token = TOKEN_REPO.use_mnemonic_recovery_key(mnemonic_phrase, name)
+        return token.token
+    except (RecoveryKeyNotFound, InvalidMnemonic):
+        return None
 
 
 def delete_new_device_auth_token() -> None:
