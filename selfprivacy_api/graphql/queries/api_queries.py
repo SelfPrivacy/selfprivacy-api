@@ -4,13 +4,14 @@ import datetime
 import typing
 import strawberry
 from strawberry.types import Info
-from selfprivacy_api.actions.api_tokens import get_api_tokens_with_caller_flag
+from selfprivacy_api.actions.api_tokens import (
+    get_api_tokens_with_caller_flag,
+    get_api_recovery_token_status,
+)
 from selfprivacy_api.graphql import IsAuthenticated
-from selfprivacy_api.utils import parse_date
 from selfprivacy_api.dependencies import get_api_version as get_api_version_dependency
 
 from selfprivacy_api.utils.auth import (
-    get_recovery_token_status,
     is_recovery_token_exists,
     is_recovery_token_valid,
 )
@@ -51,7 +52,7 @@ def get_recovery_key_status() -> ApiRecoveryKeyStatus:
             expiration_date=None,
             uses_left=None,
         )
-    status = get_recovery_token_status()
+    status = get_api_recovery_token_status()
     if status is None:
         return ApiRecoveryKeyStatus(
             exists=False,
@@ -63,11 +64,9 @@ def get_recovery_key_status() -> ApiRecoveryKeyStatus:
     return ApiRecoveryKeyStatus(
         exists=True,
         valid=is_recovery_token_valid(),
-        creation_date=parse_date(status["date"]),
-        expiration_date=parse_date(status["expiration"])
-        if status["expiration"] is not None
-        else None,
-        uses_left=status["uses_left"] if status["uses_left"] is not None else None,
+        creation_date=status.date,
+        expiration_date=status.expiration,
+        uses_left=status.uses_left,
     )
 
 

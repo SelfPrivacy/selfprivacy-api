@@ -132,23 +132,6 @@ def is_recovery_token_valid():
         return datetime.now() < parse_date(recovery_token["expiration"])
 
 
-def get_recovery_token_status():
-    """Get recovery token date of creation, expiration and uses left"""
-    with ReadUserData(UserDataFiles.TOKENS) as tokens:
-        if "recovery_token" not in tokens:
-            return None
-        recovery_token = tokens["recovery_token"]
-        return {
-            "date": recovery_token["date"],
-            "expiration": recovery_token["expiration"]
-            if "expiration" in recovery_token
-            else None,
-            "uses_left": recovery_token["uses_left"]
-            if "uses_left" in recovery_token
-            else None,
-        }
-
-
 def _get_recovery_token():
     """Get recovery token"""
     with ReadUserData(UserDataFiles.TOKENS) as tokens:
