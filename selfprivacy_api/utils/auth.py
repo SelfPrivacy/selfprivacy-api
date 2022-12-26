@@ -112,26 +112,6 @@ def create_token(name):
     return token
 
 
-def is_recovery_token_exists():
-    """Check if recovery token exists"""
-    with ReadUserData(UserDataFiles.TOKENS) as tokens:
-        return "recovery_token" in tokens
-
-
-def is_recovery_token_valid():
-    """Check if recovery token is valid"""
-    with ReadUserData(UserDataFiles.TOKENS) as tokens:
-        if "recovery_token" not in tokens:
-            return False
-        recovery_token = tokens["recovery_token"]
-        if "uses_left" in recovery_token and recovery_token["uses_left"] is not None:
-            if recovery_token["uses_left"] <= 0:
-                return False
-        if "expiration" not in recovery_token or recovery_token["expiration"] is None:
-            return True
-        return datetime.now() < parse_date(recovery_token["expiration"])
-
-
 def _get_recovery_token():
     """Get recovery token"""
     with ReadUserData(UserDataFiles.TOKENS) as tokens:
