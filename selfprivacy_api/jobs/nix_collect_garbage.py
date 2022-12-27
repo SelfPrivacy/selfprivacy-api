@@ -2,10 +2,11 @@ import re
 import subprocess
 
 from selfprivacy_api.jobs import JobStatus, Jobs
+from selfprivacy_api.utils.huey import huey
 
 
 COMPLETED_WITH_ERROR = "Completed with an error"
-RESULT_WAAS_NOT_FOUND_ERROR = "We are sorry, result was not found :("
+RESULT_WAS_NOT_FOUND_ERROR = "We are sorry, result was not found :("
 CLEAR_COMPLETED = "Сleaning completed."
 
 
@@ -46,7 +47,7 @@ def parse_line(line):
             JobStatus.FINISHED,
             100,
             COMPLETED_WITH_ERROR,
-            RESULT_WAAS_NOT_FOUND_ERROR,
+            RESULT_WAS_NOT_FOUND_ERROR,
         )
 
     else:
@@ -72,6 +73,7 @@ def stream_process(
             set_job_status(
                 status=JobStatus.RUNNING,
                 progress=int(percent),
+                progress=int(percent),
                 status_text="Сleaning...",
             )
 
@@ -93,6 +95,7 @@ def get_dead_packages(output):
     return dead, percent
 
 
+@huey.task()
 def nix_collect_garbage(
     job,
     jobs=Jobs,

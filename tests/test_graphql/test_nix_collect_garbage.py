@@ -4,6 +4,11 @@
 
 import pytest
 from selfprivacy_api.jobs import JobStatus
+from selfprivacy_api.graphql import schema
+import asyncio
+import strawberry
+
+# from selfprivacy_api.graphql.schema import Subscription
 
 from selfprivacy_api.jobs.nix_collect_garbage import (
     get_dead_packages,
@@ -12,7 +17,7 @@ from selfprivacy_api.jobs.nix_collect_garbage import (
     CLEAR_COMPLETED,
     COMPLETED_WITH_ERROR,
     stream_process,
-    RESULT_WAAS_NOT_FOUND_ERROR,
+    RESULT_WAS_NOT_FOUND_ERROR,
 )
 
 
@@ -59,7 +64,7 @@ def test_parse_line_with_blank_line():
         JobStatus.FINISHED,
         100,
         COMPLETED_WITH_ERROR,
-        RESULT_WAAS_NOT_FOUND_ERROR,
+        RESULT_WAS_NOT_FOUND_ERROR,
     )
     assert parse_line(txt) == output
 
@@ -146,3 +151,21 @@ def test_nix_collect_garbage_zero_trash():
     )
 
     assert log_event == reference
+
+
+@pytest.mark.asyncio
+async def test_graphql_nix_collect_garbage():
+    query = """
+    	subscription {
+        	nixCollectGarbage()
+    	}
+    """
+
+    schema_for_garbage = strawberry.Schema(
+        query=schema.Query, mutation=schema.Mutation, subscription=schema.Subscription
+    )
+
+    sub = await schema_for_garbage.subscribe(query)
+    for result in sub:
+        assert not result.errors
+        assert result.data == {}
