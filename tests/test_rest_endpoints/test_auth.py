@@ -74,15 +74,9 @@ def test_delete_token(authorized_client, tokens_file):
         "/auth/tokens", json={"token_name": "test_token2"}
     )
     assert response.status_code == 200
-    assert read_json(tokens_file) == {
-        "tokens": [
-            {
-                "token": "TEST_TOKEN",
-                "name": "test_token",
-                "date": "2022-01-14 08:31:10.789314",
-            }
-        ]
-    }
+    assert rest_get_tokens_info(authorized_client) == [
+        {"name": "test_token", "date": "2022-01-14T08:31:10.789314", "is_caller": True}
+    ]
 
 
 def test_delete_self_token(authorized_client, tokens_file):
