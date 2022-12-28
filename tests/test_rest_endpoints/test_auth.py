@@ -41,10 +41,14 @@ def assert_original(filename):
     assert read_json(filename) == TOKENS_FILE_CONTETS
 
 
-def test_get_tokens_info(authorized_client, tokens_file):
-    response = authorized_client.get("/auth/tokens")
+def rest_get_tokens_info(client):
+    response = client.get("/auth/tokens")
     assert response.status_code == 200
-    assert response.json() == [
+    return response.json()
+
+
+def test_get_tokens_info(authorized_client, tokens_file):
+    assert rest_get_tokens_info(authorized_client) == [
         {"name": "test_token", "date": "2022-01-14T08:31:10.789314", "is_caller": True},
         {
             "name": "test_token2",
