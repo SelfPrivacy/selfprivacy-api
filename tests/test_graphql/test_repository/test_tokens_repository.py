@@ -44,6 +44,8 @@ EMPTY_KEYS_JSON = """
 }
 """
 
+EMPTY_TOKENS_JSON = ' {"tokens": []}'
+
 
 def mnemonic_from_hex(hexkey):
     return Mnemonic(language="english").to_mnemonic(bytes.fromhex(hexkey))
@@ -62,6 +64,16 @@ def empty_keys(mocker, tmpdir):
             "date": "2022-07-15 17:41:31.675698",
         }
     ]
+    return tmpdir
+
+
+@pytest.fixture
+def empty_tokens(mocker, tmpdir):
+    tokens_file = tmpdir / "empty_tokens.json"
+    with open(tokens_file, "w") as file:
+        file.write(EMPTY_TOKENS_JSON)
+    mocker.patch("selfprivacy_api.utils.TOKENS_FILE", new=tokens_file)
+    assert read_json(tokens_file)["tokens"] == []
     return tmpdir
 
 
@@ -153,7 +165,7 @@ def mock_recovery_key_generate(mocker):
 
 
 @pytest.fixture
-def empty_json_repo(empty_keys):
+def empty_json_repo(empty_tokens):
     repo = JsonTokensRepository()
     for token in repo.get_tokens():
         repo.delete_token(token)
