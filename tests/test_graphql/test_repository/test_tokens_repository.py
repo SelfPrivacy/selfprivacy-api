@@ -32,22 +32,37 @@ ORIGINAL_DEVICE_NAMES = [
     "forth_token",
 ]
 
+EMPTY_KEYS_JSON = """
+{
+    "tokens": [
+        {
+            "token": "KG9ni-B-CMPk327Zv1qC7YBQaUGaBUcgdkvMvQ2atFI",
+            "name": "primary_token",
+            "date": "2022-07-15 17:41:31.675698"
+        }
+    ]
+}
+"""
+
 
 def mnemonic_from_hex(hexkey):
     return Mnemonic(language="english").to_mnemonic(bytes.fromhex(hexkey))
 
 
 @pytest.fixture
-def empty_keys(mocker, datadir):
-    mocker.patch("selfprivacy_api.utils.TOKENS_FILE", new=datadir / "empty_keys.json")
-    assert read_json(datadir / "empty_keys.json")["tokens"] == [
+def empty_keys(mocker, tmpdir):
+    tokens_file = tmpdir / "empty_keys.json"
+    with open(tokens_file, "w") as file:
+        file.write(EMPTY_KEYS_JSON)
+    mocker.patch("selfprivacy_api.utils.TOKENS_FILE", new=tokens_file)
+    assert read_json(tokens_file)["tokens"] == [
         {
             "token": "KG9ni-B-CMPk327Zv1qC7YBQaUGaBUcgdkvMvQ2atFI",
             "name": "primary_token",
             "date": "2022-07-15 17:41:31.675698",
         }
     ]
-    return datadir
+    return tmpdir
 
 
 @pytest.fixture
