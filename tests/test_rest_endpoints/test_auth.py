@@ -36,6 +36,11 @@ def assert_original(filename):
     assert read_json(filename) == TOKENS_FILE_CONTETS
 
 
+def assert_token_valid(client, token):
+    client.headers.update({"Authorization": "Bearer " + token})
+    assert rest_get_tokens_info(client) is not None
+
+
 def rest_get_tokens_info(client):
     response = client.get("/auth/tokens")
     assert response.status_code == 200
@@ -100,8 +105,7 @@ def test_refresh_token(authorized_client, tokens_file):
     response = authorized_client.post("/auth/tokens")
     assert response.status_code == 200
     new_token = response.json()["token"]
-    authorized_client.headers.update({"Authorization": "Bearer " + new_token})
-    assert rest_get_tokens_info(authorized_client) is not None
+    assert_token_valid(authorized_client, new_token)
 
 
 # new device
@@ -148,8 +152,7 @@ def test_get_and_authorize_new_device(client, authorized_client, tokens_file):
         },
     )
     assert response.status_code == 200
-    assert read_json(tokens_file)["tokens"][2]["token"] == response.json()["token"]
-    assert read_json(tokens_file)["tokens"][2]["name"] == "new_device"
+    assert_token_valid(authorized_client, response.json()["token"])
 
 
 def test_authorize_new_device_with_invalid_token(client, tokens_file):
@@ -168,8 +171,7 @@ def test_get_and_authorize_used_token(client, authorized_client, tokens_file):
         json={"token": token_to_be_used_2_times, "device": "new_device"},
     )
     assert response.status_code == 200
-    assert read_json(tokens_file)["tokens"][2]["token"] == response.json()["token"]
-    assert read_json(tokens_file)["tokens"][2]["name"] == "new_device"
+    assert_token_valid(authorized_client, response.json()["token"])
     response = client.post(
         "/auth/new_device/authorize",
         json={"token": token_to_be_used_2_times, "device": "new_device"},
