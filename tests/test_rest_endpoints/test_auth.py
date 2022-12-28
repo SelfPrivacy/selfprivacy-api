@@ -37,6 +37,10 @@ DATE_FORMATS = [
 ]
 
 
+def assert_original(filename):
+    assert read_json(filename) == TOKENS_FILE_CONTETS
+
+
 def test_get_tokens_info(authorized_client, tokens_file):
     response = authorized_client.get("/auth/tokens")
     assert response.status_code == 200
@@ -58,7 +62,7 @@ def test_get_tokens_unauthorized(client, tokens_file):
 def test_delete_token_unauthorized(client, tokens_file):
     response = client.delete("/auth/tokens")
     assert response.status_code == 401
-    assert read_json(tokens_file) == TOKENS_FILE_CONTETS
+    assert_original(tokens_file)
 
 
 def test_delete_token(authorized_client, tokens_file):
@@ -82,7 +86,7 @@ def test_delete_self_token(authorized_client, tokens_file):
         "/auth/tokens", json={"token_name": "test_token"}
     )
     assert response.status_code == 400
-    assert read_json(tokens_file) == TOKENS_FILE_CONTETS
+    assert_original(tokens_file)
 
 
 def test_delete_nonexistent_token(authorized_client, tokens_file):
@@ -90,13 +94,13 @@ def test_delete_nonexistent_token(authorized_client, tokens_file):
         "/auth/tokens", json={"token_name": "test_token3"}
     )
     assert response.status_code == 404
-    assert read_json(tokens_file) == TOKENS_FILE_CONTETS
+    assert_original(tokens_file)
 
 
 def test_refresh_token_unauthorized(client, tokens_file):
     response = client.post("/auth/tokens")
     assert response.status_code == 401
-    assert read_json(tokens_file) == TOKENS_FILE_CONTETS
+    assert_original(tokens_file)
 
 
 def test_refresh_token(authorized_client, tokens_file):
@@ -112,7 +116,7 @@ def test_refresh_token(authorized_client, tokens_file):
 def test_get_new_device_auth_token_unauthorized(client, tokens_file):
     response = client.post("/auth/new_device")
     assert response.status_code == 401
-    assert read_json(tokens_file) == TOKENS_FILE_CONTETS
+    assert_original(tokens_file)
 
 
 def test_get_new_device_auth_token(authorized_client, tokens_file):
@@ -133,13 +137,13 @@ def test_get_and_delete_new_device_token(authorized_client, tokens_file):
         "/auth/new_device", json={"token": response.json()["token"]}
     )
     assert response.status_code == 200
-    assert read_json(tokens_file) == TOKENS_FILE_CONTETS
+    assert_original(tokens_file)
 
 
 def test_delete_token_unauthenticated(client, tokens_file):
     response = client.delete("/auth/new_device")
     assert response.status_code == 401
-    assert read_json(tokens_file) == TOKENS_FILE_CONTETS
+    assert_original(tokens_file)
 
 
 def test_get_and_authorize_new_device(client, authorized_client, tokens_file):
@@ -163,7 +167,7 @@ def test_authorize_new_device_with_invalid_token(client, tokens_file):
         json={"token": "invalid_token", "device": "new_device"},
     )
     assert response.status_code == 404
-    assert read_json(tokens_file) == TOKENS_FILE_CONTETS
+    assert_original(tokens_file)
 
 
 def test_get_and_authorize_used_token(client, authorized_client, tokens_file):
@@ -214,7 +218,7 @@ def test_authorize_without_token(client, tokens_file):
         json={"device": "new_device"},
     )
     assert response.status_code == 422
-    assert read_json(tokens_file) == TOKENS_FILE_CONTETS
+    assert_original(tokens_file)
 
 
 # Recovery tokens
@@ -243,7 +247,7 @@ def test_authorize_without_token(client, tokens_file):
 def test_get_recovery_token_status_unauthorized(client, tokens_file):
     response = client.get("/auth/recovery_token")
     assert response.status_code == 401
-    assert read_json(tokens_file) == TOKENS_FILE_CONTETS
+    assert_original(tokens_file)
 
 
 def test_get_recovery_token_when_none_exists(authorized_client, tokens_file):
@@ -256,7 +260,7 @@ def test_get_recovery_token_when_none_exists(authorized_client, tokens_file):
         "expiration": None,
         "uses_left": None,
     }
-    assert read_json(tokens_file) == TOKENS_FILE_CONTETS
+    assert_original(tokens_file)
 
 
 def test_generate_recovery_token(authorized_client, client, tokens_file):
