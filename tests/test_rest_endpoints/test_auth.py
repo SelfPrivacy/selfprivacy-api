@@ -31,6 +31,9 @@ DATE_FORMATS = [
     "%Y-%m-%d %H:%M:%S.%f",
 ]
 
+# for expiration tests. If headache, consider freezegun
+DEVICE_KEY_VALIDATION_DATETIME = "selfprivacy_api.models.tokens.new_device_key.datetime"
+
 
 def assert_original(filename):
     assert read_json(filename) == TOKENS_FILE_CONTETS
@@ -176,15 +179,19 @@ def test_get_and_authorize_used_token(client, authorized_client, tokens_file):
 
 
 def test_get_and_authorize_token_after_12_minutes(
-    client, authorized_client, tokens_file
+    client, authorized_client, tokens_file, mocker
 ):
     token = rest_get_new_device_token(authorized_client)
 
-    file_data = read_json(tokens_file)
-    file_data["new_device"]["expiration"] = str(
-        datetime.datetime.now() - datetime.timedelta(minutes=13)
-    )
-    write_json(tokens_file, file_data)
+    # TARDIS sounds
+    new_time = datetime.datetime.now() + datetime.timedelta(minutes=13)
+
+    class warped_spacetime(datetime.datetime):
+        @classmethod
+        def now(cls):
+            return new_time
+
+    mock = mocker.patch(DEVICE_KEY_VALIDATION_DATETIME, warped_spacetime)
 
     response = client.post(
         "/auth/new_device/authorize",
