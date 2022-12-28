@@ -4,18 +4,25 @@
 import os
 import pytest
 from fastapi.testclient import TestClient
+from shutil import copy
+import os.path as path
 
 
 def pytest_generate_tests(metafunc):
     os.environ["TEST_MODE"] = "true"
 
 
+def global_data_dir():
+    return path.join(path.dirname(__file__), "data")
+
+
 @pytest.fixture
-def tokens_file(mocker, shared_datadir):
+def tokens_file(mocker, tmpdir):
     """Mock tokens file."""
-    mock = mocker.patch(
-        "selfprivacy_api.utils.TOKENS_FILE", shared_datadir / "tokens.json"
-    )
+    tmp_file = tmpdir / "tokens.json"
+    source_file = path.join(global_data_dir(), "tokens.json")
+    copy(source_file, tmp_file)
+    mock = mocker.patch("selfprivacy_api.utils.TOKENS_FILE", tmp_file)
     return mock
 
 
