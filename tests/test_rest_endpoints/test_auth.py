@@ -132,15 +132,20 @@ def test_delete_token_unauthenticated(client, tokens_file):
     assert_original(tokens_file)
 
 
-def test_get_and_authorize_new_device(client, authorized_client, tokens_file):
-    response = authorized_client.post("/auth/new_device")
+def rest_get_new_device_token(client):
+    response = client.post("/auth/new_device")
     assert response.status_code == 200
     assert "token" in response.json()
-    token = Mnemonic(language="english").to_entropy(response.json()["token"]).hex()
-    assert read_json(tokens_file)["new_device"]["token"] == token
+    return response.json()["token"]
+
+
+def test_get_and_authorize_new_device(client, authorized_client, tokens_file):
     response = client.post(
         "/auth/new_device/authorize",
-        json={"token": response.json()["token"], "device": "new_device"},
+        json={
+            "token": rest_get_new_device_token(authorized_client),
+            "device": "new_device",
+        },
     )
     assert response.status_code == 200
     assert read_json(tokens_file)["tokens"][2]["token"] == response.json()["token"]
@@ -157,21 +162,17 @@ def test_authorize_new_device_with_invalid_token(client, tokens_file):
 
 
 def test_get_and_authorize_used_token(client, authorized_client, tokens_file):
-    response = authorized_client.post("/auth/new_device")
-    assert response.status_code == 200
-    assert "token" in response.json()
-    token = Mnemonic(language="english").to_entropy(response.json()["token"]).hex()
-    assert read_json(tokens_file)["new_device"]["token"] == token
+    token_to_be_used_2_times = rest_get_new_device_token(authorized_client)
     response = client.post(
         "/auth/new_device/authorize",
-        json={"token": response.json()["token"], "device": "new_device"},
+        json={"token": token_to_be_used_2_times, "device": "new_device"},
     )
     assert response.status_code == 200
     assert read_json(tokens_file)["tokens"][2]["token"] == response.json()["token"]
     assert read_json(tokens_file)["tokens"][2]["name"] == "new_device"
     response = client.post(
         "/auth/new_device/authorize",
-        json={"token": response.json()["token"], "device": "new_device"},
+        json={"token": token_to_be_used_2_times, "device": "new_device"},
     )
     assert response.status_code == 404
 
