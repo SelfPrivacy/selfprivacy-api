@@ -118,14 +118,8 @@ def test_get_new_device_auth_token_unauthorized(client, tokens_file):
 
 
 def test_get_and_delete_new_device_token(authorized_client, tokens_file):
-    response = authorized_client.post("/auth/new_device")
-    assert response.status_code == 200
-    assert "token" in response.json()
-    token = Mnemonic(language="english").to_entropy(response.json()["token"]).hex()
-    assert read_json(tokens_file)["new_device"]["token"] == token
-    response = authorized_client.delete(
-        "/auth/new_device", json={"token": response.json()["token"]}
-    )
+    token = rest_get_new_device_token(authorized_client)
+    response = authorized_client.delete("/auth/new_device", json={"token": token})
     assert response.status_code == 200
     assert_original(tokens_file)
 
@@ -144,10 +138,11 @@ def rest_get_new_device_token(client):
 
 
 def test_get_and_authorize_new_device(client, authorized_client, tokens_file):
+    token = rest_get_new_device_token(authorized_client)
     response = client.post(
         "/auth/new_device/authorize",
         json={
-            "token": rest_get_new_device_token(authorized_client),
+            "token": token,
             "device": "new_device",
         },
     )
@@ -172,6 +167,7 @@ def test_get_and_authorize_used_token(client, authorized_client, tokens_file):
     )
     assert response.status_code == 200
     assert_token_valid(authorized_client, response.json()["token"])
+
     response = client.post(
         "/auth/new_device/authorize",
         json={"token": token_to_be_used_2_times, "device": "new_device"},
@@ -182,11 +178,7 @@ def test_get_and_authorize_used_token(client, authorized_client, tokens_file):
 def test_get_and_authorize_token_after_12_minutes(
     client, authorized_client, tokens_file
 ):
-    response = authorized_client.post("/auth/new_device")
-    assert response.status_code == 200
-    assert "token" in response.json()
-    token = Mnemonic(language="english").to_entropy(response.json()["token"]).hex()
-    assert read_json(tokens_file)["new_device"]["token"] == token
+    token = rest_get_new_device_token(authorized_client)
 
     file_data = read_json(tokens_file)
     file_data["new_device"]["expiration"] = str(
@@ -196,7 +188,7 @@ def test_get_and_authorize_token_after_12_minutes(
 
     response = client.post(
         "/auth/new_device/authorize",
-        json={"token": response.json()["token"], "device": "new_device"},
+        json={"token": token, "device": "new_device"},
     )
     assert response.status_code == 404
 
