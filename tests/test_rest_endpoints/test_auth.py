@@ -251,15 +251,23 @@ def test_get_recovery_token_when_none_exists(authorized_client, tokens_file):
     assert_original(tokens_file)
 
 
-def rest_make_recovery_token(client, expires_at=None, timeformat=None):
-    if expires_at is None:
-        response = client.post("/auth/recovery_token")
-    else:
+def rest_make_recovery_token(client, expires_at=None, timeformat=None, uses=None):
+    json = {}
+
+    if expires_at is not None:
         assert timeformat is not None
         expires_at_str = expires_at.strftime(timeformat)
+        json["expiration"] = expires_at_str
+
+    if uses is not None:
+        json["uses"] = uses
+
+    if json == {}:
+        response = client.post("/auth/recovery_token")
+    else:
         response = client.post(
             "/auth/recovery_token",
-            json={"expiration": expires_at_str},
+            json=json,
         )
 
     assert response.status_code == 200
