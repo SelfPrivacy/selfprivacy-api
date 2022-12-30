@@ -57,6 +57,64 @@ def rest_get_tokens_info(client):
     return response.json()
 
 
+def rest_make_recovery_token(client, expires_at=None, timeformat=None, uses=None):
+    json = {}
+
+    if expires_at is not None:
+        assert timeformat is not None
+        expires_at_str = expires_at.strftime(timeformat)
+        json["expiration"] = expires_at_str
+
+    if uses is not None:
+        json["uses"] = uses
+
+    if json == {}:
+        response = client.post("/auth/recovery_token")
+    else:
+        response = client.post(
+            "/auth/recovery_token",
+            json=json,
+        )
+
+    assert response.status_code == 200
+    assert "token" in response.json()
+    return response.json()["token"]
+
+
+def rest_get_recovery_status(client):
+    response = client.get("/auth/recovery_token")
+    assert response.status_code == 200
+    return response.json()
+
+
+def rest_get_recovery_date(client):
+    status = rest_get_recovery_status(client)
+    assert "date" in status
+    return status["date"]
+
+
+def assert_recovery_recent(time_generated):
+    assert (
+        datetime.datetime.strptime(time_generated, "%Y-%m-%dT%H:%M:%S.%f")
+        - datetime.timedelta(seconds=5)
+        < datetime.datetime.now()
+    )
+
+
+def rest_recover_with_mnemonic(client, mnemonic_token, device_name):
+    recovery_response = client.post(
+        "/auth/recovery_token/use",
+        json={"token": mnemonic_token, "device": device_name},
+    )
+    assert recovery_response.status_code == 200
+    new_token = recovery_response.json()["token"]
+    assert_token_valid(client, new_token)
+    return new_token
+
+
+# Tokens
+
+
 def test_get_tokens_info(authorized_client, tokens_file):
     assert rest_get_tokens_info(authorized_client) == [
         {"name": "test_token", "date": "2022-01-14T08:31:10.789314", "is_caller": True},
@@ -118,7 +176,7 @@ def test_refresh_token(authorized_client, tokens_file):
     assert_token_valid(authorized_client, new_token)
 
 
-# new device
+# New device
 
 
 def test_get_new_device_auth_token_unauthorized(client, tokens_file):
@@ -249,61 +307,6 @@ def test_get_recovery_token_when_none_exists(authorized_client, tokens_file):
         "uses_left": None,
     }
     assert_original(tokens_file)
-
-
-def rest_make_recovery_token(client, expires_at=None, timeformat=None, uses=None):
-    json = {}
-
-    if expires_at is not None:
-        assert timeformat is not None
-        expires_at_str = expires_at.strftime(timeformat)
-        json["expiration"] = expires_at_str
-
-    if uses is not None:
-        json["uses"] = uses
-
-    if json == {}:
-        response = client.post("/auth/recovery_token")
-    else:
-        response = client.post(
-            "/auth/recovery_token",
-            json=json,
-        )
-
-    assert response.status_code == 200
-    assert "token" in response.json()
-    return response.json()["token"]
-
-
-def rest_get_recovery_status(client):
-    response = client.get("/auth/recovery_token")
-    assert response.status_code == 200
-    return response.json()
-
-
-def rest_get_recovery_date(client):
-    status = rest_get_recovery_status(client)
-    assert "date" in status
-    return status["date"]
-
-
-def assert_recovery_recent(time_generated):
-    assert (
-        datetime.datetime.strptime(time_generated, "%Y-%m-%dT%H:%M:%S.%f")
-        - datetime.timedelta(seconds=5)
-        < datetime.datetime.now()
-    )
-
-
-def rest_recover_with_mnemonic(client, mnemonic_token, device_name):
-    recovery_response = client.post(
-        "/auth/recovery_token/use",
-        json={"token": mnemonic_token, "device": device_name},
-    )
-    assert recovery_response.status_code == 200
-    new_token = recovery_response.json()["token"]
-    assert_token_valid(client, new_token)
-    return new_token
 
 
 def test_generate_recovery_token(authorized_client, client, tokens_file):
