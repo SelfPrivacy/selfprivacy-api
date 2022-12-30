@@ -17,7 +17,7 @@ from selfprivacy_api.models.tokens.new_device_key import NewDeviceKey
 
 
 class AbstractTokensRepository(ABC):
-    def get_token_by_token_string(self, token_string: str) -> Optional[Token]:
+    def get_token_by_token_string(self, token_string: str) -> Token:
         """Get the token by token"""
         tokens = self.get_tokens()
         for token in tokens:
@@ -26,7 +26,7 @@ class AbstractTokensRepository(ABC):
 
         raise TokenNotFound("Token not found!")
 
-    def get_token_by_name(self, token_name: str) -> Optional[Token]:
+    def get_token_by_name(self, token_name: str) -> Token:
         """Get the token by name"""
         tokens = self.get_tokens()
         for token in tokens:
@@ -101,7 +101,12 @@ class AbstractTokensRepository(ABC):
         if not self.is_recovery_key_valid():
             raise RecoveryKeyNotFound("Recovery key not found")
 
-        recovery_hex_key = self.get_recovery_key().key
+        recovery_key = self.get_recovery_key()
+
+        if recovery_key is None:
+            raise RecoveryKeyNotFound("Recovery key not found")
+
+        recovery_hex_key = recovery_key.key
         if not self._assert_mnemonic(recovery_hex_key, mnemonic_phrase):
             raise RecoveryKeyNotFound("Recovery key not found")
 

@@ -150,7 +150,7 @@ def get_new_device_auth_token() -> str:
     return Mnemonic(language="english").to_mnemonic(bytes.fromhex(key.key))
 
 
-def use_new_device_auth_token(mnemonic_phrase, name) -> str:
+def use_new_device_auth_token(mnemonic_phrase, name) -> Optional[str]:
     """Use the new device auth token by converting the mnemonic string to a byte array.
     If the mnemonic phrase is valid then generate a device token and return it.
     New device auth token must be deleted.
