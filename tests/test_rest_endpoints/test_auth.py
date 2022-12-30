@@ -340,25 +340,9 @@ def test_generate_recovery_token_with_expiration_date(
         "uses_left": None,
     }
 
-    # Try to use the token
-    recovery_response = client.post(
-        "/auth/recovery_token/use",
-        json={"token": mnemonic_token, "device": "recovery_device"},
-    )
-    assert recovery_response.status_code == 200
-    new_token = recovery_response.json()["token"]
-    assert read_json(tokens_file)["tokens"][2]["token"] == new_token
-    assert read_json(tokens_file)["tokens"][2]["name"] == "recovery_device"
-
-    # Try to use token again
-    recovery_response = client.post(
-        "/auth/recovery_token/use",
-        json={"token": mnemonic_token, "device": "recovery_device2"},
-    )
-    assert recovery_response.status_code == 200
-    new_token = recovery_response.json()["token"]
-    assert read_json(tokens_file)["tokens"][3]["token"] == new_token
-    assert read_json(tokens_file)["tokens"][3]["name"] == "recovery_device2"
+    rest_recover_with_mnemonic(client, mnemonic_token, "recover_device")
+    # And again
+    rest_recover_with_mnemonic(client, mnemonic_token, "recover_device2")
 
     # Try to use token after expiration date
     new_data = read_json(tokens_file)
@@ -450,16 +434,7 @@ def test_generate_recovery_token_with_limited_uses(
     }
 
     # Try to use the token
-    recovery_response = client.post(
-        "/auth/recovery_token/use",
-        json={"token": mnemonic_token, "device": "recovery_device"},
-    )
-    assert recovery_response.status_code == 200
-    new_token = recovery_response.json()["token"]
-    assert read_json(tokens_file)["tokens"][2]["token"] == new_token
-    assert read_json(tokens_file)["tokens"][2]["name"] == "recovery_device"
-
-    assert read_json(tokens_file)["recovery_token"]["uses_left"] == 1
+    rest_recover_with_mnemonic(client, mnemonic_token, "recover_device")
 
     # Get the status of the token
     response = authorized_client.get("/auth/recovery_token")
@@ -473,14 +448,7 @@ def test_generate_recovery_token_with_limited_uses(
     }
 
     # Try to use token again
-    recovery_response = client.post(
-        "/auth/recovery_token/use",
-        json={"token": mnemonic_token, "device": "recovery_device2"},
-    )
-    assert recovery_response.status_code == 200
-    new_token = recovery_response.json()["token"]
-    assert read_json(tokens_file)["tokens"][3]["token"] == new_token
-    assert read_json(tokens_file)["tokens"][3]["name"] == "recovery_device2"
+    rest_recover_with_mnemonic(client, mnemonic_token, "recover_device2")
 
     # Get the status of the token
     response = authorized_client.get("/auth/recovery_token")
