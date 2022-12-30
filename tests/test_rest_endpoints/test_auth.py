@@ -257,21 +257,19 @@ def test_generate_recovery_token(authorized_client, client, tokens_file):
     assert response.status_code == 200
     assert "token" in response.json()
     mnemonic_token = response.json()["token"]
-    token = Mnemonic(language="english").to_entropy(mnemonic_token).hex()
-    assert read_json(tokens_file)["recovery_token"]["token"] == token
 
-    time_generated = read_json(tokens_file)["recovery_token"]["date"]
-    assert time_generated is not None
+    # Try to get token status
+    response = authorized_client.get("/auth/recovery_token")
+    assert response.status_code == 200
+    assert "date" in response.json()
+    time_generated = response.json()["date"]
+
     # Assert that the token was generated near the current time
     assert (
         datetime.datetime.strptime(time_generated, "%Y-%m-%dT%H:%M:%S.%f")
         - datetime.timedelta(seconds=5)
         < datetime.datetime.now()
     )
-
-    # Try to get token status
-    response = authorized_client.get("/auth/recovery_token")
-    assert response.status_code == 200
     assert response.json() == {
         "exists": True,
         "valid": True,
@@ -287,8 +285,7 @@ def test_generate_recovery_token(authorized_client, client, tokens_file):
     )
     assert recovery_response.status_code == 200
     new_token = recovery_response.json()["token"]
-    assert read_json(tokens_file)["tokens"][2]["token"] == new_token
-    assert read_json(tokens_file)["tokens"][2]["name"] == "recovery_device"
+    assert_token_valid(authorized_client, new_token)
 
     # Try to use token again
     recovery_response = client.post(
@@ -297,8 +294,7 @@ def test_generate_recovery_token(authorized_client, client, tokens_file):
     )
     assert recovery_response.status_code == 200
     new_token = recovery_response.json()["token"]
-    assert read_json(tokens_file)["tokens"][3]["token"] == new_token
-    assert read_json(tokens_file)["tokens"][3]["name"] == "recovery_device2"
+    assert_token_valid(authorized_client, new_token)
 
 
 @pytest.mark.parametrize("timeformat", DATE_FORMATS)
