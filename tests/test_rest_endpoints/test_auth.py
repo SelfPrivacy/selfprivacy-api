@@ -267,23 +267,34 @@ def rest_make_recovery_token(client, expires_at=None, timeformat=None):
     return response.json()["token"]
 
 
-def test_generate_recovery_token(authorized_client, client, tokens_file):
-    # Generate token without expiration and uses_left
-    mnemonic_token = rest_make_recovery_token(authorized_client)
-
-    # Try to get token status
-    response = authorized_client.get("/auth/recovery_token")
+def rest_get_recovery_status(client):
+    response = client.get("/auth/recovery_token")
     assert response.status_code == 200
-    assert "date" in response.json()
-    time_generated = response.json()["date"]
+    return response.json()
 
-    # Assert that the token was generated near the current time
+
+def rest_get_recovery_date(client):
+    status = rest_get_recovery_status(client)
+    assert "date" in status
+    return status["date"]
+
+
+def assert_recovery_recent(time_generated):
     assert (
         datetime.datetime.strptime(time_generated, "%Y-%m-%dT%H:%M:%S.%f")
         - datetime.timedelta(seconds=5)
         < datetime.datetime.now()
     )
-    assert response.json() == {
+
+
+def test_generate_recovery_token(authorized_client, client, tokens_file):
+    # Generate token without expiration and uses_left
+    mnemonic_token = rest_make_recovery_token(authorized_client)
+
+    time_generated = rest_get_recovery_date(authorized_client)
+    assert_recovery_recent(time_generated)
+
+    assert rest_get_recovery_status(authorized_client) == {
         "exists": True,
         "valid": True,
         "date": time_generated,
@@ -320,19 +331,11 @@ def test_generate_recovery_token_with_expiration_date(
     mnemonic_token = rest_make_recovery_token(
         authorized_client, expires_at=expiration_date, timeformat=timeformat
     )
-    time_generated = read_json(tokens_file)["recovery_token"]["date"]
-    assert time_generated is not None
-    # Assert that the token was generated near the current time
-    assert (
-        datetime.datetime.strptime(time_generated, "%Y-%m-%dT%H:%M:%S.%f")
-        - datetime.timedelta(seconds=5)
-        < datetime.datetime.now()
-    )
 
-    # Try to get token status
-    response = authorized_client.get("/auth/recovery_token")
-    assert response.status_code == 200
-    assert response.json() == {
+    time_generated = rest_get_recovery_date(authorized_client)
+    assert_recovery_recent(time_generated)
+
+    assert rest_get_recovery_status(authorized_client) == {
         "exists": True,
         "valid": True,
         "date": time_generated,
