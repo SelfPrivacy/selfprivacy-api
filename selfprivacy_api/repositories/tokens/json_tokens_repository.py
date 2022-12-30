@@ -69,7 +69,7 @@ class JsonTokensRepository(AbstractTokensRepository):
             recovery_key = RecoveryKey(
                 key=tokens_file["recovery_token"].get("token"),
                 created_at=tokens_file["recovery_token"].get("date"),
-                expires_at=tokens_file["recovery_token"].get("expitation"),
+                expires_at=tokens_file["recovery_token"].get("expiration"),
                 uses_left=tokens_file["recovery_token"].get("uses_left"),
             )
 
@@ -85,10 +85,13 @@ class JsonTokensRepository(AbstractTokensRepository):
         recovery_key = RecoveryKey.generate(expiration, uses_left)
 
         with WriteUserData(UserDataFiles.TOKENS) as tokens_file:
+            key_expiration: Optional[str] = None
+            if recovery_key.expires_at is not None:
+                key_expiration = recovery_key.expires_at.strftime(DATETIME_FORMAT)
             tokens_file["recovery_token"] = {
                 "token": recovery_key.key,
                 "date": recovery_key.created_at.strftime(DATETIME_FORMAT),
-                "expiration": recovery_key.expires_at,
+                "expiration": key_expiration,
                 "uses_left": recovery_key.uses_left,
             }
 
@@ -98,20 +101,16 @@ class JsonTokensRepository(AbstractTokensRepository):
         """Decrement recovery key use count by one"""
         if self.is_recovery_key_valid():
             with WriteUserData(UserDataFiles.TOKENS) as tokens:
-                tokens["recovery_token"]["uses_left"] -= 1
+                if tokens["recovery_token"]["uses_left"] is not None:
+                    tokens["recovery_token"]["uses_left"] -= 1
 
-    def get_new_device_key(self) -> NewDeviceKey:
-        """Creates and returns the new device key"""
-        new_device_key = NewDeviceKey.generate()
-
+    def _store_new_device_key(self, new_device_key: NewDeviceKey) -> None:
         with WriteUserData(UserDataFiles.TOKENS) as tokens_file:
             tokens_file["new_device"] = {
                 "token": new_device_key.key,
                 "date": new_device_key.created_at.strftime(DATETIME_FORMAT),
                 "expiration": new_device_key.expires_at.strftime(DATETIME_FORMAT),
             }
-
-        return new_device_key
 
     def delete_new_device_key(self) -> None:
         """Delete the new device key"""

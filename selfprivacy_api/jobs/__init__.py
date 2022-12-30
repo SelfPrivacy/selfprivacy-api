@@ -97,8 +97,8 @@ class Jobs:
             error=None,
             result=None,
         )
-        r = RedisPool().get_connection()
-        _store_job_as_hash(r, _redis_key_from_uuid(job.uid), job)
+        redis = RedisPool().get_connection()
+        _store_job_as_hash(redis, _redis_key_from_uuid(job.uid), job)
         return job
 
     @staticmethod
@@ -113,10 +113,10 @@ class Jobs:
         """
         Remove a job from the jobs list.
         """
-        r = RedisPool().get_connection()
+        redis = RedisPool().get_connection()
         key = _redis_key_from_uuid(job_uuid)
-        if (r.exists(key)):
-            r.delete(key)
+        if redis.exists(key):
+            redis.delete(key)
             return True
         return False
 
@@ -149,12 +149,12 @@ class Jobs:
         if status in (JobStatus.FINISHED, JobStatus.ERROR):
             job.finished_at = datetime.datetime.now()
 
-        r = RedisPool().get_connection()
+        redis = RedisPool().get_connection()
         key = _redis_key_from_uuid(job.uid)
-        if r.exists(key):
-            _store_job_as_hash(r, key, job)
+        if redis.exists(key):
+            _store_job_as_hash(redis, key, job)
             if status in (JobStatus.FINISHED, JobStatus.ERROR):
-                r.expire(key, JOB_EXPIRATION_SECONDS)
+                redis.expire(key, JOB_EXPIRATION_SECONDS)
 
         return job
 
@@ -163,10 +163,10 @@ class Jobs:
         """
         Get a job from the jobs list.
         """
-        r = RedisPool().get_connection()
+        redis = RedisPool().get_connection()
         key = _redis_key_from_uuid(uid)
-        if r.exists(key):
-            return _job_from_hash(r, key)
+        if redis.exists(key):
+            return _job_from_hash(redis, key)
         return None
 
     @staticmethod
@@ -174,9 +174,14 @@ class Jobs:
         """
         Get the jobs list.
         """
-        r = RedisPool().get_connection()
-        jobs = r.keys("jobs:*")
-        return [_job_from_hash(r, job_key) for job_key in jobs]
+        redis = RedisPool().get_connection()
+        job_keys = redis.keys("jobs:*")
+        jobs = []
+        for job_key in job_keys:
+            job = _job_from_hash(redis, job_key)
+            if job is not None:
+                jobs.append(job)
+        return jobs
 
     @staticmethod
     def is_busy() -> bool:
@@ -189,11 +194,11 @@ class Jobs:
         return False
 
 
-def _redis_key_from_uuid(uuid):
-    return "jobs:" + str(uuid)
+def _redis_key_from_uuid(uuid_string):
+    return "jobs:" + str(uuid_string)
 
 
-def _store_job_as_hash(r, redis_key, model):
+def _store_job_as_hash(redis, redis_key, model):
     for key, value in model.dict().items():
         if isinstance(value, uuid.UUID):
             value = str(value)
@@ -201,12 +206,12 @@ def _store_job_as_hash(r, redis_key, model):
             value = value.isoformat()
         if isinstance(value, JobStatus):
             value = value.value
-        r.hset(redis_key, key, str(value))
+        redis.hset(redis_key, key, str(value))
 
 
-def _job_from_hash(r, redis_key):
-    if r.exists(redis_key):
-        job_dict = r.hgetall(redis_key)
+def _job_from_hash(redis, redis_key):
+    if redis.exists(redis_key):
+        job_dict = redis.hgetall(redis_key)
         for date in [
             "created_at",
             "updated_at",

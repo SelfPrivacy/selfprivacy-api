@@ -32,29 +32,34 @@ class RedisTokensRepository(AbstractTokensRepository):
 
     def get_tokens(self) -> list[Token]:
         """Get the tokens"""
-        r = self.connection
-        token_keys = r.keys(TOKENS_PREFIX + "*")
-        return [self._token_from_hash(key) for key in token_keys]
+        redis = self.connection
+        token_keys = redis.keys(TOKENS_PREFIX + "*")
+        tokens = []
+        for key in token_keys:
+            token = self._token_from_hash(key)
+            if token is not None:
+                tokens.append(token)
+        return tokens
 
     def delete_token(self, input_token: Token) -> None:
         """Delete the token"""
-        r = self.connection
+        redis = self.connection
         key = RedisTokensRepository._token_redis_key(input_token)
         if input_token not in self.get_tokens():
             raise TokenNotFound
-        r.delete(key)
+        redis.delete(key)
 
     def reset(self):
         for token in self.get_tokens():
             self.delete_token(token)
         self.delete_new_device_key()
-        r = self.connection
-        r.delete(RECOVERY_KEY_REDIS_KEY)
+        redis = self.connection
+        redis.delete(RECOVERY_KEY_REDIS_KEY)
 
     def get_recovery_key(self) -> Optional[RecoveryKey]:
         """Get the recovery key"""
-        r = self.connection
-        if r.exists(RECOVERY_KEY_REDIS_KEY):
+        redis = self.connection
+        if redis.exists(RECOVERY_KEY_REDIS_KEY):
             return self._recovery_key_from_hash(RECOVERY_KEY_REDIS_KEY)
         return None
 
@@ -68,16 +73,14 @@ class RedisTokensRepository(AbstractTokensRepository):
         self._store_model_as_hash(RECOVERY_KEY_REDIS_KEY, recovery_key)
         return recovery_key
 
-    def get_new_device_key(self) -> NewDeviceKey:
-        """Creates and returns the new device key"""
-        new_device_key = NewDeviceKey.generate()
+    def _store_new_device_key(self, new_device_key: NewDeviceKey) -> None:
+        """Store new device key directly"""
         self._store_model_as_hash(NEW_DEVICE_KEY_REDIS_KEY, new_device_key)
-        return new_device_key
 
     def delete_new_device_key(self) -> None:
         """Delete the new device key"""
-        r = self.connection
-        r.delete(NEW_DEVICE_KEY_REDIS_KEY)
+        redis = self.connection
+        redis.delete(NEW_DEVICE_KEY_REDIS_KEY)
 
     @staticmethod
     def _token_redis_key(token: Token) -> str:
@@ -91,9 +94,13 @@ class RedisTokensRepository(AbstractTokensRepository):
     def _decrement_recovery_token(self):
         """Decrement recovery key use count by one"""
         if self.is_recovery_key_valid():
-            uses_left = self.get_recovery_key().uses_left
-            r = self.connection
-            r.hset(RECOVERY_KEY_REDIS_KEY, "uses_left", uses_left - 1)
+            recovery_key = self.get_recovery_key()
+            if recovery_key is None:
+                return
+            uses_left = recovery_key.uses_left
+            if uses_left is not None:
+                redis = self.connection
+                redis.hset(RECOVERY_KEY_REDIS_KEY, "uses_left", uses_left - 1)
 
     def _get_stored_new_device_key(self) -> Optional[NewDeviceKey]:
         """Retrieves new device key that is already stored."""
@@ -117,9 +124,9 @@ class RedisTokensRepository(AbstractTokensRepository):
                 d[key] = None
 
     def _model_dict_from_hash(self, redis_key: str) -> Optional[dict]:
-        r = self.connection
-        if r.exists(redis_key):
-            token_dict = r.hgetall(redis_key)
+        redis = self.connection
+        if redis.exists(redis_key):
+            token_dict = redis.hgetall(redis_key)
             RedisTokensRepository._prepare_model_dict(token_dict)
             return token_dict
         return None
@@ -140,8 +147,8 @@ class RedisTokensRepository(AbstractTokensRepository):
         return self._hash_as_model(redis_key, NewDeviceKey)
 
     def _store_model_as_hash(self, redis_key, model):
-        r = self.connection
+        redis = self.connection
         for key, value in model.dict().items():
             if isinstance(value, datetime):
                 value = value.isoformat()
-            r.hset(redis_key, key, str(value))
+            redis.hset(redis_key, key, str(value))

@@ -2,20 +2,19 @@
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel
+from mnemonic import Mnemonic
 
-
-from selfprivacy_api.utils.auth import (
-    delete_token,
-    generate_recovery_token,
-    get_recovery_token_status,
-    get_tokens_info,
-    is_recovery_token_exists,
-    is_recovery_token_valid,
-    is_token_name_exists,
-    is_token_name_pair_valid,
-    refresh_token,
-    get_token_name,
+from selfprivacy_api.repositories.tokens.json_tokens_repository import (
+    JsonTokensRepository,
 )
+from selfprivacy_api.repositories.tokens.exceptions import (
+    TokenNotFound,
+    RecoveryKeyNotFound,
+    InvalidMnemonic,
+    NewDeviceKeyNotFound,
+)
+
+TOKEN_REPO = JsonTokensRepository()
 
 
 class TokenInfoWithIsCaller(BaseModel):
@@ -28,16 +27,21 @@ class TokenInfoWithIsCaller(BaseModel):
 
 def get_api_tokens_with_caller_flag(caller_token: str) -> list[TokenInfoWithIsCaller]:
     """Get the tokens info"""
-    caller_name = get_token_name(caller_token)
-    tokens = get_tokens_info()
+    caller_name = TOKEN_REPO.get_token_by_token_string(caller_token).device_name
+    tokens = TOKEN_REPO.get_tokens()
     return [
         TokenInfoWithIsCaller(
-            name=token.name,
-            date=token.date,
-            is_caller=token.name == caller_name,
+            name=token.device_name,
+            date=token.created_at,
+            is_caller=token.device_name == caller_name,
         )
         for token in tokens
     ]
+
+
+def is_token_valid(token) -> bool:
+    """Check if token is valid"""
+    return TOKEN_REPO.is_token_valid(token)
 
 
 class NotFoundException(Exception):
@@ -50,19 +54,22 @@ class CannotDeleteCallerException(Exception):
 
 def delete_api_token(caller_token: str, token_name: str) -> None:
     """Delete the token"""
-    if is_token_name_pair_valid(token_name, caller_token):
+    if TOKEN_REPO.is_token_name_pair_valid(token_name, caller_token):
         raise CannotDeleteCallerException("Cannot delete caller's token")
-    if not is_token_name_exists(token_name):
+    if not TOKEN_REPO.is_token_name_exists(token_name):
         raise NotFoundException("Token not found")
-    delete_token(token_name)
+    token = TOKEN_REPO.get_token_by_name(token_name)
+    TOKEN_REPO.delete_token(token)
 
 
 def refresh_api_token(caller_token: str) -> str:
     """Refresh the token"""
-    new_token = refresh_token(caller_token)
-    if new_token is None:
+    try:
+        old_token = TOKEN_REPO.get_token_by_token_string(caller_token)
+        new_token = TOKEN_REPO.refresh_token(old_token)
+    except TokenNotFound:
         raise NotFoundException("Token not found")
-    return new_token
+    return new_token.token
 
 
 class RecoveryTokenStatus(BaseModel):
@@ -77,18 +84,16 @@ class RecoveryTokenStatus(BaseModel):
 
 def get_api_recovery_token_status() -> RecoveryTokenStatus:
     """Get the recovery token status"""
-    if not is_recovery_token_exists():
+    token = TOKEN_REPO.get_recovery_key()
+    if token is None:
         return RecoveryTokenStatus(exists=False, valid=False)
-    status = get_recovery_token_status()
-    if status is None:
-        return RecoveryTokenStatus(exists=False, valid=False)
-    is_valid = is_recovery_token_valid()
+    is_valid = TOKEN_REPO.is_recovery_key_valid()
     return RecoveryTokenStatus(
         exists=True,
         valid=is_valid,
-        date=status["date"],
-        expiration=status["expiration"],
-        uses_left=status["uses_left"],
+        date=token.created_at,
+        expiration=token.expires_at,
+        uses_left=token.uses_left,
     )
 
 
@@ -112,5 +117,46 @@ def get_new_api_recovery_key(
         if uses_left <= 0:
             raise InvalidUsesLeft("Uses must be greater than 0")
 
-    key = generate_recovery_token(expiration_date, uses_left)
-    return key
+    key = TOKEN_REPO.create_recovery_key(expiration_date, uses_left)
+    mnemonic_phrase = Mnemonic(language="english").to_mnemonic(bytes.fromhex(key.key))
+    return mnemonic_phrase
+
+
+def use_mnemonic_recovery_token(mnemonic_phrase, name):
+    """Use the recovery token by converting the mnemonic word list to a byte array.
+    If the recovery token if invalid itself, return None
+    If the binary representation of phrase not matches
+    the byte array of the recovery token, return None.
+    If the mnemonic phrase is valid then generate a device token and return it.
+    Substract 1 from uses_left if it exists.
+    mnemonic_phrase is a string representation of the mnemonic word list.
+    """
+    try:
+        token = TOKEN_REPO.use_mnemonic_recovery_key(mnemonic_phrase, name)
+        return token.token
+    except (RecoveryKeyNotFound, InvalidMnemonic):
+        return None
+
+
+def delete_new_device_auth_token() -> None:
+    TOKEN_REPO.delete_new_device_key()
+
+
+def get_new_device_auth_token() -> str:
+    """Generate and store a new device auth token which is valid for 10 minutes
+    and return a mnemonic phrase representation
+    """
+    key = TOKEN_REPO.get_new_device_key()
+    return Mnemonic(language="english").to_mnemonic(bytes.fromhex(key.key))
+
+
+def use_new_device_auth_token(mnemonic_phrase, name) -> Optional[str]:
+    """Use the new device auth token by converting the mnemonic string to a byte array.
+    If the mnemonic phrase is valid then generate a device token and return it.
+    New device auth token must be deleted.
+    """
+    try:
+        token = TOKEN_REPO.use_mnemonic_new_device_key(mnemonic_phrase, name)
+        return token.token
+    except (NewDeviceKeyNotFound, InvalidMnemonic):
+        return None

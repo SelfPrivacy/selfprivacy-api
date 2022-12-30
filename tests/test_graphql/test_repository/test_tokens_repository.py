@@ -2,7 +2,8 @@
 # pylint: disable=unused-argument
 # pylint: disable=missing-function-docstring
 
-from datetime import datetime
+from datetime import datetime, timedelta
+from mnemonic import Mnemonic
 
 import pytest
 
@@ -30,6 +31,10 @@ ORIGINAL_DEVICE_NAMES = [
     "third_token",
     "forth_token",
 ]
+
+
+def mnemonic_from_hex(hexkey):
+    return Mnemonic(language="english").to_mnemonic(bytes.fromhex(hexkey))
 
 
 @pytest.fixture
@@ -133,21 +138,6 @@ def mock_recovery_key_generate(mocker):
 
 
 @pytest.fixture
-def mock_recovery_key_generate_for_mnemonic(mocker):
-    mock = mocker.patch(
-        "selfprivacy_api.models.tokens.recovery_key.RecoveryKey.generate",
-        autospec=True,
-        return_value=RecoveryKey(
-            key="ed653e4b8b042b841d285fa7a682fa09e925ddb2d8906f54",
-            created_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
-            expires_at=None,
-            uses_left=1,
-        ),
-    )
-    return mock
-
-
-@pytest.fixture
 def empty_json_repo(empty_keys):
     repo = JsonTokensRepository()
     for token in repo.get_tokens():
@@ -221,6 +211,28 @@ def test_get_token_by_non_existent_name(some_tokens_repo):
         assert repo.get_token_by_name(token_name="badname") is None
 
 
+def test_is_token_valid(some_tokens_repo):
+    repo = some_tokens_repo
+    token = repo.get_tokens()[0]
+    assert repo.is_token_valid(token.token)
+    assert not repo.is_token_valid("gibberish")
+
+
+def test_is_token_name_pair_valid(some_tokens_repo):
+    repo = some_tokens_repo
+    token = repo.get_tokens()[0]
+    assert repo.is_token_name_pair_valid(token.device_name, token.token)
+    assert not repo.is_token_name_pair_valid(token.device_name, "gibberish")
+    assert not repo.is_token_name_pair_valid("gibberish", token.token)
+
+
+def test_is_token_name_exists(some_tokens_repo):
+    repo = some_tokens_repo
+    token = repo.get_tokens()[0]
+    assert repo.is_token_name_exists(token.device_name)
+    assert not repo.is_token_name_exists("gibberish")
+
+
 def test_get_tokens(some_tokens_repo):
     repo = some_tokens_repo
     tokenstrings = []
@@ -247,6 +259,17 @@ def test_create_token(empty_repo, mock_token_generate):
             created_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
         )
     ]
+
+
+def test_create_token_existing(some_tokens_repo):
+    repo = some_tokens_repo
+    old_token = repo.get_tokens()[0]
+
+    new_token = repo.create_token(device_name=old_token.device_name)
+    assert new_token.device_name != old_token.device_name
+
+    assert old_token in repo.get_tokens()
+    assert new_token in repo.get_tokens()
 
 
 def test_delete_token(some_tokens_repo):
@@ -280,15 +303,17 @@ def test_delete_not_found_token(some_tokens_repo):
         assert token in new_tokens
 
 
-def test_refresh_token(some_tokens_repo, mock_token_generate):
+def test_refresh_token(some_tokens_repo):
     repo = some_tokens_repo
     input_token = some_tokens_repo.get_tokens()[0]
 
-    assert repo.refresh_token(input_token) == Token(
-        token="ZuLNKtnxDeq6w2dpOJhbB3iat_sJLPTPl_rN5uc5MvM",
-        device_name="IamNewDevice",
-        created_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
-    )
+    output_token = repo.refresh_token(input_token)
+
+    assert output_token.token != input_token.token
+    assert output_token.device_name == input_token.device_name
+    assert output_token.created_at == input_token.created_at
+
+    assert output_token in repo.get_tokens()
 
 
 def test_refresh_not_found_token(some_tokens_repo, mock_token_generate):
@@ -355,6 +380,23 @@ def test_use_mnemonic_not_valid_recovery_key(
         )
 
 
+def test_use_mnemonic_expired_recovery_key(
+    some_tokens_repo,
+):
+    repo = some_tokens_repo
+    expiration = datetime.now() - timedelta(minutes=5)
+    assert repo.create_recovery_key(uses_left=2, expiration=expiration) is not None
+    recovery_key = repo.get_recovery_key()
+    assert recovery_key.expires_at == expiration
+    assert not repo.is_recovery_key_valid()
+
+    with pytest.raises(RecoveryKeyNotFound):
+        token = repo.use_mnemonic_recovery_key(
+            mnemonic_phrase=mnemonic_from_hex(recovery_key.key),
+            device_name="newdevice",
+        )
+
+
 def test_use_mnemonic_not_mnemonic_recovery_key(some_tokens_repo):
     repo = some_tokens_repo
     assert repo.create_recovery_key(uses_left=1, expiration=None) is not None
@@ -397,46 +439,38 @@ def test_use_not_found_mnemonic_recovery_key(some_tokens_repo):
         )
 
 
-def test_use_mnemonic_recovery_key_when_empty(empty_repo):
-    repo = empty_repo
-
-    with pytest.raises(RecoveryKeyNotFound):
-        assert (
-            repo.use_mnemonic_recovery_key(
-                mnemonic_phrase="captain ribbon toddler settle symbol minute step broccoli bless universe divide bulb",
-                device_name="primary_token",
-            )
-            is None
-        )
+@pytest.fixture(params=["recovery_uses_1", "recovery_eternal"])
+def recovery_key_uses_left(request):
+    if request.param == "recovery_uses_1":
+        return 1
+    if request.param == "recovery_eternal":
+        return None
 
 
-# agnostic test mixed with an implementation test
-def test_use_mnemonic_recovery_key(
-    some_tokens_repo, mock_recovery_key_generate_for_mnemonic, mock_generate_token
-):
+def test_use_mnemonic_recovery_key(some_tokens_repo, recovery_key_uses_left):
     repo = some_tokens_repo
-    assert repo.create_recovery_key(uses_left=1, expiration=None) is not None
-
-    test_token = Token(
-        token="ur71mC4aiI6FIYAN--cTL-38rPHS5D6NuB1bgN_qKF4",
-        device_name="newdevice",
-        created_at=datetime(2022, 11, 14, 6, 6, 32, 777123),
-    )
-
     assert (
-        repo.use_mnemonic_recovery_key(
-            mnemonic_phrase="uniform clarify napkin bid dress search input armor police cross salon because myself uphold slice bamboo hungry park",
-            device_name="newdevice",
-        )
-        == test_token
+        repo.create_recovery_key(uses_left=recovery_key_uses_left, expiration=None)
+        is not None
+    )
+    assert repo.is_recovery_key_valid()
+    recovery_key = repo.get_recovery_key()
+
+    token = repo.use_mnemonic_recovery_key(
+        mnemonic_phrase=mnemonic_from_hex(recovery_key.key),
+        device_name="newdevice",
     )
 
-    assert test_token in repo.get_tokens()
+    assert token.device_name == "newdevice"
+    assert token in repo.get_tokens()
+    new_uses = None
+    if recovery_key_uses_left is not None:
+        new_uses = recovery_key_uses_left - 1
     assert repo.get_recovery_key() == RecoveryKey(
-        key="ed653e4b8b042b841d285fa7a682fa09e925ddb2d8906f54",
-        created_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
+        key=recovery_key.key,
+        created_at=recovery_key.created_at,
         expires_at=None,
-        uses_left=0,
+        uses_left=new_uses,
     )
 
 
@@ -497,15 +531,16 @@ def test_use_not_exists_mnemonic_new_device_key(
         )
 
 
-def test_use_mnemonic_new_device_key(
-    empty_repo, mock_new_device_key_generate_for_mnemonic
-):
+def test_use_mnemonic_new_device_key(empty_repo):
     repo = empty_repo
-    assert repo.get_new_device_key() is not None
+    key = repo.get_new_device_key()
+    assert key is not None
+
+    mnemonic_phrase = mnemonic_from_hex(key.key)
 
     new_token = repo.use_mnemonic_new_device_key(
         device_name="imnew",
-        mnemonic_phrase="captain ribbon toddler settle symbol minute step broccoli bless universe divide bulb",
+        mnemonic_phrase=mnemonic_phrase,
     )
 
     assert new_token.device_name == "imnew"
@@ -516,9 +551,29 @@ def test_use_mnemonic_new_device_key(
         assert (
             repo.use_mnemonic_new_device_key(
                 device_name="imnew",
-                mnemonic_phrase="captain ribbon toddler settle symbol minute step broccoli bless universe divide bulb",
+                mnemonic_phrase=mnemonic_phrase,
             )
             is None
+        )
+
+
+def test_use_mnemonic_expired_new_device_key(
+    some_tokens_repo,
+):
+    repo = some_tokens_repo
+    expiration = datetime.now() - timedelta(minutes=5)
+
+    key = repo.get_new_device_key()
+    assert key is not None
+    assert key.expires_at is not None
+    key.expires_at = expiration
+    assert not key.is_valid()
+    repo._store_new_device_key(key)
+
+    with pytest.raises(NewDeviceKeyNotFound):
+        token = repo.use_mnemonic_new_device_key(
+            mnemonic_phrase=mnemonic_from_hex(key.key),
+            device_name="imnew",
         )
 
 
