@@ -9,7 +9,7 @@ from mnemonic import Mnemonic
 from tests.common import read_json, write_json
 
 
-TOKENS_FILE_CONTETS = {
+TOKENS_FILE_CONTENTS = {
     "tokens": [
         {
             "token": "TEST_TOKEN",
@@ -36,7 +36,7 @@ DEVICE_KEY_VALIDATION_DATETIME = "selfprivacy_api.models.tokens.new_device_key.d
 
 
 def assert_original(filename):
-    assert read_json(filename) == TOKENS_FILE_CONTETS
+    assert read_json(filename) == TOKENS_FILE_CONTENTS
 
 
 def assert_token_valid(client, token):
