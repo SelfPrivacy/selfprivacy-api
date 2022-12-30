@@ -378,7 +378,7 @@ def test_generate_recovery_token_with_expiration_in_the_past(
         json={"expiration": expiration_date_str},
     )
     assert response.status_code == 400
-    assert "recovery_token" not in read_json(tokens_file)
+    assert not rest_get_recovery_status(authorized_client)["exists"]
 
 
 def test_generate_recovery_token_with_invalid_time_format(
@@ -391,37 +391,19 @@ def test_generate_recovery_token_with_invalid_time_format(
         json={"expiration": expiration_date},
     )
     assert response.status_code == 422
-    assert "recovery_token" not in read_json(tokens_file)
+    assert not rest_get_recovery_status(authorized_client)["exists"]
 
 
 def test_generate_recovery_token_with_limited_uses(
     authorized_client, client, tokens_file
 ):
     # Generate token with limited uses
-    response = authorized_client.post(
-        "/auth/recovery_token",
-        json={"uses": 2},
-    )
-    assert response.status_code == 200
-    assert "token" in response.json()
-    mnemonic_token = response.json()["token"]
-    token = Mnemonic(language="english").to_entropy(mnemonic_token).hex()
-    assert read_json(tokens_file)["recovery_token"]["token"] == token
-    assert read_json(tokens_file)["recovery_token"]["uses_left"] == 2
+    mnemonic_token = rest_make_recovery_token(authorized_client, uses=2)
 
-    # Get the date of the token
-    time_generated = read_json(tokens_file)["recovery_token"]["date"]
-    assert time_generated is not None
-    assert (
-        datetime.datetime.strptime(time_generated, "%Y-%m-%dT%H:%M:%S.%f")
-        - datetime.timedelta(seconds=5)
-        < datetime.datetime.now()
-    )
+    time_generated = rest_get_recovery_date(authorized_client)
+    assert_recovery_recent(time_generated)
 
-    # Try to get token status
-    response = authorized_client.get("/auth/recovery_token")
-    assert response.status_code == 200
-    assert response.json() == {
+    assert rest_get_recovery_status(authorized_client) == {
         "exists": True,
         "valid": True,
         "date": time_generated,
@@ -432,10 +414,7 @@ def test_generate_recovery_token_with_limited_uses(
     # Try to use the token
     rest_recover_with_mnemonic(client, mnemonic_token, "recover_device")
 
-    # Get the status of the token
-    response = authorized_client.get("/auth/recovery_token")
-    assert response.status_code == 200
-    assert response.json() == {
+    assert rest_get_recovery_status(authorized_client) == {
         "exists": True,
         "valid": True,
         "date": time_generated,
@@ -446,10 +425,7 @@ def test_generate_recovery_token_with_limited_uses(
     # Try to use token again
     rest_recover_with_mnemonic(client, mnemonic_token, "recover_device2")
 
-    # Get the status of the token
-    response = authorized_client.get("/auth/recovery_token")
-    assert response.status_code == 200
-    assert response.json() == {
+    assert rest_get_recovery_status(authorized_client) == {
         "exists": True,
         "valid": False,
         "date": time_generated,
@@ -464,8 +440,6 @@ def test_generate_recovery_token_with_limited_uses(
     )
     assert recovery_response.status_code == 404
 
-    assert read_json(tokens_file)["recovery_token"]["uses_left"] == 0
-
 
 def test_generate_recovery_token_with_negative_uses(
     authorized_client, client, tokens_file
@@ -476,7 +450,7 @@ def test_generate_recovery_token_with_negative_uses(
         json={"uses": -2},
     )
     assert response.status_code == 400
-    assert "recovery_token" not in read_json(tokens_file)
+    assert not rest_get_recovery_status(authorized_client)["exists"]
 
 
 def test_generate_recovery_token_with_zero_uses(authorized_client, client, tokens_file):
@@ -486,4 +460,4 @@ def test_generate_recovery_token_with_zero_uses(authorized_client, client, token
         json={"uses": 0},
     )
     assert response.status_code == 400
-    assert "recovery_token" not in read_json(tokens_file)
+    assert not rest_get_recovery_status(authorized_client)["exists"]
