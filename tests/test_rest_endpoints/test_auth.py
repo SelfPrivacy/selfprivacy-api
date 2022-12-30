@@ -287,6 +287,17 @@ def assert_recovery_recent(time_generated):
     )
 
 
+def rest_recover_with_mnemonic(client, mnemonic_token, device_name):
+    recovery_response = client.post(
+        "/auth/recovery_token/use",
+        json={"token": mnemonic_token, "device": device_name},
+    )
+    assert recovery_response.status_code == 200
+    new_token = recovery_response.json()["token"]
+    assert_token_valid(client, new_token)
+    return new_token
+
+
 def test_generate_recovery_token(authorized_client, client, tokens_file):
     # Generate token without expiration and uses_left
     mnemonic_token = rest_make_recovery_token(authorized_client)
@@ -302,23 +313,9 @@ def test_generate_recovery_token(authorized_client, client, tokens_file):
         "uses_left": None,
     }
 
-    # Try to use the token
-    recovery_response = client.post(
-        "/auth/recovery_token/use",
-        json={"token": mnemonic_token, "device": "recovery_device"},
-    )
-    assert recovery_response.status_code == 200
-    new_token = recovery_response.json()["token"]
-    assert_token_valid(authorized_client, new_token)
-
-    # Try to use token again
-    recovery_response = client.post(
-        "/auth/recovery_token/use",
-        json={"token": mnemonic_token, "device": "recovery_device2"},
-    )
-    assert recovery_response.status_code == 200
-    new_token = recovery_response.json()["token"]
-    assert_token_valid(authorized_client, new_token)
+    rest_recover_with_mnemonic(client, mnemonic_token, "recover_device")
+    # And again
+    rest_recover_with_mnemonic(client, mnemonic_token, "recover_device2")
 
 
 @pytest.mark.parametrize("timeformat", DATE_FORMATS)
