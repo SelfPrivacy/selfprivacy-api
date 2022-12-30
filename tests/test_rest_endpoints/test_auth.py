@@ -32,7 +32,14 @@ DATE_FORMATS = [
 ]
 
 # for expiration tests. If headache, consider freezegun
+RECOVERY_KEY_VALIDATION_DATETIME = "selfprivacy_api.models.tokens.recovery_key.datetime"
 DEVICE_KEY_VALIDATION_DATETIME = "selfprivacy_api.models.tokens.new_device_key.datetime"
+
+
+class NearFuture(datetime.datetime):
+    @classmethod
+    def now(cls):
+        return datetime.datetime.now() + datetime.timedelta(minutes=13)
 
 
 def assert_original(filename):
@@ -184,14 +191,7 @@ def test_get_and_authorize_token_after_12_minutes(
     token = rest_get_new_device_token(authorized_client)
 
     # TARDIS sounds
-    new_time = datetime.datetime.now() + datetime.timedelta(minutes=13)
-
-    class warped_spacetime(datetime.datetime):
-        @classmethod
-        def now(cls):
-            return new_time
-
-    mock = mocker.patch(DEVICE_KEY_VALIDATION_DATETIME, warped_spacetime)
+    mock = mocker.patch(DEVICE_KEY_VALIDATION_DATETIME, NearFuture)
 
     response = client.post(
         "/auth/new_device/authorize",
@@ -320,7 +320,7 @@ def test_generate_recovery_token(authorized_client, client, tokens_file):
 
 @pytest.mark.parametrize("timeformat", DATE_FORMATS)
 def test_generate_recovery_token_with_expiration_date(
-    authorized_client, client, tokens_file, timeformat
+    authorized_client, client, tokens_file, timeformat, mocker
 ):
     # Generate token with expiration date
     # Generate expiration date in the future
@@ -345,29 +345,17 @@ def test_generate_recovery_token_with_expiration_date(
     rest_recover_with_mnemonic(client, mnemonic_token, "recover_device2")
 
     # Try to use token after expiration date
-    new_data = read_json(tokens_file)
-    new_data["recovery_token"]["expiration"] = datetime.datetime.now().strftime(
-        "%Y-%m-%dT%H:%M:%S.%f"
-    )
-    write_json(tokens_file, new_data)
+    mock = mocker.patch(RECOVERY_KEY_VALIDATION_DATETIME, NearFuture)
+    device_name = "recovery_device3"
     recovery_response = client.post(
         "/auth/recovery_token/use",
-        json={"token": mnemonic_token, "device": "recovery_device3"},
+        json={"token": mnemonic_token, "device": device_name},
     )
     assert recovery_response.status_code == 404
-    # Assert that the token was not created in JSON
-    assert read_json(tokens_file)["tokens"] == new_data["tokens"]
-
-    # Get the status of the token
-    response = authorized_client.get("/auth/recovery_token")
-    assert response.status_code == 200
-    assert response.json() == {
-        "exists": True,
-        "valid": False,
-        "date": time_generated,
-        "expiration": new_data["recovery_token"]["expiration"],
-        "uses_left": None,
-    }
+    # Assert that the token was not created
+    assert device_name not in [
+        token["name"] for token in rest_get_tokens_info(authorized_client)
+    ]
 
 
 @pytest.mark.parametrize("timeformat", DATE_FORMATS)
