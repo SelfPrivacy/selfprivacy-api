@@ -17,16 +17,14 @@ A job is a dictionary with the following keys:
 import typing
 import datetime
 from uuid import UUID
-import asyncio
-import json
-import os
-import time
 import uuid
 from enum import Enum
 
 from pydantic import BaseModel
 
-from selfprivacy_api.utils import ReadUserData, UserDataFiles, WriteUserData
+from selfprivacy_api.utils.redis_pool import RedisPool
+
+JOB_EXPIRATION_SECONDS = 10 * 24 * 60 * 60  # ten days
 
 
 class JobStatus(Enum):
@@ -64,36 +62,14 @@ class Jobs:
     Jobs class.
     """
 
-    __instance = None
-
-    @staticmethod
-    def get_instance():
-        """
-        Singleton method.
-        """
-        if Jobs.__instance is None:
-            Jobs()
-            if Jobs.__instance is None:
-                raise Exception("Couldn't init Jobs singleton!")
-            return Jobs.__instance
-        return Jobs.__instance
-
-    def __init__(self):
-        """
-        Initialize the jobs list.
-        """
-        if Jobs.__instance is not None:
-            raise Exception("This class is a singleton!")
-        else:
-            Jobs.__instance = self
-
     @staticmethod
     def reset() -> None:
         """
         Reset the jobs list.
         """
-        with WriteUserData(UserDataFiles.JOBS) as user_data:
-            user_data["jobs"] = []
+        jobs = Jobs.get_jobs()
+        for job in jobs:
+            Jobs.remove(job)
 
     @staticmethod
     def add(
@@ -121,32 +97,27 @@ class Jobs:
             error=None,
             result=None,
         )
-        with WriteUserData(UserDataFiles.JOBS) as user_data:
-            try:
-                if "jobs" not in user_data:
-                    user_data["jobs"] = []
-                user_data["jobs"].append(json.loads(job.json()))
-            except json.decoder.JSONDecodeError:
-                user_data["jobs"] = [json.loads(job.json())]
+        redis = RedisPool().get_connection()
+        _store_job_as_hash(redis, _redis_key_from_uuid(job.uid), job)
         return job
 
-    def remove(self, job: Job) -> None:
+    @staticmethod
+    def remove(job: Job) -> None:
         """
         Remove a job from the jobs list.
         """
-        self.remove_by_uid(str(job.uid))
+        Jobs.remove_by_uid(str(job.uid))
 
-    def remove_by_uid(self, job_uuid: str) -> bool:
+    @staticmethod
+    def remove_by_uid(job_uuid: str) -> bool:
         """
         Remove a job from the jobs list.
         """
-        with WriteUserData(UserDataFiles.JOBS) as user_data:
-            if "jobs" not in user_data:
-                user_data["jobs"] = []
-            for i, j in enumerate(user_data["jobs"]):
-                if j["uid"] == job_uuid:
-                    del user_data["jobs"][i]
-                    return True
+        redis = RedisPool().get_connection()
+        key = _redis_key_from_uuid(job_uuid)
+        if redis.exists(key):
+            redis.delete(key)
+            return True
         return False
 
     @staticmethod
@@ -178,13 +149,12 @@ class Jobs:
         if status in (JobStatus.FINISHED, JobStatus.ERROR):
             job.finished_at = datetime.datetime.now()
 
-        with WriteUserData(UserDataFiles.JOBS) as user_data:
-            if "jobs" not in user_data:
-                user_data["jobs"] = []
-            for i, j in enumerate(user_data["jobs"]):
-                if j["uid"] == str(job.uid):
-                    user_data["jobs"][i] = json.loads(job.json())
-                    break
+        redis = RedisPool().get_connection()
+        key = _redis_key_from_uuid(job.uid)
+        if redis.exists(key):
+            _store_job_as_hash(redis, key, job)
+            if status in (JobStatus.FINISHED, JobStatus.ERROR):
+                redis.expire(key, JOB_EXPIRATION_SECONDS)
 
         return job
 
@@ -193,12 +163,10 @@ class Jobs:
         """
         Get a job from the jobs list.
         """
-        with ReadUserData(UserDataFiles.JOBS) as user_data:
-            if "jobs" not in user_data:
-                user_data["jobs"] = []
-            for job in user_data["jobs"]:
-                if job["uid"] == uid:
-                    return Job(**job)
+        redis = RedisPool().get_connection()
+        key = _redis_key_from_uuid(uid)
+        if redis.exists(key):
+            return _job_from_hash(redis, key)
         return None
 
     @staticmethod
@@ -206,23 +174,54 @@ class Jobs:
         """
         Get the jobs list.
         """
-        with ReadUserData(UserDataFiles.JOBS) as user_data:
-            try:
-                if "jobs" not in user_data:
-                    user_data["jobs"] = []
-                return [Job(**job) for job in user_data["jobs"]]
-            except json.decoder.JSONDecodeError:
-                return []
+        redis = RedisPool().get_connection()
+        job_keys = redis.keys("jobs:*")
+        jobs = []
+        for job_key in job_keys:
+            job = _job_from_hash(redis, job_key)
+            if job is not None:
+                jobs.append(job)
+        return jobs
 
     @staticmethod
     def is_busy() -> bool:
         """
         Check if there is a job running.
         """
-        with ReadUserData(UserDataFiles.JOBS) as user_data:
-            if "jobs" not in user_data:
-                user_data["jobs"] = []
-            for job in user_data["jobs"]:
-                if job["status"] == JobStatus.RUNNING.value:
-                    return True
+        for job in Jobs.get_jobs():
+            if job.status == JobStatus.RUNNING:
+                return True
         return False
+
+
+def _redis_key_from_uuid(uuid_string):
+    return "jobs:" + str(uuid_string)
+
+
+def _store_job_as_hash(redis, redis_key, model):
+    for key, value in model.dict().items():
+        if isinstance(value, uuid.UUID):
+            value = str(value)
+        if isinstance(value, datetime.datetime):
+            value = value.isoformat()
+        if isinstance(value, JobStatus):
+            value = value.value
+        redis.hset(redis_key, key, str(value))
+
+
+def _job_from_hash(redis, redis_key):
+    if redis.exists(redis_key):
+        job_dict = redis.hgetall(redis_key)
+        for date in [
+            "created_at",
+            "updated_at",
+            "finished_at",
+        ]:
+            if job_dict[date] != "None":
+                job_dict[date] = datetime.datetime.fromisoformat(job_dict[date])
+        for key in job_dict.keys():
+            if job_dict[key] == "None":
+                job_dict[key] = None
+
+        return Job(**job_dict)
+    return None

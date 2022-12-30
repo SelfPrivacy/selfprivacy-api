@@ -11,3 +11,9 @@ class DnsProvider(Enum):
 @strawberry.enum
 class ServerProvider(Enum):
     HETZNER = "HETZNER"
+    DIGITALOCEAN = "DIGITALOCEAN"
+
+
+@strawberry.enum
+class BackupProvider(Enum):
+    BACKBLAZE = "BACKBLAZE"

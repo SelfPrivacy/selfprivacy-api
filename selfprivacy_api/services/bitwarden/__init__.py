@@ -144,7 +144,7 @@ class Bitwarden(Service):
         ]
 
     def move_to_volume(self, volume: BlockDevice) -> Job:
-        job = Jobs.get_instance().add(
+        job = Jobs.add(
             type_id="services.bitwarden.move",
             name="Move Bitwarden",
             description=f"Moving Bitwarden data to {volume.name}",

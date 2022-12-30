@@ -2,7 +2,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
 
-from selfprivacy_api.utils.auth import is_token_valid
+from selfprivacy_api.actions.api_tokens import is_token_valid
 
 
 class TokenHeader(BaseModel):
@@ -27,4 +27,4 @@ async def get_token_header(
 
 def get_api_version() -> str:
     """Get API version"""
-    return "2.0.9"
+    return "2.1.0"

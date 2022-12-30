@@ -4,7 +4,7 @@ import typing
 from strawberry.permission import BasePermission
 from strawberry.types import Info
 
-from selfprivacy_api.utils.auth import is_token_valid
+from selfprivacy_api.actions.api_tokens import is_token_valid
 
 
 class IsAuthenticated(BasePermission):

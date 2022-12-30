@@ -44,7 +44,7 @@ def get_system_domain_info() -> SystemDomainInfo:
         return SystemDomainInfo(
             domain=user_data["domain"],
             hostname=user_data["hostname"],
-            provider=DnsProvider.CLOUDFLARE,
+            provider=user_data["dns"]["provider"],
         )
 
 
@@ -133,7 +133,11 @@ class SystemProviderInfo:
 
 def get_system_provider_info() -> SystemProviderInfo:
     """Get system provider info"""
-    return SystemProviderInfo(provider=ServerProvider.HETZNER, id="UNKNOWN")
+    with ReadUserData() as user_data:
+        return SystemProviderInfo(
+            provider=user_data["server"]["provider"],
+            id="UNKNOWN",
+        )
 
 
 @strawberry.type

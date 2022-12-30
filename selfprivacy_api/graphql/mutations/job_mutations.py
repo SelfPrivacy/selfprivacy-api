@@ -14,7 +14,7 @@ class JobMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def remove_job(self, job_id: str) -> GenericMutationReturn:
         """Remove a job from the queue"""
-        result = Jobs.get_instance().remove_by_uid(job_id)
+        result = Jobs.remove_by_uid(job_id)
         if result:
             return GenericMutationReturn(
                 success=True,

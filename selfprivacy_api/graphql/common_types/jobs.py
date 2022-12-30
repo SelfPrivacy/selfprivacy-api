@@ -43,7 +43,7 @@ def job_to_api_job(job: Job) -> ApiJob:
 
 def get_api_job_by_id(job_id: str) -> typing.Optional[ApiJob]:
     """Get a job for GraphQL by its ID."""
-    job = Jobs.get_instance().get_job(job_id)
+    job = Jobs.get_job(job_id)
     if job is None:
         return None
     return job_to_api_job(job)

@@ -4,6 +4,7 @@ import json
 import typing
 
 from selfprivacy_api.utils import WriteUserData
+from selfprivacy_api.utils.singleton_metaclass import SingletonMetaclass
 
 
 def get_block_device(device_name):
@@ -147,15 +148,8 @@ class BlockDevice:
         return False
 
 
-class BlockDevices:
+class BlockDevices(metaclass=SingletonMetaclass):
     """Singleton holding all Block devices"""
-
-    _instance = None
-
-    def __new__(cls, *args, **kwargs):
-        if not cls._instance:
-            cls._instance = super().__new__(cls)
-        return cls._instance
 
     def __init__(self):
         self.block_devices = []

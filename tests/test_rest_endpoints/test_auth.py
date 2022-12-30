@@ -5,6 +5,12 @@ import datetime
 import pytest
 from mnemonic import Mnemonic
 
+from selfprivacy_api.repositories.tokens.json_tokens_repository import (
+    JsonTokensRepository,
+)
+
+TOKEN_REPO = JsonTokensRepository()
+
 from tests.common import read_json, write_json
 
 
@@ -97,7 +103,7 @@ def test_refresh_token(authorized_client, tokens_file):
     response = authorized_client.post("/auth/tokens")
     assert response.status_code == 200
     new_token = response.json()["token"]
-    assert read_json(tokens_file)["tokens"][0]["token"] == new_token
+    assert TOKEN_REPO.get_token_by_token_string(new_token) is not None
 
 
 # new device
