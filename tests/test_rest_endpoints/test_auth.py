@@ -251,12 +251,25 @@ def test_get_recovery_token_when_none_exists(authorized_client, tokens_file):
     assert_original(tokens_file)
 
 
-def test_generate_recovery_token(authorized_client, client, tokens_file):
-    # Generate token without expiration and uses_left
-    response = authorized_client.post("/auth/recovery_token")
+def rest_make_recovery_token(client, expires_at=None, timeformat=None):
+    if expires_at is None:
+        response = client.post("/auth/recovery_token")
+    else:
+        assert timeformat is not None
+        expires_at_str = expires_at.strftime(timeformat)
+        response = client.post(
+            "/auth/recovery_token",
+            json={"expiration": expires_at_str},
+        )
+
     assert response.status_code == 200
     assert "token" in response.json()
-    mnemonic_token = response.json()["token"]
+    return response.json()["token"]
+
+
+def test_generate_recovery_token(authorized_client, client, tokens_file):
+    # Generate token without expiration and uses_left
+    mnemonic_token = rest_make_recovery_token(authorized_client)
 
     # Try to get token status
     response = authorized_client.get("/auth/recovery_token")
@@ -304,20 +317,9 @@ def test_generate_recovery_token_with_expiration_date(
     # Generate token with expiration date
     # Generate expiration date in the future
     expiration_date = datetime.datetime.now() + datetime.timedelta(minutes=5)
-    expiration_date_str = expiration_date.strftime(timeformat)
-    response = authorized_client.post(
-        "/auth/recovery_token",
-        json={"expiration": expiration_date_str},
+    mnemonic_token = rest_make_recovery_token(
+        authorized_client, expires_at=expiration_date, timeformat=timeformat
     )
-    assert response.status_code == 200
-    assert "token" in response.json()
-    mnemonic_token = response.json()["token"]
-    token = Mnemonic(language="english").to_entropy(mnemonic_token).hex()
-    assert read_json(tokens_file)["recovery_token"]["token"] == token
-    assert datetime.datetime.strptime(
-        read_json(tokens_file)["recovery_token"]["expiration"], "%Y-%m-%dT%H:%M:%S.%f"
-    ) == datetime.datetime.strptime(expiration_date_str, timeformat)
-
     time_generated = read_json(tokens_file)["recovery_token"]["date"]
     assert time_generated is not None
     # Assert that the token was generated near the current time
