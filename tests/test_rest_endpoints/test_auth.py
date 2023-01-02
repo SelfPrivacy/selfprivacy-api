@@ -3,10 +3,6 @@
 # pylint: disable=missing-function-docstring
 import datetime
 import pytest
-from mnemonic import Mnemonic
-
-
-from tests.common import read_json, write_json
 
 
 TOKENS_FILE_CONTENTS = {
@@ -14,12 +10,12 @@ TOKENS_FILE_CONTENTS = {
         {
             "token": "TEST_TOKEN",
             "name": "test_token",
-            "date": "2022-01-14 08:31:10.789314",
+            "date": datetime.datetime(2022, 1, 14, 8, 31, 10, 789314),
         },
         {
             "token": "TEST_TOKEN2",
             "name": "test_token2",
-            "date": "2022-01-14 08:31:10.789314",
+            "date": datetime.datetime(2022, 1, 14, 8, 31, 10, 789314),
         },
     ]
 }
@@ -42,8 +38,17 @@ class NearFuture(datetime.datetime):
         return datetime.datetime.now() + datetime.timedelta(minutes=13)
 
 
-def assert_original(filename):
-    assert read_json(filename) == TOKENS_FILE_CONTENTS
+def assert_original(client):
+    new_tokens = rest_get_tokens_info(client)
+
+    for token in TOKENS_FILE_CONTENTS["tokens"]:
+        assert_token_valid(client, token["token"])
+        for new_token in new_tokens:
+            if new_token["name"] == token["name"]:
+                assert (
+                    datetime.datetime.fromisoformat(new_token["date"]) == token["date"]
+                )
+    assert_no_recovery(client)
 
 
 def assert_token_valid(client, token):
@@ -55,6 +60,17 @@ def rest_get_tokens_info(client):
     response = client.get("/auth/tokens")
     assert response.status_code == 200
     return response.json()
+
+
+def rest_try_authorize_new_device(client, token, device_name):
+    response = client.post(
+        "/auth/new_device/authorize",
+        json={
+            "token": token,
+            "device": device_name,
+        },
+    )
+    return response
 
 
 def rest_make_recovery_token(client, expires_at=None, timeformat=None, uses=None):
@@ -101,6 +117,10 @@ def assert_recovery_recent(time_generated):
     )
 
 
+def assert_no_recovery(client):
+    assert not rest_get_recovery_status(client)["exists"]
+
+
 def rest_recover_with_mnemonic(client, mnemonic_token, device_name):
     recovery_response = client.post(
         "/auth/recovery_token/use",
@@ -131,10 +151,10 @@ def test_get_tokens_unauthorized(client, tokens_file):
     assert response.status_code == 401
 
 
-def test_delete_token_unauthorized(client, tokens_file):
+def test_delete_token_unauthorized(client, authorized_client, tokens_file):
     response = client.delete("/auth/tokens")
     assert response.status_code == 401
-    assert_original(tokens_file)
+    assert_original(authorized_client)
 
 
 def test_delete_token(authorized_client, tokens_file):
@@ -152,7 +172,7 @@ def test_delete_self_token(authorized_client, tokens_file):
         "/auth/tokens", json={"token_name": "test_token"}
     )
     assert response.status_code == 400
-    assert_original(tokens_file)
+    assert_original(authorized_client)
 
 
 def test_delete_nonexistent_token(authorized_client, tokens_file):
@@ -160,13 +180,13 @@ def test_delete_nonexistent_token(authorized_client, tokens_file):
         "/auth/tokens", json={"token_name": "test_token3"}
     )
     assert response.status_code == 404
-    assert_original(tokens_file)
+    assert_original(authorized_client)
 
 
-def test_refresh_token_unauthorized(client, tokens_file):
+def test_refresh_token_unauthorized(client, authorized_client, tokens_file):
     response = client.post("/auth/tokens")
     assert response.status_code == 401
-    assert_original(tokens_file)
+    assert_original(authorized_client)
 
 
 def test_refresh_token(authorized_client, tokens_file):
@@ -179,23 +199,26 @@ def test_refresh_token(authorized_client, tokens_file):
 # New device
 
 
-def test_get_new_device_auth_token_unauthorized(client, tokens_file):
+def test_get_new_device_auth_token_unauthorized(client, authorized_client, tokens_file):
     response = client.post("/auth/new_device")
     assert response.status_code == 401
-    assert_original(tokens_file)
+    assert "token" not in response.json()
+    assert "detail" in response.json()
+    # We only can check existence of a token we know.
 
 
-def test_get_and_delete_new_device_token(authorized_client, tokens_file):
+def test_get_and_delete_new_device_token(client, authorized_client, tokens_file):
     token = rest_get_new_device_token(authorized_client)
     response = authorized_client.delete("/auth/new_device", json={"token": token})
     assert response.status_code == 200
-    assert_original(tokens_file)
+    assert rest_try_authorize_new_device(client, token, "new_device").status_code == 404
 
 
-def test_delete_token_unauthenticated(client, tokens_file):
-    response = client.delete("/auth/new_device")
+def test_delete_token_unauthenticated(client, authorized_client, tokens_file):
+    token = rest_get_new_device_token(authorized_client)
+    response = client.delete("/auth/new_device", json={"token": token})
     assert response.status_code == 401
-    assert_original(tokens_file)
+    assert rest_try_authorize_new_device(client, token, "new_device").status_code == 200
 
 
 def rest_get_new_device_token(client):
@@ -207,38 +230,29 @@ def rest_get_new_device_token(client):
 
 def test_get_and_authorize_new_device(client, authorized_client, tokens_file):
     token = rest_get_new_device_token(authorized_client)
-    response = client.post(
-        "/auth/new_device/authorize",
-        json={
-            "token": token,
-            "device": "new_device",
-        },
-    )
+    response = rest_try_authorize_new_device(client, token, "new_device")
     assert response.status_code == 200
     assert_token_valid(authorized_client, response.json()["token"])
 
 
-def test_authorize_new_device_with_invalid_token(client, tokens_file):
-    response = client.post(
-        "/auth/new_device/authorize",
-        json={"token": "invalid_token", "device": "new_device"},
-    )
+def test_authorize_new_device_with_invalid_token(
+    client, authorized_client, tokens_file
+):
+    response = rest_try_authorize_new_device(client, "invalid_token", "new_device")
     assert response.status_code == 404
-    assert_original(tokens_file)
+    assert_original(authorized_client)
 
 
 def test_get_and_authorize_used_token(client, authorized_client, tokens_file):
     token_to_be_used_2_times = rest_get_new_device_token(authorized_client)
-    response = client.post(
-        "/auth/new_device/authorize",
-        json={"token": token_to_be_used_2_times, "device": "new_device"},
+    response = rest_try_authorize_new_device(
+        client, token_to_be_used_2_times, "new_device"
     )
     assert response.status_code == 200
     assert_token_valid(authorized_client, response.json()["token"])
 
-    response = client.post(
-        "/auth/new_device/authorize",
-        json={"token": token_to_be_used_2_times, "device": "new_device"},
+    response = rest_try_authorize_new_device(
+        client, token_to_be_used_2_times, "new_device"
     )
     assert response.status_code == 404
 
@@ -251,20 +265,18 @@ def test_get_and_authorize_token_after_12_minutes(
     # TARDIS sounds
     mock = mocker.patch(DEVICE_KEY_VALIDATION_DATETIME, NearFuture)
 
-    response = client.post(
-        "/auth/new_device/authorize",
-        json={"token": token, "device": "new_device"},
-    )
+    response = rest_try_authorize_new_device(client, token, "new_device")
     assert response.status_code == 404
+    assert_original(authorized_client)
 
 
-def test_authorize_without_token(client, tokens_file):
+def test_authorize_without_token(client, authorized_client, tokens_file):
     response = client.post(
         "/auth/new_device/authorize",
         json={"device": "new_device"},
     )
     assert response.status_code == 422
-    assert_original(tokens_file)
+    assert_original(authorized_client)
 
 
 # Recovery tokens
@@ -290,10 +302,10 @@ def test_authorize_without_token(client, tokens_file):
 #  - if request is invalid, returns 400
 
 
-def test_get_recovery_token_status_unauthorized(client, tokens_file):
+def test_get_recovery_token_status_unauthorized(client, authorized_client, tokens_file):
     response = client.get("/auth/recovery_token")
     assert response.status_code == 401
-    assert_original(tokens_file)
+    assert_original(authorized_client)
 
 
 def test_get_recovery_token_when_none_exists(authorized_client, tokens_file):
@@ -306,7 +318,7 @@ def test_get_recovery_token_when_none_exists(authorized_client, tokens_file):
         "expiration": None,
         "uses_left": None,
     }
-    assert_original(tokens_file)
+    assert_original(authorized_client)
 
 
 def test_generate_recovery_token(authorized_client, client, tokens_file):
@@ -381,7 +393,7 @@ def test_generate_recovery_token_with_expiration_in_the_past(
         json={"expiration": expiration_date_str},
     )
     assert response.status_code == 400
-    assert not rest_get_recovery_status(authorized_client)["exists"]
+    assert_no_recovery(authorized_client)
 
 
 def test_generate_recovery_token_with_invalid_time_format(
@@ -394,7 +406,7 @@ def test_generate_recovery_token_with_invalid_time_format(
         json={"expiration": expiration_date},
     )
     assert response.status_code == 422
-    assert not rest_get_recovery_status(authorized_client)["exists"]
+    assert_no_recovery(authorized_client)
 
 
 def test_generate_recovery_token_with_limited_uses(
@@ -453,7 +465,7 @@ def test_generate_recovery_token_with_negative_uses(
         json={"uses": -2},
     )
     assert response.status_code == 400
-    assert not rest_get_recovery_status(authorized_client)["exists"]
+    assert_no_recovery(authorized_client)
 
 
 def test_generate_recovery_token_with_zero_uses(authorized_client, client, tokens_file):
@@ -463,4 +475,4 @@ def test_generate_recovery_token_with_zero_uses(authorized_client, client, token
         json={"uses": 0},
     )
     assert response.status_code == 400
-    assert not rest_get_recovery_status(authorized_client)["exists"]
+    assert_no_recovery(authorized_client)
