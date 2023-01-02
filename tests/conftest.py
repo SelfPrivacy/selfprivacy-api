@@ -7,7 +7,6 @@ from fastapi.testclient import TestClient
 import os.path as path
 import datetime
 
-# from selfprivacy_api.actions.api_tokens import TOKEN_REPO
 from selfprivacy_api.models.tokens.token import Token
 from selfprivacy_api.repositories.tokens.json_tokens_repository import (
     JsonTokensRepository,
