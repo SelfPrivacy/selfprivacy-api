@@ -17,12 +17,12 @@ TOKENS_FILE_CONTETS = {
         {
             "token": "TEST_TOKEN",
             "name": "test_token",
-            "date": "2022-01-14 08:31:10.789314",
+            "date": "2022-01-14T08:31:10.789314",
         },
         {
             "token": "TEST_TOKEN2",
             "name": "test_token2",
-            "date": "2022-01-14 08:31:10.789314",
+            "date": "2022-01-14T08:31:10.789314",
         },
     ]
 }
@@ -118,7 +118,7 @@ def test_graphql_delete_token(authorized_client, tokens_file):
             {
                 "token": "TEST_TOKEN",
                 "name": "test_token",
-                "date": "2022-01-14 08:31:10.789314",
+                "date": "2022-01-14T08:31:10.789314",
             }
         ]
     }

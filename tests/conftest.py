@@ -4,8 +4,34 @@
 import os
 import pytest
 from fastapi.testclient import TestClient
-from shutil import copy
 import os.path as path
+import datetime
+
+# from selfprivacy_api.actions.api_tokens import TOKEN_REPO
+from selfprivacy_api.models.tokens.token import Token
+from selfprivacy_api.repositories.tokens.json_tokens_repository import (
+    JsonTokensRepository,
+)
+
+from tests.common import read_json
+
+EMPTY_TOKENS_JSON = ' {"tokens": []}'
+
+
+TOKENS_FILE_CONTENTS = {
+    "tokens": [
+        {
+            "token": "TEST_TOKEN",
+            "name": "test_token",
+            "date": datetime.datetime(2022, 1, 14, 8, 31, 10, 789314),
+        },
+        {
+            "token": "TEST_TOKEN2",
+            "name": "test_token2",
+            "date": datetime.datetime(2022, 1, 14, 8, 31, 10, 789314),
+        },
+    ]
+}
 
 
 def pytest_generate_tests(metafunc):
@@ -17,13 +43,40 @@ def global_data_dir():
 
 
 @pytest.fixture
-def tokens_file(mocker, tmpdir):
-    """Mock tokens file."""
-    tmp_file = tmpdir / "tokens.json"
-    source_file = path.join(global_data_dir(), "tokens.json")
-    copy(source_file, tmp_file)
-    mock = mocker.patch("selfprivacy_api.utils.TOKENS_FILE", tmp_file)
-    return mock
+def empty_tokens(mocker, tmpdir):
+    tokenfile = tmpdir / "empty_tokens.json"
+    with open(tokenfile, "w") as file:
+        file.write(EMPTY_TOKENS_JSON)
+    mocker.patch("selfprivacy_api.utils.TOKENS_FILE", new=tokenfile)
+    assert read_json(tokenfile)["tokens"] == []
+    return tmpdir
+
+
+@pytest.fixture
+def empty_json_repo(empty_tokens):
+    repo = JsonTokensRepository()
+    for token in repo.get_tokens():
+        repo.delete_token(token)
+    assert repo.get_tokens() == []
+    return repo
+
+
+@pytest.fixture
+def tokens_file(empty_json_repo, tmpdir):
+    """A state with tokens"""
+    for token in TOKENS_FILE_CONTENTS["tokens"]:
+        empty_json_repo._store_token(
+            Token(
+                token=token["token"],
+                device_name=token["name"],
+                created_at=token["date"],
+            )
+        )
+    # temporary return for compatibility with older tests
+
+    tokenfile = tmpdir / "empty_tokens.json"
+    assert path.exists(tokenfile)
+    return tokenfile
 
 
 @pytest.fixture
