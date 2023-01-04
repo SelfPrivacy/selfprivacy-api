@@ -7,21 +7,6 @@ from tests.test_graphql.test_api_devices import API_DEVICES_QUERY
 from tests.test_graphql.test_api_recovery import API_RECOVERY_QUERY
 from tests.test_graphql.test_api_version import API_VERSION_QUERY
 
-TOKENS_FILE_CONTETS = {
-    "tokens": [
-        {
-            "token": "TEST_TOKEN",
-            "name": "test_token",
-            "date": "2022-01-14 08:31:10.789314",
-        },
-        {
-            "token": "TEST_TOKEN2",
-            "name": "test_token2",
-            "date": "2022-01-14 08:31:10.789314",
-        },
-    ]
-}
-
 
 def test_graphql_get_entire_api_data(authorized_client, tokens_file):
     response = authorized_client.post(

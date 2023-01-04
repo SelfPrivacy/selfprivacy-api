@@ -4,21 +4,7 @@
 import datetime
 import pytest
 
-
-TOKENS_FILE_CONTENTS = {
-    "tokens": [
-        {
-            "token": "TEST_TOKEN",
-            "name": "test_token",
-            "date": datetime.datetime(2022, 1, 14, 8, 31, 10, 789314),
-        },
-        {
-            "token": "TEST_TOKEN2",
-            "name": "test_token2",
-            "date": datetime.datetime(2022, 1, 14, 8, 31, 10, 789314),
-        },
-    ]
-}
+from tests.conftest import TOKENS_FILE_CONTENTS
 
 DATE_FORMATS = [
     "%Y-%m-%dT%H:%M:%S.%fZ",

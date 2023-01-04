@@ -5,21 +5,6 @@ import datetime
 
 from tests.common import generate_api_query, mnemonic_to_hex, read_json, write_json
 
-TOKENS_FILE_CONTETS = {
-    "tokens": [
-        {
-            "token": "TEST_TOKEN",
-            "name": "test_token",
-            "date": "2022-01-14 08:31:10.789314",
-        },
-        {
-            "token": "TEST_TOKEN2",
-            "name": "test_token2",
-            "date": "2022-01-14 08:31:10.789314",
-        },
-    ]
-}
-
 API_RECOVERY_QUERY = """
 recoveryKey {
     exists
