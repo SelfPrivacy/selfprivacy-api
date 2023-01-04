@@ -120,6 +120,13 @@ def graphql_try_auth_new_device(client, mnemonic_key, device_name):
     )
 
 
+def graphql_authorize_new_device(client, mnemonic_key, device_name) -> str:
+    response = graphql_try_auth_new_device(client, mnemonic_key, "new_device")
+    assert_ok(response, "authorizeWithNewDeviceApiKey")
+    token = response.json()["data"]["authorizeWithNewDeviceApiKey"]["token"]
+    assert_token_valid(client, token)
+
+
 def test_graphql_tokens_info(authorized_client, tokens_file):
     assert_original(authorized_client)
 
@@ -310,23 +317,14 @@ mutation AuthorizeWithNewDeviceKey($input: UseNewDeviceKeyInput!) {
 
 
 def test_graphql_get_and_authorize_new_device(client, authorized_client, tokens_file):
-    response = authorized_client.post(
-        "/graphql",
-        json={"query": NEW_DEVICE_KEY_MUTATION},
-    )
-    assert_ok(response, "getNewDeviceApiKey")
+    mnemonic_key = graphql_get_new_device_key(authorized_client)
+    old_devices = graphql_get_devices(authorized_client)
 
-    mnemonic_key = response.json()["data"]["getNewDeviceApiKey"]["key"]
-    assert mnemonic_key.split(" ").__len__() == 12
-    key = Mnemonic(language="english").to_entropy(mnemonic_key).hex()
-    assert read_json(tokens_file)["new_device"]["token"] == key
+    graphql_authorize_new_device(client, mnemonic_key, "new_device")
+    new_devices = graphql_get_devices(authorized_client)
 
-    response = graphql_try_auth_new_device(client, mnemonic_key, "new_device")
-
-    assert_ok(response, "authorizeWithNewDeviceApiKey")
-    token = response.json()["data"]["authorizeWithNewDeviceApiKey"]["token"]
-    assert read_json(tokens_file)["tokens"][2]["token"] == token
-    assert read_json(tokens_file)["tokens"][2]["name"] == "new_device"
+    assert len(new_devices) == len(old_devices) + 1
+    assert "new_device" in [device["name"] for device in new_devices]
 
 
 def test_graphql_authorize_new_device_with_invalid_key(
