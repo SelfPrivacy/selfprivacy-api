@@ -34,9 +34,8 @@ def graphql_get_devices(client):
         "/graphql",
         json={"query": generate_api_query([API_DEVICES_QUERY])},
     )
-    assert response.status_code == 200
-    assert response.json().get("data") is not None
-    devices = response.json()["data"]["api"]["devices"]
+    data = assert_data(response)
+    devices = data["api"]["devices"]
     assert devices is not None
     return devices
 
@@ -63,24 +62,29 @@ def assert_original(client):
 
 
 def assert_ok(response, request):
-    assert response.status_code == 200
-    assert response.json().get("data") is not None
-    assert response.json()["data"][request]["success"] is True
-    assert response.json()["data"][request]["message"] is not None
-    assert response.json()["data"][request]["code"] == 200
+    data = assert_data(response)
+    data[request]["success"] is True
+    data[request]["message"] is not None
+    data[request]["code"] == 200
 
 
 def assert_errorcode(response, request, code):
-    assert response.status_code == 200
-    assert response.json().get("data") is not None
-    assert response.json()["data"][request]["success"] is False
-    assert response.json()["data"][request]["message"] is not None
-    assert response.json()["data"][request]["code"] == code
+    data = assert_data(response)
+    data[request]["success"] is False
+    data[request]["message"] is not None
+    data[request]["code"] == code
 
 
 def assert_empty(response):
     assert response.status_code == 200
     assert response.json().get("data") is None
+
+
+def assert_data(response):
+    assert response.status_code == 200
+    data = response.json().get("data")
+    assert data is not None
+    return data
 
 
 def test_graphql_tokens_info(authorized_client, tokens_file):
