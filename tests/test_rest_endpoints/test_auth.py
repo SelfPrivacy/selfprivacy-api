@@ -5,6 +5,11 @@ import datetime
 import pytest
 
 from tests.conftest import TOKENS_FILE_CONTENTS
+from tests.common import (
+    RECOVERY_KEY_VALIDATION_DATETIME,
+    DEVICE_KEY_VALIDATION_DATETIME,
+    NearFuture,
+)
 
 DATE_FORMATS = [
     "%Y-%m-%dT%H:%M:%S.%fZ",
@@ -12,16 +17,6 @@ DATE_FORMATS = [
     "%Y-%m-%d %H:%M:%S.%fZ",
     "%Y-%m-%d %H:%M:%S.%f",
 ]
-
-# for expiration tests. If headache, consider freezegun
-RECOVERY_KEY_VALIDATION_DATETIME = "selfprivacy_api.models.tokens.recovery_key.datetime"
-DEVICE_KEY_VALIDATION_DATETIME = "selfprivacy_api.models.tokens.new_device_key.datetime"
-
-
-class NearFuture(datetime.datetime):
-    @classmethod
-    def now(cls):
-        return datetime.datetime.now() + datetime.timedelta(minutes=13)
 
 
 def assert_original(client):

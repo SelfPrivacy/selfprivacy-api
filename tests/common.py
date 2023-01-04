@@ -1,5 +1,16 @@
 import json
+import datetime
 from mnemonic import Mnemonic
+
+# for expiration tests. If headache, consider freezegun
+RECOVERY_KEY_VALIDATION_DATETIME = "selfprivacy_api.models.tokens.recovery_key.datetime"
+DEVICE_KEY_VALIDATION_DATETIME = "selfprivacy_api.models.tokens.new_device_key.datetime"
+
+
+class NearFuture(datetime.datetime):
+    @classmethod
+    def now(cls):
+        return datetime.datetime.now() + datetime.timedelta(minutes=13)
 
 
 def read_json(file_path):
