@@ -78,6 +78,11 @@ def assert_errorcode(response, request, code):
     assert response.json()["data"][request]["code"] == code
 
 
+def assert_empty(response):
+    assert response.status_code == 200
+    assert response.json().get("data") is None
+
+
 def test_graphql_tokens_info(authorized_client, tokens_file):
     assert_original(authorized_client)
 
@@ -87,8 +92,7 @@ def test_graphql_tokens_info_unauthorized(client, tokens_file):
         "/graphql",
         json={"query": generate_api_query([API_DEVICES_QUERY])},
     )
-    assert response.status_code == 200
-    assert response.json()["data"] is None
+    assert_empty(response)
 
 
 DELETE_TOKEN_MUTATION = """
@@ -112,8 +116,7 @@ def test_graphql_delete_token_unauthorized(client, tokens_file):
             },
         },
     )
-    assert response.status_code == 200
-    assert response.json()["data"] is None
+    assert_empty(response)
 
 
 def test_graphql_delete_token(authorized_client, tokens_file):
@@ -185,8 +188,7 @@ def test_graphql_refresh_token_unauthorized(client, tokens_file):
         "/graphql",
         json={"query": REFRESH_TOKEN_MUTATION},
     )
-    assert response.status_code == 200
-    assert response.json()["data"] is None
+    assert_empty(response)
 
 
 def test_graphql_refresh_token(authorized_client, tokens_file, token_repo):
@@ -224,8 +226,7 @@ def test_graphql_get_new_device_auth_key_unauthorized(client, tokens_file):
         "/graphql",
         json={"query": NEW_DEVICE_KEY_MUTATION},
     )
-    assert response.status_code == 200
-    assert response.json()["data"] is None
+    assert_empty(response)
 
 
 def test_graphql_get_new_device_auth_key(authorized_client, tokens_file):
@@ -270,8 +271,7 @@ def test_graphql_invalidate_new_device_token_unauthorized(client, tokens_file):
             },
         },
     )
-    assert response.status_code == 200
-    assert response.json()["data"] is None
+    assert_empty(response)
 
 
 def test_graphql_get_and_delete_new_device_key(authorized_client, tokens_file):
@@ -502,5 +502,4 @@ def test_graphql_authorize_without_token(client, tokens_file):
             },
         },
     )
-    assert response.status_code == 200
-    assert response.json().get("data") is None
+    assert_empty(response)
