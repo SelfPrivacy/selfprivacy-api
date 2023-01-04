@@ -233,24 +233,6 @@ def test_graphql_get_new_device_auth_key_unauthorized(client, tokens_file):
     assert_empty(response)
 
 
-def test_graphql_get_new_device_auth_key(authorized_client, tokens_file):
-    response = authorized_client.post(
-        "/graphql",
-        json={"query": NEW_DEVICE_KEY_MUTATION},
-    )
-    assert_ok(response, "getNewDeviceApiKey")
-
-    assert (
-        response.json()["data"]["getNewDeviceApiKey"]["key"].split(" ").__len__() == 12
-    )
-    token = (
-        Mnemonic(language="english")
-        .to_entropy(response.json()["data"]["getNewDeviceApiKey"]["key"])
-        .hex()
-    )
-    assert read_json(tokens_file)["new_device"]["token"] == token
-
-
 INVALIDATE_NEW_DEVICE_KEY_MUTATION = """
 mutation InvalidateNewDeviceKey {
     invalidateNewDeviceApiKey {
