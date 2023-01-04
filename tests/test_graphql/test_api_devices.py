@@ -330,19 +330,9 @@ def test_graphql_get_and_authorize_new_device(client, authorized_client, tokens_
 def test_graphql_authorize_new_device_with_invalid_key(
     client, authorized_client, tokens_file
 ):
-    response = client.post(
-        "/graphql",
-        json={
-            "query": AUTHORIZE_WITH_NEW_DEVICE_KEY_MUTATION,
-            "variables": {
-                "input": {
-                    "key": "invalid_token",
-                    "deviceName": "test_token",
-                }
-            },
-        },
-    )
+    response = graphql_try_auth_new_device(client, "invalid_token", "new_device")
     assert_errorcode(response, "authorizeWithNewDeviceApiKey", 404)
+
     assert_original(authorized_client)
 
 
