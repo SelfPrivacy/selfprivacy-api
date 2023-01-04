@@ -32,6 +32,8 @@ TOKENS_FILE_CONTENTS = {
     ]
 }
 
+DEVICE_WE_AUTH_TESTS_WITH = TOKENS_FILE_CONTENTS["tokens"][0]
+
 
 def pytest_generate_tests(metafunc):
     os.environ["TEST_MODE"] = "true"
@@ -107,7 +109,9 @@ def authorized_client(tokens_file, huey_database, jobs_file):
     from selfprivacy_api.app import app
 
     client = TestClient(app)
-    client.headers.update({"Authorization": "Bearer TEST_TOKEN"})
+    client.headers.update(
+        {"Authorization": "Bearer " + DEVICE_WE_AUTH_TESTS_WITH["token"]}
+    )
     return client
 
 
