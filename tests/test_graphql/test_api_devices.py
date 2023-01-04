@@ -2,13 +2,8 @@
 # pylint: disable=unused-argument
 # pylint: disable=missing-function-docstring
 import datetime
-import pytest
 from mnemonic import Mnemonic
 
-from selfprivacy_api.repositories.tokens.json_tokens_repository import (
-    JsonTokensRepository,
-)
-from selfprivacy_api.models.tokens.token import Token
 
 from tests.common import generate_api_query, read_json, write_json
 from tests.conftest import DEVICE_WE_AUTH_TESTS_WITH, TOKENS_FILE_CONTENTS
@@ -24,11 +19,6 @@ devices {
 """
 
 
-@pytest.fixture
-def token_repo():
-    return JsonTokensRepository()
-
-
 def graphql_get_devices(client):
     response = client.post(
         "/graphql",
@@ -38,6 +28,13 @@ def graphql_get_devices(client):
     devices = data["api"]["devices"]
     assert devices is not None
     return devices
+
+
+def graphql_get_caller_token_info(client):
+    devices = graphql_get_devices(client)
+    for device in devices:
+        if device["isCaller"] is True:
+            return device
 
 
 def assert_same(graphql_devices, abstract_devices):
@@ -85,6 +82,15 @@ def assert_data(response):
     data = response.json().get("data")
     assert data is not None
     return data
+
+
+def set_client_token(client, token):
+    client.headers.update({"Authorization": "Bearer " + token})
+
+
+def assert_token_valid(client, token):
+    set_client_token(client, token)
+    assert graphql_get_devices(client) is not None
 
 
 def test_graphql_tokens_info(authorized_client, tokens_file):
@@ -192,19 +198,19 @@ def test_graphql_refresh_token_unauthorized(client, tokens_file):
     assert_empty(response)
 
 
-def test_graphql_refresh_token(authorized_client, tokens_file, token_repo):
+def test_graphql_refresh_token(authorized_client, client, tokens_file):
+    caller_name_and_date = graphql_get_caller_token_info(authorized_client)
     response = authorized_client.post(
         "/graphql",
         json={"query": REFRESH_TOKEN_MUTATION},
     )
     assert_ok(response, "refreshDeviceApiToken")
 
-    token = token_repo.get_token_by_name("test_token")
-    assert token == Token(
-        token=response.json()["data"]["refreshDeviceApiToken"]["token"],
-        device_name="test_token",
-        created_at=datetime.datetime(2022, 1, 14, 8, 31, 10, 789314),
-    )
+    new_token = response.json()["data"]["refreshDeviceApiToken"]["token"]
+    assert_token_valid(client, new_token)
+
+    set_client_token(client, new_token)
+    assert graphql_get_caller_token_info(client) == caller_name_and_date
 
 
 NEW_DEVICE_KEY_MUTATION = """
