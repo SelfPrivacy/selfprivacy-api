@@ -13,6 +13,8 @@ from selfprivacy_api.models.tokens.token import Token
 from tests.common import generate_api_query, read_json, write_json
 from tests.conftest import DEVICE_WE_AUTH_TESTS_WITH, TOKENS_FILE_CONTENTS
 
+ORIGINAL_DEVICES = TOKENS_FILE_CONTENTS["tokens"]
+
 API_DEVICES_QUERY = """
 devices {
     creationDate
@@ -27,7 +29,7 @@ def token_repo():
     return JsonTokensRepository()
 
 
-def assert_original(client):
+def graphql_get_devices(client):
     response = client.post(
         "/graphql",
         json={"query": generate_api_query([API_DEVICES_QUERY])},
@@ -36,17 +38,28 @@ def assert_original(client):
     assert response.json().get("data") is not None
     devices = response.json()["data"]["api"]["devices"]
     assert devices is not None
-    original_devices = TOKENS_FILE_CONTENTS["tokens"]
-    assert len(devices) == len(original_devices)
-    for original_device in original_devices:
-        assert original_device["name"] in [device["name"] for device in devices]
-        for device in devices:
-            if device["name"] == DEVICE_WE_AUTH_TESTS_WITH["name"]:
-                assert device["isCaller"] is True
-            else:
-                assert device["isCaller"] is False
+    return devices
+
+
+def assert_same(graphql_devices, abstract_devices):
+    """Orderless comparison"""
+    assert len(graphql_devices) == len(abstract_devices)
+    for original_device in abstract_devices:
+        assert original_device["name"] in [device["name"] for device in graphql_devices]
+        for device in graphql_devices:
             if device["name"] == original_device["name"]:
                 assert device["creationDate"] == original_device["date"].isoformat()
+
+
+def assert_original(client):
+    devices = graphql_get_devices(client)
+    assert_same(devices, ORIGINAL_DEVICES)
+
+    for device in devices:
+        if device["name"] == DEVICE_WE_AUTH_TESTS_WITH["name"]:
+            assert device["isCaller"] is True
+        else:
+            assert device["isCaller"] is False
 
 
 def test_graphql_tokens_info(authorized_client, tokens_file):
@@ -88,12 +101,16 @@ def test_graphql_delete_token_unauthorized(client, tokens_file):
 
 
 def test_graphql_delete_token(authorized_client, tokens_file):
+    test_devices = ORIGINAL_DEVICES.copy()
+    device_to_delete = test_devices.pop(1)
+    assert device_to_delete != DEVICE_WE_AUTH_TESTS_WITH
+
     response = authorized_client.post(
         "/graphql",
         json={
             "query": DELETE_TOKEN_MUTATION,
             "variables": {
-                "device": "test_token2",
+                "device": device_to_delete["name"],
             },
         },
     )
@@ -102,15 +119,9 @@ def test_graphql_delete_token(authorized_client, tokens_file):
     assert response.json()["data"]["deleteDeviceApiToken"]["success"] is True
     assert response.json()["data"]["deleteDeviceApiToken"]["message"] is not None
     assert response.json()["data"]["deleteDeviceApiToken"]["code"] == 200
-    assert read_json(tokens_file) == {
-        "tokens": [
-            {
-                "token": "TEST_TOKEN",
-                "name": "test_token",
-                "date": "2022-01-14T08:31:10.789314",
-            }
-        ]
-    }
+
+    devices = graphql_get_devices(authorized_client)
+    assert_same(devices, test_devices)
 
 
 def test_graphql_delete_self_token(authorized_client, tokens_file):
