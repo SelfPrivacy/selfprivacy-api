@@ -149,7 +149,7 @@ def test_graphql_delete_self_token(authorized_client, tokens_file):
         json={
             "query": DELETE_TOKEN_MUTATION,
             "variables": {
-                "device": "test_token",
+                "device": DEVICE_WE_AUTH_TESTS_WITH["name"],
             },
         },
     )
