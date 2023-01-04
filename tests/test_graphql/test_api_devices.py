@@ -1,11 +1,12 @@
 # pylint: disable=redefined-outer-name
 # pylint: disable=unused-argument
 # pylint: disable=missing-function-docstring
-import datetime
-from mnemonic import Mnemonic
-
-
-from tests.common import generate_api_query, read_json, write_json
+from tests.common import (
+    RECOVERY_KEY_VALIDATION_DATETIME,
+    DEVICE_KEY_VALIDATION_DATETIME,
+    NearFuture,
+    generate_api_query
+)
 from tests.conftest import DEVICE_WE_AUTH_TESTS_WITH, TOKENS_FILE_CONTENTS
 
 ORIGINAL_DEVICES = TOKENS_FILE_CONTENTS["tokens"]
@@ -349,41 +350,12 @@ def test_graphql_get_and_authorize_used_key(client, authorized_client, tokens_fi
 
 
 def test_graphql_get_and_authorize_key_after_12_minutes(
-    client, authorized_client, tokens_file
+    client, authorized_client, tokens_file, mocker
 ):
-    response = authorized_client.post(
-        "/graphql",
-        json={"query": NEW_DEVICE_KEY_MUTATION},
-    )
-    assert_ok(response, "getNewDeviceApiKey")
-    assert (
-        response.json()["data"]["getNewDeviceApiKey"]["key"].split(" ").__len__() == 12
-    )
-    key = (
-        Mnemonic(language="english")
-        .to_entropy(response.json()["data"]["getNewDeviceApiKey"]["key"])
-        .hex()
-    )
-    assert read_json(tokens_file)["new_device"]["token"] == key
+    mnemonic_key = graphql_get_new_device_key(authorized_client)
+    mock = mocker.patch(DEVICE_KEY_VALIDATION_DATETIME, NearFuture)
 
-    file_data = read_json(tokens_file)
-    file_data["new_device"]["expiration"] = str(
-        datetime.datetime.now() - datetime.timedelta(minutes=13)
-    )
-    write_json(tokens_file, file_data)
-
-    response = client.post(
-        "/graphql",
-        json={
-            "query": AUTHORIZE_WITH_NEW_DEVICE_KEY_MUTATION,
-            "variables": {
-                "input": {
-                    "key": key,
-                    "deviceName": "test_token",
-                }
-            },
-        },
-    )
+    response = graphql_try_auth_new_device(client, mnemonic_key, "new_device")
     assert_errorcode(response, "authorizeWithNewDeviceApiKey", 404)
 
 
