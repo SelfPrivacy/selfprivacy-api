@@ -347,49 +347,15 @@ def test_graphql_authorize_new_device_with_invalid_key(
 
 
 def test_graphql_get_and_authorize_used_key(client, authorized_client, tokens_file):
-    response = authorized_client.post(
-        "/graphql",
-        json={"query": NEW_DEVICE_KEY_MUTATION},
-    )
-    assert_ok(response, "getNewDeviceApiKey")
-    mnemonic_key = response.json()["data"]["getNewDeviceApiKey"]["key"]
-    assert mnemonic_key.split(" ").__len__() == 12
-    key = Mnemonic(language="english").to_entropy(mnemonic_key).hex()
-    assert read_json(tokens_file)["new_device"]["token"] == key
+    mnemonic_key = graphql_get_new_device_key(authorized_client)
 
-    response = client.post(
-        "/graphql",
-        json={
-            "query": AUTHORIZE_WITH_NEW_DEVICE_KEY_MUTATION,
-            "variables": {
-                "input": {
-                    "key": mnemonic_key,
-                    "deviceName": "new_token",
-                }
-            },
-        },
-    )
-    assert_ok(response, "authorizeWithNewDeviceApiKey")
-    assert (
-        read_json(tokens_file)["tokens"][2]["token"]
-        == response.json()["data"]["authorizeWithNewDeviceApiKey"]["token"]
-    )
-    assert read_json(tokens_file)["tokens"][2]["name"] == "new_token"
+    graphql_authorize_new_device(client, mnemonic_key, "new_device")
+    devices = graphql_get_devices(authorized_client)
 
-    response = client.post(
-        "/graphql",
-        json={
-            "query": AUTHORIZE_WITH_NEW_DEVICE_KEY_MUTATION,
-            "variables": {
-                "input": {
-                    "key": mnemonic_key,
-                    "deviceName": "test_token2",
-                }
-            },
-        },
-    )
+    response = graphql_try_auth_new_device(client, mnemonic_key, "new_device2")
     assert_errorcode(response, "authorizeWithNewDeviceApiKey", 404)
-    assert read_json(tokens_file)["tokens"].__len__() == 3
+
+    assert graphql_get_devices(authorized_client) == devices
 
 
 def test_graphql_get_and_authorize_key_after_12_minutes(
