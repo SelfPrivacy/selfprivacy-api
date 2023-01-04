@@ -62,6 +62,22 @@ def assert_original(client):
             assert device["isCaller"] is False
 
 
+def assert_ok(response, request):
+    assert response.status_code == 200
+    assert response.json().get("data") is not None
+    assert response.json()["data"][request]["success"] is True
+    assert response.json()["data"][request]["message"] is not None
+    assert response.json()["data"][request]["code"] == 200
+
+
+def assert_errorcode(response, request, code):
+    assert response.status_code == 200
+    assert response.json().get("data") is not None
+    assert response.json()["data"][request]["success"] is False
+    assert response.json()["data"][request]["message"] is not None
+    assert response.json()["data"][request]["code"] == code
+
+
 def test_graphql_tokens_info(authorized_client, tokens_file):
     assert_original(authorized_client)
 
@@ -114,11 +130,7 @@ def test_graphql_delete_token(authorized_client, tokens_file):
             },
         },
     )
-    assert response.status_code == 200
-    assert response.json().get("data") is not None
-    assert response.json()["data"]["deleteDeviceApiToken"]["success"] is True
-    assert response.json()["data"]["deleteDeviceApiToken"]["message"] is not None
-    assert response.json()["data"]["deleteDeviceApiToken"]["code"] == 200
+    assert_ok(response, "deleteDeviceApiToken")
 
     devices = graphql_get_devices(authorized_client)
     assert_same(devices, test_devices)
@@ -134,11 +146,7 @@ def test_graphql_delete_self_token(authorized_client, tokens_file):
             },
         },
     )
-    assert response.status_code == 200
-    assert response.json().get("data") is not None
-    assert response.json()["data"]["deleteDeviceApiToken"]["success"] is False
-    assert response.json()["data"]["deleteDeviceApiToken"]["message"] is not None
-    assert response.json()["data"]["deleteDeviceApiToken"]["code"] == 400
+    assert_errorcode(response, "deleteDeviceApiToken", 400)
     assert_original(authorized_client)
 
 
