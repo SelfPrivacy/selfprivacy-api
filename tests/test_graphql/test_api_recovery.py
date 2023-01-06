@@ -3,7 +3,13 @@
 # pylint: disable=missing-function-docstring
 import datetime
 
-from tests.common import generate_api_query, mnemonic_to_hex, read_json, write_json
+from tests.common import (
+    generate_api_query,
+    mnemonic_to_hex,
+    read_json,
+    write_json,
+    assert_recovery_recent,
+)
 from tests.test_graphql.common import assert_empty, assert_data, assert_ok
 
 API_RECOVERY_QUERY = """
@@ -90,12 +96,7 @@ def test_graphql_generate_recovery_key(client, authorized_client, tokens_file):
     assert read_json(tokens_file)["recovery_token"] is not None
     time_generated = read_json(tokens_file)["recovery_token"]["date"]
     assert time_generated is not None
-    assert (
-        datetime.datetime.strptime(time_generated, "%Y-%m-%dT%H:%M:%S.%f")
-        - datetime.timedelta(seconds=5)
-        < datetime.datetime.now()
-    )
-
+    assert_recovery_recent(time_generated)
     # Try to get token status
     response = authorized_client.post(
         "/graphql",

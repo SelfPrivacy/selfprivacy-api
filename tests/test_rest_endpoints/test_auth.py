@@ -9,6 +9,7 @@ from tests.common import (
     RECOVERY_KEY_VALIDATION_DATETIME,
     DEVICE_KEY_VALIDATION_DATETIME,
     NearFuture,
+    assert_recovery_recent,
 )
 
 DATE_FORMATS = [
@@ -88,14 +89,6 @@ def rest_get_recovery_date(client):
     status = rest_get_recovery_status(client)
     assert "date" in status
     return status["date"]
-
-
-def assert_recovery_recent(time_generated):
-    assert (
-        datetime.datetime.strptime(time_generated, "%Y-%m-%dT%H:%M:%S.%f")
-        - datetime.timedelta(seconds=5)
-        < datetime.datetime.now()
-    )
 
 
 def assert_no_recovery(client):

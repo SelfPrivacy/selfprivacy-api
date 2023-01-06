@@ -37,3 +37,11 @@ def generate_users_query(query_array):
 
 def mnemonic_to_hex(mnemonic):
     return Mnemonic(language="english").to_entropy(mnemonic).hex()
+
+
+def assert_recovery_recent(time_generated):
+    assert (
+        datetime.datetime.strptime(time_generated, "%Y-%m-%dT%H:%M:%S.%f")
+        - datetime.timedelta(seconds=5)
+        < datetime.datetime.now()
+    )
