@@ -16,13 +16,9 @@ from selfprivacy_api.repositories.tokens.exceptions import (
     TokenNotFound,
     NewDeviceKeyNotFound,
 )
-from selfprivacy_api.repositories.tokens.json_tokens_repository import (
-    JsonTokensRepository,
-)
 from selfprivacy_api.repositories.tokens.redis_tokens_repository import (
     RedisTokensRepository,
 )
-from tests.common import read_json
 
 
 ORIGINAL_DEVICE_NAMES = [
@@ -35,19 +31,6 @@ ORIGINAL_DEVICE_NAMES = [
 
 def mnemonic_from_hex(hexkey):
     return Mnemonic(language="english").to_mnemonic(bytes.fromhex(hexkey))
-
-
-@pytest.fixture
-def empty_keys(mocker, datadir):
-    mocker.patch("selfprivacy_api.utils.TOKENS_FILE", new=datadir / "empty_keys.json")
-    assert read_json(datadir / "empty_keys.json")["tokens"] == [
-        {
-            "token": "KG9ni-B-CMPk327Zv1qC7YBQaUGaBUcgdkvMvQ2atFI",
-            "name": "primary_token",
-            "date": "2022-07-15 17:41:31.675698",
-        }
-    ]
-    return datadir
 
 
 @pytest.fixture
@@ -135,15 +118,6 @@ def mock_recovery_key_generate(mocker):
         ),
     )
     return mock
-
-
-@pytest.fixture
-def empty_json_repo(empty_keys):
-    repo = JsonTokensRepository()
-    for token in repo.get_tokens():
-        repo.delete_token(token)
-    assert repo.get_tokens() == []
-    return repo
 
 
 @pytest.fixture
