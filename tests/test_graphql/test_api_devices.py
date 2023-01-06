@@ -14,13 +14,14 @@ from tests.test_graphql.common import (
     assert_ok,
     assert_errorcode,
     assert_token_valid,
+    assert_original,
+    assert_same,
     graphql_get_devices,
     request_devices,
     set_client_token,
     API_DEVICES_QUERY,
+    ORIGINAL_DEVICES,
 )
-
-ORIGINAL_DEVICES = TOKENS_FILE_CONTENTS["tokens"]
 
 
 def graphql_get_caller_token_info(client):
@@ -28,27 +29,6 @@ def graphql_get_caller_token_info(client):
     for device in devices:
         if device["isCaller"] is True:
             return device
-
-
-def assert_same(graphql_devices, abstract_devices):
-    """Orderless comparison"""
-    assert len(graphql_devices) == len(abstract_devices)
-    for original_device in abstract_devices:
-        assert original_device["name"] in [device["name"] for device in graphql_devices]
-        for device in graphql_devices:
-            if device["name"] == original_device["name"]:
-                assert device["creationDate"] == original_device["date"].isoformat()
-
-
-def assert_original(client):
-    devices = graphql_get_devices(client)
-    assert_same(devices, ORIGINAL_DEVICES)
-
-    for device in devices:
-        if device["name"] == DEVICE_WE_AUTH_TESTS_WITH["name"]:
-            assert device["isCaller"] is True
-        else:
-            assert device["isCaller"] is False
 
 
 def graphql_get_new_device_key(authorized_client) -> str:
