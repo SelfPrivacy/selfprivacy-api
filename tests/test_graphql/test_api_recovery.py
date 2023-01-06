@@ -4,7 +4,7 @@
 import datetime
 
 from tests.common import generate_api_query, mnemonic_to_hex, read_json, write_json
-from tests.test_graphql.common import assert_empty, assert_data
+from tests.test_graphql.common import assert_empty, assert_data, assert_ok
 
 API_RECOVERY_QUERY = """
 recoveryKey {
@@ -31,6 +31,20 @@ def graphql_recovery_status(client):
     status = data["api"]["recoveryKey"]
     assert status is not None
     return status
+
+
+def graphql_get_new_recovery_key(client):
+    response = client.post(
+        "/graphql",
+        json={
+            "query": API_RECOVERY_KEY_GENERATE_MUTATION,
+        },
+    )
+    assert_ok(response, "getNewRecoveryApiKey")
+    key = response.json()["data"]["getNewRecoveryApiKey"]["key"]
+    assert key is not None
+    assert key.split(" ").__len__() == 18
+    return key
 
 
 def test_graphql_recovery_key_status_unauthorized(client, tokens_file):
@@ -71,26 +85,11 @@ mutation TestUseRecoveryKey($input: UseRecoveryKeyInput!) {
 
 
 def test_graphql_generate_recovery_key(client, authorized_client, tokens_file):
-    response = authorized_client.post(
-        "/graphql",
-        json={
-            "query": API_RECOVERY_KEY_GENERATE_MUTATION,
-        },
-    )
-    assert response.status_code == 200
-    assert response.json().get("data") is not None
-    assert response.json()["data"]["getNewRecoveryApiKey"]["success"] is True
-    assert response.json()["data"]["getNewRecoveryApiKey"]["message"] is not None
-    assert response.json()["data"]["getNewRecoveryApiKey"]["code"] == 200
-    assert response.json()["data"]["getNewRecoveryApiKey"]["key"] is not None
-    assert (
-        response.json()["data"]["getNewRecoveryApiKey"]["key"].split(" ").__len__()
-        == 18
-    )
+    key = graphql_get_new_recovery_key(authorized_client)
+
     assert read_json(tokens_file)["recovery_token"] is not None
     time_generated = read_json(tokens_file)["recovery_token"]["date"]
     assert time_generated is not None
-    key = response.json()["data"]["getNewRecoveryApiKey"]["key"]
     assert (
         datetime.datetime.strptime(time_generated, "%Y-%m-%dT%H:%M:%S.%f")
         - datetime.timedelta(seconds=5)
