@@ -13,28 +13,14 @@ from tests.test_graphql.common import (
     assert_empty,
     assert_ok,
     assert_errorcode,
+    assert_token_valid,
+    graphql_get_devices,
+    request_devices,
+    set_client_token,
+    API_DEVICES_QUERY,
 )
 
 ORIGINAL_DEVICES = TOKENS_FILE_CONTENTS["tokens"]
-
-API_DEVICES_QUERY = """
-devices {
-    creationDate
-    isCaller
-    name
-}
-"""
-
-
-def graphql_get_devices(client):
-    response = client.post(
-        "/graphql",
-        json={"query": generate_api_query([API_DEVICES_QUERY])},
-    )
-    data = assert_data(response)
-    devices = data["api"]["devices"]
-    assert devices is not None
-    return devices
 
 
 def graphql_get_caller_token_info(client):
@@ -63,15 +49,6 @@ def assert_original(client):
             assert device["isCaller"] is True
         else:
             assert device["isCaller"] is False
-
-
-def set_client_token(client, token):
-    client.headers.update({"Authorization": "Bearer " + token})
-
-
-def assert_token_valid(client, token):
-    set_client_token(client, token)
-    assert graphql_get_devices(client) is not None
 
 
 def graphql_get_new_device_key(authorized_client) -> str:
@@ -113,10 +90,7 @@ def test_graphql_tokens_info(authorized_client, tokens_file):
 
 
 def test_graphql_tokens_info_unauthorized(client, tokens_file):
-    response = client.post(
-        "/graphql",
-        json={"query": generate_api_query([API_DEVICES_QUERY])},
-    )
+    response = request_devices(client)
     assert_empty(response)
 
 
