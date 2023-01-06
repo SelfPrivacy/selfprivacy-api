@@ -4,7 +4,7 @@
 import datetime
 
 from tests.common import generate_api_query, mnemonic_to_hex, read_json, write_json
-from tests.test_graphql.common import assert_empty
+from tests.test_graphql.common import assert_empty, assert_data
 
 API_RECOVERY_QUERY = """
 recoveryKey {
@@ -17,27 +17,34 @@ recoveryKey {
 """
 
 
-def test_graphql_recovery_key_status_unauthorized(client, tokens_file):
-    response = client.post(
+def request_recovery_status(client):
+    return client.post(
         "/graphql",
         json={"query": generate_api_query([API_RECOVERY_QUERY])},
     )
+
+
+def graphql_recovery_status(client):
+    response = request_recovery_status(client)
+    data = assert_data(response)
+
+    status = data["api"]["recoveryKey"]
+    assert status is not None
+    return status
+
+
+def test_graphql_recovery_key_status_unauthorized(client, tokens_file):
+    response = request_recovery_status(client)
     assert_empty(response)
 
 
 def test_graphql_recovery_key_status_when_none_exists(authorized_client, tokens_file):
-    response = authorized_client.post(
-        "/graphql",
-        json={"query": generate_api_query([API_RECOVERY_QUERY])},
-    )
-    assert response.status_code == 200
-    assert response.json().get("data") is not None
-    assert response.json()["data"]["api"]["recoveryKey"] is not None
-    assert response.json()["data"]["api"]["recoveryKey"]["exists"] is False
-    assert response.json()["data"]["api"]["recoveryKey"]["valid"] is False
-    assert response.json()["data"]["api"]["recoveryKey"]["creationDate"] is None
-    assert response.json()["data"]["api"]["recoveryKey"]["expirationDate"] is None
-    assert response.json()["data"]["api"]["recoveryKey"]["usesLeft"] is None
+    status = graphql_recovery_status(authorized_client)
+    assert status["exists"] is False
+    assert status["valid"] is False
+    assert status["creationDate"] is None
+    assert status["expirationDate"] is None
+    assert status["usesLeft"] is None
 
 
 API_RECOVERY_KEY_GENERATE_MUTATION = """
