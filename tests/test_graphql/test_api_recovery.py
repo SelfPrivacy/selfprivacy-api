@@ -53,6 +53,25 @@ def graphql_get_new_recovery_key(client):
     return key
 
 
+def graphql_use_recovery_key(client, key, device_name):
+    response = client.post(
+        "/graphql",
+        json={
+            "query": API_RECOVERY_KEY_USE_MUTATION,
+            "variables": {
+                "input": {
+                    "key": key,
+                    "deviceName": device_name,
+                },
+            },
+        },
+    )
+    assert_ok(response, "useRecoveryApiKey")
+    token = response.json()["data"]["useRecoveryApiKey"]["token"]
+    assert token is not None
+    return token
+
+
 def test_graphql_recovery_key_status_unauthorized(client, tokens_file):
     response = request_recovery_status(client)
     assert_empty(response)
@@ -100,29 +119,8 @@ def test_graphql_generate_recovery_key(client, authorized_client, tokens_file):
     assert status["expirationDate"] is None
     assert status["usesLeft"] is None
 
-    # Try to use token
-    response = client.post(
-        "/graphql",
-        json={
-            "query": API_RECOVERY_KEY_USE_MUTATION,
-            "variables": {
-                "input": {
-                    "key": key,
-                    "deviceName": "new_test_token",
-                },
-            },
-        },
-    )
-    assert response.status_code == 200
-    assert response.json().get("data") is not None
-    assert response.json()["data"]["useRecoveryApiKey"]["success"] is True
-    assert response.json()["data"]["useRecoveryApiKey"]["message"] is not None
-    assert response.json()["data"]["useRecoveryApiKey"]["code"] == 200
-    assert response.json()["data"]["useRecoveryApiKey"]["token"] is not None
-    assert (
-        response.json()["data"]["useRecoveryApiKey"]["token"]
-        == read_json(tokens_file)["tokens"][2]["token"]
-    )
+    token = graphql_use_recovery_key(client, key, "new_test_token")
+    assert token == read_json(tokens_file)["tokens"][2]["token"]
     assert read_json(tokens_file)["tokens"][2]["name"] == "new_test_token"
 
     # Try to use token again
