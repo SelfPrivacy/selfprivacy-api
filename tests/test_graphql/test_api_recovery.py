@@ -93,25 +93,12 @@ mutation TestUseRecoveryKey($input: UseRecoveryKeyInput!) {
 def test_graphql_generate_recovery_key(client, authorized_client, tokens_file):
     key = graphql_get_new_recovery_key(authorized_client)
 
-    assert read_json(tokens_file)["recovery_token"] is not None
-    time_generated = read_json(tokens_file)["recovery_token"]["date"]
-    assert time_generated is not None
-    assert_recovery_recent(time_generated)
-    # Try to get token status
-    response = authorized_client.post(
-        "/graphql",
-        json={"query": generate_api_query([API_RECOVERY_QUERY])},
-    )
-    assert response.status_code == 200
-    assert response.json().get("data") is not None
-    assert response.json()["data"]["api"]["recoveryKey"] is not None
-    assert response.json()["data"]["api"]["recoveryKey"]["exists"] is True
-    assert response.json()["data"]["api"]["recoveryKey"]["valid"] is True
-    assert response.json()["data"]["api"]["recoveryKey"][
-        "creationDate"
-    ] == time_generated.replace("Z", "")
-    assert response.json()["data"]["api"]["recoveryKey"]["expirationDate"] is None
-    assert response.json()["data"]["api"]["recoveryKey"]["usesLeft"] is None
+    status = graphql_recovery_status(authorized_client)
+    assert status["exists"] is True
+    assert status["valid"] is True
+    assert_recovery_recent(status["creationDate"])
+    assert status["expirationDate"] is None
+    assert status["usesLeft"] is None
 
     # Try to use token
     response = client.post(
