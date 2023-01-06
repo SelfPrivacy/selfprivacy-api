@@ -5,6 +5,7 @@ import os
 import pytest
 
 from tests.common import generate_system_query, read_json
+from tests.test_graphql.common import assert_empty
 
 
 @pytest.fixture
@@ -144,8 +145,7 @@ def test_graphql_get_python_version_wrong_auth(
             "query": generate_system_query([API_PYTHON_VERSION_INFO]),
         },
     )
-    assert response.status_code == 200
-    assert response.json().get("data") is None
+    assert_empty(response)
 
 
 def test_graphql_get_python_version(authorized_client, mock_subprocess_check_output):
@@ -181,8 +181,7 @@ def test_graphql_get_system_version_unauthorized(
         },
     )
 
-    assert response.status_code == 200
-    assert response.json().get("data") is None
+    assert_empty(response)
 
     assert mock_subprocess_check_output.call_count == 0
 
@@ -348,8 +347,7 @@ def test_graphql_get_timezone_unauthorized(client, turned_on):
             "query": generate_system_query([API_GET_TIMEZONE]),
         },
     )
-    assert response.status_code == 200
-    assert response.json().get("data") is None
+    assert_empty(response)
 
 
 def test_graphql_get_timezone(authorized_client, turned_on):
@@ -403,8 +401,7 @@ def test_graphql_change_timezone_unauthorized(client, turned_on):
             },
         },
     )
-    assert response.status_code == 200
-    assert response.json().get("data") is None
+    assert_empty(response)
 
 
 def test_graphql_change_timezone(authorized_client, turned_on):
@@ -507,8 +504,7 @@ def test_graphql_get_auto_upgrade_unauthorized(client, turned_on):
             "query": generate_system_query([API_GET_AUTO_UPGRADE_SETTINGS_QUERY]),
         },
     )
-    assert response.status_code == 200
-    assert response.json().get("data") is None
+    assert_empty(response)
 
 
 def test_graphql_get_auto_upgrade(authorized_client, turned_on):
@@ -614,8 +610,7 @@ def test_graphql_change_auto_upgrade_unauthorized(client, turned_on):
             },
         },
     )
-    assert response.status_code == 200
-    assert response.json().get("data") is None
+    assert_empty(response)
 
 
 def test_graphql_change_auto_upgrade(authorized_client, turned_on):
@@ -843,8 +838,7 @@ def test_graphql_pull_system_configuration_unauthorized(client, mock_subprocess_
         },
     )
 
-    assert response.status_code == 200
-    assert response.json().get("data") is None
+    assert_empty(response)
     assert mock_subprocess_popen.call_count == 0
 
 

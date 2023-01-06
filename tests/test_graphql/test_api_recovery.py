@@ -4,6 +4,7 @@
 import datetime
 
 from tests.common import generate_api_query, mnemonic_to_hex, read_json, write_json
+from tests.test_graphql.common import assert_empty
 
 API_RECOVERY_QUERY = """
 recoveryKey {
@@ -21,8 +22,7 @@ def test_graphql_recovery_key_status_unauthorized(client, tokens_file):
         "/graphql",
         json={"query": generate_api_query([API_RECOVERY_QUERY])},
     )
-    assert response.status_code == 200
-    assert response.json().get("data") is None
+    assert_empty(response)
 
 
 def test_graphql_recovery_key_status_when_none_exists(authorized_client, tokens_file):
@@ -354,8 +354,7 @@ def test_graphql_generate_recovery_key_with_invalid_time_format(
             },
         },
     )
-    assert response.status_code == 200
-    assert response.json().get("data") is None
+    assert_empty(response)
 
     assert "recovery_token" not in read_json(tokens_file)
 

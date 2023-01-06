@@ -3,6 +3,7 @@
 import pytest
 
 from tests.common import read_json
+from tests.test_graphql.common import assert_empty
 
 
 class ProcessMock:
@@ -70,8 +71,7 @@ def test_graphql_add_ssh_key_unauthorized(client, some_users, mock_subprocess_po
             },
         },
     )
-    assert response.status_code == 200
-    assert response.json().get("data") is None
+    assert_empty(response)
 
 
 def test_graphql_add_ssh_key(authorized_client, some_users, mock_subprocess_popen):
@@ -227,8 +227,7 @@ def test_graphql_remove_ssh_key_unauthorized(client, some_users, mock_subprocess
             },
         },
     )
-    assert response.status_code == 200
-    assert response.json().get("data") is None
+    assert_empty(response)
 
 
 def test_graphql_remove_ssh_key(authorized_client, some_users, mock_subprocess_popen):

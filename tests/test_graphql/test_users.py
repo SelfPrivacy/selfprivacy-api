@@ -6,6 +6,7 @@ from tests.common import (
     generate_users_query,
     read_json,
 )
+from tests.test_graphql.common import assert_empty
 
 invalid_usernames = [
     "messagebus",
@@ -125,8 +126,7 @@ def test_graphql_get_users_unauthorized(client, some_users, mock_subprocess_pope
             "query": generate_users_query([API_USERS_INFO]),
         },
     )
-    assert response.status_code == 200
-    assert response.json().get("data") is None
+    assert_empty(response)
 
 
 def test_graphql_get_some_users(authorized_client, some_users, mock_subprocess_popen):
@@ -192,8 +192,7 @@ def test_graphql_get_one_user_unauthorized(client, one_user, mock_subprocess_pop
             },
         },
     )
-    assert response.status_code == 200
-    assert response.json().get("data") is None
+    assert_empty(response)
 
 
 def test_graphql_get_one_user(authorized_client, one_user, mock_subprocess_popen):
@@ -321,8 +320,7 @@ def test_graphql_add_user_unauthorize(client, one_user, mock_subprocess_popen):
             },
         },
     )
-    assert response.status_code == 200
-    assert response.json().get("data") is None
+    assert_empty(response)
 
 
 def test_graphql_add_user(authorized_client, one_user, mock_subprocess_popen):
@@ -570,8 +568,7 @@ def test_graphql_delete_user_unauthorized(client, some_users, mock_subprocess_po
             "variables": {"username": "user1"},
         },
     )
-    assert response.status_code == 200
-    assert response.json().get("data") is None
+    assert_empty(response)
 
 
 def test_graphql_delete_user(authorized_client, some_users, mock_subprocess_popen):
@@ -675,8 +672,7 @@ def test_graphql_update_user_unauthorized(client, some_users, mock_subprocess_po
             },
         },
     )
-    assert response.status_code == 200
-    assert response.json().get("data") is None
+    assert_empty(response)
 
 
 def test_graphql_update_user(authorized_client, some_users, mock_subprocess_popen):

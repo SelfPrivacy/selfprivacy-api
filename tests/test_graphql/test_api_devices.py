@@ -5,9 +5,15 @@ from tests.common import (
     RECOVERY_KEY_VALIDATION_DATETIME,
     DEVICE_KEY_VALIDATION_DATETIME,
     NearFuture,
-    generate_api_query
+    generate_api_query,
 )
 from tests.conftest import DEVICE_WE_AUTH_TESTS_WITH, TOKENS_FILE_CONTENTS
+from tests.test_graphql.common import (
+    assert_data,
+    assert_empty,
+    assert_ok,
+    assert_errorcode,
+)
 
 ORIGINAL_DEVICES = TOKENS_FILE_CONTENTS["tokens"]
 
@@ -57,32 +63,6 @@ def assert_original(client):
             assert device["isCaller"] is True
         else:
             assert device["isCaller"] is False
-
-
-def assert_ok(response, request):
-    data = assert_data(response)
-    data[request]["success"] is True
-    data[request]["message"] is not None
-    data[request]["code"] == 200
-
-
-def assert_errorcode(response, request, code):
-    data = assert_data(response)
-    data[request]["success"] is False
-    data[request]["message"] is not None
-    data[request]["code"] == code
-
-
-def assert_empty(response):
-    assert response.status_code == 200
-    assert response.json().get("data") is None
-
-
-def assert_data(response):
-    assert response.status_code == 200
-    data = response.json().get("data")
-    assert data is not None
-    return data
 
 
 def set_client_token(client, token):
