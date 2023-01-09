@@ -5,9 +5,6 @@ import datetime
 
 from tests.common import (
     generate_api_query,
-    mnemonic_to_hex,
-    read_json,
-    write_json,
     assert_recovery_recent,
     NearFuture,
     RECOVERY_KEY_VALIDATION_DATETIME,
@@ -203,6 +200,7 @@ def test_graphql_generate_recovery_key_with_expiration_in_the_past(
 
     assert_errorcode(response, "getNewRecoveryApiKey", 400)
     assert response.json()["data"]["getNewRecoveryApiKey"]["key"] is None
+    assert graphql_recovery_status(authorized_client)["exists"] is False
 
 
 def test_graphql_generate_recovery_key_with_invalid_time_format(
@@ -223,8 +221,7 @@ def test_graphql_generate_recovery_key_with_invalid_time_format(
         },
     )
     assert_empty(response)
-
-    assert "recovery_token" not in read_json(tokens_file)
+    assert graphql_recovery_status(authorized_client)["exists"] is False
 
 
 def test_graphql_generate_recovery_key_with_limited_uses(
@@ -276,3 +273,4 @@ def test_graphql_generate_recovery_key_with_zero_uses(authorized_client, tokens_
 
     assert_errorcode(response, "getNewRecoveryApiKey", 400)
     assert response.json()["data"]["getNewRecoveryApiKey"]["key"] is None
+    assert graphql_recovery_status(authorized_client)["exists"] is False
