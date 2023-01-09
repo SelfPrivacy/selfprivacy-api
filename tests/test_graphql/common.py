@@ -75,6 +75,10 @@ def assert_same(graphql_devices, abstract_devices):
 
 def assert_original(client):
     devices = graphql_get_devices(client)
+    assert_original_devices(devices)
+
+
+def assert_original_devices(devices):
     assert_same(devices, ORIGINAL_DEVICES)
 
     for device in devices:
