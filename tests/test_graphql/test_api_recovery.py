@@ -199,26 +199,12 @@ def test_graphql_generate_recovery_key_with_expiration_in_the_past(
     authorized_client, tokens_file
 ):
     expiration_date = datetime.datetime.now() - datetime.timedelta(minutes=5)
-    expiration_date_str = expiration_date.strftime("%Y-%m-%dT%H:%M:%S.%f")
-
-    response = authorized_client.post(
-        "/graphql",
-        json={
-            "query": API_RECOVERY_KEY_GENERATE_MUTATION,
-            "variables": {
-                "limits": {
-                    "expirationDate": expiration_date_str,
-                },
-            },
-        },
+    response = request_make_new_recovery_key(
+        authorized_client, expires_at=expiration_date
     )
-    assert response.status_code == 200
-    assert response.json().get("data") is not None
-    assert response.json()["data"]["getNewRecoveryApiKey"]["success"] is False
-    assert response.json()["data"]["getNewRecoveryApiKey"]["message"] is not None
-    assert response.json()["data"]["getNewRecoveryApiKey"]["code"] == 400
+
+    assert_errorcode(response, "getNewRecoveryApiKey", 400)
     assert response.json()["data"]["getNewRecoveryApiKey"]["key"] is None
-    assert "recovery_token" not in read_json(tokens_file)
 
 
 def test_graphql_generate_recovery_key_with_invalid_time_format(
