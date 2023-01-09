@@ -265,42 +265,14 @@ def test_graphql_generate_recovery_key_with_limited_uses(
 def test_graphql_generate_recovery_key_with_negative_uses(
     authorized_client, tokens_file
 ):
-    # Try to get token status
-    response = authorized_client.post(
-        "/graphql",
-        json={
-            "query": API_RECOVERY_KEY_GENERATE_MUTATION,
-            "variables": {
-                "limits": {
-                    "uses": -1,
-                },
-            },
-        },
-    )
-    assert response.status_code == 200
-    assert response.json().get("data") is not None
-    assert response.json()["data"]["getNewRecoveryApiKey"]["success"] is False
-    assert response.json()["data"]["getNewRecoveryApiKey"]["message"] is not None
-    assert response.json()["data"]["getNewRecoveryApiKey"]["code"] == 400
+    response = request_make_new_recovery_key(authorized_client, uses=-1)
+
+    assert_errorcode(response, "getNewRecoveryApiKey", 400)
     assert response.json()["data"]["getNewRecoveryApiKey"]["key"] is None
 
 
 def test_graphql_generate_recovery_key_with_zero_uses(authorized_client, tokens_file):
-    # Try to get token status
-    response = authorized_client.post(
-        "/graphql",
-        json={
-            "query": API_RECOVERY_KEY_GENERATE_MUTATION,
-            "variables": {
-                "limits": {
-                    "uses": 0,
-                },
-            },
-        },
-    )
-    assert response.status_code == 200
-    assert response.json().get("data") is not None
-    assert response.json()["data"]["getNewRecoveryApiKey"]["success"] is False
-    assert response.json()["data"]["getNewRecoveryApiKey"]["message"] is not None
-    assert response.json()["data"]["getNewRecoveryApiKey"]["code"] == 400
+    response = request_make_new_recovery_key(authorized_client, uses=0)
+
+    assert_errorcode(response, "getNewRecoveryApiKey", 400)
     assert response.json()["data"]["getNewRecoveryApiKey"]["key"] is None
