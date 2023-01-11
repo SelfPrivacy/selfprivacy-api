@@ -1,4 +1,7 @@
-"""App tokens actions"""
+"""
+App tokens actions. 
+The only actions on tokens that are accessible from APIs
+"""
 from datetime import datetime, timezone
 from typing import Optional
 from pydantic import BaseModel
@@ -24,6 +27,12 @@ class TokenInfoWithIsCaller(BaseModel):
     date: datetime
     is_caller: bool
 
+def _naive(date_time: datetime) -> datetime:
+    if date_time is None:
+        return None
+    if date_time.tzinfo is not None:
+        date_time.astimezone(timezone.utc)
+    return date_time.replace(tzinfo=None)
 
 def get_api_tokens_with_caller_flag(caller_token: str) -> list[TokenInfoWithIsCaller]:
     """Get the tokens info"""
@@ -82,12 +91,7 @@ class RecoveryTokenStatus(BaseModel):
     uses_left: Optional[int] = None
 
 
-def naive(date_time: datetime) -> datetime:
-    if date_time is None:
-        return None
-    if date_time.tzinfo is not None:
-        date_time.astimezone(timezone.utc)
-    return date_time.replace(tzinfo=None)
+
 
 
 def get_api_recovery_token_status() -> RecoveryTokenStatus:
@@ -99,8 +103,8 @@ def get_api_recovery_token_status() -> RecoveryTokenStatus:
     return RecoveryTokenStatus(
         exists=True,
         valid=is_valid,
-        date=naive(token.created_at),
-        expiration=naive(token.expires_at),
+        date=_naive(token.created_at),
+        expiration=_naive(token.expires_at),
         uses_left=token.uses_left,
     )
 
