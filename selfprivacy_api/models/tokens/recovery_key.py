@@ -3,11 +3,13 @@ Recovery key used to obtain access token.
 
 Recovery key has a token string, date of creation, optional date of expiration and optional count of uses left.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 import secrets
 from typing import Optional
 from pydantic import BaseModel
 from mnemonic import Mnemonic
+
+from selfprivacy_api.models.tokens.time import is_past, ensure_timezone
 
 
 class RecoveryKey(BaseModel):
@@ -26,7 +28,7 @@ class RecoveryKey(BaseModel):
         """
         Check if the recovery key is valid.
         """
-        if self.expires_at is not None and self.expires_at < datetime.now():
+        if self.expires_at is not None and is_past(self.expires_at):
             return False
         if self.uses_left is not None and self.uses_left <= 0:
             return False
@@ -46,7 +48,9 @@ class RecoveryKey(BaseModel):
         """
         Factory to generate a random token.
         """
-        creation_date = datetime.now()
+        creation_date = datetime.now(timezone.utc)
+        if expiration is not None:
+            expiration = ensure_timezone(expiration)
         key = secrets.token_bytes(24).hex()
         return RecoveryKey(
             key=key,

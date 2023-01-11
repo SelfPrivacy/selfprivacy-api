@@ -2,7 +2,7 @@
 Token repository using Redis as backend.
 """
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 from selfprivacy_api.repositories.tokens.abstract_tokens_repository import (
     AbstractTokensRepository,
@@ -38,6 +38,8 @@ class RedisTokensRepository(AbstractTokensRepository):
         for key in token_keys:
             token = self._token_from_hash(key)
             if token is not None:
+                # token creation dates are temporarily not tz-aware
+                token.created_at = token.created_at.replace(tzinfo=None)
                 tokens.append(token)
         return tokens
 
@@ -150,5 +152,7 @@ class RedisTokensRepository(AbstractTokensRepository):
         redis = self.connection
         for key, value in model.dict().items():
             if isinstance(value, datetime):
+                if value.tzinfo is None:
+                    value = value.replace(tzinfo=timezone.utc)
                 value = value.isoformat()
             redis.hset(redis_key, key, str(value))

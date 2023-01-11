@@ -11,6 +11,8 @@ from tests.common import (
     NearFuture,
     assert_recovery_recent,
 )
+from tests.common import FIVE_MINUTES_INTO_FUTURE_NAIVE as FIVE_MINUTES_INTO_FUTURE
+from tests.common import FIVE_MINUTES_INTO_PAST_NAIVE as FIVE_MINUTES_INTO_PAST
 
 DATE_FORMATS = [
     "%Y-%m-%dT%H:%M:%S.%fZ",
@@ -110,7 +112,7 @@ def rest_recover_with_mnemonic(client, mnemonic_token, device_name):
 
 
 def test_get_tokens_info(authorized_client, tokens_file):
-    assert rest_get_tokens_info(authorized_client) == [
+    assert sorted(rest_get_tokens_info(authorized_client), key=lambda x: x["name"]) == [
         {"name": "test_token", "date": "2022-01-14T08:31:10.789314", "is_caller": True},
         {
             "name": "test_token2",
@@ -321,7 +323,7 @@ def test_generate_recovery_token_with_expiration_date(
 ):
     # Generate token with expiration date
     # Generate expiration date in the future
-    expiration_date = datetime.datetime.now() + datetime.timedelta(minutes=5)
+    expiration_date = FIVE_MINUTES_INTO_FUTURE
     mnemonic_token = rest_make_recovery_token(
         authorized_client, expires_at=expiration_date, timeformat=timeformat
     )
@@ -333,7 +335,7 @@ def test_generate_recovery_token_with_expiration_date(
         "exists": True,
         "valid": True,
         "date": time_generated,
-        "expiration": expiration_date.strftime("%Y-%m-%dT%H:%M:%S.%f"),
+        "expiration": expiration_date.isoformat(),
         "uses_left": None,
     }
 
@@ -360,7 +362,7 @@ def test_generate_recovery_token_with_expiration_in_the_past(
     authorized_client, tokens_file, timeformat
 ):
     # Server must return 400 if expiration date is in the past
-    expiration_date = datetime.datetime.utcnow() - datetime.timedelta(minutes=5)
+    expiration_date = FIVE_MINUTES_INTO_PAST
     expiration_date_str = expiration_date.strftime(timeformat)
     response = authorized_client.post(
         "/auth/recovery_token",

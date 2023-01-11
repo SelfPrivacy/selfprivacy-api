@@ -1,16 +1,21 @@
 import json
-import datetime
+from datetime import datetime, timezone, timedelta
 from mnemonic import Mnemonic
 
 # for expiration tests. If headache, consider freezegun
-RECOVERY_KEY_VALIDATION_DATETIME = "selfprivacy_api.models.tokens.recovery_key.datetime"
-DEVICE_KEY_VALIDATION_DATETIME = "selfprivacy_api.models.tokens.new_device_key.datetime"
+RECOVERY_KEY_VALIDATION_DATETIME = "selfprivacy_api.models.tokens.time.datetime"
+DEVICE_KEY_VALIDATION_DATETIME = RECOVERY_KEY_VALIDATION_DATETIME
+
+FIVE_MINUTES_INTO_FUTURE_NAIVE = datetime.now() + timedelta(minutes=5)
+FIVE_MINUTES_INTO_FUTURE = datetime.now(timezone.utc) + timedelta(minutes=5)
+FIVE_MINUTES_INTO_PAST_NAIVE = datetime.now() - timedelta(minutes=5)
+FIVE_MINUTES_INTO_PAST = datetime.now(timezone.utc) - timedelta(minutes=5)
 
 
-class NearFuture(datetime.datetime):
+class NearFuture(datetime):
     @classmethod
-    def now(cls):
-        return datetime.datetime.now() + datetime.timedelta(minutes=13)
+    def now(cls, tz=None):
+        return datetime.now(tz) + timedelta(minutes=13)
 
 
 def read_json(file_path):
@@ -41,7 +46,6 @@ def mnemonic_to_hex(mnemonic):
 
 def assert_recovery_recent(time_generated):
     assert (
-        datetime.datetime.strptime(time_generated, "%Y-%m-%dT%H:%M:%S.%f")
-        - datetime.timedelta(seconds=5)
-        < datetime.datetime.now()
+        datetime.strptime(time_generated, "%Y-%m-%dT%H:%M:%S.%f") - timedelta(seconds=5)
+        < datetime.now()
     )

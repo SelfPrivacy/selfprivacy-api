@@ -11,6 +11,9 @@ from selfprivacy_api.models.tokens.token import Token
 from selfprivacy_api.repositories.tokens.json_tokens_repository import (
     JsonTokensRepository,
 )
+from selfprivacy_api.repositories.tokens.redis_tokens_repository import (
+    RedisTokensRepository,
+)
 
 from tests.common import read_json
 
@@ -63,21 +66,26 @@ def empty_json_repo(empty_tokens):
 
 
 @pytest.fixture
-def tokens_file(empty_json_repo, tmpdir):
+def empty_redis_repo():
+    repo = RedisTokensRepository()
+    repo.reset()
+    assert repo.get_tokens() == []
+    return repo
+
+
+@pytest.fixture
+def tokens_file(empty_redis_repo, tmpdir):
     """A state with tokens"""
+    repo = empty_redis_repo
     for token in TOKENS_FILE_CONTENTS["tokens"]:
-        empty_json_repo._store_token(
+        repo._store_token(
             Token(
                 token=token["token"],
                 device_name=token["name"],
                 created_at=token["date"],
             )
         )
-    # temporary return for compatibility with older tests
-
-    tokenfile = tmpdir / "empty_tokens.json"
-    assert path.exists(tokenfile)
-    return tokenfile
+    return repo
 
 
 @pytest.fixture

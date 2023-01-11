@@ -2,7 +2,7 @@
 temporary legacy
 """
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 from selfprivacy_api.utils import UserDataFiles, WriteUserData, ReadUserData
 from selfprivacy_api.models.tokens.token import Token
@@ -14,6 +14,7 @@ from selfprivacy_api.repositories.tokens.exceptions import (
 from selfprivacy_api.repositories.tokens.abstract_tokens_repository import (
     AbstractTokensRepository,
 )
+
 
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
 
@@ -56,6 +57,20 @@ class JsonTokensRepository(AbstractTokensRepository):
 
         raise TokenNotFound("Token not found!")
 
+    def __key_date_from_str(self, date_string: str) -> datetime:
+        if date_string is None or date_string == "":
+            return None
+        # we assume that we store dates in json as naive utc
+        utc_no_tz = datetime.fromisoformat(date_string)
+        utc_with_tz = utc_no_tz.replace(tzinfo=timezone.utc)
+        return utc_with_tz
+
+    def __date_from_tokens_file(
+        self, tokens_file: object, tokenfield: str, datefield: str
+    ):
+        date_string = tokens_file[tokenfield].get(datefield)
+        return self.__key_date_from_str(date_string)
+
     def get_recovery_key(self) -> Optional[RecoveryKey]:
         """Get the recovery key"""
         with ReadUserData(UserDataFiles.TOKENS) as tokens_file:
@@ -68,8 +83,12 @@ class JsonTokensRepository(AbstractTokensRepository):
 
             recovery_key = RecoveryKey(
                 key=tokens_file["recovery_token"].get("token"),
-                created_at=tokens_file["recovery_token"].get("date"),
-                expires_at=tokens_file["recovery_token"].get("expiration"),
+                created_at=self.__date_from_tokens_file(
+                    tokens_file, "recovery_token", "date"
+                ),
+                expires_at=self.__date_from_tokens_file(
+                    tokens_file, "recovery_token", "expiration"
+                ),
                 uses_left=tokens_file["recovery_token"].get("uses_left"),
             )
 

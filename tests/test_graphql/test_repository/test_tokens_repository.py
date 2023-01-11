@@ -2,7 +2,7 @@
 # pylint: disable=unused-argument
 # pylint: disable=missing-function-docstring
 
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
 from mnemonic import Mnemonic
 
 import pytest
@@ -16,9 +16,8 @@ from selfprivacy_api.repositories.tokens.exceptions import (
     TokenNotFound,
     NewDeviceKeyNotFound,
 )
-from selfprivacy_api.repositories.tokens.redis_tokens_repository import (
-    RedisTokensRepository,
-)
+
+from tests.common import FIVE_MINUTES_INTO_PAST
 
 
 ORIGINAL_DEVICE_NAMES = [
@@ -27,6 +26,10 @@ ORIGINAL_DEVICE_NAMES = [
     "third_token",
     "forth_token",
 ]
+
+TEST_DATE = datetime(2022, 7, 15, 17, 41, 31, 675698, timezone.utc)
+# tokens are not tz-aware
+TOKEN_TEST_DATE = datetime(2022, 7, 15, 17, 41, 31, 675698)
 
 
 def mnemonic_from_hex(hexkey):
@@ -40,8 +43,8 @@ def mock_new_device_key_generate(mocker):
         autospec=True,
         return_value=NewDeviceKey(
             key="43478d05b35e4781598acd76e33832bb",
-            created_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
-            expires_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
+            created_at=TEST_DATE,
+            expires_at=TEST_DATE,
         ),
     )
     return mock
@@ -55,8 +58,8 @@ def mock_new_device_key_generate_for_mnemonic(mocker):
         autospec=True,
         return_value=NewDeviceKey(
             key="2237238de23dc71ab558e317bdb8ff8e",
-            created_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
-            expires_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
+            created_at=TEST_DATE,
+            expires_at=TEST_DATE,
         ),
     )
     return mock
@@ -83,7 +86,7 @@ def mock_recovery_key_generate_invalid(mocker):
         autospec=True,
         return_value=RecoveryKey(
             key="889bf49c1d3199d71a2e704718772bd53a422020334db051",
-            created_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
+            created_at=TEST_DATE,
             expires_at=None,
             uses_left=0,
         ),
@@ -99,7 +102,7 @@ def mock_token_generate(mocker):
         return_value=Token(
             token="ZuLNKtnxDeq6w2dpOJhbB3iat_sJLPTPl_rN5uc5MvM",
             device_name="IamNewDevice",
-            created_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
+            created_at=TOKEN_TEST_DATE,
         ),
     )
     return mock
@@ -112,20 +115,12 @@ def mock_recovery_key_generate(mocker):
         autospec=True,
         return_value=RecoveryKey(
             key="889bf49c1d3199d71a2e704718772bd53a422020334db051",
-            created_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
+            created_at=TEST_DATE,
             expires_at=None,
             uses_left=1,
         ),
     )
     return mock
-
-
-@pytest.fixture
-def empty_redis_repo():
-    repo = RedisTokensRepository()
-    repo.reset()
-    assert repo.get_tokens() == []
-    return repo
 
 
 @pytest.fixture(params=["json", "redis"])
@@ -224,13 +219,13 @@ def test_create_token(empty_repo, mock_token_generate):
     assert repo.create_token(device_name="IamNewDevice") == Token(
         token="ZuLNKtnxDeq6w2dpOJhbB3iat_sJLPTPl_rN5uc5MvM",
         device_name="IamNewDevice",
-        created_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
+        created_at=TOKEN_TEST_DATE,
     )
     assert repo.get_tokens() == [
         Token(
             token="ZuLNKtnxDeq6w2dpOJhbB3iat_sJLPTPl_rN5uc5MvM",
             device_name="IamNewDevice",
-            created_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
+            created_at=TOKEN_TEST_DATE,
         )
     ]
 
@@ -266,7 +261,7 @@ def test_delete_not_found_token(some_tokens_repo):
     input_token = Token(
         token="imbadtoken",
         device_name="primary_token",
-        created_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
+        created_at=TEST_DATE,
     )
     with pytest.raises(TokenNotFound):
         assert repo.delete_token(input_token) is None
@@ -295,7 +290,7 @@ def test_refresh_not_found_token(some_tokens_repo, mock_token_generate):
     input_token = Token(
         token="idontknowwhoiam",
         device_name="tellmewhoiam?",
-        created_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
+        created_at=TEST_DATE,
     )
 
     with pytest.raises(TokenNotFound):
@@ -319,7 +314,7 @@ def test_create_get_recovery_key(some_tokens_repo, mock_recovery_key_generate):
     assert repo.create_recovery_key(uses_left=1, expiration=None) is not None
     assert repo.get_recovery_key() == RecoveryKey(
         key="889bf49c1d3199d71a2e704718772bd53a422020334db051",
-        created_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
+        created_at=TEST_DATE,
         expires_at=None,
         uses_left=1,
     )
@@ -358,10 +353,13 @@ def test_use_mnemonic_expired_recovery_key(
     some_tokens_repo,
 ):
     repo = some_tokens_repo
-    expiration = datetime.now() - timedelta(minutes=5)
+    expiration = FIVE_MINUTES_INTO_PAST
     assert repo.create_recovery_key(uses_left=2, expiration=expiration) is not None
     recovery_key = repo.get_recovery_key()
-    assert recovery_key.expires_at == expiration
+    # TODO: do not ignore timezone once json backend is deleted
+    assert recovery_key.expires_at.replace(tzinfo=None) == expiration.replace(
+        tzinfo=None
+    )
     assert not repo.is_recovery_key_valid()
 
     with pytest.raises(RecoveryKeyNotFound):
@@ -458,8 +456,8 @@ def test_get_new_device_key(some_tokens_repo, mock_new_device_key_generate):
 
     assert repo.get_new_device_key() == NewDeviceKey(
         key="43478d05b35e4781598acd76e33832bb",
-        created_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
-        expires_at=datetime(2022, 7, 15, 17, 41, 31, 675698),
+        created_at=TEST_DATE,
+        expires_at=TEST_DATE,
     )
 
 
@@ -535,7 +533,7 @@ def test_use_mnemonic_expired_new_device_key(
     some_tokens_repo,
 ):
     repo = some_tokens_repo
-    expiration = datetime.now() - timedelta(minutes=5)
+    expiration = FIVE_MINUTES_INTO_PAST
 
     key = repo.get_new_device_key()
     assert key is not None

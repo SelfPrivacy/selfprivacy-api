@@ -1,7 +1,6 @@
 # pylint: disable=redefined-outer-name
 # pylint: disable=unused-argument
 # pylint: disable=missing-function-docstring
-import datetime
 
 from tests.common import (
     generate_api_query,
@@ -9,6 +8,11 @@ from tests.common import (
     NearFuture,
     RECOVERY_KEY_VALIDATION_DATETIME,
 )
+
+# Graphql API's output should be timezone-naive
+from tests.common import FIVE_MINUTES_INTO_FUTURE_NAIVE as FIVE_MINUTES_INTO_FUTURE
+from tests.common import FIVE_MINUTES_INTO_PAST_NAIVE as FIVE_MINUTES_INTO_PAST
+
 from tests.test_graphql.common import (
     assert_empty,
     assert_data,
@@ -153,7 +157,7 @@ def test_graphql_generate_recovery_key(client, authorized_client, tokens_file):
 def test_graphql_generate_recovery_key_with_expiration_date(
     client, authorized_client, tokens_file
 ):
-    expiration_date = datetime.datetime.now() + datetime.timedelta(minutes=5)
+    expiration_date = FIVE_MINUTES_INTO_FUTURE
     key = graphql_make_new_recovery_key(authorized_client, expires_at=expiration_date)
 
     status = graphql_recovery_status(authorized_client)
@@ -171,7 +175,7 @@ def test_graphql_generate_recovery_key_with_expiration_date(
 def test_graphql_use_recovery_key_after_expiration(
     client, authorized_client, tokens_file, mocker
 ):
-    expiration_date = datetime.datetime.now() + datetime.timedelta(minutes=5)
+    expiration_date = FIVE_MINUTES_INTO_FUTURE
     key = graphql_make_new_recovery_key(authorized_client, expires_at=expiration_date)
 
     # Timewarp to after it expires
@@ -193,7 +197,7 @@ def test_graphql_use_recovery_key_after_expiration(
 def test_graphql_generate_recovery_key_with_expiration_in_the_past(
     authorized_client, tokens_file
 ):
-    expiration_date = datetime.datetime.now() - datetime.timedelta(minutes=5)
+    expiration_date = FIVE_MINUTES_INTO_PAST
     response = request_make_new_recovery_key(
         authorized_client, expires_at=expiration_date
     )
