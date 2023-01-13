@@ -17,7 +17,17 @@ from selfprivacy_api.repositories.tokens.exceptions import (
     NewDeviceKeyNotFound,
 )
 
-from tests.common import FIVE_MINUTES_INTO_PAST
+from selfprivacy_api.repositories.tokens.json_tokens_repository import (
+    JsonTokensRepository,
+)
+from selfprivacy_api.repositories.tokens.redis_tokens_repository import (
+    RedisTokensRepository,
+)
+from selfprivacy_api.repositories.tokens.abstract_tokens_repository import (
+    AbstractTokensRepository,
+)
+
+from tests.common import FIVE_MINUTES_INTO_PAST, FIVE_MINUTES_INTO_FUTURE
 
 
 ORIGINAL_DEVICE_NAMES = [
@@ -560,3 +570,36 @@ def test_use_mnemonic_new_device_key_when_empty(empty_repo):
             )
             is None
         )
+
+
+def assert_identical(
+    repo_a: AbstractTokensRepository, repo_b: AbstractTokensRepository
+):
+    tokens_a = repo_a.get_tokens()
+    tokens_b = repo_b.get_tokens()
+    assert len(tokens_a) == len(tokens_b)
+    for token in tokens_a:
+        assert token in tokens_b
+    assert repo_a.get_recovery_key() == repo_b.get_recovery_key()
+    assert repo_a._get_stored_new_device_key() == repo_b._get_stored_new_device_key()
+
+
+def clone_to_redis(repo: JsonTokensRepository):
+    other_repo = RedisTokensRepository()
+    other_repo.clone(repo)
+    assert_identical(repo, other_repo)
+
+
+# we cannot easily parametrize this unfortunately, since some_tokens and empty_repo cannot coexist
+def test_clone_json_to_redis_empty(empty_repo):
+    repo = empty_repo
+    if isinstance(repo, JsonTokensRepository):
+        clone_to_redis(repo)
+
+
+def test_clone_json_to_redis_full(some_tokens_repo):
+    repo = some_tokens_repo
+    if isinstance(repo, JsonTokensRepository):
+        repo.get_new_device_key()
+        repo.create_recovery_key(FIVE_MINUTES_INTO_FUTURE, 2)
+        clone_to_redis(repo)

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Optional
@@ -171,6 +173,20 @@ class AbstractTokensRepository(ABC):
             self.delete_token(token)
         self.delete_new_device_key()
         self._delete_recovery_key()
+
+    def clone(self, source: AbstractTokensRepository) -> None:
+        """Clone the state of another repository to this one"""
+        self.reset()
+        for token in source.get_tokens():
+            self._store_token(token)
+
+        recovery_key = source.get_recovery_key()
+        if recovery_key is not None:
+            self._store_recovery_key(recovery_key)
+
+        new_device_key = source._get_stored_new_device_key()
+        if new_device_key is not None:
+            self._store_new_device_key(new_device_key)
 
     @abstractmethod
     def _store_token(self, new_token: Token):
