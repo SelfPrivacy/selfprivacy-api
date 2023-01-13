@@ -51,13 +51,6 @@ class RedisTokensRepository(AbstractTokensRepository):
             raise TokenNotFound
         redis.delete(key)
 
-    def reset(self):
-        for token in self.get_tokens():
-            self.delete_token(token)
-        self.delete_new_device_key()
-        redis = self.connection
-        redis.delete(RECOVERY_KEY_REDIS_KEY)
-
     def get_recovery_key(self) -> Optional[RecoveryKey]:
         """Get the recovery key"""
         redis = self.connection
@@ -74,6 +67,11 @@ class RedisTokensRepository(AbstractTokensRepository):
         recovery_key = RecoveryKey.generate(expiration=expiration, uses_left=uses_left)
         self._store_model_as_hash(RECOVERY_KEY_REDIS_KEY, recovery_key)
         return recovery_key
+
+    def _delete_recovery_key(self) -> None:
+        """Delete the recovery key"""
+        redis = self.connection
+        redis.delete(RECOVERY_KEY_REDIS_KEY)
 
     def _store_new_device_key(self, new_device_key: NewDeviceKey) -> None:
         """Store new device key directly"""

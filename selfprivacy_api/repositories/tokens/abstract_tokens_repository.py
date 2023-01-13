@@ -123,6 +123,10 @@ class AbstractTokensRepository(ABC):
             return False
         return recovery_key.is_valid()
 
+    @abstractmethod
+    def _delete_recovery_key(self) -> None:
+        """Delete the recovery key"""
+
     def get_new_device_key(self) -> NewDeviceKey:
         """Creates and returns the new device key"""
         new_device_key = NewDeviceKey.generate()
@@ -155,6 +159,12 @@ class AbstractTokensRepository(ABC):
         self.delete_new_device_key()
 
         return new_token
+
+    def reset(self):
+        for token in self.get_tokens():
+            self.delete_token(token)
+        self.delete_new_device_key()
+        self._delete_recovery_key()
 
     @abstractmethod
     def _store_token(self, new_token: Token):

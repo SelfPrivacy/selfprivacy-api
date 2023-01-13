@@ -123,6 +123,13 @@ class JsonTokensRepository(AbstractTokensRepository):
                 if tokens["recovery_token"]["uses_left"] is not None:
                     tokens["recovery_token"]["uses_left"] -= 1
 
+    def _delete_recovery_key(self) -> None:
+        """Delete the recovery key"""
+        with WriteUserData(UserDataFiles.TOKENS) as tokens_file:
+            if "recovery_token" in tokens_file:
+                del tokens_file["recovery_token"]
+                return
+
     def _store_new_device_key(self, new_device_key: NewDeviceKey) -> None:
         with WriteUserData(UserDataFiles.TOKENS) as tokens_file:
             tokens_file["new_device"] = {
