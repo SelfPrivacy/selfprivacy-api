@@ -65,8 +65,11 @@ class RedisTokensRepository(AbstractTokensRepository):
     ) -> RecoveryKey:
         """Create the recovery key"""
         recovery_key = RecoveryKey.generate(expiration=expiration, uses_left=uses_left)
-        self._store_model_as_hash(RECOVERY_KEY_REDIS_KEY, recovery_key)
+        self._store_recovery_key(recovery_key)
         return recovery_key
+
+    def _store_recovery_key(self, recovery_key: RecoveryKey) -> None:
+        self._store_model_as_hash(RECOVERY_KEY_REDIS_KEY, recovery_key)
 
     def _delete_recovery_key(self) -> None:
         """Delete the recovery key"""

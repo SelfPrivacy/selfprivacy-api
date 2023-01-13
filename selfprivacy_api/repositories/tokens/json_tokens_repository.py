@@ -103,6 +103,11 @@ class JsonTokensRepository(AbstractTokensRepository):
 
         recovery_key = RecoveryKey.generate(expiration, uses_left)
 
+        self._store_recovery_key(recovery_key)
+
+        return recovery_key
+
+    def _store_recovery_key(self, recovery_key: RecoveryKey) -> None:
         with WriteUserData(UserDataFiles.TOKENS) as tokens_file:
             key_expiration: Optional[str] = None
             if recovery_key.expires_at is not None:
@@ -113,8 +118,6 @@ class JsonTokensRepository(AbstractTokensRepository):
                 "expiration": key_expiration,
                 "uses_left": recovery_key.uses_left,
             }
-
-        return recovery_key
 
     def _decrement_recovery_token(self):
         """Decrement recovery key use count by one"""

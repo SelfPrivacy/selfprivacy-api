@@ -124,6 +124,10 @@ class AbstractTokensRepository(ABC):
         return recovery_key.is_valid()
 
     @abstractmethod
+    def _store_recovery_key(self, recovery_key: RecoveryKey) -> None:
+        """Store recovery key directly"""
+
+    @abstractmethod
     def _delete_recovery_key(self) -> None:
         """Delete the recovery key"""
 
