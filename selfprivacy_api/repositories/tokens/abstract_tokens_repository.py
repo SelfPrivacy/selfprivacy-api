@@ -86,13 +86,15 @@ class AbstractTokensRepository(ABC):
     def get_recovery_key(self) -> Optional[RecoveryKey]:
         """Get the recovery key"""
 
-    @abstractmethod
     def create_recovery_key(
         self,
         expiration: Optional[datetime],
         uses_left: Optional[int],
     ) -> RecoveryKey:
         """Create the recovery key"""
+        recovery_key = RecoveryKey.generate(expiration, uses_left)
+        self._store_recovery_key(recovery_key)
+        return recovery_key
 
     def use_mnemonic_recovery_key(
         self, mnemonic_phrase: str, device_name: str
