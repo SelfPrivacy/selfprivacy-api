@@ -143,7 +143,11 @@ class JsonTokensRepository(AbstractTokensRepository):
 
             new_device_key = NewDeviceKey(
                 key=tokens_file["new_device"]["token"],
-                created_at=tokens_file["new_device"]["date"],
-                expires_at=tokens_file["new_device"]["expiration"],
+                created_at=self.__date_from_tokens_file(
+                    tokens_file, "new_device", "date"
+                ),
+                expires_at=self.__date_from_tokens_file(
+                    tokens_file, "new_device", "expiration"
+                ),
             )
             return new_device_key
