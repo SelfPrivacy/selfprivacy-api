@@ -22,6 +22,7 @@ from selfprivacy_api.migrations.providers import CreateProviderFields
 from selfprivacy_api.migrations.prepare_for_nixos_2211 import (
     MigrateToSelfprivacyChannelFrom2205,
 )
+from selfprivacy_api.migrations.redis_tokens import LoadTokensToRedis
 
 migrations = [
     FixNixosConfigBranch(),
@@ -31,6 +32,7 @@ migrations = [
     CheckForFailedBindsMigration(),
     CreateProviderFields(),
     MigrateToSelfprivacyChannelFrom2205(),
+    LoadTokensToRedis(),
 ]
 
 
