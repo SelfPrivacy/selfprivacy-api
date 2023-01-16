@@ -2,6 +2,8 @@ import base64
 import json
 import pytest
 
+from selfprivacy_api.utils import get_dkim_key
+
 ###############################################################################
 
 
@@ -13,7 +15,10 @@ class ProcessMock:
         self.kwargs = kwargs
 
     def communicate():
-        return (b"I am a DKIM key", None)
+        return (
+            b'selector._domainkey\tIN\tTXT\t( "v=DKIM1; k=rsa; "\n\t  "p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDNn/IhEz1SxgHxxxI8vlPYC2dNueiLe1GC4SYz8uHimC8SDkMvAwm7rqi2SimbFgGB5nccCNOqCkrIqJTCB9vufqBnVKAjshHqpOr5hk4JJ1T/AGQKWinstmDbfTLPYTbU8ijZrwwGeqQLlnXR5nSN0GB9GazheA9zaPsT6PV+aQIDAQAB" )  ; ----- DKIM key selector for example.com\n',
+            None,
+        )
 
 
 class NoFileMock(ProcessMock):
@@ -63,11 +68,27 @@ def test_illegal_methods(authorized_client, mock_subproccess_popen):
     assert response.status_code == 405
 
 
-def test_dkim_key(authorized_client, mock_subproccess_popen):
+def test_get_dkim_key(mock_subproccess_popen):
     """Test DKIM key"""
+    dkim_key = get_dkim_key("example.com")
+    assert (
+        dkim_key
+        == "v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDNn/IhEz1SxgHxxxI8vlPYC2dNueiLe1GC4SYz8uHimC8SDkMvAwm7rqi2SimbFgGB5nccCNOqCkrIqJTCB9vufqBnVKAjshHqpOr5hk4JJ1T/AGQKWinstmDbfTLPYTbU8ijZrwwGeqQLlnXR5nSN0GB9GazheA9zaPsT6PV+aQIDAQAB"
+    )
+    assert mock_subproccess_popen.call_args[0][0] == [
+        "cat",
+        "/var/dkim/example.com.selector.txt",
+    ]
+
+
+def test_dkim_key(authorized_client, mock_subproccess_popen):
+    """Test old REST DKIM key endpoint"""
     response = authorized_client.get("/services/mailserver/dkim")
     assert response.status_code == 200
-    assert base64.b64decode(response.text) == b"I am a DKIM key"
+    assert (
+        base64.b64decode(response.text)
+        == b'selector._domainkey\tIN\tTXT\t( "v=DKIM1; k=rsa; "\n\t  "p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDNn/IhEz1SxgHxxxI8vlPYC2dNueiLe1GC4SYz8uHimC8SDkMvAwm7rqi2SimbFgGB5nccCNOqCkrIqJTCB9vufqBnVKAjshHqpOr5hk4JJ1T/AGQKWinstmDbfTLPYTbU8ijZrwwGeqQLlnXR5nSN0GB9GazheA9zaPsT6PV+aQIDAQAB" )  ; ----- DKIM key selector for example.com\n'
+    )
     assert mock_subproccess_popen.call_args[0][0] == [
         "cat",
         "/var/dkim/example.com.selector.txt",

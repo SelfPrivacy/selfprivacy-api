@@ -117,7 +117,7 @@ async def get_mailserver_dkim():
     """Get the DKIM record for the mailserver"""
     domain = get_domain()
 
-    dkim = get_dkim_key(domain)
+    dkim = get_dkim_key(domain, parse=False)
     if dkim is None:
         raise HTTPException(status_code=404, detail="DKIM record not found")
     dkim = base64.b64encode(dkim.encode("utf-8")).decode("utf-8")
