@@ -126,7 +126,10 @@ class ResticController(metaclass=SingletonMetaclass):
         return f"rclone:backblaze:{self._repository_name}/sfbackup"
 
     def rclone_args(self):
-        return "rclone.args=serve restic --stdio"
+        return "rclone.args=serve restic --stdio" + self.backend_rclone_args()
+
+    def backend_rclone_args(self):
+        return f"--b2-account {self._backblaze_account} --b2-key {self._backblaze_key}"
 
     def initialize_repository(self):
         """
