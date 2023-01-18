@@ -4,7 +4,6 @@ import json
 import subprocess
 import os
 from enum import Enum
-import portalocker
 from selfprivacy_api.utils import ReadUserData
 from selfprivacy_api.utils.singleton_metaclass import SingletonMetaclass
 
@@ -50,7 +49,6 @@ class ResticController(metaclass=SingletonMetaclass):
         self.error_message = None
         self._initialized = True
         self.load_configuration()
-        self.write_rclone_config()
         self.load_snapshots()
 
     def load_configuration(self):
@@ -63,25 +61,6 @@ class ResticController(metaclass=SingletonMetaclass):
             self.state = ResticStates.INITIALIZING
         else:
             self.state = ResticStates.NO_KEY
-
-    def write_rclone_config(self):
-        """
-        Open /root/.config/rclone/rclone.conf with portalocker
-        and write configuration in the following format:
-            [backblaze]
-            type = b2
-            account = {self.backblaze_account}
-            key = {self.backblaze_key}
-        """
-        with portalocker.Lock(
-            "/root/.config/rclone/rclone.conf", "w", timeout=None
-        ) as rclone_config:
-            rclone_config.write(
-                f"[backblaze]\n"
-                f"type = b2\n"
-                f"account = {self._backblaze_account}\n"
-                f"key = {self._backblaze_key}\n"
-            )
 
     def load_snapshots(self):
         """
@@ -123,7 +102,9 @@ class ResticController(metaclass=SingletonMetaclass):
             return
 
     def restic_repo(self):
-        return f"rclone:backblaze:{self._repository_name}/sfbackup"
+        # https://restic.readthedocs.io/en/latest/030_preparing_a_new_repo.html#other-services-via-rclone
+        # https://forum.rclone.org/t/can-rclone-be-run-solely-with-command-line-options-no-config-no-env-vars/6314/5
+        return f"rclone::b2:{self._repository_name}/sfbackup"
 
     def rclone_args(self):
         return "rclone.args=serve restic --stdio" + self.backend_rclone_args()
