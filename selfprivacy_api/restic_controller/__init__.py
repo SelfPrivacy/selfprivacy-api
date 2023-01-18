@@ -92,7 +92,7 @@ class ResticController(metaclass=SingletonMetaclass):
             "-o",
             self.rclone_args(),
             "-r",
-            f"rclone:backblaze:{self._repository_name}/sfbackup",
+            self.restic_repo(),
             "snapshots",
             "--json",
         ]
@@ -122,6 +122,9 @@ class ResticController(metaclass=SingletonMetaclass):
             self.error_message = snapshots_list
             return
 
+    def restic_repo(self):
+        return f"rclone:backblaze:{self._repository_name}/sfbackup"
+
     def rclone_args(self):
         return "rclone.args=serve restic --stdio"
 
@@ -134,7 +137,7 @@ class ResticController(metaclass=SingletonMetaclass):
             "-o",
             self.rclone_args(),
             "-r",
-            f"rclone:backblaze:{self._repository_name}/sfbackup",
+            self.restic_repo(),
             "init",
         ]
         with subprocess.Popen(
@@ -163,7 +166,7 @@ class ResticController(metaclass=SingletonMetaclass):
             "-o",
             self.rclone_args(),
             "-r",
-            f"rclone:backblaze:{self._repository_name}/sfbackup",
+            self.restic_repo(),
             "--verbose",
             "--json",
             "backup",
@@ -232,7 +235,7 @@ class ResticController(metaclass=SingletonMetaclass):
             "-o",
             self.rclone_args(),
             "-r",
-            f"rclone:backblaze:{self._repository_name}/sfbackup",
+            self.restic_repo(),
             "restore",
             snapshot_id,
             "--target",
