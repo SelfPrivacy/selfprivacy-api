@@ -90,7 +90,7 @@ class ResticController(metaclass=SingletonMetaclass):
         backup_listing_command = [
             "restic",
             "-o",
-            "rclone.args=serve restic --stdio",
+            self.rclone_args(),
             "-r",
             f"rclone:backblaze:{self._repository_name}/sfbackup",
             "snapshots",
@@ -122,6 +122,9 @@ class ResticController(metaclass=SingletonMetaclass):
             self.error_message = snapshots_list
             return
 
+    def rclone_args(self):
+        return "rclone.args=serve restic --stdio"
+
     def initialize_repository(self):
         """
         Initialize repository with restic
@@ -129,7 +132,7 @@ class ResticController(metaclass=SingletonMetaclass):
         initialize_repository_command = [
             "restic",
             "-o",
-            "rclone.args=serve restic --stdio",
+            self.rclone_args(),
             "-r",
             f"rclone:backblaze:{self._repository_name}/sfbackup",
             "init",
@@ -158,7 +161,7 @@ class ResticController(metaclass=SingletonMetaclass):
         backup_command = [
             "restic",
             "-o",
-            "rclone.args=serve restic --stdio",
+            self.rclone_args(),
             "-r",
             f"rclone:backblaze:{self._repository_name}/sfbackup",
             "--verbose",
@@ -227,7 +230,7 @@ class ResticController(metaclass=SingletonMetaclass):
         backup_restoration_command = [
             "restic",
             "-o",
-            "rclone.args=serve restic --stdio",
+            self.rclone_args(),
             "-r",
             f"rclone:backblaze:{self._repository_name}/sfbackup",
             "restore",
