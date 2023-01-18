@@ -3,7 +3,6 @@ from datetime import datetime
 import json
 import subprocess
 import os
-from threading import Lock
 from enum import Enum
 import portalocker
 from selfprivacy_api.utils import ReadUserData
