@@ -1,7 +1,9 @@
 from enum import Enum
 import typing
 import strawberry
+import datetime
 from selfprivacy_api.graphql.common_types.dns import DnsRecord
+from selfprivacy_api.graphql.common_types.backup_snapshot import SnapshotInfo
 
 from selfprivacy_api.services import get_service_by_id, get_services_by_location
 from selfprivacy_api.services import Service as ServiceInterface
@@ -100,6 +102,10 @@ class Service:
     def storage_usage(self) -> ServiceStorageUsage:
         """Get storage usage for a service"""
         return get_storage_usage(self)
+
+    @strawberry.field
+    def backup_snapshots(self) -> typing.Optional[typing.List[SnapshotInfo]]:
+        return None
 
 
 def service_to_graphql_service(service: ServiceInterface) -> Service:
