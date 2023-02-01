@@ -11,3 +11,7 @@ class AbstractBackupProvider(ABC):
     @property
     def backuper(self) -> AbstractBackuper:
         raise NotImplementedError
+
+    def __init__(self, login, key):
+        self.login = login
+        self.key = key
