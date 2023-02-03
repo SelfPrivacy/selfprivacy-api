@@ -1,3 +1,5 @@
+import subprocess
+
 from selfprivacy_api.backup import AbstractBackuper
 
 
@@ -6,6 +8,12 @@ class ResticBackuper(AbstractBackuper):
         self.login_flag = login_flag
         self.key_flag = key_flag
         self.type = type
+        self.account = ""
+        self.key = ""
+
+    def set_creds(self, account: str, key: str):
+        self.account = account
+        self.key = key
 
     def restic_repo(self, repository_name: str) -> str:
         # https://restic.readthedocs.io/en/latest/030_preparing_a_new_repo.html#other-services-via-rclone
@@ -33,3 +41,21 @@ class ResticBackuper(AbstractBackuper):
             "-r",
             self.restic_repo(account, key),
         ].extend(args)
+
+    def start_backup(self, folder: str):
+        """
+        Start backup with restic
+        """
+        backup_command = self.restic_command(
+            self.account,
+            self.key,
+            "backup",
+            folder,
+        )
+        with open("/var/backup.log", "w", encoding="utf-8") as log_file:
+            subprocess.Popen(
+                backup_command,
+                shell=False,
+                stdout=log_file,
+                stderr=subprocess.STDOUT,
+            )
