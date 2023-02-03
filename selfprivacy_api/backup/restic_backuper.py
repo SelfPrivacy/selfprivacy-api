@@ -15,8 +15,15 @@ class ResticBackuper(AbstractBackuper):
     def rclone_args(self):
         return "rclone.args=serve restic --stdio" + self.backend_rclone_args()
 
-    def backend_rclone_args(self, account: str, key: str):
-        return f"{self.login_flag} {account} {self.key_flag} {key}"
+    def backend_rclone_args(self, account: str, key: str) -> str:
+        acc_arg = ""
+        key_arg = ""
+        if account != "":
+            acc_arg = f"{self.login_flag} {account}"
+        if key != "":
+            key_arg = f"{self.key_flag} {key}"
+
+        return f"{acc_arg} {key_arg}"
 
     def restic_command(self, account: str, key: str, *args):
         return [
