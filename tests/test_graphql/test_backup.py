@@ -1,4 +1,5 @@
 import pytest
+import os.path as path
 
 from selfprivacy_api.services.test_service import DummyService
 
@@ -9,8 +10,14 @@ from selfprivacy_api.backup.providers.backblaze import Backblaze
 from selfprivacy_api.graphql.queries.providers import BackupProvider
 
 
+TESTFILE_BODY = "testytest!"
+
+
 @pytest.fixture()
 def test_service(tmpdir):
+    testile_path = path.join(tmpdir, "testfile.txt")
+    with open(testile_path, "w") as file:
+        file.write(TESTFILE_BODY)
     return DummyService(tmpdir)
 
 
