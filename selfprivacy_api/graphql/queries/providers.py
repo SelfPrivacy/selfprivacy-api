@@ -6,6 +6,7 @@ import strawberry
 @strawberry.enum
 class DnsProvider(Enum):
     CLOUDFLARE = "CLOUDFLARE"
+    DIGITALOCEAN = "DIGITALOCEAN"
 
 
 @strawberry.enum
