@@ -11,6 +11,7 @@ from selfprivacy_api.graphql.queries.providers import BackupProvider
 
 
 TESTFILE_BODY = "testytest!"
+REPO_NAME = "test_backup"
 
 
 @pytest.fixture()
@@ -18,11 +19,16 @@ def test_service(tmpdir):
     testile_path = path.join(tmpdir, "testfile.txt")
     with open(testile_path, "w") as file:
         file.write(TESTFILE_BODY)
-    return DummyService(tmpdir)
+
+    # we need this to not change get_location() much
+    class TestDummyService (DummyService, location=tmpdir):
+        pass
+
+    return TestDummyService()
 
 
 @pytest.fixture()
-def memory_backup():
+def memory_backup() -> AbstractBackupProvider:
     ProviderClass = providers.get_provider(BackupProvider.MEMORY)
     assert ProviderClass is not None
     memory_provider = ProviderClass(login="", key="")
@@ -40,3 +46,4 @@ def test_backup_service(test_service, memory_backup):
     # temporarily incomplete
     assert test_service is not None
     assert memory_backup is not None
+    memory_backup.backuper.start_backup(test_service.get_location(), REPO_NAME)
