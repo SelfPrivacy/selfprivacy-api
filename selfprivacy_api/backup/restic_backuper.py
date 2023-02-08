@@ -1,6 +1,6 @@
 import subprocess
 
-from selfprivacy_api.backup import AbstractBackuper
+from selfprivacy_api.backup.backuper import AbstractBackuper
 
 
 class ResticBackuper(AbstractBackuper):
