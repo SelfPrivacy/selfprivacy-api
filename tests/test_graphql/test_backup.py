@@ -3,6 +3,7 @@ import os.path as path
 
 from selfprivacy_api.services.test_service import DummyService
 
+from selfprivacy_api.backup import Backups
 import selfprivacy_api.backup.providers as providers
 from selfprivacy_api.backup.providers import AbstractBackupProvider
 
@@ -21,7 +22,7 @@ def test_service(tmpdir):
         file.write(TESTFILE_BODY)
 
     # we need this to not change get_location() much
-    class TestDummyService (DummyService, location=tmpdir):
+    class TestDummyService(DummyService, location=tmpdir):
         pass
 
     return TestDummyService()
@@ -36,14 +37,23 @@ def memory_backup() -> AbstractBackupProvider:
     return memory_provider
 
 
+@pytest.fixture()
+def backups():
+    return Backups()
+
+
 def test_select_backend():
     provider = providers.get_provider(BackupProvider.BACKBLAZE)
     assert provider is not None
     assert provider == Backblaze
 
 
-def test_backup_service(test_service, memory_backup):
+def test_backup_simple(test_service, memory_backup):
     # temporarily incomplete
     assert test_service is not None
     assert memory_backup is not None
     memory_backup.backuper.start_backup(test_service.get_location(), REPO_NAME)
+
+
+def test_backup_service(test_service, backups):
+    backups.back_up(test_service)
