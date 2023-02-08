@@ -37,4 +37,7 @@ class Backups(metaclass=SingletonMetaclass):
     def back_up(self, service: Service):
         folder = service.get_location()
         repo_name = service.get_id()
+
+        service.pre_backup()
         self.provider.backuper.start_backup(folder, repo_name)
+        service.post_restore()

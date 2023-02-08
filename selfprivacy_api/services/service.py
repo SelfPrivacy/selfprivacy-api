@@ -138,3 +138,9 @@ class Service(ABC):
     @abstractmethod
     def move_to_volume(self, volume: BlockDevice) -> Job:
         pass
+
+    def pre_backup(self):
+        pass
+
+    def post_restore(self):
+        pass
