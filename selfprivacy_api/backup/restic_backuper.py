@@ -69,3 +69,13 @@ class ResticBackuper(AbstractBackuper):
         #         stdout=log_file,
         #         stderr=subprocess.STDOUT,
         #     )
+
+    def restore_from_backup(self, repo_name, snapshot_id, folder):
+        """
+        Restore from backup with restic
+        """
+        restore_command = self.restic_command(
+            repo_name, "restore", snapshot_id, "--target", folder
+        )
+
+        subprocess.run(restore_command, shell=False)
