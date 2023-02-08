@@ -14,8 +14,8 @@ from selfprivacy_api.services.test_service.icon import BITWARDEN_ICON
 class DummyService(Service):
     """A test service"""
 
-    def __init__(self, location):
-        self.loccation = location
+    def __init_subclass__(cls, location):
+        cls.location = location
 
     @staticmethod
     def get_id() -> str:
@@ -106,13 +106,9 @@ class DummyService(Service):
         storage_usage = 0
         return storage_usage
 
-    @staticmethod
-    def get_location() -> str:
-        with ReadUserData() as user_data:
-            if user_data.get("useBinds", False):
-                return user_data.get("bitwarden", {}).get("location", "sda1")
-            else:
-                return "sda1"
+    @classmethod
+    def get_location(cls) -> str:
+        return cls.location
 
     @staticmethod
     def get_dns_records() -> typing.List[ServiceDnsRecord]:
