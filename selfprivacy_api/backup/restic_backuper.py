@@ -1,7 +1,10 @@
 import subprocess
 import json
 
+from typing import List
+
 from selfprivacy_api.backup.backuper import AbstractBackuper
+from selfprivacy_api.models.backup.snapshot import Snapshot
 
 
 class ResticBackuper(AbstractBackuper):
@@ -107,10 +110,11 @@ class ResticBackuper(AbstractBackuper):
             self.error_message = output
             return []
 
-    def get_snapshots(self):
+    def get_snapshots(self, repo_name) -> List[Snapshot]:
+        """Get all snapshots from the repo"""
         # No transformation for now
         snapshots = []
-        for snapshot in self._load_snapshots():
+        for snapshot in self._load_snapshots(repo_name):
             snapshots.append(snapshot)
         return snapshots
 
