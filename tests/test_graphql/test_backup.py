@@ -57,3 +57,7 @@ def test_backup_simple(test_service, memory_backup):
 
 def test_backup_service(test_service, backups):
     backups.back_up(test_service)
+
+
+def test_no_snapshots(memory_backup):
+    assert memory_backup.backuper.get_snapshots("") == []
