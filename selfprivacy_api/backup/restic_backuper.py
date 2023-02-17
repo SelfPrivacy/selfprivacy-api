@@ -81,6 +81,17 @@ class ResticBackuper(AbstractBackuper):
         #         stderr=subprocess.STDOUT,
         #     )
 
+    def init(self, repo_name):
+        init_command = self.restic_command(
+            repo_name,
+            "init",
+        )
+        subprocess.Popen(
+            init_command,
+            shell=False,
+            stderr=subprocess.STDOUT,
+        )
+
     def restore_from_backup(self, repo_name, snapshot_id, folder):
         """
         Restore from backup with restic
