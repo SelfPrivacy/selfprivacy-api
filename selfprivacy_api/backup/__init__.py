@@ -46,6 +46,10 @@ class Backups(metaclass=SingletonMetaclass):
         self.provider.backuper.start_backup(folder, repo_name)
         service.post_restore()
 
+    def init_repo(self, service: Service):
+        repo_name = service.get_id()
+        self.provider.backuper.init(repo_name)
+
     def get_snapshots(self, service: Service) -> List[Snapshot]:
         repo_name = service.get_id()
 

@@ -16,3 +16,7 @@ class AbstractBackuper(ABC):
     def get_snapshots(self, repo_name) -> List[Snapshot]:
         """Get all snapshots from the repo"""
         raise NotImplementedError
+
+    @abstractmethod
+    def init(self, repo_name):
+        raise NotImplementedError
