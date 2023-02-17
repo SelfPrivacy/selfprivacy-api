@@ -6,6 +6,8 @@ from typing import List
 from selfprivacy_api.backup.backuper import AbstractBackuper
 from selfprivacy_api.models.backup.snapshot import Snapshot
 
+from selfprivacy_api.backup.local_secret import LocalBackupSecret
+
 
 class ResticBackuper(AbstractBackuper):
     def __init__(self, login_flag: str, key_flag: str, type: str):
@@ -37,6 +39,9 @@ class ResticBackuper(AbstractBackuper):
 
         return f"{acc_arg} {key_arg}"
 
+    def _password_command(self):
+        return f"echo {LocalBackupSecret.get()}"
+
     def restic_command(self, repo_name: str, *args):
         command = [
             "restic",
@@ -44,6 +49,8 @@ class ResticBackuper(AbstractBackuper):
             self.rclone_args(),
             "-r",
             self.restic_repo(repo_name),
+            "--password-command",
+            self._password_command(),
         ]
         if args != []:
             command.extend(args)
@@ -87,6 +94,7 @@ class ResticBackuper(AbstractBackuper):
     def _load_snapshots(self, repo_name) -> object:
         """
         Load list of snapshots from repository
+        raises Value Error if repo does not exist
         """
         listing_command = self.restic_command(
             repo_name,
@@ -102,13 +110,12 @@ class ResticBackuper(AbstractBackuper):
         ) as backup_listing_process_descriptor:
             output = backup_listing_process_descriptor.communicate()[0].decode("utf-8")
 
+        if "Is there a repository at the following location?" in output:
+            raise ValueError("No repository! : " + output)
         try:
             return self.parse_snapshot_output(output)
-        except ValueError:
-            if "Is there a repository at the following location?" in output:
-                return []
-            self.error_message = output
-            return []
+        except ValueError as e:
+            raise ValueError("Cannot load snapshots: ") from e
 
     def get_snapshots(self, repo_name) -> List[Snapshot]:
         """Get all snapshots from the repo"""
@@ -119,7 +126,7 @@ class ResticBackuper(AbstractBackuper):
         return snapshots
 
     def parse_snapshot_output(self, output: str) -> object:
+        if "[" not in output:
+            raise ValueError("There is no json in the restic snapshot output")
         starting_index = output.find("[")
-        json.loads(output[starting_index:])
-        self.snapshot_list = json.loads(output[starting_index:])
-        print(output)
+        return json.loads(output[starting_index:])
