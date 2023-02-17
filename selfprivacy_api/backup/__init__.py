@@ -1,3 +1,7 @@
+from typing import List
+
+from selfprivacy_api.models.backup.snapshot import Snapshot
+
 from selfprivacy_api.utils.singleton_metaclass import SingletonMetaclass
 
 from selfprivacy_api.services.service import Service
@@ -41,3 +45,8 @@ class Backups(metaclass=SingletonMetaclass):
         service.pre_backup()
         self.provider.backuper.start_backup(folder, repo_name)
         service.post_restore()
+
+    def get_snapshots(self, service: Service) -> List[Snapshot]:
+        repo_name = service.get_id()
+
+        return self.provider.backuper.get_snapshots(repo_name)

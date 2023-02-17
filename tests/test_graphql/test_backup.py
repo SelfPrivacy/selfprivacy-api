@@ -59,5 +59,11 @@ def test_backup_service(test_service, backups):
     backups.back_up(test_service)
 
 
-def test_no_snapshots(memory_backup):
-    assert memory_backup.backuper.get_snapshots("") == []
+def test_no_repo(memory_backup):
+    with pytest.raises(ValueError):
+        assert memory_backup.backuper.get_snapshots("") == []
+
+
+# def test_one_snapshot(backups, test_service):
+#     backups.back_up(test_service)
+#     assert len(backups.get_snapshots(test_service)) == 1
