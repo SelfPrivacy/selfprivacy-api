@@ -86,11 +86,15 @@ class ResticBackuper(AbstractBackuper):
             repo_name,
             "init",
         )
-        subprocess.Popen(
+        with subprocess.Popen(
             init_command,
             shell=False,
+            stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-        )
+        ) as process_handle:
+            output = process_handle.communicate()[0].decode("utf-8")
+            if not "created restic repository" in output:
+                raise ValueError("cannot init a repo: " + output)
 
     def restore_from_backup(self, repo_name, snapshot_id, folder):
         """
