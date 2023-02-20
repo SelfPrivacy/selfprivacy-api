@@ -24,7 +24,7 @@ class ResticBackuper(AbstractBackuper):
     def restic_repo(self, repository_name: str) -> str:
         # https://restic.readthedocs.io/en/latest/030_preparing_a_new_repo.html#other-services-via-rclone
         # https://forum.rclone.org/t/can-rclone-be-run-solely-with-command-line-options-no-config-no-env-vars/6314/5
-        return f"rclone::{self.type}:{repository_name}/sfbackup"
+        return f"rclone:{self.type}{repository_name}/sfbackup"
 
     def rclone_args(self):
         return "rclone.args=serve restic --stdio" + self.backend_rclone_args()
