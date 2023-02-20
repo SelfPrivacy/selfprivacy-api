@@ -1,5 +1,6 @@
 import pytest
 import os.path as path
+from os import makedirs
 
 from selfprivacy_api.services.test_service import DummyService
 
@@ -15,17 +16,36 @@ TESTFILE_BODY = "testytest!"
 REPO_NAME = "test_backup"
 
 
+@pytest.fixture(scope="function")
+def backups(tmpdir):
+    test_repo_path = path.join(tmpdir, "totallyunrelated")
+    return Backups(test_repo_path)
+
+
 @pytest.fixture()
-def test_service(tmpdir, backups):
-    testile_path = path.join(tmpdir, "testfile.txt")
-    with open(testile_path, "w") as file:
+def raw_dummy_service(tmpdir, backups):
+    service_dir = path.join(tmpdir, "test_service")
+    makedirs(service_dir)
+
+    testfile_path = path.join(service_dir, "testfile.txt")
+    with open(testfile_path, "w") as file:
         file.write(TESTFILE_BODY)
 
     # we need this to not change get_location() much
-    class TestDummyService(DummyService, location=tmpdir):
+    class TestDummyService(DummyService, location=service_dir):
         pass
 
     service = TestDummyService()
+    return service
+
+
+@pytest.fixture()
+def dummy_service(tmpdir, backups, raw_dummy_service):
+    service = raw_dummy_service
+    repo_path = path.join(tmpdir, "test_repo")
+    assert not path.exists(repo_path)
+    # assert not repo_path
+
     backups.init_repo(service)
     return service
 
@@ -49,12 +69,6 @@ def file_backup(tmpdir) -> AbstractBackupProvider:
     return provider
 
 
-@pytest.fixture()
-def backups(tmpdir):
-    test_repo_path = path.join(tmpdir, "test_repo")
-    return Backups(test_repo_path)
-
-
 def test_select_backend():
     provider = providers.get_provider(BackupProvider.BACKBLAZE)
     assert provider is not None
@@ -65,15 +79,18 @@ def test_file_backend_init(file_backup):
     file_backup.backuper.init("somerepo")
 
 
-def test_backup_simple(test_service, memory_backup):
+def test_backup_simple_file(raw_dummy_service, file_backup):
     # temporarily incomplete
-    assert test_service is not None
-    assert memory_backup is not None
-    memory_backup.backuper.start_backup(test_service.get_location(), REPO_NAME)
+    service = raw_dummy_service
+    assert service is not None
+    assert file_backup is not None
+
+    name = service.get_id()
+    file_backup.backuper.init(name)
 
 
-def test_backup_service(test_service, backups):
-    backups.back_up(test_service)
+def test_backup_service(dummy_service, backups):
+    backups.back_up(dummy_service)
 
 
 def test_no_repo(memory_backup):
@@ -81,6 +98,6 @@ def test_no_repo(memory_backup):
         assert memory_backup.backuper.get_snapshots("") == []
 
 
-# def test_one_snapshot(backups, test_service):
-#     backups.back_up(test_service)
-#     assert len(backups.get_snapshots(test_service)) == 1
+# def test_one_snapshot(backups, dummy_service):
+#     backups.back_up(dummy_service)
+#     assert len(backups.get_snapshots(dummy_service)) == 1

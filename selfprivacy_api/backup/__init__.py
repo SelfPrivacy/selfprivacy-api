@@ -10,7 +10,8 @@ from selfprivacy_api.backup.providers import get_provider
 from selfprivacy_api.graphql.queries.providers import BackupProvider
 
 
-class Backups(metaclass=SingletonMetaclass):
+# class Backups(metaclass=SingletonMetaclass):
+class Backups:
     """A singleton controller for backups"""
 
     provider: AbstractBackupProvider
@@ -18,7 +19,8 @@ class Backups(metaclass=SingletonMetaclass):
     def __init__(self, test_repo_file: str = ""):
         if test_repo_file != "":
             self.set_localfile_repo(test_repo_file)
-        self.lookup_provider()
+        else:
+            self.lookup_provider()
 
     def set_localfile_repo(self, file_path: str):
         ProviderClass = get_provider(BackupProvider.FILE)
