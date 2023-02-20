@@ -15,8 +15,15 @@ class Backups(metaclass=SingletonMetaclass):
 
     provider: AbstractBackupProvider
 
-    def __init__(self):
+    def __init__(self, test_repo_file: str = ""):
+        if test_repo_file != "":
+            self.set_localfile_repo(test_repo_file)
         self.lookup_provider()
+
+    def set_localfile_repo(self, file_path: str):
+        ProviderClass = get_provider(BackupProvider.FILE)
+        provider = ProviderClass(file_path)
+        self.provider = provider
 
     def lookup_provider(self):
         redis_provider = Backups.load_provider_redis()
