@@ -21,3 +21,4 @@ class BackupProvider(Enum):
     BACKBLAZE = "BACKBLAZE"
     # for testing purposes, make sure not selectable in prod.
     MEMORY = "MEMORY"
+    FILE = "FILE"
