@@ -50,8 +50,9 @@ def file_backup(tmpdir) -> AbstractBackupProvider:
 
 
 @pytest.fixture()
-def backups():
-    return Backups()
+def backups(tmpdir):
+    test_repo_path = path.join(tmpdir, "test_repo")
+    return Backups(test_repo_path)
 
 
 def test_select_backend():
