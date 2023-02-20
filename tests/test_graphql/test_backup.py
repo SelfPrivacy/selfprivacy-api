@@ -40,6 +40,16 @@ def memory_backup() -> AbstractBackupProvider:
 
 
 @pytest.fixture()
+def file_backup(tmpdir) -> AbstractBackupProvider:
+    test_repo_path = path.join(tmpdir, "test_repo")
+    ProviderClass = providers.get_provider(BackupProvider.FILE)
+    assert ProviderClass is not None
+    provider = ProviderClass(test_repo_path)
+    assert provider is not None
+    return provider
+
+
+@pytest.fixture()
 def backups():
     return Backups()
 
@@ -48,6 +58,10 @@ def test_select_backend():
     provider = providers.get_provider(BackupProvider.BACKBLAZE)
     assert provider is not None
     assert provider == Backblaze
+
+
+def test_file_backend_init(file_backup):
+    file_backup.backuper.init("somerepo")
 
 
 def test_backup_simple(test_service, memory_backup):
