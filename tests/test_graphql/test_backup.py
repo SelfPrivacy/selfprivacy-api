@@ -16,7 +16,7 @@ REPO_NAME = "test_backup"
 
 
 @pytest.fixture()
-def test_service(tmpdir):
+def test_service(tmpdir, backups):
     testile_path = path.join(tmpdir, "testfile.txt")
     with open(testile_path, "w") as file:
         file.write(TESTFILE_BODY)
@@ -25,7 +25,9 @@ def test_service(tmpdir):
     class TestDummyService(DummyService, location=tmpdir):
         pass
 
-    return TestDummyService()
+    service = TestDummyService()
+    backups.init_repo(service)
+    return service
 
 
 @pytest.fixture()
