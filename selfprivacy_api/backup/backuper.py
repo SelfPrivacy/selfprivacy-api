@@ -25,3 +25,7 @@ class AbstractBackuper(ABC):
     def restore_from_backup(self, repo_name: str, snapshot_id: str, folder: str):
         """Restore a target folder using a snapshot"""
         raise NotImplementedError
+
+    @abstractmethod
+    def restored_size(self, repo_name, snapshot_id) -> float:
+        raise NotImplementedError
