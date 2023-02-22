@@ -4,12 +4,14 @@ from selfprivacy_api.models.backup.snapshot import Snapshot
 
 from selfprivacy_api.utils.singleton_metaclass import SingletonMetaclass
 
+from selfprivacy_api.services import get_service_by_id
 from selfprivacy_api.services.service import Service
+
 from selfprivacy_api.backup.providers.provider import AbstractBackupProvider
 from selfprivacy_api.backup.providers import get_provider
 from selfprivacy_api.graphql.queries.providers import BackupProvider
 
-
+# Singleton has a property of being persistent between tests. I don't know what to do with this yet
 # class Backups(metaclass=SingletonMetaclass):
 class Backups:
     """A singleton controller for backups"""
@@ -63,3 +65,15 @@ class Backups:
         repo_name = service.get_id()
 
         return self.provider.backuper.get_snapshots(repo_name)
+
+    def restore_service_from_snapshot(self, service: Service, snapshot_id: str):
+        repo_name = service.get_id()
+        folder = service.get_location()
+
+        self.provider.backuper.restore_from_backup(repo_name, snapshot_id, folder)
+
+    # Our dummy service is not yet globally registered so this is not testable yet
+    def restore_snapshot(self, snapshot: Snapshot):
+        self.restore_service_from_snapshot(
+            get_service_by_id(snapshot.service_name), snapshot.id
+        )
