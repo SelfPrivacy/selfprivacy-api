@@ -77,3 +77,13 @@ class Backups:
         self.restore_service_from_snapshot(
             get_service_by_id(snapshot.service_name), snapshot.id
         )
+
+    def service_snapshot_size(self, service: Service, snapshot_id: str) -> float:
+        repo_name = service.get_id()
+        return self.provider.backuper.restored_size(repo_name, snapshot_id)
+
+    # Our dummy service is not yet globally registered so this is not testable yet
+    def snapshot_restored_size(self, snapshot: Snapshot) -> float:
+        return self.service_snapshot_size(
+            get_service_by_id(snapshot.service_name), snapshot.id
+        )
