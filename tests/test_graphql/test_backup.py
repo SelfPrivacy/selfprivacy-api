@@ -1,6 +1,8 @@
 import pytest
 import os.path as path
 from os import makedirs
+from os import remove
+from os import listdir
 
 from selfprivacy_api.services.test_service import DummyService
 
@@ -107,3 +109,21 @@ def test_one_snapshot(backups, dummy_service):
     assert len(snaps) == 1
     snap = snaps[0]
     assert snap.service_name == dummy_service.get_id()
+
+
+def test_restore(backups, dummy_service):
+    service_folder = dummy_service.get_location()
+    file_to_nuke = listdir(service_folder)[0]
+    assert file_to_nuke is not None
+    path_to_nuke = path.join(service_folder, file_to_nuke)
+
+    backups.back_up(dummy_service)
+    snap = backups.get_snapshots(dummy_service)[0]
+    assert snap is not None
+
+    assert path.exists(path_to_nuke)
+    remove(path_to_nuke)
+    assert not path.exists(path_to_nuke)
+
+    backups.restore_service_from_snapshot(dummy_service, snap.id)
+    assert path.exists(path_to_nuke)
