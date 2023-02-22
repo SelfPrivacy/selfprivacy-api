@@ -141,6 +141,8 @@ class ResticBackuper(AbstractBackuper):
 
     def parse_snapshot_output(self, output: str) -> object:
         if "[" not in output:
-            raise ValueError("There is no json in the restic snapshot output")
+            raise ValueError(
+                "There is no json in the restic snapshot output : " + output
+            )
         starting_index = output.find("[")
         return json.loads(output[starting_index:])
