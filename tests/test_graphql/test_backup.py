@@ -4,6 +4,8 @@ from os import makedirs
 
 from selfprivacy_api.services.test_service import DummyService
 
+from selfprivacy_api.models.backup.snapshot import Snapshot
+
 from selfprivacy_api.backup import Backups
 import selfprivacy_api.backup.providers as providers
 from selfprivacy_api.backup.providers import AbstractBackupProvider
@@ -100,4 +102,8 @@ def test_no_repo(memory_backup):
 
 def test_one_snapshot(backups, dummy_service):
     backups.back_up(dummy_service)
-    assert len(backups.get_snapshots(dummy_service)) == 1
+
+    snaps = backups.get_snapshots(dummy_service)
+    assert len(snaps) == 1
+    snap = snaps[0]
+    assert snap.service_name == dummy_service.get_id()

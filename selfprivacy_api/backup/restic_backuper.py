@@ -128,9 +128,14 @@ class ResticBackuper(AbstractBackuper):
 
     def get_snapshots(self, repo_name) -> List[Snapshot]:
         """Get all snapshots from the repo"""
-        # No transformation for now
         snapshots = []
-        for snapshot in self._load_snapshots(repo_name):
+        for restic_snapshot in self._load_snapshots(repo_name):
+            snapshot = Snapshot(
+                id=restic_snapshot["short_id"],
+                created_at=restic_snapshot["time"],
+                service_name=repo_name,
+            )
+
             snapshots.append(snapshot)
         return snapshots
 
