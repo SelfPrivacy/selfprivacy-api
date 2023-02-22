@@ -2,7 +2,15 @@
 Separated out for circular dependency reasons
 """
 
+from __future__ import annotations
+import secrets
+
+from selfprivacy_api.utils.redis_pool import RedisPool
+
+
 REDIS_KEY = "backup:local_secret"
+
+redis = RedisPool().get_connection()
 
 
 class LocalBackupSecret:
@@ -10,21 +18,24 @@ class LocalBackupSecret:
     def get():
         """A secret string which backblaze/other clouds do not know.
         Serves as encryption key.
-        TODO: generate and save in redis
         """
-        return "TEMPORARY_SECRET"
+        if not LocalBackupSecret.exists():
+            LocalBackupSecret.reset()
+        return redis.get(REDIS_KEY)
 
     @staticmethod
     def reset():
-        pass
-
-    def exists():
-        pass
+        new_secret = LocalBackupSecret._generate()
+        LocalBackupSecret._store(new_secret)
 
     @staticmethod
-    def _generate():
-        pass
+    def exists() -> bool:
+        return redis.exists(REDIS_KEY)
+
+    @staticmethod
+    def _generate() -> str:
+        return secrets.token_urlsafe(256)
 
     @staticmethod
     def _store(secret: str):
-        pass
+        redis.set(REDIS_KEY, secret)
