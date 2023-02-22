@@ -98,6 +98,6 @@ def test_no_repo(memory_backup):
         assert memory_backup.backuper.get_snapshots("") == []
 
 
-# def test_one_snapshot(backups, dummy_service):
-#     backups.back_up(dummy_service)
-#     assert len(backups.get_snapshots(dummy_service)) == 1
+def test_one_snapshot(backups, dummy_service):
+    backups.back_up(dummy_service)
+    assert len(backups.get_snapshots(dummy_service)) == 1
