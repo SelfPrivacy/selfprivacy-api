@@ -94,8 +94,15 @@ class ResticBackuper(AbstractBackuper):
         """
         Restore from backup with restic
         """
+        # snapshots save the path of the folder in the file system
+        # I do not alter the signature yet because maybe this can be
+        # changed with flags
         restore_command = self.restic_command(
-            repo_name, "restore", snapshot_id, "--target", folder
+            repo_name,
+            "restore",
+            snapshot_id,
+            "--target",
+            "/",
         )
 
         with subprocess.Popen(
@@ -103,7 +110,7 @@ class ResticBackuper(AbstractBackuper):
         ) as handle:
 
             output = handle.communicate()[0].decode("utf-8")
-            if "restored" not in output:
+            if "restoring" not in output:
                 raise ValueError("cannot restore a snapshot: " + output)
 
     def _load_snapshots(self, repo_name) -> object:
