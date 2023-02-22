@@ -127,3 +127,11 @@ def test_restore(backups, dummy_service):
 
     backups.restore_service_from_snapshot(dummy_service, snap.id)
     assert path.exists(path_to_nuke)
+
+
+def test_sizing(backups, dummy_service):
+    backups.back_up(dummy_service)
+    snap = backups.get_snapshots(dummy_service)[0]
+    size = backups.service_snapshot_size(dummy_service, snap.id)
+    assert size is not None
+    assert size > 0

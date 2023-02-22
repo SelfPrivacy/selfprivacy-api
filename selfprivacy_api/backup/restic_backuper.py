@@ -90,6 +90,25 @@ class ResticBackuper(AbstractBackuper):
             if not "created restic repository" in output:
                 raise ValueError("cannot init a repo: " + output)
 
+    def restored_size(self, repo_name, snapshot_id) -> float:
+        """
+        Size of a snapshot
+        """
+        command = self.restic_command(
+            repo_name,
+            "stats",
+            snapshot_id,
+            "--json",
+        )
+
+        with subprocess.Popen(command, stdout=subprocess.PIPE, shell=False) as handle:
+            output = handle.communicate()[0].decode("utf-8")
+            try:
+                parsed_output = self.parse_json_output(output)
+                return parsed_output["total_size"]
+            except ValueError as e:
+                raise ValueError("cannot restore a snapshot: " + output) from e
+
     def restore_from_backup(self, repo_name, snapshot_id, folder):
         """
         Restore from backup with restic
@@ -135,7 +154,7 @@ class ResticBackuper(AbstractBackuper):
         if "Is there a repository at the following location?" in output:
             raise ValueError("No repository! : " + output)
         try:
-            return self.parse_snapshot_output(output)
+            return self.parse_json_output(output)
         except ValueError as e:
             raise ValueError("Cannot load snapshots: ") from e
 
@@ -152,10 +171,18 @@ class ResticBackuper(AbstractBackuper):
             snapshots.append(snapshot)
         return snapshots
 
-    def parse_snapshot_output(self, output: str) -> object:
-        if "[" not in output:
+    def parse_json_output(self, output: str) -> object:
+        indices = [
+            output.find("["),
+            output.find("{"),
+        ]
+        indices = [x for x in indices if x != -1]
+
+        if indices == []:
             raise ValueError(
                 "There is no json in the restic snapshot output : " + output
             )
-        starting_index = output.find("[")
+
+        starting_index = min(indices)
+
         return json.loads(output[starting_index:])
