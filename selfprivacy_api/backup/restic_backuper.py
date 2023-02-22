@@ -98,7 +98,13 @@ class ResticBackuper(AbstractBackuper):
             repo_name, "restore", snapshot_id, "--target", folder
         )
 
-        subprocess.run(restore_command, shell=False)
+        with subprocess.Popen(
+            restore_command, stdout=subprocess.PIPE, shell=False
+        ) as handle:
+
+            output = handle.communicate()[0].decode("utf-8")
+            if "restored" not in output:
+                raise ValueError("cannot restore a snapshot: " + output)
 
     def _load_snapshots(self, repo_name) -> object:
         """
