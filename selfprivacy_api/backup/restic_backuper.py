@@ -65,21 +65,15 @@ class ResticBackuper(AbstractBackuper):
             "backup",
             folder,
         )
-        subprocess.Popen(
+        with subprocess.Popen(
             backup_command,
             shell=False,
+            stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-        )
-
-        # TODO: we might want to provide logging facilities
-        # that are reroutable for testing
-        # with open("/var/backup.log", "w", encoding="utf-8") as log_file:
-        #     subprocess.Popen(
-        #         backup_command,
-        #         shell=False,
-        #         stdout=log_file,
-        #         stderr=subprocess.STDOUT,
-        #     )
+        ) as handle:
+            output = handle.communicate()[0].decode("utf-8")
+            if "saved" not in output:
+                raise ValueError("could not create a new snapshot: " + output)
 
     def init(self, repo_name):
         init_command = self.restic_command(
