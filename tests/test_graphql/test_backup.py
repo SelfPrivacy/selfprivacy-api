@@ -73,6 +73,16 @@ def file_backup(tmpdir) -> AbstractBackupProvider:
     return provider
 
 
+def test_config_load(generic_userdata):
+    backups = Backups()
+    provider = backups.provider
+
+    assert provider is not None
+    assert isinstance(provider, Backblaze)
+    assert provider.login == "ID"
+    assert provider.key == "KEY"
+
+
 def test_select_backend():
     provider = providers.get_provider(BackupProvider.BACKBLAZE)
     assert provider is not None
