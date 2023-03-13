@@ -1,16 +1,24 @@
 from typing import List
 
 from selfprivacy_api.models.backup.snapshot import Snapshot
+from selfprivacy_api.models.backup.provider import BackupProviderModel
 
 from selfprivacy_api.utils.singleton_metaclass import SingletonMetaclass
 from selfprivacy_api.utils import ReadUserData
+from selfprivacy_api.utils.redis_pool import RedisPool
+from selfprivacy_api.utils.redis_model_storage import store_model_as_hash, hash_as_model
+
 
 from selfprivacy_api.services import get_service_by_id
 from selfprivacy_api.services.service import Service
 
 from selfprivacy_api.backup.providers.provider import AbstractBackupProvider
-from selfprivacy_api.backup.providers import get_provider
+from selfprivacy_api.backup.providers import get_provider, get_kind
 from selfprivacy_api.graphql.queries.providers import BackupProvider
+
+REDIS_PROVIDER_KEY = "backups:provider"
+
+redis = RedisPool().get_connection()
 
 
 # Singleton has a property of being persistent between tests.
@@ -37,6 +45,29 @@ class Backups:
         provider_class = get_provider(BackupProvider[kind])
         return provider_class(login=login, key=key)
 
+    @staticmethod
+    def store_provider_redis(provider: AbstractBackupProvider):
+        store_model_as_hash(
+            redis,
+            REDIS_PROVIDER_KEY,
+            BackupProviderModel(
+                kind=get_kind(provider), login=provider.login, key=provider.key
+            ),
+        )
+
+    @staticmethod
+    def load_provider_redis() -> AbstractBackupProvider:
+        provider_model = hash_as_model(redis, REDIS_PROVIDER_KEY, BackupProviderModel)
+        if provider_model is None:
+            return None
+        return Backups.construct_provider(
+            provider_model.kind, provider_model.login, provider_model.key
+        )
+
+    @staticmethod
+    def reset():
+        redis.delete(REDIS_PROVIDER_KEY)
+
     def lookup_provider(self) -> AbstractBackupProvider:
         redis_provider = Backups.load_provider_redis()
         if redis_provider is not None:
@@ -47,10 +78,6 @@ class Backups:
             return json_provider
 
         return Backups.construct_provider("MEMORY", login="", key="")
-
-    @staticmethod
-    def load_provider_redis() -> AbstractBackupProvider:
-        pass
 
     @staticmethod
     def load_provider_json() -> AbstractBackupProvider:

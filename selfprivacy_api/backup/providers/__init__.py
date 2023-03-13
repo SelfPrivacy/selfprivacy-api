@@ -14,3 +14,9 @@ PROVIDER_MAPPING = {
 
 def get_provider(provider_type: BackupProvider) -> AbstractBackupProvider:
     return PROVIDER_MAPPING[provider_type]
+
+
+def get_kind(provider: AbstractBackupProvider) -> str:
+    for key, value in PROVIDER_MAPPING.items():
+        if isinstance(provider, value):
+            return key.value
