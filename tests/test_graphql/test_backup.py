@@ -23,7 +23,16 @@ REPO_NAME = "test_backup"
 @pytest.fixture(scope="function")
 def backups(tmpdir):
     test_repo_path = path.join(tmpdir, "totallyunrelated")
-    return Backups(test_repo_path)
+    backups = Backups(test_repo_path)
+    backups.reset()
+    return backups
+
+
+@pytest.fixture()
+def backups_backblaze(generic_userdata):
+    backups = Backups()
+    backups.reset()
+    return backups
 
 
 @pytest.fixture()
@@ -75,6 +84,7 @@ def file_backup(tmpdir) -> AbstractBackupProvider:
 
 def test_config_load(generic_userdata):
     backups = Backups()
+    backups.reset()
     provider = backups.provider
 
     assert provider is not None
@@ -145,3 +155,21 @@ def test_sizing(backups, dummy_service):
     size = backups.service_snapshot_size(dummy_service, snap.id)
     assert size is not None
     assert size > 0
+
+
+def test_redis_storage(backups_backblaze):
+    backups = Backups()
+    backups.reset()
+    provider = backups.provider
+
+    assert provider is not None
+
+    assert isinstance(provider, Backblaze)
+    assert provider.login == "ID"
+    assert provider.key == "KEY"
+
+    backups.store_provider_redis(provider)
+    restored_provider = backups.load_provider_redis()
+    assert isinstance(restored_provider, Backblaze)
+    assert restored_provider.login == "ID"
+    assert restored_provider.key == "KEY"
