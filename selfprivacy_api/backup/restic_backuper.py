@@ -90,6 +90,20 @@ class ResticBackuper(AbstractBackuper):
             if not "created restic repository" in output:
                 raise ValueError("cannot init a repo: " + output)
 
+    def is_initted(self, repo_name: str) -> bool:
+        command = self.restic_command(
+            repo_name,
+            "check",
+            "--json",
+        )
+
+        with subprocess.Popen(command, stdout=subprocess.PIPE, shell=False) as handle:
+            output = handle.communicate()[0].decode("utf-8")
+            if not self.has_json(output):
+                return False
+            # raise NotImplementedError("error(big): " + output)
+            return True
+
     def restored_size(self, repo_name, snapshot_id) -> float:
         """
         Size of a snapshot
@@ -172,6 +186,16 @@ class ResticBackuper(AbstractBackuper):
         return snapshots
 
     def parse_json_output(self, output: str) -> object:
+        starting_index = self.json_start(output)
+
+        if starting_index == -1:
+            raise ValueError(
+                "There is no json in the restic snapshot output : " + output
+            )
+
+        return json.loads(output[starting_index:])
+
+    def json_start(self, output: str) -> int:
         indices = [
             output.find("["),
             output.find("{"),
@@ -179,10 +203,10 @@ class ResticBackuper(AbstractBackuper):
         indices = [x for x in indices if x != -1]
 
         if indices == []:
-            raise ValueError(
-                "There is no json in the restic snapshot output : " + output
-            )
+            return -1
+        return min(indices)
 
-        starting_index = min(indices)
-
-        return json.loads(output[starting_index:])
+    def has_json(self, output: str) -> bool:
+        if self.json_start(output) == -1:
+            return False
+        return True

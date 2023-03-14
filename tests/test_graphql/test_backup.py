@@ -173,3 +173,31 @@ def test_redis_storage(backups_backblaze):
     assert isinstance(restored_provider, Backblaze)
     assert restored_provider.login == "ID"
     assert restored_provider.key == "KEY"
+
+
+# lowlevel
+def test_init_tracking_caching(backups, raw_dummy_service):
+    assert backups._has_redis_init_mark(raw_dummy_service) is False
+
+    backups._redis_mark_as_init(raw_dummy_service)
+
+    assert backups._has_redis_init_mark(raw_dummy_service) is True
+    assert backups.is_initted(raw_dummy_service) is True
+
+
+# lowlevel
+def test_init_tracking_caching2(backups, raw_dummy_service):
+    assert backups._has_redis_init_mark(raw_dummy_service) is False
+
+    backups.init_repo(raw_dummy_service)
+
+    assert backups._has_redis_init_mark(raw_dummy_service) is True
+
+
+# only public API
+def test_init_tracking(backups, raw_dummy_service):
+    assert backups.is_initted(raw_dummy_service) is False
+
+    backups.init_repo(raw_dummy_service)
+
+    assert backups.is_initted(raw_dummy_service) is True
