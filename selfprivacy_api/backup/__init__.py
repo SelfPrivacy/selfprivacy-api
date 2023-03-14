@@ -17,6 +17,7 @@ from selfprivacy_api.backup.providers import get_provider, get_kind
 from selfprivacy_api.graphql.queries.providers import BackupProvider
 
 REDIS_PROVIDER_KEY = "backups:provider"
+REDIS_INITTED_CACHE_PREFIX = "backups:initted_services:"
 
 redis = RedisPool().get_connection()
 
@@ -67,6 +68,8 @@ class Backups:
     @staticmethod
     def reset():
         redis.delete(REDIS_PROVIDER_KEY)
+        for key in redis.keys(REDIS_INITTED_CACHE_PREFIX + "*"):
+            redis.delete(key)
 
     def lookup_provider(self) -> AbstractBackupProvider:
         redis_provider = Backups.load_provider_redis()
@@ -113,6 +116,29 @@ class Backups:
     def init_repo(self, service: Service):
         repo_name = service.get_id()
         self.provider.backuper.init(repo_name)
+        self._redis_mark_as_init(service)
+
+    def _has_redis_init_mark(self, service: Service) -> bool:
+        repo_name = service.get_id()
+        if redis.exists(REDIS_INITTED_CACHE_PREFIX + repo_name):
+            return True
+        return False
+
+    def _redis_mark_as_init(self, service: Service):
+        repo_name = service.get_id()
+        redis.set(REDIS_INITTED_CACHE_PREFIX + repo_name, 1)
+
+    def is_initted(self, service: Service) -> bool:
+        repo_name = service.get_id()
+        if self._has_redis_init_mark(service):
+            return True
+
+        initted = self.provider.backuper.is_initted(repo_name)
+        if initted:
+            self._redis_mark_as_init(service)
+            return True
+
+        return False
 
     def get_snapshots(self, service: Service) -> List[Snapshot]:
         repo_name = service.get_id()

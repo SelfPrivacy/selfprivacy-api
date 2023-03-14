@@ -9,6 +9,10 @@ class AbstractBackuper(ABC):
         pass
 
     @abstractmethod
+    def is_initted(self, repo_name: str) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
     def start_backup(self, folder: str, repo_name: str):
         raise NotImplementedError
 
