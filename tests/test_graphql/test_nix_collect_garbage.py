@@ -96,26 +96,21 @@ def test_stream_process():
     def set_job_status(status, progress, status_text, result=""):
         log_event.append((status, progress, status_text, result))
 
-    stream_process(output_collect_garbage.split("\n"), 20.0, set_job_status)
+    stream_process(output_collect_garbage.split("\n"), 5, set_job_status)
     assert log_event == reference
 
 
 def test_nix_collect_garbage():
     log_event = []
     reference = [
-        (JobStatus.RUNNING, 0, "Сalculate the number of dead packages...", ""),
-        (JobStatus.RUNNING, 0, "Found 5 packages to remove!", ""),
-        (JobStatus.RUNNING, 20, "Сleaning...", ""),
-        (JobStatus.RUNNING, 40, "Сleaning...", ""),
-        (JobStatus.RUNNING, 60, "Сleaning...", ""),
-        (JobStatus.RUNNING, 80, "Сleaning...", ""),
-        (JobStatus.RUNNING, 100, "Сleaning...", ""),
-        (
-            JobStatus.FINISHED,
-            100,
-            "Сleaning completed.",
-            "425.51 MiB have been cleared",
-        ),
+        (JobStatus.RUNNING, 0, 'Сalculate the number of dead packages...', ''),
+        (JobStatus.RUNNING, 0, 'Found 5 packages to remove!', ''),
+        (JobStatus.RUNNING, 5, 'Сleaning...', ''),
+        (JobStatus.RUNNING, 10, 'Сleaning...', ''),
+        (JobStatus.RUNNING, 15, 'Сleaning...', ''),
+        (JobStatus.RUNNING, 20, 'Сleaning...', ''),
+        (JobStatus.RUNNING, 25, 'Сleaning...', ''),
+        (JobStatus.FINISHED, 100, 'Сleaning completed.', '425.51 MiB have been cleared'),
     ]
 
     def set_job_status(status="", progress="", status_text="", result=""):
@@ -128,6 +123,8 @@ def test_nix_collect_garbage():
         lambda: output_collect_garbage.split("\n"),
         set_job_status,
     )
+    print("log_event:", log_event)
+    print("reference:", reference)
 
     assert log_event == reference
 
@@ -152,7 +149,7 @@ def test_nix_collect_garbage_zero_trash():
 
     assert log_event == reference
 
-
+# андр констракнш
 @pytest.mark.asyncio
 async def test_graphql_nix_collect_garbage():
     query = """
@@ -166,6 +163,6 @@ async def test_graphql_nix_collect_garbage():
     )
 
     sub = await schema_for_garbage.subscribe(query)
-    for result in sub:
+    async for result in sub:
         assert not result.errors
         assert result.data == {}

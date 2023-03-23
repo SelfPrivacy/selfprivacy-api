@@ -61,19 +61,19 @@ def parse_line(line):
 
 def stream_process(
     stream,
-    package_equal_to_percent,
+    total_dead_packages,
     set_job_status,
 ):
-    percent = 0
+    completed_packages = 0
 
     for line in stream:
         if "deleting '/nix/store/" in line:
-            percent += package_equal_to_percent
+            completed_packages += 1
+            percent = int((completed_packages / total_dead_packages) * 100)
 
             set_job_status(
                 status=JobStatus.RUNNING,
-                progress=int(percent),
-                progress=int(percent),
+                progress=percent,
                 status_text="Сleaning...",
             )
 
@@ -95,7 +95,7 @@ def get_dead_packages(output):
     return dead, percent
 
 
-@huey.task()
+# @huey.task() # ломает все к фигам
 def nix_collect_garbage(
     job,
     jobs=Jobs,
