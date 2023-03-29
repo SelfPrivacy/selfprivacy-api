@@ -13,8 +13,10 @@ import selfprivacy_api.backup.providers as providers
 from selfprivacy_api.backup.providers import AbstractBackupProvider
 
 from selfprivacy_api.backup.providers.backblaze import Backblaze
+
 from selfprivacy_api.graphql.queries.providers import BackupProvider
 
+from selfprivacy_api.backup.tasks import start_backup
 
 TESTFILE_BODY = "testytest!"
 REPO_NAME = "test_backup"
@@ -197,3 +199,11 @@ def test_init_tracking(backups, raw_dummy_service):
     Backups.init_repo(raw_dummy_service)
 
     assert Backups.is_initted(raw_dummy_service) is True
+
+
+def test_backup_service_task(backups, dummy_service):
+    handle = start_backup(dummy_service)
+    handle(blocking=True)
+
+    snaps = Backups.get_snapshots(dummy_service)
+    assert len(snaps) == 1
