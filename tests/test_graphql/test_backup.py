@@ -22,17 +22,15 @@ REPO_NAME = "test_backup"
 
 @pytest.fixture(scope="function")
 def backups(tmpdir):
+    Backups.reset()
+
     test_repo_path = path.join(tmpdir, "totallyunrelated")
-    backups = Backups(test_repo_path)
-    backups.reset()
-    return backups
+    Backups.set_localfile_repo(test_repo_path)
 
 
 @pytest.fixture()
 def backups_backblaze(generic_userdata):
-    backups = Backups()
-    backups.reset()
-    return backups
+    Backups.reset()
 
 
 @pytest.fixture()
@@ -59,7 +57,7 @@ def dummy_service(tmpdir, backups, raw_dummy_service):
     assert not path.exists(repo_path)
     # assert not repo_path
 
-    backups.init_repo(service)
+    Backups.init_repo(service)
     return service
 
 
@@ -83,9 +81,8 @@ def file_backup(tmpdir) -> AbstractBackupProvider:
 
 
 def test_config_load(generic_userdata):
-    backups = Backups()
-    backups.reset()
-    provider = backups.provider
+    Backups.reset()
+    provider = Backups.provider()
 
     assert provider is not None
     assert isinstance(provider, Backblaze)
@@ -114,7 +111,7 @@ def test_backup_simple_file(raw_dummy_service, file_backup):
 
 
 def test_backup_service(dummy_service, backups):
-    backups.back_up(dummy_service)
+    Backups.back_up(dummy_service)
 
 
 def test_no_repo(memory_backup):
@@ -123,9 +120,9 @@ def test_no_repo(memory_backup):
 
 
 def test_one_snapshot(backups, dummy_service):
-    backups.back_up(dummy_service)
+    Backups.back_up(dummy_service)
 
-    snaps = backups.get_snapshots(dummy_service)
+    snaps = Backups.get_snapshots(dummy_service)
     assert len(snaps) == 1
     snap = snaps[0]
     assert snap.service_name == dummy_service.get_id()
@@ -137,30 +134,29 @@ def test_restore(backups, dummy_service):
     assert file_to_nuke is not None
     path_to_nuke = path.join(service_folder, file_to_nuke)
 
-    backups.back_up(dummy_service)
-    snap = backups.get_snapshots(dummy_service)[0]
+    Backups.back_up(dummy_service)
+    snap = Backups.get_snapshots(dummy_service)[0]
     assert snap is not None
 
     assert path.exists(path_to_nuke)
     remove(path_to_nuke)
     assert not path.exists(path_to_nuke)
 
-    backups.restore_service_from_snapshot(dummy_service, snap.id)
+    Backups.restore_service_from_snapshot(dummy_service, snap.id)
     assert path.exists(path_to_nuke)
 
 
 def test_sizing(backups, dummy_service):
-    backups.back_up(dummy_service)
-    snap = backups.get_snapshots(dummy_service)[0]
-    size = backups.service_snapshot_size(dummy_service, snap.id)
+    Backups.back_up(dummy_service)
+    snap = Backups.get_snapshots(dummy_service)[0]
+    size = Backups.service_snapshot_size(dummy_service, snap.id)
     assert size is not None
     assert size > 0
 
 
 def test_redis_storage(backups_backblaze):
-    backups = Backups()
-    backups.reset()
-    provider = backups.provider
+    Backups.reset()
+    provider = Backups.provider()
 
     assert provider is not None
 
@@ -168,8 +164,8 @@ def test_redis_storage(backups_backblaze):
     assert provider.login == "ID"
     assert provider.key == "KEY"
 
-    backups.store_provider_redis(provider)
-    restored_provider = backups.load_provider_redis()
+    Backups.store_provider_redis(provider)
+    restored_provider = Backups.load_provider_redis()
     assert isinstance(restored_provider, Backblaze)
     assert restored_provider.login == "ID"
     assert restored_provider.key == "KEY"
@@ -177,27 +173,27 @@ def test_redis_storage(backups_backblaze):
 
 # lowlevel
 def test_init_tracking_caching(backups, raw_dummy_service):
-    assert backups._has_redis_init_mark(raw_dummy_service) is False
+    assert Backups._has_redis_init_mark(raw_dummy_service) is False
 
-    backups._redis_mark_as_init(raw_dummy_service)
+    Backups._redis_mark_as_init(raw_dummy_service)
 
-    assert backups._has_redis_init_mark(raw_dummy_service) is True
-    assert backups.is_initted(raw_dummy_service) is True
+    assert Backups._has_redis_init_mark(raw_dummy_service) is True
+    assert Backups.is_initted(raw_dummy_service) is True
 
 
 # lowlevel
 def test_init_tracking_caching2(backups, raw_dummy_service):
-    assert backups._has_redis_init_mark(raw_dummy_service) is False
+    assert Backups._has_redis_init_mark(raw_dummy_service) is False
 
-    backups.init_repo(raw_dummy_service)
+    Backups.init_repo(raw_dummy_service)
 
-    assert backups._has_redis_init_mark(raw_dummy_service) is True
+    assert Backups._has_redis_init_mark(raw_dummy_service) is True
 
 
 # only public API
 def test_init_tracking(backups, raw_dummy_service):
-    assert backups.is_initted(raw_dummy_service) is False
+    assert Backups.is_initted(raw_dummy_service) is False
 
-    backups.init_repo(raw_dummy_service)
+    Backups.init_repo(raw_dummy_service)
 
-    assert backups.is_initted(raw_dummy_service) is True
+    assert Backups.is_initted(raw_dummy_service) is True
