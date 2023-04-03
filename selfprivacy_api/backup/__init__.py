@@ -99,11 +99,17 @@ class Backups:
         """None means autobackup is disabled"""
         if not redis.exists(REDIS_AUTOBACKUP_PERIOD_KEY):
             return None
-        return redis.get(REDIS_AUTOBACKUP_PERIOD_KEY)
+        return int(redis.get(REDIS_AUTOBACKUP_PERIOD_KEY))
 
     @staticmethod
     def set_autobackup_period_minutes(minutes: int):
-        """This initiates backup very soon if some services are not backed up"""
+        """
+        0 and negative numbers are equivalent to disable.
+        Setting to a positive number may result in a backup very soon if some services are not backed up.
+        """
+        if minutes <= 0:
+            Backups.disable_all_autobackup()
+            return
         redis.set(REDIS_AUTOBACKUP_PERIOD_KEY, minutes)
 
     @staticmethod
