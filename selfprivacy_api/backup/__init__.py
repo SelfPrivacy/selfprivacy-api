@@ -78,12 +78,12 @@ class Backups:
         redis.expire(snapshot_key, REDIS_SNAPSHOT_CACHE_EXPIRE_SECONDS)
 
     @staticmethod
-    def _redis_autobackup_key(service: Service):
+    def _redis_autobackup_key(service: Service) -> str:
         return REDIS_AUTOBACKUP_ENABLED_PREFIX + service.get_id()
 
     @staticmethod
     def enable_autobackup(service: Service):
-        redis.set(Backups._redis_autobackup_key(service), True)
+        redis.set(Backups._redis_autobackup_key(service), 1)
 
     @staticmethod
     def disable_autobackup(service: Service):
@@ -159,6 +159,7 @@ class Backups:
             REDIS_INITTED_CACHE_PREFIX,
             REDIS_SNAPSHOTS_PREFIX,
             REDIS_LAST_BACKUP_PREFIX,
+            REDIS_AUTOBACKUP_ENABLED_PREFIX,
         ]
 
         for prefix in prefixes_to_clean:
