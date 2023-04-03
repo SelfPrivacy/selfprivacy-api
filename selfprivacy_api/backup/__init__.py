@@ -1,4 +1,5 @@
-from typing import List
+from typing import List, Optional
+from datetime import datetime
 
 from selfprivacy_api.models.backup.snapshot import Snapshot
 from selfprivacy_api.models.backup.provider import BackupProviderModel
@@ -17,6 +18,10 @@ from selfprivacy_api.backup.providers import get_provider, get_kind
 from selfprivacy_api.graphql.queries.providers import BackupProvider
 
 # a hack to store file path.
+REDIS_SNAPSHOT_CACHE_EXPIRE_SECONDS = 24 * 60 * 60  # one day
+
+REDIS_SNAPSHOTS_PREFIX = "backups:snapshots:"
+REDIS_LAST_BACKUP_PREFIX = "backups:last-backed-up:"
 REDIS_REPO_PATH_KEY = "backups:test_repo_path"
 
 REDIS_PROVIDER_KEY = "backups:provider"
@@ -39,6 +44,35 @@ class Backups:
         provider = ProviderClass(file_path)
         redis.set(REDIS_REPO_PATH_KEY, file_path)
         Backups.store_provider_redis(provider)
+
+    @staticmethod
+    def _redis_last_backup_key(service_id):
+        return REDIS_LAST_BACKUP_PREFIX + service_id
+
+    @staticmethod
+    def _redis_snapshot_key(snapshot: Snapshot):
+        return REDIS_SNAPSHOTS_PREFIX + snapshot.id
+
+    @staticmethod
+    def get_last_backed_up(service: Service) -> Optional[datetime]:
+        return Backups._get_last_backup_time_redis(service.get_id())
+
+    @staticmethod
+    def _get_last_backup_time_redis(service_id: str) -> Optional[datetime]:
+        key = Backups._redis_last_backup_key(service_id)
+        if not redis.exists(key):
+            return None
+
+        snapshot = hash_as_model(redis, key)
+        return snapshot.created_at
+
+    @staticmethod
+    def _store_last_snapshot(service_id: str, snapshot: Snapshot):
+        store_model_as_hash(redis, Backups._redis_last_backup_key(service_id), snapshot)
+
+        snapshot_key = Backups._redis_snapshot_key(snapshot)
+        store_model_as_hash(redis, snapshot_key, snapshot)
+        redis.expire(snapshot_key, REDIS_SNAPSHOT_CACHE_EXPIRE_SECONDS)
 
     @staticmethod
     def provider():
@@ -82,7 +116,14 @@ class Backups:
     def reset():
         redis.delete(REDIS_PROVIDER_KEY)
         redis.delete(REDIS_REPO_PATH_KEY)
+
         for key in redis.keys(REDIS_INITTED_CACHE_PREFIX + "*"):
+            redis.delete(key)
+
+        for key in redis.keys(REDIS_SNAPSHOTS_PREFIX + "*"):
+            redis.delete(key)
+
+        for key in redis.keys(REDIS_LAST_BACKUP_PREFIX + "*"):
             redis.delete(key)
 
     @staticmethod
@@ -129,7 +170,9 @@ class Backups:
         repo_name = service.get_id()
 
         service.pre_backup()
-        Backups.provider().backuper.start_backup(folder, repo_name)
+        snapshot = Backups.provider().backuper.start_backup(folder, repo_name)
+        Backups._store_last_snapshot(repo_name, snapshot)
+
         service.post_restore()
 
     @staticmethod
