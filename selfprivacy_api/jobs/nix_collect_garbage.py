@@ -95,15 +95,12 @@ def get_dead_packages(output):
     return dead, percent
 
 
-# @huey.task() # ломает все к фигам
+# @huey.task()
 def nix_collect_garbage(
     job,
     jobs=Jobs,
-    run_nix_store=run_nix_store_print_dead,
-    run_nix_collect=run_nix_collect_garbage,
-    set_job_status=None,
-):  # innocent as a pure function
-    set_job_status = set_job_status or set_job_status_wrapper(jobs, job)
+):
+    set_job_status = set_job_status_wrapper(jobs, job)
 
     set_job_status(
         status=JobStatus.RUNNING,
@@ -111,7 +108,7 @@ def nix_collect_garbage(
         status_text="Сalculate the number of dead packages...",
     )
 
-    dead_packages, package_equal_to_percent = get_dead_packages(run_nix_store())
+    dead_packages, package_equal_to_percent = get_dead_packages(run_nix_store_print_dead())
 
     if dead_packages == 0:
         set_job_status(
@@ -128,4 +125,4 @@ def nix_collect_garbage(
         status_text=f"Found {dead_packages} packages to remove!",
     )
 
-    stream_process(run_nix_collect(), package_equal_to_percent, set_job_status)
+    stream_process(run_nix_collect_garbage(), package_equal_to_percent, set_job_status)
