@@ -21,13 +21,14 @@ from selfprivacy_api.graphql.queries.providers import BackupProvider
 REDIS_SNAPSHOT_CACHE_EXPIRE_SECONDS = 24 * 60 * 60  # one day
 
 REDIS_AUTOBACKUP_ENABLED_PREFIX = "backup:autobackup:services:"
-
 REDIS_SNAPSHOTS_PREFIX = "backups:snapshots:"
 REDIS_LAST_BACKUP_PREFIX = "backups:last-backed-up:"
-REDIS_REPO_PATH_KEY = "backups:test_repo_path"
-
-REDIS_PROVIDER_KEY = "backups:provider"
 REDIS_INITTED_CACHE_PREFIX = "backups:initted_services:"
+
+REDIS_REPO_PATH_KEY = "backups:test_repo_path"
+REDIS_PROVIDER_KEY = "backups:provider"
+REDIS_AUTOBACKUP_PERIOD_KEY = "backups:autobackup_period"
+
 
 redis = RedisPool().get_connection()
 
@@ -86,11 +87,29 @@ class Backups:
 
     @staticmethod
     def disable_autobackup(service: Service):
+        """also see disable_all_autobackup()"""
         redis.delete(Backups._redis_autobackup_key(service))
 
     @staticmethod
     def is_autobackup_enabled(service: Service) -> bool:
         return redis.exists(Backups._redis_autobackup_key(service))
+
+    @staticmethod
+    def autobackup_period_minutes() -> Optional[int]:
+        """None means autobackup is disabled"""
+        if not redis.exists(REDIS_AUTOBACKUP_PERIOD_KEY):
+            return None
+        return redis.get(REDIS_AUTOBACKUP_PERIOD_KEY)
+
+    @staticmethod
+    def set_autobackup_period_minutes(minutes: int):
+        """This initiates backup very soon if some services are not backed up"""
+        redis.set(REDIS_AUTOBACKUP_PERIOD_KEY, minutes)
+
+    @staticmethod
+    def disable_all_autobackup():
+        """disables all automatic backing up, but does not change per-service settings"""
+        redis.delete(REDIS_AUTOBACKUP_PERIOD_KEY)
 
     @staticmethod
     def provider():
@@ -134,6 +153,7 @@ class Backups:
     def reset():
         redis.delete(REDIS_PROVIDER_KEY)
         redis.delete(REDIS_REPO_PATH_KEY)
+        redis.delete(REDIS_AUTOBACKUP_PERIOD_KEY)
 
         prefixes_to_clean = [
             REDIS_INITTED_CACHE_PREFIX,
