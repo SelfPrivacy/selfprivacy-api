@@ -218,3 +218,13 @@ def test_backup_service_task(backups, dummy_service):
 
     snaps = Backups.get_snapshots(dummy_service)
     assert len(snaps) == 1
+
+
+def test_autobackup_enable_service(backups, dummy_service):
+    assert not Backups.is_autobackup_enabled(dummy_service)
+
+    Backups.enable_autobackup(dummy_service)
+    assert Backups.is_autobackup_enabled(dummy_service)
+
+    Backups.disable_autobackup(dummy_service)
+    assert not Backups.is_autobackup_enabled(dummy_service)
