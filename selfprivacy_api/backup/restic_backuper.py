@@ -87,6 +87,7 @@ class ResticBackuper(AbstractBackuper):
         for message in messages:
             if message["message_type"] == "summary":
                 return ResticBackuper._snapshot_from_fresh_summary(message, repo_name)
+        raise ValueError("no summary message in restic json output")
 
     @staticmethod
     def _snapshot_from_fresh_summary(message: object, repo_name) -> Snapshot:
