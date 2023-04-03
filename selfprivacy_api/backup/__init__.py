@@ -253,6 +253,6 @@ class Backups:
     # Our dummy service is not yet globally registered so this is not testable yet
     @staticmethod
     def snapshot_restored_size(snapshot: Snapshot) -> float:
-        return self.service_snapshot_size(
+        return Backups.service_snapshot_size(
             get_service_by_id(snapshot.service_name), snapshot.id
         )
