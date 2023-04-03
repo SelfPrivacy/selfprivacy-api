@@ -20,6 +20,8 @@ from selfprivacy_api.graphql.queries.providers import BackupProvider
 # a hack to store file path.
 REDIS_SNAPSHOT_CACHE_EXPIRE_SECONDS = 24 * 60 * 60  # one day
 
+REDIS_AUTOBACKUP_ENABLED_PREFIX = "backup:autobackup:services:"
+
 REDIS_SNAPSHOTS_PREFIX = "backups:snapshots:"
 REDIS_LAST_BACKUP_PREFIX = "backups:last-backed-up:"
 REDIS_REPO_PATH_KEY = "backups:test_repo_path"
@@ -75,6 +77,22 @@ class Backups:
         redis.expire(snapshot_key, REDIS_SNAPSHOT_CACHE_EXPIRE_SECONDS)
 
     @staticmethod
+    def _redis_autobackup_key(service: Service):
+        return REDIS_AUTOBACKUP_ENABLED_PREFIX + service.get_id()
+
+    @staticmethod
+    def enable_autobackup(service: Service):
+        redis.set(Backups._redis_autobackup_key(service), True)
+
+    @staticmethod
+    def disable_autobackup(service: Service):
+        redis.delete(Backups._redis_autobackup_key(service))
+
+    @staticmethod
+    def is_autobackup_enabled(service: Service) -> bool:
+        return redis.exists(Backups._redis_autobackup_key(service))
+
+    @staticmethod
     def provider():
         return Backups.lookup_provider()
 
@@ -117,14 +135,15 @@ class Backups:
         redis.delete(REDIS_PROVIDER_KEY)
         redis.delete(REDIS_REPO_PATH_KEY)
 
-        for key in redis.keys(REDIS_INITTED_CACHE_PREFIX + "*"):
-            redis.delete(key)
+        prefixes_to_clean = [
+            REDIS_INITTED_CACHE_PREFIX,
+            REDIS_SNAPSHOTS_PREFIX,
+            REDIS_LAST_BACKUP_PREFIX,
+        ]
 
-        for key in redis.keys(REDIS_SNAPSHOTS_PREFIX + "*"):
-            redis.delete(key)
-
-        for key in redis.keys(REDIS_LAST_BACKUP_PREFIX + "*"):
-            redis.delete(key)
+        for prefix in prefixes_to_clean:
+            for key in redis.keys(prefix + "*"):
+                redis.delete(key)
 
     @staticmethod
     def lookup_provider() -> AbstractBackupProvider:
