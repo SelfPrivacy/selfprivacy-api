@@ -130,6 +130,17 @@ def test_one_snapshot(backups, dummy_service):
     assert snap.service_name == dummy_service.get_id()
 
 
+def test_backup_returns_snapshot(backups, dummy_service):
+    service_folder = dummy_service.get_location()
+    provider = Backups.provider()
+    name = dummy_service.get_id()
+    snapshot = provider.backuper.start_backup(service_folder, name)
+
+    assert snapshot.id is not None
+    assert snapshot.service_name == name
+    assert snapshot.created_at is not None
+
+
 def test_restore(backups, dummy_service):
     service_folder = dummy_service.get_location()
     file_to_nuke = listdir(service_folder)[0]
