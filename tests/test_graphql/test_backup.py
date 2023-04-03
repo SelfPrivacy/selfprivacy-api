@@ -228,3 +228,25 @@ def test_autobackup_enable_service(backups, dummy_service):
 
     Backups.disable_autobackup(dummy_service)
     assert not Backups.is_autobackup_enabled(dummy_service)
+
+
+def test_set_autobackup_period(backups):
+    assert Backups.autobackup_period_minutes() is None
+
+    Backups.set_autobackup_period_minutes(2)
+    assert Backups.autobackup_period_minutes() == 2
+
+    Backups.disable_all_autobackup()
+    assert Backups.autobackup_period_minutes() is None
+
+    Backups.set_autobackup_period_minutes(3)
+    assert Backups.autobackup_period_minutes() == 3
+
+    Backups.set_autobackup_period_minutes(0)
+    assert Backups.autobackup_period_minutes() is None
+
+    Backups.set_autobackup_period_minutes(3)
+    assert Backups.autobackup_period_minutes() == 3
+
+    Backups.set_autobackup_period_minutes(-1)
+    assert Backups.autobackup_period_minutes() is None
