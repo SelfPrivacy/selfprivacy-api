@@ -1,5 +1,5 @@
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 from selfprivacy_api.models.backup.snapshot import Snapshot
 from selfprivacy_api.models.backup.provider import BackupProviderModel
@@ -78,21 +78,52 @@ class Backups:
         redis.expire(snapshot_key, REDIS_SNAPSHOT_CACHE_EXPIRE_SECONDS)
 
     @staticmethod
-    def _redis_autobackup_key(service: Service) -> str:
-        return REDIS_AUTOBACKUP_ENABLED_PREFIX + service.get_id()
+    def _redis_autobackup_key(service_name: str) -> str:
+        return REDIS_AUTOBACKUP_ENABLED_PREFIX + service_name
 
     @staticmethod
     def enable_autobackup(service: Service):
-        redis.set(Backups._redis_autobackup_key(service), 1)
+        redis.set(Backups._redis_autobackup_key(service.get_id()), 1)
+
+    @staticmethod
+    def is_time_to_backup(time: datetime) -> bool:
+        """
+        Intended as a time validator for huey cron scheduler of automatic backups
+        """
+        for key in redis.keys(REDIS_AUTOBACKUP_ENABLED_PREFIX + "*"):
+            service_id = key.split(":")[-1]
+            if Backups.is_time_to_backup_service(service_id, time):
+                return True
+        return False
+
+    @staticmethod
+    def is_time_to_backup_service(service_id: str, time: datetime):
+        period = Backups.autobackup_period_minutes()
+        if period is None:
+            return False
+        if not Backups._is_autobackup_enabled_by_name(service_id) is None:
+            return False
+
+        last_backup = Backups._get_last_backup_time_redis(service_id)
+        if last_backup is None:
+            return True  # queue a backup immediately if there are no previous backups
+
+        if time > last_backup + timedelta(minutes=period):
+            return True
+        return False
 
     @staticmethod
     def disable_autobackup(service: Service):
         """also see disable_all_autobackup()"""
-        redis.delete(Backups._redis_autobackup_key(service))
+        redis.delete(Backups._redis_autobackup_key(service.get_id()))
 
     @staticmethod
     def is_autobackup_enabled(service: Service) -> bool:
-        return redis.exists(Backups._redis_autobackup_key(service))
+        return Backups._is_autobackup_enabled_by_name(service.get_id())
+
+    @staticmethod
+    def _is_autobackup_enabled_by_name(service_name: str):
+        return redis.exists(Backups._redis_autobackup_key(service_name))
 
     @staticmethod
     def autobackup_period_minutes() -> Optional[int]:
