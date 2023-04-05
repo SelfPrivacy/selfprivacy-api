@@ -1,18 +1,10 @@
 {
-    "backblaze": {
-        "accountId": "ID",
-        "accountKey": "KEY",
-        "bucket": "selfprivacy"
-    },
     "api": {
         "token": "TEST_TOKEN",
         "enableSwagger": false
     },
     "bitwarden": {
         "enable": false
-    },
-    "cloudflare": {
-        "apiKey": "TOKEN"
     },
     "databasePassword": "PASSWORD",
     "domain": "test.tld",
@@ -42,5 +34,18 @@
         "enable": true,
         "allowReboot": true
     },
-    "timezone": "Europe/Moscow"
+    "timezone": "Europe/Moscow",
+    "dns": {
+        "provider": "CLOUDFLARE",
+        "apiKey": "TOKEN"
+    },
+    "server": {
+        "provider": "HETZNER"
+    },
+    "backup": {
+        "provider": "BACKBLAZE",
+        "accountId": "ID",
+        "accountKey": "KEY",
+        "bucket": "selfprivacy"
+    }
 }

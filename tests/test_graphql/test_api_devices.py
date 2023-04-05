@@ -2,7 +2,13 @@
 # pylint: disable=unused-argument
 # pylint: disable=missing-function-docstring
 import datetime
+import pytest
 from mnemonic import Mnemonic
+
+from selfprivacy_api.repositories.tokens.json_tokens_repository import (
+    JsonTokensRepository,
+)
+from selfprivacy_api.models.tokens.token import Token
 
 from tests.common import generate_api_query, read_json, write_json
 
@@ -28,6 +34,11 @@ devices {
     name
 }
 """
+
+
+@pytest.fixture
+def token_repo():
+    return JsonTokensRepository()
 
 
 def test_graphql_tokens_info(authorized_client, tokens_file):
@@ -170,7 +181,7 @@ def test_graphql_refresh_token_unauthorized(client, tokens_file):
     assert response.json()["data"] is None
 
 
-def test_graphql_refresh_token(authorized_client, tokens_file):
+def test_graphql_refresh_token(authorized_client, tokens_file, token_repo):
     response = authorized_client.post(
         "/graphql",
         json={"query": REFRESH_TOKEN_MUTATION},
@@ -180,11 +191,12 @@ def test_graphql_refresh_token(authorized_client, tokens_file):
     assert response.json()["data"]["refreshDeviceApiToken"]["success"] is True
     assert response.json()["data"]["refreshDeviceApiToken"]["message"] is not None
     assert response.json()["data"]["refreshDeviceApiToken"]["code"] == 200
-    assert read_json(tokens_file)["tokens"][0] == {
-        "token": response.json()["data"]["refreshDeviceApiToken"]["token"],
-        "name": "test_token",
-        "date": "2022-01-14 08:31:10.789314",
-    }
+    token = token_repo.get_token_by_name("test_token")
+    assert token == Token(
+        token=response.json()["data"]["refreshDeviceApiToken"]["token"],
+        device_name="test_token",
+        created_at=datetime.datetime(2022, 1, 14, 8, 31, 10, 789314),
+    )
 
 
 NEW_DEVICE_KEY_MUTATION = """

@@ -5,12 +5,16 @@ name: default
 steps:
 - name: Run Tests and Generate Coverage Report
   commands:
+  - kill $(ps aux | grep '[r]edis-server 127.0.0.1:6389' | awk '{print $2}')
+  - redis-server --bind 127.0.0.1 --port 6389 >/dev/null &
   - coverage run -m pytest -q
   - coverage xml
   - sonar-scanner -Dsonar.projectKey=SelfPrivacy-REST-API -Dsonar.sources=. -Dsonar.host.url=http://analyzer.lan:9000 -Dsonar.login="$SONARQUBE_TOKEN"
   environment:
     SONARQUBE_TOKEN:
       from_secret: SONARQUBE_TOKEN
+    USE_REDIS_PORT: 6389
+
 
 - name: Run Bandit Checks
   commands:

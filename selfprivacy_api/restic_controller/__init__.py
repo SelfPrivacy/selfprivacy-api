@@ -7,6 +7,7 @@ from threading import Lock
 from enum import Enum
 import portalocker
 from selfprivacy_api.utils import ReadUserData
+from selfprivacy_api.utils.singleton_metaclass import SingletonMetaclass
 
 
 class ResticStates(Enum):
@@ -21,7 +22,7 @@ class ResticStates(Enum):
     INITIALIZING = 6
 
 
-class ResticController:
+class ResticController(metaclass=SingletonMetaclass):
     """
     States in wich the restic_controller may be
     - no backblaze key
@@ -35,15 +36,7 @@ class ResticController:
     Current state can be fetched with get_state()
     """
 
-    _instance = None
-    _lock = Lock()
     _initialized = False
-
-    def __new__(cls):
-        if not cls._instance:
-            with cls._lock:
-                cls._instance = super(ResticController, cls).__new__(cls)
-        return cls._instance
 
     def __init__(self):
         if self._initialized:

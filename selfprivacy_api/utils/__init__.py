@@ -164,13 +164,25 @@ def parse_date(date_str: str) -> datetime.datetime:
     raise ValueError("Invalid date string")
 
 
-def get_dkim_key(domain):
+def get_dkim_key(domain, parse=True):
     """Get DKIM key from /var/dkim/<domain>.selector.txt"""
     if os.path.exists("/var/dkim/" + domain + ".selector.txt"):
         cat_process = subprocess.Popen(
             ["cat", "/var/dkim/" + domain + ".selector.txt"], stdout=subprocess.PIPE
         )
         dkim = cat_process.communicate()[0]
+        if parse:
+            # Extract key from file
+            dkim = dkim.split(b"(")[1]
+            dkim = dkim.split(b")")[0]
+            # Replace all quotes with nothing
+            dkim = dkim.replace(b'"', b"")
+            # Trim whitespace, remove newlines and tabs
+            dkim = dkim.strip()
+            dkim = dkim.replace(b"\n", b"")
+            dkim = dkim.replace(b"\t", b"")
+            # Remove all redundant spaces
+            dkim = b" ".join(dkim.split())
         return str(dkim, "utf-8")
     return None
 

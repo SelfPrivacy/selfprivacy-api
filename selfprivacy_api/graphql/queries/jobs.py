@@ -16,9 +16,9 @@ class Job:
     @strawberry.field
     def get_jobs(self) -> typing.List[ApiJob]:
 
-        Jobs.get_instance().get_jobs()
+        Jobs.get_jobs()
 
-        return [job_to_api_job(job) for job in Jobs.get_instance().get_jobs()]
+        return [job_to_api_job(job) for job in Jobs.get_jobs()]
 
     @strawberry.field
     def get_job(self, job_id: str) -> typing.Optional[ApiJob]:

@@ -161,7 +161,7 @@ def mock_restic_tasks(mocker):
 @pytest.fixture
 def undefined_settings(mocker, datadir):
     mocker.patch("selfprivacy_api.utils.USERDATA_FILE", new=datadir / "undefined.json")
-    assert "backblaze" not in read_json(datadir / "undefined.json")
+    assert "backup" not in read_json(datadir / "undefined.json")
     return datadir
 
 
@@ -170,20 +170,22 @@ def some_settings(mocker, datadir):
     mocker.patch(
         "selfprivacy_api.utils.USERDATA_FILE", new=datadir / "some_values.json"
     )
-    assert "backblaze" in read_json(datadir / "some_values.json")
-    assert read_json(datadir / "some_values.json")["backblaze"]["accountId"] == "ID"
-    assert read_json(datadir / "some_values.json")["backblaze"]["accountKey"] == "KEY"
-    assert read_json(datadir / "some_values.json")["backblaze"]["bucket"] == "BUCKET"
+    assert "backup" in read_json(datadir / "some_values.json")
+    assert read_json(datadir / "some_values.json")["backup"]["provider"] == "BACKBLAZE"
+    assert read_json(datadir / "some_values.json")["backup"]["accountId"] == "ID"
+    assert read_json(datadir / "some_values.json")["backup"]["accountKey"] == "KEY"
+    assert read_json(datadir / "some_values.json")["backup"]["bucket"] == "BUCKET"
     return datadir
 
 
 @pytest.fixture
 def no_values(mocker, datadir):
     mocker.patch("selfprivacy_api.utils.USERDATA_FILE", new=datadir / "no_values.json")
-    assert "backblaze" in read_json(datadir / "no_values.json")
-    assert "accountId" not in read_json(datadir / "no_values.json")["backblaze"]
-    assert "accountKey" not in read_json(datadir / "no_values.json")["backblaze"]
-    assert "bucket" not in read_json(datadir / "no_values.json")["backblaze"]
+    assert "backup" in read_json(datadir / "no_values.json")
+    assert "provider" not in read_json(datadir / "no_values.json")["backup"]
+    assert "accountId" not in read_json(datadir / "no_values.json")["backup"]
+    assert "accountKey" not in read_json(datadir / "no_values.json")["backup"]
+    assert "bucket" not in read_json(datadir / "no_values.json")["backup"]
     return datadir
 
 
@@ -462,7 +464,8 @@ def test_set_backblaze_config(
     )
     assert response.status_code == 200
     assert mock_restic_tasks.update_keys_from_userdata.call_count == 1
-    assert read_json(some_settings / "some_values.json")["backblaze"] == {
+    assert read_json(some_settings / "some_values.json")["backup"] == {
+        "provider": "BACKBLAZE",
         "accountId": "123",
         "accountKey": "456",
         "bucket": "789",
@@ -478,7 +481,8 @@ def test_set_backblaze_config_on_undefined(
     )
     assert response.status_code == 200
     assert mock_restic_tasks.update_keys_from_userdata.call_count == 1
-    assert read_json(undefined_settings / "undefined.json")["backblaze"] == {
+    assert read_json(undefined_settings / "undefined.json")["backup"] == {
+        "provider": "BACKBLAZE",
         "accountId": "123",
         "accountKey": "456",
         "bucket": "789",
@@ -494,7 +498,8 @@ def test_set_backblaze_config_on_no_values(
     )
     assert response.status_code == 200
     assert mock_restic_tasks.update_keys_from_userdata.call_count == 1
-    assert read_json(no_values / "no_values.json")["backblaze"] == {
+    assert read_json(no_values / "no_values.json")["backup"] == {
+        "provider": "BACKBLAZE",
         "accountId": "123",
         "accountKey": "456",
         "bucket": "789",

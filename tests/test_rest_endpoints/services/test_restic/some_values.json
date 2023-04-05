@@ -1,18 +1,10 @@
 {
-    "backblaze": {
-        "accountId": "ID",
-        "accountKey": "KEY",
-        "bucket": "BUCKET"
-    },
     "api": {
         "token": "TEST_TOKEN",
         "enableSwagger": false
     },
     "bitwarden": {
         "enable": false
-    },
-    "cloudflare": {
-        "apiKey": "TOKEN"
     },
     "databasePassword": "PASSWORD",
     "domain": "test.tld",
@@ -67,5 +59,18 @@
             "username": "user3",
             "hashedPassword": "HASHED_PASSWORD_3"
         }
-    ]
+    ],
+    "dns": {
+        "provider": "CLOUDFLARE",
+        "apiKey": "TOKEN"
+    },
+    "server": {
+        "provider": "HETZNER"
+    },
+    "backup": {
+        "provider": "BACKBLAZE",
+        "accountId": "ID",
+        "accountKey": "KEY",
+        "bucket": "BUCKET"
+    }
 }

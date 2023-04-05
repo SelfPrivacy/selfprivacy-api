@@ -6,9 +6,6 @@
     "bitwarden": {
         "enable": false
     },
-    "cloudflare": {
-        "apiKey": "TOKEN"
-    },
     "databasePassword": "PASSWORD",
     "domain": "test.tld",
     "hashedMasterPassword": "HASHED_PASSWORD",
@@ -62,5 +59,12 @@
             "username": "user3",
             "hashedPassword": "HASHED_PASSWORD_3"
         }
-    ]
+    ],
+    "dns": {
+        "provider": "CLOUDFLARE",
+        "apiKey": "TOKEN"
+    },
+    "server": {
+        "provider": "HETZNER"
+    }
 }

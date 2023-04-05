@@ -11,19 +11,16 @@ from selfprivacy_api.actions.api_tokens import (
     NotFoundException,
     delete_api_token,
     get_new_api_recovery_key,
+    use_mnemonic_recovery_token,
+    refresh_api_token,
+    delete_new_device_auth_token,
+    get_new_device_auth_token,
+    use_new_device_auth_token,
 )
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericMutationReturn,
     MutationReturnInterface,
-)
-
-from selfprivacy_api.utils.auth import (
-    delete_new_device_auth_token,
-    get_new_device_auth_token,
-    refresh_token,
-    use_mnemonic_recoverery_token,
-    use_new_device_auth_token,
 )
 
 
@@ -98,50 +95,53 @@ class ApiMutations:
         self, input: UseRecoveryKeyInput
     ) -> DeviceApiTokenMutationReturn:
         """Use recovery key"""
-        token = use_mnemonic_recoverery_token(input.key, input.deviceName)
-        if token is None:
+        token = use_mnemonic_recovery_token(input.key, input.deviceName)
+        if token is not None:
+            return DeviceApiTokenMutationReturn(
+                success=True,
+                message="Recovery key used",
+                code=200,
+                token=token,
+            )
+        else:
             return DeviceApiTokenMutationReturn(
                 success=False,
                 message="Recovery key not found",
                 code=404,
                 token=None,
             )
-        return DeviceApiTokenMutationReturn(
-            success=True,
-            message="Recovery key used",
-            code=200,
-            token=token,
-        )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def refresh_device_api_token(self, info: Info) -> DeviceApiTokenMutationReturn:
         """Refresh device api token"""
-        token = (
+        token_string = (
             info.context["request"]
             .headers.get("Authorization", "")
             .replace("Bearer ", "")
         )
-        if token is None:
+        if token_string is None:
             return DeviceApiTokenMutationReturn(
                 success=False,
                 message="Token not found",
                 code=404,
                 token=None,
             )
-        new_token = refresh_token(token)
-        if new_token is None:
+
+        try:
+            new_token = refresh_api_token(token_string)
+            return DeviceApiTokenMutationReturn(
+                success=True,
+                message="Token refreshed",
+                code=200,
+                token=new_token,
+            )
+        except NotFoundException:
             return DeviceApiTokenMutationReturn(
                 success=False,
                 message="Token not found",
                 code=404,
                 token=None,
             )
-        return DeviceApiTokenMutationReturn(
-            success=True,
-            message="Token refreshed",
-            code=200,
-            token=new_token,
-        )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def delete_device_api_token(self, device: str, info: Info) -> GenericMutationReturn:

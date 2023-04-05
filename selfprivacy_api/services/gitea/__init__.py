@@ -141,7 +141,7 @@ class Gitea(Service):
         ]
 
     def move_to_volume(self, volume: BlockDevice) -> Job:
-        job = Jobs.get_instance().add(
+        job = Jobs.add(
             type_id="services.gitea.move",
             name="Move Gitea",
             description=f"Moving Gitea data to {volume.name}",

@@ -149,7 +149,7 @@ class Nextcloud(Service):
         ]
 
     def move_to_volume(self, volume: BlockDevice) -> Job:
-        job = Jobs.get_instance().add(
+        job = Jobs.add(
             type_id="services.nextcloud.move",
             name="Move Nextcloud",
             description=f"Moving Nextcloud to volume {volume.name}",

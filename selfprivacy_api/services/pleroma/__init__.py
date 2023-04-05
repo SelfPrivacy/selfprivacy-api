@@ -129,7 +129,7 @@ class Pleroma(Service):
         ]
 
     def move_to_volume(self, volume: BlockDevice) -> Job:
-        job = Jobs.get_instance().add(
+        job = Jobs.add(
             type_id="services.pleroma.move",
             name="Move Pleroma",
             description=f"Moving Pleroma to volume {volume.name}",

@@ -29,7 +29,7 @@ def move_service(
     userdata_location: str,
 ):
     """Move a service to another volume."""
-    job = Jobs.get_instance().update(
+    job = Jobs.update(
         job=job,
         status_text="Performing pre-move checks...",
         status=JobStatus.RUNNING,
@@ -37,7 +37,7 @@ def move_service(
     service_name = service.get_display_name()
     with ReadUserData() as user_data:
         if not user_data.get("useBinds", False):
-            Jobs.get_instance().update(
+            Jobs.update(
                 job=job,
                 status=JobStatus.ERROR,
                 error="Server is not using binds.",
@@ -46,7 +46,7 @@ def move_service(
     # Check if we are on the same volume
     old_volume = service.get_location()
     if old_volume == volume.name:
-        Jobs.get_instance().update(
+        Jobs.update(
             job=job,
             status=JobStatus.ERROR,
             error=f"{service_name} is already on this volume.",
@@ -54,7 +54,7 @@ def move_service(
         return
     # Check if there is enough space on the new volume
     if int(volume.fsavail) < service.get_storage_usage():
-        Jobs.get_instance().update(
+        Jobs.update(
             job=job,
             status=JobStatus.ERROR,
             error="Not enough space on the new volume.",
@@ -62,7 +62,7 @@ def move_service(
         return
     # Make sure the volume is mounted
     if volume.name != "sda1" and f"/volumes/{volume.name}" not in volume.mountpoints:
-        Jobs.get_instance().update(
+        Jobs.update(
             job=job,
             status=JobStatus.ERROR,
             error="Volume is not mounted.",
@@ -71,14 +71,14 @@ def move_service(
     # Make sure current actual directory exists and if its user and group are correct
     for folder in folder_names:
         if not pathlib.Path(f"/volumes/{old_volume}/{folder.name}").exists():
-            Jobs.get_instance().update(
+            Jobs.update(
                 job=job,
                 status=JobStatus.ERROR,
                 error=f"{service_name} is not found.",
             )
             return
         if not pathlib.Path(f"/volumes/{old_volume}/{folder.name}").is_dir():
-            Jobs.get_instance().update(
+            Jobs.update(
                 job=job,
                 status=JobStatus.ERROR,
                 error=f"{service_name} is not a directory.",
@@ -88,7 +88,7 @@ def move_service(
             not pathlib.Path(f"/volumes/{old_volume}/{folder.name}").owner()
             == folder.owner
         ):
-            Jobs.get_instance().update(
+            Jobs.update(
                 job=job,
                 status=JobStatus.ERROR,
                 error=f"{service_name} owner is not {folder.owner}.",
@@ -96,7 +96,7 @@ def move_service(
             return
 
     # Stop service
-    Jobs.get_instance().update(
+    Jobs.update(
         job=job,
         status=JobStatus.RUNNING,
         status_text=f"Stopping {service_name}...",
@@ -113,7 +113,7 @@ def move_service(
             break
         time.sleep(1)
     else:
-        Jobs.get_instance().update(
+        Jobs.update(
             job=job,
             status=JobStatus.ERROR,
             error=f"{service_name} did not stop in 30 seconds.",
@@ -121,7 +121,7 @@ def move_service(
         return
 
     # Unmount old volume
-    Jobs.get_instance().update(
+    Jobs.update(
         job=job,
         status_text="Unmounting old folder...",
         status=JobStatus.RUNNING,
@@ -134,14 +134,14 @@ def move_service(
                 check=True,
             )
         except subprocess.CalledProcessError:
-            Jobs.get_instance().update(
+            Jobs.update(
                 job=job,
                 status=JobStatus.ERROR,
                 error="Unable to unmount old volume.",
             )
             return
     # Move data to new volume and set correct permissions
-    Jobs.get_instance().update(
+    Jobs.update(
         job=job,
         status_text="Moving data to new volume...",
         status=JobStatus.RUNNING,
@@ -154,14 +154,14 @@ def move_service(
             f"/volumes/{old_volume}/{folder.name}",
             f"/volumes/{volume.name}/{folder.name}",
         )
-        Jobs.get_instance().update(
+        Jobs.update(
             job=job,
             status_text="Moving data to new volume...",
             status=JobStatus.RUNNING,
             progress=current_progress + folder_percentage,
         )
 
-    Jobs.get_instance().update(
+    Jobs.update(
         job=job,
         status_text=f"Making sure {service_name} owns its files...",
         status=JobStatus.RUNNING,
@@ -180,14 +180,14 @@ def move_service(
             )
         except subprocess.CalledProcessError as error:
             print(error.output)
-            Jobs.get_instance().update(
+            Jobs.update(
                 job=job,
                 status=JobStatus.RUNNING,
                 error=f"Unable to set ownership of new volume. {service_name} may not be able to access its files. Continuing anyway.",
             )
 
     # Mount new volume
-    Jobs.get_instance().update(
+    Jobs.update(
         job=job,
         status_text=f"Mounting {service_name} data...",
         status=JobStatus.RUNNING,
@@ -207,7 +207,7 @@ def move_service(
             )
         except subprocess.CalledProcessError as error:
             print(error.output)
-            Jobs.get_instance().update(
+            Jobs.update(
                 job=job,
                 status=JobStatus.ERROR,
                 error="Unable to mount new volume.",
@@ -215,7 +215,7 @@ def move_service(
             return
 
     # Update userdata
-    Jobs.get_instance().update(
+    Jobs.update(
         job=job,
         status_text="Finishing move...",
         status=JobStatus.RUNNING,
@@ -227,7 +227,7 @@ def move_service(
         user_data[userdata_location]["location"] = volume.name
     # Start service
     service.start()
-    Jobs.get_instance().update(
+    Jobs.update(
         job=job,
         status=JobStatus.FINISHED,
         result=f"{service_name} moved successfully.",
