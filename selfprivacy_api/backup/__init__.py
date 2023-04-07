@@ -321,9 +321,16 @@ class Backups:
 
     @staticmethod
     def get_snapshots(service: Service) -> List[Snapshot]:
-        repo_name = service.get_id()
+        service_id = service.get_id()
+        cached_snapshots = Backups.get_cached_snapshots_service(service_id)
+        if cached_snapshots != []:
+            return cached_snapshots
+        # TODO: the oldest snapshots will get expired faster than the new ones.
+        # How to detect that the end is missing?
 
-        return Backups.provider().backuper.get_snapshots(repo_name)
+        upstream_snapshots = Backups.provider().backuper.get_snapshots(service_id)
+        Backups.sync_service_snapshots(service_id, upstream_snapshots)
+        return upstream_snapshots
 
     @staticmethod
     def restore_service_from_snapshot(service: Service, snapshot_id: str):
