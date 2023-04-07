@@ -72,11 +72,45 @@ class Backups:
 
     @staticmethod
     def _store_last_snapshot(service_id: str, snapshot: Snapshot):
+        # non-expiring timestamp of the last
         store_model_as_hash(redis, Backups._redis_last_backup_key(service_id), snapshot)
+        # expiring cache entry
+        Backups.cache_snapshot(snapshot)
 
+    @staticmethod
+    def cache_snapshot(snapshot: Snapshot):
         snapshot_key = Backups._redis_snapshot_key(snapshot)
         store_model_as_hash(redis, snapshot_key, snapshot)
         redis.expire(snapshot_key, REDIS_SNAPSHOT_CACHE_EXPIRE_SECONDS)
+
+    @staticmethod
+    def delete_cached_snapshot(snapshot: Snapshot):
+        snapshot_key = Backups._redis_snapshot_key(snapshot)
+        redis.delete(snapshot_key)
+
+    @staticmethod
+    def get_cached_snapshots() -> List[Snapshot]:
+        keys = redis.keys(REDIS_SNAPSHOTS_PREFIX + "*")
+        result = []
+
+        for key in keys:
+            snapshot = hash_as_model(redis, key, Snapshot)
+            result.append(snapshot)
+        return result
+
+    @staticmethod
+    def get_cached_snapshots_service(service_id: str) -> List[Snapshot]:
+        snapshots = Backups.get_cached_snapshots()
+        return [snap for snap in snapshots if snap.service_name == service_id]
+
+    @staticmethod
+    def sync_service_snapshots(service_id: str, snapshots: List[Snapshot]):
+        for snapshot in snapshots:
+            if snapshot.service_name == service_id:
+                Backups.cache_snapshot(snapshot)
+        for snapshot in Backups.get_cached_snapshots_service(service_id):
+            if snapshot.id not in [snap.id for snap in snapshots]:
+                Backups.delete_cached_snapshot(snapshot)
 
     @staticmethod
     def _redis_autobackup_key(service_name: str) -> str:
@@ -244,6 +278,7 @@ class Backups:
 
     @staticmethod
     def back_up(service: Service):
+        """The top-level function to back up a service"""
         folder = service.get_location()
         repo_name = service.get_id()
 
