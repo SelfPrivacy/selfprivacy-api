@@ -192,6 +192,17 @@ def test_redis_storage(backups_backblaze):
     assert restored_provider.key == "KEY"
 
 
+def test_snapshots_caching(backups, dummy_service):
+    Backups.back_up(dummy_service)
+
+    # we test indirectly that we do redis calls instead of shell calls
+    start = datetime.now()
+    for i in range(10):
+        snapshots = Backups.get_snapshots(dummy_service)
+        assert len(snapshots) == 1
+    assert datetime.now() - start < timedelta(seconds=0.5)
+
+
 # lowlevel
 def test_init_tracking_caching(backups, raw_dummy_service):
     assert Backups._has_redis_init_mark(raw_dummy_service) is False
