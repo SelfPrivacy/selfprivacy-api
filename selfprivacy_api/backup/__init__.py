@@ -58,6 +58,7 @@ class Backups:
 
     @staticmethod
     def get_last_backed_up(service: Service) -> Optional[datetime]:
+        """Get a timezone-aware time of the last backup of a service"""
         return Backups._get_last_backup_time_redis(service.get_id())
 
     @staticmethod
@@ -66,7 +67,7 @@ class Backups:
         if not redis.exists(key):
             return None
 
-        snapshot = hash_as_model(redis, key)
+        snapshot = hash_as_model(redis, key, Snapshot)
         return snapshot.created_at
 
     @staticmethod

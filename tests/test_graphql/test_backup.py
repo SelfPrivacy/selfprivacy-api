@@ -3,6 +3,7 @@ import os.path as path
 from os import makedirs
 from os import remove
 from os import listdir
+from datetime import datetime, timedelta, timezone
 
 from selfprivacy_api.services.test_service import DummyService
 
@@ -113,7 +114,14 @@ def test_backup_simple_file(raw_dummy_service, file_backup):
 
 
 def test_backup_service(dummy_service, backups):
+    assert Backups.get_last_backed_up(dummy_service) is None
     Backups.back_up(dummy_service)
+
+    now = datetime.now(timezone.utc)
+    date = Backups.get_last_backed_up(dummy_service)
+    assert date is not None
+    assert now > date
+    assert now - date < timedelta(minutes=1)
 
 
 def test_no_repo(memory_backup):
