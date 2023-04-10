@@ -1,41 +1,22 @@
 from typing import List, Optional
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 
 from selfprivacy_api.models.backup.snapshot import Snapshot
-from selfprivacy_api.models.backup.provider import BackupProviderModel
 
-from selfprivacy_api.utils.singleton_metaclass import SingletonMetaclass
 from selfprivacy_api.utils import ReadUserData
 from selfprivacy_api.utils.redis_pool import RedisPool
-from selfprivacy_api.utils.redis_model_storage import store_model_as_hash, hash_as_model
 
 
 from selfprivacy_api.services import get_service_by_id
 from selfprivacy_api.services.service import Service
 
-from selfprivacy_api.backup.providers.provider import AbstractBackupProvider
-from selfprivacy_api.backup.providers import get_provider, get_kind
 from selfprivacy_api.graphql.queries.providers import BackupProvider
 
-# a hack to store file path.
-REDIS_SNAPSHOT_CACHE_EXPIRE_SECONDS = 24 * 60 * 60  # one day
-
-REDIS_AUTOBACKUP_ENABLED_PREFIX = "backup:autobackup:services:"
-REDIS_SNAPSHOTS_PREFIX = "backups:snapshots:"
-REDIS_LAST_BACKUP_PREFIX = "backups:last-backed-up:"
-REDIS_INITTED_CACHE_PREFIX = "backups:initted_services:"
-
-REDIS_REPO_PATH_KEY = "backups:test_repo_path"
-REDIS_PROVIDER_KEY = "backups:provider"
-REDIS_AUTOBACKUP_PERIOD_KEY = "backups:autobackup_period"
+from selfprivacy_api.backup.providers.provider import AbstractBackupProvider
+from selfprivacy_api.backup.providers import get_provider
+from selfprivacy_api.backup.storage import Storage
 
 
-redis = RedisPool().get_connection()
-
-
-# Singleton has a property of being persistent between tests.
-# I don't know what to do with this yet
-# class Backups(metaclass=SingletonMetaclass):
 class Backups:
     """A singleton controller for backups"""
 
@@ -45,88 +26,40 @@ class Backups:
     def set_localfile_repo(file_path: str):
         ProviderClass = get_provider(BackupProvider.FILE)
         provider = ProviderClass(file_path)
-        redis.set(REDIS_REPO_PATH_KEY, file_path)
-        Backups.store_provider_redis(provider)
-
-    @staticmethod
-    def _redis_last_backup_key(service_id):
-        return REDIS_LAST_BACKUP_PREFIX + service_id
-
-    @staticmethod
-    def _redis_snapshot_key(snapshot: Snapshot):
-        return REDIS_SNAPSHOTS_PREFIX + snapshot.id
+        Storage.store_testrepo_path(file_path)
+        Storage.store_provider(provider)
 
     @staticmethod
     def get_last_backed_up(service: Service) -> Optional[datetime]:
         """Get a timezone-aware time of the last backup of a service"""
-        return Backups._get_last_backup_time_redis(service.get_id())
-
-    @staticmethod
-    def _get_last_backup_time_redis(service_id: str) -> Optional[datetime]:
-        key = Backups._redis_last_backup_key(service_id)
-        if not redis.exists(key):
-            return None
-
-        snapshot = hash_as_model(redis, key, Snapshot)
-        return snapshot.created_at
-
-    @staticmethod
-    def _store_last_snapshot(service_id: str, snapshot: Snapshot):
-        # non-expiring timestamp of the last
-        store_model_as_hash(redis, Backups._redis_last_backup_key(service_id), snapshot)
-        # expiring cache entry
-        Backups.cache_snapshot(snapshot)
-
-    @staticmethod
-    def cache_snapshot(snapshot: Snapshot):
-        snapshot_key = Backups._redis_snapshot_key(snapshot)
-        store_model_as_hash(redis, snapshot_key, snapshot)
-        redis.expire(snapshot_key, REDIS_SNAPSHOT_CACHE_EXPIRE_SECONDS)
-
-    @staticmethod
-    def delete_cached_snapshot(snapshot: Snapshot):
-        snapshot_key = Backups._redis_snapshot_key(snapshot)
-        redis.delete(snapshot_key)
-
-    @staticmethod
-    def get_cached_snapshots() -> List[Snapshot]:
-        keys = redis.keys(REDIS_SNAPSHOTS_PREFIX + "*")
-        result = []
-
-        for key in keys:
-            snapshot = hash_as_model(redis, key, Snapshot)
-            result.append(snapshot)
-        return result
+        return Storage.get_last_backup_time(service.get_id())
 
     @staticmethod
     def get_cached_snapshots_service(service_id: str) -> List[Snapshot]:
-        snapshots = Backups.get_cached_snapshots()
+        snapshots = Storage.get_cached_snapshots()
         return [snap for snap in snapshots if snap.service_name == service_id]
 
     @staticmethod
     def sync_service_snapshots(service_id: str, snapshots: List[Snapshot]):
         for snapshot in snapshots:
             if snapshot.service_name == service_id:
-                Backups.cache_snapshot(snapshot)
+                Storage.cache_snapshot(snapshot)
         for snapshot in Backups.get_cached_snapshots_service(service_id):
             if snapshot.id not in [snap.id for snap in snapshots]:
-                Backups.delete_cached_snapshot(snapshot)
-
-    @staticmethod
-    def _redis_autobackup_key(service_name: str) -> str:
-        return REDIS_AUTOBACKUP_ENABLED_PREFIX + service_name
+                Storage.delete_cached_snapshot(snapshot)
 
     @staticmethod
     def enable_autobackup(service: Service):
-        redis.set(Backups._redis_autobackup_key(service.get_id()), 1)
+        Storage.set_autobackup(service)
 
     @staticmethod
     def is_time_to_backup(time: datetime) -> bool:
         """
         Intended as a time validator for huey cron scheduler of automatic backups
         """
-        for key in redis.keys(REDIS_AUTOBACKUP_ENABLED_PREFIX + "*"):
-            service_id = key.split(":")[-1]
+
+        enabled_services = Storage.services_with_autobackup()
+        for service_id in enabled_services:
             if Backups.is_time_to_backup_service(service_id, time):
                 return True
         return False
@@ -136,10 +69,10 @@ class Backups:
         period = Backups.autobackup_period_minutes()
         if period is None:
             return False
-        if not Backups._is_autobackup_enabled_by_name(service_id) is None:
+        if not Storage.is_autobackup_set_by_name(service_id) is None:
             return False
 
-        last_backup = Backups._get_last_backup_time_redis(service_id)
+        last_backup = Storage.get_last_backup_time(service_id)
         if last_backup is None:
             return True  # queue a backup immediately if there are no previous backups
 
@@ -150,22 +83,16 @@ class Backups:
     @staticmethod
     def disable_autobackup(service: Service):
         """also see disable_all_autobackup()"""
-        redis.delete(Backups._redis_autobackup_key(service.get_id()))
+        Storage.unset_autobackup(service)
 
     @staticmethod
     def is_autobackup_enabled(service: Service) -> bool:
-        return Backups._is_autobackup_enabled_by_name(service.get_id())
-
-    @staticmethod
-    def _is_autobackup_enabled_by_name(service_name: str):
-        return redis.exists(Backups._redis_autobackup_key(service_name))
+        return Storage.is_autobackup_set(service.get_id())
 
     @staticmethod
     def autobackup_period_minutes() -> Optional[int]:
         """None means autobackup is disabled"""
-        if not redis.exists(REDIS_AUTOBACKUP_PERIOD_KEY):
-            return None
-        return int(redis.get(REDIS_AUTOBACKUP_PERIOD_KEY))
+        return Storage.autobackup_period_minutes()
 
     @staticmethod
     def set_autobackup_period_minutes(minutes: int):
@@ -176,12 +103,12 @@ class Backups:
         if minutes <= 0:
             Backups.disable_all_autobackup()
             return
-        redis.set(REDIS_AUTOBACKUP_PERIOD_KEY, minutes)
+        Storage.store_autobackup_period_minutes(minutes)
 
     @staticmethod
     def disable_all_autobackup():
         """disables all automatic backing up, but does not change per-service settings"""
-        redis.delete(REDIS_AUTOBACKUP_PERIOD_KEY)
+        Storage.delete_backup_period()
 
     @staticmethod
     def provider():
@@ -190,53 +117,21 @@ class Backups:
     @staticmethod
     def set_provider(kind: str, login: str, key: str):
         provider = Backups.construct_provider(kind, login, key)
-        Backups.store_provider_redis(provider)
+        Storage.store_provider(provider)
 
     @staticmethod
     def construct_provider(kind: str, login: str, key: str):
         provider_class = get_provider(BackupProvider[kind])
 
         if kind == "FILE":
-            path = redis.get(REDIS_REPO_PATH_KEY)
+            path = Storage.get_testrepo_path()
             return provider_class(path)
 
         return provider_class(login=login, key=key)
 
     @staticmethod
-    def store_provider_redis(provider: AbstractBackupProvider):
-        store_model_as_hash(
-            redis,
-            REDIS_PROVIDER_KEY,
-            BackupProviderModel(
-                kind=get_kind(provider), login=provider.login, key=provider.key
-            ),
-        )
-
-    @staticmethod
-    def load_provider_redis() -> AbstractBackupProvider:
-        provider_model = hash_as_model(redis, REDIS_PROVIDER_KEY, BackupProviderModel)
-        if provider_model is None:
-            return None
-        return Backups.construct_provider(
-            provider_model.kind, provider_model.login, provider_model.key
-        )
-
-    @staticmethod
     def reset():
-        redis.delete(REDIS_PROVIDER_KEY)
-        redis.delete(REDIS_REPO_PATH_KEY)
-        redis.delete(REDIS_AUTOBACKUP_PERIOD_KEY)
-
-        prefixes_to_clean = [
-            REDIS_INITTED_CACHE_PREFIX,
-            REDIS_SNAPSHOTS_PREFIX,
-            REDIS_LAST_BACKUP_PREFIX,
-            REDIS_AUTOBACKUP_ENABLED_PREFIX,
-        ]
-
-        for prefix in prefixes_to_clean:
-            for key in redis.keys(prefix + "*"):
-                redis.delete(key)
+        Storage.reset()
 
     @staticmethod
     def lookup_provider() -> AbstractBackupProvider:
@@ -246,11 +141,11 @@ class Backups:
 
         json_provider = Backups.load_provider_json()
         if json_provider is not None:
-            Backups.store_provider_redis(json_provider)
+            Storage.store_provider(json_provider)
             return json_provider
 
         memory_provider = Backups.construct_provider("MEMORY", login="", key="")
-        Backups.store_provider_redis(memory_provider)
+        Storage.store_provider(memory_provider)
         return memory_provider
 
     @staticmethod
@@ -277,6 +172,15 @@ class Backups:
             )
 
     @staticmethod
+    def load_provider_redis() -> AbstractBackupProvider:
+        provider_model = Storage.load_provider()
+        if provider_model is None:
+            return None
+        return Backups.construct_provider(
+            provider_model.kind, provider_model.login, provider_model.key
+        )
+
+    @staticmethod
     def back_up(service: Service):
         """The top-level function to back up a service"""
         folder = service.get_location()
@@ -292,29 +196,17 @@ class Backups:
     def init_repo(service: Service):
         repo_name = service.get_id()
         Backups.provider().backuper.init(repo_name)
-        Backups._redis_mark_as_init(service)
-
-    @staticmethod
-    def _has_redis_init_mark(service: Service) -> bool:
-        repo_name = service.get_id()
-        if redis.exists(REDIS_INITTED_CACHE_PREFIX + repo_name):
-            return True
-        return False
-
-    @staticmethod
-    def _redis_mark_as_init(service: Service):
-        repo_name = service.get_id()
-        redis.set(REDIS_INITTED_CACHE_PREFIX + repo_name, 1)
+        Storage.mark_as_init(service)
 
     @staticmethod
     def is_initted(service: Service) -> bool:
         repo_name = service.get_id()
-        if Backups._has_redis_init_mark(service):
+        if Storage.has_init_mark(service):
             return True
 
         initted = Backups.provider().backuper.is_initted(repo_name)
         if initted:
-            Backups._redis_mark_as_init(service)
+            Storage.mark_as_init(service)
             return True
 
         return False
@@ -357,3 +249,11 @@ class Backups:
         return Backups.service_snapshot_size(
             get_service_by_id(snapshot.service_name), snapshot.id
         )
+
+    @staticmethod
+    def _store_last_snapshot(service_id: str, snapshot: Snapshot):
+        """What do we do with a snapshot that is just made?"""
+        # non-expiring timestamp of the last
+        Storage.store_last_timestamp(service_id, snapshot)
+        # expiring cache entry
+        Storage.cache_snapshot(snapshot)
