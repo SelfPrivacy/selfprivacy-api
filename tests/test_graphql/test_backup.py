@@ -6,18 +6,15 @@ from os import listdir
 from datetime import datetime, timedelta, timezone
 
 from selfprivacy_api.services.test_service import DummyService
-
-from selfprivacy_api.models.backup.snapshot import Snapshot
+from selfprivacy_api.graphql.queries.providers import BackupProvider
 
 from selfprivacy_api.backup import Backups
 import selfprivacy_api.backup.providers as providers
 from selfprivacy_api.backup.providers import AbstractBackupProvider
-
 from selfprivacy_api.backup.providers.backblaze import Backblaze
-
-from selfprivacy_api.graphql.queries.providers import BackupProvider
-
 from selfprivacy_api.backup.tasks import start_backup
+from selfprivacy_api.backup.storage import Storage
+
 
 TESTFILE_BODY = "testytest!"
 REPO_NAME = "test_backup"
@@ -175,54 +172,6 @@ def test_sizing(backups, dummy_service):
     assert size > 0
 
 
-def test_redis_storage(backups_backblaze):
-    Backups.reset()
-    provider = Backups.provider()
-
-    assert provider is not None
-
-    assert isinstance(provider, Backblaze)
-    assert provider.login == "ID"
-    assert provider.key == "KEY"
-
-    Backups.store_provider_redis(provider)
-    restored_provider = Backups.load_provider_redis()
-    assert isinstance(restored_provider, Backblaze)
-    assert restored_provider.login == "ID"
-    assert restored_provider.key == "KEY"
-
-
-def test_snapshots_caching(backups, dummy_service):
-    Backups.back_up(dummy_service)
-
-    # we test indirectly that we do redis calls instead of shell calls
-    start = datetime.now()
-    for i in range(10):
-        snapshots = Backups.get_snapshots(dummy_service)
-        assert len(snapshots) == 1
-    assert datetime.now() - start < timedelta(seconds=0.5)
-
-
-# lowlevel
-def test_init_tracking_caching(backups, raw_dummy_service):
-    assert Backups._has_redis_init_mark(raw_dummy_service) is False
-
-    Backups._redis_mark_as_init(raw_dummy_service)
-
-    assert Backups._has_redis_init_mark(raw_dummy_service) is True
-    assert Backups.is_initted(raw_dummy_service) is True
-
-
-# lowlevel
-def test_init_tracking_caching2(backups, raw_dummy_service):
-    assert Backups._has_redis_init_mark(raw_dummy_service) is False
-
-    Backups.init_repo(raw_dummy_service)
-
-    assert Backups._has_redis_init_mark(raw_dummy_service) is True
-
-
-# only public API
 def test_init_tracking(backups, raw_dummy_service):
     assert Backups.is_initted(raw_dummy_service) is False
 
@@ -269,3 +218,64 @@ def test_set_autobackup_period(backups):
 
     Backups.set_autobackup_period_minutes(-1)
     assert Backups.autobackup_period_minutes() is None
+
+
+# Storage
+def test_snapshots_caching(backups, dummy_service):
+    Backups.back_up(dummy_service)
+
+    # we test indirectly that we do redis calls instead of shell calls
+    start = datetime.now()
+    for i in range(10):
+        snapshots = Backups.get_snapshots(dummy_service)
+        assert len(snapshots) == 1
+    assert datetime.now() - start < timedelta(seconds=0.5)
+
+    cached_snapshots = Storage.get_cached_snapshots()
+    assert len(cached_snapshots) == 1
+
+    Storage.delete_cached_snapshot(cached_snapshots[0])
+    cached_snapshots = Storage.get_cached_snapshots()
+    assert len(cached_snapshots) == 0
+
+    snapshots = Backups.get_snapshots(dummy_service)
+    assert len(snapshots) == 1
+    cached_snapshots = Storage.get_cached_snapshots()
+    assert len(cached_snapshots) == 1
+
+
+# Storage
+def test_init_tracking_caching(backups, raw_dummy_service):
+    assert Storage.has_init_mark(raw_dummy_service) is False
+
+    Storage.mark_as_init(raw_dummy_service)
+
+    assert Storage.has_init_mark(raw_dummy_service) is True
+    assert Backups.is_initted(raw_dummy_service) is True
+
+
+# Storage
+def test_init_tracking_caching2(backups, raw_dummy_service):
+    assert Storage.has_init_mark(raw_dummy_service) is False
+
+    Backups.init_repo(raw_dummy_service)
+
+    assert Storage.has_init_mark(raw_dummy_service) is True
+
+
+# Storage
+def test_provider_storage(backups_backblaze):
+    Backups.reset()
+    provider = Backups.provider()
+
+    assert provider is not None
+
+    assert isinstance(provider, Backblaze)
+    assert provider.login == "ID"
+    assert provider.key == "KEY"
+
+    Storage.store_provider(provider)
+    restored_provider = Backups.load_provider_redis()
+    assert isinstance(restored_provider, Backblaze)
+    assert restored_provider.login == "ID"
+    assert restored_provider.key == "KEY"
