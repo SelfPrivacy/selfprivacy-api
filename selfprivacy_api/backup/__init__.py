@@ -53,16 +53,28 @@ class Backups:
         Storage.set_autobackup(service)
 
     @staticmethod
+    def _service_ids_to_back_up(time: datetime) -> List[str]:
+        services = Storage.services_with_autobackup()
+        return [id for id in services if Backups.is_time_to_backup_service(id, time)]
+
+    # untestable until the dummy service is registered
+    @staticmethod
+    def services_to_back_up(time: datetime) -> List[Service]:
+        result = []
+        for id in Backups._service_ids_to_back_up(time):
+            service = get_service_by_id(id)
+            if service is None:
+                raise ValueError("Cannot look up a service scheduled for backup!")
+            result.append(service)
+        return result
+
+    @staticmethod
     def is_time_to_backup(time: datetime) -> bool:
         """
         Intended as a time validator for huey cron scheduler of automatic backups
         """
 
-        enabled_services = Storage.services_with_autobackup()
-        for service_id in enabled_services:
-            if Backups.is_time_to_backup_service(service_id, time):
-                return True
-        return False
+        return Backups._service_ids_to_back_up(time) != []
 
     @staticmethod
     def is_time_to_backup_service(service_id: str, time: datetime):
