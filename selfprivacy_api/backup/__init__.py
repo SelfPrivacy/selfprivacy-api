@@ -69,7 +69,7 @@ class Backups:
         period = Backups.autobackup_period_minutes()
         if period is None:
             return False
-        if not Storage.is_autobackup_set_by_name(service_id) is None:
+        if not Storage.is_autobackup_set(service_id):
             return False
 
         last_backup = Storage.get_last_backup_time(service_id)
