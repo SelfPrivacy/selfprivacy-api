@@ -122,7 +122,7 @@ class Storage:
         redis.delete(Storage.__autobackup_key(service.get_id()))
 
     @staticmethod
-    def is_autobackup_set(service_name: str):
+    def is_autobackup_set(service_name: str) -> bool:
         return redis.exists(Storage.__autobackup_key(service_name))
 
     @staticmethod
