@@ -4,6 +4,8 @@
 import asyncio
 from typing import AsyncGenerator
 import strawberry
+from strawberry.types import Info
+
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.mutations.api_mutations import ApiMutations
 from selfprivacy_api.graphql.mutations.job_mutations import JobMutations
@@ -57,6 +59,11 @@ class Query:
     def services(self) -> Services:
         """Services queries"""
         return Services()
+
+    @strawberry.field()
+    def test(self, info: Info) -> str:
+        """Test query"""
+        return info.context["request"].headers["Accept-Language"]
 
 
 @strawberry.type
