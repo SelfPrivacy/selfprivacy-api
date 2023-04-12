@@ -2,15 +2,15 @@
 import base64
 import subprocess
 import typing
-from selfprivacy_api.jobs import Job, Jobs
-from selfprivacy_api.services.generic_service_mover import FolderMoveNames, move_service
-from selfprivacy_api.services.generic_size_counter import get_storage_usage
+
+import selfprivacy_api.utils.network as network_utils
+from selfprivacy_api.jobs import Job
 from selfprivacy_api.services.generic_status_getter import get_service_status
+from selfprivacy_api.services.ocserv.icon import OCSERV_ICON
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
 from selfprivacy_api.utils import ReadUserData, WriteUserData
 from selfprivacy_api.utils.block_devices import BlockDevice
-from selfprivacy_api.services.ocserv.icon import OCSERV_ICON
-import selfprivacy_api.utils.network as network_utils
+from selfprivacy_api.utils.localization import Localization as L10n
 
 
 class Ocserv(Service):
@@ -21,12 +21,12 @@ class Ocserv(Service):
         return "ocserv"
 
     @staticmethod
-    def get_display_name() -> str:
-        return "OpenConnect VPN"
+    def get_display_name(locale: str = "en") -> str:
+        return L10n().get("services.ocserv.display_name", locale)
 
     @staticmethod
-    def get_description() -> str:
-        return "OpenConnect VPN to connect your devices and access the internet."
+    def get_description(locale: str = "en") -> str:
+        return L10n().get("services.ocserv.description", locale)
 
     @staticmethod
     def get_svg_icon() -> str:
@@ -117,5 +117,5 @@ class Ocserv(Service):
     def get_storage_usage() -> int:
         return 0
 
-    def move_to_volume(self, volume: BlockDevice) -> Job:
+    def move_to_volume(self, volume: BlockDevice, locale: str = "en") -> Job:
         raise NotImplementedError("ocserv service is not movable")

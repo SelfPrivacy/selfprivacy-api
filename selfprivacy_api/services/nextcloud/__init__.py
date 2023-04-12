@@ -9,6 +9,7 @@ from selfprivacy_api.services.generic_status_getter import get_service_status
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
 from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
 from selfprivacy_api.utils.block_devices import BlockDevice
+from selfprivacy_api.utils.localization import Localization as L10n
 import selfprivacy_api.utils.network as network_utils
 from selfprivacy_api.services.nextcloud.icon import NEXTCLOUD_ICON
 
@@ -22,14 +23,14 @@ class Nextcloud(Service):
         return "nextcloud"
 
     @staticmethod
-    def get_display_name() -> str:
+    def get_display_name(locale: str = "en") -> str:
         """Return service display name."""
-        return "Nextcloud"
+        return L10n().get("services.nextcloud.display_name", locale)
 
     @staticmethod
-    def get_description() -> str:
+    def get_description(locale: str = "en") -> str:
         """Return service description."""
-        return "Nextcloud is a cloud storage service that offers a web interface and a desktop client."
+        return L10n().get("services.nextcloud.description", locale)
 
     @staticmethod
     def get_svg_icon() -> str:
@@ -148,11 +149,13 @@ class Nextcloud(Service):
             ),
         ]
 
-    def move_to_volume(self, volume: BlockDevice) -> Job:
+    def move_to_volume(self, volume: BlockDevice, locale: str = "en") -> Job:
         job = Jobs.add(
             type_id="services.nextcloud.move",
-            name="Move Nextcloud",
-            description=f"Moving Nextcloud to volume {volume.name}",
+            name=L10n().get("services.nextcloud.move_job.name", locale),
+            description=L10n()
+            .get("services.nextcloud.move_job.description", locale)
+            .format(volume=volume.name),
         )
         move_service(
             self,

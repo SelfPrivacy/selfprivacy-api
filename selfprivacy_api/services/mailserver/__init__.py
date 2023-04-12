@@ -13,6 +13,7 @@ from selfprivacy_api.services.generic_status_getter import (
 )
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
 import selfprivacy_api.utils as utils
+from selfprivacy_api.utils.localization import Localization as L10n
 from selfprivacy_api.utils.block_devices import BlockDevice
 from selfprivacy_api.utils.huey import huey
 import selfprivacy_api.utils.network as network_utils
@@ -27,12 +28,12 @@ class MailServer(Service):
         return "mailserver"
 
     @staticmethod
-    def get_display_name() -> str:
-        return "Mail Server"
+    def get_display_name(locale: str = "en") -> str:
+        return L10n().get("services.mailserver.display_name", locale)
 
     @staticmethod
-    def get_description() -> str:
-        return "E-Mail for company and family."
+    def get_description(locale: str = "en") -> str:
+        return L10n().get("services.mailserver.description", locale)
 
     @staticmethod
     def get_svg_icon() -> str:
@@ -148,11 +149,13 @@ class MailServer(Service):
             ),
         ]
 
-    def move_to_volume(self, volume: BlockDevice) -> Job:
+    def move_to_volume(self, volume: BlockDevice, locale: str = "en") -> Job:
         job = Jobs.add(
             type_id="services.mailserver.move",
-            name="Move Mail Server",
-            description=f"Moving mailserver data to {volume.name}",
+            name=L10n().get("services.mailserver.move_job.name", locale),
+            description=L10n()
+            .get("services.mailserver.move_job.description", locale)
+            .format(volume=volume.name),
         )
 
         move_service(

@@ -11,6 +11,7 @@ from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceS
 from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
 from selfprivacy_api.utils.block_devices import BlockDevice
 from selfprivacy_api.utils.huey import huey
+from selfprivacy_api.utils.localization import Localization as L10n
 import selfprivacy_api.utils.network as network_utils
 from selfprivacy_api.services.bitwarden.icon import BITWARDEN_ICON
 
@@ -24,14 +25,14 @@ class Bitwarden(Service):
         return "bitwarden"
 
     @staticmethod
-    def get_display_name() -> str:
+    def get_display_name(locale: str = "en") -> str:
         """Return service display name."""
-        return "Bitwarden"
+        return L10n().get("services.bitwarden.display_name", locale)
 
     @staticmethod
-    def get_description() -> str:
+    def get_description(locale: str = "en") -> str:
         """Return service description."""
-        return "Bitwarden is a password manager."
+        return L10n().get("services.bitwarden.description", locale)
 
     @staticmethod
     def get_svg_icon() -> str:
@@ -143,11 +144,13 @@ class Bitwarden(Service):
             ),
         ]
 
-    def move_to_volume(self, volume: BlockDevice) -> Job:
+    def move_to_volume(self, volume: BlockDevice, locale: str = "en") -> Job:
         job = Jobs.add(
             type_id="services.bitwarden.move",
-            name="Move Bitwarden",
-            description=f"Moving Bitwarden data to {volume.name}",
+            name=L10n().get("services.bitwarden.move_job.name", locale),
+            description=L10n()
+            .get("services.bitwarden.move_job.description")
+            .format(volume=volume.name),
         )
 
         move_service(

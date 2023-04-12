@@ -1,0 +1,12 @@
+{
+  "services": {
+    "bitwarden": {
+      "display_name": "Bitwarden",
+      "description": "Bitwarden это менеджер паролей с открытым исходным кодом, который может работать на вашем сервере.",
+      "move_job": {
+        "name": "Переместить Bitwarden",
+        "description": "Перемещение данных Bitwarden на {volume}"
+      }
+    }
+  }
+}

@@ -3,19 +3,17 @@ import base64
 import subprocess
 import typing
 
-from selfprivacy_api.jobs import Job, Jobs
-from selfprivacy_api.services.generic_service_mover import FolderMoveNames, move_service
+import selfprivacy_api.utils.network as network_utils
+from selfprivacy_api.jobs import Job
 from selfprivacy_api.services.generic_size_counter import get_storage_usage
 from selfprivacy_api.services.generic_status_getter import (
-    get_service_status,
     get_service_status_from_several_units,
 )
+from selfprivacy_api.services.jitsi.icon import JITSI_ICON
+from selfprivacy_api.utils.localization import Localization as L10n
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
 from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
 from selfprivacy_api.utils.block_devices import BlockDevice
-from selfprivacy_api.utils.huey import huey
-import selfprivacy_api.utils.network as network_utils
-from selfprivacy_api.services.jitsi.icon import JITSI_ICON
 
 
 class Jitsi(Service):
@@ -27,14 +25,14 @@ class Jitsi(Service):
         return "jitsi"
 
     @staticmethod
-    def get_display_name() -> str:
+    def get_display_name(locale: str = "en") -> str:
         """Return service display name."""
-        return "Jitsi"
+        return L10n().get("services.jitsi.display_name", locale)
 
     @staticmethod
-    def get_description() -> str:
+    def get_description(locale: str = "en") -> str:
         """Return service description."""
-        return "Jitsi is a free and open-source video conferencing solution."
+        return L10n().get("services.jitsi.description", locale)
 
     @staticmethod
     def get_svg_icon() -> str:
@@ -138,5 +136,5 @@ class Jitsi(Service):
             ),
         ]
 
-    def move_to_volume(self, volume: BlockDevice) -> Job:
+    def move_to_volume(self, volume: BlockDevice, locale: str = "en") -> Job:
         raise NotImplementedError("jitsi service is not movable")

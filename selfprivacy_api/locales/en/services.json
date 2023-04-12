@@ -1,0 +1,52 @@
+{
+  "services": {
+    "bitwarden": {
+      "display_name": "Bitwarden",
+      "description": "Bitwarden is an open source password management solution you can run on your own server.",
+      "move_job": {
+        "name": "Move Bitwarden",
+        "description": "Moving Bitwarden data to {volume}"
+      }
+    },
+    "gitea": {
+      "display_name": "Gitea",
+      "description": "Gitea is a lightweight code hosting solution written in Go.",
+      "move_job": {
+        "name": "Move Gitea",
+        "description": "Moving Gitea data to {volume}"
+      }
+    },
+    "jitsi": {
+      "display_name": "Jitsi",
+      "description": "Jitsi is a free and open source video conferencing solution."
+    },
+    "mailserver": {
+      "display_name": "Email",
+      "description": "E-Mail for company and family.",
+      "move_job": {
+        "name": "Move Mail Server",
+        "description": "Moving mailserver data to {volume}"
+      }
+    },
+    "nextcloud": {
+      "display_name": "Nextcloud",
+      "description": "Nextcloud is a cloud storage service that offers a web interface and a desktop client.",
+      "move_job": {
+        "name": "Move Nextcloud",
+        "description": "Moving Nextcloud data to {volume}"
+      }
+    },
+    "ocserv": {
+      "display_name": "OpenConnect VPN",
+      "description": "OpenConnect VPN to connect your devices and access the internet."
+    },
+    "pleroma": {
+      "display_name": "Pleroma",
+      "description": "Pleroma is a free and open source microblogging server.",
+      "move_job": {
+        "name": "Move Pleroma",
+        "description": "Moving Pleroma data to {volume}"
+      }
+    }
+  }
+}

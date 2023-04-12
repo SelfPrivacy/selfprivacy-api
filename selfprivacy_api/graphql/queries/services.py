@@ -13,6 +13,6 @@ from selfprivacy_api.services import get_all_services
 @strawberry.type
 class Services:
     @strawberry.field
-    def all_services(self) -> typing.List[Service]:
+    def all_services(self, locale: str = "en") -> typing.List[Service]:
         services = get_all_services()
-        return [service_to_graphql_service(service) for service in services]
+        return [service_to_graphql_service(service, locale) for service in services]

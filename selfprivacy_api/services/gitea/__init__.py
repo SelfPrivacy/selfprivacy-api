@@ -11,6 +11,7 @@ from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceS
 from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
 from selfprivacy_api.utils.block_devices import BlockDevice
 from selfprivacy_api.utils.huey import huey
+from selfprivacy_api.utils.localization import Localization as L10n
 import selfprivacy_api.utils.network as network_utils
 from selfprivacy_api.services.gitea.icon import GITEA_ICON
 
@@ -24,14 +25,14 @@ class Gitea(Service):
         return "gitea"
 
     @staticmethod
-    def get_display_name() -> str:
+    def get_display_name(locale: str = "en") -> str:
         """Return service display name."""
-        return "Gitea"
+        return L10n().get("services.gitea.display_name", locale)
 
     @staticmethod
-    def get_description() -> str:
+    def get_description(locale: str = "en") -> str:
         """Return service description."""
-        return "Gitea is a Git forge."
+        return L10n().get("services.gitea.description", locale)
 
     @staticmethod
     def get_svg_icon() -> str:
@@ -140,11 +141,13 @@ class Gitea(Service):
             ),
         ]
 
-    def move_to_volume(self, volume: BlockDevice) -> Job:
+    def move_to_volume(self, volume: BlockDevice, locale: str = "en") -> Job:
         job = Jobs.add(
             type_id="services.gitea.move",
-            name="Move Gitea",
-            description=f"Moving Gitea data to {volume.name}",
+            name=L10n().get("services.gitea.move_job.name", locale),
+            description=L10n()
+            .get("services.gitea.move_job.description", locale)
+            .format(volume=volume.name),
         )
 
         move_service(

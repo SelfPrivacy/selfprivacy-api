@@ -9,6 +9,7 @@ from selfprivacy_api.services.generic_status_getter import get_service_status
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
 from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
 from selfprivacy_api.utils.block_devices import BlockDevice
+from selfprivacy_api.utils.localization import Localization as L10n
 import selfprivacy_api.utils.network as network_utils
 from selfprivacy_api.services.pleroma.icon import PLEROMA_ICON
 
@@ -21,12 +22,12 @@ class Pleroma(Service):
         return "pleroma"
 
     @staticmethod
-    def get_display_name() -> str:
-        return "Pleroma"
+    def get_display_name(locale: str = "en") -> str:
+        return L10n().get("services.pleroma.display_name", locale)
 
     @staticmethod
-    def get_description() -> str:
-        return "Pleroma is a microblogging service that offers a web interface and a desktop client."
+    def get_description(locale: str = "en") -> str:
+        return L10n().get("services.pleroma.description", locale)
 
     @staticmethod
     def get_svg_icon() -> str:
@@ -128,11 +129,13 @@ class Pleroma(Service):
             ),
         ]
 
-    def move_to_volume(self, volume: BlockDevice) -> Job:
+    def move_to_volume(self, volume: BlockDevice, locale: str = "en") -> Job:
         job = Jobs.add(
             type_id="services.pleroma.move",
-            name="Move Pleroma",
-            description=f"Moving Pleroma to volume {volume.name}",
+            name=L10n().get("services.pleroma.move_job.name", locale),
+            description=L10n()
+            .get("services.pleroma.move_job.description", locale)
+            .format(volume=volume.name),
         )
         move_service(
             self,
