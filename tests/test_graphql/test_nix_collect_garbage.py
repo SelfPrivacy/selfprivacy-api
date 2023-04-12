@@ -46,11 +46,35 @@ note: currently hard linking saves -0.00 MiB
 190 store paths deleted, 425.51 MiB freed
 """
 
+OUTPUT_COLLECT_GARBAGE_ZERO_TRASH = """
+removing old generations of profile /nix/var/nix/profiles/per-user/def/profile
+removing old generations of profile /nix/var/nix/profiles/per-user/def/channels
+finding garbage collector roots...
+deleting garbage...
+deleting unused links...
+note: currently hard linking saves 0.00 MiB
+0 store paths deleted, 0.00 MiB freed
+"""
+
+OUTPUT_RUN_NIX_STORE_PRINT_DEAD_ZERO_TRASH = """
+finding garbage collector roots...
+determining live/dead paths...
+"""
+
 log_event = []
 
 
 def set_job_status(status="", progress="", status_text="", result=""):
     log_event.append((status, progress, status_text, result))
+
+
+@pytest.fixture
+def mock_run_nix_store_print_dead_zero_trash(mocker):
+    mock = mocker.patch(
+        "selfprivacy_api.jobs.nix_collect_garbage.run_nix_store_print_dead",
+        autospec=True,
+        return_value=OUTPUT_RUN_NIX_STORE_PRINT_DEAD_ZERO_TRASH.split("\n"),
+    )
 
 
 @pytest.fixture
@@ -74,6 +98,16 @@ def mock_run_nix_collect_garbage(mocker):
 
 
 @pytest.fixture
+def mock_run_nix_collect_garbage_zero_trash(mocker):
+    mock = mocker.patch(
+        "selfprivacy_api.jobs.nix_collect_garbage.run_nix_collect_garbage",
+        autospec=True,
+        return_value=OUTPUT_COLLECT_GARBAGE_ZERO_TRASH.split("\n"),
+    )
+    return mock
+
+
+@pytest.fixture
 def mock_run_nix_store_print_dead(mocker):
     mock = mocker.patch(
         "selfprivacy_api.jobs.nix_collect_garbage.run_nix_store_print_dead",
@@ -92,7 +126,6 @@ def job_reset():
 
 
 def test_parse_line(job_reset):
-
     txt = "190 store paths deleted, 425.51 MiB freed"
     output = (
         JobStatus.FINISHED,
@@ -114,7 +147,7 @@ def test_parse_line_with_blank_line(job_reset):
     assert parse_line(txt) == output
 
 
-def test_get_dead_packages(job_resetм):
+def test_get_dead_packages(job_reset):
     assert get_dead_packages(OUTPUT_PRINT_DEAD) == (5, 20.0)
 
 
@@ -122,7 +155,7 @@ def test_get_dead_packages_zero(job_reset):
     assert get_dead_packages("") == (0, None)
 
 
-def test_stream_process():
+def test_stream_process(job_reset):
     log_event = []
     reference = [
         (JobStatus.RUNNING, 20, "Сleaning...", ""),
@@ -172,11 +205,11 @@ def test_nix_collect_garbage(
 
 def test_nix_collect_garbage_zero_trash(
     mock_set_job_status,
-    mock_run_nix_collect_garbage,
+    mock_run_nix_collect_garbage_zero_trash,
     mock_run_nix_store_print_dead,
     job_reset,
+    mock_run_nix_store_print_dead_zero_trash,
 ):
-
     reference = [
         (JobStatus.RUNNING, 0, "Сalculate the number of dead packages...", ""),
         (JobStatus.FINISHED, 100, "Nothing to clear", "System is clear"),

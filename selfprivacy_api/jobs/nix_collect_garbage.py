@@ -95,7 +95,7 @@ def get_dead_packages(output):
     return dead, percent
 
 
-# @huey.task()
+@huey.task()
 def nix_collect_garbage(
     job,
 ):
