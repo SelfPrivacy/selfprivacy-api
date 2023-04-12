@@ -5,6 +5,8 @@ from os import remove
 from os import listdir
 from datetime import datetime, timedelta, timezone
 
+import selfprivacy_api.services as services
+from selfprivacy_api.services import get_service_by_id
 from selfprivacy_api.services.test_service import DummyService
 from selfprivacy_api.graphql.queries.providers import BackupProvider
 
@@ -58,6 +60,11 @@ def dummy_service(tmpdir, backups, raw_dummy_service):
     # assert not repo_path
 
     Backups.init_repo(service)
+
+    # register our service
+    services.services.append(service)
+
+    assert get_service_by_id(service.get_id()) is not None
     return service
 
 
@@ -354,3 +361,15 @@ def test_provider_storage(backups_backblaze):
     assert isinstance(restored_provider, Backblaze)
     assert restored_provider.login == "ID"
     assert restored_provider.key == "KEY"
+
+
+def test_services_to_back_up(backups, dummy_service):
+    backup_period = 13  # minutes
+    now = datetime.now(timezone.utc)
+
+    Backups.enable_autobackup(dummy_service)
+    Backups.set_autobackup_period_minutes(backup_period)
+
+    services = Backups.services_to_back_up(now)
+    assert len(services) == 1
+    assert services[0].get_id() == dummy_service.get_id()
