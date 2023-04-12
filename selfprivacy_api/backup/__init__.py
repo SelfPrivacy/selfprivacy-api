@@ -57,7 +57,6 @@ class Backups:
         services = Storage.services_with_autobackup()
         return [id for id in services if Backups.is_time_to_backup_service(id, time)]
 
-    # untestable until the dummy service is registered
     @staticmethod
     def services_to_back_up(time: datetime) -> List[Service]:
         result = []
@@ -243,7 +242,6 @@ class Backups:
 
         Backups.provider().backuper.restore_from_backup(repo_name, snapshot_id, folder)
 
-    # Our dummy service is not yet globally registered so this is not testable yet
     @staticmethod
     def restore_snapshot(snapshot: Snapshot):
         Backups.restore_service_from_snapshot(
@@ -255,7 +253,6 @@ class Backups:
         repo_name = service.get_id()
         return Backups.provider().backuper.restored_size(repo_name, snapshot_id)
 
-    # Our dummy service is not yet globally registered so this is not testable yet
     @staticmethod
     def snapshot_restored_size(snapshot: Snapshot) -> float:
         return Backups.service_snapshot_size(
