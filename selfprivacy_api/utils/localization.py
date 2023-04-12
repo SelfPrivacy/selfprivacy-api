@@ -45,6 +45,20 @@ class Localization(metaclass=SingletonMetaclass):
             return self.locales[DEFAULT_LOCALE][string_id]
         return string_id
 
+    def supported_locales(self) -> typing.List[str]:
+        """Return a list of supported languages."""
+        return list(self.locales.keys())
+
+    def get_locale(self, locale: typing.Optional[str]) -> str:
+        """Parse the value of Accept-Language header and return the most preferred supported locale."""
+        if locale is None:
+            return DEFAULT_LOCALE
+        for lang in locale.split(","):
+            lang = lang.split(";")[0]
+            if lang in self.locales:
+                return lang
+        return DEFAULT_LOCALE
+
     def flatten_dict(
         self, d: typing.Dict[str, typing.Any], parent_key: str = "", sep: str = "."
     ) -> typing.Dict[str, str]:

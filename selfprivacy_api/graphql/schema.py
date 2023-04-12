@@ -6,7 +6,7 @@ from typing import AsyncGenerator
 import strawberry
 from strawberry.types import Info
 
-from selfprivacy_api.graphql import IsAuthenticated
+from selfprivacy_api.graphql import IsAuthenticated, LocaleExtension
 from selfprivacy_api.graphql.mutations.api_mutations import ApiMutations
 from selfprivacy_api.graphql.mutations.job_mutations import JobMutations
 from selfprivacy_api.graphql.mutations.mutation_interface import GenericMutationReturn
@@ -63,7 +63,7 @@ class Query:
     @strawberry.field()
     def test(self, info: Info) -> str:
         """Test query"""
-        return info.context["request"].headers["Accept-Language"]
+        return info.context["locale"]
 
 
 @strawberry.type
@@ -102,4 +102,9 @@ class Subscription:
             await asyncio.sleep(0.5)
 
 
-schema = strawberry.Schema(query=Query, mutation=Mutation, subscription=Subscription)
+schema = strawberry.Schema(
+    query=Query,
+    mutation=Mutation,
+    subscription=Subscription,
+    extensions=[LocaleExtension],
+)
