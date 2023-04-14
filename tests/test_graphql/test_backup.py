@@ -45,7 +45,7 @@ def raw_dummy_service(tmpdir, backups):
         file.write(TESTFILE_BODY)
 
     # we need this to not change get_folders() much
-    class TestDummyService(DummyService, location=service_dir):
+    class TestDummyService(DummyService, folders=[service_dir]):
         pass
 
     service = TestDummyService()
