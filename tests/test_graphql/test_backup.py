@@ -19,6 +19,7 @@ from selfprivacy_api.backup.storage import Storage
 
 
 TESTFILE_BODY = "testytest!"
+TESTFILE_2_BODY = "testissimo!"
 REPO_NAME = "test_backup"
 
 
@@ -37,15 +38,23 @@ def backups_backblaze(generic_userdata):
 
 @pytest.fixture()
 def raw_dummy_service(tmpdir, backups):
-    service_dir = path.join(tmpdir, "test_service")
-    makedirs(service_dir)
+    dirnames = ["test_service", "also_test_service"]
+    service_dirs = []
+    for d in dirnames:
+        service_dir = path.join(tmpdir, d)
+        makedirs(service_dir)
+        service_dirs.append(service_dir)
 
-    testfile_path = path.join(service_dir, "testfile.txt")
-    with open(testfile_path, "w") as file:
+    testfile_path_1 = path.join(service_dirs[0], "testfile.txt")
+    with open(testfile_path_1, "w") as file:
         file.write(TESTFILE_BODY)
 
+    testfile_path_2 = path.join(service_dirs[1], "testfile2.txt")
+    with open(testfile_path_2, "w") as file:
+        file.write(TESTFILE_2_BODY)
+
     # we need this to not change get_folders() much
-    class TestDummyService(DummyService, folders=[service_dir]):
+    class TestDummyService(DummyService, folders=service_dirs):
         pass
 
     service = TestDummyService()
