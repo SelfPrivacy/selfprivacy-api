@@ -118,7 +118,7 @@ class Bitwarden(Service):
         return storage_usage
 
     @staticmethod
-    def get_location() -> str:
+    def get_drive() -> str:
         with ReadUserData() as user_data:
             if user_data.get("useBinds", False):
                 return user_data.get("bitwarden", {}).get("location", "sda1")

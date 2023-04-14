@@ -116,7 +116,7 @@ class Jitsi(Service):
         return storage_usage
 
     @staticmethod
-    def get_location() -> str:
+    def get_drive() -> str:
         return "sda1"
 
     @staticmethod
