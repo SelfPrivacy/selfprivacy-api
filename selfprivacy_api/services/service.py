@@ -135,6 +135,11 @@ class Service(ABC):
     def get_drive() -> str:
         pass
 
+    # @staticmethod
+    # @abstractmethod
+    # def get_folders() -> str:
+    #     pass
+
     @abstractmethod
     def move_to_volume(self, volume: BlockDevice) -> Job:
         pass
