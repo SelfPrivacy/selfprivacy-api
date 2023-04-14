@@ -163,21 +163,31 @@ def test_backup_returns_snapshot(backups, dummy_service):
 
 
 def test_restore(backups, dummy_service):
-    service_folder = dummy_service.get_folders()[0]
-    file_to_nuke = listdir(service_folder)[0]
-    assert file_to_nuke is not None
-    path_to_nuke = path.join(service_folder, file_to_nuke)
+    paths_to_nuke = []
+    contents = []
+
+    for service_folder in dummy_service.get_folders():
+        file_to_nuke = listdir(service_folder)[0]
+        assert file_to_nuke is not None
+        path_to_nuke = path.join(service_folder, file_to_nuke)
+        paths_to_nuke.append(path_to_nuke)
+        with open(path_to_nuke, "r") as file:
+            contents.append(file.read())
 
     Backups.back_up(dummy_service)
     snap = Backups.get_snapshots(dummy_service)[0]
     assert snap is not None
 
-    assert path.exists(path_to_nuke)
-    remove(path_to_nuke)
-    assert not path.exists(path_to_nuke)
+    for p in paths_to_nuke:
+        assert path.exists(p)
+        remove(p)
+        assert not path.exists(p)
 
     Backups.restore_service_from_snapshot(dummy_service, snap.id)
-    assert path.exists(path_to_nuke)
+    for p, content in zip(paths_to_nuke, contents):
+        assert path.exists(p)
+        with open(p, "r") as file:
+            assert file.read() == content
 
 
 def test_sizing(backups, dummy_service):
