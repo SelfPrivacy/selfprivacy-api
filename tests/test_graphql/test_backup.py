@@ -143,10 +143,10 @@ def test_one_snapshot(backups, dummy_service):
 
 
 def test_backup_returns_snapshot(backups, dummy_service):
-    service_folder = dummy_service.get_folders()
+    service_folders = dummy_service.get_folders()
     provider = Backups.provider()
     name = dummy_service.get_id()
-    snapshot = provider.backuper.start_backup(service_folder, name)
+    snapshot = provider.backuper.start_backup(service_folders, name)
 
     assert snapshot.id is not None
     assert snapshot.service_name == name
@@ -154,7 +154,7 @@ def test_backup_returns_snapshot(backups, dummy_service):
 
 
 def test_restore(backups, dummy_service):
-    service_folder = dummy_service.get_folders()
+    service_folder = dummy_service.get_folders()[0]
     file_to_nuke = listdir(service_folder)[0]
     assert file_to_nuke is not None
     path_to_nuke = path.join(service_folder, file_to_nuke)

@@ -194,11 +194,11 @@ class Backups:
     @staticmethod
     def back_up(service: Service):
         """The top-level function to back up a service"""
-        folder = service.get_folders()
+        folders = service.get_folders()
         repo_name = service.get_id()
 
         service.pre_backup()
-        snapshot = Backups.provider().backuper.start_backup(folder, repo_name)
+        snapshot = Backups.provider().backuper.start_backup(folders, repo_name)
         Backups._store_last_snapshot(repo_name, snapshot)
 
         service.post_restore()
@@ -238,9 +238,9 @@ class Backups:
     @staticmethod
     def restore_service_from_snapshot(service: Service, snapshot_id: str):
         repo_name = service.get_id()
-        folder = service.get_folders()
+        folders = service.get_folders()
 
-        Backups.provider().backuper.restore_from_backup(repo_name, snapshot_id, folder)
+        Backups.provider().backuper.restore_from_backup(repo_name, snapshot_id, folders)
 
     @staticmethod
     def restore_snapshot(snapshot: Snapshot):

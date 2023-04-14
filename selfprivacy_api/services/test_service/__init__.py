@@ -1,6 +1,7 @@
 """Class representing Bitwarden service"""
 import base64
 import typing
+from typing import List
 
 from selfprivacy_api.jobs import Job
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
@@ -111,9 +112,8 @@ class DummyService(Service):
         return "sda1"
 
     @classmethod
-    def get_folders(cls) -> str:
-        # for now only a single folder
-        return cls.location
+    def get_folders(cls) -> List[str]:
+        return [cls.location]
 
     @staticmethod
     def get_dns_records() -> typing.List[ServiceDnsRecord]:
