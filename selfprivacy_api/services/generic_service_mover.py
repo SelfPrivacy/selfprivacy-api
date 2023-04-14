@@ -44,7 +44,7 @@ def move_service(
             )
             return
     # Check if we are on the same volume
-    old_volume = service.get_location()
+    old_volume = service.get_drive()
     if old_volume == volume.name:
         Jobs.update(
             job=job,

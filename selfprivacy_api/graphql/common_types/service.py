@@ -17,7 +17,7 @@ def get_usages(root: "StorageVolume") -> list["StorageUsageInterface"]:
             service=service_to_graphql_service(service),
             title=service.get_display_name(),
             used_space=str(service.get_storage_usage()),
-            volume=get_volume_by_id(service.get_location()),
+            volume=get_volume_by_id(service.get_drive()),
         )
         for service in get_services_by_location(root.name)
     ]
@@ -81,7 +81,7 @@ def get_storage_usage(root: "Service") -> ServiceStorageUsage:
         service=service_to_graphql_service(service),
         title=service.get_display_name(),
         used_space=str(service.get_storage_usage()),
-        volume=get_volume_by_id(service.get_location()),
+        volume=get_volume_by_id(service.get_drive()),
     )
 
 

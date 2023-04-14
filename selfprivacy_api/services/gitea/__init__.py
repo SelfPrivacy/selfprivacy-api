@@ -117,7 +117,7 @@ class Gitea(Service):
         return storage_usage
 
     @staticmethod
-    def get_location() -> str:
+    def get_drive() -> str:
         with ReadUserData() as user_data:
             if user_data.get("useBinds", False):
                 return user_data.get("gitea", {}).get("location", "sda1")

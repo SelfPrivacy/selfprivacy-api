@@ -107,7 +107,7 @@ class DummyService(Service):
         return storage_usage
 
     @classmethod
-    def get_location(cls) -> str:
+    def get_drive(cls) -> str:
         return cls.location
 
     @staticmethod
