@@ -15,8 +15,8 @@ from selfprivacy_api.services.test_service.icon import BITWARDEN_ICON
 class DummyService(Service):
     """A test service"""
 
-    def __init_subclass__(cls, location):
-        cls.location = location
+    def __init_subclass__(cls, folders: List[str]):
+        cls.folders = folders
 
     @staticmethod
     def get_id() -> str:
@@ -113,7 +113,7 @@ class DummyService(Service):
 
     @classmethod
     def get_folders(cls) -> List[str]:
-        return [cls.location]
+        return cls.folders
 
     @staticmethod
     def get_dns_records() -> typing.List[ServiceDnsRecord]:
