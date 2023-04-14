@@ -132,7 +132,7 @@ class Service(ABC):
 
     @staticmethod
     @abstractmethod
-    def get_location() -> str:
+    def get_drive() -> str:
         pass
 
     @abstractmethod

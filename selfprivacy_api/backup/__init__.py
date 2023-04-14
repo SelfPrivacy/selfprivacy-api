@@ -194,7 +194,7 @@ class Backups:
     @staticmethod
     def back_up(service: Service):
         """The top-level function to back up a service"""
-        folder = service.get_location()
+        folder = service.get_drive()
         repo_name = service.get_id()
 
         service.pre_backup()
@@ -238,7 +238,7 @@ class Backups:
     @staticmethod
     def restore_service_from_snapshot(service: Service, snapshot_id: str):
         repo_name = service.get_id()
-        folder = service.get_location()
+        folder = service.get_drive()
 
         Backups.provider().backuper.restore_from_backup(repo_name, snapshot_id, folder)
 

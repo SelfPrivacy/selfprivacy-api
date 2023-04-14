@@ -101,7 +101,7 @@ class MailServer(Service):
         return get_storage_usage("/var/vmail")
 
     @staticmethod
-    def get_location() -> str:
+    def get_drive() -> str:
         with utils.ReadUserData() as user_data:
             if user_data.get("useBinds", False):
                 return user_data.get("mailserver", {}).get("location", "sda1")
