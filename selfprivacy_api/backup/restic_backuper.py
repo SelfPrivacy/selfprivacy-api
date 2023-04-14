@@ -3,6 +3,7 @@ import json
 import datetime
 
 from typing import List
+from collections.abc import Iterable
 
 from selfprivacy_api.backup.backuper import AbstractBackuper
 from selfprivacy_api.models.backup.snapshot import Snapshot
@@ -54,8 +55,19 @@ class ResticBackuper(AbstractBackuper):
             self._password_command(),
         ]
         if args != []:
-            command.extend(args)
+            command.extend(ResticBackuper.__flatten_list(args))
         return command
+
+    @staticmethod
+    def __flatten_list(list):
+        """string-aware list flattener"""
+        result = []
+        for item in list:
+            if isinstance(item, Iterable) and not isinstance(item, str):
+                result.extend(ResticBackuper.__flatten_list(item))
+                continue
+            result.append(item)
+        return result
 
     def start_backup(self, folders: List[str], repo_name: str):
         """
@@ -69,7 +81,7 @@ class ResticBackuper(AbstractBackuper):
             repo_name,
             "backup",
             "--json",
-            folders[0],
+            folders,
         )
         with subprocess.Popen(
             backup_command,
