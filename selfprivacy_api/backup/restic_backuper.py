@@ -57,15 +57,19 @@ class ResticBackuper(AbstractBackuper):
             command.extend(args)
         return command
 
-    def start_backup(self, folder: str, repo_name: str):
+    def start_backup(self, folders: List[str], repo_name: str):
         """
         Start backup with restic
         """
+
+        # but maybe it is ok to accept a union of a string and an array of strings
+        assert not isinstance(folders, str)
+
         backup_command = self.restic_command(
             repo_name,
             "backup",
             "--json",
-            folder,
+            folders[0],
         )
         with subprocess.Popen(
             backup_command,
@@ -145,7 +149,7 @@ class ResticBackuper(AbstractBackuper):
             except ValueError as e:
                 raise ValueError("cannot restore a snapshot: " + output) from e
 
-    def restore_from_backup(self, repo_name, snapshot_id, folder):
+    def restore_from_backup(self, repo_name, snapshot_id, folders):
         """
         Restore from backup with restic
         """
