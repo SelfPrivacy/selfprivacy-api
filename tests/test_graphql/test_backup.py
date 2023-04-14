@@ -44,7 +44,7 @@ def raw_dummy_service(tmpdir, backups):
     with open(testfile_path, "w") as file:
         file.write(TESTFILE_BODY)
 
-    # we need this to not change get_drive() much
+    # we need this to not change get_folders() much
     class TestDummyService(DummyService, location=service_dir):
         pass
 
@@ -143,7 +143,7 @@ def test_one_snapshot(backups, dummy_service):
 
 
 def test_backup_returns_snapshot(backups, dummy_service):
-    service_folder = dummy_service.get_drive()
+    service_folder = dummy_service.get_folders()
     provider = Backups.provider()
     name = dummy_service.get_id()
     snapshot = provider.backuper.start_backup(service_folder, name)
@@ -154,7 +154,7 @@ def test_backup_returns_snapshot(backups, dummy_service):
 
 
 def test_restore(backups, dummy_service):
-    service_folder = dummy_service.get_drive()
+    service_folder = dummy_service.get_folders()
     file_to_nuke = listdir(service_folder)[0]
     assert file_to_nuke is not None
     path_to_nuke = path.join(service_folder, file_to_nuke)
