@@ -106,8 +106,13 @@ class DummyService(Service):
         storage_usage = 0
         return storage_usage
 
-    @classmethod
+    @staticmethod
     def get_drive(cls) -> str:
+        return "sda1"
+
+    @classmethod
+    def get_folders(cls) -> str:
+        # for now only a single folder
         return cls.location
 
     @staticmethod
