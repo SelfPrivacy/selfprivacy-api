@@ -8,6 +8,8 @@ from selfprivacy_api.jobs import Job
 
 from selfprivacy_api.utils.block_devices import BlockDevice
 
+from selfprivacy_api.services.generic_size_counter import get_storage_usage
+
 
 class ServiceStatus(Enum):
     """Enum for service status"""
@@ -120,10 +122,12 @@ class Service(ABC):
     def get_logs():
         pass
 
-    @staticmethod
-    @abstractmethod
-    def get_storage_usage() -> int:
-        pass
+    @classmethod
+    def get_storage_usage(cls) -> int:
+        storage_used = 0
+        for folder in cls.get_folders():
+            storage_used += get_storage_usage(folder)
+        return storage_used
 
     @staticmethod
     @abstractmethod

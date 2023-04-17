@@ -113,7 +113,7 @@ class Gitea(Service):
     def get_storage_usage() -> int:
         storage_usage = 0
         for folder in Gitea.get_folders():
-            storage_usage += get_storage_usage()
+            storage_usage += get_storage_usage(folder)
         return storage_usage
 
     @staticmethod
