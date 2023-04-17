@@ -1,5 +1,6 @@
 """Generic handler for moving services"""
 
+from __future__ import annotations
 import subprocess
 import time
 import pathlib
@@ -11,6 +12,7 @@ from selfprivacy_api.utils.huey import huey
 from selfprivacy_api.utils.block_devices import BlockDevice
 from selfprivacy_api.utils import ReadUserData, WriteUserData
 from selfprivacy_api.services.service import Service, ServiceStatus
+from selfprivacy_api.services.owned_path import OwnedPath
 
 
 class FolderMoveNames(BaseModel):
@@ -18,6 +20,19 @@ class FolderMoveNames(BaseModel):
     bind_location: str
     owner: str
     group: str
+
+    @staticmethod
+    def from_owned_path(path: OwnedPath) -> FolderMoveNames:
+        return FolderMoveNames(
+            name=FolderMoveNames.get_foldername(),
+            bind_location=path.path,
+            owner=path.owner,
+            group=path.group,
+        )
+
+    @staticmethod
+    def get_foldername(path: str) -> str:
+        return path.split("/")[-1]
 
 
 @huey.task()
