@@ -124,6 +124,11 @@ class Service(ABC):
 
     @classmethod
     def get_storage_usage(cls) -> int:
+        """
+        Calculate the real storage usage of folders occupied by service
+        Calculate using pathlib.
+        Do not follow symlinks.
+        """
         storage_used = 0
         for folder in cls.get_folders():
             storage_used += get_storage_usage(folder)
