@@ -9,6 +9,7 @@ from selfprivacy_api.jobs import Job
 from selfprivacy_api.utils.block_devices import BlockDevice
 
 from selfprivacy_api.services.generic_size_counter import get_storage_usage
+from selfprivacy_api.services.owned_path import OwnedPath
 
 
 class ServiceStatus(Enum):
@@ -152,10 +153,29 @@ class Service(ABC):
     def get_drive() -> str:
         pass
 
-    @staticmethod
-    @abstractmethod
-    def get_folders() -> str:
-        pass
+    @classmethod
+    def get_folders(cls) -> str:
+        """
+        get a plain list of occupied directories
+        Default extracts info from overriden get_owned_folders()
+        """
+        if cls.get_owned_folders == Service.get_owned_folders:
+            raise NotImplementedError(
+                "you need to implement at least one of get_folders() or get_owned_folders()"
+            )
+        return [owned_folder.path for owned_folder in cls.get_owned_folders()]
+
+    @classmethod
+    def get_owned_folders(cls) -> str:
+        """
+        Get a list of occupied directories with ownership info
+        Default extracts info from overriden get_folders()
+        """
+        if cls.get_folders == Service.get_folders:
+            raise NotImplementedError(
+                "you need to implement at least one of get_folders() or get_owned_folders()"
+            )
+        return [cls.owned_path(path) for path in cls.get_folders()]
 
     @staticmethod
     def get_foldername(path: str) -> str:
@@ -164,6 +184,15 @@ class Service(ABC):
     @abstractmethod
     def move_to_volume(self, volume: BlockDevice) -> Job:
         pass
+
+    @classmethod
+    def owned_path(cls, path: str):
+        """A default guess on folder ownership"""
+        return OwnedPath(
+            path=path,
+            owner=cls.get_user(),
+            group=cls.get_group(),
+        )
 
     def pre_backup(self):
         pass
