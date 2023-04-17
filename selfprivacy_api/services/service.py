@@ -62,6 +62,14 @@ class Service(ABC):
     def get_url() -> typing.Optional[str]:
         pass
 
+    @classmethod
+    def get_user(cls) -> typing.Optional[str]:
+        return cls.get_id()
+
+    @classmethod
+    def get_group(cls) -> typing.Optional[str]:
+        return cls.get_user()
+
     @staticmethod
     @abstractmethod
     def is_movable() -> bool:
