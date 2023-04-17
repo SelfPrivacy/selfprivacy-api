@@ -117,5 +117,9 @@ class Ocserv(Service):
     def get_storage_usage() -> int:
         return 0
 
+    @staticmethod
+    def get_folders() -> typing.List[str]:
+        return []
+
     def move_to_volume(self, volume: BlockDevice) -> Job:
         raise NotImplementedError("ocserv service is not movable")

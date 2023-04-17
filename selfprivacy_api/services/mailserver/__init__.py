@@ -101,6 +101,10 @@ class MailServer(Service):
         return get_storage_usage("/var/vmail")
 
     @staticmethod
+    def get_folders() -> typing.List[str]:
+        return ["/var/vmail", "/var/sieve"]
+
+    @staticmethod
     def get_drive() -> str:
         with utils.ReadUserData() as user_data:
             if user_data.get("useBinds", False):

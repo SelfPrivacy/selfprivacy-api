@@ -104,6 +104,10 @@ class Pleroma(Service):
         return storage_usage
 
     @staticmethod
+    def get_folders() -> typing.List[str]:
+        return ["/var/lib/pleroma", "/var/lib/postgresql"]
+
+    @staticmethod
     def get_drive() -> str:
         with ReadUserData() as user_data:
             if user_data.get("useBinds", False):
