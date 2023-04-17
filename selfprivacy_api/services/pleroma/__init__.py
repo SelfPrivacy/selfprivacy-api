@@ -4,7 +4,6 @@ import subprocess
 import typing
 from selfprivacy_api.jobs import Job, Jobs
 from selfprivacy_api.services.generic_service_mover import FolderMoveNames, move_service
-from selfprivacy_api.services.generic_size_counter import get_storage_usage
 from selfprivacy_api.services.generic_status_getter import get_service_status
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
 from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
@@ -95,13 +94,6 @@ class Pleroma(Service):
     @staticmethod
     def get_logs():
         return ""
-
-    @staticmethod
-    def get_storage_usage() -> int:
-        storage_usage = 0
-        storage_usage += get_storage_usage("/var/lib/pleroma")
-        storage_usage += get_storage_usage("/var/lib/postgresql")
-        return storage_usage
 
     @staticmethod
     def get_folders() -> typing.List[str]:
