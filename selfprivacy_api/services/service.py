@@ -154,7 +154,7 @@ class Service(ABC):
         pass
 
     @classmethod
-    def get_folders(cls) -> str:
+    def get_folders(cls) -> typing.List[str]:
         """
         get a plain list of occupied directories
         Default extracts info from overriden get_owned_folders()
@@ -166,7 +166,7 @@ class Service(ABC):
         return [owned_folder.path for owned_folder in cls.get_owned_folders()]
 
     @classmethod
-    def get_owned_folders(cls) -> str:
+    def get_owned_folders(cls) -> typing.List[OwnedPath]:
         """
         Get a list of occupied directories with ownership info
         Default extracts info from overriden get_folders()
