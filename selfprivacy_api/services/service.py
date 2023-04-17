@@ -135,10 +135,10 @@ class Service(ABC):
     def get_drive() -> str:
         pass
 
-    # @staticmethod
-    # @abstractmethod
-    # def get_folders() -> str:
-    #     pass
+    @staticmethod
+    @abstractmethod
+    def get_folders() -> str:
+        pass
 
     @staticmethod
     def get_foldername(path: str) -> str:
