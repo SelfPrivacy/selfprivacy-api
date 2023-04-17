@@ -112,8 +112,13 @@ class Gitea(Service):
     @staticmethod
     def get_storage_usage() -> int:
         storage_usage = 0
-        storage_usage += get_storage_usage("/var/lib/gitea")
+        for folder in Gitea.get_folders():
+            storage_usage += get_storage_usage()
         return storage_usage
+
+    @staticmethod
+    def get_folders() -> typing.List[str]:
+        return ["/var/lib/gitea"]
 
     @staticmethod
     def get_drive() -> str:
@@ -154,10 +159,11 @@ class Gitea(Service):
             [
                 FolderMoveNames(
                     name="gitea",
-                    bind_location="/var/lib/gitea",
+                    bind_location=folder,
                     group="gitea",
                     owner="gitea",
-                ),
+                )
+                for folder in Gitea.get_folders()
             ],
             "gitea",
         )
