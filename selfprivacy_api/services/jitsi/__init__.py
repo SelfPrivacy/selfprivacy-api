@@ -116,6 +116,10 @@ class Jitsi(Service):
         return storage_usage
 
     @staticmethod
+    def get_folders() -> typing.List[str]:
+        return ["/var/lib/jitsi-meet"]
+
+    @staticmethod
     def get_drive() -> str:
         return "sda1"
 
