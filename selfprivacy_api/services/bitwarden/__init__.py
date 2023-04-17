@@ -113,9 +113,13 @@ class Bitwarden(Service):
     @staticmethod
     def get_storage_usage() -> int:
         storage_usage = 0
-        storage_usage += get_storage_usage("/var/lib/bitwarden")
-        storage_usage += get_storage_usage("/var/lib/bitwarden_rs")
+        for folder in Bitwarden.get_folders():
+            storage_usage += get_storage_usage(folder)
         return storage_usage
+
+    @staticmethod
+    def get_folders() -> typing.List[str]:
+        return ["/var/lib/bitwarden", "/var/lib/bitwarden_rs"]
 
     @staticmethod
     def get_drive() -> str:
@@ -157,16 +161,11 @@ class Bitwarden(Service):
             [
                 FolderMoveNames(
                     name="bitwarden",
-                    bind_location="/var/lib/bitwarden",
+                    bind_location=folder,
                     group="vaultwarden",
                     owner="vaultwarden",
-                ),
-                FolderMoveNames(
-                    name="bitwarden_rs",
-                    bind_location="/var/lib/bitwarden_rs",
-                    group="vaultwarden",
-                    owner="vaultwarden",
-                ),
+                )
+                for folder in Bitwarden.get_folders()
             ],
             "bitwarden",
         )
