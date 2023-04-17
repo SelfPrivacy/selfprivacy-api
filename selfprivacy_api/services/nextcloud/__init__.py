@@ -4,7 +4,6 @@ import subprocess
 import typing
 from selfprivacy_api.jobs import Job, Jobs
 from selfprivacy_api.services.generic_service_mover import FolderMoveNames, move_service
-from selfprivacy_api.services.generic_size_counter import get_storage_usage
 from selfprivacy_api.services.generic_status_getter import get_service_status
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
 from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
@@ -112,15 +111,6 @@ class Nextcloud(Service):
     def get_logs():
         """Return Nextcloud logs."""
         return ""
-
-    @staticmethod
-    def get_storage_usage() -> int:
-        """
-        Calculate the real storage usage of /var/lib/nextcloud and all subdirectories.
-        Calculate using pathlib.
-        Do not follow symlinks.
-        """
-        return get_storage_usage("/var/lib/nextcloud")
 
     @staticmethod
     def get_folders() -> typing.List[str]:
