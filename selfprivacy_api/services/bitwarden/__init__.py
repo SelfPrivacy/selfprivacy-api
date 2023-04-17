@@ -160,7 +160,7 @@ class Bitwarden(Service):
             job,
             [
                 FolderMoveNames(
-                    name="bitwarden",
+                    name=Bitwarden.get_foldername(folder),
                     bind_location=folder,
                     group="vaultwarden",
                     owner="vaultwarden",

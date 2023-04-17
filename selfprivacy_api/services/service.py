@@ -140,6 +140,10 @@ class Service(ABC):
     # def get_folders() -> str:
     #     pass
 
+    @staticmethod
+    def get_foldername(path: str) -> str:
+        return path.split("/")[-1]
+
     @abstractmethod
     def move_to_volume(self, volume: BlockDevice) -> Job:
         pass

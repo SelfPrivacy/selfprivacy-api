@@ -158,7 +158,7 @@ class Gitea(Service):
             job,
             [
                 FolderMoveNames(
-                    name="gitea",
+                    name=Gitea.get_foldername(folder),
                     bind_location=folder,
                     group="gitea",
                     owner="gitea",
