@@ -34,6 +34,15 @@ class FolderMoveNames(BaseModel):
     def get_foldername(path: str) -> str:
         return path.split("/")[-1]
 
+    @staticmethod
+    def default_foldermoves(service: Service):
+        return (
+            [
+                FolderMoveNames.from_owned_path(folder)
+                for folder in service.get_owned_folders()
+            ],
+        )
+
 
 @huey.task()
 def move_service(

@@ -38,6 +38,10 @@ class MailServer(Service):
         return base64.b64encode(MAILSERVER_ICON.encode("utf-8")).decode("utf-8")
 
     @staticmethod
+    def get_user() -> str:
+        return "virtualMail"
+
+    @staticmethod
     def get_url() -> typing.Optional[str]:
         """Return service url."""
         return None
@@ -158,20 +162,7 @@ class MailServer(Service):
             self,
             volume,
             job,
-            [
-                FolderMoveNames(
-                    name="vmail",
-                    bind_location="/var/vmail",
-                    group="virtualMail",
-                    owner="virtualMail",
-                ),
-                FolderMoveNames(
-                    name="sieve",
-                    bind_location="/var/sieve",
-                    group="virtualMail",
-                    owner="virtualMail",
-                ),
-            ],
+            FolderMoveNames.default_foldermoves(self),
             "mailserver",
         )
 
