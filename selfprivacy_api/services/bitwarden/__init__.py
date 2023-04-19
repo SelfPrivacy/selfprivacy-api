@@ -38,6 +38,10 @@ class Bitwarden(Service):
         return base64.b64encode(BITWARDEN_ICON.encode("utf-8")).decode("utf-8")
 
     @staticmethod
+    def get_user() -> str:
+        return "vaultwarden"
+
+    @staticmethod
     def get_url() -> typing.Optional[str]:
         """Return service url."""
         domain = get_domain()
