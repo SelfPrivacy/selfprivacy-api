@@ -24,7 +24,7 @@ class FolderMoveNames(BaseModel):
     @staticmethod
     def from_owned_path(path: OwnedPath) -> FolderMoveNames:
         return FolderMoveNames(
-            name=FolderMoveNames.get_foldername(),
+            name=FolderMoveNames.get_foldername(path.path),
             bind_location=path.path,
             owner=path.owner,
             group=path.group,
