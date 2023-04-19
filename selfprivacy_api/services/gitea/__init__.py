@@ -148,15 +148,7 @@ class Gitea(Service):
             self,
             volume,
             job,
-            [
-                FolderMoveNames(
-                    name=Gitea.get_foldername(folder),
-                    bind_location=folder,
-                    group="gitea",
-                    owner="gitea",
-                )
-                for folder in Gitea.get_folders()
-            ],
+            FolderMoveNames.default_foldermoves(self),
             "gitea",
         )
 

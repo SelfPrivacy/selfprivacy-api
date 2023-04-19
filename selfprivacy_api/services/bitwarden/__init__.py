@@ -154,15 +154,7 @@ class Bitwarden(Service):
             self,
             volume,
             job,
-            [
-                FolderMoveNames(
-                    name=Bitwarden.get_foldername(folder),
-                    bind_location=folder,
-                    group="vaultwarden",
-                    owner="vaultwarden",
-                )
-                for folder in Bitwarden.get_folders()
-            ],
+            FolderMoveNames.default_foldermoves(self),
             "bitwarden",
         )
 

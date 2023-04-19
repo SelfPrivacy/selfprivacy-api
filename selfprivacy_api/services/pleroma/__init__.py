@@ -150,20 +150,7 @@ class Pleroma(Service):
             self,
             volume,
             job,
-            [
-                FolderMoveNames(
-                    name="pleroma",
-                    bind_location="/var/lib/pleroma",
-                    owner="pleroma",
-                    group="pleroma",
-                ),
-                FolderMoveNames(
-                    name="postgresql",
-                    bind_location="/var/lib/postgresql",
-                    owner="postgres",
-                    group="postgres",
-                ),
-            ],
+            FolderMoveNames.default_foldermoves(self),
             "pleroma",
         )
         return job

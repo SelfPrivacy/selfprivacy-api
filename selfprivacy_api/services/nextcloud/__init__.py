@@ -152,14 +152,7 @@ class Nextcloud(Service):
             self,
             volume,
             job,
-            [
-                FolderMoveNames(
-                    name="nextcloud",
-                    bind_location="/var/lib/nextcloud",
-                    owner="nextcloud",
-                    group="nextcloud",
-                ),
-            ],
+            FolderMoveNames.default_foldermoves(self),
             "nextcloud",
         )
         return job
