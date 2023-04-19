@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from selfprivacy_api.models.backup.snapshot import Snapshot
 from selfprivacy_api.utils.huey import huey
 from selfprivacy_api.services.service import Service
 from selfprivacy_api.backup import Backups
@@ -21,6 +22,12 @@ def validate_datetime(dt: datetime):
 @huey.task()
 def start_backup(service: Service) -> bool:
     Backups.back_up(service)
+    return True
+
+
+@huey.task()
+def restore_snapshot(snapshot: Snapshot) -> bool:
+    Backups.restore_snapshot(snapshot)
     return True
 
 

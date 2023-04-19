@@ -14,7 +14,7 @@ from selfprivacy_api.backup import Backups
 import selfprivacy_api.backup.providers as providers
 from selfprivacy_api.backup.providers import AbstractBackupProvider
 from selfprivacy_api.backup.providers.backblaze import Backblaze
-from selfprivacy_api.backup.tasks import start_backup
+from selfprivacy_api.backup.tasks import start_backup, restore_snapshot
 from selfprivacy_api.backup.storage import Storage
 
 
@@ -162,16 +162,22 @@ def test_backup_returns_snapshot(backups, dummy_service):
     assert snapshot.created_at is not None
 
 
+def service_files(service):
+    result = []
+    for service_folder in service.get_folders():
+        service_filename = listdir(service_folder)[0]
+        assert service_filename is not None
+        service_file = path.join(service_folder, service_filename)
+        result.append(service_file)
+    return result
+
+
 def test_restore(backups, dummy_service):
-    paths_to_nuke = []
+    paths_to_nuke = service_files(dummy_service)
     contents = []
 
-    for service_folder in dummy_service.get_folders():
-        file_to_nuke = listdir(service_folder)[0]
-        assert file_to_nuke is not None
-        path_to_nuke = path.join(service_folder, file_to_nuke)
-        paths_to_nuke.append(path_to_nuke)
-        with open(path_to_nuke, "r") as file:
+    for service_file in paths_to_nuke:
+        with open(service_file, "r") as file:
             contents.append(file.read())
 
     Backups.back_up(dummy_service)
@@ -212,6 +218,30 @@ def test_backup_service_task(backups, dummy_service):
 
     snaps = Backups.get_snapshots(dummy_service)
     assert len(snaps) == 1
+
+
+def test_restore_snapshot_task(backups, dummy_service):
+    Backups.back_up(dummy_service)
+    snaps = Backups.get_snapshots(dummy_service)
+    assert len(snaps) == 1
+
+    paths_to_nuke = service_files(dummy_service)
+    contents = []
+
+    for service_file in paths_to_nuke:
+        with open(service_file, "r") as file:
+            contents.append(file.read())
+
+    for p in paths_to_nuke:
+        remove(p)
+
+    handle = restore_snapshot(snaps[0])
+    handle(blocking=True)
+
+    for p, content in zip(paths_to_nuke, contents):
+        assert path.exists(p)
+        with open(p, "r") as file:
+            assert file.read() == content
 
 
 def test_autobackup_enable_service(backups, dummy_service):
