@@ -24,9 +24,13 @@ class LocalBackupSecret:
         return redis.get(REDIS_KEY)
 
     @staticmethod
+    def set(secret: str):
+        redis.set(REDIS_KEY, secret)
+
+    @staticmethod
     def reset():
         new_secret = LocalBackupSecret._generate()
-        LocalBackupSecret._store(new_secret)
+        LocalBackupSecret.set(new_secret)
 
     @staticmethod
     def exists() -> bool:
@@ -35,7 +39,3 @@ class LocalBackupSecret:
     @staticmethod
     def _generate() -> str:
         return secrets.token_urlsafe(256)
-
-    @staticmethod
-    def _store(secret: str):
-        redis.set(REDIS_KEY, secret)
