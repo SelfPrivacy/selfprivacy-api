@@ -33,6 +33,10 @@ class LocalBackupSecret:
         LocalBackupSecret.set(new_secret)
 
     @staticmethod
+    def _full_reset():
+        redis.delete(REDIS_KEY)
+
+    @staticmethod
     def exists() -> bool:
         return redis.exists(REDIS_KEY)
 
