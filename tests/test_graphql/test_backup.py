@@ -9,6 +9,7 @@ import selfprivacy_api.services as services
 from selfprivacy_api.services import get_service_by_id
 from selfprivacy_api.services.test_service import DummyService
 from selfprivacy_api.graphql.queries.providers import BackupProvider
+from selfprivacy_api.jobs import Jobs, JobStatus
 
 from selfprivacy_api.backup import Backups
 import selfprivacy_api.backup.providers as providers
@@ -16,6 +17,7 @@ from selfprivacy_api.backup.providers import AbstractBackupProvider
 from selfprivacy_api.backup.providers.backblaze import Backblaze
 from selfprivacy_api.backup.tasks import start_backup, restore_snapshot
 from selfprivacy_api.backup.storage import Storage
+from selfprivacy_api.backup.jobs import get_backup_job
 
 
 TESTFILE_BODY = "testytest!"
@@ -29,6 +31,8 @@ def backups(tmpdir):
 
     test_repo_path = path.join(tmpdir, "totallyunrelated")
     Backups.set_localfile_repo(test_repo_path)
+
+    Jobs.reset()
 
 
 @pytest.fixture()
@@ -218,6 +222,11 @@ def test_backup_service_task(backups, dummy_service):
 
     snaps = Backups.get_snapshots(dummy_service)
     assert len(snaps) == 1
+
+    id = dummy_service.get_id()
+    finished_jobs = [job for job in Jobs.get_jobs() if job.status is JobStatus.FINISHED]
+    finished_types = [job.type_id for job in finished_jobs]
+    assert finished_types.count(f"services.{id}.backup") == 1
 
 
 def test_restore_snapshot_task(backups, dummy_service):
