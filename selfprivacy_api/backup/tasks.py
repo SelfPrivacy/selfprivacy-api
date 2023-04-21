@@ -4,6 +4,8 @@ from selfprivacy_api.models.backup.snapshot import Snapshot
 from selfprivacy_api.utils.huey import huey
 from selfprivacy_api.services.service import Service
 from selfprivacy_api.backup import Backups
+from selfprivacy_api.backup.jobs import get_backup_job, add_backup_job
+from selfprivacy_api.jobs import Jobs, JobStatus
 
 
 def validate_datetime(dt: datetime):
@@ -21,7 +23,10 @@ def validate_datetime(dt: datetime):
 # huey tasks need to return something
 @huey.task()
 def start_backup(service: Service) -> bool:
+    add_backup_job(service)
     Backups.back_up(service)
+    job = get_backup_job(service)
+    Jobs.update(job, status=JobStatus.FINISHED)
     return True
 
 
