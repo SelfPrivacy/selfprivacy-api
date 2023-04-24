@@ -23,10 +23,11 @@ def validate_datetime(dt: datetime):
 # huey tasks need to return something
 @huey.task()
 def start_backup(service: Service) -> bool:
+    # Backups can create the job, but doing this here
+    # allows us to see the job as queued before it is actually executed
     add_backup_job(service)
+
     Backups.back_up(service)
-    job = get_backup_job(service)
-    Jobs.update(job, status=JobStatus.FINISHED)
     return True
 
 

@@ -131,7 +131,10 @@ def test_backup_simple_file(raw_dummy_service, file_backup):
 
 
 def test_backup_service(dummy_service, backups):
+    id = dummy_service.get_id()
+    assert_job_finished(f"services.{id}.backup", count=0)
     assert Backups.get_last_backed_up(dummy_service) is None
+
     Backups.back_up(dummy_service)
 
     now = datetime.now(timezone.utc)
@@ -139,6 +142,8 @@ def test_backup_service(dummy_service, backups):
     assert date is not None
     assert now > date
     assert now - date < timedelta(minutes=1)
+
+    assert_job_finished(f"services.{id}.backup", count=1)
 
 
 def test_no_repo(memory_backup):
