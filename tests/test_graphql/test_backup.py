@@ -216,6 +216,12 @@ def test_init_tracking(backups, raw_dummy_service):
     assert Backups.is_initted(raw_dummy_service) is True
 
 
+def assert_job_finished(job_type, count):
+    finished_jobs = [job for job in Jobs.get_jobs() if job.status is JobStatus.FINISHED]
+    finished_types = [job.type_id for job in finished_jobs]
+    assert finished_types.count(job_type) == count
+
+
 def test_backup_service_task(backups, dummy_service):
     handle = start_backup(dummy_service)
     handle(blocking=True)
@@ -224,9 +230,7 @@ def test_backup_service_task(backups, dummy_service):
     assert len(snaps) == 1
 
     id = dummy_service.get_id()
-    finished_jobs = [job for job in Jobs.get_jobs() if job.status is JobStatus.FINISHED]
-    finished_types = [job.type_id for job in finished_jobs]
-    assert finished_types.count(f"services.{id}.backup") == 1
+    assert_job_finished(f"services.{id}.backup", count=1)
 
 
 def test_restore_snapshot_task(backups, dummy_service):
