@@ -15,6 +15,7 @@ from selfprivacy_api.graphql.queries.providers import BackupProvider
 from selfprivacy_api.backup.providers.provider import AbstractBackupProvider
 from selfprivacy_api.backup.providers import get_provider
 from selfprivacy_api.backup.storage import Storage
+from selfprivacy_api.backup.jobs import get_backup_job, add_backup_job
 
 
 class Backups:
@@ -196,6 +197,9 @@ class Backups:
         """The top-level function to back up a service"""
         folders = service.get_folders()
         repo_name = service.get_id()
+
+        if get_backup_job(service) is None:
+            add_backup_job(service)
 
         service.pre_backup()
         snapshot = Backups.provider().backuper.start_backup(folders, repo_name)
