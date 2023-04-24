@@ -207,6 +207,7 @@ class Backups:
         Backups._store_last_snapshot(repo_name, snapshot)
 
         service.post_restore()
+        Jobs.update(job, status=JobStatus.FINISHED)
 
     @staticmethod
     def init_repo(service: Service):
