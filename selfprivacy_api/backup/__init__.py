@@ -4,8 +4,6 @@ from datetime import datetime, timedelta
 from selfprivacy_api.models.backup.snapshot import Snapshot
 
 from selfprivacy_api.utils import ReadUserData
-from selfprivacy_api.utils.redis_pool import RedisPool
-
 
 from selfprivacy_api.services import get_service_by_id
 from selfprivacy_api.services.service import Service
