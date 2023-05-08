@@ -133,8 +133,25 @@ class Jobs:
         key = _redis_log_key_from_uuid(job.uid)
         if redis.exists(key):
             assert redis.type(key) == "list"
-        redis.lpush(key, str(status))
+        redis.lpush(key, status.value)
         redis.expire(key, 10)
+
+    @staticmethod
+    def status_updates(job: Job) -> typing.List[JobStatus]:
+        result = []
+
+        redis = RedisPool().get_connection()
+        key = _redis_log_key_from_uuid(job.uid)
+        if not redis.exists(key):
+            return []
+
+        status_strings = redis.lrange(key, 0, -1)
+        for status in status_strings:
+            try:
+                result.append(JobStatus[status])
+            except KeyError as e:
+                raise ValueError("impossible job status: " + status) from e
+        return result
 
     @staticmethod
     def update(
