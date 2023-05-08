@@ -27,7 +27,7 @@ from selfprivacy_api.utils.redis_pool import RedisPool
 JOB_EXPIRATION_SECONDS = 10 * 24 * 60 * 60  # ten days
 
 
-class JobStatus(Enum):
+class JobStatus(str, Enum):
     """
     Status of a job.
     """
@@ -70,6 +70,7 @@ class Jobs:
         jobs = Jobs.get_jobs()
         for job in jobs:
             Jobs.remove(job)
+        Jobs.reset_logs()
 
     @staticmethod
     def add(
@@ -121,6 +122,21 @@ class Jobs:
         return False
 
     @staticmethod
+    def reset_logs():
+        redis = RedisPool().get_connection()
+        for key in redis.keys("jobs_logs:" + "*"):
+            redis.delete(key)
+
+    @staticmethod
+    def log_status_update(job: Job, status: JobStatus):
+        redis = RedisPool().get_connection()
+        key = _redis_log_key_from_uuid(job.uid)
+        if redis.exists(key):
+            assert redis.type(key) == "list"
+        redis.lpush(key, str(status))
+        redis.expire(key, 10)
+
+    @staticmethod
     def update(
         job: Job,
         status: JobStatus,
@@ -143,6 +159,7 @@ class Jobs:
         if progress is not None:
             job.progress = progress
         job.status = status
+        Jobs.log_status_update(job, status)
         job.updated_at = datetime.datetime.now()
         job.error = error
         job.result = result
@@ -196,6 +213,10 @@ class Jobs:
 
 def _redis_key_from_uuid(uuid_string):
     return "jobs:" + str(uuid_string)
+
+
+def _redis_log_key_from_uuid(uuid_string):
+    return "jobs_logs:" + str(uuid_string)
 
 
 def _store_job_as_hash(redis, redis_key, model):
