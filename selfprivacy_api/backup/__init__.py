@@ -202,11 +202,15 @@ class Backups:
             job = add_backup_job(service)
         Jobs.update(job, status=JobStatus.RUNNING)
 
-        service.pre_backup()
-        snapshot = Backups.provider().backuper.start_backup(folders, repo_name)
-        Backups._store_last_snapshot(repo_name, snapshot)
+        try:
+            service.pre_backup()
+            snapshot = Backups.provider().backuper.start_backup(folders, repo_name)
+            Backups._store_last_snapshot(repo_name, snapshot)
+            service.post_restore()
+        except Exception as e:
+            Jobs.update(job, status=JobStatus.ERROR)
+            raise e
 
-        service.post_restore()
         Jobs.update(job, status=JobStatus.FINISHED)
 
     @staticmethod
