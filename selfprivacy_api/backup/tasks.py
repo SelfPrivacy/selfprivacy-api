@@ -4,8 +4,7 @@ from selfprivacy_api.models.backup.snapshot import Snapshot
 from selfprivacy_api.utils.huey import huey
 from selfprivacy_api.services.service import Service
 from selfprivacy_api.backup import Backups
-from selfprivacy_api.backup.jobs import get_backup_job, add_backup_job
-from selfprivacy_api.jobs import Jobs, JobStatus
+from selfprivacy_api.backup.jobs import add_backup_job
 
 
 def validate_datetime(dt: datetime):
