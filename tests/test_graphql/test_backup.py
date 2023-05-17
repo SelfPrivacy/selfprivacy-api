@@ -221,15 +221,17 @@ def test_init_tracking(backups, raw_dummy_service):
     assert Backups.is_initted(raw_dummy_service) is True
 
 
+def finished_jobs():
+    return [job for job in Jobs.get_jobs() if job.status is JobStatus.FINISHED]
+
+
 def assert_job_finished(job_type, count):
-    finished_jobs = [job for job in Jobs.get_jobs() if job.status is JobStatus.FINISHED]
-    finished_types = [job.type_id for job in finished_jobs]
+    finished_types = [job.type_id for job in finished_jobs()]
     assert finished_types.count(job_type) == count
 
 
 def assert_job_has_run(job_type):
-    finished_jobs = [job for job in Jobs.get_jobs() if job.status is JobStatus.FINISHED]
-    job = [job for job in finished_jobs if job.type_id == job_type][0]
+    job = [job for job in finished_jobs() if job.type_id == job_type][0]
     assert JobStatus.RUNNING in Jobs.status_updates(job)
 
 
