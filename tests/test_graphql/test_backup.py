@@ -235,6 +235,11 @@ def assert_job_has_run(job_type):
     assert JobStatus.RUNNING in Jobs.status_updates(job)
 
 
+def assert_job_had_progress(job_type):
+    job = [job for job in finished_jobs() if job.type_id == job_type][0]
+    assert len(Jobs.progress_updates(job)) > 0
+
+
 def test_backup_service_task(backups, dummy_service):
     handle = start_backup(dummy_service)
     handle(blocking=True)
@@ -246,6 +251,7 @@ def test_backup_service_task(backups, dummy_service):
     job_type_id = f"services.{id}.backup"
     assert_job_finished(job_type_id, count=1)
     assert_job_has_run(job_type_id)
+    assert_job_had_progress(job_type_id)
 
 
 def test_restore_snapshot_task(backups, dummy_service):

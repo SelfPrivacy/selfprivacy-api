@@ -7,6 +7,9 @@ from collections.abc import Iterable
 
 from selfprivacy_api.backup.backuper import AbstractBackuper
 from selfprivacy_api.models.backup.snapshot import Snapshot
+from selfprivacy_api.backup.jobs import get_backup_job
+from selfprivacy_api.services import get_service_by_id
+from selfprivacy_api.jobs import Jobs, JobStatus
 
 from selfprivacy_api.backup.local_secret import LocalBackupSecret
 
@@ -78,6 +81,19 @@ class ResticBackuper(AbstractBackuper):
             result.append(item)
         return result
 
+    @staticmethod
+    def output_yielder(command):
+        with subprocess.Popen(
+            command,
+            shell=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            universal_newlines=True,
+        ) as handle:
+            for line in iter(handle.stdout.readline, ""):
+                if not "NOTICE:" in line:
+                    yield line
+
     def start_backup(self, folders: List[str], repo_name: str):
         """
         Start backup with restic
@@ -92,20 +108,25 @@ class ResticBackuper(AbstractBackuper):
             folders,
             branch_name=repo_name,
         )
-        with subprocess.Popen(
-            backup_command,
-            shell=False,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        ) as handle:
-            output = handle.communicate()[0].decode("utf-8")
-            try:
-                messages = self.parse_json_output(output)
-                return ResticBackuper._snapshot_from_backup_messages(
-                    messages, repo_name
-                )
-            except ValueError as e:
-                raise ValueError("could not create a snapshot: ") from e
+
+        messages = []
+        try:
+            for raw_message in ResticBackuper.output_yielder(backup_command):
+                message = self.parse_json_output(raw_message)
+                if message["message_type"] == "status":
+                    job = get_backup_job(get_service_by_id(repo_name))
+                    if job is not None:  # only update status if we run under some job
+                        Jobs.update(
+                            job,
+                            JobStatus.RUNNING,
+                            progress=ResticBackuper.progress_from_status_message(
+                                message
+                            ),
+                        )
+                messages.append(message)
+            return ResticBackuper._snapshot_from_backup_messages(messages, repo_name)
+        except ValueError as e:
+            raise ValueError("could not create a snapshot: ", messages) from e
 
     @staticmethod
     def _snapshot_from_backup_messages(messages, repo_name) -> Snapshot:
@@ -113,6 +134,10 @@ class ResticBackuper(AbstractBackuper):
             if message["message_type"] == "summary":
                 return ResticBackuper._snapshot_from_fresh_summary(message, repo_name)
         raise ValueError("no summary message in restic json output")
+
+    @staticmethod
+    def progress_from_status_message(message: object) -> int:
+        return int(message["percent_done"])
 
     @staticmethod
     def _snapshot_from_fresh_summary(message: object, repo_name) -> Snapshot:
