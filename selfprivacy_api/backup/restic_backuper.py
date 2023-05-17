@@ -110,19 +110,10 @@ class ResticBackuper(AbstractBackuper):
         )
 
         messages = []
+        job = get_backup_job(get_service_by_id(repo_name))
         try:
             for raw_message in ResticBackuper.output_yielder(backup_command):
-                message = self.parse_json_output(raw_message)
-                if message["message_type"] == "status":
-                    job = get_backup_job(get_service_by_id(repo_name))
-                    if job is not None:  # only update status if we run under some job
-                        Jobs.update(
-                            job,
-                            JobStatus.RUNNING,
-                            progress=ResticBackuper.progress_from_status_message(
-                                message
-                            ),
-                        )
+                message = self.parse_message(raw_message, job)
                 messages.append(message)
             return ResticBackuper._snapshot_from_backup_messages(messages, repo_name)
         except ValueError as e:
@@ -135,9 +126,16 @@ class ResticBackuper(AbstractBackuper):
                 return ResticBackuper._snapshot_from_fresh_summary(message, repo_name)
         raise ValueError("no summary message in restic json output")
 
-    @staticmethod
-    def progress_from_status_message(message: object) -> int:
-        return int(message["percent_done"])
+    def parse_message(self, raw_message, job=None) -> object:
+        message = self.parse_json_output(raw_message)
+        if message["message_type"] == "status":
+            if job is not None:  # only update status if we run under some job
+                Jobs.update(
+                    job,
+                    JobStatus.RUNNING,
+                    progress=int(message["percent_done"]),
+                )
+        return message
 
     @staticmethod
     def _snapshot_from_fresh_summary(message: object, repo_name) -> Snapshot:
