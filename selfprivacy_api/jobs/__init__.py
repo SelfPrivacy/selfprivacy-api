@@ -133,10 +133,19 @@ class Jobs:
     @staticmethod
     def log_status_update(job: Job, status: JobStatus):
         redis = RedisPool().get_connection()
-        key = _redis_log_key_from_uuid(job.uid)
+        key = _status_log_key_from_uuid(job.uid)
         if redis.exists(key):
             assert redis.type(key) == "list"
         redis.lpush(key, status.value)
+        redis.expire(key, 10)
+
+    @staticmethod
+    def log_progress_update(job: Job, progress: int):
+        redis = RedisPool().get_connection()
+        key = _progress_log_key_from_uuid(job.uid)
+        if redis.exists(key):
+            assert redis.type(key) == "list"
+        redis.lpush(key, progress)
         redis.expire(key, 10)
 
     @staticmethod
@@ -144,7 +153,7 @@ class Jobs:
         result = []
 
         redis = RedisPool().get_connection()
-        key = _redis_log_key_from_uuid(job.uid)
+        key = _status_log_key_from_uuid(job.uid)
         if not redis.exists(key):
             return []
 
@@ -154,6 +163,23 @@ class Jobs:
                 result.append(JobStatus[status])
             except KeyError as e:
                 raise ValueError("impossible job status: " + status) from e
+        return result
+
+    @staticmethod
+    def progress_updates(job: Job) -> typing.List[int]:
+        result = []
+
+        redis = RedisPool().get_connection()
+        key = _progress_log_key_from_uuid(job.uid)
+        if not redis.exists(key):
+            return []
+
+        progress_strings = redis.lrange(key, 0, -1)
+        for progress in progress_strings:
+            try:
+                result.append(int(progress))
+            except KeyError as e:
+                raise ValueError("impossible job progress: " + progress) from e
         return result
 
     @staticmethod
@@ -178,6 +204,7 @@ class Jobs:
             job.status_text = status_text
         if progress is not None:
             job.progress = progress
+            Jobs.log_progress_update(job, progress)
         job.status = status
         Jobs.log_status_update(job, status)
         job.updated_at = datetime.datetime.now()
@@ -235,8 +262,12 @@ def _redis_key_from_uuid(uuid_string):
     return "jobs:" + str(uuid_string)
 
 
-def _redis_log_key_from_uuid(uuid_string):
+def _status_log_key_from_uuid(uuid_string):
     return STATUS_LOGS_PREFIX + str(uuid_string)
+
+
+def _progress_log_key_from_uuid(uuid_string):
+    return PROGRESS_LOGS_PREFIX + str(uuid_string)
 
 
 def _store_job_as_hash(redis, redis_key, model):
