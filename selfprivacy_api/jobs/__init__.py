@@ -134,8 +134,6 @@ class Jobs:
     def log_status_update(job: Job, status: JobStatus):
         redis = RedisPool().get_connection()
         key = _status_log_key_from_uuid(job.uid)
-        if redis.exists(key):
-            assert redis.type(key) == "list"
         redis.lpush(key, status.value)
         redis.expire(key, 10)
 
@@ -143,8 +141,6 @@ class Jobs:
     def log_progress_update(job: Job, progress: int):
         redis = RedisPool().get_connection()
         key = _progress_log_key_from_uuid(job.uid)
-        if redis.exists(key):
-            assert redis.type(key) == "list"
         redis.lpush(key, progress)
         redis.expire(key, 10)
 
