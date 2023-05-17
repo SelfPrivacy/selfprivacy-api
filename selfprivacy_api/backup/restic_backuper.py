@@ -18,15 +18,17 @@ class ResticBackuper(AbstractBackuper):
         self.type = type
         self.account = ""
         self.key = ""
+        self.repo = ""
 
-    def set_creds(self, account: str, key: str):
+    def set_creds(self, account: str, key: str, repo: str):
         self.account = account
         self.key = key
+        self.repo = repo
 
-    def restic_repo(self, repository_name: str) -> str:
+    def restic_repo(self) -> str:
         # https://restic.readthedocs.io/en/latest/030_preparing_a_new_repo.html#other-services-via-rclone
         # https://forum.rclone.org/t/can-rclone-be-run-solely-with-command-line-options-no-config-no-env-vars/6314/5
-        return f"rclone:{self.type}{repository_name}/sfbackup"
+        return f"rclone:{self.type}{self.repo}"
 
     def rclone_args(self):
         return "rclone.args=serve restic --stdio" + self.backend_rclone_args()
@@ -44,16 +46,23 @@ class ResticBackuper(AbstractBackuper):
     def _password_command(self):
         return f"echo {LocalBackupSecret.get()}"
 
-    def restic_command(self, repo_name: str, *args):
+    def restic_command(self, *args, branch_name: str = ""):
         command = [
             "restic",
             "-o",
             self.rclone_args(),
             "-r",
-            self.restic_repo(repo_name),
+            self.restic_repo(),
             "--password-command",
             self._password_command(),
         ]
+        if branch_name != "":
+            command.extend(
+                [
+                    "--tag",
+                    branch_name,
+                ]
+            )
         if args != []:
             command.extend(ResticBackuper.__flatten_list(args))
         return command
@@ -78,10 +87,10 @@ class ResticBackuper(AbstractBackuper):
         assert not isinstance(folders, str)
 
         backup_command = self.restic_command(
-            repo_name,
             "backup",
             "--json",
             folders,
+            branch_name=repo_name,
         )
         with subprocess.Popen(
             backup_command,
@@ -115,7 +124,6 @@ class ResticBackuper(AbstractBackuper):
 
     def init(self, repo_name):
         init_command = self.restic_command(
-            repo_name,
             "init",
         )
         with subprocess.Popen(
@@ -130,7 +138,6 @@ class ResticBackuper(AbstractBackuper):
 
     def is_initted(self, repo_name: str) -> bool:
         command = self.restic_command(
-            repo_name,
             "check",
             "--json",
         )
@@ -147,7 +154,6 @@ class ResticBackuper(AbstractBackuper):
         Size of a snapshot
         """
         command = self.restic_command(
-            repo_name,
             "stats",
             snapshot_id,
             "--json",
@@ -169,7 +175,6 @@ class ResticBackuper(AbstractBackuper):
         # I do not alter the signature yet because maybe this can be
         # changed with flags
         restore_command = self.restic_command(
-            repo_name,
             "restore",
             snapshot_id,
             "--target",
@@ -190,7 +195,6 @@ class ResticBackuper(AbstractBackuper):
         raises Value Error if repo does not exist
         """
         listing_command = self.restic_command(
-            repo_name,
             "snapshots",
             "--json",
         )
@@ -217,7 +221,7 @@ class ResticBackuper(AbstractBackuper):
             snapshot = Snapshot(
                 id=restic_snapshot["short_id"],
                 created_at=restic_snapshot["time"],
-                service_name=repo_name,
+                service_name=restic_snapshot["tags"][0],
             )
 
             snapshots.append(snapshot)

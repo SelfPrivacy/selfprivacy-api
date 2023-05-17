@@ -8,4 +8,5 @@ class LocalFileBackup(AbstractBackupProvider):
     # login and key args are for compatibility with generic provider methods. They are ignored.
     def __init__(self, filename: str, login: str = "", key: str = ""):
         super().__init__()
-        self.backuper = ResticBackuper("", "", f":local:{filename}/")
+        self.backuper = ResticBackuper("", "", ":local:")
+        self.backuper.set_creds("", "", filename)
