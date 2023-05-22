@@ -109,6 +109,9 @@ def test_config_load(generic_userdata):
     assert provider.login == "ID"
     assert provider.key == "KEY"
 
+    assert provider.backuper.account == "ID"
+    assert provider.backuper.key == "KEY"
+
 
 def test_select_backend():
     provider = providers.get_provider(BackupProvider.BACKBLAZE)
