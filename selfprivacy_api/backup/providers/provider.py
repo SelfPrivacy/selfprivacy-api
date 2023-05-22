@@ -12,6 +12,7 @@ class AbstractBackupProvider(ABC):
     def backuper(self) -> AbstractBackuper:
         raise NotImplementedError
 
-    def __init__(self, login="", key=""):
+    def __init__(self, login="", key="", location=""):
+        self.backuper.set_creds(login, key, location)
         self.login = login
         self.key = key
