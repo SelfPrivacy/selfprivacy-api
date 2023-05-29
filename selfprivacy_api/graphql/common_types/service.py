@@ -108,6 +108,13 @@ class Service:
         return None
 
 
+@strawberry.type
+class SnapshotInfo:
+    id: str
+    service: "Service"
+    created_at: datetime.datetime
+
+
 def service_to_graphql_service(service: ServiceInterface) -> Service:
     """Convert service to graphql service"""
     return Service(
