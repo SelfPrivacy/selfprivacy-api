@@ -9,6 +9,7 @@ from selfprivacy_api.graphql.mutations.mutation_interface import (
     MutationReturnInterface,
 )
 from selfprivacy_api.graphql.queries.backup import BackupConfiguration
+from selfprivacy_api.graphql.queries.backup import Backup
 from selfprivacy_api.graphql.queries.providers import BackupProvider
 
 from selfprivacy_api.backup import Backups
@@ -51,3 +52,10 @@ class BackupMutations:
         )
         Backups.set_provider(provider)
         Backups.init_repo()
+
+
+@strawberry.mutation(permission_classes=[IsAuthenticated])
+def remove_repository(self) -> GenericBackupConfigReturn:
+    """Remove repository"""
+    Backups.reset()
+    return Backup.configuration()
