@@ -120,7 +120,7 @@ def test_select_backend():
 
 
 def test_file_backend_init(file_backup):
-    file_backup.backuper.init("somerepo")
+    file_backup.backuper.init()
 
 
 def test_backup_simple_file(raw_dummy_service, file_backup):
@@ -130,7 +130,7 @@ def test_backup_simple_file(raw_dummy_service, file_backup):
     assert file_backup is not None
 
     name = service.get_id()
-    file_backup.backuper.init(name)
+    file_backup.backuper.init()
 
 
 def test_backup_service(dummy_service, backups):
@@ -217,11 +217,11 @@ def test_sizing(backups, dummy_service):
 
 
 def test_init_tracking(backups, raw_dummy_service):
-    assert Backups.is_initted(raw_dummy_service) is False
+    assert Backups.is_initted() is False
 
-    Backups.init_repo(raw_dummy_service)
+    Backups.init_repo()
 
-    assert Backups.is_initted(raw_dummy_service) is True
+    assert Backups.is_initted() is True
 
 
 def finished_jobs():
@@ -414,21 +414,21 @@ def test_snapshots_caching(backups, dummy_service):
 
 # Storage
 def test_init_tracking_caching(backups, raw_dummy_service):
-    assert Storage.has_init_mark(raw_dummy_service) is False
+    assert Storage.has_init_mark() is False
 
-    Storage.mark_as_init(raw_dummy_service)
+    Storage.mark_as_init()
 
-    assert Storage.has_init_mark(raw_dummy_service) is True
-    assert Backups.is_initted(raw_dummy_service) is True
+    assert Storage.has_init_mark() is True
+    assert Backups.is_initted() is True
 
 
 # Storage
 def test_init_tracking_caching2(backups, raw_dummy_service):
-    assert Storage.has_init_mark(raw_dummy_service) is False
+    assert Storage.has_init_mark() is False
 
-    Backups.init_repo(raw_dummy_service)
+    Backups.init_repo()
 
-    assert Storage.has_init_mark(raw_dummy_service) is True
+    assert Storage.has_init_mark() is True
 
 
 # Storage

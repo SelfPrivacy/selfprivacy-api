@@ -145,7 +145,7 @@ class ResticBackuper(AbstractBackuper):
             service_name=repo_name,
         )
 
-    def init(self, repo_name):
+    def init(self):
         init_command = self.restic_command(
             "init",
         )
@@ -159,7 +159,7 @@ class ResticBackuper(AbstractBackuper):
             if not "created restic repository" in output:
                 raise ValueError("cannot init a repo: " + output)
 
-    def is_initted(self, repo_name: str) -> bool:
+    def is_initted(self) -> bool:
         command = self.restic_command(
             "check",
             "--json",
