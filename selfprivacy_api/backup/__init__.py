@@ -29,6 +29,9 @@ class Backups:
         Storage.store_testrepo_path(file_path)
         Storage.store_provider(provider)
 
+    def set_provider(provider: AbstractBackupProvider):
+        Storage.store_provider(provider)
+
     @staticmethod
     def get_last_backed_up(service: Service) -> Optional[datetime]:
         """Get a timezone-aware time of the last backup of a service"""
@@ -126,19 +129,21 @@ class Backups:
         return Backups.lookup_provider()
 
     @staticmethod
-    def set_provider(kind: str, login: str, key: str):
-        provider = Backups.construct_provider(kind, login, key)
+    def set_provider(kind: str, login: str, key: str, location: str, repo_id: str = ""):
+        provider = Backups.construct_provider(kind, login, key, location, id)
         Storage.store_provider(provider)
 
     @staticmethod
-    def construct_provider(kind: str, login: str, key: str):
+    def construct_provider(
+        kind: str, login: str, key: str, location: str, repo_id: str = ""
+    ):
         provider_class = get_provider(BackupProvider[kind])
 
         if kind == "FILE":
             path = Storage.get_testrepo_path()
             return provider_class(path)
 
-        return provider_class(login=login, key=key)
+        return provider_class(login=login, key=key, location=location, repo_id=repo_id)
 
     @staticmethod
     def reset():
@@ -169,17 +174,19 @@ class Backups:
                 if "backblaze" in user_data.keys():
                     account = user_data["backblaze"]["accountId"]
                     key = user_data["backblaze"]["accountKey"]
+                    location = user_data["backblaze"]["bucket"]
                     provider_string = "BACKBLAZE"
                     return Backups.construct_provider(
-                        kind=provider_string, login=account, key=key
+                        kind=provider_string, login=account, key=key, location=location
                     )
                 return None
 
             account = user_data["backup"]["accountId"]
             key = user_data["backup"]["accountKey"]
             provider_string = user_data["backup"]["provider"]
+            location = user_data["backup"]["bucket"]
             return Backups.construct_provider(
-                kind=provider_string, login=account, key=key
+                kind=provider_string, login=account, key=key, location=location
             )
 
     @staticmethod
@@ -188,7 +195,11 @@ class Backups:
         if provider_model is None:
             return None
         return Backups.construct_provider(
-            provider_model.kind, provider_model.login, provider_model.key
+            provider_model.kind,
+            provider_model.login,
+            provider_model.key,
+            provider_model.location,
+            provider_model.repo_id,
         )
 
     @staticmethod
@@ -214,10 +225,13 @@ class Backups:
         Jobs.update(job, status=JobStatus.FINISHED)
 
     @staticmethod
-    def init_repo(service: Service):
-        repo_name = service.get_id()
+    def init_repo(service: Optional[Service] = None):
+        if service is not None:
+            repo_name = service.get_id()
+
         Backups.provider().backuper.init(repo_name)
-        Storage.mark_as_init(service)
+        if service is not None:
+            Storage.mark_as_init(service)
 
     @staticmethod
     def is_initted(service: Service) -> bool:

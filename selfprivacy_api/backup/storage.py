@@ -146,7 +146,11 @@ class Storage:
             redis,
             REDIS_PROVIDER_KEY,
             BackupProviderModel(
-                kind=get_kind(provider), login=provider.login, key=provider.key
+                kind=get_kind(provider),
+                login=provider.login,
+                key=provider.key,
+                location=provider.location,
+                repo_id=provider.repo_id,
             ),
         )
 
