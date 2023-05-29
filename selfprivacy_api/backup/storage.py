@@ -160,13 +160,11 @@ class Storage:
         return provider_model
 
     @staticmethod
-    def has_init_mark(service: Service) -> bool:
-        repo_name = service.get_id()
-        if redis.exists(REDIS_INITTED_CACHE_PREFIX + repo_name):
+    def has_init_mark() -> bool:
+        if redis.exists(REDIS_INITTED_CACHE_PREFIX):
             return True
         return False
 
     @staticmethod
-    def mark_as_init(service: Service):
-        repo_name = service.get_id()
-        redis.set(REDIS_INITTED_CACHE_PREFIX + repo_name, 1)
+    def mark_as_init():
+        redis.set(REDIS_INITTED_CACHE_PREFIX, 1)

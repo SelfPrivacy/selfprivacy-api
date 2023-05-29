@@ -229,19 +229,17 @@ class Backups:
         if service is not None:
             repo_name = service.get_id()
 
-        Backups.provider().backuper.init(repo_name)
-        if service is not None:
-            Storage.mark_as_init(service)
+        Backups.provider().backuper.init()
+        Storage.mark_as_init()
 
     @staticmethod
-    def is_initted(service: Service) -> bool:
-        repo_name = service.get_id()
-        if Storage.has_init_mark(service):
+    def is_initted() -> bool:
+        if Storage.has_init_mark():
             return True
 
-        initted = Backups.provider().backuper.is_initted(repo_name)
+        initted = Backups.provider().backuper.is_initted()
         if initted:
-            Storage.mark_as_init(service)
+            Storage.mark_as_init()
             return True
 
         return False
