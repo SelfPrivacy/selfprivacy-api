@@ -151,7 +151,7 @@ def test_backup_service(dummy_service, backups):
 
 def test_no_repo(memory_backup):
     with pytest.raises(ValueError):
-        assert memory_backup.backuper.get_snapshots("") == []
+        assert memory_backup.backuper.get_snapshots() == []
 
 
 def test_one_snapshot(backups, dummy_service):
