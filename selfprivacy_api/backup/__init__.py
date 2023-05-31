@@ -253,7 +253,7 @@ class Backups:
         # TODO: the oldest snapshots will get expired faster than the new ones.
         # How to detect that the end is missing?
 
-        upstream_snapshots = Backups.provider().backuper.get_snapshots(service_id)
+        upstream_snapshots = Backups.provider().backuper.get_snapshots()
         Backups.sync_service_snapshots(service_id, upstream_snapshots)
         return upstream_snapshots
 

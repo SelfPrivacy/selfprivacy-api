@@ -212,7 +212,7 @@ class ResticBackuper(AbstractBackuper):
             if "restoring" not in output:
                 raise ValueError("cannot restore a snapshot: " + output)
 
-    def _load_snapshots(self, repo_name) -> object:
+    def _load_snapshots(self) -> object:
         """
         Load list of snapshots from repository
         raises Value Error if repo does not exist
@@ -237,10 +237,10 @@ class ResticBackuper(AbstractBackuper):
         except ValueError as e:
             raise ValueError("Cannot load snapshots: ") from e
 
-    def get_snapshots(self, repo_name) -> List[Snapshot]:
+    def get_snapshots(self) -> List[Snapshot]:
         """Get all snapshots from the repo"""
         snapshots = []
-        for restic_snapshot in self._load_snapshots(repo_name):
+        for restic_snapshot in self._load_snapshots():
             snapshot = Snapshot(
                 id=restic_snapshot["short_id"],
                 created_at=restic_snapshot["time"],
