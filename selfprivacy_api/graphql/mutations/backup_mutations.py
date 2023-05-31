@@ -13,6 +13,8 @@ from selfprivacy_api.graphql.queries.backup import Backup
 from selfprivacy_api.graphql.queries.providers import BackupProvider
 
 from selfprivacy_api.backup import Backups
+from selfprivacy_api.services import get_all_services, get_service_by_id
+from selfprivacy_api.backup.tasks import start_backup
 
 
 @strawberry.input
@@ -36,6 +38,10 @@ class GenericBackupConfigReturn(MutationReturnInterface):
     configuration: typing.Optional[BackupConfiguration]
 
 
+class GenericJobMutationReturn:
+    pass
+
+
 @strawberry.type
 class BackupMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
@@ -53,9 +59,24 @@ class BackupMutations:
         Backups.set_provider(provider)
         Backups.init_repo()
 
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    def remove_repository(self) -> GenericBackupConfigReturn:
+        """Remove repository"""
+        Backups.reset()
+        return Backup.configuration()
 
-@strawberry.mutation(permission_classes=[IsAuthenticated])
-def remove_repository(self) -> GenericBackupConfigReturn:
-    """Remove repository"""
-    Backups.reset()
-    return Backup.configuration()
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    def start_backup(
+        self, service_id: typing.Optional[str] = None
+    ) -> GenericJobMutationReturn:
+        """Start backup. If service not provided, backup all services"""
+        if service_id is None:
+            for service in get_all_services():
+                start_backup(service)
+        else:
+            service = get_service_by_id(service_id)
+            if service is None:
+                raise ValueError(f"nonexistent service: {service_id}")
+            start_backup(service)
+
+        return GenericJobMutationReturn()
