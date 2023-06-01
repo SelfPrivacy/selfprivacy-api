@@ -23,11 +23,11 @@ class Pleroma(Service):
 
     @staticmethod
     def get_display_name(locale: str = "en") -> str:
-        return L10n().get("services.pleroma.display_name", locale)
+        return "services.pleroma.display_name"
 
     @staticmethod
     def get_description(locale: str = "en") -> str:
-        return L10n().get("services.pleroma.description", locale)
+        return "services.pleroma.description"
 
     @staticmethod
     def get_svg_icon() -> str:

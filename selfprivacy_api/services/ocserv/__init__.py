@@ -22,11 +22,11 @@ class Ocserv(Service):
 
     @staticmethod
     def get_display_name(locale: str = "en") -> str:
-        return L10n().get("services.ocserv.display_name", locale)
+        return "services.ocserv.display_name"
 
     @staticmethod
     def get_description(locale: str = "en") -> str:
-        return L10n().get("services.ocserv.description", locale)
+        return "services.ocserv.description"
 
     @staticmethod
     def get_svg_icon() -> str:

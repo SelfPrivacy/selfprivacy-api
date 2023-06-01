@@ -1,20 +1,21 @@
 from enum import Enum
 import typing
 import strawberry
-import datetime
+from strawberry.types import Info
 from selfprivacy_api.graphql.common_types.dns import DnsRecord
 from selfprivacy_api.graphql.common_types.backup_snapshot import SnapshotInfo
 
 from selfprivacy_api.services import get_service_by_id, get_services_by_location
 from selfprivacy_api.services import Service as ServiceInterface
 from selfprivacy_api.utils.block_devices import BlockDevices
+from selfprivacy_api.utils.localization import Localization as L10n
 
 
-def get_usages(root: "StorageVolume") -> list["StorageUsageInterface"]:
+def get_usages(root: "StorageVolume", locale: str) -> list["StorageUsageInterface"]:
     """Get usages of a volume"""
     return [
         ServiceStorageUsage(
-            service=service_to_graphql_service(service),
+            service=service_to_graphql_service(service, locale),
             title=service.get_display_name(),
             used_space=str(service.get_storage_usage()),
             volume=get_volume_by_id(service.get_drive()),
@@ -37,9 +38,10 @@ class StorageVolume:
     type: str
 
     @strawberry.field
-    def usages(self) -> list["StorageUsageInterface"]:
+    def usages(self, info: Info) -> list["StorageUsageInterface"]:
         """Get usages of a volume"""
-        return get_usages(self)
+        locale = info.context["locale"]
+        return get_usages(self, locale)
 
 
 @strawberry.interface
@@ -67,7 +69,7 @@ class ServiceStatusEnum(Enum):
     OFF = "OFF"
 
 
-def get_storage_usage(root: "Service") -> ServiceStorageUsage:
+def get_storage_usage(root: "Service", locale: str) -> ServiceStorageUsage:
     """Get storage usage for a service"""
     service = get_service_by_id(root.id)
     if service is None:
@@ -78,7 +80,7 @@ def get_storage_usage(root: "Service") -> ServiceStorageUsage:
             volume=get_volume_by_id("sda1"),
         )
     return ServiceStorageUsage(
-        service=service_to_graphql_service(service),
+        service=service_to_graphql_service(service, locale),
         title=service.get_display_name(),
         used_space=str(service.get_storage_usage()),
         volume=get_volume_by_id(service.get_drive()),
@@ -99,21 +101,23 @@ class Service:
     dns_records: typing.Optional[typing.List[DnsRecord]]
 
     @strawberry.field
-    def storage_usage(self) -> ServiceStorageUsage:
+    def storage_usage(self, info: Info) -> ServiceStorageUsage:
         """Get storage usage for a service"""
-        return get_storage_usage(self)
+        locale = info.context["locale"]
+        return get_storage_usage(self, locale)
 
     @strawberry.field
     def backup_snapshots(self) -> typing.Optional[typing.List[SnapshotInfo]]:
         return None
 
 
-def service_to_graphql_service(service: ServiceInterface) -> Service:
+def service_to_graphql_service(service: ServiceInterface, locale: str) -> Service:
     """Convert service to graphql service"""
+    l10n = L10n()
     return Service(
         id=service.get_id(),
-        display_name=service.get_display_name(),
-        description=service.get_description(),
+        display_name=l10n.get(service.get_display_name(), locale),
+        description=l10n.get(service.get_description(), locale),
         svg_icon=service.get_svg_icon(),
         is_movable=service.is_movable(),
         is_required=service.is_required(),

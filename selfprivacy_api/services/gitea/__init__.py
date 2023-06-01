@@ -27,12 +27,12 @@ class Gitea(Service):
     @staticmethod
     def get_display_name(locale: str = "en") -> str:
         """Return service display name."""
-        return L10n().get("services.gitea.display_name", locale)
+        return "services.gitea.display_name"
 
     @staticmethod
     def get_description(locale: str = "en") -> str:
         """Return service description."""
-        return L10n().get("services.gitea.description", locale)
+        return "services.gitea.description"
 
     @staticmethod
     def get_svg_icon() -> str:

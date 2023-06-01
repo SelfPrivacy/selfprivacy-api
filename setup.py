@@ -7,5 +7,5 @@ setup(
     scripts=[
         "selfprivacy_api/app.py",
     ],
-    include_package_data=True
+    include_package_data=True,
 )

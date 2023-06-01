@@ -27,12 +27,12 @@ class Jitsi(Service):
     @staticmethod
     def get_display_name(locale: str = "en") -> str:
         """Return service display name."""
-        return L10n().get("services.jitsi.display_name", locale)
+        return "services.jitsi.display_name"
 
     @staticmethod
     def get_description(locale: str = "en") -> str:
         """Return service description."""
-        return L10n().get("services.jitsi.description", locale)
+        return "services.jitsi.description"
 
     @staticmethod
     def get_svg_icon() -> str:

@@ -2,6 +2,7 @@
 # pylint: disable=too-few-public-methods
 import typing
 import strawberry
+from strawberry.types import Info
 
 from selfprivacy_api.graphql.common_types.service import (
     Service,
@@ -13,6 +14,7 @@ from selfprivacy_api.services import get_all_services
 @strawberry.type
 class Services:
     @strawberry.field
-    def all_services(self, locale: str = "en") -> typing.List[Service]:
+    def all_services(self, info: Info) -> typing.List[Service]:
+        locale = info.context["locale"]
         services = get_all_services()
         return [service_to_graphql_service(service, locale) for service in services]

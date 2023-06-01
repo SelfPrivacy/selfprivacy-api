@@ -27,12 +27,12 @@ class Bitwarden(Service):
     @staticmethod
     def get_display_name(locale: str = "en") -> str:
         """Return service display name."""
-        return L10n().get("services.bitwarden.display_name", locale)
+        return "services.bitwarden.display_name"
 
     @staticmethod
     def get_description(locale: str = "en") -> str:
         """Return service description."""
-        return L10n().get("services.bitwarden.description", locale)
+        return "services.bitwarden.description"
 
     @staticmethod
     def get_svg_icon() -> str:

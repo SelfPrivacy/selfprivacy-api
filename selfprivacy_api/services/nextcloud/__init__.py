@@ -23,14 +23,14 @@ class Nextcloud(Service):
         return "nextcloud"
 
     @staticmethod
-    def get_display_name(locale: str = "en") -> str:
+    def get_display_name() -> str:
         """Return service display name."""
-        return L10n().get("services.nextcloud.display_name", locale)
+        return "services.nextcloud.display_name"
 
     @staticmethod
-    def get_description(locale: str = "en") -> str:
+    def get_description() -> str:
         """Return service description."""
-        return L10n().get("services.nextcloud.description", locale)
+        return "services.nextcloud.description"
 
     @staticmethod
     def get_svg_icon() -> str:
