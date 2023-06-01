@@ -48,6 +48,11 @@ class Storage:
                 redis.delete(key)
 
     @staticmethod
+    def invalidate_snapshot_storage():
+        for key in redis.keys(REDIS_SNAPSHOTS_PREFIX + "*"):
+            redis.delete(key)
+
+    @staticmethod
     def store_testrepo_path(path: str):
         redis.set(REDIS_REPO_PATH_KEY, path)
 
@@ -96,6 +101,13 @@ class Storage:
     def delete_cached_snapshot(snapshot: Snapshot):
         snapshot_key = Storage.__snapshot_key(snapshot)
         redis.delete(snapshot_key)
+
+    @staticmethod
+    def get_cached_snapshot_by_id(snapshot_id: str) -> Optional[Snapshot]:
+        key = redis.keys(REDIS_SNAPSHOTS_PREFIX + snapshot_id)
+        if not redis.exists(key):
+            return None
+        return hash_as_model(redis, key, Snapshot)
 
     @staticmethod
     def get_cached_snapshots() -> List[Snapshot]:
