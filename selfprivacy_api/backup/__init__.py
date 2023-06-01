@@ -258,6 +258,25 @@ class Backups:
         return [snap for snap in upstream_snapshots if snap.service_name == service_id]
 
     @staticmethod
+    def get_snapshot_by_id(id: str) -> Optional[Snapshot]:
+        snap = Storage.get_cached_snapshot_by_id(id)
+        if snap is not None:
+            return snap
+
+        # Possibly our cache entry got invalidated, let's try one more time
+        Backups.sync_all_snapshots()
+        snap = Storage.get_cached_snapshot_by_id(id)
+
+        return snap
+
+    @staticmethod
+    def sync_all_snapshots():
+        upstream_snapshots = Backups.provider().backuper.get_snapshots()
+        Storage.invalidate_snapshot_storage()
+        for snapshot in upstream_snapshots:
+            Storage.cache_snapshot(snapshot)
+
+    @staticmethod
     def restore_service_from_snapshot(service: Service, snapshot_id: str):
         repo_name = service.get_id()
         folders = service.get_folders()

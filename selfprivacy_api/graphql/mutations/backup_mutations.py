@@ -14,7 +14,7 @@ from selfprivacy_api.graphql.queries.providers import BackupProvider
 
 from selfprivacy_api.backup import Backups
 from selfprivacy_api.services import get_all_services, get_service_by_id
-from selfprivacy_api.backup.tasks import start_backup
+from selfprivacy_api.backup.tasks import start_backup, restore_snapshot
 
 
 @strawberry.input
@@ -78,5 +78,15 @@ class BackupMutations:
             if service is None:
                 raise ValueError(f"nonexistent service: {service_id}")
             start_backup(service)
+
+        return GenericJobMutationReturn()
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    def restore_backup(self, snapshot_id: str) -> GenericJobMutationReturn:
+        """Restore backup"""
+        snap = Backups.get_snapshot_by_id(snapshot_id)
+        if snap in None:
+            raise ValueError(f"No such snapshot: {snapshot_id}")
+        restore_snapshot(snap)
 
         return GenericJobMutationReturn()
