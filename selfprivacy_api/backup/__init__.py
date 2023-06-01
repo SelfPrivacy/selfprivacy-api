@@ -255,7 +255,7 @@ class Backups:
 
         upstream_snapshots = Backups.provider().backuper.get_snapshots()
         Backups.sync_service_snapshots(service_id, upstream_snapshots)
-        return upstream_snapshots
+        return [snap for snap in upstream_snapshots if snap.service_name == service_id]
 
     @staticmethod
     def restore_service_from_snapshot(service: Service, snapshot_id: str):
