@@ -270,6 +270,10 @@ class Backups:
         return snap
 
     @staticmethod
+    def force_snapshot_reload():
+        Backups.sync_all_snapshots()
+
+    @staticmethod
     def sync_all_snapshots():
         upstream_snapshots = Backups.provider().backuper.get_snapshots()
         Storage.invalidate_snapshot_storage()
