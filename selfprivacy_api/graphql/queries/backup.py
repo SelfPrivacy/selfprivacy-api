@@ -37,4 +37,11 @@ class Backup:
 
     @strawberry.field
     def all_snapshots(self) -> typing.List[SnapshotInfo]:
-        return []
+        result = []
+        snapshots = Backups.get_all_snapshots()
+        for snap in snapshots:
+            graphql_snap = SnapshotInfo(
+                id=snap.id, service=snap.service_name, created_at=snap.created_at
+            )
+            result.append(graphql_snap)
+        return result
