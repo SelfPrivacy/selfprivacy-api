@@ -223,6 +223,7 @@ class Backups:
             raise e
 
         Jobs.update(job, status=JobStatus.FINISHED)
+        return snapshot
 
     @staticmethod
     def init_repo(service: Optional[Service] = None):

@@ -104,7 +104,7 @@ class Storage:
 
     @staticmethod
     def get_cached_snapshot_by_id(snapshot_id: str) -> Optional[Snapshot]:
-        key = redis.keys(REDIS_SNAPSHOTS_PREFIX + snapshot_id)
+        key = REDIS_SNAPSHOTS_PREFIX + snapshot_id
         if not redis.exists(key):
             return None
         return hash_as_model(redis, key, Snapshot)
