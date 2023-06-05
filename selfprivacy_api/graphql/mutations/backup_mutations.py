@@ -66,6 +66,14 @@ class BackupMutations:
         return Backup.configuration()
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
+    def set_autobackup_period(
+        self, period: typing.Optional[int] = None
+    ) -> GenericBackupConfigReturn:
+        """Set autobackup period. None is to disable autobackup"""
+        Backups.set_autobackup_period_minutes(period)
+        return Backup.configuration()
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def start_backup(
         self, service_id: typing.Optional[str] = None
     ) -> GenericJobMutationReturn:
