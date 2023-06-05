@@ -247,16 +247,20 @@ class Backups:
 
     @staticmethod
     def get_snapshots(service: Service) -> List[Snapshot]:
-        service_id = service.get_id()
-        cached_snapshots = Backups.get_cached_snapshots_service(service_id)
+        snapshots = Backups.get_all_snapshots()
+        return [snap for snap in snapshots if snap.service_name == service.get_id()]
+
+    @staticmethod
+    def get_all_snapshots() -> List[Snapshot]:
+        cached_snapshots = Storage.get_cached_snapshots()
         if cached_snapshots != []:
             return cached_snapshots
         # TODO: the oldest snapshots will get expired faster than the new ones.
         # How to detect that the end is missing?
 
         upstream_snapshots = Backups.provider().backuper.get_snapshots()
-        Backups.sync_service_snapshots(service_id, upstream_snapshots)
-        return [snap for snap in upstream_snapshots if snap.service_name == service_id]
+        Backups.sync_all_snapshots()
+        return upstream_snapshots
 
     @staticmethod
     def get_snapshot_by_id(id: str) -> Optional[Snapshot]:
