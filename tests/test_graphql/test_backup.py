@@ -243,6 +243,18 @@ def assert_job_had_progress(job_type):
     assert len(Jobs.progress_updates(job)) > 0
 
 
+def test_snapshots_by_id(backups, dummy_service):
+    snap1 = Backups.back_up(dummy_service)
+    snap2 = Backups.back_up(dummy_service)
+    snap3 = Backups.back_up(dummy_service)
+
+    assert snap2.id is not None
+    assert snap2.id != ""
+
+    assert len(Backups.get_snapshots(dummy_service)) == 3
+    assert Backups.get_snapshot_by_id(snap2.id).id == snap2.id
+
+
 def test_backup_service_task(backups, dummy_service):
     handle = start_backup(dummy_service)
     handle(blocking=True)
