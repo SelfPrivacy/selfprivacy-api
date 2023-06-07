@@ -112,7 +112,7 @@ class BackupMutations:
             success=True,
             code=200,
             message="restore job created",
-            jobs=[get_restore_job(service)],
+            job=get_restore_job(service),
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
