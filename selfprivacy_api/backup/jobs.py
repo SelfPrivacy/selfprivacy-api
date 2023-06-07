@@ -1,7 +1,9 @@
 from typing import Optional, List
 
+from selfprivacy_api.models.backup.snapshot import Snapshot
 from selfprivacy_api.jobs import Jobs, Job, JobStatus
 from selfprivacy_api.services.service import Service
+from selfprivacy_api.services import get_service_by_id
 
 
 def job_type_prefix(service: Service) -> str:
@@ -43,6 +45,23 @@ def add_backup_job(service: Service) -> Job:
         type_id=backup_job_type(service),
         name=f"Backup {display_name}",
         description=f"Backing up {display_name}",
+    )
+    return job
+
+
+def add_restore_job(snapshot: Snapshot) -> Job:
+    service = get_service_by_id(snapshot.service_name)
+    if is_something_queued_for(service):
+        message = (
+            f"Cannot start a restore of {service.get_id()}, another operation is queued: "
+            + get_jobs_by_service(service)[0].type_id
+        )
+        raise ValueError(message)
+    display_name = service.get_display_name()
+    job = Jobs.add(
+        type_id=restore_job_type(service),
+        name=f"Restore {display_name}",
+        description=f"restoring {display_name} from {snapshot.id}",
     )
     return job
 
