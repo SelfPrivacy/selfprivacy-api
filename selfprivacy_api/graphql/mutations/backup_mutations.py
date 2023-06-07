@@ -101,7 +101,7 @@ class BackupMutations:
         if snap is None:
             return GenericJobButationReturn(
                 success=False,
-                code=300,
+                code=400,
                 message=f"No such snapshot: {snapshot_id}",
                 job=None,
             )
