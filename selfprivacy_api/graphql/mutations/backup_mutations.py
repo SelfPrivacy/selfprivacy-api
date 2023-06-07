@@ -6,15 +6,18 @@ from strawberry.types import Info
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericMutationReturn,
+    GenericJobButationReturn,
     MutationReturnInterface,
 )
 from selfprivacy_api.graphql.queries.backup import BackupConfiguration
 from selfprivacy_api.graphql.queries.backup import Backup
 from selfprivacy_api.graphql.queries.providers import BackupProvider
+from selfprivacy_api.graphql.common_types.jobs import job_to_api_job
 
 from selfprivacy_api.backup import Backups
 from selfprivacy_api.services import get_all_services, get_service_by_id
 from selfprivacy_api.backup.tasks import start_backup, restore_snapshot
+from selfprivacy_api.backup.jobs import get_backup_job, get_restore_job
 
 
 @strawberry.input
@@ -36,10 +39,6 @@ class GenericBackupConfigReturn(MutationReturnInterface):
     """Generic backup config return"""
 
     configuration: typing.Optional[BackupConfiguration]
-
-
-class GenericJobMutationReturn:
-    pass
 
 
 @strawberry.type
@@ -76,28 +75,45 @@ class BackupMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def start_backup(
         self, service_id: typing.Optional[str] = None
-    ) -> GenericJobMutationReturn:
-        """Start backup. If service not provided, backup all services"""
-        if service_id is None:
-            for service in get_all_services():
-                start_backup(service)
-        else:
-            service = get_service_by_id(service_id)
-            if service is None:
-                raise ValueError(f"nonexistent service: {service_id}")
-            start_backup(service)
+    ) -> GenericJobButationReturn:
+        """Start backup"""
 
-        return GenericJobMutationReturn()
+        service = get_service_by_id(service_id)
+        if service is None:
+            return GenericJobButationReturn(
+                success=False,
+                code=300,
+                message=f"nonexistent service: {service_id}",
+                job=None,
+            )
+        start_backup(service)
+        job = get_backup_job(service)
+
+        return GenericJobButationReturn(
+            success=True, code=200, message="Backup job queued", job=job_to_api_job(job)
+        )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def restore_backup(self, snapshot_id: str) -> GenericJobMutationReturn:
+    def restore_backup(self, snapshot_id: str) -> GenericJobButationReturn:
         """Restore backup"""
         snap = Backups.get_snapshot_by_id(snapshot_id)
-        if snap in None:
-            raise ValueError(f"No such snapshot: {snapshot_id}")
+        service = get_service_by_id(snap.service_name)
+        if snap is None:
+            return GenericJobButationReturn(
+                success=False,
+                code=300,
+                message=f"No such snapshot: {snapshot_id}",
+                job=None,
+            )
+
         restore_snapshot(snap)
 
-        return GenericJobMutationReturn()
+        return GenericJobButationReturn(
+            success=True,
+            code=200,
+            message="restore job created",
+            jobs=[get_restore_job(service)],
+        )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def force_snapshots_reload(self) -> GenericMutationReturn:

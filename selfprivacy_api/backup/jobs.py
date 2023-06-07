@@ -12,6 +12,10 @@ def backup_job_type(service: Service) -> str:
     return f"{job_type_prefix(service)}.backup"
 
 
+def restore_job_type(service: Service) -> str:
+    return f"{job_type_prefix(service)}.restore"
+
+
 def get_jobs_by_service(service: Service) -> List[Job]:
     result = []
     for job in Jobs.get_jobs():
@@ -54,3 +58,7 @@ def get_job_by_type(type_id: str) -> Optional[Job]:
 
 def get_backup_job(service: Service) -> Optional[Job]:
     return get_job_by_type(backup_job_type(service))
+
+
+def get_restore_job(service: Service) -> Optional[Job]:
+    return get_job_by_type(restore_job_type(service))
