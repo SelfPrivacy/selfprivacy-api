@@ -1,5 +1,6 @@
 from typing import List, Optional
 from datetime import datetime, timedelta
+from os import statvfs
 
 from selfprivacy_api.models.backup.snapshot import Snapshot
 
@@ -299,6 +300,21 @@ class Backups:
         Backups.provider().backuper.restore_from_backup(repo_name, snapshot_id, folders)
 
     @staticmethod
+    def assert_restorable(snapshot: Snapshot):
+        service = get_service_by_id(snapshot.service_name)
+        if service is None:
+            raise ValueError(
+                f"snapshot has a nonexistent service: {snapshot.service_name}"
+            )
+
+        needed_space = Backups.snapshot_restored_size(snapshot)
+        available_space = Backups.space_usable_for_service(service)
+        if needed_space > available_space:
+            raise ValueError(
+                f"we only have {available_space} bytes but snapshot needs{ needed_space}"
+            )
+
+    @staticmethod
     def restore_snapshot(snapshot: Snapshot):
         service = get_service_by_id(snapshot.service_name)
 
@@ -308,6 +324,7 @@ class Backups:
 
         Jobs.update(job, status=JobStatus.RUNNING)
         try:
+            Backups.assert_restorable(snapshot)
             Backups.restore_service_from_snapshot(service, snapshot.id)
             service.post_restore()
         except Exception as e:
@@ -326,6 +343,16 @@ class Backups:
         return Backups.service_snapshot_size(
             get_service_by_id(snapshot.service_name), snapshot.id
         )
+
+    @staticmethod
+    def space_usable_for_service(service: Service) -> bool:
+        folders = service.get_folders()
+        if folders == []:
+            raise ValueError("unallocated service", service.get_id())
+
+        fs_info = statvfs(folders[0])
+        usable_bytes = fs_info.f_frsize * fs_info.f_bavail
+        return usable_bytes
 
     @staticmethod
     def _store_last_snapshot(service_id: str, snapshot: Snapshot):
