@@ -4,6 +4,7 @@ import datetime
 
 from typing import List
 from collections.abc import Iterable
+from json.decoder import JSONDecodeError
 
 from selfprivacy_api.backup.backuper import AbstractBackuper
 from selfprivacy_api.models.backup.snapshot import Snapshot
@@ -208,6 +209,7 @@ class ResticBackuper(AbstractBackuper):
             restore_command, stdout=subprocess.PIPE, shell=False
         ) as handle:
 
+            # for some reason restore does not support nice reporting of progress via json
             output = handle.communicate()[0].decode("utf-8")
             if "restoring" not in output:
                 raise ValueError("cannot restore a snapshot: " + output)
@@ -259,7 +261,12 @@ class ResticBackuper(AbstractBackuper):
         truncated_output = output[starting_index:]
         json_messages = truncated_output.splitlines()
         if len(json_messages) == 1:
-            return json.loads(truncated_output)
+            try:
+                return json.loads(truncated_output)
+            except JSONDecodeError as e:
+                raise ValueError(
+                    "There is no json in the restic output : " + output
+                ) from e
 
         result_array = []
         for message in json_messages:
