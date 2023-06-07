@@ -13,7 +13,12 @@ from selfprivacy_api.graphql.queries.providers import BackupProvider
 from selfprivacy_api.backup.providers.provider import AbstractBackupProvider
 from selfprivacy_api.backup.providers import get_provider
 from selfprivacy_api.backup.storage import Storage
-from selfprivacy_api.backup.jobs import get_backup_job, add_backup_job
+from selfprivacy_api.backup.jobs import (
+    get_backup_job,
+    add_backup_job,
+    get_restore_job,
+    add_restore_job,
+)
 from selfprivacy_api.jobs import Jobs, JobStatus
 
 
@@ -285,6 +290,7 @@ class Backups:
         for snapshot in upstream_snapshots:
             Storage.cache_snapshot(snapshot)
 
+    # to be deprecated/internalized in favor of restore_snapshot()
     @staticmethod
     def restore_service_from_snapshot(service: Service, snapshot_id: str):
         repo_name = service.get_id()
@@ -294,9 +300,21 @@ class Backups:
 
     @staticmethod
     def restore_snapshot(snapshot: Snapshot):
-        Backups.restore_service_from_snapshot(
-            get_service_by_id(snapshot.service_name), snapshot.id
-        )
+        service = get_service_by_id(snapshot.service_name)
+
+        job = get_restore_job(service)
+        if job is None:
+            job = add_restore_job(snapshot)
+
+        Jobs.update(job, status=JobStatus.RUNNING)
+        try:
+            Backups.restore_service_from_snapshot(service, snapshot.id)
+            service.post_restore()
+        except Exception as e:
+            Jobs.update(job, status=JobStatus.ERROR)
+            raise e
+
+        Jobs.update(job, status=JobStatus.FINISHED)
 
     @staticmethod
     def service_snapshot_size(service: Service, snapshot_id: str) -> float:
