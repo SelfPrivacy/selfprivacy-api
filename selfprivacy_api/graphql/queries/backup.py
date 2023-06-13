@@ -28,10 +28,9 @@ class BackupConfiguration:
 class Backup:
     @strawberry.field
     def configuration(self) -> BackupConfiguration:
-        encryption_key = LocalBackupSecret.get()
         return BackupConfiguration(
             provider=BackupProvider[Backups.provider().name],
-            encryption_key=encryption_key.decode() if encryption_key else "",
+            encryption_key=LocalBackupSecret.get(),
             is_initialized=Backups.is_initted(),
             autobackup_period=Backups.autobackup_period_minutes(),
             location_name=Backups.provider().location,
