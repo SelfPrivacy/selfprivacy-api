@@ -15,13 +15,13 @@ class BackupConfiguration:
     provider: BackupProvider
     # When server is lost, the app should have the key to decrypt backups on a new server
     encryption_key: str
+    # False when repo is not initialized and not ready to be used
+    is_initialized: bool
     # If none, autobackups are disabled
     autobackup_period: typing.Optional[int] = None
     # Bucket name for Backblaze, path for some other providers
     location_name: typing.Optional[str] = None
     location_id: typing.Optional[str] = None
-    # False when repo is not initialized and not ready to be used
-    is_initialized: bool
 
 
 @strawberry.type
