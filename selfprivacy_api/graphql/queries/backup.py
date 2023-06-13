@@ -18,22 +18,25 @@ class BackupConfiguration:
     # False when repo is not initialized and not ready to be used
     is_initialized: bool
     # If none, autobackups are disabled
-    autobackup_period: typing.Optional[int] = None
+    autobackup_period: typing.Optional[int]
     # Bucket name for Backblaze, path for some other providers
-    location_name: typing.Optional[str] = None
-    location_id: typing.Optional[str] = None
+    location_name: typing.Optional[str]
+    location_id: typing.Optional[str]
 
 
 @strawberry.type
 class Backup:
     @strawberry.field
-    def configuration() -> BackupConfiguration:
-        config = BackupConfiguration()
-        config.encryption_key = LocalBackupSecret.get()
-        config.is_initialized = Backups.is_initted()
-        config.autobackup_period = Backups.autobackup_period_minutes()
-        config.location_name = Backups.provider().location
-        config.location_id = Backups.provider().repo_id
+    def configuration(self) -> BackupConfiguration:
+        encryption_key = LocalBackupSecret.get()
+        return BackupConfiguration(
+            provider=BackupProvider[Backups.provider().name],
+            encryption_key=encryption_key.decode() if encryption_key else "",
+            is_initialized=Backups.is_initted(),
+            autobackup_period=Backups.autobackup_period_minutes(),
+            location_name=Backups.provider().location,
+            location_id=Backups.provider().repo_id,
+        )
 
     @strawberry.field
     def all_snapshots(self) -> typing.List[SnapshotInfo]:
