@@ -7,13 +7,20 @@ import strawberry
 from selfprivacy_api.backup import Backups
 from selfprivacy_api.backup.local_secret import LocalBackupSecret
 from selfprivacy_api.graphql.queries.providers import BackupProvider
-from selfprivacy_api.graphql.common_types.service import SnapshotInfo
+from selfprivacy_api.graphql.common_types.service import (
+    Service,
+    ServiceStatusEnum,
+    SnapshotInfo,
+    service_to_graphql_service,
+)
+from selfprivacy_api.services import get_service_by_id
 
 
 @strawberry.type
 class BackupConfiguration:
     provider: BackupProvider
-    # When server is lost, the app should have the key to decrypt backups on a new server
+    # When server is lost, the app should have the key to decrypt backups
+    # on a new server
     encryption_key: str
     # False when repo is not initialized and not ready to be used
     is_initialized: bool
@@ -39,11 +46,31 @@ class Backup:
 
     @strawberry.field
     def all_snapshots(self) -> typing.List[SnapshotInfo]:
+        if not Backups.is_initted():
+            return []
         result = []
         snapshots = Backups.get_all_snapshots()
         for snap in snapshots:
+            service = get_service_by_id(snap.service_name)
+            if service is None:
+                service = Service(
+                    id=snap.service_name,
+                    display_name=f"{snap.service_name} (Orphaned)",
+                    description="",
+                    svg_icon="",
+                    is_movable=False,
+                    is_required=False,
+                    is_enabled=False,
+                    status=ServiceStatusEnum.OFF,
+                    url=None,
+                    dns_records=None,
+                )
+            else:
+                service = service_to_graphql_service(service)
             graphql_snap = SnapshotInfo(
-                id=snap.id, service=snap.service_name, created_at=snap.created_at
+                id=snap.id,
+                service=service,
+                created_at=snap.created_at,
             )
             result.append(graphql_snap)
         return result

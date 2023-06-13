@@ -38,7 +38,7 @@ class LocalBackupSecret:
 
     @staticmethod
     def exists() -> bool:
-        return redis.exists(REDIS_KEY)
+        return redis.exists(REDIS_KEY) == 1
 
     @staticmethod
     def _generate() -> str:
