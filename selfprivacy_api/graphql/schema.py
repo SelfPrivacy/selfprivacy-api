@@ -6,6 +6,7 @@ from typing import AsyncGenerator
 import strawberry
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.mutations.api_mutations import ApiMutations
+from selfprivacy_api.graphql.mutations.backup_mutations import BackupMutations
 from selfprivacy_api.graphql.mutations.job_mutations import JobMutations
 from selfprivacy_api.graphql.mutations.mutation_interface import GenericMutationReturn
 from selfprivacy_api.graphql.mutations.services_mutations import ServicesMutations
@@ -14,6 +15,7 @@ from selfprivacy_api.graphql.mutations.storage_mutations import StorageMutations
 from selfprivacy_api.graphql.mutations.system_mutations import SystemMutations
 
 from selfprivacy_api.graphql.queries.api_queries import Api
+from selfprivacy_api.graphql.queries.backup import Backup
 from selfprivacy_api.graphql.queries.jobs import Job
 from selfprivacy_api.graphql.queries.services import Services
 from selfprivacy_api.graphql.queries.storage import Storage
@@ -58,6 +60,11 @@ class Query:
         """Services queries"""
         return Services()
 
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    def backup(self) -> Backup:
+        """Backup queries"""
+        return Backup()
+
 
 @strawberry.type
 class Mutation(
@@ -68,6 +75,7 @@ class Mutation(
     StorageMutations,
     ServicesMutations,
     JobMutations,
+    BackupMutations,
 ):
     """Root schema for mutations"""
 
