@@ -31,8 +31,7 @@ class Backups:
     @staticmethod
     def set_localfile_repo(file_path: str):
         ProviderClass = get_provider(BackupProvider.FILE)
-        provider = ProviderClass(file_path)
-        Storage.store_testrepo_path(file_path)
+        provider = ProviderClass(login="", key="", location=file_path, repo_id="")
         Storage.store_provider(provider)
 
     def set_provider(provider: AbstractBackupProvider):
@@ -144,10 +143,6 @@ class Backups:
         kind: str, login: str, key: str, location: str, repo_id: str = ""
     ):
         provider_class = get_provider(BackupProvider[kind])
-
-        if kind == "FILE":
-            path = Storage.get_testrepo_path()
-            return provider_class(path)
 
         return provider_class(login=login, key=key, location=location, repo_id=repo_id)
 

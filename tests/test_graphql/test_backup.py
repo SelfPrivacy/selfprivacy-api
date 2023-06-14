@@ -95,7 +95,7 @@ def file_backup(tmpdir) -> AbstractBackupProvider:
     test_repo_path = path.join(tmpdir, "test_repo")
     ProviderClass = providers.get_provider(BackupProvider.FILE)
     assert ProviderClass is not None
-    provider = ProviderClass(test_repo_path)
+    provider = ProviderClass(location=test_repo_path)
     assert provider is not None
     return provider
 
