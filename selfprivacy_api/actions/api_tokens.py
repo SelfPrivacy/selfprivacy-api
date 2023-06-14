@@ -27,12 +27,14 @@ class TokenInfoWithIsCaller(BaseModel):
     date: datetime
     is_caller: bool
 
+
 def _naive(date_time: datetime) -> datetime:
     if date_time is None:
         return None
     if date_time.tzinfo is not None:
         date_time.astimezone(timezone.utc)
     return date_time.replace(tzinfo=None)
+
 
 def get_api_tokens_with_caller_flag(caller_token: str) -> list[TokenInfoWithIsCaller]:
     """Get the tokens info"""
@@ -89,9 +91,6 @@ class RecoveryTokenStatus(BaseModel):
     date: Optional[datetime] = None
     expiration: Optional[datetime] = None
     uses_left: Optional[int] = None
-
-
-
 
 
 def get_api_recovery_token_status() -> RecoveryTokenStatus:
