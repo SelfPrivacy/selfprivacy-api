@@ -21,6 +21,7 @@ from selfprivacy_api.graphql.queries.jobs import Job
 from selfprivacy_api.graphql.queries.services import Services
 from selfprivacy_api.graphql.queries.storage import Storage
 from selfprivacy_api.graphql.queries.system import System
+from selfprivacy_api.graphql.queries.backup import Backup
 
 from selfprivacy_api.graphql.mutations.users_mutations import UserMutations
 from selfprivacy_api.graphql.queries.users import Users
