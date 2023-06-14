@@ -42,6 +42,10 @@ def api_backup(authorized_client, service):
 def get_data(response):
     assert response.status_code == 200
     response = response.json()
+    if (
+        "errors" in response.keys()
+    ):  # convenience for debugging, this will display error
+        assert response["errors"] == []
     assert response["data"] is not None
     data = response["data"]
     return data
