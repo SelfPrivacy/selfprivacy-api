@@ -1,9 +1,17 @@
 from tests.test_graphql.test_backup import dummy_service, backups, raw_dummy_service
+from tests.common import generate_backup_query
 
-# from tests.common import generate_api_query
-
-# from selfprivacy_api.graphql.mutations.backup_mutations import BackupMutations
 from selfprivacy_api.jobs import Jobs, JobStatus
+
+API_SNAPSHOTS_QUERY = """
+allSnapshots {
+    id
+    service {
+        id
+    }
+    createdAt
+}
+"""
 
 API_BACK_UP_MUTATION = """
 mutation TestBackupService($service_id: String) {
@@ -29,6 +37,30 @@ def api_backup(authorized_client, service):
         },
     ).json()
     return response
+
+
+def get_data(response):
+    assert response.status_code == 200
+    response = response.json()
+    assert response["data"] is not None
+    data = response["data"]
+    return data
+
+
+def api_snapshots(authorized_client, service):
+    response = authorized_client.post(
+        "/graphql",
+        json={"query": generate_backup_query([API_SNAPSHOTS_QUERY])},
+    )
+    data = get_data(response)
+    result = data["backup"]["allSnapshots"]
+    assert result is not None
+    return result
+
+
+def test_snapshots_empty(authorized_client, dummy_service):
+    snaps = api_snapshots(authorized_client, dummy_service)
+    assert snaps == []
 
 
 def test_start_backup(authorized_client, dummy_service):
