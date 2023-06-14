@@ -42,7 +42,7 @@ class DummyService(Service):
     @staticmethod
     def get_url() -> typing.Optional[str]:
         """Return service url."""
-        domain = get_domain()
+        domain = "test.com"
         return f"https://password.{domain}"
 
     @staticmethod
@@ -68,7 +68,7 @@ class DummyService(Service):
         Return code 3 means service is stopped.
         Return code 4 means service is off.
         """
-        return 0
+        return ServiceStatus.ACTIVE
 
     @staticmethod
     def enable():
