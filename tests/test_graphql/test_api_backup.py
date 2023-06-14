@@ -78,4 +78,9 @@ def test_start_backup(authorized_client, dummy_service):
     response = api_backup(authorized_client, dummy_service)
     assert response["data"]["startBackup"]["success"] is True
     job = response["data"]["startBackup"]["job"]
+
     assert Jobs.get_job(job["uid"]).status == JobStatus.FINISHED
+    snaps = api_snapshots(authorized_client)
+    assert len(snaps) == 1
+    snap = snaps[0]
+    assert snap["service"]["id"] == "testservice"
