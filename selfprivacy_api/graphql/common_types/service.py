@@ -3,7 +3,6 @@ import typing
 import strawberry
 import datetime
 from selfprivacy_api.graphql.common_types.dns import DnsRecord
-from selfprivacy_api.graphql.common_types.backup_snapshot import SnapshotInfo
 
 from selfprivacy_api.services import get_service_by_id, get_services_by_location
 from selfprivacy_api.services import Service as ServiceInterface
@@ -104,14 +103,14 @@ class Service:
         return get_storage_usage(self)
 
     @strawberry.field
-    def backup_snapshots(self) -> typing.Optional[typing.List[SnapshotInfo]]:
+    def backup_snapshots(self) -> typing.Optional[typing.List["SnapshotInfo"]]:
         return None
 
 
 @strawberry.type
 class SnapshotInfo:
     id: str
-    service: "Service"
+    service: Service
     created_at: datetime.datetime
 
 
