@@ -37,7 +37,7 @@ def api_backup(authorized_client, service):
             "query": API_BACK_UP_MUTATION,
             "variables": {"service_id": service.get_id()},
         },
-    ).json()
+    )
     return response
 
 
@@ -76,8 +76,9 @@ def test_snapshots_empty(authorized_client, dummy_service):
 
 def test_start_backup(authorized_client, dummy_service):
     response = api_backup(authorized_client, dummy_service)
-    assert response["data"]["startBackup"]["success"] is True
-    job = response["data"]["startBackup"]["job"]
+    data = get_data(response)["startBackup"]
+    assert data["success"] is True
+    job = data["job"]
 
     assert Jobs.get_job(job["uid"]).status == JobStatus.FINISHED
     snaps = api_snapshots(authorized_client)
