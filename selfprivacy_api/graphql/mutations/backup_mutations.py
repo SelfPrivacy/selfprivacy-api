@@ -17,7 +17,7 @@ from selfprivacy_api.graphql.common_types.jobs import job_to_api_job
 from selfprivacy_api.backup import Backups
 from selfprivacy_api.services import get_all_services, get_service_by_id
 from selfprivacy_api.backup.tasks import start_backup, restore_snapshot
-from selfprivacy_api.backup.jobs import get_backup_job, get_restore_job
+from selfprivacy_api.backup.jobs import add_backup_job, add_restore_job
 
 
 @strawberry.input
@@ -86,11 +86,16 @@ class BackupMutations:
                 message=f"nonexistent service: {service_id}",
                 job=None,
             )
+
+        job = add_backup_job(service)
         start_backup(service)
-        job = get_backup_job(service)
+        job = job_to_api_job(job)
 
         return GenericJobButationReturn(
-            success=True, code=200, message="Backup job queued", job=job_to_api_job(job)
+            success=True,
+            code=200,
+            message="Backup job queued",
+            job=job,
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
@@ -106,13 +111,14 @@ class BackupMutations:
                 job=None,
             )
 
+        job = add_restore_job(snap)
         restore_snapshot(snap)
 
         return GenericJobButationReturn(
             success=True,
             code=200,
             message="restore job created",
-            job=get_restore_job(service),
+            job=job,
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])

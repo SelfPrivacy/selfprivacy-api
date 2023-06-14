@@ -23,18 +23,12 @@ def validate_datetime(dt: datetime):
 # huey tasks need to return something
 @huey.task()
 def start_backup(service: Service) -> bool:
-    # Backups can create the job, but doing this here
-    # allows us to see the job as queued before it is actually executed
-    add_backup_job(service)
-
     Backups.back_up(service)
     return True
 
 
 @huey.task()
 def restore_snapshot(snapshot: Snapshot) -> bool:
-    add_restore_job(snapshot)
-
     Backups.restore_snapshot(snapshot)
     return True
 
