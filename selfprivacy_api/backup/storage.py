@@ -21,7 +21,6 @@ REDIS_SNAPSHOTS_PREFIX = "backups:snapshots:"
 REDIS_LAST_BACKUP_PREFIX = "backups:last-backed-up:"
 REDIS_INITTED_CACHE_PREFIX = "backups:initted_services:"
 
-REDIS_REPO_PATH_KEY = "backups:test_repo_path"
 REDIS_PROVIDER_KEY = "backups:provider"
 REDIS_AUTOBACKUP_PERIOD_KEY = "backups:autobackup_period"
 
@@ -33,7 +32,6 @@ class Storage:
     @staticmethod
     def reset():
         redis.delete(REDIS_PROVIDER_KEY)
-        redis.delete(REDIS_REPO_PATH_KEY)
         redis.delete(REDIS_AUTOBACKUP_PERIOD_KEY)
 
         prefixes_to_clean = [
@@ -51,18 +49,6 @@ class Storage:
     def invalidate_snapshot_storage():
         for key in redis.keys(REDIS_SNAPSHOTS_PREFIX + "*"):
             redis.delete(key)
-
-    @staticmethod
-    def store_testrepo_path(path: str):
-        redis.set(REDIS_REPO_PATH_KEY, path)
-
-    @staticmethod
-    def get_testrepo_path() -> str:
-        if not redis.exists(REDIS_REPO_PATH_KEY):
-            raise ValueError(
-                "No test repository filepath is set, but we tried to access it"
-            )
-        return redis.get(REDIS_REPO_PATH_KEY)
 
     @staticmethod
     def services_with_autobackup() -> List[str]:
