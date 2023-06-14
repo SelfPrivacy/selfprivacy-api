@@ -31,7 +31,7 @@ allSnapshots {
 """
 
 API_BACK_UP_MUTATION = """
-mutation TestBackupService($service_id: String) {
+mutation TestBackupService($service_id: String!) {
         startBackup(serviceId: $service_id) {
             success
             message
