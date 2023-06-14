@@ -47,7 +47,7 @@ def get_data(response):
     return data
 
 
-def api_snapshots(authorized_client, service):
+def api_snapshots(authorized_client):
     response = authorized_client.post(
         "/graphql",
         json={"query": generate_backup_query([API_SNAPSHOTS_QUERY])},
@@ -59,7 +59,7 @@ def api_snapshots(authorized_client, service):
 
 
 def test_snapshots_empty(authorized_client, dummy_service):
-    snaps = api_snapshots(authorized_client, dummy_service)
+    snaps = api_snapshots(authorized_client)
     assert snaps == []
 
 
