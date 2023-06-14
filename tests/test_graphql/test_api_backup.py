@@ -1,6 +1,8 @@
 from tests.test_graphql.test_backup import dummy_service, backups, raw_dummy_service
 from tests.common import generate_backup_query
 
+
+from selfprivacy_api.graphql.common_types.service import service_to_graphql_service
 from selfprivacy_api.jobs import Jobs, JobStatus
 
 API_SNAPSHOTS_QUERY = """
@@ -60,6 +62,11 @@ def api_snapshots(authorized_client):
     result = data["backup"]["allSnapshots"]
     assert result is not None
     return result
+
+
+def test_dummy_service_convertible_to_gql(dummy_service):
+    gql_service = service_to_graphql_service(dummy_service)
+    assert gql_service is not None
 
 
 def test_snapshots_empty(authorized_client, dummy_service):
