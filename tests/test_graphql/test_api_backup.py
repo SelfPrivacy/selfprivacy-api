@@ -5,6 +5,21 @@ from tests.common import generate_backup_query
 from selfprivacy_api.graphql.common_types.service import service_to_graphql_service
 from selfprivacy_api.jobs import Jobs, JobStatus
 
+
+API_RESTORE_MUTATION = """
+mutation TestRestoreService($snapshot_id: String!) {
+        restoreBackup(snapshotId: $snapshot_id) {
+            success
+            message
+            code
+            job { 
+                uid
+                status
+            }
+        }
+}
+"""
+
 API_SNAPSHOTS_QUERY = """
 allSnapshots {
     id
@@ -28,6 +43,17 @@ mutation TestBackupService($service_id: String) {
         }
 }
 """
+
+
+def api_restore(authorized_client, snapshot_id):
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_RESTORE_MUTATION,
+            "variables": {"snapshot_id": snapshot_id},
+        },
+    )
+    return response
 
 
 def api_backup(authorized_client, service):
@@ -84,4 +110,20 @@ def test_start_backup(authorized_client, dummy_service):
     snaps = api_snapshots(authorized_client)
     assert len(snaps) == 1
     snap = snaps[0]
+
+    assert snap["id"] is not None
+    assert snap["id"] != ""
     assert snap["service"]["id"] == "testservice"
+
+
+def test_restore(authorized_client, dummy_service):
+    api_backup(authorized_client, dummy_service)
+    snap = api_snapshots(authorized_client)[0]
+    assert snap["id"] is not None
+
+    response = api_restore(authorized_client, snap["id"])
+    data = get_data(response)["restoreBackup"]
+    assert data["success"] is True
+    job = data["job"]
+
+    assert Jobs.get_job(job["uid"]).status == JobStatus.FINISHED
