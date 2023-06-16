@@ -64,7 +64,9 @@ class BackupMutations:
     def remove_repository(self) -> GenericBackupConfigReturn:
         """Remove repository"""
         Backups.reset()
-        return Backup.configuration()
+        return GenericBackupConfigReturn(
+            success=True, message="", code="200", configuration=Backup().configuration()
+        )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def set_autobackup_period(
