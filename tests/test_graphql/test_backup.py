@@ -37,7 +37,7 @@ def backups(tmpdir):
 
 @pytest.fixture()
 def backups_backblaze(generic_userdata):
-    Backups.reset()
+    Backups.reset(reset_json=False)
 
 
 @pytest.fixture()
@@ -101,7 +101,7 @@ def file_backup(tmpdir) -> AbstractBackupProvider:
 
 
 def test_config_load(generic_userdata):
-    Backups.reset()
+    Backups.reset(reset_json=False)
     provider = Backups.provider()
 
     assert provider is not None
@@ -445,7 +445,6 @@ def test_init_tracking_caching2(backups, raw_dummy_service):
 
 # Storage
 def test_provider_storage(backups_backblaze):
-    Backups.reset()
     provider = Backups.provider()
 
     assert provider is not None

@@ -232,7 +232,7 @@ def test_remove(authorized_client, generic_userdata):
     configuration = data["configuration"]
     assert configuration["provider"] == "BACKBLAZE"
     assert configuration["locationId"] == ""
-    assert configuration["locationName"] == "selfprivacy"
+    assert configuration["locationName"] == ""
     # still generated every time it is missing
     assert len(configuration["encryptionKey"]) > 1
     assert configuration["isInitialized"] is False

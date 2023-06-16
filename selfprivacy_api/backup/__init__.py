@@ -4,7 +4,7 @@ from os import statvfs
 
 from selfprivacy_api.models.backup.snapshot import Snapshot
 
-from selfprivacy_api.utils import ReadUserData
+from selfprivacy_api.utils import ReadUserData, WriteUserData
 
 from selfprivacy_api.services import get_service_by_id
 from selfprivacy_api.services.service import Service
@@ -21,6 +21,13 @@ from selfprivacy_api.backup.jobs import (
     add_restore_job,
 )
 from selfprivacy_api.jobs import Jobs, JobStatus
+
+DEFAULT_JSON_PROVIDER = {
+    "provider": "BACKBLAZE",
+    "accountId": "",
+    "accountKey": "",
+    "bucket": "",
+}
 
 
 class Backups:
@@ -147,8 +154,13 @@ class Backups:
         return provider_class(login=login, key=key, location=location, repo_id=repo_id)
 
     @staticmethod
-    def reset():
+    def reset(reset_json=True):
         Storage.reset()
+        if reset_json:
+            try:
+                Backups.reset_provider_json()
+            except FileNotFoundError:  # if there is no userdata file, we do not need to reset it
+                pass
 
     @staticmethod
     def lookup_provider() -> AbstractBackupProvider:
@@ -189,6 +201,13 @@ class Backups:
             return Backups.construct_provider(
                 kind=provider_string, login=account, key=key, location=location
             )
+
+    def reset_provider_json() -> AbstractBackupProvider:
+        with WriteUserData() as user_data:
+            if "backblaze" in user_data.keys():
+                del user_data["backblaze"]
+
+            user_data["backup"] = DEFAULT_JSON_PROVIDER
 
     @staticmethod
     def load_provider_redis() -> AbstractBackupProvider:
