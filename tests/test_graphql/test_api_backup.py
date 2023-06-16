@@ -6,6 +6,24 @@ from tests.common import generate_backup_query
 from selfprivacy_api.graphql.common_types.service import service_to_graphql_service
 from selfprivacy_api.jobs import Jobs, JobStatus
 
+API_REMOVE_REPOSITORY_MUTATION = """
+mutation TestRemoveRepo {
+        removeRepository {
+            success
+            message
+            code
+            configuration { 
+                provider
+                encryptionKey
+                isInitialized
+                autobackupPeriod
+                locationName
+                locationId
+            }
+        }
+}
+"""
+
 API_INIT_MUTATION = """
 mutation TestInitRepo($input: InitializeRepositoryInput!) {
         initializeRepository(repository: $input) {
@@ -80,6 +98,17 @@ def api_backup(authorized_client, service):
         json={
             "query": API_BACK_UP_MUTATION,
             "variables": {"service_id": service.get_id()},
+        },
+    )
+    return response
+
+
+def api_remove(authorized_client):
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_REMOVE_REPOSITORY_MUTATION,
+            "variables": {},
         },
     )
     return response
@@ -193,3 +222,17 @@ def test_reinit(authorized_client, dummy_service, tmpdir):
     job = data["job"]
 
     assert Jobs.get_job(job["uid"]).status == JobStatus.FINISHED
+
+
+def test_remove(authorized_client, generic_userdata):
+    response = api_remove(authorized_client)
+    data = get_data(response)["removeRepository"]
+    assert_ok(data)
+
+    configuration = data["configuration"]
+    assert configuration["provider"] == "BACKBLAZE"
+    assert configuration["locationId"] == ""
+    assert configuration["locationName"] == "selfprivacy"
+    # still generated every time it is missing
+    assert len(configuration["encryptionKey"]) > 1
+    assert configuration["isInitialized"] is False
