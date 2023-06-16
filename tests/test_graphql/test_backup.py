@@ -108,9 +108,29 @@ def test_config_load(generic_userdata):
     assert isinstance(provider, Backblaze)
     assert provider.login == "ID"
     assert provider.key == "KEY"
+    assert provider.location == "selfprivacy"
 
     assert provider.backuper.account == "ID"
     assert provider.backuper.key == "KEY"
+
+
+def test_json_reset(generic_userdata):
+    Backups.reset(reset_json=False)
+    provider = Backups.provider()
+    assert provider is not None
+    assert isinstance(provider, Backblaze)
+    assert provider.login == "ID"
+    assert provider.key == "KEY"
+    assert provider.location == "selfprivacy"
+
+    Backups.reset()
+    provider = Backups.provider()
+    assert provider is not None
+    assert isinstance(provider, Backblaze)
+    assert provider.login == ""
+    assert provider.key == ""
+    assert provider.location == ""
+    assert provider.repo_id == ""
 
 
 def test_select_backend():
