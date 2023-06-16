@@ -1,3 +1,4 @@
+from os import path
 from tests.test_graphql.test_backup import dummy_service, backups, raw_dummy_service
 from tests.common import generate_backup_query
 
@@ -5,6 +6,23 @@ from tests.common import generate_backup_query
 from selfprivacy_api.graphql.common_types.service import service_to_graphql_service
 from selfprivacy_api.jobs import Jobs, JobStatus
 
+API_INIT_MUTATION = """
+mutation TestInitRepo($input: InitializeRepositoryInput!) {
+        initializeRepository(repository: $input) {
+            success
+            message
+            code
+            configuration { 
+                provider
+                encryptionKey
+                isInitialized
+                autobackupPeriod
+                locationName
+                locationId
+            }
+        }
+}
+"""
 
 API_RESTORE_MUTATION = """
 mutation TestRestoreService($snapshot_id: String!) {
@@ -67,6 +85,32 @@ def api_backup(authorized_client, service):
     return response
 
 
+def api_init_without_key(
+    authorized_client, kind, login, password, location_name, location_id
+):
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_INIT_MUTATION,
+            "variables": {
+                "input": {
+                    "provider": kind,
+                    "locationId": location_id,
+                    "locationName": location_name,
+                    "login": login,
+                    "password": password,
+                }
+            },
+        },
+    )
+    return response
+
+
+def assert_ok(data):
+    assert data["code"] == 200
+    assert data["success"] is True
+
+
 def get_data(response):
     assert response.status_code == 200
     response = response.json()
@@ -123,6 +167,28 @@ def test_restore(authorized_client, dummy_service):
 
     response = api_restore(authorized_client, snap["id"])
     data = get_data(response)["restoreBackup"]
+    assert data["success"] is True
+    job = data["job"]
+
+    assert Jobs.get_job(job["uid"]).status == JobStatus.FINISHED
+
+
+def test_reinit(authorized_client, dummy_service, tmpdir):
+    test_repo_path = path.join(tmpdir, "not_at_all_sus")
+    response = api_init_without_key(
+        authorized_client, "FILE", "", "", test_repo_path, ""
+    )
+    data = get_data(response)["initializeRepository"]
+    assert_ok(data)
+    configuration = data["configuration"]
+    assert configuration["provider"] == "FILE"
+    assert configuration["locationId"] == ""
+    assert configuration["locationName"] == test_repo_path
+    assert len(configuration["encryptionKey"]) > 1
+    assert configuration["isInitialized"] is True
+
+    response = api_backup(authorized_client, dummy_service)
+    data = get_data(response)["startBackup"]
     assert data["success"] is True
     job = data["job"]
 

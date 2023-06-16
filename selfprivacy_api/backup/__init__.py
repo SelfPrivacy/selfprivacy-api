@@ -135,7 +135,7 @@ class Backups:
 
     @staticmethod
     def set_provider(kind: str, login: str, key: str, location: str, repo_id: str = ""):
-        provider = Backups.construct_provider(kind, login, key, location, id)
+        provider = Backups.construct_provider(kind, login, key, location, repo_id)
         Storage.store_provider(provider)
 
     @staticmethod

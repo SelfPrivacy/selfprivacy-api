@@ -48,15 +48,17 @@ class BackupMutations:
         self, repository: InitializeRepositoryInput
     ) -> GenericBackupConfigReturn:
         """Initialize a new repository"""
-        provider = Backups.construct_provider(
-            kind=repository.provider,
+        Backups.set_provider(
+            kind=repository.provider.value,
             login=repository.login,
             key=repository.password,
             location=repository.location_name,
             repo_id=repository.location_id,
         )
-        Backups.set_provider(provider)
         Backups.init_repo()
+        return GenericBackupConfigReturn(
+            success=True, message="", code="200", configuration=Backup().configuration()
+        )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def remove_repository(self) -> GenericBackupConfigReturn:
@@ -73,9 +75,7 @@ class BackupMutations:
         return Backup.configuration()
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def start_backup(
-        self, service_id: typing.Optional[str] = None
-    ) -> GenericJobButationReturn:
+    def start_backup(self, service_id: str) -> GenericJobButationReturn:
         """Start backup"""
 
         service = get_service_by_id(service_id)
