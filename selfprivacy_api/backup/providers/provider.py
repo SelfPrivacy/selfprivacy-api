@@ -4,7 +4,7 @@ It assumes that while some providers are supported via restic/rclone, others may
 require different backends
 """
 from abc import ABC
-from selfprivacy_api.backup.backuper import AbstractBackuper
+from selfprivacy_api.backup.backuppers import AbstractBackuper
 
 
 class AbstractBackupProvider(ABC):

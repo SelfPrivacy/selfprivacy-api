@@ -1,5 +1,5 @@
 from .provider import AbstractBackupProvider
-from selfprivacy_api.backup.restic_backuper import ResticBackuper
+from selfprivacy_api.backup.backuppers.restic_backupper import ResticBackuper
 
 
 class Backblaze(AbstractBackupProvider):

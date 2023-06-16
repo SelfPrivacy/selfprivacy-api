@@ -6,7 +6,7 @@ from typing import List
 from collections.abc import Iterable
 from json.decoder import JSONDecodeError
 
-from selfprivacy_api.backup.backuper import AbstractBackuper
+from selfprivacy_api.backup.backuppers import AbstractBackuper
 from selfprivacy_api.models.backup.snapshot import Snapshot
 from selfprivacy_api.backup.jobs import get_backup_job
 from selfprivacy_api.services import get_service_by_id
