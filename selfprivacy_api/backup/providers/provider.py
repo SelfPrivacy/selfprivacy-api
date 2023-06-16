@@ -5,12 +5,13 @@ require different backends
 """
 from abc import ABC
 from selfprivacy_api.backup.backuppers import AbstractBackuper
+from selfprivacy_api.backup.backuppers.none_backupper import NoneBackupper
 
 
 class AbstractBackupProvider(ABC):
     @property
     def backuper(self) -> AbstractBackuper:
-        raise NotImplementedError
+        return NoneBackupper
 
     name = "NONE"
 

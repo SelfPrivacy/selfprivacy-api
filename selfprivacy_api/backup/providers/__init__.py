@@ -9,6 +9,7 @@ PROVIDER_MAPPING = {
     BackupProvider.BACKBLAZE: Backblaze,
     BackupProvider.MEMORY: InMemoryBackup,
     BackupProvider.FILE: LocalFileBackup,
+    BackupProvider.NONE: AbstractBackupProvider,
 }
 
 
