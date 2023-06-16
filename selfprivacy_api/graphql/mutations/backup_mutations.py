@@ -74,7 +74,9 @@ class BackupMutations:
     ) -> GenericBackupConfigReturn:
         """Set autobackup period. None is to disable autobackup"""
         Backups.set_autobackup_period_minutes(period)
-        return Backup.configuration()
+        return GenericBackupConfigReturn(
+            success=True, message="", code="200", configuration=Backup().configuration()
+        )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def start_backup(self, service_id: str) -> GenericJobButationReturn:
@@ -127,4 +129,8 @@ class BackupMutations:
     def force_snapshots_reload(self) -> GenericMutationReturn:
         """Force snapshots reload"""
         Backups.force_snapshot_reload()
-        return GenericMutationReturn()
+        return GenericMutationReturn(
+            success=True,
+            code=200,
+            message="",
+        )
