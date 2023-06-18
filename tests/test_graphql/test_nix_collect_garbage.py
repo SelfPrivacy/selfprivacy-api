@@ -10,15 +10,15 @@ from selfprivacy_api.graphql import schema
 
 # from selfprivacy_api.graphql.schema import Subscription
 
-from selfprivacy_api.jobs.nix_collect_garbage import (
-    get_dead_packages,
-    nix_collect_garbage,
-    parse_line,
-    CLEAR_COMPLETED,
-    COMPLETED_WITH_ERROR,
-    stream_process,
-    RESULT_WAS_NOT_FOUND_ERROR,
-)
+# from selfprivacy_api.jobs.nix_collect_garbage import (
+#     get_dead_packages,
+#     nix_collect_garbage,
+#     parse_line,
+#     CLEAR_COMPLETED,
+#     COMPLETED_WITH_ERROR,
+#     stream_process,
+#     RESULT_WAS_NOT_FOUND_ERROR,
+# )
 
 pytest_plugins = ("pytest_asyncio",)
 
