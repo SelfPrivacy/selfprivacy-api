@@ -25,8 +25,8 @@ class CheckForFailedBindsMigration(Migration):
                 ):
                     return True
             return False
-        except Exception as e:
-            print(e)
+        except Exception as error:
+            print(error)
             return False
 
     def migrate(self):
@@ -43,6 +43,6 @@ class CheckForFailedBindsMigration(Migration):
             with WriteUserData() as userdata:
                 userdata["useBinds"] = False
             print("Done")
-        except Exception as e:
-            print(e)
+        except Exception as error:
+            print(error)
             print("Error mounting volume")

@@ -5,6 +5,7 @@ let
     portalocker
     pytz
     pytest
+    pytest-asyncio
     pytest-mock
     pytest-datadir
     huey

@@ -1,8 +1,10 @@
 import re
 import subprocess
 
-from selfprivacy_api.jobs import JobStatus, Jobs
-from selfprivacy_api.utils.huey import huey
+from selfprivacy_api.jobs import JobStatus, Jobs, Job
+
+
+# from selfprivacy_api.utils.huey import huey
 
 
 COMPLETED_WITH_ERROR = "Completed with an error"
@@ -22,25 +24,9 @@ def run_nix_collect_garbage():
     ).stdout
 
 
-def set_job_status_wrapper(Jobs, job):
-    def set_job_status(status, progress, status_text, result="Default result"):
-        Jobs.update(
-            job=job,
-            status=status,
-            progress=progress,
-            status_text=status_text,
-            result=result,
-        )
-
-    return set_job_status
-
-
 def parse_line(line):
     pattern = re.compile(r"[+-]?\d+\.\d+ \w+(?= freed)")
-    match = re.search(
-        pattern,
-        line,
-    )
+    match = re.search(pattern, line)
 
     if match is None:
         return (
@@ -60,9 +46,9 @@ def parse_line(line):
 
 
 def stream_process(
+    job,
     stream,
     total_dead_packages,
-    set_job_status,
 ):
     completed_packages = 0
 
@@ -71,7 +57,8 @@ def stream_process(
             completed_packages += 1
             percent = int((completed_packages / total_dead_packages) * 100)
 
-            set_job_status(
+            Jobs.update(
+                job=job,
                 status=JobStatus.RUNNING,
                 progress=percent,
                 status_text="Сleaning...",
@@ -79,7 +66,8 @@ def stream_process(
 
         elif "store paths deleted," in line:
             status = parse_line(line)
-            set_job_status(
+            Jobs.update(
+                job=job,
                 status=status[0],
                 progress=status[1],
                 status_text=status[2],
@@ -95,13 +83,9 @@ def get_dead_packages(output):
     return dead, percent
 
 
-@huey.task()
-def nix_collect_garbage(
-    job,
-):
-    set_job_status = set_job_status_wrapper(Jobs, job)
-
-    set_job_status(
+def calculate_and_clear_dead_packages(job: Jobs):
+    Jobs.update(
+        job=job,
         status=JobStatus.RUNNING,
         progress=0,
         status_text="Сalculate the number of dead packages...",
@@ -112,7 +96,8 @@ def nix_collect_garbage(
     )
 
     if dead_packages == 0:
-        set_job_status(
+        Jobs.update(
+            job=job,
             status=JobStatus.FINISHED,
             progress=100,
             status_text="Nothing to clear",
@@ -120,10 +105,21 @@ def nix_collect_garbage(
         )
         return
 
-    set_job_status(
+    Jobs.update(
+        job=job,
         status=JobStatus.RUNNING,
         progress=0,
         status_text=f"Found {dead_packages} packages to remove!",
     )
 
-    stream_process(run_nix_collect_garbage(), package_equal_to_percent, set_job_status)
+    stream_process(job, run_nix_collect_garbage(), package_equal_to_percent)
+
+
+def start_nix_collect_garbage() -> Job:
+    job = Jobs.add(
+        type_id="maintenance.collect_nix_garbage",
+        name="Collect garbage",
+        description=".",
+    )
+    calculate_and_clear_dead_packages(job=job)
+    return job

@@ -20,6 +20,8 @@ from selfprivacy_api.jobs.nix_collect_garbage import (
     RESULT_WAS_NOT_FOUND_ERROR,
 )
 
+pytest_plugins = ("pytest_asyncio",)
+
 
 OUTPUT_PRINT_DEAD = """
 finding garbage collector roots...

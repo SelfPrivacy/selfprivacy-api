@@ -6,9 +6,12 @@ from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericMutationReturn,
     MutationReturnInterface,
+    GenericJobButationReturn,
 )
 
 import selfprivacy_api.actions.system as system_actions
+from selfprivacy_api.graphql.common_types.jobs import job_to_api_job
+from selfprivacy_api.jobs.nix_collect_garbage import start_nix_collect_garbage
 
 
 @strawberry.type
@@ -125,4 +128,15 @@ class SystemMutations:
             success=False,
             message=f"Failed to pull repository changes:\n{result.data}",
             code=500,
+        )
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    def nix_collect_garbage(self) -> GenericJobButationReturn:
+        job = start_nix_collect_garbage()
+
+        return GenericJobButationReturn(
+            success=True,
+            code=200,
+            message="Cleaning started..,",
+            job=job_to_api_job(job),
         )
