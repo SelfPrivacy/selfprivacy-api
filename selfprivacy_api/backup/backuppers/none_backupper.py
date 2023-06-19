@@ -14,9 +14,9 @@ class NoneBackupper(AbstractBackuper):
     def start_backup(self, folders: List[str], repo_name: str):
         raise NotImplementedError
 
-    def get_snapshots(self, repo_name) -> List[Snapshot]:
+    def get_snapshots(self) -> List[Snapshot]:
         """Get all snapshots from the repo"""
-        raise NotImplementedError
+        return []
 
     def init(self, repo_name):
         raise NotImplementedError
