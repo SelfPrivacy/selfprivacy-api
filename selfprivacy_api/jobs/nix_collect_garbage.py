@@ -1,10 +1,9 @@
 import re
 import subprocess
 
+from selfprivacy_api.utils.huey import huey
+
 from selfprivacy_api.jobs import JobStatus, Jobs, Job
-
-
-# from selfprivacy_api.utils.huey import huey
 
 
 COMPLETED_WITH_ERROR = "Completed with an error"
@@ -83,6 +82,7 @@ def get_dead_packages(output):
     return dead, percent
 
 
+@huey.task()
 def calculate_and_clear_dead_packages(job: Jobs):
     Jobs.update(
         job=job,
