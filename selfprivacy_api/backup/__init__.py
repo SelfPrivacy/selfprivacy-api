@@ -41,9 +41,6 @@ class Backups:
         provider = ProviderClass(login="", key="", location=file_path, repo_id="")
         Storage.store_provider(provider)
 
-    def set_provider(provider: AbstractBackupProvider):
-        Storage.store_provider(provider)
-
     @staticmethod
     def get_last_backed_up(service: Service) -> Optional[datetime]:
         """Get a timezone-aware time of the last backup of a service"""
