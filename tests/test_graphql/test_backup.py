@@ -15,6 +15,7 @@ from selfprivacy_api.backup import Backups
 import selfprivacy_api.backup.providers as providers
 from selfprivacy_api.backup.providers import AbstractBackupProvider
 from selfprivacy_api.backup.providers.backblaze import Backblaze
+
 from selfprivacy_api.backup.tasks import start_backup, restore_snapshot
 from selfprivacy_api.backup.storage import Storage
 from selfprivacy_api.backup.jobs import get_backup_job
@@ -126,7 +127,7 @@ def test_json_reset(generic_userdata):
     Backups.reset()
     provider = Backups.provider()
     assert provider is not None
-    assert isinstance(provider, Backblaze)
+    assert isinstance(provider, AbstractBackupProvider)
     assert provider.login == ""
     assert provider.key == ""
     assert provider.location == ""

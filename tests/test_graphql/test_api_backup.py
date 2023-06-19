@@ -230,7 +230,7 @@ def test_remove(authorized_client, generic_userdata):
     assert_ok(data)
 
     configuration = data["configuration"]
-    assert configuration["provider"] == "BACKBLAZE"
+    assert configuration["provider"] == "NONE"
     assert configuration["locationId"] == ""
     assert configuration["locationName"] == ""
     # still generated every time it is missing

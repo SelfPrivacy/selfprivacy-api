@@ -9,7 +9,11 @@ class AbstractBackuper(ABC):
         pass
 
     @abstractmethod
-    def is_initted(self, repo_name: str) -> bool:
+    def is_initted(self) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def set_creds(self, account: str, key: str, repo: str):
         raise NotImplementedError
 
     @abstractmethod

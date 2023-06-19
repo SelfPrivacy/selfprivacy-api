@@ -11,7 +11,7 @@ from selfprivacy_api.backup.backuppers.none_backupper import NoneBackupper
 class AbstractBackupProvider(ABC):
     @property
     def backuper(self) -> AbstractBackuper:
-        return NoneBackupper
+        return NoneBackupper()
 
     name = "NONE"
 
