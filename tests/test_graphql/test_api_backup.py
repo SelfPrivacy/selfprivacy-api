@@ -6,6 +6,16 @@ from tests.common import generate_backup_query
 from selfprivacy_api.graphql.common_types.service import service_to_graphql_service
 from selfprivacy_api.jobs import Jobs, JobStatus
 
+API_RELOAD_SNAPSHOTS = """
+mutation TestSnapshotsReload {
+        forceSnapshotsReload {
+            success
+            message
+            code
+        }
+}
+"""
+
 API_SET_AUTOBACKUP_PERIOD_MUTATION = """
 mutation TestAutobackupPeriod($period: Int) {
         setAutobackupPeriod(period: $period) {
@@ -137,6 +147,17 @@ def api_remove(authorized_client):
         "/graphql",
         json={
             "query": API_REMOVE_REPOSITORY_MUTATION,
+            "variables": {},
+        },
+    )
+    return response
+
+
+def api_reload_snapshots(authorized_client):
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_RELOAD_SNAPSHOTS,
             "variables": {},
         },
     )
@@ -312,3 +333,28 @@ def test_autobackup_period_negative(authorized_client):
 
     configuration = data["configuration"]
     assert configuration["autobackupPeriod"] == None
+
+
+# We cannot really check the effect at this level, we leave it to backend tests
+# But we still make it run in both empty and full scenarios and ask for snaps afterwards
+def test_reload_snapshots_bare_bare_bare(authorized_client, dummy_service):
+    api_remove(authorized_client)
+
+    response = api_reload_snapshots(authorized_client)
+    data = get_data(response)["forceSnapshotsReload"]
+    assert_ok(data)
+
+    snaps = api_snapshots(authorized_client)
+    assert snaps == []
+
+
+def test_reload_snapshots(authorized_client, dummy_service):
+    response = api_backup(authorized_client, dummy_service)
+    data = get_data(response)["startBackup"]
+
+    response = api_reload_snapshots(authorized_client)
+    data = get_data(response)["forceSnapshotsReload"]
+    assert_ok(data)
+
+    snaps = api_snapshots(authorized_client)
+    assert len(snaps) == 1
