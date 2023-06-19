@@ -73,7 +73,11 @@ class BackupMutations:
         self, period: typing.Optional[int] = None
     ) -> GenericBackupConfigReturn:
         """Set autobackup period. None is to disable autobackup"""
-        Backups.set_autobackup_period_minutes(period)
+        if period is not None:
+            Backups.set_autobackup_period_minutes(period)
+        else:
+            Backups.set_autobackup_period_minutes(0)
+
         return GenericBackupConfigReturn(
             success=True, message="", code="200", configuration=Backup().configuration()
         )

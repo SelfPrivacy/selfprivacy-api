@@ -6,6 +6,24 @@ from tests.common import generate_backup_query
 from selfprivacy_api.graphql.common_types.service import service_to_graphql_service
 from selfprivacy_api.jobs import Jobs, JobStatus
 
+API_SET_AUTOBACKUP_PERIOD_MUTATION = """
+mutation TestAutobackupPeriod($period: Int) {
+        setAutobackupPeriod(period: $period) {
+            success
+            message
+            code
+            configuration { 
+                provider
+                encryptionKey
+                isInitialized
+                autobackupPeriod
+                locationName
+                locationId
+            }
+        }
+}
+"""
+
 API_REMOVE_REPOSITORY_MUTATION = """
 mutation TestRemoveRepo {
         removeRepository {
@@ -98,6 +116,17 @@ def api_backup(authorized_client, service):
         json={
             "query": API_BACK_UP_MUTATION,
             "variables": {"service_id": service.get_id()},
+        },
+    )
+    return response
+
+
+def api_set_period(authorized_client, period):
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_SET_AUTOBACKUP_PERIOD_MUTATION,
+            "variables": {"period": period},
         },
     )
     return response
@@ -236,3 +265,50 @@ def test_remove(authorized_client, generic_userdata):
     # still generated every time it is missing
     assert len(configuration["encryptionKey"]) > 1
     assert configuration["isInitialized"] is False
+
+
+def test_autobackup_period_nonzero(authorized_client):
+    new_period = 11
+    response = api_set_period(authorized_client, new_period)
+    data = get_data(response)["setAutobackupPeriod"]
+    assert_ok(data)
+
+    configuration = data["configuration"]
+    assert configuration["autobackupPeriod"] == new_period
+
+
+def test_autobackup_period_zero(authorized_client):
+    new_period = 0
+    # since it is none by default, we better first set it to something non-negative
+    response = api_set_period(authorized_client, 11)
+    # and now we nullify it
+    response = api_set_period(authorized_client, new_period)
+    data = get_data(response)["setAutobackupPeriod"]
+    assert_ok(data)
+
+    configuration = data["configuration"]
+    assert configuration["autobackupPeriod"] == None
+
+
+def test_autobackup_period_none(authorized_client):
+    # since it is none by default, we better first set it to something non-negative
+    response = api_set_period(authorized_client, 11)
+    # and now we nullify it
+    response = api_set_period(authorized_client, None)
+    data = get_data(response)["setAutobackupPeriod"]
+    assert_ok(data)
+
+    configuration = data["configuration"]
+    assert configuration["autobackupPeriod"] == None
+
+
+def test_autobackup_period_negative(authorized_client):
+    # since it is none by default, we better first set it to something non-negative
+    response = api_set_period(authorized_client, 11)
+    # and now we nullify it
+    response = api_set_period(authorized_client, -12)
+    data = get_data(response)["setAutobackupPeriod"]
+    assert_ok(data)
+
+    configuration = data["configuration"]
+    assert configuration["autobackupPeriod"] == None
