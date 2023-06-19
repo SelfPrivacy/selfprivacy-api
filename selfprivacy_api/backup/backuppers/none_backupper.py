@@ -5,8 +5,11 @@ from selfprivacy_api.backup.backuppers import AbstractBackuper
 
 
 class NoneBackupper(AbstractBackuper):
-    def is_initted(self, repo_name: str) -> bool:
+    def is_initted(self, repo_name: str = "") -> bool:
         return False
+
+    def set_creds(self, account: str, key: str, repo: str):
+        pass
 
     def start_backup(self, folders: List[str], repo_name: str):
         raise NotImplementedError

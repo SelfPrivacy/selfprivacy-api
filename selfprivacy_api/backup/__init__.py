@@ -168,38 +168,47 @@ class Backups:
         if redis_provider is not None:
             return redis_provider
 
-        json_provider = Backups.load_provider_json()
+        try:
+            json_provider = Backups.load_provider_json()
+        except FileNotFoundError:
+            json_provider = None
+
         if json_provider is not None:
             Storage.store_provider(json_provider)
             return json_provider
 
-        memory_provider = Backups.construct_provider("MEMORY", login="", key="")
-        Storage.store_provider(memory_provider)
-        return memory_provider
+        none_provider = Backups.construct_provider(
+            "NONE", login="", key="", location=""
+        )
+        Storage.store_provider(none_provider)
+        return none_provider
 
     @staticmethod
-    def load_provider_json() -> AbstractBackupProvider:
+    def load_provider_json() -> Optional[AbstractBackupProvider]:
         with ReadUserData() as user_data:
-            account = ""
-            key = ""
+            provider_dict = {
+                "provider": "",
+                "accountId": "",
+                "accountKey": "",
+                "bucket": "",
+            }
 
             if "backup" not in user_data.keys():
                 if "backblaze" in user_data.keys():
-                    account = user_data["backblaze"]["accountId"]
-                    key = user_data["backblaze"]["accountKey"]
-                    location = user_data["backblaze"]["bucket"]
-                    provider_string = "BACKBLAZE"
-                    return Backups.construct_provider(
-                        kind=provider_string, login=account, key=key, location=location
-                    )
+                    provider_dict.update(user_data["backblaze"])
+                    provider_dict["provider"] = "BACKBLAZE"
+                return None
+            else:
+                provider_dict.update(user_data["backup"])
+
+            if provider_dict == DEFAULT_JSON_PROVIDER:
                 return None
 
-            account = user_data["backup"]["accountId"]
-            key = user_data["backup"]["accountKey"]
-            provider_string = user_data["backup"]["provider"]
-            location = user_data["backup"]["bucket"]
             return Backups.construct_provider(
-                kind=provider_string, login=account, key=key, location=location
+                kind=provider_dict["provider"],
+                login=provider_dict["accountId"],
+                key=provider_dict["accountKey"],
+                location=provider_dict["bucket"],
             )
 
     def reset_provider_json() -> AbstractBackupProvider:
