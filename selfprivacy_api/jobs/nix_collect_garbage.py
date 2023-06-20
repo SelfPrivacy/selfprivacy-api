@@ -52,6 +52,8 @@ def stream_process(
     completed_packages = 0
 
     for line in stream:
+        line = line.decode("utf-8")
+
         if "deleting '/nix/store/" in line:
             completed_packages += 1
             percent = int((completed_packages / total_dead_packages) * 100)
