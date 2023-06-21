@@ -1,4 +1,5 @@
 import re
+import os
 import subprocess
 
 from selfprivacy_api.utils.huey import huey
@@ -8,10 +9,12 @@ from selfprivacy_api.jobs import JobStatus, Jobs, Job
 
 COMPLETED_WITH_ERROR = "Completed with an error"
 RESULT_WAS_NOT_FOUND_ERROR = "We are sorry, result was not found :("
-CLEAR_COMPLETED = "Сleaning completed."
+CLEAR_COMPLETED = "Cleaning completed."
 
 
 def run_nix_store_print_dead():
+    os.system("nix-env -p /nix/var/nix/profiles/system --delete-generations old")
+
     return subprocess.check_output(["nix-store", "--gc", "--print-dead"]).decode(
         "utf-8"
     )
@@ -19,7 +22,7 @@ def run_nix_store_print_dead():
 
 def run_nix_collect_garbage():
     return subprocess.Popen(
-        ["nix-collect-garbage", "-d"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+        ["nix-store", "--gc"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT
     ).stdout
 
 
@@ -62,7 +65,7 @@ def stream_process(
                 job=job,
                 status=JobStatus.RUNNING,
                 progress=percent,
-                status_text="Сleaning...",
+                status_text="Cleaning...",
             )
 
         elif "store paths deleted," in line:
@@ -78,7 +81,7 @@ def stream_process(
 
 def get_dead_packages(output):
     dead = len(re.findall("/nix/store/", output))
-    percent = None
+    percent = 0
     if dead != 0:
         percent = 100 / dead
     return dead, percent
@@ -90,7 +93,7 @@ def calculate_and_clear_dead_packages(job: Jobs):
         job=job,
         status=JobStatus.RUNNING,
         progress=0,
-        status_text="Сalculate the number of dead packages...",
+        status_text="Calculate the number of dead packages...",
     )
 
     dead_packages, package_equal_to_percent = get_dead_packages(
@@ -121,7 +124,7 @@ def start_nix_collect_garbage() -> Job:
     job = Jobs.add(
         type_id="maintenance.collect_nix_garbage",
         name="Collect garbage",
-        description=".",
+        description="Cleaning up unused packages",
     )
     calculate_and_clear_dead_packages(job=job)
     return job
