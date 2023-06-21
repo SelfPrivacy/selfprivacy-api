@@ -4,7 +4,7 @@ from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.common_types.jobs import job_to_api_job
 from selfprivacy_api.utils.block_devices import BlockDevices
 from selfprivacy_api.graphql.mutations.mutation_interface import (
-    GenericJobButationReturn,
+    GenericJobMutationReturn,
     GenericMutationReturn,
 )
 from selfprivacy_api.jobs.migrate_to_binds import (
@@ -79,10 +79,10 @@ class StorageMutations:
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def migrate_to_binds(self, input: MigrateToBindsInput) -> GenericJobButationReturn:
+    def migrate_to_binds(self, input: MigrateToBindsInput) -> GenericJobMutationReturn:
         """Migrate to binds"""
         if is_bind_migrated():
-            return GenericJobButationReturn(
+            return GenericJobMutationReturn(
                 success=False, code=409, message="Already migrated to binds"
             )
         job = start_bind_migration(
@@ -94,7 +94,7 @@ class StorageMutations:
                 pleroma_block_device=input.pleroma_block_device,
             )
         )
-        return GenericJobButationReturn(
+        return GenericJobMutationReturn(
             success=True,
             code=200,
             message="Migration to binds started, rebuild the system to apply changes",

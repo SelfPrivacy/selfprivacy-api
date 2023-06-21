@@ -10,6 +10,7 @@ from selfprivacy_api.utils.redis_pool import RedisPool
 TEST_KEY = "model_storage"
 redis = RedisPool().get_connection()
 
+
 @pytest.fixture()
 def clean_redis():
     redis.delete(TEST_KEY)
@@ -19,18 +20,14 @@ class DummyModel(BaseModel):
     name: str
     date: Optional[datetime]
 
+
 def test_store_retrieve():
-    model = DummyModel(
-        name= "test",
-        date= datetime.now()
-    )
+    model = DummyModel(name="test", date=datetime.now())
     store_model_as_hash(redis, TEST_KEY, model)
-    assert hash_as_model(redis, TEST_KEY, DummyModel) == model 
+    assert hash_as_model(redis, TEST_KEY, DummyModel) == model
+
 
 def test_store_retrieve_none():
-    model = DummyModel(
-        name= "test",
-        date= None
-    )
+    model = DummyModel(name="test", date=None)
     store_model_as_hash(redis, TEST_KEY, model)
-    assert hash_as_model(redis, TEST_KEY, DummyModel) == model 
+    assert hash_as_model(redis, TEST_KEY, DummyModel) == model

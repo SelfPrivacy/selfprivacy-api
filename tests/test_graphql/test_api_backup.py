@@ -8,21 +8,24 @@ from selfprivacy_api.jobs import Jobs, JobStatus
 
 API_RELOAD_SNAPSHOTS = """
 mutation TestSnapshotsReload {
+    backup {
         forceSnapshotsReload {
             success
             message
             code
         }
+    }
 }
 """
 
 API_SET_AUTOBACKUP_PERIOD_MUTATION = """
 mutation TestAutobackupPeriod($period: Int) {
+    backup {
         setAutobackupPeriod(period: $period) {
             success
             message
             code
-            configuration { 
+            configuration {
                 provider
                 encryptionKey
                 isInitialized
@@ -31,16 +34,18 @@ mutation TestAutobackupPeriod($period: Int) {
                 locationId
             }
         }
+    }
 }
 """
 
 API_REMOVE_REPOSITORY_MUTATION = """
 mutation TestRemoveRepo {
+    backup {
         removeRepository {
             success
             message
             code
-            configuration { 
+            configuration {
                 provider
                 encryptionKey
                 isInitialized
@@ -49,16 +54,18 @@ mutation TestRemoveRepo {
                 locationId
             }
         }
+    }
 }
 """
 
 API_INIT_MUTATION = """
 mutation TestInitRepo($input: InitializeRepositoryInput!) {
+    backup {
         initializeRepository(repository: $input) {
             success
             message
             code
-            configuration { 
+            configuration {
                 provider
                 encryptionKey
                 isInitialized
@@ -67,20 +74,23 @@ mutation TestInitRepo($input: InitializeRepositoryInput!) {
                 locationId
             }
         }
+    }
 }
 """
 
 API_RESTORE_MUTATION = """
 mutation TestRestoreService($snapshot_id: String!) {
+    backup {
         restoreBackup(snapshotId: $snapshot_id) {
             success
             message
             code
-            job { 
+            job {
                 uid
                 status
             }
         }
+    }
 }
 """
 
@@ -96,15 +106,17 @@ allSnapshots {
 
 API_BACK_UP_MUTATION = """
 mutation TestBackupService($service_id: String!) {
+    backup {
         startBackup(serviceId: $service_id) {
             success
             message
             code
-            job { 
+            job {
                 uid
                 status
             }
         }
+    }
 }
 """
 
@@ -225,7 +237,7 @@ def test_snapshots_empty(authorized_client, dummy_service):
 
 def test_start_backup(authorized_client, dummy_service):
     response = api_backup(authorized_client, dummy_service)
-    data = get_data(response)["startBackup"]
+    data = get_data(response)["backup"]["startBackup"]
     assert data["success"] is True
     job = data["job"]
 
@@ -245,7 +257,7 @@ def test_restore(authorized_client, dummy_service):
     assert snap["id"] is not None
 
     response = api_restore(authorized_client, snap["id"])
-    data = get_data(response)["restoreBackup"]
+    data = get_data(response)["backup"]["restoreBackup"]
     assert data["success"] is True
     job = data["job"]
 
@@ -257,7 +269,7 @@ def test_reinit(authorized_client, dummy_service, tmpdir):
     response = api_init_without_key(
         authorized_client, "FILE", "", "", test_repo_path, ""
     )
-    data = get_data(response)["initializeRepository"]
+    data = get_data(response)["backup"]["initializeRepository"]
     assert_ok(data)
     configuration = data["configuration"]
     assert configuration["provider"] == "FILE"
@@ -267,7 +279,7 @@ def test_reinit(authorized_client, dummy_service, tmpdir):
     assert configuration["isInitialized"] is True
 
     response = api_backup(authorized_client, dummy_service)
-    data = get_data(response)["startBackup"]
+    data = get_data(response)["backup"]["startBackup"]
     assert data["success"] is True
     job = data["job"]
 
@@ -276,7 +288,7 @@ def test_reinit(authorized_client, dummy_service, tmpdir):
 
 def test_remove(authorized_client, generic_userdata):
     response = api_remove(authorized_client)
-    data = get_data(response)["removeRepository"]
+    data = get_data(response)["backup"]["removeRepository"]
     assert_ok(data)
 
     configuration = data["configuration"]
@@ -291,7 +303,7 @@ def test_remove(authorized_client, generic_userdata):
 def test_autobackup_period_nonzero(authorized_client):
     new_period = 11
     response = api_set_period(authorized_client, new_period)
-    data = get_data(response)["setAutobackupPeriod"]
+    data = get_data(response)["backup"]["setAutobackupPeriod"]
     assert_ok(data)
 
     configuration = data["configuration"]
@@ -304,7 +316,7 @@ def test_autobackup_period_zero(authorized_client):
     response = api_set_period(authorized_client, 11)
     # and now we nullify it
     response = api_set_period(authorized_client, new_period)
-    data = get_data(response)["setAutobackupPeriod"]
+    data = get_data(response)["backup"]["setAutobackupPeriod"]
     assert_ok(data)
 
     configuration = data["configuration"]
@@ -316,7 +328,7 @@ def test_autobackup_period_none(authorized_client):
     response = api_set_period(authorized_client, 11)
     # and now we nullify it
     response = api_set_period(authorized_client, None)
-    data = get_data(response)["setAutobackupPeriod"]
+    data = get_data(response)["backup"]["setAutobackupPeriod"]
     assert_ok(data)
 
     configuration = data["configuration"]
@@ -328,7 +340,7 @@ def test_autobackup_period_negative(authorized_client):
     response = api_set_period(authorized_client, 11)
     # and now we nullify it
     response = api_set_period(authorized_client, -12)
-    data = get_data(response)["setAutobackupPeriod"]
+    data = get_data(response)["backup"]["setAutobackupPeriod"]
     assert_ok(data)
 
     configuration = data["configuration"]
@@ -341,7 +353,7 @@ def test_reload_snapshots_bare_bare_bare(authorized_client, dummy_service):
     api_remove(authorized_client)
 
     response = api_reload_snapshots(authorized_client)
-    data = get_data(response)["forceSnapshotsReload"]
+    data = get_data(response)["backup"]["forceSnapshotsReload"]
     assert_ok(data)
 
     snaps = api_snapshots(authorized_client)
@@ -350,10 +362,10 @@ def test_reload_snapshots_bare_bare_bare(authorized_client, dummy_service):
 
 def test_reload_snapshots(authorized_client, dummy_service):
     response = api_backup(authorized_client, dummy_service)
-    data = get_data(response)["startBackup"]
+    data = get_data(response)["backup"]["startBackup"]
 
     response = api_reload_snapshots(authorized_client)
-    data = get_data(response)["forceSnapshotsReload"]
+    data = get_data(response)["backup"]["forceSnapshotsReload"]
     assert_ok(data)
 
     snaps = api_snapshots(authorized_client)
