@@ -6,7 +6,7 @@ from strawberry.types import Info
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericMutationReturn,
-    GenericJobButationReturn,
+    GenericJobMutationReturn,
     MutationReturnInterface,
 )
 from selfprivacy_api.graphql.queries.backup import BackupConfiguration
@@ -83,12 +83,12 @@ class BackupMutations:
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def start_backup(self, service_id: str) -> GenericJobButationReturn:
+    def start_backup(self, service_id: str) -> GenericJobMutationReturn:
         """Start backup"""
 
         service = get_service_by_id(service_id)
         if service is None:
-            return GenericJobButationReturn(
+            return GenericJobMutationReturn(
                 success=False,
                 code=300,
                 message=f"nonexistent service: {service_id}",
@@ -99,7 +99,7 @@ class BackupMutations:
         start_backup(service)
         job = job_to_api_job(job)
 
-        return GenericJobButationReturn(
+        return GenericJobMutationReturn(
             success=True,
             code=200,
             message="Backup job queued",
@@ -107,12 +107,12 @@ class BackupMutations:
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def restore_backup(self, snapshot_id: str) -> GenericJobButationReturn:
+    def restore_backup(self, snapshot_id: str) -> GenericJobMutationReturn:
         """Restore backup"""
         snap = Backups.get_snapshot_by_id(snapshot_id)
         service = get_service_by_id(snap.service_name)
         if snap is None:
-            return GenericJobButationReturn(
+            return GenericJobMutationReturn(
                 success=False,
                 code=400,
                 message=f"No such snapshot: {snapshot_id}",
@@ -122,7 +122,7 @@ class BackupMutations:
         job = add_restore_job(snap)
         restore_snapshot(snap)
 
-        return GenericJobButationReturn(
+        return GenericJobMutationReturn(
             success=True,
             code=200,
             message="restore job created",
