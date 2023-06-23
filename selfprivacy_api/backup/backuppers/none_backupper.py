@@ -1,10 +1,10 @@
 from typing import List
 
 from selfprivacy_api.models.backup.snapshot import Snapshot
-from selfprivacy_api.backup.backuppers import AbstractBackuper
+from selfprivacy_api.backup.backuppers import AbstractBackupper
 
 
-class NoneBackupper(AbstractBackuper):
+class NoneBackupper(AbstractBackupper):
     def is_initted(self, repo_name: str = "") -> bool:
         return False
 

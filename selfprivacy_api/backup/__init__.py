@@ -287,7 +287,7 @@ class Backups:
 
         try:
             service.pre_backup()
-            snapshot = Backups.provider().backuper.start_backup(
+            snapshot = Backups.provider().backupper.start_backup(
                 folders,
                 tag,
             )
@@ -302,7 +302,7 @@ class Backups:
 
     @staticmethod
     def init_repo():
-        Backups.provider().backuper.init()
+        Backups.provider().backupper.init()
         Storage.mark_as_init()
 
     @staticmethod
@@ -310,7 +310,7 @@ class Backups:
         if Storage.has_init_mark():
             return True
 
-        initted = Backups.provider().backuper.is_initted()
+        initted = Backups.provider().backupper.is_initted()
         if initted:
             Storage.mark_as_init()
             return True
@@ -336,7 +336,7 @@ class Backups:
         # TODO: the oldest snapshots will get expired faster than the new ones.
         # How to detect that the end is missing?
 
-        upstream_snapshots = Backups.provider().backuper.get_snapshots()
+        upstream_snapshots = Backups.provider().backupper.get_snapshots()
         Backups.sync_all_snapshots()
         return upstream_snapshots
 
@@ -358,7 +358,7 @@ class Backups:
 
     @staticmethod
     def sync_all_snapshots():
-        upstream_snapshots = Backups.provider().backuper.get_snapshots()
+        upstream_snapshots = Backups.provider().backupper.get_snapshots()
         Storage.invalidate_snapshot_storage()
         for snapshot in upstream_snapshots:
             Storage.cache_snapshot(snapshot)
@@ -368,7 +368,7 @@ class Backups:
     def restore_service_from_snapshot(service: Service, snapshot_id: str):
         folders = service.get_folders()
 
-        Backups.provider().backuper.restore_from_backup(
+        Backups.provider().backupper.restore_from_backup(
             snapshot_id,
             folders,
         )
@@ -427,7 +427,7 @@ class Backups:
 
     @staticmethod
     def service_snapshot_size(snapshot_id: str) -> int:
-        return Backups.provider().backuper.restored_size(
+        return Backups.provider().backupper.restored_size(
             snapshot_id,
         )
 

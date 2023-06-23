@@ -111,8 +111,8 @@ def test_config_load(generic_userdata):
     assert provider.key == "KEY"
     assert provider.location == "selfprivacy"
 
-    assert provider.backuper.account == "ID"
-    assert provider.backuper.key == "KEY"
+    assert provider.backupper.account == "ID"
+    assert provider.backupper.key == "KEY"
 
 
 def test_json_reset(generic_userdata):
@@ -141,7 +141,7 @@ def test_select_backend():
 
 
 def test_file_backend_init(file_backup):
-    file_backup.backuper.init()
+    file_backup.backupper.init()
 
 
 def test_backup_simple_file(raw_dummy_service, file_backup):
@@ -151,7 +151,7 @@ def test_backup_simple_file(raw_dummy_service, file_backup):
     assert file_backup is not None
 
     name = service.get_id()
-    file_backup.backuper.init()
+    file_backup.backupper.init()
 
 
 def test_backup_service(dummy_service, backups):
@@ -172,7 +172,7 @@ def test_backup_service(dummy_service, backups):
 
 def test_no_repo(memory_backup):
     with pytest.raises(ValueError):
-        assert memory_backup.backuper.get_snapshots() == []
+        assert memory_backup.backupper.get_snapshots() == []
 
 
 def test_one_snapshot(backups, dummy_service):
@@ -188,7 +188,7 @@ def test_backup_returns_snapshot(backups, dummy_service):
     service_folders = dummy_service.get_folders()
     provider = Backups.provider()
     name = dummy_service.get_id()
-    snapshot = provider.backuper.start_backup(service_folders, name)
+    snapshot = provider.backupper.start_backup(service_folders, name)
 
     assert snapshot.id is not None
     assert snapshot.service_name == name

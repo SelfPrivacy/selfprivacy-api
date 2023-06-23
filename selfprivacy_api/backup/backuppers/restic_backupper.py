@@ -6,7 +6,7 @@ from typing import List
 from collections.abc import Iterable
 from json.decoder import JSONDecodeError
 
-from selfprivacy_api.backup.backuppers import AbstractBackuper
+from selfprivacy_api.backup.backuppers import AbstractBackupper
 from selfprivacy_api.models.backup.snapshot import Snapshot
 from selfprivacy_api.backup.jobs import get_backup_job
 from selfprivacy_api.services import get_service_by_id
@@ -15,7 +15,7 @@ from selfprivacy_api.jobs import Jobs, JobStatus
 from selfprivacy_api.backup.local_secret import LocalBackupSecret
 
 
-class ResticBackuper(AbstractBackuper):
+class ResticBackupper(AbstractBackupper):
     def __init__(self, login_flag: str, key_flag: str, type: str):
         self.login_flag = login_flag
         self.key_flag = key_flag
@@ -68,7 +68,7 @@ class ResticBackuper(AbstractBackuper):
                 ]
             )
         if args != []:
-            command.extend(ResticBackuper.__flatten_list(args))
+            command.extend(ResticBackupper.__flatten_list(args))
         return command
 
     @staticmethod
@@ -77,7 +77,7 @@ class ResticBackuper(AbstractBackuper):
         result = []
         for item in list:
             if isinstance(item, Iterable) and not isinstance(item, str):
-                result.extend(ResticBackuper.__flatten_list(item))
+                result.extend(ResticBackupper.__flatten_list(item))
                 continue
             result.append(item)
         return result
@@ -113,10 +113,10 @@ class ResticBackuper(AbstractBackuper):
         messages = []
         job = get_backup_job(get_service_by_id(tag))
         try:
-            for raw_message in ResticBackuper.output_yielder(backup_command):
+            for raw_message in ResticBackupper.output_yielder(backup_command):
                 message = self.parse_message(raw_message, job)
                 messages.append(message)
-            return ResticBackuper._snapshot_from_backup_messages(messages, tag)
+            return ResticBackupper._snapshot_from_backup_messages(messages, tag)
         except ValueError as e:
             raise ValueError("could not create a snapshot: ", messages) from e
 
@@ -124,11 +124,11 @@ class ResticBackuper(AbstractBackuper):
     def _snapshot_from_backup_messages(messages, repo_name) -> Snapshot:
         for message in messages:
             if message["message_type"] == "summary":
-                return ResticBackuper._snapshot_from_fresh_summary(message, repo_name)
+                return ResticBackupper._snapshot_from_fresh_summary(message, repo_name)
         raise ValueError("no summary message in restic json output")
 
     def parse_message(self, raw_message, job=None) -> object:
-        message = ResticBackuper.parse_json_output(raw_message)
+        message = ResticBackupper.parse_json_output(raw_message)
         if message["message_type"] == "status":
             if job is not None:  # only update status if we run under some job
                 Jobs.update(
@@ -168,7 +168,7 @@ class ResticBackuper(AbstractBackuper):
 
         with subprocess.Popen(command, stdout=subprocess.PIPE, shell=False) as handle:
             output = handle.communicate()[0].decode("utf-8")
-            if not ResticBackuper.has_json(output):
+            if not ResticBackupper.has_json(output):
                 return False
             # raise NotImplementedError("error(big): " + output)
             return True
@@ -190,7 +190,7 @@ class ResticBackuper(AbstractBackuper):
         ) as handle:
             output = handle.communicate()[0].decode("utf-8")
             try:
-                parsed_output = ResticBackuper.parse_json_output(output)
+                parsed_output = ResticBackupper.parse_json_output(output)
                 return parsed_output["total_size"]
             except ValueError as e:
                 raise ValueError("cannot restore a snapshot: " + output) from e
@@ -239,7 +239,7 @@ class ResticBackuper(AbstractBackuper):
         if "Is there a repository at the following location?" in output:
             raise ValueError("No repository! : " + output)
         try:
-            return ResticBackuper.parse_json_output(output)
+            return ResticBackupper.parse_json_output(output)
         except ValueError as e:
             raise ValueError("Cannot load snapshots: ") from e
 
@@ -258,7 +258,7 @@ class ResticBackuper(AbstractBackuper):
 
     @staticmethod
     def parse_json_output(output: str) -> object:
-        starting_index = ResticBackuper.json_start(output)
+        starting_index = ResticBackupper.json_start(output)
 
         if starting_index == -1:
             raise ValueError("There is no json in the restic output : " + output)
@@ -292,6 +292,6 @@ class ResticBackuper(AbstractBackuper):
 
     @staticmethod
     def has_json(output: str) -> bool:
-        if ResticBackuper.json_start(output) == -1:
+        if ResticBackupper.json_start(output) == -1:
             return False
         return True
