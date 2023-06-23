@@ -50,7 +50,7 @@ class ResticBackuper(AbstractBackuper):
     def _password_command(self):
         return f"echo {LocalBackupSecret.get()}"
 
-    def restic_command(self, *args, branch_name: str = ""):
+    def restic_command(self, *args, tag: str = ""):
         command = [
             "restic",
             "-o",
@@ -60,11 +60,11 @@ class ResticBackuper(AbstractBackuper):
             "--password-command",
             self._password_command(),
         ]
-        if branch_name != "":
+        if tag != "":
             command.extend(
                 [
                     "--tag",
-                    branch_name,
+                    tag,
                 ]
             )
         if args != []:
@@ -92,10 +92,10 @@ class ResticBackuper(AbstractBackuper):
             universal_newlines=True,
         ) as handle:
             for line in iter(handle.stdout.readline, ""):
-                if not "NOTICE:" in line:
+                if "NOTICE:" not in line:
                     yield line
 
-    def start_backup(self, folders: List[str], repo_name: str):
+    def start_backup(self, folders: List[str], tag: str):
         """
         Start backup with restic
         """
@@ -107,16 +107,16 @@ class ResticBackuper(AbstractBackuper):
             "backup",
             "--json",
             folders,
-            branch_name=repo_name,
+            tag=tag,
         )
 
         messages = []
-        job = get_backup_job(get_service_by_id(repo_name))
+        job = get_backup_job(get_service_by_id(tag))
         try:
             for raw_message in ResticBackuper.output_yielder(backup_command):
                 message = self.parse_message(raw_message, job)
                 messages.append(message)
-            return ResticBackuper._snapshot_from_backup_messages(messages, repo_name)
+            return ResticBackuper._snapshot_from_backup_messages(messages, tag)
         except ValueError as e:
             raise ValueError("could not create a snapshot: ", messages) from e
 
@@ -128,7 +128,7 @@ class ResticBackuper(AbstractBackuper):
         raise ValueError("no summary message in restic json output")
 
     def parse_message(self, raw_message, job=None) -> object:
-        message = self.parse_json_output(raw_message)
+        message = ResticBackuper.parse_json_output(raw_message)
         if message["message_type"] == "status":
             if job is not None:  # only update status if we run under some job
                 Jobs.update(
@@ -168,12 +168,12 @@ class ResticBackuper(AbstractBackuper):
 
         with subprocess.Popen(command, stdout=subprocess.PIPE, shell=False) as handle:
             output = handle.communicate()[0].decode("utf-8")
-            if not self.has_json(output):
+            if not ResticBackuper.has_json(output):
                 return False
             # raise NotImplementedError("error(big): " + output)
             return True
 
-    def restored_size(self, repo_name, snapshot_id) -> float:
+    def restored_size(self, snapshot_id: str) -> int:
         """
         Size of a snapshot
         """
@@ -183,15 +183,19 @@ class ResticBackuper(AbstractBackuper):
             "--json",
         )
 
-        with subprocess.Popen(command, stdout=subprocess.PIPE, shell=False) as handle:
+        with subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            shell=False,
+        ) as handle:
             output = handle.communicate()[0].decode("utf-8")
             try:
-                parsed_output = self.parse_json_output(output)
+                parsed_output = ResticBackuper.parse_json_output(output)
                 return parsed_output["total_size"]
             except ValueError as e:
                 raise ValueError("cannot restore a snapshot: " + output) from e
 
-    def restore_from_backup(self, repo_name, snapshot_id, folders):
+    def restore_from_backup(self, snapshot_id, folders):
         """
         Restore from backup with restic
         """
@@ -235,7 +239,7 @@ class ResticBackuper(AbstractBackuper):
         if "Is there a repository at the following location?" in output:
             raise ValueError("No repository! : " + output)
         try:
-            return self.parse_json_output(output)
+            return ResticBackuper.parse_json_output(output)
         except ValueError as e:
             raise ValueError("Cannot load snapshots: ") from e
 
@@ -252,8 +256,9 @@ class ResticBackuper(AbstractBackuper):
             snapshots.append(snapshot)
         return snapshots
 
-    def parse_json_output(self, output: str) -> object:
-        starting_index = self.json_start(output)
+    @staticmethod
+    def parse_json_output(output: str) -> object:
+        starting_index = ResticBackuper.json_start(output)
 
         if starting_index == -1:
             raise ValueError("There is no json in the restic output : " + output)
@@ -273,7 +278,8 @@ class ResticBackuper(AbstractBackuper):
             result_array.append(json.loads(message))
         return result_array
 
-    def json_start(self, output: str) -> int:
+    @staticmethod
+    def json_start(output: str) -> int:
         indices = [
             output.find("["),
             output.find("{"),
@@ -284,7 +290,8 @@ class ResticBackuper(AbstractBackuper):
             return -1
         return min(indices)
 
-    def has_json(self, output: str) -> bool:
-        if self.json_start(output) == -1:
+    @staticmethod
+    def has_json(output: str) -> bool:
+        if ResticBackuper.json_start(output) == -1:
             return False
         return True

@@ -1,3 +1,4 @@
+from operator import add
 from typing import List, Optional
 from datetime import datetime, timedelta
 from os import statvfs
@@ -9,7 +10,9 @@ from selfprivacy_api.utils import ReadUserData, WriteUserData
 from selfprivacy_api.services import get_service_by_id
 from selfprivacy_api.services.service import Service
 
-from selfprivacy_api.graphql.queries.providers import BackupProvider
+from selfprivacy_api.graphql.queries.providers import (
+    BackupProvider as BackupProviderEnum,
+)
 
 from selfprivacy_api.backup.providers.provider import AbstractBackupProvider
 from selfprivacy_api.backup.providers import get_provider
@@ -33,12 +36,15 @@ DEFAULT_JSON_PROVIDER = {
 class Backups:
     """A singleton controller for backups"""
 
-    provider: AbstractBackupProvider
-
     @staticmethod
     def set_localfile_repo(file_path: str):
-        ProviderClass = get_provider(BackupProvider.FILE)
-        provider = ProviderClass(login="", key="", location=file_path, repo_id="")
+        ProviderClass = get_provider(BackupProviderEnum.FILE)
+        provider = ProviderClass(
+            login="",
+            key="",
+            location=file_path,
+            repo_id="",
+        )
         Storage.store_provider(provider)
 
     @staticmethod
@@ -67,7 +73,14 @@ class Backups:
     @staticmethod
     def _service_ids_to_back_up(time: datetime) -> List[str]:
         services = Storage.services_with_autobackup()
-        return [id for id in services if Backups.is_time_to_backup_service(id, time)]
+        return [
+            id
+            for id in services
+            if Backups.is_time_to_backup_service(
+                id,
+                time,
+            )
+        ]
 
     @staticmethod
     def services_to_back_up(time: datetime) -> List[Service]:
@@ -75,14 +88,17 @@ class Backups:
         for id in Backups._service_ids_to_back_up(time):
             service = get_service_by_id(id)
             if service is None:
-                raise ValueError("Cannot look up a service scheduled for backup!")
+                raise ValueError(
+                    "Cannot look up a service scheduled for backup!",
+                )
             result.append(service)
         return result
 
     @staticmethod
     def is_time_to_backup(time: datetime) -> bool:
         """
-        Intended as a time validator for huey cron scheduler of automatic backups
+        Intended as a time validator for huey cron scheduler
+        of automatic backups
         """
 
         return Backups._service_ids_to_back_up(time) != []
@@ -97,7 +113,8 @@ class Backups:
 
         last_backup = Storage.get_last_backup_time(service_id)
         if last_backup is None:
-            return True  # queue a backup immediately if there are no previous backups
+            # queue a backup immediately if there are no previous backups
+            return True
 
         if time > last_backup + timedelta(minutes=period):
             return True
@@ -121,7 +138,8 @@ class Backups:
     def set_autobackup_period_minutes(minutes: int):
         """
         0 and negative numbers are equivalent to disable.
-        Setting to a positive number may result in a backup very soon if some services are not backed up.
+        Setting to a positive number may result in a backup very soon
+        if some services are not backed up.
         """
         if minutes <= 0:
             Backups.disable_all_autobackup()
@@ -130,7 +148,10 @@ class Backups:
 
     @staticmethod
     def disable_all_autobackup():
-        """disables all automatic backing up, but does not change per-service settings"""
+        """
+        Disables all automatic backing up,
+        but does not change per-service settings
+        """
         Storage.delete_backup_period()
 
     @staticmethod
@@ -138,17 +159,38 @@ class Backups:
         return Backups.lookup_provider()
 
     @staticmethod
-    def set_provider(kind: str, login: str, key: str, location: str, repo_id: str = ""):
-        provider = Backups.construct_provider(kind, login, key, location, repo_id)
+    def set_provider(
+        kind: BackupProviderEnum,
+        login: str,
+        key: str,
+        location: str,
+        repo_id: str = "",
+    ):
+        provider = Backups.construct_provider(
+            kind,
+            login,
+            key,
+            location,
+            repo_id,
+        )
         Storage.store_provider(provider)
 
     @staticmethod
     def construct_provider(
-        kind: str, login: str, key: str, location: str, repo_id: str = ""
-    ):
-        provider_class = get_provider(BackupProvider[kind])
+        kind: BackupProviderEnum,
+        login: str,
+        key: str,
+        location: str,
+        repo_id: str = "",
+    ) -> AbstractBackupProvider:
+        provider_class = get_provider(kind)
 
-        return provider_class(login=login, key=key, location=location, repo_id=repo_id)
+        return provider_class(
+            login=login,
+            key=key,
+            location=location,
+            repo_id=repo_id,
+        )
 
     @staticmethod
     def reset(reset_json=True):
@@ -156,7 +198,8 @@ class Backups:
         if reset_json:
             try:
                 Backups.reset_provider_json()
-            except FileNotFoundError:  # if there is no userdata file, we do not need to reset it
+            except FileNotFoundError:
+                # if there is no userdata file, we do not need to reset it
                 pass
 
     @staticmethod
@@ -175,7 +218,7 @@ class Backups:
             return json_provider
 
         none_provider = Backups.construct_provider(
-            "NONE", login="", key="", location=""
+            BackupProviderEnum.NONE, login="", key="", location=""
         )
         Storage.store_provider(none_provider)
         return none_provider
@@ -200,15 +243,18 @@ class Backups:
 
             if provider_dict == DEFAULT_JSON_PROVIDER:
                 return None
+            try:
+                return Backups.construct_provider(
+                    kind=BackupProviderEnum[provider_dict["provider"]],
+                    login=provider_dict["accountId"],
+                    key=provider_dict["accountKey"],
+                    location=provider_dict["bucket"],
+                )
+            except KeyError:
+                return None
 
-            return Backups.construct_provider(
-                kind=provider_dict["provider"],
-                login=provider_dict["accountId"],
-                key=provider_dict["accountKey"],
-                location=provider_dict["bucket"],
-            )
-
-    def reset_provider_json() -> AbstractBackupProvider:
+    @staticmethod
+    def reset_provider_json() -> None:
         with WriteUserData() as user_data:
             if "backblaze" in user_data.keys():
                 del user_data["backblaze"]
@@ -216,12 +262,12 @@ class Backups:
             user_data["backup"] = DEFAULT_JSON_PROVIDER
 
     @staticmethod
-    def load_provider_redis() -> AbstractBackupProvider:
+    def load_provider_redis() -> Optional[AbstractBackupProvider]:
         provider_model = Storage.load_provider()
         if provider_model is None:
             return None
         return Backups.construct_provider(
-            provider_model.kind,
+            BackupProviderEnum[provider_model.kind],
             provider_model.login,
             provider_model.key,
             provider_model.location,
@@ -232,7 +278,7 @@ class Backups:
     def back_up(service: Service):
         """The top-level function to back up a service"""
         folders = service.get_folders()
-        repo_name = service.get_id()
+        tag = service.get_id()
 
         job = get_backup_job(service)
         if job is None:
@@ -241,8 +287,11 @@ class Backups:
 
         try:
             service.pre_backup()
-            snapshot = Backups.provider().backuper.start_backup(folders, repo_name)
-            Backups._store_last_snapshot(repo_name, snapshot)
+            snapshot = Backups.provider().backuper.start_backup(
+                folders,
+                tag,
+            )
+            Backups._store_last_snapshot(tag, snapshot)
             service.post_restore()
         except Exception as e:
             Jobs.update(job, status=JobStatus.ERROR)
@@ -252,10 +301,7 @@ class Backups:
         return snapshot
 
     @staticmethod
-    def init_repo(service: Optional[Service] = None):
-        if service is not None:
-            repo_name = service.get_id()
-
+    def init_repo():
         Backups.provider().backuper.init()
         Storage.mark_as_init()
 
@@ -274,7 +320,13 @@ class Backups:
     @staticmethod
     def get_snapshots(service: Service) -> List[Snapshot]:
         snapshots = Backups.get_all_snapshots()
-        return [snap for snap in snapshots if snap.service_name == service.get_id()]
+        service_id = service.get_id()
+        return list(
+            filter(
+                lambda snap: snap.service_name == service_id,
+                snapshots,
+            )
+        )
 
     @staticmethod
     def get_all_snapshots() -> List[Snapshot]:
@@ -314,10 +366,12 @@ class Backups:
     # to be deprecated/internalized in favor of restore_snapshot()
     @staticmethod
     def restore_service_from_snapshot(service: Service, snapshot_id: str):
-        repo_name = service.get_id()
         folders = service.get_folders()
 
-        Backups.provider().backuper.restore_from_backup(repo_name, snapshot_id, folders)
+        Backups.provider().backuper.restore_from_backup(
+            snapshot_id,
+            folders,
+        )
 
     @staticmethod
     def assert_restorable(snapshot: Snapshot):
@@ -327,45 +381,58 @@ class Backups:
                 f"snapshot has a nonexistent service: {snapshot.service_name}"
             )
 
-        needed_space = Backups.snapshot_restored_size(snapshot)
+        needed_space = Backups.service_snapshot_size(snapshot.id)
         available_space = Backups.space_usable_for_service(service)
         if needed_space > available_space:
             raise ValueError(
-                f"we only have {available_space} bytes but snapshot needs{ needed_space}"
+                f"we only have {available_space} bytes "
+                f"but snapshot needs {needed_space}"
             )
 
     @staticmethod
     def restore_snapshot(snapshot: Snapshot):
         service = get_service_by_id(snapshot.service_name)
 
+        if service is None:
+            raise ValueError(
+                f"snapshot has a nonexistent service: {snapshot.service_name}"
+            )
+
         job = get_restore_job(service)
         if job is None:
             job = add_restore_job(snapshot)
 
-        Jobs.update(job, status=JobStatus.RUNNING)
+        Jobs.update(
+            job,
+            status=JobStatus.RUNNING,
+        )
         try:
             Backups.assert_restorable(snapshot)
-            Backups.restore_service_from_snapshot(service, snapshot.id)
+            Backups.restore_service_from_snapshot(
+                service,
+                snapshot.id,
+            )
             service.post_restore()
         except Exception as e:
-            Jobs.update(job, status=JobStatus.ERROR)
+            Jobs.update(
+                job,
+                status=JobStatus.ERROR,
+            )
             raise e
 
-        Jobs.update(job, status=JobStatus.FINISHED)
-
-    @staticmethod
-    def service_snapshot_size(service: Service, snapshot_id: str) -> float:
-        repo_name = service.get_id()
-        return Backups.provider().backuper.restored_size(repo_name, snapshot_id)
-
-    @staticmethod
-    def snapshot_restored_size(snapshot: Snapshot) -> float:
-        return Backups.service_snapshot_size(
-            get_service_by_id(snapshot.service_name), snapshot.id
+        Jobs.update(
+            job,
+            status=JobStatus.FINISHED,
         )
 
     @staticmethod
-    def space_usable_for_service(service: Service) -> bool:
+    def service_snapshot_size(snapshot_id: str) -> int:
+        return Backups.provider().backuper.restored_size(
+            snapshot_id,
+        )
+
+    @staticmethod
+    def space_usable_for_service(service: Service) -> int:
         folders = service.get_folders()
         if folders == []:
             raise ValueError("unallocated service", service.get_id())
