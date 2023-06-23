@@ -6,8 +6,6 @@ from selfprivacy_api.graphql.queries.providers import (
 
 
 class LocalFileBackup(AbstractBackupProvider):
-    @property
-    def backuper(self):
-        return ResticBackuper("", "", ":local:")
+    backuper = ResticBackuper("", "", ":local:")
 
     name = BackupProviderEnum.FILE

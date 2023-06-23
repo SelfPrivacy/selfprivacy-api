@@ -36,7 +36,7 @@ class Backup:
     @strawberry.field
     def configuration(self) -> BackupConfiguration:
         return BackupConfiguration(
-            provider=BackupProvider[Backups.provider().name],
+            provider=Backups.provider().name,
             encryption_key=LocalBackupSecret.get(),
             is_initialized=Backups.is_initted(),
             autobackup_period=Backups.autobackup_period_minutes(),
