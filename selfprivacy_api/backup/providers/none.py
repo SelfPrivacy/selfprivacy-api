@@ -6,6 +6,6 @@ from selfprivacy_api.graphql.queries.providers import (
 
 
 class NoBackups(AbstractBackupProvider):
-    backuper = NoneBackupper()
+    backupper = NoneBackupper()
 
     name = BackupProviderEnum.NONE

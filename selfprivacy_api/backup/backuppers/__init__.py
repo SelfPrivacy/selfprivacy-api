@@ -4,7 +4,7 @@ from typing import List
 from selfprivacy_api.models.backup.snapshot import Snapshot
 
 
-class AbstractBackuper(ABC):
+class AbstractBackupper(ABC):
     def __init__(self):
         pass
 
