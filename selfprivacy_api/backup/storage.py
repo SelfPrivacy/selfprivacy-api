@@ -5,7 +5,10 @@ from selfprivacy_api.models.backup.snapshot import Snapshot
 from selfprivacy_api.models.backup.provider import BackupProviderModel
 
 from selfprivacy_api.utils.redis_pool import RedisPool
-from selfprivacy_api.utils.redis_model_storage import store_model_as_hash, hash_as_model
+from selfprivacy_api.utils.redis_model_storage import (
+    store_model_as_hash,
+    hash_as_model,
+)
 
 
 from selfprivacy_api.services.service import Service
@@ -153,8 +156,12 @@ class Storage:
         )
 
     @staticmethod
-    def load_provider() -> BackupProviderModel:
-        provider_model = hash_as_model(redis, REDIS_PROVIDER_KEY, BackupProviderModel)
+    def load_provider() -> Optional[BackupProviderModel]:
+        provider_model = hash_as_model(
+            redis,
+            REDIS_PROVIDER_KEY,
+            BackupProviderModel,
+        )
         return provider_model
 
     @staticmethod

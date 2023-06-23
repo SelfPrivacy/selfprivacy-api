@@ -51,6 +51,8 @@ def add_backup_job(service: Service) -> Job:
 
 def add_restore_job(snapshot: Snapshot) -> Job:
     service = get_service_by_id(snapshot.service_name)
+    if service is None:
+        raise ValueError(f"no such service: {snapshot.service_name}")
     if is_something_queued_for(service):
         message = (
             f"Cannot start a restore of {service.get_id()}, another operation is queued: "

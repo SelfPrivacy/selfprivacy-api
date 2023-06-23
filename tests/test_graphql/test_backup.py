@@ -73,7 +73,7 @@ def dummy_service(tmpdir, backups, raw_dummy_service):
     assert not path.exists(repo_path)
     # assert not repo_path
 
-    Backups.init_repo(service)
+    Backups.init_repo()
 
     # register our service
     services.services.append(service)
@@ -232,7 +232,7 @@ def test_restore(backups, dummy_service):
 def test_sizing(backups, dummy_service):
     Backups.back_up(dummy_service)
     snap = Backups.get_snapshots(dummy_service)[0]
-    size = Backups.service_snapshot_size(dummy_service, snap.id)
+    size = Backups.service_snapshot_size(snap.id)
     assert size is not None
     assert size > 0
 

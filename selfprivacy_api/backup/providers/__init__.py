@@ -1,23 +1,29 @@
-from selfprivacy_api.graphql.queries.providers import BackupProvider
+from typing import Type
+
+from selfprivacy_api.graphql.queries.providers import (
+    BackupProvider as BackupProviderEnum,
+)
 from selfprivacy_api.backup.providers.provider import AbstractBackupProvider
 
 from selfprivacy_api.backup.providers.backblaze import Backblaze
 from selfprivacy_api.backup.providers.memory import InMemoryBackup
 from selfprivacy_api.backup.providers.local_file import LocalFileBackup
+from selfprivacy_api.backup.providers.none import NoBackups
 
-PROVIDER_MAPPING = {
-    BackupProvider.BACKBLAZE: Backblaze,
-    BackupProvider.MEMORY: InMemoryBackup,
-    BackupProvider.FILE: LocalFileBackup,
-    BackupProvider.NONE: AbstractBackupProvider,
+PROVIDER_MAPPING: dict[BackupProviderEnum, Type[AbstractBackupProvider]] = {
+    BackupProviderEnum.BACKBLAZE: Backblaze,
+    BackupProviderEnum.MEMORY: InMemoryBackup,
+    BackupProviderEnum.FILE: LocalFileBackup,
+    BackupProviderEnum.NONE: NoBackups,
 }
 
 
-def get_provider(provider_type: BackupProvider) -> AbstractBackupProvider:
+def get_provider(
+    provider_type: BackupProviderEnum,
+) -> Type[AbstractBackupProvider]:
     return PROVIDER_MAPPING[provider_type]
 
 
 def get_kind(provider: AbstractBackupProvider) -> str:
-    for key, value in PROVIDER_MAPPING.items():
-        if isinstance(provider, value):
-            return key.value
+    """Get the kind of the provider in the form of a string"""
+    return provider.name.value

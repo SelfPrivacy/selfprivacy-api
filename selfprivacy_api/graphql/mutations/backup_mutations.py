@@ -49,7 +49,7 @@ class BackupMutations:
     ) -> GenericBackupConfigReturn:
         """Initialize a new repository"""
         Backups.set_provider(
-            kind=repository.provider.value,
+            kind=repository.provider,
             login=repository.login,
             key=repository.password,
             location=repository.location_name,
@@ -57,7 +57,10 @@ class BackupMutations:
         )
         Backups.init_repo()
         return GenericBackupConfigReturn(
-            success=True, message="", code="200", configuration=Backup().configuration()
+            success=True,
+            message="",
+            code="200",
+            configuration=Backup().configuration(),
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
@@ -65,7 +68,10 @@ class BackupMutations:
         """Remove repository"""
         Backups.reset()
         return GenericBackupConfigReturn(
-            success=True, message="", code="200", configuration=Backup().configuration()
+            success=True,
+            message="",
+            code="200",
+            configuration=Backup().configuration(),
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
@@ -79,7 +85,10 @@ class BackupMutations:
             Backups.set_autobackup_period_minutes(0)
 
         return GenericBackupConfigReturn(
-            success=True, message="", code="200", configuration=Backup().configuration()
+            success=True,
+            message="",
+            code="200",
+            configuration=Backup().configuration(),
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
@@ -97,36 +106,52 @@ class BackupMutations:
 
         job = add_backup_job(service)
         start_backup(service)
-        job = job_to_api_job(job)
 
         return GenericJobMutationReturn(
             success=True,
             code=200,
             message="Backup job queued",
-            job=job,
+            job=job_to_api_job(job),
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def restore_backup(self, snapshot_id: str) -> GenericJobMutationReturn:
         """Restore backup"""
         snap = Backups.get_snapshot_by_id(snapshot_id)
-        service = get_service_by_id(snap.service_name)
         if snap is None:
             return GenericJobMutationReturn(
                 success=False,
-                code=400,
+                code=404,
                 message=f"No such snapshot: {snapshot_id}",
                 job=None,
             )
 
-        job = add_restore_job(snap)
+        service = get_service_by_id(snap.service_name)
+        if service is None:
+            return GenericJobMutationReturn(
+                success=False,
+                code=404,
+                message=f"nonexistent service: {snap.service_name}",
+                job=None,
+            )
+
+        try:
+            job = add_restore_job(snap)
+        except ValueError as e:
+            return GenericJobMutationReturn(
+                success=False,
+                code=400,
+                message=str(e),
+                job=None,
+            )
+
         restore_snapshot(snap)
 
         return GenericJobMutationReturn(
             success=True,
             code=200,
             message="restore job created",
-            job=job,
+            job=job_to_api_job(job),
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])

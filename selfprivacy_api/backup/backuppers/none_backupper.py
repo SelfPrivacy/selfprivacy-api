@@ -18,12 +18,12 @@ class NoneBackupper(AbstractBackuper):
         """Get all snapshots from the repo"""
         return []
 
-    def init(self, repo_name):
+    def init(self):
         raise NotImplementedError
 
-    def restore_from_backup(self, repo_name: str, snapshot_id: str, folders: List[str]):
+    def restore_from_backup(self, snapshot_id: str, folders: List[str]):
         """Restore a target folder using a snapshot"""
         raise NotImplementedError
 
-    def restored_size(self, repo_name, snapshot_id) -> float:
+    def restored_size(self, snapshot_id: str) -> int:
         raise NotImplementedError
