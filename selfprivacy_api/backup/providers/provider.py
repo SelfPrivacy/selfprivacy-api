@@ -11,10 +11,7 @@ from selfprivacy_api.graphql.queries.providers import (
 
 
 class AbstractBackupProvider(ABC):
-    @property
-    @abstractmethod
-    def backuper(self) -> AbstractBackuper:
-        raise NotImplementedError
+    backuper: AbstractBackuper
 
     name: BackupProviderEnum
 

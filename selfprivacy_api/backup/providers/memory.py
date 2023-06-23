@@ -6,8 +6,6 @@ from selfprivacy_api.graphql.queries.providers import (
 
 
 class InMemoryBackup(AbstractBackupProvider):
-    @property
-    def backuper(self):
-        return ResticBackuper("", "", ":memory:")
+    backuper = ResticBackuper("", "", ":memory:")
 
     name = BackupProviderEnum.MEMORY

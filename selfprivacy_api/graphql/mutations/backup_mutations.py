@@ -59,7 +59,7 @@ class BackupMutations:
         return GenericBackupConfigReturn(
             success=True,
             message="",
-            code="200",
+            code=200,
             configuration=Backup().configuration(),
         )
 
@@ -70,7 +70,7 @@ class BackupMutations:
         return GenericBackupConfigReturn(
             success=True,
             message="",
-            code="200",
+            code=200,
             configuration=Backup().configuration(),
         )
 
@@ -87,7 +87,7 @@ class BackupMutations:
         return GenericBackupConfigReturn(
             success=True,
             message="",
-            code="200",
+            code=200,
             configuration=Backup().configuration(),
         )
 
