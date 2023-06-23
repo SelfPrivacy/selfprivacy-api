@@ -12,6 +12,9 @@ let
     mnemonic
     coverage
     pylint
+    rope
+    mypy
+    pylsp-mypy
     pydantic
     typing-extensions
     psutil
