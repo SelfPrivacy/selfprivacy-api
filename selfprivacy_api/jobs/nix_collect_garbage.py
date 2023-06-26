@@ -47,12 +47,9 @@ def parse_line(line):
         )
 
 
-def stream_process(
-    job,
-    stream,
-    total_dead_packages,
-):
+def stream_process(job, stream, total_dead_packages):
     completed_packages = 0
+    prev_progress = 0
 
     for line in stream:
         line = line.decode("utf-8")
@@ -61,12 +58,14 @@ def stream_process(
             completed_packages += 1
             percent = int((completed_packages / total_dead_packages) * 100)
 
-            Jobs.update(
-                job=job,
-                status=JobStatus.RUNNING,
-                progress=percent,
-                status_text="Cleaning...",
-            )
+            if percent - prev_progress >= 5:
+                Jobs.update(
+                    job=job,
+                    status=JobStatus.RUNNING,
+                    progress=percent,
+                    status_text="Cleaning...",
+                )
+                prev_progress = percent
 
         elif "store paths deleted," in line:
             status = parse_line(line)
