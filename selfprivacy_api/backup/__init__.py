@@ -209,31 +209,6 @@ class Backups:
 
 ### Restoring
 
-    # to be deprecated/internalized in favor of restore_snapshot()
-    @staticmethod
-    def restore_service_from_snapshot(service: Service, snapshot_id: str):
-        folders = service.get_folders()
-
-        Backups.provider().backupper.restore_from_backup(
-            snapshot_id,
-            folders,
-        )
-
-    @staticmethod
-    def assert_restorable(snapshot: Snapshot):
-        service = get_service_by_id(snapshot.service_name)
-        if service is None:
-            raise ValueError(
-                f"snapshot has a nonexistent service: {snapshot.service_name}"
-            )
-
-        needed_space = Backups.service_snapshot_size(snapshot.id)
-        available_space = Backups.space_usable_for_service(service)
-        if needed_space > available_space:
-            raise ValueError(
-                f"we only have {available_space} bytes "
-                f"but snapshot needs {needed_space}"
-            )
 
     @staticmethod
     def restore_snapshot(snapshot: Snapshot):
@@ -253,8 +228,8 @@ class Backups:
             status=JobStatus.RUNNING,
         )
         try:
-            Backups.assert_restorable(snapshot)
-            Backups.restore_service_from_snapshot(
+            Backups._assert_restorable(snapshot)
+            Backups._restore_service_from_snapshot(
                 service,
                 snapshot.id,
             )
@@ -269,6 +244,31 @@ class Backups:
         Jobs.update(
             job,
             status=JobStatus.FINISHED,
+        )
+
+    @staticmethod
+    def _assert_restorable(snapshot: Snapshot):
+        service = get_service_by_id(snapshot.service_name)
+        if service is None:
+            raise ValueError(
+                f"snapshot has a nonexistent service: {snapshot.service_name}"
+            )
+
+        needed_space = Backups.service_snapshot_size(snapshot.id)
+        available_space = Backups.space_usable_for_service(service)
+        if needed_space > available_space:
+            raise ValueError(
+                f"we only have {available_space} bytes "
+                f"but snapshot needs {needed_space}"
+            )
+
+    @staticmethod
+    def _restore_service_from_snapshot(service: Service, snapshot_id: str):
+        folders = service.get_folders()
+
+        Backups.provider().backupper.restore_from_backup(
+            snapshot_id,
+            folders,
         )
 
 ### Snapshots
