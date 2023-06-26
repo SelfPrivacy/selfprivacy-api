@@ -60,6 +60,16 @@ class Backups:
         )
         Storage.store_provider(provider)
 
+    @staticmethod
+    def reset(reset_json=True):
+        Storage.reset()
+        if reset_json:
+            try:
+                Backups._reset_provider_json()
+            except FileNotFoundError:
+                # if there is no userdata file, we do not need to reset it
+                pass
+
 
     @staticmethod
     def _lookup_provider() -> AbstractBackupProvider:
@@ -150,16 +160,6 @@ class Backups:
 
             user_data["backup"] = DEFAULT_JSON_PROVIDER
 
-
-    @staticmethod
-    def reset(reset_json=True):
-        Storage.reset()
-        if reset_json:
-            try:
-                Backups._reset_provider_json()
-            except FileNotFoundError:
-                # if there is no userdata file, we do not need to reset it
-                pass
 
 ### Backup
 
