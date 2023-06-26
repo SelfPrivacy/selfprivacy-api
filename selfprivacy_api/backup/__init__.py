@@ -292,7 +292,7 @@ class Backups:
         # TODO: the oldest snapshots will get expired faster than the new ones.
         # How to detect that the end is missing?
 
-        Backups.force_snapshot_reload()
+        Backups.force_snapshot_cache_reload()
         return Storage.get_cached_snapshots()
 
     @staticmethod
@@ -302,13 +302,13 @@ class Backups:
             return snap
 
         # Possibly our cache entry got invalidated, let's try one more time
-        Backups.force_snapshot_reload()
+        Backups.force_snapshot_cache_reload()
         snap = Storage.get_cached_snapshot_by_id(id)
 
         return snap
 
     @staticmethod
-    def force_snapshot_reload():
+    def force_snapshot_cache_reload():
         upstream_snapshots = Backups.provider().backupper.get_snapshots()
         Storage.invalidate_snapshot_storage()
         for snapshot in upstream_snapshots:
