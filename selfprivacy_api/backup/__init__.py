@@ -51,7 +51,7 @@ class Backups:
         location: str,
         repo_id: str = "",
     ):
-        provider = Backups.construct_provider(
+        provider = Backups._construct_provider(
             kind,
             login,
             key,
@@ -76,14 +76,14 @@ class Backups:
             Storage.store_provider(json_provider)
             return json_provider
 
-        none_provider = Backups.construct_provider(
+        none_provider = Backups._construct_provider(
             BackupProviderEnum.NONE, login="", key="", location=""
         )
         Storage.store_provider(none_provider)
         return none_provider
 
     @staticmethod
-    def construct_provider(
+    def _construct_provider(
         kind: BackupProviderEnum,
         login: str,
         key: str,
@@ -104,7 +104,7 @@ class Backups:
         provider_model = Storage.load_provider()
         if provider_model is None:
             return None
-        return Backups.construct_provider(
+        return Backups._construct_provider(
             BackupProviderEnum[provider_model.kind],
             provider_model.login,
             provider_model.key,
@@ -133,7 +133,7 @@ class Backups:
             if provider_dict == DEFAULT_JSON_PROVIDER:
                 return None
             try:
-                return Backups.construct_provider(
+                return Backups._construct_provider(
                     kind=BackupProviderEnum[provider_dict["provider"]],
                     login=provider_dict["accountId"],
                     key=provider_dict["accountKey"],
