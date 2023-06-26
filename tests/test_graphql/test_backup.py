@@ -475,7 +475,7 @@ def test_provider_storage(backups_backblaze):
     assert provider.key == "KEY"
 
     Storage.store_provider(provider)
-    restored_provider = Backups.load_provider_redis()
+    restored_provider = Backups._load_provider_redis()
     assert isinstance(restored_provider, Backblaze)
     assert restored_provider.login == "ID"
     assert restored_provider.key == "KEY"

@@ -63,12 +63,12 @@ class Backups:
 
     @staticmethod
     def _lookup_provider() -> AbstractBackupProvider:
-        redis_provider = Backups.load_provider_redis()
+        redis_provider = Backups._load_provider_redis()
         if redis_provider is not None:
             return redis_provider
 
         try:
-            json_provider = Backups.load_provider_json()
+            json_provider = Backups._load_provider_json()
         except FileNotFoundError:
             json_provider = None
 
@@ -100,7 +100,7 @@ class Backups:
         )
 
     @staticmethod
-    def load_provider_redis() -> Optional[AbstractBackupProvider]:
+    def _load_provider_redis() -> Optional[AbstractBackupProvider]:
         provider_model = Storage.load_provider()
         if provider_model is None:
             return None
@@ -113,7 +113,7 @@ class Backups:
         )
 
     @staticmethod
-    def load_provider_json() -> Optional[AbstractBackupProvider]:
+    def _load_provider_json() -> Optional[AbstractBackupProvider]:
         with ReadUserData() as user_data:
             provider_dict = {
                 "provider": "",
@@ -143,7 +143,7 @@ class Backups:
                 return None
 
     @staticmethod
-    def reset_provider_json() -> None:
+    def _reset_provider_json() -> None:
         with WriteUserData() as user_data:
             if "backblaze" in user_data.keys():
                 del user_data["backblaze"]
@@ -156,7 +156,7 @@ class Backups:
         Storage.reset()
         if reset_json:
             try:
-                Backups.reset_provider_json()
+                Backups._reset_provider_json()
             except FileNotFoundError:
                 # if there is no userdata file, we do not need to reset it
                 pass
