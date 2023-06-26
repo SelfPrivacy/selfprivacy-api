@@ -160,6 +160,24 @@ class Backups:
 
             user_data["backup"] = DEFAULT_JSON_PROVIDER
 
+### Init 
+
+    @staticmethod
+    def init_repo():
+        Backups.provider().backupper.init()
+        Storage.mark_as_init()
+
+    @staticmethod
+    def is_initted() -> bool:
+        if Storage.has_init_mark():
+            return True
+
+        initted = Backups.provider().backupper.is_initted()
+        if initted:
+            Storage.mark_as_init()
+            return True
+
+        return False
 
 ### Backup
 
@@ -189,24 +207,69 @@ class Backups:
         Jobs.update(job, status=JobStatus.FINISHED)
         return snapshot
 
-### Init 
+### Restoring
+
+    # to be deprecated/internalized in favor of restore_snapshot()
+    @staticmethod
+    def restore_service_from_snapshot(service: Service, snapshot_id: str):
+        folders = service.get_folders()
+
+        Backups.provider().backupper.restore_from_backup(
+            snapshot_id,
+            folders,
+        )
 
     @staticmethod
-    def init_repo():
-        Backups.provider().backupper.init()
-        Storage.mark_as_init()
+    def assert_restorable(snapshot: Snapshot):
+        service = get_service_by_id(snapshot.service_name)
+        if service is None:
+            raise ValueError(
+                f"snapshot has a nonexistent service: {snapshot.service_name}"
+            )
+
+        needed_space = Backups.service_snapshot_size(snapshot.id)
+        available_space = Backups.space_usable_for_service(service)
+        if needed_space > available_space:
+            raise ValueError(
+                f"we only have {available_space} bytes "
+                f"but snapshot needs {needed_space}"
+            )
 
     @staticmethod
-    def is_initted() -> bool:
-        if Storage.has_init_mark():
-            return True
+    def restore_snapshot(snapshot: Snapshot):
+        service = get_service_by_id(snapshot.service_name)
 
-        initted = Backups.provider().backupper.is_initted()
-        if initted:
-            Storage.mark_as_init()
-            return True
+        if service is None:
+            raise ValueError(
+                f"snapshot has a nonexistent service: {snapshot.service_name}"
+            )
 
-        return False
+        job = get_restore_job(service)
+        if job is None:
+            job = add_restore_job(snapshot)
+
+        Jobs.update(
+            job,
+            status=JobStatus.RUNNING,
+        )
+        try:
+            Backups.assert_restorable(snapshot)
+            Backups.restore_service_from_snapshot(
+                service,
+                snapshot.id,
+            )
+            service.post_restore()
+        except Exception as e:
+            Jobs.update(
+                job,
+                status=JobStatus.ERROR,
+            )
+            raise e
+
+        Jobs.update(
+            job,
+            status=JobStatus.FINISHED,
+        )
 
 ### Snapshots
 
@@ -284,71 +347,8 @@ class Backups:
             if snapshot.id not in [snap.id for snap in snapshots]:
                 Storage.delete_cached_snapshot(snapshot)
 
-### Restoring
-
-    # to be deprecated/internalized in favor of restore_snapshot()
-    @staticmethod
-    def restore_service_from_snapshot(service: Service, snapshot_id: str):
-        folders = service.get_folders()
-
-        Backups.provider().backupper.restore_from_backup(
-            snapshot_id,
-            folders,
-        )
-
-    @staticmethod
-    def assert_restorable(snapshot: Snapshot):
-        service = get_service_by_id(snapshot.service_name)
-        if service is None:
-            raise ValueError(
-                f"snapshot has a nonexistent service: {snapshot.service_name}"
-            )
-
-        needed_space = Backups.service_snapshot_size(snapshot.id)
-        available_space = Backups.space_usable_for_service(service)
-        if needed_space > available_space:
-            raise ValueError(
-                f"we only have {available_space} bytes "
-                f"but snapshot needs {needed_space}"
-            )
-
-    @staticmethod
-    def restore_snapshot(snapshot: Snapshot):
-        service = get_service_by_id(snapshot.service_name)
-
-        if service is None:
-            raise ValueError(
-                f"snapshot has a nonexistent service: {snapshot.service_name}"
-            )
-
-        job = get_restore_job(service)
-        if job is None:
-            job = add_restore_job(snapshot)
-
-        Jobs.update(
-            job,
-            status=JobStatus.RUNNING,
-        )
-        try:
-            Backups.assert_restorable(snapshot)
-            Backups.restore_service_from_snapshot(
-                service,
-                snapshot.id,
-            )
-            service.post_restore()
-        except Exception as e:
-            Jobs.update(
-                job,
-                status=JobStatus.ERROR,
-            )
-            raise e
-
-        Jobs.update(
-            job,
-            status=JobStatus.FINISHED,
-        )
-
 ### Autobackup
+    
     @staticmethod
     def is_autobackup_enabled(service: Service) -> bool:
         return Storage.is_autobackup_set(service.get_id())
