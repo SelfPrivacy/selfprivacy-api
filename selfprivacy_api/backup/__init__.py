@@ -41,7 +41,7 @@ class Backups:
 
     @staticmethod
     def provider():
-        return Backups.lookup_provider()
+        return Backups._lookup_provider()
 
     @staticmethod
     def set_provider(
@@ -62,7 +62,7 @@ class Backups:
 
 
     @staticmethod
-    def lookup_provider() -> AbstractBackupProvider:
+    def _lookup_provider() -> AbstractBackupProvider:
         redis_provider = Backups.load_provider_redis()
         if redis_provider is not None:
             return redis_provider
