@@ -338,15 +338,6 @@ class Backups:
         snapshots = Storage.get_cached_snapshots()
         return [snap for snap in snapshots if snap.service_name == service_id]
 
-    @staticmethod
-    def sync_service_snapshots(service_id: str, snapshots: List[Snapshot]):
-        for snapshot in snapshots:
-            if snapshot.service_name == service_id:
-                Storage.cache_snapshot(snapshot)
-        for snapshot in Backups.get_cached_snapshots_service(service_id):
-            if snapshot.id not in [snap.id for snap in snapshots]:
-                Storage.delete_cached_snapshot(snapshot)
-
 ### Autobackup
     
     @staticmethod
