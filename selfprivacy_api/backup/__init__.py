@@ -292,9 +292,8 @@ class Backups:
         # TODO: the oldest snapshots will get expired faster than the new ones.
         # How to detect that the end is missing?
 
-        upstream_snapshots = Backups.provider().backupper.get_snapshots()
         Backups.sync_all_snapshots()
-        return upstream_snapshots
+        return Storage.get_cached_snapshots()
 
     @staticmethod
     def get_snapshot_by_id(id: str) -> Optional[Snapshot]:
