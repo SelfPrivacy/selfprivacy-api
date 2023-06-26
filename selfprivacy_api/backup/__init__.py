@@ -1,18 +1,20 @@
-from operator import add
-from typing import List, Optional
 from datetime import datetime, timedelta
+from operator import add
 from os import statvfs
-
-from selfprivacy_api.models.backup.snapshot import Snapshot
+from typing import List, Optional
 
 from selfprivacy_api.utils import ReadUserData, WriteUserData
 
 from selfprivacy_api.services import get_service_by_id
 from selfprivacy_api.services.service import Service
 
+from selfprivacy_api.jobs import Jobs, JobStatus
+
 from selfprivacy_api.graphql.queries.providers import (
     BackupProvider as BackupProviderEnum,
 )
+
+from selfprivacy_api.models.backup.snapshot import Snapshot
 
 from selfprivacy_api.backup.providers.provider import AbstractBackupProvider
 from selfprivacy_api.backup.providers import get_provider
@@ -23,7 +25,6 @@ from selfprivacy_api.backup.jobs import (
     get_restore_job,
     add_restore_job,
 )
-from selfprivacy_api.jobs import Jobs, JobStatus
 
 DEFAULT_JSON_PROVIDER = {
     "provider": "BACKBLAZE",
