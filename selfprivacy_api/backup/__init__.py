@@ -328,10 +328,6 @@ class Backups:
         # expiring cache entry
         Storage.cache_snapshot(snapshot)
 
-    @staticmethod
-    def get_cached_snapshots_service(service_id: str) -> List[Snapshot]:
-        snapshots = Storage.get_cached_snapshots()
-        return [snap for snap in snapshots if snap.service_name == service_id]
 
 ### Autobackup
     
