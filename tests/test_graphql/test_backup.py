@@ -222,7 +222,7 @@ def test_restore(backups, dummy_service):
         remove(p)
         assert not path.exists(p)
 
-    Backups.restore_service_from_snapshot(dummy_service, snap.id)
+    Backups._restore_service_from_snapshot(dummy_service, snap.id)
     for p, content in zip(paths_to_nuke, contents):
         assert path.exists(p)
         with open(p, "r") as file:
