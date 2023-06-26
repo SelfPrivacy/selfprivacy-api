@@ -157,7 +157,7 @@ class BackupMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def force_snapshots_reload(self) -> GenericMutationReturn:
         """Force snapshots reload"""
-        Backups.force_snapshot_reload()
+        Backups.force_snapshot_cache_reload()
         return GenericMutationReturn(
             success=True,
             code=200,
