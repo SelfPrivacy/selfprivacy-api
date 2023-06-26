@@ -254,7 +254,7 @@ class Backups:
                 f"snapshot has a nonexistent service: {snapshot.service_name}"
             )
 
-        needed_space = Backups.service_snapshot_size(snapshot.id)
+        needed_space = Backups.snapshot_restored_size(snapshot.id)
         available_space = Backups.space_usable_for_service(service)
         if needed_space > available_space:
             raise ValueError(
@@ -315,7 +315,7 @@ class Backups:
             Storage.cache_snapshot(snapshot)
 
     @staticmethod
-    def service_snapshot_size(snapshot_id: str) -> int:
+    def snapshot_restored_size(snapshot_id: str) -> int:
         return Backups.provider().backupper.restored_size(
             snapshot_id,
         )

@@ -232,7 +232,7 @@ def test_restore(backups, dummy_service):
 def test_sizing(backups, dummy_service):
     Backups.back_up(dummy_service)
     snap = Backups.get_snapshots(dummy_service)[0]
-    size = Backups.service_snapshot_size(snap.id)
+    size = Backups.snapshot_restored_size(snap.id)
     assert size is not None
     assert size > 0
 
