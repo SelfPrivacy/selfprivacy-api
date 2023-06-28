@@ -127,19 +127,21 @@ class ResticBackupper(AbstractBackupper):
                 return ResticBackupper._snapshot_from_fresh_summary(message, repo_name)
         raise ValueError("no summary message in restic json output")
 
-    def parse_message(self, raw_message, job=None) -> object:
-        message = ResticBackupper.parse_json_output(raw_message)
+    def parse_message(self, raw_message_line: str, job=None) -> dict:
+        message = ResticBackupper.parse_json_output(raw_message_line)
+        if not isinstance(message, dict):
+            raise ValueError("we have too many messages on one line?")
         if message["message_type"] == "status":
             if job is not None:  # only update status if we run under some job
                 Jobs.update(
                     job,
                     JobStatus.RUNNING,
-                    progress=int(message["percent_done"]),
+                    progress=int(message["percent_done"] * 100),
                 )
         return message
 
     @staticmethod
-    def _snapshot_from_fresh_summary(message: object, repo_name) -> Snapshot:
+    def _snapshot_from_fresh_summary(message: dict, repo_name) -> Snapshot:
         return Snapshot(
             id=message["snapshot_id"],
             created_at=datetime.datetime.now(datetime.timezone.utc),
