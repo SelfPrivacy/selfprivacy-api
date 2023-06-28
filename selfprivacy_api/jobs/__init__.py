@@ -198,7 +198,10 @@ class Jobs:
             job.description = description
         if status_text is not None:
             job.status_text = status_text
+        if status == JobStatus.FINISHED:
+            job.progress = 100
         if progress is not None:
+            # explicitly provided progress has priority
             job.progress = progress
             Jobs.log_progress_update(job, progress)
         job.status = status
