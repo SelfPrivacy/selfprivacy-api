@@ -303,7 +303,7 @@ def test_backup_service_task(backups, dummy_service):
 def test_backup_larger_file(backups, dummy_service):
     dir = path.join(dummy_service.get_folders()[0], "LARGEFILE")
     mega = 2**20
-    make_large_file(dir, 10 * mega)
+    make_large_file(dir, 100 * mega)
 
     handle = start_backup(dummy_service)
     handle(blocking=True)
@@ -315,7 +315,7 @@ def test_backup_larger_file(backups, dummy_service):
     assert_job_has_run(job_type_id)
     updates = job_progress_updates(job_type_id)
     assert len(updates) > 3
-    assert updates[1] > 10
+    assert updates[int((len(updates)-1)/2.0)] > 10
 
 
 def test_restore_snapshot_task(backups, dummy_service):
