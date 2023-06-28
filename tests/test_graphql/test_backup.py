@@ -3,6 +3,7 @@ import os.path as path
 from os import makedirs
 from os import remove
 from os import listdir
+from os import urandom
 from datetime import datetime, timedelta, timezone
 
 import selfprivacy_api.services as services
@@ -259,9 +260,18 @@ def assert_job_has_run(job_type):
     assert JobStatus.RUNNING in Jobs.status_updates(job)
 
 
-def assert_job_had_progress(job_type):
+def job_progress_updates(job_type):
     job = [job for job in finished_jobs() if job.type_id == job_type][0]
-    assert len(Jobs.progress_updates(job)) > 0
+    return Jobs.progress_updates(job)
+
+
+def assert_job_had_progress(job_type):
+    assert len(job_progress_updates(job_type)) > 0
+
+
+def make_large_file(path: str, bytes: int):
+    with open(path, "wb") as file:
+        file.write(urandom(bytes))
 
 
 def test_snapshots_by_id(backups, dummy_service):
@@ -288,6 +298,24 @@ def test_backup_service_task(backups, dummy_service):
     assert_job_finished(job_type_id, count=1)
     assert_job_has_run(job_type_id)
     assert_job_had_progress(job_type_id)
+
+
+def test_backup_larger_file(backups, dummy_service):
+    dir = path.join(dummy_service.get_folders()[0], "LARGEFILE")
+    mega = 2**20
+    make_large_file(dir, 10 * mega)
+
+    handle = start_backup(dummy_service)
+    handle(blocking=True)
+
+    # results will be slightly different on different machines. if someone has troubles with it on their machine, consider dropping this test.
+    id = dummy_service.get_id()
+    job_type_id = f"services.{id}.backup"
+    assert_job_finished(job_type_id, count=1)
+    assert_job_has_run(job_type_id)
+    updates = job_progress_updates(job_type_id)
+    assert len(updates) > 3
+    assert updates[1] > 10
 
 
 def test_restore_snapshot_task(backups, dummy_service):
