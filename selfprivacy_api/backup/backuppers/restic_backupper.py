@@ -35,7 +35,7 @@ class ResticBackupper(AbstractBackupper):
         return f"rclone:{self.type}{self.repo}"
 
     def rclone_args(self):
-        return "rclone.args=serve restic --stdio" + self.backend_rclone_args()
+        return "rclone.args=serve restic --stdio " + self.backend_rclone_args()
 
     def backend_rclone_args(self) -> str:
         acc_arg = ""
