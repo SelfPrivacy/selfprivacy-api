@@ -56,6 +56,10 @@ class Bitwarden(Service):
         return False
 
     @staticmethod
+    def get_backup_description() -> str:
+        return "Password database, encryption certificate and attachments."
+
+    @staticmethod
     def is_enabled() -> bool:
         with ReadUserData() as user_data:
             return user_data.get("bitwarden", {}).get("enable", False)

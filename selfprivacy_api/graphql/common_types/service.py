@@ -94,6 +94,7 @@ class Service:
     is_required: bool
     is_enabled: bool
     can_be_backed_up: bool
+    backup_description: str
     status: ServiceStatusEnum
     url: typing.Optional[str]
     dns_records: typing.Optional[typing.List[DnsRecord]]
@@ -126,6 +127,7 @@ def service_to_graphql_service(service: ServiceInterface) -> Service:
         is_required=service.is_required(),
         is_enabled=service.is_enabled(),
         can_be_backed_up=service.can_be_backed_up(),
+        backup_description=service.get_backup_description(),
         status=ServiceStatusEnum(service.get_status().value),
         url=service.get_url(),
         dns_records=[

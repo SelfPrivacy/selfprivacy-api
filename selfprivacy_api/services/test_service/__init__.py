@@ -54,6 +54,10 @@ class DummyService(Service):
         return False
 
     @staticmethod
+    def get_backup_description() -> str:
+        return "How did we get here?"
+
+    @staticmethod
     def is_enabled() -> bool:
         return True
 

@@ -55,6 +55,10 @@ class MailServer(Service):
         return True
 
     @staticmethod
+    def get_backup_description() -> str:
+        return "Mail boxes and filters."
+
+    @staticmethod
     def is_enabled() -> bool:
         return True
 
