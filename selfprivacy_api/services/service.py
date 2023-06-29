@@ -82,6 +82,10 @@ class Service(ABC):
         pass
 
     @staticmethod
+    def can_be_backed_up() -> bool:
+        return True
+
+    @staticmethod
     @abstractmethod
     def is_enabled() -> bool:
         pass
