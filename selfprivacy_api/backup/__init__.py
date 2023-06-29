@@ -37,7 +37,7 @@ DEFAULT_JSON_PROVIDER = {
 class Backups:
     """A stateless controller class for backups"""
 
-### Providers
+    ### Providers
 
     @staticmethod
     def provider():
@@ -69,7 +69,6 @@ class Backups:
             except FileNotFoundError:
                 # if there is no userdata file, we do not need to reset it
                 pass
-
 
     @staticmethod
     def _lookup_provider() -> AbstractBackupProvider:
@@ -160,7 +159,7 @@ class Backups:
 
             user_data["backup"] = DEFAULT_JSON_PROVIDER
 
-### Init 
+    ### Init
 
     @staticmethod
     def init_repo():
@@ -179,7 +178,7 @@ class Backups:
 
         return False
 
-### Backup
+    ### Backup
 
     @staticmethod
     def back_up(service: Service):
@@ -207,8 +206,7 @@ class Backups:
         Jobs.update(job, status=JobStatus.FINISHED)
         return snapshot
 
-### Restoring
-
+    ### Restoring
 
     @staticmethod
     def restore_snapshot(snapshot: Snapshot):
@@ -271,7 +269,7 @@ class Backups:
             folders,
         )
 
-### Snapshots
+    ### Snapshots
 
     @staticmethod
     def get_snapshots(service: Service) -> List[Snapshot]:
@@ -328,9 +326,8 @@ class Backups:
         # expiring cache entry
         Storage.cache_snapshot(snapshot)
 
+    ### Autobackup
 
-### Autobackup
-    
     @staticmethod
     def is_autobackup_enabled(service: Service) -> bool:
         return Storage.is_autobackup_set(service.get_id())
@@ -424,7 +421,7 @@ class Backups:
             )
         ]
 
-### Helpers
+    ### Helpers
 
     @staticmethod
     def space_usable_for_service(service: Service) -> int:
@@ -446,6 +443,3 @@ class Backups:
             repo_id="",
         )
         Storage.store_provider(provider)
-
-
-
