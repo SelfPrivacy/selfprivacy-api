@@ -41,83 +41,125 @@ class Service(ABC):
     @staticmethod
     @abstractmethod
     def get_id() -> str:
+        """
+        The unique id of the service.
+        """
         pass
 
     @staticmethod
     @abstractmethod
     def get_display_name() -> str:
+        """
+        The name of the service that is shown to the user.
+        """
         pass
 
     @staticmethod
     @abstractmethod
     def get_description() -> str:
+        """
+        The description of the service that is shown to the user.
+        """
         pass
 
     @staticmethod
     @abstractmethod
     def get_svg_icon() -> str:
+        """
+        The monochrome svg icon of the service.
+        """
         pass
 
     @staticmethod
     @abstractmethod
     def get_url() -> typing.Optional[str]:
+        """
+        The url of the service if it is accessible from the internet browser.
+        """
         pass
 
     @classmethod
     def get_user(cls) -> typing.Optional[str]:
+        """
+        The user that owns the service's files.
+        Defaults to the service's id.
+        """
         return cls.get_id()
 
     @classmethod
     def get_group(cls) -> typing.Optional[str]:
+        """
+        The group that owns the service's files.
+        Defaults to the service's user.
+        """
         return cls.get_user()
 
     @staticmethod
     @abstractmethod
     def is_movable() -> bool:
+        """`True` if the service can be moved to the non-system volume."""
         pass
 
     @staticmethod
     @abstractmethod
     def is_required() -> bool:
+        """`True` if the service is required for the server to function."""
         pass
 
     @staticmethod
     def can_be_backed_up() -> bool:
+        """`True` if the service can be backed up."""
         return True
 
     @staticmethod
     @abstractmethod
+    def get_backup_description() -> str:
+        """
+        The text shown to the user that exlplains what data will be
+        backed up.
+        """
+        pass
+
+    @staticmethod
+    @abstractmethod
     def is_enabled() -> bool:
+        """`True` if the service is enabled."""
         pass
 
     @staticmethod
     @abstractmethod
     def get_status() -> ServiceStatus:
+        """The status of the service, reported by systemd."""
         pass
 
     @staticmethod
     @abstractmethod
     def enable():
+        """Enable the service. Usually this means enabling systemd unit."""
         pass
 
     @staticmethod
     @abstractmethod
     def disable():
+        """Disable the service. Usually this means disabling systemd unit."""
         pass
 
     @staticmethod
     @abstractmethod
     def stop():
+        """Stop the service. Usually this means stopping systemd unit."""
         pass
 
     @staticmethod
     @abstractmethod
     def start():
+        """Start the service. Usually this means starting systemd unit."""
         pass
 
     @staticmethod
     @abstractmethod
     def restart():
+        """Restart the service. Usually this means restarting systemd unit."""
         pass
 
     @staticmethod

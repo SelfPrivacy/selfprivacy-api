@@ -50,6 +50,10 @@ class Nextcloud(Service):
         return False
 
     @staticmethod
+    def get_backup_description() -> str:
+        return "All the files and other data stored in Nextcloud."
+
+    @staticmethod
     def is_enabled() -> bool:
         with ReadUserData() as user_data:
             return user_data.get("nextcloud", {}).get("enable", False)

@@ -49,6 +49,10 @@ class Ocserv(Service):
         return False
 
     @staticmethod
+    def get_backup_description() -> str:
+        return "Nothing to backup."
+
+    @staticmethod
     def is_enabled() -> bool:
         with ReadUserData() as user_data:
             return user_data.get("ocserv", {}).get("enable", False)
