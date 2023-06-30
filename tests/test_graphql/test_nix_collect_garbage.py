@@ -160,15 +160,15 @@ def test_get_dead_packages_zero(job_reset):
 def test_stream_process(job_reset):
     log_event = []
     reference = [
-        (JobStatus.RUNNING, 20, "Сleaning...", ""),
-        (JobStatus.RUNNING, 40, "Сleaning...", ""),
-        (JobStatus.RUNNING, 60, "Сleaning...", ""),
-        (JobStatus.RUNNING, 80, "Сleaning...", ""),
-        (JobStatus.RUNNING, 100, "Сleaning...", ""),
+        (JobStatus.RUNNING, 20, "Cleaning...", ""),
+        (JobStatus.RUNNING, 40, "Cleaning...", ""),
+        (JobStatus.RUNNING, 60, "Cleaning...", ""),
+        (JobStatus.RUNNING, 80, "Cleaning...", ""),
+        (JobStatus.RUNNING, 100, "Cleaning...", ""),
         (
             JobStatus.FINISHED,
             100,
-            "Сleaning completed.",
+            "Cleaning completed.",
             "425.51 MiB have been cleared",
         ),
     ]
@@ -185,17 +185,17 @@ def test_nix_collect_garbage(
 ):
     log_event = []
     reference = [
-        (JobStatus.RUNNING, 0, "Сalculate the number of dead packages...", ""),
+        (JobStatus.RUNNING, 0, "Calculate the number of dead packages...", ""),
         (JobStatus.RUNNING, 0, "Found 5 packages to remove!", ""),
-        (JobStatus.RUNNING, 5, "Сleaning...", ""),
-        (JobStatus.RUNNING, 10, "Сleaning...", ""),
-        (JobStatus.RUNNING, 15, "Сleaning...", ""),
-        (JobStatus.RUNNING, 20, "Сleaning...", ""),
-        (JobStatus.RUNNING, 25, "Сleaning...", ""),
+        (JobStatus.RUNNING, 5, "Cleaning...", ""),
+        (JobStatus.RUNNING, 10, "Cleaning...", ""),
+        (JobStatus.RUNNING, 15, "Cleaning...", ""),
+        (JobStatus.RUNNING, 20, "Cleaning...", ""),
+        (JobStatus.RUNNING, 25, "Cleaning...", ""),
         (
             JobStatus.FINISHED,
             100,
-            "Сleaning completed.",
+            "Cleaning completed.",
             "425.51 MiB have been cleared",
         ),
     ]
@@ -213,7 +213,7 @@ def test_nix_collect_garbage_zero_trash(
     mock_run_nix_store_print_dead_zero_trash,
 ):
     reference = [
-        (JobStatus.RUNNING, 0, "Сalculate the number of dead packages...", ""),
+        (JobStatus.RUNNING, 0, "Calculate the number of dead packages...", ""),
         (JobStatus.FINISHED, 100, "Nothing to clear", "System is clear"),
     ]
 
@@ -222,7 +222,7 @@ def test_nix_collect_garbage_zero_trash(
     assert log_event == reference
 
 
-# андр констракнш
+# андр конcтракнш
 @pytest.mark.asyncio
 async def test_graphql_nix_collect_garbage():
     query = """
