@@ -325,6 +325,8 @@ def test_backup_larger_file(backups, dummy_service):
     updates = job_progress_updates(job_type_id)
     assert len(updates) > 3
     assert updates[int((len(updates) - 1) / 2.0)] > 10
+    #clean up a bit
+    remove(dir)
 
 
 def test_restore_snapshot_task(backups, dummy_service):
