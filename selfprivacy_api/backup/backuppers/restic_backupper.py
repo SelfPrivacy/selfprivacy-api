@@ -7,6 +7,7 @@ from collections.abc import Iterable
 from json.decoder import JSONDecodeError
 from os.path import exists
 
+from selfprivacy_api.backup.util import output_yielder
 from selfprivacy_api.backup.backuppers import AbstractBackupper
 from selfprivacy_api.models.backup.snapshot import Snapshot
 from selfprivacy_api.backup.jobs import get_backup_job
@@ -84,31 +85,16 @@ class ResticBackupper(AbstractBackupper):
         return result
 
     @staticmethod
-    def output_yielder(command):
-        with subprocess.Popen(
-            command,
-            shell=False,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            universal_newlines=True,
-        ) as handle:
-            for line in iter(handle.stdout.readline, ""):
-                if "NOTICE:" not in line:
-                    yield line
-
-
-    @staticmethod
-    def sync (src_path: str, dest_path:str):
+    def sync(src_path: str, dest_path: str):
         """a wrapper around rclone sync"""
 
         if not exists(src_path):
             raise ValueError("source dir for rclone sync must exist")
 
         rclone_command = ["rclone", "sync", "-P", src_path, dest_path]
-        for raw_message in ResticBackupper.output_yielder(rclone_command):
+        for raw_message in output_yielder(rclone_command):
             if "ERROR" in raw_message:
                 raise ValueError(raw_message)
-
 
     def start_backup(self, folders: List[str], tag: str):
         """
@@ -128,7 +114,7 @@ class ResticBackupper(AbstractBackupper):
         messages = []
         job = get_backup_job(get_service_by_id(tag))
         try:
-            for raw_message in ResticBackupper.output_yielder(backup_command):
+            for raw_message in output_yielder(backup_command):
                 message = self.parse_message(raw_message, job)
                 messages.append(message)
             return ResticBackupper._snapshot_from_backup_messages(messages, tag)
