@@ -1,15 +1,16 @@
 import subprocess
 import json
 import datetime
+import tempfile
 
 from typing import List
 from collections.abc import Iterable
 from json.decoder import JSONDecodeError
-from os.path import exists
+from os.path import exists, join
 from os import listdir
 from time import sleep
 
-from selfprivacy_api.backup.util import output_yielder
+from selfprivacy_api.backup.util import output_yielder, sync
 from selfprivacy_api.backup.backuppers import AbstractBackupper
 from selfprivacy_api.models.backup.snapshot import Snapshot
 from selfprivacy_api.backup.jobs import get_backup_job
@@ -210,19 +211,34 @@ class ResticBackupper(AbstractBackupper):
             except ValueError as e:
                 raise ValueError("cannot restore a snapshot: " + output) from e
 
-    def restore_from_backup(self, snapshot_id, folders):
+    def restore_from_backup(self, snapshot_id, folders: List[str], verify=True):
         """
         Restore from backup with restic
         """
-        # snapshots save the path of the folder in the file system
-        # I do not alter the signature yet because maybe this can be
-        # changed with flags
+        if folders is None or folders == []:
+            raise ValueError("cannot restore without knowing where to!")
+
+        with tempfile.TemporaryDirectory() as dir:
+            self.do_restore(snapshot_id, target=dir)
+            for folder in folders:
+                src = join(dir, folder.strip("/"))
+                if not exists(src):
+                    raise ValueError(
+                        f"there is no such path: {src}. We tried to find {folder}"
+                    )
+                dst = folder
+                sync(src, dst)
+
+    def do_restore(self, snapshot_id, target="/", verify=False):
+        """barebones restic restore"""
         restore_command = self.restic_command(
             "restore",
             snapshot_id,
             "--target",
-            "/",
+            target,
         )
+        if verify:
+            restore_command.append("--verify")
 
         with subprocess.Popen(
             restore_command, stdout=subprocess.PIPE, shell=False
