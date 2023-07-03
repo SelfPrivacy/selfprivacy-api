@@ -7,6 +7,8 @@ from os import urandom
 from datetime import datetime, timedelta, timezone
 
 import selfprivacy_api.services as services
+from selfprivacy_api.services import Service
+
 from selfprivacy_api.services import get_service_by_id
 from selfprivacy_api.services.test_service import DummyService
 from selfprivacy_api.graphql.queries.providers import BackupProvider
@@ -16,6 +18,8 @@ from selfprivacy_api.backup import Backups
 import selfprivacy_api.backup.providers as providers
 from selfprivacy_api.backup.providers import AbstractBackupProvider
 from selfprivacy_api.backup.providers.backblaze import Backblaze
+
+from selfprivacy_api.backup.backuppers.restic_backupper import ResticBackupper
 
 from selfprivacy_api.backup.tasks import start_backup, restore_snapshot
 from selfprivacy_api.backup.storage import Storage
@@ -68,7 +72,7 @@ def raw_dummy_service(tmpdir, backups):
 
 
 @pytest.fixture()
-def dummy_service(tmpdir, backups, raw_dummy_service):
+def dummy_service(tmpdir, backups, raw_dummy_service) -> Service:
     service = raw_dummy_service
     repo_path = path.join(tmpdir, "test_repo")
     assert not path.exists(repo_path)
@@ -519,3 +523,25 @@ def test_services_to_back_up(backups, dummy_service):
     services = Backups.services_to_back_up(now)
     assert len(services) == 1
     assert services[0].get_id() == dummy_service.get_id()
+
+
+def test_sync(dummy_service):
+    src = dummy_service.get_folders()[0]
+    dst = dummy_service.get_folders()[1]
+    old_files_src = listdir(src)
+    old_files_dst = listdir(dst)
+    assert old_files_src != old_files_dst
+
+    ResticBackupper.sync(src, dst)
+    new_files_src = listdir(src)
+    new_files_dst = listdir(dst)
+    assert new_files_src == old_files_src
+    assert new_files_dst == new_files_src
+
+
+def test_sync_nonexistent_src(dummy_service):
+    src = "/var/lib/nonexistentFluffyBunniesOfUnix"
+    dst = dummy_service.get_folders()[1]
+
+    with pytest.raises(ValueError):
+        ResticBackupper.sync(src, dst)
