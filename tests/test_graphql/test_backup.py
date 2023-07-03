@@ -200,13 +200,18 @@ def test_backup_returns_snapshot(backups, dummy_service):
     assert snapshot.created_at is not None
 
 
+def folder_files(folder):
+    return [
+        path.join(folder, filename)
+        for filename in listdir(folder)
+        if filename is not None
+    ]
+
+
 def service_files(service):
     result = []
     for service_folder in service.get_folders():
-        service_filename = listdir(service_folder)[0]
-        assert service_filename is not None
-        service_file = path.join(service_folder, service_filename)
-        result.append(service_file)
+        result.extend(folder_files(service_folder))
     return result
 
 
