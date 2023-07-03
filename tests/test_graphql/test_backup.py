@@ -18,8 +18,8 @@ from selfprivacy_api.backup import Backups
 import selfprivacy_api.backup.providers as providers
 from selfprivacy_api.backup.providers import AbstractBackupProvider
 from selfprivacy_api.backup.providers.backblaze import Backblaze
+from selfprivacy_api.backup.util import sync
 
-from selfprivacy_api.backup.backuppers.restic_backupper import ResticBackupper
 
 from selfprivacy_api.backup.tasks import start_backup, restore_snapshot
 from selfprivacy_api.backup.storage import Storage
@@ -537,7 +537,7 @@ def test_sync(dummy_service):
     old_files_dst = listdir(dst)
     assert old_files_src != old_files_dst
 
-    ResticBackupper.sync(src, dst)
+    sync(src, dst)
     new_files_src = listdir(src)
     new_files_dst = listdir(dst)
     assert new_files_src == old_files_src
@@ -549,4 +549,4 @@ def test_sync_nonexistent_src(dummy_service):
     dst = dummy_service.get_folders()[1]
 
     with pytest.raises(ValueError):
-        ResticBackupper.sync(src, dst)
+        sync(src, dst)
