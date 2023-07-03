@@ -6,6 +6,8 @@ from typing import List
 from collections.abc import Iterable
 from json.decoder import JSONDecodeError
 from os.path import exists
+from os import listdir
+from time import sleep
 
 from selfprivacy_api.backup.util import output_yielder
 from selfprivacy_api.backup.backuppers import AbstractBackupper
@@ -52,7 +54,7 @@ class ResticBackupper(AbstractBackupper):
     def _password_command(self):
         return f"echo {LocalBackupSecret.get()}"
 
-    def restic_command(self, *args, tag: str = ""):
+    def restic_command(self, *args, tag: str = "") -> List[str]:
         command = [
             "restic",
             "-o",
@@ -72,6 +74,28 @@ class ResticBackupper(AbstractBackupper):
         if args != []:
             command.extend(ResticBackupper.__flatten_list(args))
         return command
+
+    def mount_repo(self, dir):
+        mount_command = self.restic_command("mount", dir)
+        mount_command.insert(0, "nohup")
+        handle = subprocess.Popen(mount_command, stdout=subprocess.DEVNULL, shell=False)
+        sleep(2)
+        if not "ids" in listdir(dir):
+            raise IOError("failed to mount dir ", dir)
+        return handle
+
+    def unmount_repo(self, dir):
+        mount_command = ["umount", "-l", dir]
+        with subprocess.Popen(
+            mount_command, stdout=subprocess.PIPE, shell=False
+        ) as handle:
+            output = handle.communicate()[0].decode("utf-8")
+            # TODO: check for exit code?
+            if "error" in output.lower():
+                return IOError("failed to unmount dir ", dir, ": ", output)
+
+        if not listdir(dir) == []:
+            return IOError("failed to unmount dir ", dir)
 
     @staticmethod
     def __flatten_list(list):

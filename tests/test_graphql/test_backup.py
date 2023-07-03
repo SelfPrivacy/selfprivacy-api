@@ -5,6 +5,7 @@ from os import remove
 from os import listdir
 from os import urandom
 from datetime import datetime, timedelta, timezone
+from subprocess import Popen
 
 import selfprivacy_api.services as services
 from selfprivacy_api.services import Service
@@ -19,6 +20,7 @@ import selfprivacy_api.backup.providers as providers
 from selfprivacy_api.backup.providers import AbstractBackupProvider
 from selfprivacy_api.backup.providers.backblaze import Backblaze
 from selfprivacy_api.backup.util import sync
+from selfprivacy_api.backup.backuppers.restic_backupper import ResticBackupper
 
 
 from selfprivacy_api.backup.tasks import start_backup, restore_snapshot
@@ -325,7 +327,7 @@ def test_backup_larger_file(backups, dummy_service):
     updates = job_progress_updates(job_type_id)
     assert len(updates) > 3
     assert updates[int((len(updates) - 1) / 2.0)] > 10
-    #clean up a bit
+    # clean up a bit
     remove(dir)
 
 
@@ -552,3 +554,22 @@ def test_sync_nonexistent_src(dummy_service):
 
     with pytest.raises(ValueError):
         sync(src, dst)
+
+
+# Restic lowlevel
+def test_mount_umount(backups, dummy_service, tmpdir):
+    Backups.back_up(dummy_service)
+    backupper = Backups.provider().backupper
+    assert isinstance(backupper, ResticBackupper)
+
+    mountpoint = tmpdir / "mount"
+    makedirs(mountpoint)
+    assert path.exists(mountpoint)
+    assert len(listdir(mountpoint)) == 0
+
+    handle = backupper.mount_repo(mountpoint)
+    assert len(listdir(mountpoint)) != 0
+
+    backupper.unmount_repo(mountpoint)
+    # handle.terminate()
+    assert len(listdir(mountpoint)) == 0
