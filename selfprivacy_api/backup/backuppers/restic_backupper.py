@@ -5,6 +5,7 @@ import datetime
 from typing import List
 from collections.abc import Iterable
 from json.decoder import JSONDecodeError
+from os.path import exists
 
 from selfprivacy_api.backup.backuppers import AbstractBackupper
 from selfprivacy_api.models.backup.snapshot import Snapshot
@@ -94,6 +95,20 @@ class ResticBackupper(AbstractBackupper):
             for line in iter(handle.stdout.readline, ""):
                 if "NOTICE:" not in line:
                     yield line
+
+
+    @staticmethod
+    def sync (src_path: str, dest_path:str):
+        """a wrapper around rclone sync"""
+
+        if not exists(src_path):
+            raise ValueError("source dir for rclone sync must exist")
+
+        rclone_command = ["rclone", "sync", "-P", src_path, dest_path]
+        for raw_message in ResticBackupper.output_yielder(rclone_command):
+            if "ERROR" in raw_message:
+                raise ValueError(raw_message)
+
 
     def start_backup(self, folders: List[str], tag: str):
         """
