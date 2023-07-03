@@ -219,7 +219,7 @@ class ResticBackupper(AbstractBackupper):
             raise ValueError("cannot restore without knowing where to!")
 
         with tempfile.TemporaryDirectory() as dir:
-            self.do_restore(snapshot_id, target=dir)
+            self.do_restore(snapshot_id, target=dir, verify=verify)
             for folder in folders:
                 src = join(dir, folder.strip("/"))
                 if not exists(src):
@@ -248,6 +248,14 @@ class ResticBackupper(AbstractBackupper):
             output = handle.communicate()[0].decode("utf-8")
             if "restoring" not in output:
                 raise ValueError("cannot restore a snapshot: " + output)
+
+            assert (
+                handle.returncode is not None
+            )  # none should be impossible after communicate
+            if handle.returncode != 0:
+                raise ValueError(
+                    "restore exited with errorcode", returncode, ":", output
+                )
 
     def _load_snapshots(self) -> object:
         """
