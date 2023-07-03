@@ -86,7 +86,10 @@ def dummy_service(tmpdir, backups, raw_dummy_service) -> Service:
     services.services.append(service)
 
     assert get_service_by_id(service.get_id()) is not None
-    return service
+    yield service
+
+    # cleanup because apparently it matters wrt tasks
+    services.services.remove(service)
 
 
 @pytest.fixture()
