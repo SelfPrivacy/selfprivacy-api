@@ -257,6 +257,32 @@ class ResticBackupper(AbstractBackupper):
                     "restore exited with errorcode", returncode, ":", output
                 )
 
+    def forget_snapshot(self, snapshot_id):
+        """either removes snapshot or marks it for deletion later depending on server settings"""
+        forget_command = self.restic_command(
+            "forget",
+            snapshot_id,
+        )
+
+        with subprocess.Popen(
+            forget_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False
+        ) as handle:
+            # for some reason restore does not support nice reporting of progress via json
+            output, err = [string.decode("utf-8") for string in handle.communicate()]
+
+            if "no matching ID found" in err:
+                raise ValueError(
+                    "trying to delete, but no such snapshot: ", snapshot_id
+                )
+
+            assert (
+                handle.returncode is not None
+            )  # none should be impossible after communicate
+            if handle.returncode != 0:
+                raise ValueError(
+                    "forget exited with errorcode", returncode, ":", output
+                )
+
     def _load_snapshots(self) -> object:
         """
         Load list of snapshots from repository

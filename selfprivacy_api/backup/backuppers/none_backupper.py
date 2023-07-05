@@ -27,3 +27,6 @@ class NoneBackupper(AbstractBackupper):
 
     def restored_size(self, snapshot_id: str) -> int:
         raise NotImplementedError
+
+    def forget_snapshot(self, snapshot_id):
+        raise NotImplementedError
