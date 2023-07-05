@@ -37,3 +37,7 @@ class AbstractBackupper(ABC):
     @abstractmethod
     def restored_size(self, snapshot_id: str) -> int:
         raise NotImplementedError
+
+    @abstractmethod
+    def forget_snapshot(self, snapshot_id):
+        raise NotImplementedError

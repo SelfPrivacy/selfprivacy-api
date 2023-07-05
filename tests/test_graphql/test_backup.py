@@ -15,6 +15,8 @@ from selfprivacy_api.services.test_service import DummyService
 from selfprivacy_api.graphql.queries.providers import BackupProvider
 from selfprivacy_api.jobs import Jobs, JobStatus
 
+from selfprivacy_api.models.backup.snapshot import Snapshot
+
 from selfprivacy_api.backup import Backups
 import selfprivacy_api.backup.providers as providers
 from selfprivacy_api.backup.providers import AbstractBackupProvider
@@ -312,6 +314,30 @@ def test_backup_service_task(backups, dummy_service):
     assert_job_finished(job_type_id, count=1)
     assert_job_has_run(job_type_id)
     assert_job_had_progress(job_type_id)
+
+
+def test_forget_snapshot(backups, dummy_service):
+    snap1 = Backups.back_up(dummy_service)
+    snap2 = Backups.back_up(dummy_service)
+    assert len(Backups.get_snapshots(dummy_service)) == 2
+
+    Backups.forget_snapshot(snap2)
+    assert len(Backups.get_snapshots(dummy_service)) == 1
+    Backups.force_snapshot_cache_reload()
+    assert len(Backups.get_snapshots(dummy_service)) == 1
+
+    assert Backups.get_snapshots(dummy_service)[0].id == snap1.id
+
+    Backups.forget_snapshot(snap1)
+    assert len(Backups.get_snapshots(dummy_service)) == 0
+
+
+def test_forget_nonexistent_snapshot(backups, dummy_service):
+    bogus = Snapshot(
+        id="gibberjibber", service_name="nohoho", created_at=datetime.now(timezone.utc)
+    )
+    with pytest.raises(ValueError):
+        Backups.forget_snapshot(bogus)
 
 
 def test_backup_larger_file(backups, dummy_service):

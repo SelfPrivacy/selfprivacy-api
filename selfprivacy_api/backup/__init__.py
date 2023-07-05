@@ -306,6 +306,11 @@ class Backups:
         return snap
 
     @staticmethod
+    def forget_snapshot(snapshot: Snapshot):
+        Backups.provider().backupper.forget_snapshot(snapshot.id)
+        Storage.delete_cached_snapshot(snapshot)
+
+    @staticmethod
     def force_snapshot_cache_reload():
         upstream_snapshots = Backups.provider().backupper.get_snapshots()
         Storage.invalidate_snapshot_storage()
