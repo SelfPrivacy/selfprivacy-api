@@ -13,6 +13,7 @@ from selfprivacy_api.graphql.queries.backup import BackupConfiguration
 from selfprivacy_api.graphql.queries.backup import Backup
 from selfprivacy_api.graphql.queries.providers import BackupProvider
 from selfprivacy_api.graphql.common_types.jobs import job_to_api_job
+from selfprivacy_api.graphql.common_types.backup import RestoreStrategy
 
 from selfprivacy_api.backup import Backups
 from selfprivacy_api.services import get_all_services, get_service_by_id
@@ -115,7 +116,11 @@ class BackupMutations:
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def restore_backup(self, snapshot_id: str) -> GenericJobMutationReturn:
+    def restore_backup(
+        self,
+        snapshot_id: str,
+        strategy: RestoreStrategy = RestoreStrategy.DOWNLOAD_VERIFY_OVERWRITE,
+    ) -> GenericJobMutationReturn:
         """Restore backup"""
         snap = Backups.get_snapshot_by_id(snapshot_id)
         if snap is None:
@@ -145,7 +150,7 @@ class BackupMutations:
                 job=None,
             )
 
-        restore_snapshot(snap)
+        restore_snapshot(snap, strategy)
 
         return GenericJobMutationReturn(
             success=True,
