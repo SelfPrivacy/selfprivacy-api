@@ -209,13 +209,27 @@ class Backups:
 
     ### Restoring
     @staticmethod
-    def _ensure_active_restore_job(service, snapshot) -> Job:
+    def _ensure_queued_restore_job(service, snapshot) -> Job:
         job = get_restore_job(service)
         if job is None:
             job = add_restore_job(snapshot)
 
-        Jobs.update(job, status=JobStatus.RUNNING)
+        Jobs.update(job, status=JobStatus.CREATED)
         return job
+
+    @staticmethod
+    def _inplace_restore(service: Service, snapshot: Snapshot, job: Job):
+        failsafe_snapshot = Backups.back_up(service)
+
+        Jobs.update(job, status=JobStatus.RUNNING)
+        try:
+            Backups._restore_service_from_snapshot(service, snapshot.id, verify=False)
+        except Exception as e:
+            Backups._restore_service_from_snapshot(
+                service, failsafe_snapshot.id, verify=False
+            )
+            raise e
+        Backups.forget_snapshot(failsafe_snapshot)
 
     @staticmethod
     def restore_snapshot(
@@ -226,13 +240,21 @@ class Backups:
             raise ValueError(
                 f"snapshot has a nonexistent service: {snapshot.service_name}"
             )
-
-        job = Backups._ensure_active_restore_job(service, snapshot)
+        job = Backups._ensure_queued_restore_job(service, snapshot)
 
         try:
             Backups._assert_restorable(snapshot)
-            Backups._restore_service_from_snapshot(service, snapshot.id)
+
+            if strategy == RestoreStrategy.INPLACE:
+                Backups._inplace_restore(service, snapshot, job)
+            else:  # verify_before_download is our default
+                Jobs.update(job, status=JobStatus.RUNNING)
+                Backups._restore_service_from_snapshot(
+                    service, snapshot.id, verify=True
+                )
+
             service.post_restore()
+
         except Exception as e:
             Jobs.update(job, status=JobStatus.ERROR)
             raise e
@@ -256,7 +278,7 @@ class Backups:
             )
 
     @staticmethod
-    def _restore_service_from_snapshot(service: Service, snapshot_id: str):
+    def _restore_service_from_snapshot(service: Service, snapshot_id: str, verify=True):
         folders = service.get_folders()
 
         Backups.provider().backupper.restore_from_backup(
