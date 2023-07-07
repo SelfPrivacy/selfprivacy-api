@@ -8,11 +8,12 @@ from selfprivacy_api.utils import ReadUserData, WriteUserData
 from selfprivacy_api.services import get_service_by_id
 from selfprivacy_api.services.service import Service
 
-from selfprivacy_api.jobs import Jobs, JobStatus
+from selfprivacy_api.jobs import Jobs, JobStatus, Job
 
 from selfprivacy_api.graphql.queries.providers import (
     BackupProvider as BackupProviderEnum,
 )
+from selfprivacy_api.graphql.common_types.backup import RestoreStrategy
 
 from selfprivacy_api.models.backup.snapshot import Snapshot
 
@@ -207,42 +208,36 @@ class Backups:
         return snapshot
 
     ### Restoring
+    @staticmethod
+    def _ensure_active_restore_job(service, snapshot) -> Job:
+        job = get_restore_job(service)
+        if job is None:
+            job = add_restore_job(snapshot)
+
+        Jobs.update(job, status=JobStatus.RUNNING)
+        return job
 
     @staticmethod
-    def restore_snapshot(snapshot: Snapshot):
+    def restore_snapshot(
+        snapshot: Snapshot, strategy=RestoreStrategy.DOWNLOAD_VERIFY_OVERWRITE
+    ):
         service = get_service_by_id(snapshot.service_name)
-
         if service is None:
             raise ValueError(
                 f"snapshot has a nonexistent service: {snapshot.service_name}"
             )
 
-        job = get_restore_job(service)
-        if job is None:
-            job = add_restore_job(snapshot)
+        job = Backups._ensure_active_restore_job(service, snapshot)
 
-        Jobs.update(
-            job,
-            status=JobStatus.RUNNING,
-        )
         try:
             Backups._assert_restorable(snapshot)
-            Backups._restore_service_from_snapshot(
-                service,
-                snapshot.id,
-            )
+            Backups._restore_service_from_snapshot(service, snapshot.id)
             service.post_restore()
         except Exception as e:
-            Jobs.update(
-                job,
-                status=JobStatus.ERROR,
-            )
+            Jobs.update(job, status=JobStatus.ERROR)
             raise e
 
-        Jobs.update(
-            job,
-            status=JobStatus.FINISHED,
-        )
+        Jobs.update(job, status=JobStatus.FINISHED)
 
     @staticmethod
     def _assert_restorable(snapshot: Snapshot):
