@@ -219,9 +219,16 @@ class ResticBackupper(AbstractBackupper):
             raise ValueError("cannot restore without knowing where to!")
 
         with tempfile.TemporaryDirectory() as dir:
-            self.do_restore(snapshot_id, target=dir, verify=verify)
+            if verify:
+                self.do_restore(snapshot_id, target=dir, verify=verify)
+                snapshot_root = dir
+            else:  # attempting inplace restore via mount + sync
+                self.mount_repo(dir)
+                snapshot_root = join(dir, "ids", snapshot_id)
+
+            assert snapshot_root is not None
             for folder in folders:
-                src = join(dir, folder.strip("/"))
+                src = join(snapshot_root, folder.strip("/"))
                 if not exists(src):
                     raise ValueError(
                         f"there is no such path: {src}. We tried to find {folder}"
