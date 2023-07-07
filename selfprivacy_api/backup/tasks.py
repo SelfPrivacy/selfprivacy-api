@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from selfprivacy_api.graphql.common_types.backup import RestoreStrategy
+
 from selfprivacy_api.models.backup.snapshot import Snapshot
 from selfprivacy_api.utils.huey import huey
 from selfprivacy_api.services import get_service_by_id
@@ -28,8 +30,11 @@ def start_backup(service: Service) -> bool:
 
 
 @huey.task()
-def restore_snapshot(snapshot: Snapshot) -> bool:
-    Backups.restore_snapshot(snapshot)
+def restore_snapshot(
+    snapshot: Snapshot,
+    strategy: RestoreStrategy = RestoreStrategy.DOWNLOAD_VERIFY_OVERWRITE,
+) -> bool:
+    Backups.restore_snapshot(snapshot, strategy)
     return True
 
 
