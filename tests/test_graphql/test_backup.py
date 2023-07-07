@@ -13,6 +13,7 @@ from selfprivacy_api.services import Service
 from selfprivacy_api.services import get_service_by_id
 from selfprivacy_api.services.test_service import DummyService
 from selfprivacy_api.graphql.queries.providers import BackupProvider
+from selfprivacy_api.graphql.common_types.backup import RestoreStrategy
 from selfprivacy_api.jobs import Jobs, JobStatus
 
 from selfprivacy_api.models.backup.snapshot import Snapshot
@@ -360,7 +361,15 @@ def test_backup_larger_file(backups, dummy_service):
     remove(dir)
 
 
-def test_restore_snapshot_task(backups, dummy_service):
+@pytest.fixture(params=["verify", "inplace"])
+def restore_strategy(request) -> RestoreStrategy:
+    if request.param == "verify":
+        return RestoreStrategy.DOWNLOAD_VERIFY_OVERWRITE
+    else:
+        return RestoreStrategy.INPLACE
+
+
+def test_restore_snapshot_task(backups, dummy_service, restore_strategy):
     Backups.back_up(dummy_service)
     snaps = Backups.get_snapshots(dummy_service)
     assert len(snaps) == 1
@@ -375,13 +384,16 @@ def test_restore_snapshot_task(backups, dummy_service):
     for p in paths_to_nuke:
         remove(p)
 
-    handle = restore_snapshot(snaps[0])
+    handle = restore_snapshot(snaps[0], restore_strategy)
     handle(blocking=True)
 
     for p, content in zip(paths_to_nuke, contents):
         assert path.exists(p)
         with open(p, "r") as file:
             assert file.read() == content
+
+    snaps = Backups.get_snapshots(dummy_service)
+    assert len(snaps) == 1
 
 
 def test_autobackup_enable_service(backups, dummy_service):

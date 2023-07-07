@@ -29,14 +29,17 @@ def get_jobs_by_service(service: Service) -> List[Job]:
     return result
 
 
-def is_something_queued_for(service: Service) -> bool:
-    return len(get_jobs_by_service(service)) != 0
+def is_something_running_for(service: Service) -> bool:
+    running_jobs = [
+        job for job in get_jobs_by_service(service) if job.status == JobStatus.RUNNING
+    ]
+    return len(running_jobs) != 0
 
 
 def add_backup_job(service: Service) -> Job:
-    if is_something_queued_for(service):
+    if is_something_running_for(service):
         message = (
-            f"Cannot start a backup of {service.get_id()}, another operation is queued: "
+            f"Cannot start a backup of {service.get_id()}, another operation is running: "
             + get_jobs_by_service(service)[0].type_id
         )
         raise ValueError(message)
@@ -53,9 +56,9 @@ def add_restore_job(snapshot: Snapshot) -> Job:
     service = get_service_by_id(snapshot.service_name)
     if service is None:
         raise ValueError(f"no such service: {snapshot.service_name}")
-    if is_something_queued_for(service):
+    if is_something_running_for(service):
         message = (
-            f"Cannot start a restore of {service.get_id()}, another operation is queued: "
+            f"Cannot start a restore of {service.get_id()}, another operation is running: "
             + get_jobs_by_service(service)[0].type_id
         )
         raise ValueError(message)
