@@ -52,7 +52,7 @@ def backups_backblaze(generic_userdata):
 
 
 @pytest.fixture()
-def raw_dummy_service(tmpdir, backups):
+def raw_dummy_service(tmpdir):
     dirnames = ["test_service", "also_test_service"]
     service_dirs = []
     for d in dirnames:
@@ -578,13 +578,13 @@ def test_services_to_back_up(backups, dummy_service):
 def test_sync(dummy_service):
     src = dummy_service.get_folders()[0]
     dst = dummy_service.get_folders()[1]
-    old_files_src = listdir(src)
-    old_files_dst = listdir(dst)
+    old_files_src = set(listdir(src))
+    old_files_dst = set(listdir(dst))
     assert old_files_src != old_files_dst
 
     sync(src, dst)
-    new_files_src = listdir(src)
-    new_files_dst = listdir(dst)
+    new_files_src = set(listdir(src))
+    new_files_dst = set(listdir(dst))
     assert new_files_src == old_files_src
     assert new_files_dst == new_files_src
 

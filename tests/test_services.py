@@ -9,7 +9,10 @@ from selfprivacy_api.services.owned_path import OwnedPath
 from selfprivacy_api.services.generic_service_mover import FolderMoveNames
 
 from selfprivacy_api.services.test_service import DummyService
-from selfprivacy_api.services.service import Service
+from selfprivacy_api.services.service import Service, ServiceStatus
+from selfprivacy_api.utils.waitloop import wait_until_true
+
+from tests.test_graphql.test_backup import raw_dummy_service
 
 
 def test_unimplemented_folders_raises():
@@ -23,6 +26,20 @@ def test_unimplemented_folders_raises():
 
     owned_folders = OurDummy.get_owned_folders()
     assert owned_folders is not None
+
+
+def test_delayed_start_stop(raw_dummy_service):
+    dummy = raw_dummy_service
+
+    dummy.stop(delay=0.3)
+    assert dummy.get_status() == ServiceStatus.DEACTIVATING
+    wait_until_true(lambda: dummy.get_status() == ServiceStatus.INACTIVE)
+    assert dummy.get_status() == ServiceStatus.INACTIVE
+
+    dummy.start(delay=0.3)
+    assert dummy.get_status() == ServiceStatus.ACTIVATING
+    wait_until_true(lambda: dummy.get_status() == ServiceStatus.ACTIVE)
+    assert dummy.get_status() == ServiceStatus.ACTIVE
 
 
 def test_owned_folders_from_not_owned():
