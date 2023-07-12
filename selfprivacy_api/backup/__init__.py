@@ -258,16 +258,17 @@ class Backups:
 
         try:
             Backups._assert_restorable(snapshot)
+            with StoppedService(service):
+                Backups.assert_dead(service)
+                if strategy == RestoreStrategy.INPLACE:
+                    Backups._inplace_restore(service, snapshot, job)
+                else:  # verify_before_download is our default
+                    Jobs.update(job, status=JobStatus.RUNNING)
+                    Backups._restore_service_from_snapshot(
+                        service, snapshot.id, verify=True
+                    )
 
-            if strategy == RestoreStrategy.INPLACE:
-                Backups._inplace_restore(service, snapshot, job)
-            else:  # verify_before_download is our default
-                Jobs.update(job, status=JobStatus.RUNNING)
-                Backups._restore_service_from_snapshot(
-                    service, snapshot.id, verify=True
-                )
-
-            service.post_restore()
+                service.post_restore()
 
         except Exception as e:
             Jobs.update(job, status=JobStatus.ERROR)
