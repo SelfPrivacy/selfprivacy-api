@@ -30,8 +30,7 @@ class DummyService(Service):
 
     def __init__(self):
         super().__init__()
-        dir = self.folders[0]
-        status_file = path.join(dir, "service_status")
+        status_file = self.status_file()
         with open(status_file, "w") as file:
             file.write(ServiceStatus.ACTIVE.value)
 
@@ -81,7 +80,8 @@ class DummyService(Service):
     @classmethod
     def status_file(cls) -> str:
         dir = cls.folders[0]
-        return path.join(dir, "service_status")
+        # we do not REALLY want to store our state in our declared folders
+        return path.join(dir, "..", "service_status")
 
     @classmethod
     def set_status(cls, status: ServiceStatus):
@@ -99,8 +99,7 @@ class DummyService(Service):
         cls, new_status: ServiceStatus, delay_sec: float
     ):
         """simulating a delay on systemd side"""
-        dir = cls.folders[0]
-        status_file = path.join(dir, "service_status")
+        status_file = cls.status_file()
 
         command = [
             "bash",
