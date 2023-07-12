@@ -10,6 +10,7 @@ from selfprivacy_api.utils.block_devices import BlockDevice
 
 from selfprivacy_api.services.generic_size_counter import get_storage_usage
 from selfprivacy_api.services.owned_path import OwnedPath
+from selfprivacy_api.utils.waitloop import wait_until_true
 
 
 class ServiceStatus(Enum):
@@ -245,3 +246,32 @@ class Service(ABC):
 
     def post_restore(self):
         pass
+
+
+class StoppedService:
+    """
+        A context manager that stops the service if needed and reactivates it
+        after you are done if it was active
+
+        Example:
+            ```
+                assert service.get_status() == ServiceStatus.ACTIVE
+                with StoppedService(service) [as stopped_service]:
+                    assert service.get_status() == ServiceStatus.INACTIVE
+            ```
+    """
+    def __init__(self, service: Service):
+        self.service = service
+        self.original_status = service.get_status()
+
+    def __enter__(self) -> Service:
+        self.original_status = self.service.get_status()
+        if self.original_status != ServiceStatus.INACTIVE:
+            self.service.stop()
+            wait_until_true(lambda: self.service.get_status() == ServiceStatus.INACTIVE)
+        return self.service
+
+    def __exit__(self, type, value, traceback):
+        if self.original_status in [ServiceStatus.ACTIVATING, ServiceStatus.ACTIVE]:
+            self.service.start()
+            wait_until_true(lambda: self.service.get_status() == ServiceStatus.ACTIVE)
