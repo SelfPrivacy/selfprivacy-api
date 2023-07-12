@@ -303,7 +303,17 @@ def test_snapshots_by_id(backups, dummy_service):
     assert Backups.get_snapshot_by_id(snap2.id).id == snap2.id
 
 
-def test_backup_service_task(backups, dummy_service):
+@pytest.fixture(params=["instant_server_stop", "delayed_server_stop"])
+def simulated_service_stopping_delay(request) -> float:
+    if request.param == "instant_server_stop":
+        return 0.0
+    else:
+        return 0.3
+
+
+def test_backup_service_task(backups, dummy_service, simulated_service_stopping_delay):
+    dummy_service.set_delay(simulated_service_stopping_delay)
+
     handle = start_backup(dummy_service)
     handle(blocking=True)
 
