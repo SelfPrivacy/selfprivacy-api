@@ -379,7 +379,11 @@ def restore_strategy(request) -> RestoreStrategy:
         return RestoreStrategy.INPLACE
 
 
-def test_restore_snapshot_task(backups, dummy_service, restore_strategy):
+def test_restore_snapshot_task(
+    backups, dummy_service, restore_strategy, simulated_service_stopping_delay
+):
+    dummy_service.set_delay(simulated_service_stopping_delay)
+
     Backups.back_up(dummy_service)
     snaps = Backups.get_snapshots(dummy_service)
     assert len(snaps) == 1
