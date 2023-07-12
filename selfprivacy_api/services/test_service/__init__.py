@@ -23,6 +23,7 @@ class DummyService(Service):
     """A test service"""
 
     folders: List[str] = []
+    startstop_delay = 0
 
     def __init_subclass__(cls, folders: List[str]):
         cls.folders = folders
@@ -119,19 +120,23 @@ class DummyService(Service):
         pass
 
     @classmethod
-    def stop(cls, delay=DEFAULT_DELAY):
+    def set_delay(cls, new_delay):
+        cls.startstop_delay = new_delay
+
+    @classmethod
+    def stop(cls):
         cls.set_status(ServiceStatus.DEACTIVATING)
-        cls.change_status_with_async_delay(ServiceStatus.INACTIVE, delay)
+        cls.change_status_with_async_delay(ServiceStatus.INACTIVE, cls.startstop_delay)
 
     @classmethod
-    def start(cls, delay=DEFAULT_DELAY):
+    def start(cls):
         cls.set_status(ServiceStatus.ACTIVATING)
-        cls.change_status_with_async_delay(ServiceStatus.ACTIVE, delay)
+        cls.change_status_with_async_delay(ServiceStatus.ACTIVE, cls.startstop_delay)
 
     @classmethod
-    def restart(cls, delay=DEFAULT_DELAY):
+    def restart(cls):
         cls.set_status(ServiceStatus.RELOADING)  # is a correct one?
-        cls.change_status_with_async_delay(ServiceStatus.ACTIVE, delay)
+        cls.change_status_with_async_delay(ServiceStatus.ACTIVE, cls.startstop_delay)
 
     @staticmethod
     def get_configuration():

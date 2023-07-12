@@ -30,13 +30,14 @@ def test_unimplemented_folders_raises():
 
 def test_delayed_start_stop(raw_dummy_service):
     dummy = raw_dummy_service
+    dummy.set_delay(0.3)
 
-    dummy.stop(delay=0.3)
+    dummy.stop()
     assert dummy.get_status() == ServiceStatus.DEACTIVATING
     wait_until_true(lambda: dummy.get_status() == ServiceStatus.INACTIVE)
     assert dummy.get_status() == ServiceStatus.INACTIVE
 
-    dummy.start(delay=0.3)
+    dummy.start()
     assert dummy.get_status() == ServiceStatus.ACTIVATING
     wait_until_true(lambda: dummy.get_status() == ServiceStatus.ACTIVE)
     assert dummy.get_status() == ServiceStatus.ACTIVE
