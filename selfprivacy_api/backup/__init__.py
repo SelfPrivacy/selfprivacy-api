@@ -6,7 +6,7 @@ from typing import List, Optional
 from selfprivacy_api.utils import ReadUserData, WriteUserData
 
 from selfprivacy_api.services import get_service_by_id
-from selfprivacy_api.services.service import Service
+from selfprivacy_api.services.service import Service, ServiceStatus, StoppedService
 
 from selfprivacy_api.jobs import Jobs, JobStatus, Job
 
@@ -33,6 +33,18 @@ DEFAULT_JSON_PROVIDER = {
     "accountKey": "",
     "bucket": "",
 }
+
+
+class NotDeadError(AssertionError):
+    def __init__(self, service: Service):
+        self.service_name = service.get_id()
+
+    def __str__(self):
+        return f"""
+                    Service {self.service_name} should be either stopped or dead from an error before we back up.
+                    Normally, this error is unreachable because we do try ensure this.
+                    Apparently, not this time.
+                    """
 
 
 class Backups:
@@ -193,13 +205,15 @@ class Backups:
         Jobs.update(job, status=JobStatus.RUNNING)
 
         try:
-            service.pre_backup()
-            snapshot = Backups.provider().backupper.start_backup(
-                folders,
-                tag,
-            )
-            Backups._store_last_snapshot(tag, snapshot)
-            service.post_restore()
+            with StoppedService(service):
+                Backups.assert_dead(service)  # to be extra sure
+                service.pre_backup()
+                snapshot = Backups.provider().backupper.start_backup(
+                    folders,
+                    tag,
+                )
+                Backups._store_last_snapshot(tag, snapshot)
+                service.post_restore()
         except Exception as e:
             Jobs.update(job, status=JobStatus.ERROR)
             raise e
@@ -465,3 +479,11 @@ class Backups:
             repo_id="",
         )
         Storage.store_provider(provider)
+
+    @staticmethod
+    def assert_dead(service: Service):
+        # if we backup the service that is failing to restore it to the
+        # previous snapshot, its status can be FAILED
+        # And obviously restoring a failed service is the moun route
+        if service.get_status() not in [ServiceStatus.INACTIVE, ServiceStatus.FAILED]:
+            raise NotDeadError(service)
