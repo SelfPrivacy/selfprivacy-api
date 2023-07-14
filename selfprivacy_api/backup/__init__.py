@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from operator import add
-from os import statvfs
+from os import statvfs, path, walk
 from typing import List, Optional
 
 from selfprivacy_api.utils import ReadUserData, WriteUserData
@@ -277,14 +277,28 @@ class Backups:
         Jobs.update(job, status=JobStatus.FINISHED)
 
     @staticmethod
-    def _assert_restorable(snapshot: Snapshot):
+    def _assert_restorable(
+        snapshot: Snapshot, strategy=RestoreStrategy.DOWNLOAD_VERIFY_OVERWRITE
+    ):
         service = get_service_by_id(snapshot.service_name)
         if service is None:
             raise ValueError(
                 f"snapshot has a nonexistent service: {snapshot.service_name}"
             )
 
-        needed_space = Backups.snapshot_restored_size(snapshot.id)
+        restored_snap_size = Backups.snapshot_restored_size(snapshot.id)
+
+        if strategy == RestoreStrategy.DOWNLOAD_VERIFY_OVERWRITE:
+            needed_space = restored_snap_size
+        elif strategy == RestoreStrategy.INPLACE:
+            needed_space = restored_snap_size - service.get_storage_usage()
+        else:
+            raise NotImplementedError(
+                """
+            We do not know if there is enough space for restoration because there is some novel restore strategy used! 
+            This is a developer's fault, open a issue please
+            """
+            )
         available_space = Backups.space_usable_for_service(service)
         if needed_space > available_space:
             raise ValueError(
@@ -466,6 +480,7 @@ class Backups:
         if folders == []:
             raise ValueError("unallocated service", service.get_id())
 
+        # We assume all folders of one service live at the same volume
         fs_info = statvfs(folders[0])
         usable_bytes = fs_info.f_frsize * fs_info.f_bavail
         return usable_bytes
