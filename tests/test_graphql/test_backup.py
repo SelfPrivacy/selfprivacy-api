@@ -24,6 +24,7 @@ from selfprivacy_api.backup.providers import AbstractBackupProvider
 from selfprivacy_api.backup.providers.backblaze import Backblaze
 from selfprivacy_api.backup.util import sync
 from selfprivacy_api.backup.backuppers.restic_backupper import ResticBackupper
+from selfprivacy_api.backup.jobs import add_backup_job, add_restore_job
 
 
 from selfprivacy_api.backup.tasks import start_backup, restore_snapshot
@@ -628,3 +629,19 @@ def test_mount_umount(backups, dummy_service, tmpdir):
     backupper.unmount_repo(mountpoint)
     # handle.terminate()
     assert len(listdir(mountpoint)) == 0
+
+
+def test_move_blocks_backups(backups, dummy_service, restore_strategy):
+    snap = Backups.back_up(dummy_service)
+    job = Jobs.add(
+        type_id=f"services.{dummy_service.get_id()}.move",
+        name="Move Dummy",
+        description=f"Moving Dummy data to the Rainbow Land",
+        status=JobStatus.RUNNING,
+    )
+
+    with pytest.raises(ValueError):
+        Backups.back_up(dummy_service)
+
+    with pytest.raises(ValueError):
+        Backups.restore_snapshot(snap, restore_strategy)
