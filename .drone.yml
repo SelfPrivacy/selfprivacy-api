@@ -8,6 +8,7 @@ steps:
   - kill $(ps aux | grep 'redis-server 127.0.0.1:6389' | awk '{print $2}') || true
   - redis-server --bind 127.0.0.1 --port 6389 >/dev/null &
   # We do not care about persistance on CI
+  - sleep 10
   - redis-cli -h 127.0.0.1 -p 6389 config set stop-writes-on-bgsave-error no
   - coverage run -m pytest -q
   - coverage xml
