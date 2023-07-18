@@ -81,7 +81,7 @@ class ResticBackupper(AbstractBackupper):
         mount_command.insert(0, "nohup")
         handle = subprocess.Popen(mount_command, stdout=subprocess.DEVNULL, shell=False)
         sleep(2)
-        if not "ids" in listdir(dir):
+        if "ids" not in listdir(dir):
             raise IOError("failed to mount dir ", dir)
         return handle
 
@@ -211,7 +211,12 @@ class ResticBackupper(AbstractBackupper):
             except ValueError as e:
                 raise ValueError("cannot restore a snapshot: " + output) from e
 
-    def restore_from_backup(self, snapshot_id, folders: List[str], verify=True):
+    def restore_from_backup(
+        self,
+        snapshot_id,
+        folders: List[str],
+        verify=True,
+    ):
         """
         Restore from backup with restic
         """
@@ -235,6 +240,9 @@ class ResticBackupper(AbstractBackupper):
                     )
                 dst = folder
                 sync(src, dst)
+
+            if not verify:
+                self.unmount_repo(dir)
 
     def do_restore(self, snapshot_id, target="/", verify=False):
         """barebones restic restore"""
