@@ -24,6 +24,7 @@ class DummyService(Service):
 
     folders: List[str] = []
     startstop_delay = 0
+    backuppable = True
 
     def __init_subclass__(cls, folders: List[str]):
         cls.folders = folders
@@ -109,6 +110,17 @@ class DummyService(Service):
         handle = subprocess.Popen(command)
         if delay_sec == 0:
             handle.communicate()
+
+    @classmethod
+    def set_backuppable(cls, new_value: bool) -> None:
+        """For tests: because can_be_backed_up is static,
+        we can only set it up dynamically for tests via a classmethod"""
+        cls.backuppable = new_value
+
+    @classmethod
+    def can_be_backed_up(cls) -> bool:
+        """`True` if the service can be backed up."""
+        return cls.backuppable
 
     @classmethod
     def enable(cls):

@@ -12,6 +12,7 @@ from selfprivacy_api.utils.redis_model_storage import (
 
 
 from selfprivacy_api.services.service import Service
+from selfprivacy_api.services import get_service_by_id
 
 from selfprivacy_api.backup.providers.provider import AbstractBackupProvider
 from selfprivacy_api.backup.providers import get_kind
@@ -130,7 +131,10 @@ class Storage:
 
     @staticmethod
     def is_autobackup_set(service_name: str) -> bool:
-        return redis.exists(Storage.__autobackup_key(service_name))
+        service = get_service_by_id(service_name)
+        if service is None:
+            raise ValueError("nonexistent service: ", service_name)
+        return service.can_be_backed_up()
 
     @staticmethod
     def autobackup_period_minutes() -> Optional[int]:

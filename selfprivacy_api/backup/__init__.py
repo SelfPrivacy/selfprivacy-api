@@ -5,6 +5,7 @@ from typing import List, Optional
 from selfprivacy_api.utils import ReadUserData, WriteUserData
 
 from selfprivacy_api.services import get_service_by_id
+from selfprivacy_api.services import get_all_services
 from selfprivacy_api.services.service import (
     Service,
     ServiceStatus,
@@ -480,15 +481,9 @@ class Backups:
 
     @staticmethod
     def _service_ids_to_back_up(time: datetime) -> List[str]:
-        services = Storage.services_with_autobackup()
-        return [
-            id
-            for id in services
-            if Backups.is_time_to_backup_service(
-                id,
-                time,
-            )
-        ]
+        # TODO: simplify in light that we do not use redis for this anymore
+        service_ids = [service.get_id() for service in get_all_services()]
+        return [id for id in service_ids if Backups.is_time_to_backup_service(id, time)]
 
     # Helpers
 
