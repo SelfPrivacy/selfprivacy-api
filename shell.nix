@@ -23,6 +23,8 @@ let
     uvicorn
     redis
     strawberry-graphql
+    flake8-bugbear
+    flake8
   ]);
 in
 pkgs.mkShell {
