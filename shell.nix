@@ -31,6 +31,7 @@ pkgs.mkShell {
     pkgs.black
     pkgs.redis
     pkgs.restic
+    pkgs.rclone
   ];
   shellHook = ''
     PYTHONPATH=${sp-python}/${sp-python.sitePackages}
