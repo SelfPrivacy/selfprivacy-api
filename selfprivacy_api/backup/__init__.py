@@ -399,27 +399,6 @@ class Backups:
     # Autobackup
 
     @staticmethod
-    def is_autobackup_enabled(service: Service) -> bool:
-        return Storage.is_autobackup_set(service.get_id())
-
-    @staticmethod
-    def enable_autobackup(service: Service) -> None:
-        Storage.set_autobackup(service)
-
-    @staticmethod
-    def disable_autobackup(service: Service) -> None:
-        """also see disable_all_autobackup()"""
-        Storage.unset_autobackup(service)
-
-    @staticmethod
-    def disable_all_autobackup() -> None:
-        """
-        Disables all automatic backing up,
-        but does not change per-service settings
-        """
-        Storage.delete_backup_period()
-
-    @staticmethod
     def autobackup_period_minutes() -> Optional[int]:
         """None means autobackup is disabled"""
         return Storage.autobackup_period_minutes()
@@ -437,25 +416,29 @@ class Backups:
         Storage.store_autobackup_period_minutes(minutes)
 
     @staticmethod
+    def disable_all_autobackup() -> None:
+        """
+        Disables all automatic backing up,
+        but does not change per-service settings
+        """
+        Storage.delete_backup_period()
+
+    @staticmethod
     def is_time_to_backup(time: datetime) -> bool:
         """
         Intended as a time validator for huey cron scheduler
         of automatic backups
         """
 
-        return Backups._service_ids_to_back_up(time) != []
+        return Backups.services_to_back_up(time) != []
 
     @staticmethod
     def services_to_back_up(time: datetime) -> List[Service]:
-        result: list[Service] = []
-        for id in Backups._service_ids_to_back_up(time):
-            service = get_service_by_id(id)
-            if service is None:
-                raise ValueError(
-                    "Cannot look up a service scheduled for backup!",
-                )
-            result.append(service)
-        return result
+        return [
+            service
+            for service in get_all_services()
+            if Backups.is_time_to_backup_service(service, time)
+        ]
 
     @staticmethod
     def get_last_backed_up(service: Service) -> Optional[datetime]:
@@ -463,11 +446,12 @@ class Backups:
         return Storage.get_last_backup_time(service.get_id())
 
     @staticmethod
-    def is_time_to_backup_service(service_id: str, time: datetime):
+    def is_time_to_backup_service(service: Service, time: datetime):
         period = Backups.autobackup_period_minutes()
-        if period is None:
+        service_id = service.get_id()
+        if not service.can_be_backed_up():
             return False
-        if not Storage.is_autobackup_set(service_id):
+        if period is None:
             return False
 
         last_backup = Storage.get_last_backup_time(service_id)
@@ -478,12 +462,6 @@ class Backups:
         if time > last_backup + timedelta(minutes=period):
             return True
         return False
-
-    @staticmethod
-    def _service_ids_to_back_up(time: datetime) -> List[str]:
-        # TODO: simplify in light that we do not use redis for this anymore
-        service_ids = [service.get_id() for service in get_all_services()]
-        return [id for id in service_ids if Backups.is_time_to_backup_service(id, time)]
 
     # Helpers
 

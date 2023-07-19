@@ -20,7 +20,6 @@ from selfprivacy_api.backup.providers import get_kind
 # a hack to store file path.
 REDIS_SNAPSHOT_CACHE_EXPIRE_SECONDS = 24 * 60 * 60  # one day
 
-REDIS_AUTOBACKUP_ENABLED_PREFIX = "backup:autobackup:services:"
 REDIS_SNAPSHOTS_PREFIX = "backups:snapshots:"
 REDIS_LAST_BACKUP_PREFIX = "backups:last-backed-up:"
 REDIS_INITTED_CACHE_PREFIX = "backups:initted_services:"
@@ -42,7 +41,6 @@ class Storage:
             REDIS_INITTED_CACHE_PREFIX,
             REDIS_SNAPSHOTS_PREFIX,
             REDIS_LAST_BACKUP_PREFIX,
-            REDIS_AUTOBACKUP_ENABLED_PREFIX,
         ]
 
         for prefix in prefixes_to_clean:
@@ -53,12 +51,6 @@ class Storage:
     def invalidate_snapshot_storage():
         for key in redis.keys(REDIS_SNAPSHOTS_PREFIX + "*"):
             redis.delete(key)
-
-    @staticmethod
-    def services_with_autobackup() -> List[str]:
-        keys = redis.keys(REDIS_AUTOBACKUP_ENABLED_PREFIX + "*")
-        service_ids = [key.split(":")[-1] for key in keys]
-        return service_ids
 
     @staticmethod
     def __last_backup_key(service_id):
@@ -114,27 +106,6 @@ class Storage:
             snapshot = hash_as_model(redis, key, Snapshot)
             result.append(snapshot)
         return result
-
-    @staticmethod
-    def __autobackup_key(service_name: str) -> str:
-        return REDIS_AUTOBACKUP_ENABLED_PREFIX + service_name
-
-    @staticmethod
-    def set_autobackup(service: Service):
-        # shortcut this
-        redis.set(Storage.__autobackup_key(service.get_id()), 1)
-
-    @staticmethod
-    def unset_autobackup(service: Service):
-        """also see disable_all_autobackup()"""
-        redis.delete(Storage.__autobackup_key(service.get_id()))
-
-    @staticmethod
-    def is_autobackup_set(service_name: str) -> bool:
-        service = get_service_by_id(service_name)
-        if service is None:
-            raise ValueError("nonexistent service: ", service_name)
-        return service.can_be_backed_up()
 
     @staticmethod
     def autobackup_period_minutes() -> Optional[int]:

@@ -414,17 +414,6 @@ def test_restore_snapshot_task(
         assert len(snaps) == 1
 
 
-def test_autobackup_enable_service_storage(backups, dummy_service):
-    assert len(Storage.services_with_autobackup()) == 0
-
-    Backups.enable_autobackup(dummy_service)
-    assert len(Storage.services_with_autobackup()) == 1
-    assert Storage.services_with_autobackup()[0] == dummy_service.get_id()
-
-    Backups.disable_autobackup(dummy_service)
-    assert len(Storage.services_with_autobackup()) == 0
-
-
 def test_set_autobackup_period(backups):
     assert Backups.autobackup_period_minutes() is None
 
@@ -449,7 +438,7 @@ def test_set_autobackup_period(backups):
 
 def test_no_default_autobackup(backups, dummy_service):
     now = datetime.now(timezone.utc)
-    assert not Backups.is_time_to_backup_service(dummy_service.get_id(), now)
+    assert not Backups.is_time_to_backup_service(dummy_service, now)
     assert not Backups.is_time_to_backup(now)
 
 
@@ -483,15 +472,15 @@ def test_autobackup_timer_periods(backups, dummy_service):
     now = datetime.now(timezone.utc)
     backup_period = 13  # minutes
 
-    assert not Backups.is_time_to_backup_service(dummy_service.get_id(), now)
+    assert not Backups.is_time_to_backup_service(dummy_service, now)
     assert not Backups.is_time_to_backup(now)
 
     Backups.set_autobackup_period_minutes(backup_period)
-    assert Backups.is_time_to_backup_service(dummy_service.get_id(), now)
+    assert Backups.is_time_to_backup_service(dummy_service, now)
     assert Backups.is_time_to_backup(now)
 
     Backups.set_autobackup_period_minutes(0)
-    assert not Backups.is_time_to_backup_service(dummy_service.get_id(), now)
+    assert not Backups.is_time_to_backup_service(dummy_service, now)
     assert not Backups.is_time_to_backup(now)
 
 
@@ -506,14 +495,14 @@ def test_autobackup_timer_enabling(backups, dummy_service):
     )  # there are other services too, not just our dummy
 
     # not backuppable service is not backuppable even if period is set
-    assert not Backups.is_time_to_backup_service(dummy_service.get_id(), now)
+    assert not Backups.is_time_to_backup_service(dummy_service, now)
 
     dummy_service.set_backuppable(True)
     assert dummy_service.can_be_backed_up()
-    assert Backups.is_time_to_backup_service(dummy_service.get_id(), now)
+    assert Backups.is_time_to_backup_service(dummy_service, now)
 
     Backups.disable_all_autobackup()
-    assert not Backups.is_time_to_backup_service(dummy_service.get_id(), now)
+    assert not Backups.is_time_to_backup_service(dummy_service, now)
     assert not Backups.is_time_to_backup(now)
 
 
@@ -521,21 +510,20 @@ def test_autobackup_timing(backups, dummy_service):
     backup_period = 13  # minutes
     now = datetime.now(timezone.utc)
 
-    Backups.enable_autobackup(dummy_service)
     Backups.set_autobackup_period_minutes(backup_period)
-    assert Backups.is_time_to_backup_service(dummy_service.get_id(), now)
+    assert Backups.is_time_to_backup_service(dummy_service, now)
     assert Backups.is_time_to_backup(now)
 
     Backups.back_up(dummy_service)
 
     now = datetime.now(timezone.utc)
-    assert not Backups.is_time_to_backup_service(dummy_service.get_id(), now)
+    assert not Backups.is_time_to_backup_service(dummy_service, now)
 
     past = datetime.now(timezone.utc) - timedelta(minutes=1)
-    assert not Backups.is_time_to_backup_service(dummy_service.get_id(), past)
+    assert not Backups.is_time_to_backup_service(dummy_service, past)
 
     future = datetime.now(timezone.utc) + timedelta(minutes=backup_period + 2)
-    assert Backups.is_time_to_backup_service(dummy_service.get_id(), future)
+    assert Backups.is_time_to_backup_service(dummy_service, future)
 
 
 # Storage
