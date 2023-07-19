@@ -74,11 +74,17 @@ class Storage:
             return None
 
         snapshot = hash_as_model(redis, key, Snapshot)
+        if not snapshot:
+            return None
         return snapshot.created_at
 
     @staticmethod
     def store_last_timestamp(service_id: str, snapshot: Snapshot):
-        store_model_as_hash(redis, Storage.__last_backup_key(service_id), snapshot)
+        store_model_as_hash(
+            redis,
+            Storage.__last_backup_key(service_id),
+            snapshot,
+        )
 
     @staticmethod
     def cache_snapshot(snapshot: Snapshot):

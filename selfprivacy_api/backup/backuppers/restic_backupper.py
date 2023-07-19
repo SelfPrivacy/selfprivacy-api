@@ -21,7 +21,7 @@ from selfprivacy_api.backup.local_secret import LocalBackupSecret
 
 
 class ResticBackupper(AbstractBackupper):
-    def __init__(self, login_flag: str, key_flag: str, type: str):
+    def __init__(self, login_flag: str, key_flag: str, type: str) -> None:
         self.login_flag = login_flag
         self.key_flag = key_flag
         self.type = type
@@ -29,7 +29,7 @@ class ResticBackupper(AbstractBackupper):
         self.key = ""
         self.repo = ""
 
-    def set_creds(self, account: str, key: str, repo: str):
+    def set_creds(self, account: str, key: str, repo: str) -> None:
         self.account = account
         self.key = key
         self.repo = repo
@@ -79,7 +79,11 @@ class ResticBackupper(AbstractBackupper):
     def mount_repo(self, dir):
         mount_command = self.restic_command("mount", dir)
         mount_command.insert(0, "nohup")
-        handle = subprocess.Popen(mount_command, stdout=subprocess.DEVNULL, shell=False)
+        handle = subprocess.Popen(
+            mount_command,
+            stdout=subprocess.DEVNULL,
+            shell=False,
+        )
         sleep(2)
         if "ids" not in listdir(dir):
             raise IOError("failed to mount dir ", dir)
@@ -109,12 +113,13 @@ class ResticBackupper(AbstractBackupper):
             result.append(item)
         return result
 
-    def start_backup(self, folders: List[str], tag: str):
+    def start_backup(self, folders: List[str], tag: str) -> Snapshot:
         """
         Start backup with restic
         """
 
-        # but maybe it is ok to accept a union of a string and an array of strings
+        # but maybe it is ok to accept a union
+        # of a string and an array of strings
         assert not isinstance(folders, str)
 
         backup_command = self.restic_command(
@@ -125,20 +130,34 @@ class ResticBackupper(AbstractBackupper):
         )
 
         messages = []
-        job = get_backup_job(get_service_by_id(tag))
+
+        service = get_service_by_id(tag)
+        if service is None:
+            raise ValueError("No service with id ", tag)
+
+        job = get_backup_job(service)
         try:
             for raw_message in output_yielder(backup_command):
-                message = self.parse_message(raw_message, job)
+                message = self.parse_message(
+                    raw_message,
+                    job,
+                )
                 messages.append(message)
-            return ResticBackupper._snapshot_from_backup_messages(messages, tag)
+            return ResticBackupper._snapshot_from_backup_messages(
+                messages,
+                tag,
+            )
         except ValueError as e:
-            raise ValueError("could not create a snapshot: ", messages) from e
+            raise ValueError("Could not create a snapshot: ", messages) from e
 
     @staticmethod
     def _snapshot_from_backup_messages(messages, repo_name) -> Snapshot:
         for message in messages:
             if message["message_type"] == "summary":
-                return ResticBackupper._snapshot_from_fresh_summary(message, repo_name)
+                return ResticBackupper._snapshot_from_fresh_summary(
+                    message,
+                    repo_name,
+                )
         raise ValueError("no summary message in restic json output")
 
     def parse_message(self, raw_message_line: str, job=None) -> dict:
@@ -162,7 +181,7 @@ class ResticBackupper(AbstractBackupper):
             service_name=repo_name,
         )
 
-    def init(self):
+    def init(self) -> None:
         init_command = self.restic_command(
             "init",
         )
@@ -173,7 +192,7 @@ class ResticBackupper(AbstractBackupper):
             stderr=subprocess.STDOUT,
         ) as process_handle:
             output = process_handle.communicate()[0].decode("utf-8")
-            if not "created restic repository" in output:
+            if "created restic repository" not in output:
                 raise ValueError("cannot init a repo: " + output)
 
     def is_initted(self) -> bool:
@@ -182,7 +201,11 @@ class ResticBackupper(AbstractBackupper):
             "--json",
         )
 
-        with subprocess.Popen(command, stdout=subprocess.PIPE, shell=False) as handle:
+        with subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            shell=False,
+        ) as handle:
             output = handle.communicate()[0].decode("utf-8")
             if not ResticBackupper.has_json(output):
                 return False
@@ -216,7 +239,7 @@ class ResticBackupper(AbstractBackupper):
         snapshot_id,
         folders: List[str],
         verify=True,
-    ):
+    ) -> None:
         """
         Restore from backup with restic
         """
@@ -235,9 +258,7 @@ class ResticBackupper(AbstractBackupper):
             for folder in folders:
                 src = join(snapshot_root, folder.strip("/"))
                 if not exists(src):
-                    raise ValueError(
-                        f"there is no such path: {src}. We tried to find {folder}"
-                    )
+                    raise ValueError(f"No such path: {src}. We tried to find {folder}")
                 dst = folder
                 sync(src, dst)
 
@@ -254,7 +275,8 @@ class ResticBackupper(AbstractBackupper):
             restore_command, stdout=subprocess.PIPE, shell=False
         ) as handle:
 
-            # for some reason restore does not support nice reporting of progress via json
+            # for some reason restore does not support
+            # nice reporting of progress via json
             output = handle.communicate()[0].decode("utf-8")
             if "restoring" not in output:
                 raise ValueError("cannot restore a snapshot: " + output)
@@ -264,21 +286,36 @@ class ResticBackupper(AbstractBackupper):
             )  # none should be impossible after communicate
             if handle.returncode != 0:
                 raise ValueError(
-                    "restore exited with errorcode", returncode, ":", output
+                    "restore exited with errorcode",
+                    handle.returncode,
+                    ":",
+                    output,
                 )
 
-    def forget_snapshot(self, snapshot_id):
-        """either removes snapshot or marks it for deletion later depending on server settings"""
+    def forget_snapshot(self, snapshot_id) -> None:
+        """
+        Either removes snapshot or marks it for deletion later,
+        depending on server settings
+        """
         forget_command = self.restic_command(
             "forget",
             snapshot_id,
         )
 
         with subprocess.Popen(
-            forget_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False
+            forget_command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            shell=False,
         ) as handle:
-            # for some reason restore does not support nice reporting of progress via json
-            output, err = [string.decode("utf-8") for string in handle.communicate()]
+            # for some reason restore does not support
+            # nice reporting of progress via json
+            output, err = [
+                string.decode(
+                    "utf-8",
+                )
+                for string in handle.communicate()
+            ]
 
             if "no matching ID found" in err:
                 raise ValueError(
@@ -290,7 +327,10 @@ class ResticBackupper(AbstractBackupper):
             )  # none should be impossible after communicate
             if handle.returncode != 0:
                 raise ValueError(
-                    "forget exited with errorcode", returncode, ":", output
+                    "forget exited with errorcode",
+                    handle.returncode,
+                    ":",
+                    output,
                 )
 
     def _load_snapshots(self) -> object:
@@ -336,7 +376,7 @@ class ResticBackupper(AbstractBackupper):
         starting_index = ResticBackupper.json_start(output)
 
         if starting_index == -1:
-            raise ValueError("There is no json in the restic output : " + output)
+            raise ValueError("There is no json in the restic output: " + output)
 
         truncated_output = output[starting_index:]
         json_messages = truncated_output.splitlines()

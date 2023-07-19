@@ -5,7 +5,7 @@ from selfprivacy_api.models.backup.snapshot import Snapshot
 
 
 class AbstractBackupper(ABC):
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     @abstractmethod
@@ -13,11 +13,11 @@ class AbstractBackupper(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def set_creds(self, account: str, key: str, repo: str):
+    def set_creds(self, account: str, key: str, repo: str) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def start_backup(self, folders: List[str], repo_name: str):
+    def start_backup(self, folders: List[str], repo_name: str) -> Snapshot:
         raise NotImplementedError
 
     @abstractmethod
@@ -26,7 +26,7 @@ class AbstractBackupper(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def init(self):
+    def init(self) -> None:
         raise NotImplementedError
 
     @abstractmethod
@@ -35,7 +35,7 @@ class AbstractBackupper(ABC):
         snapshot_id: str,
         folders: List[str],
         verify=True,
-    ):
+    ) -> None:
         """Restore a target folder using a snapshot"""
         raise NotImplementedError
 
@@ -44,5 +44,5 @@ class AbstractBackupper(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def forget_snapshot(self, snapshot_id):
+    def forget_snapshot(self, snapshot_id) -> None:
         raise NotImplementedError
