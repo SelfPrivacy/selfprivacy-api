@@ -30,7 +30,12 @@ class AbstractBackupper(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def restore_from_backup(self, snapshot_id: str, folders: List[str], verify=True):
+    def restore_from_backup(
+        self,
+        snapshot_id: str,
+        folders: List[str],
+        verify=True,
+    ):
         """Restore a target folder using a snapshot"""
         raise NotImplementedError
 

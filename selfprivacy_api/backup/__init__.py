@@ -1,12 +1,16 @@
 from datetime import datetime, timedelta
 from operator import add
-from os import statvfs, path, walk
+from os import statvfs
 from typing import List, Optional
 
 from selfprivacy_api.utils import ReadUserData, WriteUserData
 
 from selfprivacy_api.services import get_service_by_id
-from selfprivacy_api.services.service import Service, ServiceStatus, StoppedService
+from selfprivacy_api.services.service import (
+    Service,
+    ServiceStatus,
+    StoppedService,
+)
 
 from selfprivacy_api.jobs import Jobs, JobStatus, Job
 
@@ -41,16 +45,17 @@ class NotDeadError(AssertionError):
 
     def __str__(self):
         return f"""
-                    Service {self.service_name} should be either stopped or dead from an error before we back up.
-                    Normally, this error is unreachable because we do try ensure this.
-                    Apparently, not this time.
-                    """
+        Service {self.service_name} should be either stopped or dead from
+        an error before we back up.
+        Normally, this error is unreachable because we do try ensure this.
+        Apparently, not this time.
+        """
 
 
 class Backups:
     """A stateless controller class for backups"""
 
-    ### Providers
+    # Providers
 
     @staticmethod
     def provider():
@@ -172,7 +177,7 @@ class Backups:
 
             user_data["backup"] = DEFAULT_JSON_PROVIDER
 
-    ### Init
+    # Init
 
     @staticmethod
     def init_repo():
@@ -191,7 +196,7 @@ class Backups:
 
         return False
 
-    ### Backup
+    # Backup
 
     @staticmethod
     def back_up(service: Service):
@@ -221,7 +226,8 @@ class Backups:
         Jobs.update(job, status=JobStatus.FINISHED)
         return snapshot
 
-    ### Restoring
+    # Restoring
+
     @staticmethod
     def _ensure_queued_restore_job(service, snapshot) -> Job:
         job = get_restore_job(service)
@@ -237,12 +243,17 @@ class Backups:
 
         Jobs.update(job, status=JobStatus.RUNNING)
         try:
-            Backups._restore_service_from_snapshot(service, snapshot.id, verify=False)
+            Backups._restore_service_from_snapshot(
+                service,
+                snapshot.id,
+                verify=False,
+            )
         except Exception as e:
             Backups._restore_service_from_snapshot(
                 service, failsafe_snapshot.id, verify=False
             )
             raise e
+        # TODO: Do we really have to forget this snapshot? — Inex
         Backups.forget_snapshot(failsafe_snapshot)
 
     @staticmethod
@@ -295,8 +306,9 @@ class Backups:
         else:
             raise NotImplementedError(
                 """
-            We do not know if there is enough space for restoration because there is some novel restore strategy used! 
-            This is a developer's fault, open a issue please
+            We do not know if there is enough space for restoration because
+            there is some novel restore strategy used!
+            This is a developer's fault, open an issue please
             """
             )
         available_space = Backups.space_usable_for_service(service)
@@ -307,15 +319,20 @@ class Backups:
             )
 
     @staticmethod
-    def _restore_service_from_snapshot(service: Service, snapshot_id: str, verify=True):
+    def _restore_service_from_snapshot(
+        service: Service,
+        snapshot_id: str,
+        verify=True,
+    ):
         folders = service.get_folders()
 
         Backups.provider().backupper.restore_from_backup(
             snapshot_id,
             folders,
+            verify=verify,
         )
 
-    ### Snapshots
+    # Snapshots
 
     @staticmethod
     def get_snapshots(service: Service) -> List[Snapshot]:
@@ -377,7 +394,7 @@ class Backups:
         # expiring cache entry
         Storage.cache_snapshot(snapshot)
 
-    ### Autobackup
+    # Autobackup
 
     @staticmethod
     def is_autobackup_enabled(service: Service) -> bool:
@@ -472,7 +489,7 @@ class Backups:
             )
         ]
 
-    ### Helpers
+    # Helpers
 
     @staticmethod
     def space_usable_for_service(service: Service) -> int:
@@ -500,6 +517,9 @@ class Backups:
     def assert_dead(service: Service):
         # if we backup the service that is failing to restore it to the
         # previous snapshot, its status can be FAILED
-        # And obviously restoring a failed service is the moun route
-        if service.get_status() not in [ServiceStatus.INACTIVE, ServiceStatus.FAILED]:
+        # And obviously restoring a failed service is the main route
+        if service.get_status() not in [
+            ServiceStatus.INACTIVE,
+            ServiceStatus.FAILED,
+        ]:
             raise NotDeadError(service)
