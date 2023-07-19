@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from operator import add
 from os import statvfs
 from typing import List, Optional
 
@@ -58,7 +57,7 @@ class Backups:
     # Providers
 
     @staticmethod
-    def provider():
+    def provider() -> AbstractBackupProvider:
         return Backups._lookup_provider()
 
     @staticmethod
@@ -68,8 +67,8 @@ class Backups:
         key: str,
         location: str,
         repo_id: str = "",
-    ):
-        provider = Backups._construct_provider(
+    ) -> None:
+        provider: AbstractBackupProvider = Backups._construct_provider(
             kind,
             login,
             key,
@@ -79,7 +78,7 @@ class Backups:
         Storage.store_provider(provider)
 
     @staticmethod
-    def reset(reset_json=True):
+    def reset(reset_json=True) -> None:
         Storage.reset()
         if reset_json:
             try:
@@ -180,7 +179,7 @@ class Backups:
     # Init
 
     @staticmethod
-    def init_repo():
+    def init_repo() -> None:
         Backups.provider().backupper.init()
         Storage.mark_as_init()
 
@@ -199,7 +198,7 @@ class Backups:
     # Backup
 
     @staticmethod
-    def back_up(service: Service):
+    def back_up(service: Service) -> Snapshot:
         """The top-level function to back up a service"""
         folders = service.get_folders()
         tag = service.get_id()
@@ -238,7 +237,11 @@ class Backups:
         return job
 
     @staticmethod
-    def _inplace_restore(service: Service, snapshot: Snapshot, job: Job):
+    def _inplace_restore(
+        service: Service,
+        snapshot: Snapshot,
+        job: Job,
+    ) -> None:
         failsafe_snapshot = Backups.back_up(service)
 
         Jobs.update(job, status=JobStatus.RUNNING)
@@ -253,13 +256,11 @@ class Backups:
                 service, failsafe_snapshot.id, verify=False
             )
             raise e
-        # TODO: Do we really have to forget this snapshot? — Inex
-        Backups.forget_snapshot(failsafe_snapshot)
 
     @staticmethod
     def restore_snapshot(
         snapshot: Snapshot, strategy=RestoreStrategy.DOWNLOAD_VERIFY_OVERWRITE
-    ):
+    ) -> None:
         service = get_service_by_id(snapshot.service_name)
         if service is None:
             raise ValueError(
@@ -290,7 +291,7 @@ class Backups:
     @staticmethod
     def _assert_restorable(
         snapshot: Snapshot, strategy=RestoreStrategy.DOWNLOAD_VERIFY_OVERWRITE
-    ):
+    ) -> None:
         service = get_service_by_id(snapshot.service_name)
         if service is None:
             raise ValueError(
@@ -323,7 +324,7 @@ class Backups:
         service: Service,
         snapshot_id: str,
         verify=True,
-    ):
+    ) -> None:
         folders = service.get_folders()
 
         Backups.provider().backupper.restore_from_backup(
@@ -369,12 +370,12 @@ class Backups:
         return snap
 
     @staticmethod
-    def forget_snapshot(snapshot: Snapshot):
+    def forget_snapshot(snapshot: Snapshot) -> None:
         Backups.provider().backupper.forget_snapshot(snapshot.id)
         Storage.delete_cached_snapshot(snapshot)
 
     @staticmethod
-    def force_snapshot_cache_reload():
+    def force_snapshot_cache_reload() -> None:
         upstream_snapshots = Backups.provider().backupper.get_snapshots()
         Storage.invalidate_snapshot_storage()
         for snapshot in upstream_snapshots:
@@ -387,7 +388,7 @@ class Backups:
         )
 
     @staticmethod
-    def _store_last_snapshot(service_id: str, snapshot: Snapshot):
+    def _store_last_snapshot(service_id: str, snapshot: Snapshot) -> None:
         """What do we do with a snapshot that is just made?"""
         # non-expiring timestamp of the last
         Storage.store_last_timestamp(service_id, snapshot)
@@ -401,16 +402,16 @@ class Backups:
         return Storage.is_autobackup_set(service.get_id())
 
     @staticmethod
-    def enable_autobackup(service: Service):
+    def enable_autobackup(service: Service) -> None:
         Storage.set_autobackup(service)
 
     @staticmethod
-    def disable_autobackup(service: Service):
+    def disable_autobackup(service: Service) -> None:
         """also see disable_all_autobackup()"""
         Storage.unset_autobackup(service)
 
     @staticmethod
-    def disable_all_autobackup():
+    def disable_all_autobackup() -> None:
         """
         Disables all automatic backing up,
         but does not change per-service settings
@@ -423,7 +424,7 @@ class Backups:
         return Storage.autobackup_period_minutes()
 
     @staticmethod
-    def set_autobackup_period_minutes(minutes: int):
+    def set_autobackup_period_minutes(minutes: int) -> None:
         """
         0 and negative numbers are equivalent to disable.
         Setting to a positive number may result in a backup very soon
@@ -445,7 +446,7 @@ class Backups:
 
     @staticmethod
     def services_to_back_up(time: datetime) -> List[Service]:
-        result = []
+        result: list[Service] = []
         for id in Backups._service_ids_to_back_up(time):
             service = get_service_by_id(id)
             if service is None:

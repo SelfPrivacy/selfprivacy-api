@@ -408,7 +408,10 @@ def test_restore_snapshot_task(
             assert file.read() == content
 
     snaps = Backups.get_snapshots(dummy_service)
-    assert len(snaps) == 1
+    if restore_strategy == RestoreStrategy.INPLACE:
+        assert len(snaps) == 2
+    else:
+        assert len(snaps) == 1
 
 
 def test_autobackup_enable_service(backups, dummy_service):
