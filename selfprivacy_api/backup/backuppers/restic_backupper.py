@@ -225,7 +225,7 @@ class ResticBackupper(AbstractBackupper):
 
         with tempfile.TemporaryDirectory() as dir:
             if verify:
-                self.do_restore(snapshot_id, target=dir, verify=verify)
+                self._raw_verified_restore(snapshot_id, target=dir)
                 snapshot_root = dir
             else:  # attempting inplace restore via mount + sync
                 self.mount_repo(dir)
@@ -244,16 +244,11 @@ class ResticBackupper(AbstractBackupper):
             if not verify:
                 self.unmount_repo(dir)
 
-    def do_restore(self, snapshot_id, target="/", verify=False):
+    def _raw_verified_restore(self, snapshot_id, target="/"):
         """barebones restic restore"""
         restore_command = self.restic_command(
-            "restore",
-            snapshot_id,
-            "--target",
-            target,
+            "restore", snapshot_id, "--target", target, "--verify"
         )
-        if verify:
-            restore_command.append("--verify")
 
         with subprocess.Popen(
             restore_command, stdout=subprocess.PIPE, shell=False
