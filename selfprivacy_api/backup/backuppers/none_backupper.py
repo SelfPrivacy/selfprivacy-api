@@ -5,13 +5,15 @@ from selfprivacy_api.backup.backuppers import AbstractBackupper
 
 
 class NoneBackupper(AbstractBackupper):
+    """A backupper that does nothing"""
+
     def is_initted(self, repo_name: str = "") -> bool:
         return False
 
     def set_creds(self, account: str, key: str, repo: str):
         pass
 
-    def start_backup(self, folders: List[str], repo_name: str):
+    def start_backup(self, folders: List[str], tag: str):
         raise NotImplementedError
 
     def get_snapshots(self) -> List[Snapshot]:
@@ -21,7 +23,7 @@ class NoneBackupper(AbstractBackupper):
     def init(self):
         raise NotImplementedError
 
-    def restore_from_backup(self, snapshot_id: str, folders: List[str]):
+    def restore_from_backup(self, snapshot_id: str, folders: List[str], verify=True):
         """Restore a target folder using a snapshot"""
         raise NotImplementedError
 

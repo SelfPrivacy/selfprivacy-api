@@ -1,3 +1,6 @@
+"""
+This module contains the controller class for backups.
+"""
 from datetime import datetime, timedelta
 from os import statvfs
 from typing import List, Optional
@@ -42,8 +45,12 @@ DEFAULT_JSON_PROVIDER = {
 
 
 class NotDeadError(AssertionError):
+    """
+    This error is raised when we try to back up a service that is not dead yet.
+    """
     def __init__(self, service: Service):
         self.service_name = service.get_id()
+        super().__init__()
 
     def __str__(self):
         return f"""
@@ -61,6 +68,9 @@ class Backups:
 
     @staticmethod
     def provider() -> AbstractBackupProvider:
+        """
+        Returns the current backup storage provider.
+        """
         return Backups._lookup_provider()
 
     @staticmethod
@@ -71,6 +81,13 @@ class Backups:
         location: str,
         repo_id: str = "",
     ) -> None:
+        """
+        Sets the new configuration of the backup storage provider.
+
+        In case of `BackupProviderEnum.BACKBLAZE`, the `login` is the key ID,
+        the `key` is the key itself, and the `location` is the bucket name and
+        the `repo_id` is the bucket ID.
+        """
         provider: AbstractBackupProvider = Backups._construct_provider(
             kind,
             login,
@@ -82,6 +99,9 @@ class Backups:
 
     @staticmethod
     def reset(reset_json=True) -> None:
+        """
+        Deletes all the data about the backup storage provider.
+        """
         Storage.reset()
         if reset_json:
             try:
@@ -183,11 +203,19 @@ class Backups:
 
     @staticmethod
     def init_repo() -> None:
+        """
+        Initializes the backup repository. This is required once per repo.
+        """
         Backups.provider().backupper.init()
         Storage.mark_as_init()
 
     @staticmethod
     def is_initted() -> bool:
+        """
+        Returns whether the backup repository is initialized or not.
+        If it is not initialized, we cannot back up and probably should
+        call `init_repo` first.
+        """
         if Storage.has_init_mark():
             return True
 
@@ -219,9 +247,9 @@ class Backups:
             )
             Backups._store_last_snapshot(tag, snapshot)
             service.post_restore()
-        except Exception as e:
+        except Exception as error:
             Jobs.update(job, status=JobStatus.ERROR)
-            raise e
+            raise error
 
         Jobs.update(job, status=JobStatus.FINISHED)
         return snapshot
@@ -252,16 +280,17 @@ class Backups:
                 snapshot.id,
                 verify=False,
             )
-        except Exception as e:
+        except Exception as error:
             Backups._restore_service_from_snapshot(
                 service, failsafe_snapshot.id, verify=False
             )
-            raise e
+            raise error
 
     @staticmethod
     def restore_snapshot(
         snapshot: Snapshot, strategy=RestoreStrategy.DOWNLOAD_VERIFY_OVERWRITE
     ) -> None:
+        """Restores a snapshot to its original service using the given strategy"""
         service = get_service_by_id(snapshot.service_name)
         if service is None:
             raise ValueError(
@@ -283,9 +312,9 @@ class Backups:
 
                 service.post_restore()
 
-        except Exception as e:
+        except Exception as error:
             Jobs.update(job, status=JobStatus.ERROR)
-            raise e
+            raise error
 
         Jobs.update(job, status=JobStatus.FINISHED)
 
@@ -338,6 +367,7 @@ class Backups:
 
     @staticmethod
     def get_snapshots(service: Service) -> List[Snapshot]:
+        """Returns all snapshots for a given service"""
         snapshots = Backups.get_all_snapshots()
         service_id = service.get_id()
         return list(
@@ -349,8 +379,9 @@ class Backups:
 
     @staticmethod
     def get_all_snapshots() -> List[Snapshot]:
+        """Returns all snapshots"""
         cached_snapshots = Storage.get_cached_snapshots()
-        if cached_snapshots != []:
+        if cached_snapshots:
             return cached_snapshots
         # TODO: the oldest snapshots will get expired faster than the new ones.
         # How to detect that the end is missing?
@@ -359,24 +390,32 @@ class Backups:
         return Storage.get_cached_snapshots()
 
     @staticmethod
-    def get_snapshot_by_id(id: str) -> Optional[Snapshot]:
-        snap = Storage.get_cached_snapshot_by_id(id)
+    def get_snapshot_by_id(snapshot_id: str) -> Optional[Snapshot]:
+        """Returns a backup snapshot by its id"""
+        snap = Storage.get_cached_snapshot_by_id(snapshot_id)
         if snap is not None:
             return snap
 
         # Possibly our cache entry got invalidated, let's try one more time
         Backups.force_snapshot_cache_reload()
-        snap = Storage.get_cached_snapshot_by_id(id)
+        snap = Storage.get_cached_snapshot_by_id(snapshot_id)
 
         return snap
 
     @staticmethod
     def forget_snapshot(snapshot: Snapshot) -> None:
+        """Deletes a snapshot from the storage"""
         Backups.provider().backupper.forget_snapshot(snapshot.id)
         Storage.delete_cached_snapshot(snapshot)
 
     @staticmethod
     def force_snapshot_cache_reload() -> None:
+        """
+        Forces a reload of the snapshot cache.
+
+        This may be an expensive operation, so use it wisely.
+        User pays for the API calls.
+        """
         upstream_snapshots = Backups.provider().backupper.get_snapshots()
         Storage.invalidate_snapshot_storage()
         for snapshot in upstream_snapshots:
@@ -384,6 +423,7 @@ class Backups:
 
     @staticmethod
     def snapshot_restored_size(snapshot_id: str) -> int:
+        """Returns the size of the snapshot"""
         return Backups.provider().backupper.restored_size(
             snapshot_id,
         )
@@ -434,6 +474,7 @@ class Backups:
 
     @staticmethod
     def services_to_back_up(time: datetime) -> List[Service]:
+        """Returns a list of services that should be backed up at a given time"""
         return [
             service
             for service in get_all_services()
@@ -447,6 +488,7 @@ class Backups:
 
     @staticmethod
     def is_time_to_backup_service(service: Service, time: datetime):
+        """Returns True if it is time to back up a service"""
         period = Backups.autobackup_period_minutes()
         service_id = service.get_id()
         if not service.can_be_backed_up():
@@ -467,6 +509,10 @@ class Backups:
 
     @staticmethod
     def space_usable_for_service(service: Service) -> int:
+        """
+        Returns the amount of space available on the volume the given
+        service is located on.
+        """
         folders = service.get_folders()
         if folders == []:
             raise ValueError("unallocated service", service.get_id())
@@ -478,6 +524,8 @@ class Backups:
 
     @staticmethod
     def set_localfile_repo(file_path: str):
+        """Used by tests to set a local folder as a backup repo"""
+        # pylint: disable-next=invalid-name
         ProviderClass = get_provider(BackupProviderEnum.FILE)
         provider = ProviderClass(
             login="",
@@ -490,10 +538,7 @@ class Backups:
     @staticmethod
     def assert_dead(service: Service):
         """
-
-        If we backup the service that is failing to restore it to the previous snapshot,
-        its status can be FAILED.
-        And obviously restoring a failed service is the main route
+        Checks if a service is dead and can be safely restored from a snapshot.
         """
         if service.get_status() not in [
             ServiceStatus.INACTIVE,

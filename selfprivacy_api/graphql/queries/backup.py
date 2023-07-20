@@ -64,6 +64,8 @@ class Backup:
                     status=ServiceStatusEnum.OFF,
                     url=None,
                     dns_records=None,
+                    can_be_backed_up=False,
+                    backup_description="",
                 )
             else:
                 service = service_to_graphql_service(service)

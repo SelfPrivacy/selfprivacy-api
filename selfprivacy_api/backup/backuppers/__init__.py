@@ -5,19 +5,25 @@ from selfprivacy_api.models.backup.snapshot import Snapshot
 
 
 class AbstractBackupper(ABC):
+    """Abstract class for backuppers"""
+
+    # flake8: noqa: B027
     def __init__(self) -> None:
         pass
 
     @abstractmethod
     def is_initted(self) -> bool:
+        """Returns true if the repository is initted"""
         raise NotImplementedError
 
     @abstractmethod
     def set_creds(self, account: str, key: str, repo: str) -> None:
+        """Set the credentials for the backupper"""
         raise NotImplementedError
 
     @abstractmethod
-    def start_backup(self, folders: List[str], repo_name: str) -> Snapshot:
+    def start_backup(self, folders: List[str], tag: str) -> Snapshot:
+        """Start a backup of the given folders"""
         raise NotImplementedError
 
     @abstractmethod
@@ -27,6 +33,7 @@ class AbstractBackupper(ABC):
 
     @abstractmethod
     def init(self) -> None:
+        """Initialize the repository"""
         raise NotImplementedError
 
     @abstractmethod
@@ -41,8 +48,10 @@ class AbstractBackupper(ABC):
 
     @abstractmethod
     def restored_size(self, snapshot_id: str) -> int:
+        """Get the size of the restored snapshot"""
         raise NotImplementedError
 
     @abstractmethod
     def forget_snapshot(self, snapshot_id) -> None:
+        """Forget a snapshot"""
         raise NotImplementedError

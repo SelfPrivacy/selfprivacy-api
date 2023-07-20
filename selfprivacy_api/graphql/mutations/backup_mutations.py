@@ -1,7 +1,5 @@
-import datetime
 import typing
 import strawberry
-from strawberry.types import Info
 
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.mutations.mutation_interface import (
@@ -16,7 +14,7 @@ from selfprivacy_api.graphql.common_types.jobs import job_to_api_job
 from selfprivacy_api.graphql.common_types.backup import RestoreStrategy
 
 from selfprivacy_api.backup import Backups
-from selfprivacy_api.services import get_all_services, get_service_by_id
+from selfprivacy_api.services import get_service_by_id
 from selfprivacy_api.backup.tasks import start_backup, restore_snapshot
 from selfprivacy_api.backup.jobs import add_backup_job, add_restore_job
 
@@ -142,11 +140,11 @@ class BackupMutations:
 
         try:
             job = add_restore_job(snap)
-        except ValueError as e:
+        except ValueError as error:
             return GenericJobMutationReturn(
                 success=False,
                 code=400,
-                message=str(e),
+                message=str(error),
                 job=None,
             )
 

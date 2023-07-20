@@ -21,13 +21,14 @@ from selfprivacy_api.backup.local_secret import LocalBackupSecret
 
 
 class ResticBackupper(AbstractBackupper):
-    def __init__(self, login_flag: str, key_flag: str, type: str) -> None:
+    def __init__(self, login_flag: str, key_flag: str, storage_type: str) -> None:
         self.login_flag = login_flag
         self.key_flag = key_flag
-        self.type = type
+        self.storage_type = storage_type
         self.account = ""
         self.key = ""
         self.repo = ""
+        super().__init__()
 
     def set_creds(self, account: str, key: str, repo: str) -> None:
         self.account = account
@@ -37,7 +38,7 @@ class ResticBackupper(AbstractBackupper):
     def restic_repo(self) -> str:
         # https://restic.readthedocs.io/en/latest/030_preparing_a_new_repo.html#other-services-via-rclone
         # https://forum.rclone.org/t/can-rclone-be-run-solely-with-command-line-options-no-config-no-env-vars/6314/5
-        return f"rclone:{self.type}{self.repo}"
+        return f"rclone:{self.storage_type}{self.repo}"
 
     def rclone_args(self):
         return "rclone.args=serve restic --stdio " + self.backend_rclone_args()
@@ -72,12 +73,12 @@ class ResticBackupper(AbstractBackupper):
                     tag,
                 ]
             )
-        if args != []:
+        if args:
             command.extend(ResticBackupper.__flatten_list(args))
         return command
 
-    def mount_repo(self, dir):
-        mount_command = self.restic_command("mount", dir)
+    def mount_repo(self, mount_directory):
+        mount_command = self.restic_command("mount", mount_directory)
         mount_command.insert(0, "nohup")
         handle = subprocess.Popen(
             mount_command,
@@ -85,28 +86,28 @@ class ResticBackupper(AbstractBackupper):
             shell=False,
         )
         sleep(2)
-        if "ids" not in listdir(dir):
-            raise IOError("failed to mount dir ", dir)
+        if "ids" not in listdir(mount_directory):
+            raise IOError("failed to mount dir ", mount_directory)
         return handle
 
-    def unmount_repo(self, dir):
-        mount_command = ["umount", "-l", dir]
+    def unmount_repo(self, mount_directory):
+        mount_command = ["umount", "-l", mount_directory]
         with subprocess.Popen(
             mount_command, stdout=subprocess.PIPE, shell=False
         ) as handle:
             output = handle.communicate()[0].decode("utf-8")
             # TODO: check for exit code?
             if "error" in output.lower():
-                return IOError("failed to unmount dir ", dir, ": ", output)
+                return IOError("failed to unmount dir ", mount_directory, ": ", output)
 
-        if not listdir(dir) == []:
-            return IOError("failed to unmount dir ", dir)
+        if not listdir(mount_directory) == []:
+            return IOError("failed to unmount dir ", mount_directory)
 
     @staticmethod
-    def __flatten_list(list):
+    def __flatten_list(list_to_flatten):
         """string-aware list flattener"""
         result = []
-        for item in list:
+        for item in list_to_flatten:
             if isinstance(item, Iterable) and not isinstance(item, str):
                 result.extend(ResticBackupper.__flatten_list(item))
                 continue
@@ -147,8 +148,8 @@ class ResticBackupper(AbstractBackupper):
                 messages,
                 tag,
             )
-        except ValueError as e:
-            raise ValueError("Could not create a snapshot: ", messages) from e
+        except ValueError as error:
+            raise ValueError("Could not create a snapshot: ", messages) from error
 
     @staticmethod
     def _snapshot_from_backup_messages(messages, repo_name) -> Snapshot:
@@ -231,8 +232,8 @@ class ResticBackupper(AbstractBackupper):
             try:
                 parsed_output = ResticBackupper.parse_json_output(output)
                 return parsed_output["total_size"]
-            except ValueError as e:
-                raise ValueError("cannot restore a snapshot: " + output) from e
+            except ValueError as error:
+                raise ValueError("cannot restore a snapshot: " + output) from error
 
     def restore_from_backup(
         self,
@@ -246,13 +247,13 @@ class ResticBackupper(AbstractBackupper):
         if folders is None or folders == []:
             raise ValueError("cannot restore without knowing where to!")
 
-        with tempfile.TemporaryDirectory() as dir:
+        with tempfile.TemporaryDirectory() as temp_dir:
             if verify:
-                self._raw_verified_restore(snapshot_id, target=dir)
-                snapshot_root = dir
+                self._raw_verified_restore(snapshot_id, target=temp_dir)
+                snapshot_root = temp_dir
             else:  # attempting inplace restore via mount + sync
-                self.mount_repo(dir)
-                snapshot_root = join(dir, "ids", snapshot_id)
+                self.mount_repo(temp_dir)
+                snapshot_root = join(temp_dir, "ids", snapshot_id)
 
             assert snapshot_root is not None
             for folder in folders:
@@ -263,7 +264,7 @@ class ResticBackupper(AbstractBackupper):
                 sync(src, dst)
 
             if not verify:
-                self.unmount_repo(dir)
+                self.unmount_repo(temp_dir)
 
     def _raw_verified_restore(self, snapshot_id, target="/"):
         """barebones restic restore"""
@@ -355,8 +356,8 @@ class ResticBackupper(AbstractBackupper):
             raise ValueError("No repository! : " + output)
         try:
             return ResticBackupper.parse_json_output(output)
-        except ValueError as e:
-            raise ValueError("Cannot load snapshots: ") from e
+        except ValueError as error:
+            raise ValueError("Cannot load snapshots: ") from error
 
     def get_snapshots(self) -> List[Snapshot]:
         """Get all snapshots from the repo"""
@@ -383,10 +384,10 @@ class ResticBackupper(AbstractBackupper):
         if len(json_messages) == 1:
             try:
                 return json.loads(truncated_output)
-            except JSONDecodeError as e:
+            except JSONDecodeError as error:
                 raise ValueError(
                     "There is no json in the restic output : " + output
-                ) from e
+                ) from error
 
         result_array = []
         for message in json_messages:

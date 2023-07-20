@@ -125,57 +125,57 @@ class Jobs:
         return False
 
     @staticmethod
-    def reset_logs():
+    def reset_logs() -> None:
         redis = RedisPool().get_connection()
         for key in redis.keys(STATUS_LOGS_PREFIX + "*"):
             redis.delete(key)
 
     @staticmethod
-    def log_status_update(job: Job, status: JobStatus):
+    def log_status_update(job: Job, status: JobStatus) -> None:
         redis = RedisPool().get_connection()
         key = _status_log_key_from_uuid(job.uid)
         redis.lpush(key, status.value)
         redis.expire(key, 10)
 
     @staticmethod
-    def log_progress_update(job: Job, progress: int):
+    def log_progress_update(job: Job, progress: int) -> None:
         redis = RedisPool().get_connection()
         key = _progress_log_key_from_uuid(job.uid)
         redis.lpush(key, progress)
         redis.expire(key, 10)
 
     @staticmethod
-    def status_updates(job: Job) -> typing.List[JobStatus]:
-        result = []
+    def status_updates(job: Job) -> list[JobStatus]:
+        result: list[JobStatus] = []
 
         redis = RedisPool().get_connection()
         key = _status_log_key_from_uuid(job.uid)
         if not redis.exists(key):
             return []
 
-        status_strings = redis.lrange(key, 0, -1)
+        status_strings: list[str] = redis.lrange(key, 0, -1)  # type: ignore
         for status in status_strings:
             try:
                 result.append(JobStatus[status])
-            except KeyError as e:
-                raise ValueError("impossible job status: " + status) from e
+            except KeyError as error:
+                raise ValueError("impossible job status: " + status) from error
         return result
 
     @staticmethod
-    def progress_updates(job: Job) -> typing.List[int]:
-        result = []
+    def progress_updates(job: Job) -> list[int]:
+        result: list[int] = []
 
         redis = RedisPool().get_connection()
         key = _progress_log_key_from_uuid(job.uid)
         if not redis.exists(key):
             return []
 
-        progress_strings = redis.lrange(key, 0, -1)
+        progress_strings: list[str] = redis.lrange(key, 0, -1)  # type: ignore
         for progress in progress_strings:
             try:
                 result.append(int(progress))
-            except KeyError as e:
-                raise ValueError("impossible job progress: " + progress) from e
+            except KeyError as error:
+                raise ValueError("impossible job progress: " + progress) from error
         return result
 
     @staticmethod
@@ -257,19 +257,19 @@ class Jobs:
         return False
 
 
-def _redis_key_from_uuid(uuid_string):
+def _redis_key_from_uuid(uuid_string) -> str:
     return "jobs:" + str(uuid_string)
 
 
-def _status_log_key_from_uuid(uuid_string):
+def _status_log_key_from_uuid(uuid_string) -> str:
     return STATUS_LOGS_PREFIX + str(uuid_string)
 
 
-def _progress_log_key_from_uuid(uuid_string):
+def _progress_log_key_from_uuid(uuid_string) -> str:
     return PROGRESS_LOGS_PREFIX + str(uuid_string)
 
 
-def _store_job_as_hash(redis, redis_key, model):
+def _store_job_as_hash(redis, redis_key, model) -> None:
     for key, value in model.dict().items():
         if isinstance(value, uuid.UUID):
             value = str(value)
@@ -280,7 +280,7 @@ def _store_job_as_hash(redis, redis_key, model):
         redis.hset(redis_key, key, str(value))
 
 
-def _job_from_hash(redis, redis_key):
+def _job_from_hash(redis, redis_key) -> typing.Optional[Job]:
     if redis.exists(redis_key):
         job_dict = redis.hgetall(redis_key)
         for date in [
