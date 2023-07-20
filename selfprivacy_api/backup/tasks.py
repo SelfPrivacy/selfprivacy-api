@@ -47,6 +47,6 @@ def automatic_backup():
     """
     The worker periodic task that starts the automatic backup process.
     """
-    time = datetime.now()
+    time = datetime.utcnow().replace(tzinfo=timezone.utc)
     for service in Backups.services_to_back_up(time):
         start_backup(service)
