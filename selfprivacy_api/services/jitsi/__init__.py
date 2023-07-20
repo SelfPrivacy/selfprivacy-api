@@ -5,7 +5,6 @@ import typing
 
 from selfprivacy_api.jobs import Job, Jobs
 from selfprivacy_api.services.generic_service_mover import FolderMoveNames, move_service
-from selfprivacy_api.services.generic_size_counter import get_storage_usage
 from selfprivacy_api.services.generic_status_getter import (
     get_service_status,
     get_service_status_from_several_units,
@@ -54,6 +53,10 @@ class Jitsi(Service):
     @staticmethod
     def is_required() -> bool:
         return False
+
+    @staticmethod
+    def get_backup_description() -> str:
+        return "Secrets that are used to encrypt the communication."
 
     @staticmethod
     def is_enabled() -> bool:
@@ -110,13 +113,11 @@ class Jitsi(Service):
         return ""
 
     @staticmethod
-    def get_storage_usage() -> int:
-        storage_usage = 0
-        storage_usage += get_storage_usage("/var/lib/jitsi-meet")
-        return storage_usage
+    def get_folders() -> typing.List[str]:
+        return ["/var/lib/jitsi-meet"]
 
     @staticmethod
-    def get_location() -> str:
+    def get_drive() -> str:
         return "sda1"
 
     @staticmethod

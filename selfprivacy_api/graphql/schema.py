@@ -5,21 +5,30 @@ import asyncio
 from typing import AsyncGenerator
 import strawberry
 from selfprivacy_api.graphql import IsAuthenticated
+from selfprivacy_api.graphql.mutations.deprecated_mutations import (
+    DeprecatedApiMutations,
+    DeprecatedJobMutations,
+    DeprecatedServicesMutations,
+    DeprecatedStorageMutations,
+    DeprecatedSystemMutations,
+    DeprecatedUsersMutations,
+)
 from selfprivacy_api.graphql.mutations.api_mutations import ApiMutations
 from selfprivacy_api.graphql.mutations.job_mutations import JobMutations
 from selfprivacy_api.graphql.mutations.mutation_interface import GenericMutationReturn
 from selfprivacy_api.graphql.mutations.services_mutations import ServicesMutations
-from selfprivacy_api.graphql.mutations.ssh_mutations import SshMutations
 from selfprivacy_api.graphql.mutations.storage_mutations import StorageMutations
 from selfprivacy_api.graphql.mutations.system_mutations import SystemMutations
+from selfprivacy_api.graphql.mutations.backup_mutations import BackupMutations
 
 from selfprivacy_api.graphql.queries.api_queries import Api
+from selfprivacy_api.graphql.queries.backup import Backup
 from selfprivacy_api.graphql.queries.jobs import Job
 from selfprivacy_api.graphql.queries.services import Services
 from selfprivacy_api.graphql.queries.storage import Storage
 from selfprivacy_api.graphql.queries.system import System
 
-from selfprivacy_api.graphql.mutations.users_mutations import UserMutations
+from selfprivacy_api.graphql.mutations.users_mutations import UsersMutations
 from selfprivacy_api.graphql.queries.users import Users
 from selfprivacy_api.jobs.test import test_job
 
@@ -28,15 +37,15 @@ from selfprivacy_api.jobs.test import test_job
 class Query:
     """Root schema for queries"""
 
-    @strawberry.field(permission_classes=[IsAuthenticated])
-    def system(self) -> System:
-        """System queries"""
-        return System()
-
     @strawberry.field
     def api(self) -> Api:
         """API access status"""
         return Api()
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    def system(self) -> System:
+        """System queries"""
+        return System()
 
     @strawberry.field(permission_classes=[IsAuthenticated])
     def users(self) -> Users:
@@ -58,18 +67,57 @@ class Query:
         """Services queries"""
         return Services()
 
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    def backup(self) -> Backup:
+        """Backup queries"""
+        return Backup()
+
 
 @strawberry.type
 class Mutation(
-    ApiMutations,
-    SystemMutations,
-    UserMutations,
-    SshMutations,
-    StorageMutations,
-    ServicesMutations,
-    JobMutations,
+    DeprecatedApiMutations,
+    DeprecatedSystemMutations,
+    DeprecatedUsersMutations,
+    DeprecatedStorageMutations,
+    DeprecatedServicesMutations,
+    DeprecatedJobMutations,
 ):
     """Root schema for mutations"""
+
+    @strawberry.field
+    def api(self) -> ApiMutations:
+        """API mutations"""
+        return ApiMutations()
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    def system(self) -> SystemMutations:
+        """System mutations"""
+        return SystemMutations()
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    def users(self) -> UsersMutations:
+        """Users mutations"""
+        return UsersMutations()
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    def storage(self) -> StorageMutations:
+        """Storage mutations"""
+        return StorageMutations()
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    def services(self) -> ServicesMutations:
+        """Services mutations"""
+        return ServicesMutations()
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    def jobs(self) -> JobMutations:
+        """Jobs mutations"""
+        return JobMutations()
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    def backup(self) -> BackupMutations:
+        """Backup mutations"""
+        return BackupMutations()
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def test_mutation(self) -> GenericMutationReturn:
@@ -95,4 +143,8 @@ class Subscription:
             await asyncio.sleep(0.5)
 
 
-schema = strawberry.Schema(query=Query, mutation=Mutation, subscription=Subscription)
+schema = strawberry.Schema(
+    query=Query,
+    mutation=Mutation,
+    subscription=Subscription,
+)

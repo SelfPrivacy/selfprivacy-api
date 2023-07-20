@@ -10,7 +10,7 @@ from selfprivacy_api.graphql.common_types.service import (
     service_to_graphql_service,
 )
 from selfprivacy_api.graphql.mutations.mutation_interface import (
-    GenericJobButationReturn,
+    GenericJobMutationReturn,
     GenericMutationReturn,
 )
 
@@ -34,7 +34,7 @@ class MoveServiceInput:
 
 
 @strawberry.type
-class ServiceJobMutationReturn(GenericJobButationReturn):
+class ServiceJobMutationReturn(GenericJobMutationReturn):
     """Service job mutation return type."""
 
     service: typing.Optional[Service] = None

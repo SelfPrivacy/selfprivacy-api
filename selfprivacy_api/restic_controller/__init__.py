@@ -3,9 +3,7 @@ from datetime import datetime
 import json
 import subprocess
 import os
-from threading import Lock
 from enum import Enum
-import portalocker
 from selfprivacy_api.utils import ReadUserData
 from selfprivacy_api.utils.singleton_metaclass import SingletonMetaclass
 
@@ -51,7 +49,6 @@ class ResticController(metaclass=SingletonMetaclass):
         self.error_message = None
         self._initialized = True
         self.load_configuration()
-        self.write_rclone_config()
         self.load_snapshots()
 
     def load_configuration(self):
@@ -65,25 +62,6 @@ class ResticController(metaclass=SingletonMetaclass):
         else:
             self.state = ResticStates.NO_KEY
 
-    def write_rclone_config(self):
-        """
-        Open /root/.config/rclone/rclone.conf with portalocker
-        and write configuration in the following format:
-            [backblaze]
-            type = b2
-            account = {self.backblaze_account}
-            key = {self.backblaze_key}
-        """
-        with portalocker.Lock(
-            "/root/.config/rclone/rclone.conf", "w", timeout=None
-        ) as rclone_config:
-            rclone_config.write(
-                f"[backblaze]\n"
-                f"type = b2\n"
-                f"account = {self._backblaze_account}\n"
-                f"key = {self._backblaze_key}\n"
-            )
-
     def load_snapshots(self):
         """
         Load list of snapshots from repository
@@ -91,9 +69,9 @@ class ResticController(metaclass=SingletonMetaclass):
         backup_listing_command = [
             "restic",
             "-o",
-            "rclone.args=serve restic --stdio",
+            self.rclone_args(),
             "-r",
-            f"rclone:backblaze:{self._repository_name}/sfbackup",
+            self.restic_repo(),
             "snapshots",
             "--json",
         ]
@@ -123,6 +101,17 @@ class ResticController(metaclass=SingletonMetaclass):
             self.error_message = snapshots_list
             return
 
+    def restic_repo(self):
+        # https://restic.readthedocs.io/en/latest/030_preparing_a_new_repo.html#other-services-via-rclone
+        # https://forum.rclone.org/t/can-rclone-be-run-solely-with-command-line-options-no-config-no-env-vars/6314/5
+        return f"rclone::b2:{self._repository_name}/sfbackup"
+
+    def rclone_args(self):
+        return "rclone.args=serve restic --stdio" + self.backend_rclone_args()
+
+    def backend_rclone_args(self):
+        return f"--b2-account {self._backblaze_account} --b2-key {self._backblaze_key}"
+
     def initialize_repository(self):
         """
         Initialize repository with restic
@@ -130,9 +119,9 @@ class ResticController(metaclass=SingletonMetaclass):
         initialize_repository_command = [
             "restic",
             "-o",
-            "rclone.args=serve restic --stdio",
+            self.rclone_args(),
             "-r",
-            f"rclone:backblaze:{self._repository_name}/sfbackup",
+            self.restic_repo(),
             "init",
         ]
         with subprocess.Popen(
@@ -159,9 +148,9 @@ class ResticController(metaclass=SingletonMetaclass):
         backup_command = [
             "restic",
             "-o",
-            "rclone.args=serve restic --stdio",
+            self.rclone_args(),
             "-r",
-            f"rclone:backblaze:{self._repository_name}/sfbackup",
+            self.restic_repo(),
             "--verbose",
             "--json",
             "backup",
@@ -228,9 +217,9 @@ class ResticController(metaclass=SingletonMetaclass):
         backup_restoration_command = [
             "restic",
             "-o",
-            "rclone.args=serve restic --stdio",
+            self.rclone_args(),
             "-r",
-            f"rclone:backblaze:{self._repository_name}/sfbackup",
+            self.restic_repo(),
             "restore",
             snapshot_id,
             "--target",

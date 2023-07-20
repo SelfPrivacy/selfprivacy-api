@@ -1,8 +1,9 @@
 """
 Token repository using Redis as backend.
 """
-from typing import Optional
+from typing import Any, Optional
 from datetime import datetime
+from hashlib import md5
 
 from selfprivacy_api.repositories.tokens.abstract_tokens_repository import (
     AbstractTokensRepository,
@@ -28,12 +29,15 @@ class RedisTokensRepository(AbstractTokensRepository):
 
     @staticmethod
     def token_key_for_device(device_name: str):
-        return TOKENS_PREFIX + str(hash(device_name))
+        md5_hash = md5()
+        md5_hash.update(bytes(device_name, "utf-8"))
+        digest = md5_hash.hexdigest()
+        return TOKENS_PREFIX + digest
 
     def get_tokens(self) -> list[Token]:
         """Get the tokens"""
         redis = self.connection
-        token_keys = redis.keys(TOKENS_PREFIX + "*")
+        token_keys: list[str] = redis.keys(TOKENS_PREFIX + "*")  # type: ignore
         tokens = []
         for key in token_keys:
             token = self._token_from_hash(key)
@@ -41,11 +45,20 @@ class RedisTokensRepository(AbstractTokensRepository):
                 tokens.append(token)
         return tokens
 
+    def _discover_token_key(self, input_token: Token) -> Optional[str]:
+        """brute-force searching for tokens, for robust deletion"""
+        redis = self.connection
+        token_keys: list[str] = redis.keys(TOKENS_PREFIX + "*")  # type: ignore
+        for key in token_keys:
+            token = self._token_from_hash(key)
+            if token == input_token:
+                return key
+
     def delete_token(self, input_token: Token) -> None:
         """Delete the token"""
         redis = self.connection
-        key = RedisTokensRepository._token_redis_key(input_token)
-        if input_token not in self.get_tokens():
+        key = self._discover_token_key(input_token)
+        if key is None:
             raise TokenNotFound
         redis.delete(key)
 
@@ -107,26 +120,26 @@ class RedisTokensRepository(AbstractTokensRepository):
         return self._new_device_key_from_hash(NEW_DEVICE_KEY_REDIS_KEY)
 
     @staticmethod
-    def _is_date_key(key: str):
+    def _is_date_key(key: str) -> bool:
         return key in [
             "created_at",
             "expires_at",
         ]
 
     @staticmethod
-    def _prepare_model_dict(d: dict):
-        date_keys = [key for key in d.keys() if RedisTokensRepository._is_date_key(key)]
+    def _prepare_model_dict(model_dict: dict[str, Any]) -> None:
+        date_keys = [key for key in model_dict.keys() if RedisTokensRepository._is_date_key(key)]
         for date in date_keys:
-            if d[date] != "None":
-                d[date] = datetime.fromisoformat(d[date])
-        for key in d.keys():
-            if d[key] == "None":
-                d[key] = None
+            if model_dict[date] != "None":
+                model_dict[date] = datetime.fromisoformat(model_dict[date])
+        for key in model_dict.keys():
+            if model_dict[key] == "None":
+                model_dict[key] = None
 
-    def _model_dict_from_hash(self, redis_key: str) -> Optional[dict]:
+    def _model_dict_from_hash(self, redis_key: str) -> Optional[dict[str, Any]]:
         redis = self.connection
         if redis.exists(redis_key):
-            token_dict = redis.hgetall(redis_key)
+            token_dict: dict[str, Any] = redis.hgetall(redis_key)  # type: ignore
             RedisTokensRepository._prepare_model_dict(token_dict)
             return token_dict
         return None
@@ -138,7 +151,10 @@ class RedisTokensRepository(AbstractTokensRepository):
         return None
 
     def _token_from_hash(self, redis_key: str) -> Optional[Token]:
-        return self._hash_as_model(redis_key, Token)
+        token = self._hash_as_model(redis_key, Token)
+        if token is not None:
+            token.created_at = token.created_at.replace(tzinfo=None)
+            return token
 
     def _recovery_key_from_hash(self, redis_key: str) -> Optional[RecoveryKey]:
         return self._hash_as_model(redis_key, RecoveryKey)

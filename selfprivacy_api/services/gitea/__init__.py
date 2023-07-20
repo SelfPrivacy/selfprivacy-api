@@ -5,7 +5,6 @@ import typing
 
 from selfprivacy_api.jobs import Job, Jobs
 from selfprivacy_api.services.generic_service_mover import FolderMoveNames, move_service
-from selfprivacy_api.services.generic_size_counter import get_storage_usage
 from selfprivacy_api.services.generic_status_getter import get_service_status
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
 from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
@@ -51,6 +50,10 @@ class Gitea(Service):
     @staticmethod
     def is_required() -> bool:
         return False
+
+    @staticmethod
+    def get_backup_description() -> str:
+        return "Git repositories, database and user data."
 
     @staticmethod
     def is_enabled() -> bool:
@@ -110,13 +113,11 @@ class Gitea(Service):
         return ""
 
     @staticmethod
-    def get_storage_usage() -> int:
-        storage_usage = 0
-        storage_usage += get_storage_usage("/var/lib/gitea")
-        return storage_usage
+    def get_folders() -> typing.List[str]:
+        return ["/var/lib/gitea"]
 
     @staticmethod
-    def get_location() -> str:
+    def get_drive() -> str:
         with ReadUserData() as user_data:
             if user_data.get("useBinds", False):
                 return user_data.get("gitea", {}).get("location", "sda1")
@@ -151,14 +152,7 @@ class Gitea(Service):
             self,
             volume,
             job,
-            [
-                FolderMoveNames(
-                    name="gitea",
-                    bind_location="/var/lib/gitea",
-                    group="gitea",
-                    owner="gitea",
-                ),
-            ],
+            FolderMoveNames.default_foldermoves(self),
             "gitea",
         )
 

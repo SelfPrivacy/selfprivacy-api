@@ -6,7 +6,6 @@ import typing
 
 from selfprivacy_api.jobs import Job, JobStatus, Jobs
 from selfprivacy_api.services.generic_service_mover import FolderMoveNames, move_service
-from selfprivacy_api.services.generic_size_counter import get_storage_usage
 from selfprivacy_api.services.generic_status_getter import (
     get_service_status,
     get_service_status_from_several_units,
@@ -39,6 +38,10 @@ class MailServer(Service):
         return base64.b64encode(MAILSERVER_ICON.encode("utf-8")).decode("utf-8")
 
     @staticmethod
+    def get_user() -> str:
+        return "virtualMail"
+
+    @staticmethod
     def get_url() -> typing.Optional[str]:
         """Return service url."""
         return None
@@ -50,6 +53,10 @@ class MailServer(Service):
     @staticmethod
     def is_required() -> bool:
         return True
+
+    @staticmethod
+    def get_backup_description() -> str:
+        return "Mail boxes and filters."
 
     @staticmethod
     def is_enabled() -> bool:
@@ -97,11 +104,11 @@ class MailServer(Service):
         return ""
 
     @staticmethod
-    def get_storage_usage() -> int:
-        return get_storage_usage("/var/vmail")
+    def get_folders() -> typing.List[str]:
+        return ["/var/vmail", "/var/sieve"]
 
     @staticmethod
-    def get_location() -> str:
+    def get_drive() -> str:
         with utils.ReadUserData() as user_data:
             if user_data.get("useBinds", False):
                 return user_data.get("mailserver", {}).get("location", "sda1")
@@ -159,20 +166,7 @@ class MailServer(Service):
             self,
             volume,
             job,
-            [
-                FolderMoveNames(
-                    name="vmail",
-                    bind_location="/var/vmail",
-                    group="virtualMail",
-                    owner="virtualMail",
-                ),
-                FolderMoveNames(
-                    name="sieve",
-                    bind_location="/var/sieve",
-                    group="virtualMail",
-                    owner="virtualMail",
-                ),
-            ],
+            FolderMoveNames.default_foldermoves(self),
             "mailserver",
         )
 

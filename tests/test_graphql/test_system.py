@@ -382,11 +382,13 @@ def test_graphql_get_timezone_on_undefined(authorized_client, undefined_config):
 
 API_CHANGE_TIMEZONE_MUTATION = """
 mutation changeTimezone($timezone: String!) {
-    changeTimezone(timezone: $timezone) {
-        success
-        message
-        code
-        timezone
+    system {
+        changeTimezone(timezone: $timezone) {
+            success
+            message
+            code
+            timezone
+        }
     }
 }
 """
@@ -420,10 +422,13 @@ def test_graphql_change_timezone(authorized_client, turned_on):
     )
     assert response.status_code == 200
     assert response.json().get("data") is not None
-    assert response.json()["data"]["changeTimezone"]["success"] is True
-    assert response.json()["data"]["changeTimezone"]["message"] is not None
-    assert response.json()["data"]["changeTimezone"]["code"] == 200
-    assert response.json()["data"]["changeTimezone"]["timezone"] == "Europe/Helsinki"
+    assert response.json()["data"]["system"]["changeTimezone"]["success"] is True
+    assert response.json()["data"]["system"]["changeTimezone"]["message"] is not None
+    assert response.json()["data"]["system"]["changeTimezone"]["code"] == 200
+    assert (
+        response.json()["data"]["system"]["changeTimezone"]["timezone"]
+        == "Europe/Helsinki"
+    )
     assert read_json(turned_on / "turned_on.json")["timezone"] == "Europe/Helsinki"
 
 
@@ -440,10 +445,13 @@ def test_graphql_change_timezone_on_undefined(authorized_client, undefined_confi
     )
     assert response.status_code == 200
     assert response.json().get("data") is not None
-    assert response.json()["data"]["changeTimezone"]["success"] is True
-    assert response.json()["data"]["changeTimezone"]["message"] is not None
-    assert response.json()["data"]["changeTimezone"]["code"] == 200
-    assert response.json()["data"]["changeTimezone"]["timezone"] == "Europe/Helsinki"
+    assert response.json()["data"]["system"]["changeTimezone"]["success"] is True
+    assert response.json()["data"]["system"]["changeTimezone"]["message"] is not None
+    assert response.json()["data"]["system"]["changeTimezone"]["code"] == 200
+    assert (
+        response.json()["data"]["system"]["changeTimezone"]["timezone"]
+        == "Europe/Helsinki"
+    )
     assert (
         read_json(undefined_config / "undefined.json")["timezone"] == "Europe/Helsinki"
     )
@@ -462,10 +470,10 @@ def test_graphql_change_timezone_without_timezone(authorized_client, turned_on):
     )
     assert response.status_code == 200
     assert response.json().get("data") is not None
-    assert response.json()["data"]["changeTimezone"]["success"] is False
-    assert response.json()["data"]["changeTimezone"]["message"] is not None
-    assert response.json()["data"]["changeTimezone"]["code"] == 400
-    assert response.json()["data"]["changeTimezone"]["timezone"] is None
+    assert response.json()["data"]["system"]["changeTimezone"]["success"] is False
+    assert response.json()["data"]["system"]["changeTimezone"]["message"] is not None
+    assert response.json()["data"]["system"]["changeTimezone"]["code"] == 400
+    assert response.json()["data"]["system"]["changeTimezone"]["timezone"] is None
     assert read_json(turned_on / "turned_on.json")["timezone"] == "Europe/Moscow"
 
 
@@ -482,10 +490,10 @@ def test_graphql_change_timezone_with_invalid_timezone(authorized_client, turned
     )
     assert response.status_code == 200
     assert response.json().get("data") is not None
-    assert response.json()["data"]["changeTimezone"]["success"] is False
-    assert response.json()["data"]["changeTimezone"]["message"] is not None
-    assert response.json()["data"]["changeTimezone"]["code"] == 400
-    assert response.json()["data"]["changeTimezone"]["timezone"] is None
+    assert response.json()["data"]["system"]["changeTimezone"]["success"] is False
+    assert response.json()["data"]["system"]["changeTimezone"]["message"] is not None
+    assert response.json()["data"]["system"]["changeTimezone"]["code"] == 400
+    assert response.json()["data"]["system"]["changeTimezone"]["timezone"] is None
     assert read_json(turned_on / "turned_on.json")["timezone"] == "Europe/Moscow"
 
 
@@ -589,12 +597,14 @@ def test_graphql_get_auto_upgrade_turned_off(authorized_client, turned_off):
 
 API_CHANGE_AUTO_UPGRADE_SETTINGS = """
 mutation changeServerSettings($settings: AutoUpgradeSettingsInput!) {
-    changeAutoUpgradeSettings(settings: $settings) {
-        success
-        message
-        code
-        enableAutoUpgrade
-        allowReboot
+    system {
+        changeAutoUpgradeSettings(settings: $settings) {
+            success
+            message
+            code
+            enableAutoUpgrade
+            allowReboot
+        }
     }
 }
 """
@@ -634,14 +644,25 @@ def test_graphql_change_auto_upgrade(authorized_client, turned_on):
     )
     assert response.status_code == 200
     assert response.json().get("data") is not None
-    assert response.json()["data"]["changeAutoUpgradeSettings"]["success"] is True
-    assert response.json()["data"]["changeAutoUpgradeSettings"]["message"] is not None
-    assert response.json()["data"]["changeAutoUpgradeSettings"]["code"] == 200
     assert (
-        response.json()["data"]["changeAutoUpgradeSettings"]["enableAutoUpgrade"]
+        response.json()["data"]["system"]["changeAutoUpgradeSettings"]["success"]
+        is True
+    )
+    assert (
+        response.json()["data"]["system"]["changeAutoUpgradeSettings"]["message"]
+        is not None
+    )
+    assert response.json()["data"]["system"]["changeAutoUpgradeSettings"]["code"] == 200
+    assert (
+        response.json()["data"]["system"]["changeAutoUpgradeSettings"][
+            "enableAutoUpgrade"
+        ]
         is False
     )
-    assert response.json()["data"]["changeAutoUpgradeSettings"]["allowReboot"] is True
+    assert (
+        response.json()["data"]["system"]["changeAutoUpgradeSettings"]["allowReboot"]
+        is True
+    )
     assert read_json(turned_on / "turned_on.json")["autoUpgrade"]["enable"] is False
     assert read_json(turned_on / "turned_on.json")["autoUpgrade"]["allowReboot"] is True
 
@@ -662,14 +683,25 @@ def test_graphql_change_auto_upgrade_on_undefined(authorized_client, undefined_c
     )
     assert response.status_code == 200
     assert response.json().get("data") is not None
-    assert response.json()["data"]["changeAutoUpgradeSettings"]["success"] is True
-    assert response.json()["data"]["changeAutoUpgradeSettings"]["message"] is not None
-    assert response.json()["data"]["changeAutoUpgradeSettings"]["code"] == 200
     assert (
-        response.json()["data"]["changeAutoUpgradeSettings"]["enableAutoUpgrade"]
+        response.json()["data"]["system"]["changeAutoUpgradeSettings"]["success"]
+        is True
+    )
+    assert (
+        response.json()["data"]["system"]["changeAutoUpgradeSettings"]["message"]
+        is not None
+    )
+    assert response.json()["data"]["system"]["changeAutoUpgradeSettings"]["code"] == 200
+    assert (
+        response.json()["data"]["system"]["changeAutoUpgradeSettings"][
+            "enableAutoUpgrade"
+        ]
         is False
     )
-    assert response.json()["data"]["changeAutoUpgradeSettings"]["allowReboot"] is True
+    assert (
+        response.json()["data"]["system"]["changeAutoUpgradeSettings"]["allowReboot"]
+        is True
+    )
     assert (
         read_json(undefined_config / "undefined.json")["autoUpgrade"]["enable"] is False
     )
@@ -695,14 +727,25 @@ def test_graphql_change_auto_upgrade_without_vlaues(authorized_client, no_values
     )
     assert response.status_code == 200
     assert response.json().get("data") is not None
-    assert response.json()["data"]["changeAutoUpgradeSettings"]["success"] is True
-    assert response.json()["data"]["changeAutoUpgradeSettings"]["message"] is not None
-    assert response.json()["data"]["changeAutoUpgradeSettings"]["code"] == 200
     assert (
-        response.json()["data"]["changeAutoUpgradeSettings"]["enableAutoUpgrade"]
+        response.json()["data"]["system"]["changeAutoUpgradeSettings"]["success"]
         is True
     )
-    assert response.json()["data"]["changeAutoUpgradeSettings"]["allowReboot"] is True
+    assert (
+        response.json()["data"]["system"]["changeAutoUpgradeSettings"]["message"]
+        is not None
+    )
+    assert response.json()["data"]["system"]["changeAutoUpgradeSettings"]["code"] == 200
+    assert (
+        response.json()["data"]["system"]["changeAutoUpgradeSettings"][
+            "enableAutoUpgrade"
+        ]
+        is True
+    )
+    assert (
+        response.json()["data"]["system"]["changeAutoUpgradeSettings"]["allowReboot"]
+        is True
+    )
     assert read_json(no_values / "no_values.json")["autoUpgrade"]["enable"] is True
     assert read_json(no_values / "no_values.json")["autoUpgrade"]["allowReboot"] is True
 
@@ -723,14 +766,25 @@ def test_graphql_change_auto_upgrade_turned_off(authorized_client, turned_off):
     )
     assert response.status_code == 200
     assert response.json().get("data") is not None
-    assert response.json()["data"]["changeAutoUpgradeSettings"]["success"] is True
-    assert response.json()["data"]["changeAutoUpgradeSettings"]["message"] is not None
-    assert response.json()["data"]["changeAutoUpgradeSettings"]["code"] == 200
     assert (
-        response.json()["data"]["changeAutoUpgradeSettings"]["enableAutoUpgrade"]
+        response.json()["data"]["system"]["changeAutoUpgradeSettings"]["success"]
         is True
     )
-    assert response.json()["data"]["changeAutoUpgradeSettings"]["allowReboot"] is True
+    assert (
+        response.json()["data"]["system"]["changeAutoUpgradeSettings"]["message"]
+        is not None
+    )
+    assert response.json()["data"]["system"]["changeAutoUpgradeSettings"]["code"] == 200
+    assert (
+        response.json()["data"]["system"]["changeAutoUpgradeSettings"][
+            "enableAutoUpgrade"
+        ]
+        is True
+    )
+    assert (
+        response.json()["data"]["system"]["changeAutoUpgradeSettings"]["allowReboot"]
+        is True
+    )
     assert read_json(turned_off / "turned_off.json")["autoUpgrade"]["enable"] is True
     assert (
         read_json(turned_off / "turned_off.json")["autoUpgrade"]["allowReboot"] is True
@@ -752,14 +806,25 @@ def test_grphql_change_auto_upgrade_without_enable(authorized_client, turned_off
     )
     assert response.status_code == 200
     assert response.json().get("data") is not None
-    assert response.json()["data"]["changeAutoUpgradeSettings"]["success"] is True
-    assert response.json()["data"]["changeAutoUpgradeSettings"]["message"] is not None
-    assert response.json()["data"]["changeAutoUpgradeSettings"]["code"] == 200
     assert (
-        response.json()["data"]["changeAutoUpgradeSettings"]["enableAutoUpgrade"]
+        response.json()["data"]["system"]["changeAutoUpgradeSettings"]["success"]
+        is True
+    )
+    assert (
+        response.json()["data"]["system"]["changeAutoUpgradeSettings"]["message"]
+        is not None
+    )
+    assert response.json()["data"]["system"]["changeAutoUpgradeSettings"]["code"] == 200
+    assert (
+        response.json()["data"]["system"]["changeAutoUpgradeSettings"][
+            "enableAutoUpgrade"
+        ]
         is False
     )
-    assert response.json()["data"]["changeAutoUpgradeSettings"]["allowReboot"] is True
+    assert (
+        response.json()["data"]["system"]["changeAutoUpgradeSettings"]["allowReboot"]
+        is True
+    )
     assert read_json(turned_off / "turned_off.json")["autoUpgrade"]["enable"] is False
     assert (
         read_json(turned_off / "turned_off.json")["autoUpgrade"]["allowReboot"] is True
@@ -783,14 +848,25 @@ def test_graphql_change_auto_upgrade_without_allow_reboot(
     )
     assert response.status_code == 200
     assert response.json().get("data") is not None
-    assert response.json()["data"]["changeAutoUpgradeSettings"]["success"] is True
-    assert response.json()["data"]["changeAutoUpgradeSettings"]["message"] is not None
-    assert response.json()["data"]["changeAutoUpgradeSettings"]["code"] == 200
     assert (
-        response.json()["data"]["changeAutoUpgradeSettings"]["enableAutoUpgrade"]
+        response.json()["data"]["system"]["changeAutoUpgradeSettings"]["success"]
         is True
     )
-    assert response.json()["data"]["changeAutoUpgradeSettings"]["allowReboot"] is False
+    assert (
+        response.json()["data"]["system"]["changeAutoUpgradeSettings"]["message"]
+        is not None
+    )
+    assert response.json()["data"]["system"]["changeAutoUpgradeSettings"]["code"] == 200
+    assert (
+        response.json()["data"]["system"]["changeAutoUpgradeSettings"][
+            "enableAutoUpgrade"
+        ]
+        is True
+    )
+    assert (
+        response.json()["data"]["system"]["changeAutoUpgradeSettings"]["allowReboot"]
+        is False
+    )
     assert read_json(turned_off / "turned_off.json")["autoUpgrade"]["enable"] is True
     assert (
         read_json(turned_off / "turned_off.json")["autoUpgrade"]["allowReboot"] is False
@@ -810,14 +886,25 @@ def test_graphql_change_auto_upgrade_with_empty_input(authorized_client, turned_
     )
     assert response.status_code == 200
     assert response.json().get("data") is not None
-    assert response.json()["data"]["changeAutoUpgradeSettings"]["success"] is True
-    assert response.json()["data"]["changeAutoUpgradeSettings"]["message"] is not None
-    assert response.json()["data"]["changeAutoUpgradeSettings"]["code"] == 200
     assert (
-        response.json()["data"]["changeAutoUpgradeSettings"]["enableAutoUpgrade"]
+        response.json()["data"]["system"]["changeAutoUpgradeSettings"]["success"]
+        is True
+    )
+    assert (
+        response.json()["data"]["system"]["changeAutoUpgradeSettings"]["message"]
+        is not None
+    )
+    assert response.json()["data"]["system"]["changeAutoUpgradeSettings"]["code"] == 200
+    assert (
+        response.json()["data"]["system"]["changeAutoUpgradeSettings"][
+            "enableAutoUpgrade"
+        ]
         is False
     )
-    assert response.json()["data"]["changeAutoUpgradeSettings"]["allowReboot"] is False
+    assert (
+        response.json()["data"]["system"]["changeAutoUpgradeSettings"]["allowReboot"]
+        is False
+    )
     assert read_json(turned_off / "turned_off.json")["autoUpgrade"]["enable"] is False
     assert (
         read_json(turned_off / "turned_off.json")["autoUpgrade"]["allowReboot"] is False
@@ -826,10 +913,12 @@ def test_graphql_change_auto_upgrade_with_empty_input(authorized_client, turned_
 
 API_PULL_SYSTEM_CONFIGURATION_MUTATION = """
 mutation testPullSystemConfiguration {
-    pullRepositoryChanges {
-        success
-        message
-        code
+    system {
+        pullRepositoryChanges {
+            success
+            message
+            code
+        }
     }
 }
 """
@@ -861,9 +950,12 @@ def test_graphql_pull_system_configuration(
 
     assert response.status_code == 200
     assert response.json().get("data") is not None
-    assert response.json()["data"]["pullRepositoryChanges"]["success"] is True
-    assert response.json()["data"]["pullRepositoryChanges"]["message"] is not None
-    assert response.json()["data"]["pullRepositoryChanges"]["code"] == 200
+    assert response.json()["data"]["system"]["pullRepositoryChanges"]["success"] is True
+    assert (
+        response.json()["data"]["system"]["pullRepositoryChanges"]["message"]
+        is not None
+    )
+    assert response.json()["data"]["system"]["pullRepositoryChanges"]["code"] == 200
 
     assert mock_subprocess_popen.call_count == 1
     assert mock_subprocess_popen.call_args[0][0] == ["git", "pull"]
@@ -886,9 +978,14 @@ def test_graphql_pull_system_broken_repo(
 
     assert response.status_code == 200
     assert response.json().get("data") is not None
-    assert response.json()["data"]["pullRepositoryChanges"]["success"] is False
-    assert response.json()["data"]["pullRepositoryChanges"]["message"] is not None
-    assert response.json()["data"]["pullRepositoryChanges"]["code"] == 500
+    assert (
+        response.json()["data"]["system"]["pullRepositoryChanges"]["success"] is False
+    )
+    assert (
+        response.json()["data"]["system"]["pullRepositoryChanges"]["message"]
+        is not None
+    )
+    assert response.json()["data"]["system"]["pullRepositoryChanges"]["code"] == 500
 
     assert mock_broken_service.call_count == 1
     assert mock_os_chdir.call_count == 2

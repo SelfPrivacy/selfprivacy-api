@@ -5,7 +5,6 @@ import typing
 
 from selfprivacy_api.jobs import Job, JobStatus, Jobs
 from selfprivacy_api.services.generic_service_mover import FolderMoveNames, move_service
-from selfprivacy_api.services.generic_size_counter import get_storage_usage
 from selfprivacy_api.services.generic_status_getter import get_service_status
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
 from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
@@ -39,6 +38,10 @@ class Bitwarden(Service):
         return base64.b64encode(BITWARDEN_ICON.encode("utf-8")).decode("utf-8")
 
     @staticmethod
+    def get_user() -> str:
+        return "vaultwarden"
+
+    @staticmethod
     def get_url() -> typing.Optional[str]:
         """Return service url."""
         domain = get_domain()
@@ -51,6 +54,10 @@ class Bitwarden(Service):
     @staticmethod
     def is_required() -> bool:
         return False
+
+    @staticmethod
+    def get_backup_description() -> str:
+        return "Password database, encryption certificate and attachments."
 
     @staticmethod
     def is_enabled() -> bool:
@@ -111,14 +118,11 @@ class Bitwarden(Service):
         return ""
 
     @staticmethod
-    def get_storage_usage() -> int:
-        storage_usage = 0
-        storage_usage += get_storage_usage("/var/lib/bitwarden")
-        storage_usage += get_storage_usage("/var/lib/bitwarden_rs")
-        return storage_usage
+    def get_folders() -> typing.List[str]:
+        return ["/var/lib/bitwarden", "/var/lib/bitwarden_rs"]
 
     @staticmethod
-    def get_location() -> str:
+    def get_drive() -> str:
         with ReadUserData() as user_data:
             if user_data.get("useBinds", False):
                 return user_data.get("bitwarden", {}).get("location", "sda1")
@@ -154,20 +158,7 @@ class Bitwarden(Service):
             self,
             volume,
             job,
-            [
-                FolderMoveNames(
-                    name="bitwarden",
-                    bind_location="/var/lib/bitwarden",
-                    group="vaultwarden",
-                    owner="vaultwarden",
-                ),
-                FolderMoveNames(
-                    name="bitwarden_rs",
-                    bind_location="/var/lib/bitwarden_rs",
-                    group="vaultwarden",
-                    owner="vaultwarden",
-                ),
-            ],
+            FolderMoveNames.default_foldermoves(self),
             "bitwarden",
         )
 
