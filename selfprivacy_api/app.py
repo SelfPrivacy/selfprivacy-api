@@ -9,7 +9,6 @@ import uvicorn
 from selfprivacy_api.dependencies import get_api_version
 from selfprivacy_api.graphql.schema import schema
 from selfprivacy_api.migrations import run_migrations
-from selfprivacy_api.restic_controller.tasks import init_restic
 
 from selfprivacy_api.rest import (
     system,
@@ -49,7 +48,6 @@ async def get_version():
 @app.on_event("startup")
 async def startup():
     run_migrations()
-    init_restic()
 
 
 if __name__ == "__main__":
