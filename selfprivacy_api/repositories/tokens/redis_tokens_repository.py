@@ -128,7 +128,9 @@ class RedisTokensRepository(AbstractTokensRepository):
 
     @staticmethod
     def _prepare_model_dict(model_dict: dict[str, Any]) -> None:
-        date_keys = [key for key in model_dict.keys() if RedisTokensRepository._is_date_key(key)]
+        date_keys = [
+            key for key in model_dict.keys() if RedisTokensRepository._is_date_key(key)
+        ]
         for date in date_keys:
             if model_dict[date] != "None":
                 model_dict[date] = datetime.fromisoformat(model_dict[date])

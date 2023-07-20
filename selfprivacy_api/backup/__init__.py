@@ -48,6 +48,7 @@ class NotDeadError(AssertionError):
     """
     This error is raised when we try to back up a service that is not dead yet.
     """
+
     def __init__(self, service: Service):
         self.service_name = service.get_id()
         super().__init__()

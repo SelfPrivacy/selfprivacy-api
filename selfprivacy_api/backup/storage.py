@@ -32,6 +32,7 @@ redis = RedisPool().get_connection()
 
 class Storage:
     """Static class for storing backup related data in redis"""
+
     @staticmethod
     def reset() -> None:
         """Deletes all backup related data from redis"""
