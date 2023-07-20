@@ -4,8 +4,10 @@ from typing import List, Optional
 
 from selfprivacy_api.utils import ReadUserData, WriteUserData
 
-from selfprivacy_api.services import get_service_by_id
-from selfprivacy_api.services import get_all_services
+from selfprivacy_api.services import (
+    get_service_by_id,
+    get_all_services,
+)
 from selfprivacy_api.services.service import (
     Service,
     ServiceStatus,
@@ -210,15 +212,13 @@ class Backups:
         Jobs.update(job, status=JobStatus.RUNNING)
 
         try:
-            with StoppedService(service):
-                Backups.assert_dead(service)  # to be extra sure
-                service.pre_backup()
-                snapshot = Backups.provider().backupper.start_backup(
-                    folders,
-                    tag,
-                )
-                Backups._store_last_snapshot(tag, snapshot)
-                service.post_restore()
+            service.pre_backup()
+            snapshot = Backups.provider().backupper.start_backup(
+                folders,
+                tag,
+            )
+            Backups._store_last_snapshot(tag, snapshot)
+            service.post_restore()
         except Exception as e:
             Jobs.update(job, status=JobStatus.ERROR)
             raise e
@@ -489,9 +489,12 @@ class Backups:
 
     @staticmethod
     def assert_dead(service: Service):
-        # if we backup the service that is failing to restore it to the
-        # previous snapshot, its status can be FAILED
-        # And obviously restoring a failed service is the main route
+        """
+
+        If we backup the service that is failing to restore it to the previous snapshot,
+        its status can be FAILED.
+        And obviously restoring a failed service is the main route
+        """
         if service.get_status() not in [
             ServiceStatus.INACTIVE,
             ServiceStatus.FAILED,
