@@ -1,7 +1,7 @@
 """
 The tasks module contains the worker tasks that are used to back up and restore
 """
-from datetime import datetime
+from datetime import datetime, timezone
 
 from selfprivacy_api.graphql.common_types.backup import RestoreStrategy
 
@@ -15,13 +15,8 @@ def validate_datetime(dt: datetime) -> bool:
     """
     Validates that the datetime passed in is timezone-aware.
     """
-    if dt.timetz is None:
-        raise ValueError(
-            """
-            huey passed in the timezone-unaware time!
-            Post it in support chat or maybe try uncommenting a line above
-            """
-        )
+    if dt.tzinfo is None:
+        return Backups.is_time_to_backup(dt.replace(tzinfo=timezone.utc))
     return Backups.is_time_to_backup(dt)
 
 
