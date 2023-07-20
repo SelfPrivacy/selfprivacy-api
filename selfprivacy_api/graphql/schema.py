@@ -5,8 +5,6 @@ import asyncio
 from typing import AsyncGenerator
 import strawberry
 from selfprivacy_api.graphql import IsAuthenticated
-from selfprivacy_api.graphql.mutations.api_mutations import ApiMutations
-from selfprivacy_api.graphql.mutations.backup_mutations import BackupMutations
 from selfprivacy_api.graphql.mutations.deprecated_mutations import (
     DeprecatedApiMutations,
     DeprecatedJobMutations,
@@ -15,6 +13,7 @@ from selfprivacy_api.graphql.mutations.deprecated_mutations import (
     DeprecatedSystemMutations,
     DeprecatedUsersMutations,
 )
+from selfprivacy_api.graphql.mutations.api_mutations import ApiMutations
 from selfprivacy_api.graphql.mutations.job_mutations import JobMutations
 from selfprivacy_api.graphql.mutations.mutation_interface import GenericMutationReturn
 from selfprivacy_api.graphql.mutations.services_mutations import ServicesMutations
@@ -28,7 +27,6 @@ from selfprivacy_api.graphql.queries.jobs import Job
 from selfprivacy_api.graphql.queries.services import Services
 from selfprivacy_api.graphql.queries.storage import Storage
 from selfprivacy_api.graphql.queries.system import System
-from selfprivacy_api.graphql.queries.backup import Backup
 
 from selfprivacy_api.graphql.mutations.users_mutations import UsersMutations
 from selfprivacy_api.graphql.queries.users import Users
