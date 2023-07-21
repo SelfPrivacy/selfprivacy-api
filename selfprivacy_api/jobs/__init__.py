@@ -198,12 +198,15 @@ class Jobs:
             job.description = description
         if status_text is not None:
             job.status_text = status_text
-        if status == JobStatus.FINISHED:
-            job.progress = 100
-        if progress is not None:
-            # explicitly provided progress has priority
+
+        # if it is finished it is 100
+        # unless user says otherwise
+        if status == JobStatus.FINISHED and progress is None:
+            progress = 100
+        if progress is not None and job.progress != progress:
             job.progress = progress
             Jobs.log_progress_update(job, progress)
+
         job.status = status
         Jobs.log_status_update(job, status)
         job.updated_at = datetime.datetime.now()
