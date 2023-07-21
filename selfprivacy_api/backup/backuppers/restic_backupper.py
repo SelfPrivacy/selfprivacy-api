@@ -19,6 +19,8 @@ from selfprivacy_api.jobs import Jobs, JobStatus
 
 from selfprivacy_api.backup.local_secret import LocalBackupSecret
 
+SHORT_ID_LEN = 8
+
 
 class ResticBackupper(AbstractBackupper):
     def __init__(self, login_flag: str, key_flag: str, storage_type: str) -> None:
@@ -177,7 +179,9 @@ class ResticBackupper(AbstractBackupper):
     @staticmethod
     def _snapshot_from_fresh_summary(message: dict, repo_name) -> Snapshot:
         return Snapshot(
-            id=message["snapshot_id"],
+            # There is a discrepancy between versions of restic/rclone
+            # Some report short_id in this field and some full
+            id=message["snapshot_id"][0:SHORT_ID_LEN],
             created_at=datetime.datetime.now(datetime.timezone.utc),
             service_name=repo_name,
         )

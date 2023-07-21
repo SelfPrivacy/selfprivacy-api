@@ -205,6 +205,8 @@ def test_backup_returns_snapshot(backups, dummy_service):
     snapshot = provider.backupper.start_backup(service_folders, name)
 
     assert snapshot.id is not None
+    assert len(snapshot.id) == len(Backups.get_all_snapshots()[0].id)
+    assert Backups.get_snapshot_by_id(snapshot.id) is not None
     assert snapshot.service_name == name
     assert snapshot.created_at is not None
 
