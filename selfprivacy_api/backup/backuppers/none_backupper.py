@@ -23,6 +23,10 @@ class NoneBackupper(AbstractBackupper):
     def init(self):
         raise NotImplementedError
 
+    def erase_repo(self) -> None:
+        """Completely empties the remote"""
+        raise NotImplementedError
+
     def restore_from_backup(self, snapshot_id: str, folders: List[str], verify=True):
         """Restore a target folder using a snapshot"""
         raise NotImplementedError

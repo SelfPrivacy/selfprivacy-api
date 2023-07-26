@@ -21,7 +21,7 @@ REDIS_SNAPSHOT_CACHE_EXPIRE_SECONDS = 24 * 60 * 60  # one day
 
 REDIS_SNAPSHOTS_PREFIX = "backups:snapshots:"
 REDIS_LAST_BACKUP_PREFIX = "backups:last-backed-up:"
-REDIS_INITTED_CACHE_PREFIX = "backups:initted_services:"
+REDIS_INITTED_CACHE = "backups:repo_initted"
 
 REDIS_PROVIDER_KEY = "backups:provider"
 REDIS_AUTOBACKUP_PERIOD_KEY = "backups:autobackup_period"
@@ -38,9 +38,9 @@ class Storage:
         """Deletes all backup related data from redis"""
         redis.delete(REDIS_PROVIDER_KEY)
         redis.delete(REDIS_AUTOBACKUP_PERIOD_KEY)
+        redis.delete(REDIS_INITTED_CACHE)
 
         prefixes_to_clean = [
-            REDIS_INITTED_CACHE_PREFIX,
             REDIS_SNAPSHOTS_PREFIX,
             REDIS_LAST_BACKUP_PREFIX,
         ]
@@ -162,11 +162,16 @@ class Storage:
     @staticmethod
     def has_init_mark() -> bool:
         """Returns True if the repository was initialized"""
-        if redis.exists(REDIS_INITTED_CACHE_PREFIX):
+        if redis.exists(REDIS_INITTED_CACHE):
             return True
         return False
 
     @staticmethod
     def mark_as_init():
         """Marks the repository as initialized"""
-        redis.set(REDIS_INITTED_CACHE_PREFIX, 1)
+        redis.set(REDIS_INITTED_CACHE, 1)
+
+    @staticmethod
+    def mark_as_uninitted():
+        """Marks the repository as initialized"""
+        redis.delete(REDIS_INITTED_CACHE)

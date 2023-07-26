@@ -40,20 +40,25 @@ class ResticBackupper(AbstractBackupper):
     def restic_repo(self) -> str:
         # https://restic.readthedocs.io/en/latest/030_preparing_a_new_repo.html#other-services-via-rclone
         # https://forum.rclone.org/t/can-rclone-be-run-solely-with-command-line-options-no-config-no-env-vars/6314/5
-        return f"rclone:{self.storage_type}{self.repo}"
+        return f"rclone:{self.rclone_repo()}"
+
+    def rclone_repo(self) -> str:
+        return f"{self.storage_type}{self.repo}"
 
     def rclone_args(self):
-        return "rclone.args=serve restic --stdio " + self.backend_rclone_args()
+        return "rclone.args=serve restic --stdio " + " ".join(
+            self.backend_rclone_args()
+        )
 
-    def backend_rclone_args(self) -> str:
-        acc_arg = ""
-        key_arg = ""
+    def backend_rclone_args(self) -> list[str]:
+        args = []
         if self.account != "":
-            acc_arg = f"{self.login_flag} {self.account}"
+            acc_args = [self.login_flag, self.account]
+            args.extend(acc_args)
         if self.key != "":
-            key_arg = f"{self.key_flag} {self.key}"
-
-        return f"{acc_arg} {key_arg}"
+            key_args = [self.key_flag, self.key]
+            args.extend(key_args)
+        return args
 
     def _password_command(self):
         return f"echo {LocalBackupSecret.get()}"
@@ -78,6 +83,27 @@ class ResticBackupper(AbstractBackupper):
         if args:
             command.extend(ResticBackupper.__flatten_list(args))
         return command
+
+    def erase_repo(self) -> None:
+        """Fully erases repo on remote, can be reinitted again"""
+        command = [
+            "rclone",
+            "purge",
+            self.rclone_repo(),
+        ]
+        backend_args = self.backend_rclone_args()
+        if backend_args:
+            command.extend(backend_args)
+
+        with subprocess.Popen(command, stdout=subprocess.PIPE, shell=False) as handle:
+            output = handle.communicate()[0].decode("utf-8")
+            if handle.returncode != 0:
+                raise ValueError(
+                    "purge exited with errorcode",
+                    handle.returncode,
+                    ":",
+                    output,
+                )
 
     def mount_repo(self, mount_directory):
         mount_command = self.restic_command("mount", mount_directory)

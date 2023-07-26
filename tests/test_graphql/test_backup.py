@@ -222,6 +222,19 @@ def test_file_backend_init(file_backup):
     file_backup.backupper.init()
 
 
+def test_reinit_after_purge(backups):
+    assert Backups.is_initted() is True
+
+    Backups.erase_repo()
+    assert Backups.is_initted() is False
+    with pytest.raises(ValueError):
+        Backups.get_all_snapshots()
+
+    Backups.init_repo()
+    assert Backups.is_initted() is True
+    assert len(Backups.get_all_snapshots()) == 0
+
+
 def test_backup_simple_file(raw_dummy_service, file_backup):
     # temporarily incomplete
     service = raw_dummy_service

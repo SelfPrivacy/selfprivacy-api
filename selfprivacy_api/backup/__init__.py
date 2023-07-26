@@ -237,6 +237,14 @@ class Backups:
         Storage.mark_as_init()
 
     @staticmethod
+    def erase_repo() -> None:
+        """
+        Completely empties the remote
+        """
+        Backups.provider().backupper.erase_repo()
+        Storage.mark_as_uninitted()
+
+    @staticmethod
     def is_initted() -> bool:
         """
         Returns whether the backup repository is initialized or not.
