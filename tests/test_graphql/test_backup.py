@@ -1,4 +1,5 @@
 import pytest
+import os
 import os.path as path
 from os import makedirs
 from os import remove
@@ -18,10 +19,11 @@ from selfprivacy_api.jobs import Jobs, JobStatus
 
 from selfprivacy_api.models.backup.snapshot import Snapshot
 
-from selfprivacy_api.backup import Backups
+from selfprivacy_api.backup import Backups, BACKUP_PROVIDER_ENVS
 import selfprivacy_api.backup.providers as providers
 from selfprivacy_api.backup.providers import AbstractBackupProvider
 from selfprivacy_api.backup.providers.backblaze import Backblaze
+from selfprivacy_api.backup.providers.none import NoBackups
 from selfprivacy_api.backup.util import sync
 from selfprivacy_api.backup.backuppers.restic_backupper import ResticBackupper
 from selfprivacy_api.backup.jobs import add_backup_job, add_restore_job
@@ -117,6 +119,40 @@ def file_backup(tmpdir) -> AbstractBackupProvider:
 
 def test_config_load(generic_userdata):
     Backups.reset(reset_json=False)
+    provider = Backups.provider()
+
+    assert provider is not None
+    assert isinstance(provider, Backblaze)
+    assert provider.login == "ID"
+    assert provider.key == "KEY"
+    assert provider.location == "selfprivacy"
+
+    assert provider.backupper.account == "ID"
+    assert provider.backupper.key == "KEY"
+
+
+def test_reset_sets_to_none1():
+    Backups.reset()
+    provider = Backups.provider()
+    assert provider is not None
+    assert isinstance(provider, NoBackups)
+
+
+def test_reset_sets_to_none2(backups):
+    # now with something set up first^^^
+    Backups.reset()
+    provider = Backups.provider()
+    assert provider is not None
+    assert isinstance(provider, NoBackups)
+
+
+def test_setting_from_envs(tmpdir):
+    Backups.reset()
+    os.environ[BACKUP_PROVIDER_ENVS["kind"]] = "BACKBLAZE"
+    os.environ[BACKUP_PROVIDER_ENVS["login"]] = "ID"
+    os.environ[BACKUP_PROVIDER_ENVS["key"]] = "KEY"
+    os.environ[BACKUP_PROVIDER_ENVS["location"]] = "selfprivacy"
+    Backups.set_provider_from_envs()
     provider = Backups.provider()
 
     assert provider is not None
