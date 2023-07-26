@@ -552,6 +552,34 @@ def test_snapshots_caching(backups, dummy_service):
     assert len(cached_snapshots) == 1
 
 
+def lowlevel_forget(snapshot_id):
+    Backups.provider().backupper.forget_snapshot(snapshot_id)
+
+
+# Storage
+def test_snapshots_cache_invalidation(backups, dummy_service):
+    Backups.back_up(dummy_service)
+    cached_snapshots = Storage.get_cached_snapshots()
+    assert len(cached_snapshots) == 1
+
+    Storage.invalidate_snapshot_storage()
+    cached_snapshots = Storage.get_cached_snapshots()
+    assert len(cached_snapshots) == 0
+
+    Backups.force_snapshot_cache_reload()
+    cached_snapshots = Storage.get_cached_snapshots()
+    assert len(cached_snapshots) == 1
+    snap = cached_snapshots[0]
+
+    lowlevel_forget(snap.id)
+    cached_snapshots = Storage.get_cached_snapshots()
+    assert len(cached_snapshots) == 1
+
+    Backups.force_snapshot_cache_reload()
+    cached_snapshots = Storage.get_cached_snapshots()
+    assert len(cached_snapshots) == 0
+
+
 # Storage
 def test_init_tracking_caching(backups, raw_dummy_service):
     assert Storage.has_init_mark() is False
