@@ -66,7 +66,7 @@ def backups(tmpdir):
 
     Backups.init_repo()
     yield
-    Backups.forget_all_snapshots()
+    Backups.erase_repo()
 
 
 @pytest.fixture()
