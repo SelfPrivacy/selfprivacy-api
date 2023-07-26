@@ -431,9 +431,17 @@ class Backups:
 
     @staticmethod
     def forget_snapshot(snapshot: Snapshot) -> None:
-        """Deletes a snapshot from the storage"""
+        """Deletes a snapshot from the repo and from cache"""
         Backups.provider().backupper.forget_snapshot(snapshot.id)
         Storage.delete_cached_snapshot(snapshot)
+
+    @staticmethod
+    def forget_all_snapshots():
+        """deliberately erase all snapshots we made"""
+        # there is no dedicated optimized command for this,
+        # but maybe we can have a multi-erase
+        for snapshot in Backups.get_all_snapshots():
+            Backups.forget_snapshot(snapshot)
 
     @staticmethod
     def force_snapshot_cache_reload() -> None:
