@@ -2,12 +2,11 @@
 import base64
 import subprocess
 import typing
-from selfprivacy_api.jobs import Job, Jobs
-from selfprivacy_api.services.generic_service_mover import FolderMoveNames, move_service
+from selfprivacy_api.jobs import Job
 from selfprivacy_api.services.generic_status_getter import get_service_status
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
 from selfprivacy_api.utils import ReadUserData, WriteUserData
-from selfprivacy_api.utils.block_devices import BlockDevice
+from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
 from selfprivacy_api.services.ocserv.icon import OCSERV_ICON
 import selfprivacy_api.utils.network as network_utils
 
@@ -77,15 +76,15 @@ class Ocserv(Service):
 
     @staticmethod
     def stop():
-        subprocess.run(["systemctl", "stop", "ocserv.service"])
+        subprocess.run(["systemctl", "stop", "ocserv.service"], check=False)
 
     @staticmethod
     def start():
-        subprocess.run(["systemctl", "start", "ocserv.service"])
+        subprocess.run(["systemctl", "start", "ocserv.service"], check=False)
 
     @staticmethod
     def restart():
-        subprocess.run(["systemctl", "restart", "ocserv.service"])
+        subprocess.run(["systemctl", "restart", "ocserv.service"], check=False)
 
     @staticmethod
     def get_configuration():
@@ -101,7 +100,7 @@ class Ocserv(Service):
 
     @staticmethod
     def get_drive() -> str:
-        return "sda1"
+        return BlockDevices().get_root_block_device().name
 
     @staticmethod
     def get_dns_records() -> typing.List[ServiceDnsRecord]:

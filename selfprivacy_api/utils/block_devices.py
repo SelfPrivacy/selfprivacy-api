@@ -218,3 +218,12 @@ class BlockDevices(metaclass=SingletonMetaclass):
             if mountpoint in block_device.mountpoints:
                 block_devices.append(block_device)
         return block_devices
+
+    def get_root_block_device(self) -> BlockDevice:
+        """
+        Return the root block device.
+        """
+        for block_device in self.block_devices:
+            if "/" in block_device.mountpoints:
+                return block_device
+        raise RuntimeError("No root block device found")

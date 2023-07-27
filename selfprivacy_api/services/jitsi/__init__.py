@@ -3,16 +3,13 @@ import base64
 import subprocess
 import typing
 
-from selfprivacy_api.jobs import Job, Jobs
-from selfprivacy_api.services.generic_service_mover import FolderMoveNames, move_service
+from selfprivacy_api.jobs import Job
 from selfprivacy_api.services.generic_status_getter import (
-    get_service_status,
     get_service_status_from_several_units,
 )
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
 from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
-from selfprivacy_api.utils.block_devices import BlockDevice
-from selfprivacy_api.utils.huey import huey
+from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
 import selfprivacy_api.utils.network as network_utils
 from selfprivacy_api.services.jitsi.icon import JITSI_ICON
 
@@ -87,18 +84,27 @@ class Jitsi(Service):
 
     @staticmethod
     def stop():
-        subprocess.run(["systemctl", "stop", "jitsi-videobridge.service"])
-        subprocess.run(["systemctl", "stop", "jicofo.service"])
+        subprocess.run(
+            ["systemctl", "stop", "jitsi-videobridge.service"],
+            check=False,
+        )
+        subprocess.run(["systemctl", "stop", "jicofo.service"], check=False)
 
     @staticmethod
     def start():
-        subprocess.run(["systemctl", "start", "jitsi-videobridge.service"])
-        subprocess.run(["systemctl", "start", "jicofo.service"])
+        subprocess.run(
+            ["systemctl", "start", "jitsi-videobridge.service"],
+            check=False,
+        )
+        subprocess.run(["systemctl", "start", "jicofo.service"], check=False)
 
     @staticmethod
     def restart():
-        subprocess.run(["systemctl", "restart", "jitsi-videobridge.service"])
-        subprocess.run(["systemctl", "restart", "jicofo.service"])
+        subprocess.run(
+            ["systemctl", "restart", "jitsi-videobridge.service"],
+            check=False,
+        )
+        subprocess.run(["systemctl", "restart", "jicofo.service"], check=False)
 
     @staticmethod
     def get_configuration():
@@ -118,7 +124,7 @@ class Jitsi(Service):
 
     @staticmethod
     def get_drive() -> str:
-        return "sda1"
+        return BlockDevices().get_root_block_device().name
 
     @staticmethod
     def get_dns_records() -> typing.List[ServiceDnsRecord]:
