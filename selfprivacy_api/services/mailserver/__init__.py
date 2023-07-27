@@ -4,16 +4,14 @@ import base64
 import subprocess
 import typing
 
-from selfprivacy_api.jobs import Job, JobStatus, Jobs
+from selfprivacy_api.jobs import Job, Jobs
 from selfprivacy_api.services.generic_service_mover import FolderMoveNames, move_service
 from selfprivacy_api.services.generic_status_getter import (
-    get_service_status,
     get_service_status_from_several_units,
 )
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
-import selfprivacy_api.utils as utils
+from selfprivacy_api import utils
 from selfprivacy_api.utils.block_devices import BlockDevice
-from selfprivacy_api.utils.huey import huey
 import selfprivacy_api.utils.network as network_utils
 from selfprivacy_api.services.mailserver.icon import MAILSERVER_ICON
 
@@ -78,18 +76,18 @@ class MailServer(Service):
 
     @staticmethod
     def stop():
-        subprocess.run(["systemctl", "stop", "dovecot2.service"])
-        subprocess.run(["systemctl", "stop", "postfix.service"])
+        subprocess.run(["systemctl", "stop", "dovecot2.service"], check=False)
+        subprocess.run(["systemctl", "stop", "postfix.service"], check=False)
 
     @staticmethod
     def start():
-        subprocess.run(["systemctl", "start", "dovecot2.service"])
-        subprocess.run(["systemctl", "start", "postfix.service"])
+        subprocess.run(["systemctl", "start", "dovecot2.service"], check=False)
+        subprocess.run(["systemctl", "start", "postfix.service"], check=False)
 
     @staticmethod
     def restart():
-        subprocess.run(["systemctl", "restart", "dovecot2.service"])
-        subprocess.run(["systemctl", "restart", "postfix.service"])
+        subprocess.run(["systemctl", "restart", "dovecot2.service"], check=False)
+        subprocess.run(["systemctl", "restart", "postfix.service"], check=False)
 
     @staticmethod
     def get_configuration():
@@ -111,7 +109,7 @@ class MailServer(Service):
     def get_drive() -> str:
         with utils.ReadUserData() as user_data:
             if user_data.get("useBinds", False):
-                return user_data.get("mailserver", {}).get("location", "sda1")
+                return user_data.get("email", {}).get("location", "sda1")
             else:
                 return "sda1"
 
@@ -142,7 +140,7 @@ class MailServer(Service):
                 type="MX", name=domain, content=domain, ttl=3600, priority=10
             ),
             ServiceDnsRecord(
-                type="TXT", name="_dmarc", content=f"v=DMARC1; p=none", ttl=18000
+                type="TXT", name="_dmarc", content="v=DMARC1; p=none", ttl=18000
             ),
             ServiceDnsRecord(
                 type="TXT",
@@ -167,7 +165,7 @@ class MailServer(Service):
             volume,
             job,
             FolderMoveNames.default_foldermoves(self),
-            "mailserver",
+            "email",
         )
 
         return job
