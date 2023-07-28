@@ -71,6 +71,12 @@ class BlockDevice:
     def __hash__(self):
         return hash(self.name)
 
+    def is_root(self) -> bool:
+        """
+        Return True if the block device is the root device.
+        """
+        return "/" in self.mountpoints
+
     def stats(self) -> typing.Dict[str, typing.Any]:
         """
         Update current data and return a dictionary of stats.
@@ -174,6 +180,9 @@ class BlockDevices(metaclass=SingletonMetaclass):
         for device in lsblk_output["blockdevices"]:
             # Ignore devices with type "rom"
             if device["type"] == "rom":
+                continue
+            # Ignore iso9660 devices
+            if device["fstype"] == "iso9660":
                 continue
             if device["fstype"] is None:
                 if "children" in device:
