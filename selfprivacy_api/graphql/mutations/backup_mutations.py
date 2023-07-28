@@ -158,6 +158,35 @@ class BackupMutations:
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
+    def forget_snapshot(self, snapshot_id: str) -> GenericMutationReturn:
+        """Forget a snapshot. 
+        Makes it inaccessible from the server. 
+        After some time, the data (encrypted) will not be recoverable
+        from the backup server too, but not immediately"""
+
+        snap = Backups.get_snapshot_by_id(snapshot_id)
+        if snap is None:
+            return GenericMutationReturn(
+                success=False,
+                code=404,
+                message=f"snapshot {snapshot_id} not found",
+            )
+            
+        try:
+            Backups.forget_snapshot(snap)
+            return GenericMutationReturn(
+                success=True,
+                code=200,
+                message="",
+            )
+        except Exception as error:
+            return GenericMutationReturn(
+                success=False,
+                code=400,
+                message=str(error),
+            )
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def force_snapshots_reload(self) -> GenericMutationReturn:
         """Force snapshots reload"""
         Backups.force_snapshot_cache_reload()
