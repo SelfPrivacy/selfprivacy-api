@@ -6,10 +6,11 @@ import typing
 from pydantic import BaseModel
 from selfprivacy_api.jobs import Job
 
-from selfprivacy_api.utils.block_devices import BlockDevice
+from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
 
 from selfprivacy_api.services.generic_size_counter import get_storage_usage
 from selfprivacy_api.services.owned_path import OwnedPath
+from selfprivacy_api import utils
 from selfprivacy_api.utils.waitloop import wait_until_true
 
 DEFAULT_START_STOP_TIMEOUT = 10 * 60
@@ -197,10 +198,23 @@ class Service(ABC):
     def get_dns_records() -> typing.List[ServiceDnsRecord]:
         pass
 
-    @staticmethod
-    @abstractmethod
-    def get_drive() -> str:
-        pass
+    @classmethod
+    def get_drive(cls) -> str:
+        """
+        Get the name of the drive/volume where the service is located.
+        Example values are `sda1`, `vda`, `sdb`.
+        """
+        root_device: str = BlockDevices().get_root_block_device().name
+        if not cls.is_movable():
+            return root_device
+        with utils.ReadUserData() as userdata:
+            if userdata.get("useBinds", False):
+                return userdata.get(cls.get_id(), {}).get(
+                    "location",
+                    root_device,
+                )
+            else:
+                return root_device
 
     @classmethod
     def get_folders(cls) -> typing.List[str]:

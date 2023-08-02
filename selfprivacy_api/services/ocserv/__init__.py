@@ -99,10 +99,6 @@ class Ocserv(Service):
         return ""
 
     @staticmethod
-    def get_drive() -> str:
-        return BlockDevices().get_root_block_device().name
-
-    @staticmethod
     def get_dns_records() -> typing.List[ServiceDnsRecord]:
         return [
             ServiceDnsRecord(

@@ -117,14 +117,6 @@ class Gitea(Service):
         return ["/var/lib/gitea"]
 
     @staticmethod
-    def get_drive() -> str:
-        with ReadUserData() as user_data:
-            if user_data.get("useBinds", False):
-                return user_data.get("gitea", {}).get("location", "sda1")
-            else:
-                return "sda1"
-
-    @staticmethod
     def get_dns_records() -> typing.List[ServiceDnsRecord]:
         return [
             ServiceDnsRecord(

@@ -122,14 +122,6 @@ class Bitwarden(Service):
         return ["/var/lib/bitwarden", "/var/lib/bitwarden_rs"]
 
     @staticmethod
-    def get_drive() -> str:
-        with ReadUserData() as user_data:
-            if user_data.get("useBinds", False):
-                return user_data.get("bitwarden", {}).get("location", "sda1")
-            else:
-                return "sda1"
-
-    @staticmethod
     def get_dns_records() -> typing.List[ServiceDnsRecord]:
         """Return list of DNS records for Bitwarden service."""
         return [

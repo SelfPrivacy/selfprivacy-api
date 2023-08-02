@@ -123,10 +123,6 @@ class Jitsi(Service):
         return ["/var/lib/jitsi-meet"]
 
     @staticmethod
-    def get_drive() -> str:
-        return BlockDevices().get_root_block_device().name
-
-    @staticmethod
     def get_dns_records() -> typing.List[ServiceDnsRecord]:
         ip4 = network_utils.get_ip4()
         ip6 = network_utils.get_ip6()

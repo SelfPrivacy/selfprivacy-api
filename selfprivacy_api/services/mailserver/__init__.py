@@ -106,14 +106,6 @@ class MailServer(Service):
         return ["/var/vmail", "/var/sieve"]
 
     @staticmethod
-    def get_drive() -> str:
-        with utils.ReadUserData() as user_data:
-            if user_data.get("useBinds", False):
-                return user_data.get("email", {}).get("location", "sda1")
-            else:
-                return "sda1"
-
-    @staticmethod
     def get_dns_records() -> typing.List[ServiceDnsRecord]:
         domain = utils.get_domain()
         dkim_record = utils.get_dkim_key(domain)
