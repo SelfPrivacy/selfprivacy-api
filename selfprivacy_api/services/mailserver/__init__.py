@@ -21,7 +21,7 @@ class MailServer(Service):
 
     @staticmethod
     def get_id() -> str:
-        return "mailserver"
+        return "email"
 
     @staticmethod
     def get_display_name() -> str:
@@ -155,7 +155,7 @@ class MailServer(Service):
 
     def move_to_volume(self, volume: BlockDevice) -> Job:
         job = Jobs.add(
-            type_id="services.mailserver.move",
+            type_id="services.email.move",
             name="Move Mail Server",
             description=f"Moving mailserver data to {volume.name}",
         )
