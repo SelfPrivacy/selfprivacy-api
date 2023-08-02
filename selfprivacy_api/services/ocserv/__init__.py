@@ -6,7 +6,7 @@ from selfprivacy_api.jobs import Job
 from selfprivacy_api.services.generic_status_getter import get_service_status
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
 from selfprivacy_api.utils import ReadUserData, WriteUserData
-from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
+from selfprivacy_api.utils.block_devices import BlockDevice
 from selfprivacy_api.services.ocserv.icon import OCSERV_ICON
 import selfprivacy_api.utils.network as network_utils
 

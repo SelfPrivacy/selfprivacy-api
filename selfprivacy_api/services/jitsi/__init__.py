@@ -9,7 +9,7 @@ from selfprivacy_api.services.generic_status_getter import (
 )
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
 from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
-from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
+from selfprivacy_api.utils.block_devices import BlockDevice
 import selfprivacy_api.utils.network as network_utils
 from selfprivacy_api.services.jitsi.icon import JITSI_ICON
 
