@@ -9,7 +9,6 @@ from selfprivacy_api.services.generic_status_getter import get_service_status
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
 from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
 from selfprivacy_api.utils.block_devices import BlockDevice
-from selfprivacy_api.utils.huey import huey
 import selfprivacy_api.utils.network as network_utils
 from selfprivacy_api.services.gitea.icon import GITEA_ICON
 
@@ -115,14 +114,6 @@ class Gitea(Service):
     @staticmethod
     def get_folders() -> typing.List[str]:
         return ["/var/lib/gitea"]
-
-    @staticmethod
-    def get_drive() -> str:
-        with ReadUserData() as user_data:
-            if user_data.get("useBinds", False):
-                return user_data.get("gitea", {}).get("location", "sda1")
-            else:
-                return "sda1"
 
     @staticmethod
     def get_dns_records() -> typing.List[ServiceDnsRecord]:
