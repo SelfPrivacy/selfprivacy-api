@@ -228,8 +228,7 @@ class ResticBackupper(AbstractBackupper):
 
     def is_initted(self) -> bool:
         command = self.restic_command(
-            "check",
-            "--json",
+            "unlock",
         )
 
         with subprocess.Popen(
@@ -237,10 +236,8 @@ class ResticBackupper(AbstractBackupper):
             stdout=subprocess.PIPE,
             shell=False,
         ) as handle:
-            output = handle.communicate()[0].decode("utf-8")
-            if not ResticBackupper.has_json(output):
+            if handle.returncode != 0:
                 return False
-            # raise NotImplementedError("error(big): " + output)
             return True
 
     def restored_size(self, snapshot_id: str) -> int:
