@@ -236,7 +236,11 @@ class ResticBackupper(AbstractBackupper):
             stdout=subprocess.PIPE,
             shell=False,
         ) as handle:
+            output = handle.communicate()[0].decode("utf-8")
             if handle.returncode != 0:
+                print("repo is not initted")
+                print("returncode", handle.returncode)
+                print("output", output)
                 return False
             return True
 
