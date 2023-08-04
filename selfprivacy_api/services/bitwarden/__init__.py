@@ -3,13 +3,12 @@ import base64
 import subprocess
 import typing
 
-from selfprivacy_api.jobs import Job, JobStatus, Jobs
+from selfprivacy_api.jobs import Job, Jobs
 from selfprivacy_api.services.generic_service_mover import FolderMoveNames, move_service
 from selfprivacy_api.services.generic_status_getter import get_service_status
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
 from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
 from selfprivacy_api.utils.block_devices import BlockDevice
-from selfprivacy_api.utils.huey import huey
 import selfprivacy_api.utils.network as network_utils
 from selfprivacy_api.services.bitwarden.icon import BITWARDEN_ICON
 
@@ -120,14 +119,6 @@ class Bitwarden(Service):
     @staticmethod
     def get_folders() -> typing.List[str]:
         return ["/var/lib/bitwarden", "/var/lib/bitwarden_rs"]
-
-    @staticmethod
-    def get_drive() -> str:
-        with ReadUserData() as user_data:
-            if user_data.get("useBinds", False):
-                return user_data.get("bitwarden", {}).get("location", "sda1")
-            else:
-                return "sda1"
 
     @staticmethod
     def get_dns_records() -> typing.List[ServiceDnsRecord]:

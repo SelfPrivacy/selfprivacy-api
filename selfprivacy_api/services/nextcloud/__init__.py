@@ -121,15 +121,6 @@ class Nextcloud(Service):
         return ["/var/lib/nextcloud"]
 
     @staticmethod
-    def get_drive() -> str:
-        """Get the name of disk where Nextcloud is installed."""
-        with ReadUserData() as user_data:
-            if user_data.get("useBinds", False):
-                return user_data.get("nextcloud", {}).get("location", "sda1")
-            else:
-                return "sda1"
-
-    @staticmethod
     def get_dns_records() -> typing.List[ServiceDnsRecord]:
         return [
             ServiceDnsRecord(

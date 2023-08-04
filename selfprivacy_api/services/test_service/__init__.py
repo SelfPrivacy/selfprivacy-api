@@ -10,7 +10,6 @@ from os import path
 
 from selfprivacy_api.jobs import Job
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
-from selfprivacy_api.utils import ReadUserData, get_domain
 from selfprivacy_api.utils.block_devices import BlockDevice
 import selfprivacy_api.utils.network as network_utils
 
