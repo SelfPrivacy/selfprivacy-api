@@ -136,3 +136,4 @@ def test_graphql_nix_collect_garbage(authorized_client):
     assert response.json()["data"]["nixCollectGarbage"]["success"] is True
     assert response.json()["data"]["nixCollectGarbage"]["message"] is not None
     assert response.json()["data"]["nixCollectGarbage"]["code"] == 200
+    assert response.json()["data"]["nixCollectGarbage"]["success"] == True
