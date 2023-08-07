@@ -1,5 +1,4 @@
 import re
-import os
 import subprocess
 
 from selfprivacy_api.utils.huey import huey
@@ -13,7 +12,7 @@ CLEAR_COMPLETED = "Cleaning completed."
 
 
 def run_nix_store_print_dead():
-    os.system("nix-env -p /nix/var/nix/profiles/system --delete-generations old")
+    subprocess.run(["nix-env", "-p", "/nix/var/nix/profiles/system", "--delete-generations old"], check=False)
 
     return subprocess.check_output(["nix-store", "--gc", "--print-dead"]).decode(
         "utf-8"
