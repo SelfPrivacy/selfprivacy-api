@@ -758,3 +758,18 @@ def test_move_blocks_backups(backups, dummy_service, restore_strategy):
 
     with pytest.raises(ValueError):
         Backups.restore_snapshot(snap, restore_strategy)
+
+
+def test_double_lock_unlock(backups, dummy_service):
+    # notice that introducing stale locks is only safe for other tests if we erase repo in between
+    # which we do at the time of writing this test
+
+    Backups.provider().backupper.lock()
+    with pytest.raises(ValueError):
+        Backups.provider().backupper.lock()
+
+    Backups.provider().backupper.unlock()
+    Backups.provider().backupper.lock()
+
+    Backups.provider().backupper.unlock()
+    Backups.provider().backupper.unlock()

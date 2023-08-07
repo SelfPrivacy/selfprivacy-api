@@ -228,6 +228,24 @@ class ResticBackupper(AbstractBackupper):
 
     def is_initted(self) -> bool:
         command = self.restic_command(
+            "check",
+        )
+
+        with subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            shell=False,
+            stderr=subprocess.STDOUT,
+        ) as handle:
+            # communication forces to complete and for returncode to get defined
+            output = handle.communicate()[0].decode("utf-8")
+            if handle.returncode != 0:
+                return False
+            return True
+
+    def unlock(self) -> None:
+        """Remove stale locks."""
+        command = self.restic_command(
             "unlock",
         )
 
@@ -235,10 +253,41 @@ class ResticBackupper(AbstractBackupper):
             command,
             stdout=subprocess.PIPE,
             shell=False,
+            stderr=subprocess.STDOUT,
         ) as handle:
+            # communication forces to complete and for returncode to get defined
+            output = handle.communicate()[0].decode("utf-8")
             if handle.returncode != 0:
-                return False
-            return True
+                raise ValueError("cannot unlock the backup repository: ", output)
+
+    def lock(self) -> None:
+        """
+        Introduce a stale lock.
+        Mainly for testing purposes.
+        Double lock is supposed to fail
+        """
+        command = self.restic_command(
+            "check",
+        )
+
+        # using temporary cache in /run/user/1000/restic-check-cache-817079729
+        # repository 9639c714 opened (repository version 2) successfully, password is correct
+        # created new cache in /run/user/1000/restic-check-cache-817079729
+        # create exclusive lock for repository
+        # load indexes
+        # check all packs
+        # check snapshots, trees and blobs
+        # [0:00] 100.00%  1 / 1 snapshots
+        # no errors were found
+
+        try:
+            for line in output_yielder(command):
+                if "indexes" in line:
+                    break
+                if "unable" in line:
+                    raise ValueError(line)
+        except Exception as e:
+            raise ValueError("could not lock repository") from e
 
     def restored_size(self, snapshot_id: str) -> int:
         """
