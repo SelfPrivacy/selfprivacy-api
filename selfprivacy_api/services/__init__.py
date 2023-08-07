@@ -42,7 +42,7 @@ def get_disabled_services() -> list[Service]:
 
 
 def get_services_by_location(location: str) -> list[Service]:
-    return [service for service in services if service.get_location() == location]
+    return [service for service in services if service.get_drive() == location]
 
 
 def get_all_required_dns_records() -> list[ServiceDnsRecord]:

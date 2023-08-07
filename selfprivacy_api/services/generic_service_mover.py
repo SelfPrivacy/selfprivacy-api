@@ -1,5 +1,6 @@
 """Generic handler for moving services"""
 
+from __future__ import annotations
 import subprocess
 import time
 import pathlib
@@ -11,6 +12,7 @@ from selfprivacy_api.utils.huey import huey
 from selfprivacy_api.utils.block_devices import BlockDevice
 from selfprivacy_api.utils import ReadUserData, WriteUserData
 from selfprivacy_api.services.service import Service, ServiceStatus
+from selfprivacy_api.services.owned_path import OwnedPath
 
 
 class FolderMoveNames(BaseModel):
@@ -18,6 +20,26 @@ class FolderMoveNames(BaseModel):
     bind_location: str
     owner: str
     group: str
+
+    @staticmethod
+    def from_owned_path(path: OwnedPath) -> FolderMoveNames:
+        return FolderMoveNames(
+            name=FolderMoveNames.get_foldername(path.path),
+            bind_location=path.path,
+            owner=path.owner,
+            group=path.group,
+        )
+
+    @staticmethod
+    def get_foldername(path: str) -> str:
+        return path.split("/")[-1]
+
+    @staticmethod
+    def default_foldermoves(service: Service) -> list[FolderMoveNames]:
+        return [
+            FolderMoveNames.from_owned_path(folder)
+            for folder in service.get_owned_folders()
+        ]
 
 
 @huey.task()
@@ -44,7 +66,7 @@ def move_service(
             )
             return
     # Check if we are on the same volume
-    old_volume = service.get_location()
+    old_volume = service.get_drive()
     if old_volume == volume.name:
         Jobs.update(
             job=job,
@@ -61,7 +83,7 @@ def move_service(
         )
         return
     # Make sure the volume is mounted
-    if volume.name != "sda1" and f"/volumes/{volume.name}" not in volume.mountpoints:
+    if not volume.is_root() and f"/volumes/{volume.name}" not in volume.mountpoints:
         Jobs.update(
             job=job,
             status=JobStatus.ERROR,

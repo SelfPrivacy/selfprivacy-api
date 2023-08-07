@@ -11,4 +11,5 @@ test_mode = os.environ.get("TEST_MODE")
 huey = SqliteHuey(
     HUEY_DATABASE,
     immediate=test_mode == "true",
+    utc=True,
 )

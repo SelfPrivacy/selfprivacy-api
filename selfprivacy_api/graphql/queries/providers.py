@@ -7,6 +7,7 @@ import strawberry
 class DnsProvider(Enum):
     CLOUDFLARE = "CLOUDFLARE"
     DIGITALOCEAN = "DIGITALOCEAN"
+    DESEC = "DESEC"
 
 
 @strawberry.enum
@@ -18,3 +19,7 @@ class ServerProvider(Enum):
 @strawberry.enum
 class BackupProvider(Enum):
     BACKBLAZE = "BACKBLAZE"
+    NONE = "NONE"
+    # for testing purposes, make sure not selectable in prod.
+    MEMORY = "MEMORY"
+    FILE = "FILE"

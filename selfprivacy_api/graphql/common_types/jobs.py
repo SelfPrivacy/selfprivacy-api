@@ -12,6 +12,7 @@ class ApiJob:
     """Job type for GraphQL."""
 
     uid: str
+    type_id: str
     name: str
     description: str
     status: str
@@ -28,6 +29,7 @@ def job_to_api_job(job: Job) -> ApiJob:
     """Convert a Job from jobs controller to a GraphQL ApiJob."""
     return ApiJob(
         uid=str(job.uid),
+        type_id=job.type_id,
         name=job.name,
         description=job.description,
         status=job.status.name,

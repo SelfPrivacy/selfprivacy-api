@@ -23,7 +23,7 @@ class Storage:
                 else str(volume.size),
                 free_space=str(volume.fsavail),
                 used_space=str(volume.fsused),
-                root=volume.name == "sda1",
+                root=volume.is_root(),
                 name=volume.name,
                 model=volume.model,
                 serial=volume.serial,

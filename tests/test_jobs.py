@@ -80,6 +80,29 @@ def test_jobs(jobs_with_one_job):
     jobsmodule.JOB_EXPIRATION_SECONDS = backup
 
 
+def test_finishing_equals_100(jobs_with_one_job):
+    jobs = jobs_with_one_job
+    test_job = jobs.get_jobs()[0]
+    assert not jobs.is_busy()
+    assert test_job.progress != 100
+
+    jobs.update(job=test_job, status=JobStatus.FINISHED)
+
+    assert test_job.progress == 100
+
+
+def test_finishing_equals_100_unless_stated_otherwise(jobs_with_one_job):
+    jobs = jobs_with_one_job
+    test_job = jobs.get_jobs()[0]
+    assert not jobs.is_busy()
+    assert test_job.progress != 100
+    assert test_job.progress != 23
+
+    jobs.update(job=test_job, status=JobStatus.FINISHED, progress=23)
+
+    assert test_job.progress == 23
+
+
 @pytest.fixture
 def jobs():
     j = Jobs()

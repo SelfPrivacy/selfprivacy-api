@@ -17,5 +17,5 @@ class GenericMutationReturn(MutationReturnInterface):
 
 
 @strawberry.type
-class GenericJobButationReturn(MutationReturnInterface):
+class GenericJobMutationReturn(MutationReturnInterface):
     job: typing.Optional[ApiJob] = None
