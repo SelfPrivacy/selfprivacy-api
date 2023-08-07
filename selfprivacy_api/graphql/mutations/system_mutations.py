@@ -6,7 +6,7 @@ from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericMutationReturn,
     MutationReturnInterface,
-    GenericJobButationReturn,
+    GenericJobMutationReturn,
 )
 
 import selfprivacy_api.actions.system as system_actions
@@ -131,10 +131,10 @@ class SystemMutations:
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def nix_collect_garbage(self) -> GenericJobButationReturn:
+    def nix_collect_garbage(self) -> GenericJobMutationReturn:
         job = start_nix_collect_garbage()
 
-        return GenericJobButationReturn(
+        return GenericJobMutationReturn(
             success=True,
             code=200,
             message="Cleaning started..,",

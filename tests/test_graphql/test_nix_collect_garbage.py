@@ -113,11 +113,13 @@ def test_get_dead_packages_zero(job_reset):
 
 
 RUN_NIX_COLLECT_GARBAGE_QUERY = """
-mutation system {
-    nixCollectGarbage {
-        success
-        message
-        code
+mutation CollectGarbage {
+    system {
+        nixCollectGarbage {
+            success
+            message
+            code
+        }
     }
 }
 """
@@ -133,7 +135,7 @@ def test_graphql_nix_collect_garbage(authorized_client):
 
     assert response.status_code == 200
     assert response.json().get("data") is not None
-    assert response.json()["data"]["nixCollectGarbage"]["success"] is True
-    assert response.json()["data"]["nixCollectGarbage"]["message"] is not None
-    assert response.json()["data"]["nixCollectGarbage"]["code"] == 200
-    assert response.json()["data"]["nixCollectGarbage"]["success"] == True
+    assert response.json()["data"]["system"]["nixCollectGarbage"]["success"] is True
+    assert response.json()["data"]["system"]["nixCollectGarbage"]["message"] is not None
+    assert response.json()["data"]["system"]["nixCollectGarbage"]["success"] == True
+    assert response.json()["data"]["system"]["nixCollectGarbage"]["code"] == 200
