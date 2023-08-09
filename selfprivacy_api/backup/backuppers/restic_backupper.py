@@ -256,6 +256,7 @@ class ResticBackupper(AbstractBackupper):
             if "created restic repository" not in output:
                 raise ValueError("cannot init a repo: " + output)
 
+    @unlocked_repo
     def is_initted(self) -> bool:
         command = self.restic_command(
             "check",
@@ -267,9 +268,10 @@ class ResticBackupper(AbstractBackupper):
             shell=False,
             stderr=subprocess.STDOUT,
         ) as handle:
-            # communication forces to complete and for returncode to get defined
             output = handle.communicate()[0].decode("utf-8")
             if handle.returncode != 0:
+                if "unable to create lock" in output:
+                    raise ValueError("Stale lock detected: ", output)
                 return False
             return True
 
@@ -319,6 +321,7 @@ class ResticBackupper(AbstractBackupper):
         except Exception as e:
             raise ValueError("could not lock repository") from e
 
+    @unlocked_repo
     def restored_size(self, snapshot_id: str) -> int:
         """
         Size of a snapshot

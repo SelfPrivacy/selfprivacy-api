@@ -776,6 +776,21 @@ def test_double_lock_unlock(backups, dummy_service):
 
 
 def test_operations_while_locked(backups, dummy_service):
+    # Stale lock prevention test
+
+    # consider making it fully at the level of backupper?
+    # because this is where prevention lives?
+    # Backups singleton is here only so that we can run this against B2, S3 and whatever
+    # But maybe it is not necessary (if restic treats them uniformly enough)
+
     Backups.provider().backupper.lock()
     snap = Backups.back_up(dummy_service)
     assert snap is not None
+
+    Backups.provider().backupper.lock()
+    # using lowlevel to make sure no caching interferes
+    assert Backups.provider().backupper.is_initted() is True
+
+    # check that no locks were left
+    Backups.provider().backupper.lock()
+    Backups.provider().backupper.unlock()
