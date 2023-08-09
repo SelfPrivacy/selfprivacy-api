@@ -773,3 +773,9 @@ def test_double_lock_unlock(backups, dummy_service):
 
     Backups.provider().backupper.unlock()
     Backups.provider().backupper.unlock()
+
+
+def test_operations_while_locked(backups, dummy_service):
+    Backups.provider().backupper.lock()
+    snap = Backups.back_up(dummy_service)
+    assert snap is not None

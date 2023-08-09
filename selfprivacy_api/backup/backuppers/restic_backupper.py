@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import subprocess
 import json
 import datetime
 import tempfile
 
-from typing import List
+from typing import List, TypeVar, Callable
 from collections.abc import Iterable
 from json.decoder import JSONDecodeError
 from os.path import exists, join
@@ -20,6 +22,25 @@ from selfprivacy_api.jobs import Jobs, JobStatus
 from selfprivacy_api.backup.local_secret import LocalBackupSecret
 
 SHORT_ID_LEN = 8
+
+T = TypeVar("T", bound=Callable)
+
+
+def unlocked_repo(func: T) -> T:
+    """unlock repo and retry if it appears to be locked"""
+
+    def inner(self: ResticBackupper, *args, **kwargs):
+        try:
+            return func(self, *args, **kwargs)
+        except Exception as e:
+            if "unable to create lock" in str(e):
+                self.unlock()
+                return func(self, *args, **kwargs)
+            else:
+                raise e
+
+    # Above, we manually guarantee that the type returned is compatible.
+    return inner  # type: ignore
 
 
 class ResticBackupper(AbstractBackupper):
@@ -142,6 +163,7 @@ class ResticBackupper(AbstractBackupper):
             result.append(item)
         return result
 
+    @unlocked_repo
     def start_backup(self, folders: List[str], tag: str) -> Snapshot:
         """
         Start backup with restic
@@ -165,8 +187,10 @@ class ResticBackupper(AbstractBackupper):
             raise ValueError("No service with id ", tag)
 
         job = get_backup_job(service)
+        output = []
         try:
             for raw_message in output_yielder(backup_command):
+                output.append(raw_message)
                 message = self.parse_message(
                     raw_message,
                     job,
@@ -177,7 +201,13 @@ class ResticBackupper(AbstractBackupper):
                 tag,
             )
         except ValueError as error:
-            raise ValueError("Could not create a snapshot: ", messages) from error
+            raise ValueError(
+                "Could not create a snapshot: ",
+                str(error),
+                output,
+                "parsed messages:",
+                messages,
+            ) from error
 
     @staticmethod
     def _snapshot_from_backup_messages(messages, repo_name) -> Snapshot:
