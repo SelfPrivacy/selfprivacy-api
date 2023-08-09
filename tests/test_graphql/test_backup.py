@@ -791,6 +791,9 @@ def test_operations_while_locked(backups, dummy_service):
     # using lowlevel to make sure no caching interferes
     assert Backups.provider().backupper.is_initted() is True
 
+    Backups.provider().backupper.lock()
+    assert Backups.snapshot_restored_size(snap.id) > 0
+
     # check that no locks were left
     Backups.provider().backupper.lock()
     Backups.provider().backupper.unlock()

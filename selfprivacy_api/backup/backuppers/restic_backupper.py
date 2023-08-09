@@ -335,6 +335,7 @@ class ResticBackupper(AbstractBackupper):
         with subprocess.Popen(
             command,
             stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             shell=False,
         ) as handle:
             output = handle.communicate()[0].decode("utf-8")
@@ -382,7 +383,10 @@ class ResticBackupper(AbstractBackupper):
         )
 
         with subprocess.Popen(
-            restore_command, stdout=subprocess.PIPE, shell=False
+            restore_command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            shell=False,
         ) as handle:
 
             # for some reason restore does not support
