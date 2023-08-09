@@ -794,6 +794,15 @@ def test_operations_while_locked(backups, dummy_service):
     Backups.provider().backupper.lock()
     assert Backups.snapshot_restored_size(snap.id) > 0
 
+    Backups.provider().backupper.lock()
+    Backups.restore_snapshot(snap)
+
+    Backups.provider().backupper.lock()
+    Backups.forget_snapshot(snap)
+
+    Backups.provider().backupper.lock()
+    assert Backups.provider().backupper.get_snapshots() == []
+
     # check that no locks were left
     Backups.provider().backupper.lock()
     Backups.provider().backupper.unlock()

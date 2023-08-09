@@ -345,6 +345,7 @@ class ResticBackupper(AbstractBackupper):
             except ValueError as error:
                 raise ValueError("cannot restore a snapshot: " + output) from error
 
+    @unlocked_repo
     def restore_from_backup(
         self,
         snapshot_id,
@@ -406,6 +407,7 @@ class ResticBackupper(AbstractBackupper):
                     output,
                 )
 
+    @unlocked_repo
     def forget_snapshot(self, snapshot_id) -> None:
         """
         Either removes snapshot or marks it for deletion later,
@@ -441,10 +443,7 @@ class ResticBackupper(AbstractBackupper):
             )  # none should be impossible after communicate
             if handle.returncode != 0:
                 raise ValueError(
-                    "forget exited with errorcode",
-                    handle.returncode,
-                    ":",
-                    output,
+                    "forget exited with errorcode", handle.returncode, ":", output, err
                 )
 
     def _load_snapshots(self) -> object:
@@ -470,8 +469,9 @@ class ResticBackupper(AbstractBackupper):
         try:
             return ResticBackupper.parse_json_output(output)
         except ValueError as error:
-            raise ValueError("Cannot load snapshots: ") from error
+            raise ValueError("Cannot load snapshots: ", output) from error
 
+    @unlocked_repo
     def get_snapshots(self) -> List[Snapshot]:
         """Get all snapshots from the repo"""
         snapshots = []
