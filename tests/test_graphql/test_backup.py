@@ -8,6 +8,8 @@ from os import urandom
 from datetime import datetime, timedelta, timezone
 from subprocess import Popen
 
+import tempfile
+
 import selfprivacy_api.services as services
 from selfprivacy_api.services import Service, get_all_services
 
@@ -806,3 +808,10 @@ def test_operations_while_locked(backups, dummy_service):
     # check that no locks were left
     Backups.provider().backupper.lock()
     Backups.provider().backupper.unlock()
+
+
+# a paranoid check to weed out problems with tempdirs that are not dependent on us
+def test_tempfile():
+    with tempfile.TemporaryDirectory() as temp:
+        assert path.exists(temp)
+    assert not path.exists(temp)
