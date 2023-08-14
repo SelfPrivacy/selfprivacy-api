@@ -727,36 +727,6 @@ def test_sync_nonexistent_src(dummy_service):
         sync(src, dst)
 
 
-# Restic lowlevel
-def test_mount_umount(backups, dummy_service, tmpdir):
-    Backups.back_up(dummy_service)
-    backupper = Backups.provider().backupper
-    assert isinstance(backupper, ResticBackupper)
-
-    mountpoint = tmpdir / "mount"
-    makedirs(mountpoint)
-    assert path.exists(mountpoint)
-    assert len(listdir(mountpoint)) == 0
-
-    handle = backupper.mount_repo(mountpoint)
-    assert len(listdir(mountpoint)) != 0
-
-    backupper.unmount_repo(mountpoint)
-    # handle.terminate()
-    assert len(listdir(mountpoint)) == 0
-
-
-def test_mount_nonexistent(backups, dummy_service, tmpdir):
-    backupper = Backups.provider().backupper
-    assert isinstance(backupper, ResticBackupper)
-
-    mountpoint = tmpdir / "nonexistent"
-    assert not path.exists(mountpoint)
-
-    with pytest.raises(FileNotFoundError):
-        handle = backupper.mount_repo(mountpoint)
-
-
 def test_move_blocks_backups(backups, dummy_service, restore_strategy):
     snap = Backups.back_up(dummy_service)
     job = Jobs.add(

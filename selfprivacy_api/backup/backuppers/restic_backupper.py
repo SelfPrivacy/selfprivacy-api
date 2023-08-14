@@ -127,34 +127,6 @@ class ResticBackupper(AbstractBackupper):
                     output,
                 )
 
-    def mount_repo(self, mount_directory: str) -> subprocess.Popen:
-        if not exists(mount_directory):
-            raise FileNotFoundError("no such directory to mount at: ", mount_directory)
-        mount_command = self.restic_command("mount", mount_directory)
-        mount_command.insert(0, "nohup")
-        handle = subprocess.Popen(
-            mount_command,
-            stdout=subprocess.DEVNULL,
-            shell=False,
-        )
-        sleep(2)
-        if "ids" not in listdir(mount_directory):
-            raise IOError("failed to mount dir ", mount_directory)
-        return handle
-
-    def unmount_repo(self, mount_directory: str) -> None:
-        mount_command = ["umount", "-l", mount_directory]
-        with subprocess.Popen(
-            mount_command, stdout=subprocess.PIPE, shell=False
-        ) as handle:
-            output = handle.communicate()[0].decode("utf-8")
-            # TODO: check for exit code?
-            if "error" in output.lower():
-                raise IOError("failed to unmount dir ", mount_directory, ": ", output)
-
-        if not listdir(mount_directory) == []:
-            raise IOError("failed to unmount dir ", mount_directory)
-
     @staticmethod
     def __flatten_list(list_to_flatten):
         """string-aware list flattener"""
