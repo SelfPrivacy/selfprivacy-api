@@ -746,6 +746,17 @@ def test_mount_umount(backups, dummy_service, tmpdir):
     assert len(listdir(mountpoint)) == 0
 
 
+def test_mount_nonexistent(backups, dummy_service, tmpdir):
+    backupper = Backups.provider().backupper
+    assert isinstance(backupper, ResticBackupper)
+
+    mountpoint = tmpdir / "nonexistent"
+    assert not path.exists(mountpoint)
+
+    with pytest.raises(FileNotFoundError):
+        handle = backupper.mount_repo(mountpoint)
+
+
 def test_move_blocks_backups(backups, dummy_service, restore_strategy):
     snap = Backups.back_up(dummy_service)
     job = Jobs.add(

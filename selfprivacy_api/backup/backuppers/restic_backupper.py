@@ -9,8 +9,9 @@ from typing import List, TypeVar, Callable
 from collections.abc import Iterable
 from json.decoder import JSONDecodeError
 from os.path import exists, join
-from os import listdir
+from os import listdir, mkdir
 from time import sleep
+from shutil import rmtree
 
 from selfprivacy_api.backup.util import output_yielder, sync
 from selfprivacy_api.backup.backuppers import AbstractBackupper
@@ -364,23 +365,21 @@ class ResticBackupper(AbstractBackupper):
             if verify:
                 self._raw_verified_restore(snapshot_id, target=temp_dir)
                 snapshot_root = temp_dir
-            else:  # attempting inplace restore via mount + sync
-                assert exists(
-                    temp_dir
-                )  # paranoid check, TemporaryDirectory is supposedly created
-                self.mount_repo(temp_dir)
-                snapshot_root = join(temp_dir, "ids", snapshot_id)
+                for folder in folders:
+                    src = join(snapshot_root, folder.strip("/"))
+                    if not exists(src):
+                        raise ValueError(
+                            f"No such path: {src}. We tried to find {folder}"
+                        )
+                    dst = folder
+                    sync(src, dst)
 
-            assert snapshot_root is not None
-            for folder in folders:
-                src = join(snapshot_root, folder.strip("/"))
-                if not exists(src):
-                    raise ValueError(f"No such path: {src}. We tried to find {folder}")
-                dst = folder
-                sync(src, dst)
-
-            if not verify:
-                self.unmount_repo(temp_dir)
+            else:  # attempting inplace restore
+                for folder in folders:
+                    rmtree(folder)
+                    mkdir(folder)
+                self._raw_verified_restore(snapshot_id, target="/")
+                return
 
     def _raw_verified_restore(self, snapshot_id, target="/"):
         """barebones restic restore"""
