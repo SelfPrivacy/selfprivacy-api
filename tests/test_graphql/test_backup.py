@@ -13,6 +13,8 @@ import tempfile
 
 from selfprivacy_api.utils.huey import huey
 
+import tempfile
+
 import selfprivacy_api.services as services
 from selfprivacy_api.services import Service, get_all_services
 from selfprivacy_api.services import get_service_by_id
