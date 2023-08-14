@@ -113,41 +113,6 @@ def mock_subprocess_popen(mocker):
 ##  TESTS  ######################################################
 
 
-def test_get_users_unauthorized(client, some_users, mock_subprocess_popen):
-    response = client.get("/users")
-    assert response.status_code == 401
-
-
-def test_get_some_users(authorized_client, some_users, mock_subprocess_popen):
-    response = authorized_client.get("/users")
-    assert response.status_code == 200
-    assert response.json() == ["user1", "user2", "user3"]
-
-
-def test_get_one_user(authorized_client, one_user, mock_subprocess_popen):
-    response = authorized_client.get("/users")
-    assert response.status_code == 200
-    assert response.json() == ["user1"]
-
-
-def test_get_one_user_with_main(authorized_client, one_user, mock_subprocess_popen):
-    response = authorized_client.get("/users?withMainUser=true")
-    assert response.status_code == 200
-    assert response.json().sort() == ["tester", "user1"].sort()
-
-
-def test_get_no_users(authorized_client, no_users, mock_subprocess_popen):
-    response = authorized_client.get("/users")
-    assert response.status_code == 200
-    assert response.json() == []
-
-
-def test_get_no_users_with_main(authorized_client, no_users, mock_subprocess_popen):
-    response = authorized_client.get("/users?withMainUser=true")
-    assert response.status_code == 200
-    assert response.json() == ["tester"]
-
-
 def test_get_undefined_users(
     authorized_client, undefined_settings, mock_subprocess_popen
 ):
@@ -156,28 +121,7 @@ def test_get_undefined_users(
     assert response.json() == []
 
 
-def test_post_users_unauthorized(client, some_users, mock_subprocess_popen):
-    response = client.post("/users")
-    assert response.status_code == 401
-
-
-def test_post_one_user(authorized_client, one_user, mock_subprocess_popen):
-    response = authorized_client.post(
-        "/users", json={"username": "user4", "password": "password"}
-    )
-    assert response.status_code == 201
-    assert read_json(one_user / "one_user.json")["users"] == [
-        {
-            "username": "user1",
-            "hashedPassword": "HASHED_PASSWORD_1",
-            "sshKeys": ["ssh-rsa KEY user1@pc"],
-        },
-        {
-            "username": "user4",
-            "sshKeys": [],
-            "hashedPassword": "NEW_HASHED",
-        },
-    ]
+# graphql tests still provide these fields even if with empty values
 
 
 def test_post_without_username(authorized_client, one_user, mock_subprocess_popen):
@@ -197,47 +141,10 @@ def test_post_without_username_and_password(
     assert response.status_code == 422
 
 
-@pytest.mark.parametrize("username", invalid_usernames)
-def test_post_system_user(authorized_client, one_user, mock_subprocess_popen, username):
-    response = authorized_client.post(
-        "/users", json={"username": username, "password": "password"}
-    )
-    assert response.status_code == 409
+# end of BUT THERE ARE FIELDS! rant
 
-
-def test_post_existing_user(authorized_client, one_user, mock_subprocess_popen):
-    response = authorized_client.post(
-        "/users", json={"username": "user1", "password": "password"}
-    )
-    assert response.status_code == 409
-
-
-def test_post_existing_main_user(authorized_client, one_user, mock_subprocess_popen):
-    response = authorized_client.post(
-        "/users", json={"username": "tester", "password": "password"}
-    )
-    assert response.status_code == 409
-
-
-def test_post_user_to_undefined_users(
-    authorized_client, undefined_settings, mock_subprocess_popen
-):
-    response = authorized_client.post(
-        "/users", json={"username": "user4", "password": "password"}
-    )
-    assert response.status_code == 201
-    assert read_json(undefined_settings / "undefined.json")["users"] == [
-        {"username": "user4", "sshKeys": [], "hashedPassword": "NEW_HASHED"}
-    ]
-
-
-def test_post_very_long_username(authorized_client, one_user, mock_subprocess_popen):
-    response = authorized_client.post(
-        "/users", json={"username": "a" * 32, "password": "password"}
-    )
-    assert response.status_code == 400
-
-
+# the final user is not in gql checks
+# I think maybe generate a bunch?
 @pytest.mark.parametrize("username", ["", "1", "фыр", "user1@", "№:%##$^&@$&^()_"])
 def test_post_invalid_username(
     authorized_client, one_user, mock_subprocess_popen, username
@@ -248,16 +155,7 @@ def test_post_invalid_username(
     assert response.status_code == 400
 
 
-def test_delete_user_unauthorized(client, some_users, mock_subprocess_popen):
-    response = client.delete("/users/user1")
-    assert response.status_code == 401
-
-
-def test_delete_user_not_found(authorized_client, some_users, mock_subprocess_popen):
-    response = authorized_client.delete("/users/user4")
-    assert response.status_code == 404
-
-
+# gql counterpart is too weak
 def test_delete_user(authorized_client, some_users, mock_subprocess_popen):
     response = authorized_client.delete("/users/user1")
     assert response.status_code == 200
@@ -265,14 +163,6 @@ def test_delete_user(authorized_client, some_users, mock_subprocess_popen):
         {"username": "user2", "hashedPassword": "HASHED_PASSWORD_2", "sshKeys": []},
         {"username": "user3", "hashedPassword": "HASHED_PASSWORD_3"},
     ]
-
-
-@pytest.mark.parametrize("username", invalid_usernames)
-def test_delete_system_user(
-    authorized_client, some_users, mock_subprocess_popen, username
-):
-    response = authorized_client.delete("/users/" + username)
-    assert response.status_code == 400 or response.status_code == 404
 
 
 def test_delete_main_user(authorized_client, some_users, mock_subprocess_popen):
