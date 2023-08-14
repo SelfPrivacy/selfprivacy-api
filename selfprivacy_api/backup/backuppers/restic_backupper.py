@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import subprocess
 import json
 import datetime
 import tempfile
 
-from typing import List
+from typing import List, TypeVar, Callable
 from collections.abc import Iterable
 from json.decoder import JSONDecodeError
 from os.path import exists, join
@@ -20,6 +22,25 @@ from selfprivacy_api.jobs import Jobs, JobStatus
 from selfprivacy_api.backup.local_secret import LocalBackupSecret
 
 SHORT_ID_LEN = 8
+
+T = TypeVar("T", bound=Callable)
+
+
+def unlocked_repo(func: T) -> T:
+    """unlock repo and retry if it appears to be locked"""
+
+    def inner(self: ResticBackupper, *args, **kwargs):
+        try:
+            return func(self, *args, **kwargs)
+        except Exception as e:
+            if "unable to create lock" in str(e):
+                self.unlock()
+                return func(self, *args, **kwargs)
+            else:
+                raise e
+
+    # Above, we manually guarantee that the type returned is compatible.
+    return inner  # type: ignore
 
 
 class ResticBackupper(AbstractBackupper):
@@ -40,20 +61,25 @@ class ResticBackupper(AbstractBackupper):
     def restic_repo(self) -> str:
         # https://restic.readthedocs.io/en/latest/030_preparing_a_new_repo.html#other-services-via-rclone
         # https://forum.rclone.org/t/can-rclone-be-run-solely-with-command-line-options-no-config-no-env-vars/6314/5
-        return f"rclone:{self.storage_type}{self.repo}"
+        return f"rclone:{self.rclone_repo()}"
+
+    def rclone_repo(self) -> str:
+        return f"{self.storage_type}{self.repo}"
 
     def rclone_args(self):
-        return "rclone.args=serve restic --stdio " + self.backend_rclone_args()
+        return "rclone.args=serve restic --stdio " + " ".join(
+            self.backend_rclone_args()
+        )
 
-    def backend_rclone_args(self) -> str:
-        acc_arg = ""
-        key_arg = ""
+    def backend_rclone_args(self) -> list[str]:
+        args = []
         if self.account != "":
-            acc_arg = f"{self.login_flag} {self.account}"
+            acc_args = [self.login_flag, self.account]
+            args.extend(acc_args)
         if self.key != "":
-            key_arg = f"{self.key_flag} {self.key}"
-
-        return f"{acc_arg} {key_arg}"
+            key_args = [self.key_flag, self.key]
+            args.extend(key_args)
+        return args
 
     def _password_command(self):
         return f"echo {LocalBackupSecret.get()}"
@@ -78,6 +104,27 @@ class ResticBackupper(AbstractBackupper):
         if args:
             command.extend(ResticBackupper.__flatten_list(args))
         return command
+
+    def erase_repo(self) -> None:
+        """Fully erases repo on remote, can be reinitted again"""
+        command = [
+            "rclone",
+            "purge",
+            self.rclone_repo(),
+        ]
+        backend_args = self.backend_rclone_args()
+        if backend_args:
+            command.extend(backend_args)
+
+        with subprocess.Popen(command, stdout=subprocess.PIPE, shell=False) as handle:
+            output = handle.communicate()[0].decode("utf-8")
+            if handle.returncode != 0:
+                raise ValueError(
+                    "purge exited with errorcode",
+                    handle.returncode,
+                    ":",
+                    output,
+                )
 
     def mount_repo(self, mount_directory):
         mount_command = self.restic_command("mount", mount_directory)
@@ -116,6 +163,7 @@ class ResticBackupper(AbstractBackupper):
             result.append(item)
         return result
 
+    @unlocked_repo
     def start_backup(self, folders: List[str], tag: str) -> Snapshot:
         """
         Start backup with restic
@@ -139,8 +187,10 @@ class ResticBackupper(AbstractBackupper):
             raise ValueError("No service with id ", tag)
 
         job = get_backup_job(service)
+        output = []
         try:
             for raw_message in output_yielder(backup_command):
+                output.append(raw_message)
                 message = self.parse_message(
                     raw_message,
                     job,
@@ -151,7 +201,13 @@ class ResticBackupper(AbstractBackupper):
                 tag,
             )
         except ValueError as error:
-            raise ValueError("Could not create a snapshot: ", messages) from error
+            raise ValueError(
+                "Could not create a snapshot: ",
+                str(error),
+                output,
+                "parsed messages:",
+                messages,
+            ) from error
 
     @staticmethod
     def _snapshot_from_backup_messages(messages, repo_name) -> Snapshot:
@@ -200,23 +256,72 @@ class ResticBackupper(AbstractBackupper):
             if "created restic repository" not in output:
                 raise ValueError("cannot init a repo: " + output)
 
+    @unlocked_repo
     def is_initted(self) -> bool:
         command = self.restic_command(
             "check",
-            "--json",
         )
 
         with subprocess.Popen(
             command,
             stdout=subprocess.PIPE,
             shell=False,
+            stderr=subprocess.STDOUT,
         ) as handle:
             output = handle.communicate()[0].decode("utf-8")
-            if not ResticBackupper.has_json(output):
+            if handle.returncode != 0:
+                if "unable to create lock" in output:
+                    raise ValueError("Stale lock detected: ", output)
                 return False
-            # raise NotImplementedError("error(big): " + output)
             return True
 
+    def unlock(self) -> None:
+        """Remove stale locks."""
+        command = self.restic_command(
+            "unlock",
+        )
+
+        with subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            shell=False,
+            stderr=subprocess.STDOUT,
+        ) as handle:
+            # communication forces to complete and for returncode to get defined
+            output = handle.communicate()[0].decode("utf-8")
+            if handle.returncode != 0:
+                raise ValueError("cannot unlock the backup repository: ", output)
+
+    def lock(self) -> None:
+        """
+        Introduce a stale lock.
+        Mainly for testing purposes.
+        Double lock is supposed to fail
+        """
+        command = self.restic_command(
+            "check",
+        )
+
+        # using temporary cache in /run/user/1000/restic-check-cache-817079729
+        # repository 9639c714 opened (repository version 2) successfully, password is correct
+        # created new cache in /run/user/1000/restic-check-cache-817079729
+        # create exclusive lock for repository
+        # load indexes
+        # check all packs
+        # check snapshots, trees and blobs
+        # [0:00] 100.00%  1 / 1 snapshots
+        # no errors were found
+
+        try:
+            for line in output_yielder(command):
+                if "indexes" in line:
+                    break
+                if "unable" in line:
+                    raise ValueError(line)
+        except Exception as e:
+            raise ValueError("could not lock repository") from e
+
+    @unlocked_repo
     def restored_size(self, snapshot_id: str) -> int:
         """
         Size of a snapshot
@@ -230,6 +335,7 @@ class ResticBackupper(AbstractBackupper):
         with subprocess.Popen(
             command,
             stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             shell=False,
         ) as handle:
             output = handle.communicate()[0].decode("utf-8")
@@ -239,6 +345,7 @@ class ResticBackupper(AbstractBackupper):
             except ValueError as error:
                 raise ValueError("cannot restore a snapshot: " + output) from error
 
+    @unlocked_repo
     def restore_from_backup(
         self,
         snapshot_id,
@@ -277,7 +384,10 @@ class ResticBackupper(AbstractBackupper):
         )
 
         with subprocess.Popen(
-            restore_command, stdout=subprocess.PIPE, shell=False
+            restore_command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            shell=False,
         ) as handle:
 
             # for some reason restore does not support
@@ -297,6 +407,7 @@ class ResticBackupper(AbstractBackupper):
                     output,
                 )
 
+    @unlocked_repo
     def forget_snapshot(self, snapshot_id) -> None:
         """
         Either removes snapshot or marks it for deletion later,
@@ -332,10 +443,7 @@ class ResticBackupper(AbstractBackupper):
             )  # none should be impossible after communicate
             if handle.returncode != 0:
                 raise ValueError(
-                    "forget exited with errorcode",
-                    handle.returncode,
-                    ":",
-                    output,
+                    "forget exited with errorcode", handle.returncode, ":", output, err
                 )
 
     def _load_snapshots(self) -> object:
@@ -361,8 +469,9 @@ class ResticBackupper(AbstractBackupper):
         try:
             return ResticBackupper.parse_json_output(output)
         except ValueError as error:
-            raise ValueError("Cannot load snapshots: ") from error
+            raise ValueError("Cannot load snapshots: ", output) from error
 
+    @unlocked_repo
     def get_snapshots(self) -> List[Snapshot]:
         """Get all snapshots from the repo"""
         snapshots = []

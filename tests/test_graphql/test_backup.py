@@ -1,4 +1,5 @@
 import pytest
+import os
 import os.path as path
 from os import makedirs
 from os import remove
@@ -18,10 +19,11 @@ from selfprivacy_api.jobs import Jobs, JobStatus
 
 from selfprivacy_api.models.backup.snapshot import Snapshot
 
-from selfprivacy_api.backup import Backups
+from selfprivacy_api.backup import Backups, BACKUP_PROVIDER_ENVS
 import selfprivacy_api.backup.providers as providers
 from selfprivacy_api.backup.providers import AbstractBackupProvider
 from selfprivacy_api.backup.providers.backblaze import Backblaze
+from selfprivacy_api.backup.providers.none import NoBackups
 from selfprivacy_api.backup.util import sync
 from selfprivacy_api.backup.backuppers.restic_backupper import ResticBackupper
 from selfprivacy_api.backup.jobs import add_backup_job, add_restore_job
@@ -37,14 +39,34 @@ TESTFILE_2_BODY = "testissimo!"
 REPO_NAME = "test_backup"
 
 
-@pytest.fixture(scope="function")
-def backups(tmpdir):
-    Backups.reset()
-
-    test_repo_path = path.join(tmpdir, "totallyunrelated")
+def prepare_localfile_backups(temp_dir):
+    test_repo_path = path.join(temp_dir, "totallyunrelated")
+    assert not path.exists(test_repo_path)
     Backups.set_localfile_repo(test_repo_path)
 
+
+@pytest.fixture(scope="function")
+def backups_local(tmpdir):
+    Backups.reset()
+    prepare_localfile_backups(tmpdir)
     Jobs.reset()
+    Backups.init_repo()
+
+
+@pytest.fixture(scope="function")
+def backups(tmpdir):
+    # for those tests that are supposed to pass with any repo
+    Backups.reset()
+    if BACKUP_PROVIDER_ENVS["kind"] in os.environ.keys():
+        Backups.set_provider_from_envs()
+    else:
+        prepare_localfile_backups(tmpdir)
+    Jobs.reset()
+    # assert not repo_path
+
+    Backups.init_repo()
+    yield
+    Backups.erase_repo()
 
 
 @pytest.fixture()
@@ -80,11 +102,6 @@ def raw_dummy_service(tmpdir):
 @pytest.fixture()
 def dummy_service(tmpdir, backups, raw_dummy_service) -> Service:
     service = raw_dummy_service
-    repo_path = path.join(tmpdir, "test_repo")
-    assert not path.exists(repo_path)
-    # assert not repo_path
-
-    Backups.init_repo()
 
     # register our service
     services.services.append(service)
@@ -129,6 +146,53 @@ def test_config_load(generic_userdata):
     assert provider.backupper.key == "KEY"
 
 
+def test_reset_sets_to_none1():
+    Backups.reset()
+    provider = Backups.provider()
+    assert provider is not None
+    assert isinstance(provider, NoBackups)
+
+
+def test_reset_sets_to_none2(backups):
+    # now with something set up first^^^
+    Backups.reset()
+    provider = Backups.provider()
+    assert provider is not None
+    assert isinstance(provider, NoBackups)
+
+
+def test_setting_from_envs(tmpdir):
+    Backups.reset()
+    environment_stash = {}
+    if BACKUP_PROVIDER_ENVS["kind"] in os.environ.keys():
+        # we are running under special envs, stash them before rewriting them
+        for key in BACKUP_PROVIDER_ENVS.values():
+            environment_stash[key] = os.environ[key]
+
+    os.environ[BACKUP_PROVIDER_ENVS["kind"]] = "BACKBLAZE"
+    os.environ[BACKUP_PROVIDER_ENVS["login"]] = "ID"
+    os.environ[BACKUP_PROVIDER_ENVS["key"]] = "KEY"
+    os.environ[BACKUP_PROVIDER_ENVS["location"]] = "selfprivacy"
+    Backups.set_provider_from_envs()
+    provider = Backups.provider()
+
+    assert provider is not None
+    assert isinstance(provider, Backblaze)
+    assert provider.login == "ID"
+    assert provider.key == "KEY"
+    assert provider.location == "selfprivacy"
+
+    assert provider.backupper.account == "ID"
+    assert provider.backupper.key == "KEY"
+
+    if environment_stash != {}:
+        for key in BACKUP_PROVIDER_ENVS.values():
+            os.environ[key] = environment_stash[key]
+    else:
+        for key in BACKUP_PROVIDER_ENVS.values():
+            del os.environ[key]
+
+
 def test_json_reset(generic_userdata):
     Backups.reset(reset_json=False)
     provider = Backups.provider()
@@ -156,6 +220,19 @@ def test_select_backend():
 
 def test_file_backend_init(file_backup):
     file_backup.backupper.init()
+
+
+def test_reinit_after_purge(backups):
+    assert Backups.is_initted() is True
+
+    Backups.erase_repo()
+    assert Backups.is_initted() is False
+    with pytest.raises(ValueError):
+        Backups.get_all_snapshots()
+
+    Backups.init_repo()
+    assert Backups.is_initted() is True
+    assert len(Backups.get_all_snapshots()) == 0
 
 
 def test_backup_simple_file(raw_dummy_service, file_backup):
@@ -258,9 +335,12 @@ def test_sizing(backups, dummy_service):
     assert size > 0
 
 
-def test_init_tracking(backups, raw_dummy_service):
+def test_init_tracking(backups, tmpdir):
+    assert Backups.is_initted() is True
+    Backups.reset()
     assert Backups.is_initted() is False
-
+    separate_dir = tmpdir / "out_of_the_way"
+    prepare_localfile_backups(separate_dir)
     Backups.init_repo()
 
     assert Backups.is_initted() is True
@@ -552,8 +632,38 @@ def test_snapshots_caching(backups, dummy_service):
     assert len(cached_snapshots) == 1
 
 
+def lowlevel_forget(snapshot_id):
+    Backups.provider().backupper.forget_snapshot(snapshot_id)
+
+
+# Storage
+def test_snapshots_cache_invalidation(backups, dummy_service):
+    Backups.back_up(dummy_service)
+    cached_snapshots = Storage.get_cached_snapshots()
+    assert len(cached_snapshots) == 1
+
+    Storage.invalidate_snapshot_storage()
+    cached_snapshots = Storage.get_cached_snapshots()
+    assert len(cached_snapshots) == 0
+
+    Backups.force_snapshot_cache_reload()
+    cached_snapshots = Storage.get_cached_snapshots()
+    assert len(cached_snapshots) == 1
+    snap = cached_snapshots[0]
+
+    lowlevel_forget(snap.id)
+    cached_snapshots = Storage.get_cached_snapshots()
+    assert len(cached_snapshots) == 1
+
+    Backups.force_snapshot_cache_reload()
+    cached_snapshots = Storage.get_cached_snapshots()
+    assert len(cached_snapshots) == 0
+
+
 # Storage
 def test_init_tracking_caching(backups, raw_dummy_service):
+    assert Storage.has_init_mark() is True
+    Backups.reset()
     assert Storage.has_init_mark() is False
 
     Storage.mark_as_init()
@@ -563,7 +673,12 @@ def test_init_tracking_caching(backups, raw_dummy_service):
 
 
 # Storage
-def test_init_tracking_caching2(backups, raw_dummy_service):
+def test_init_tracking_caching2(backups, tmpdir):
+    assert Storage.has_init_mark() is True
+    Backups.reset()
+    assert Storage.has_init_mark() is False
+    separate_dir = tmpdir / "out_of_the_way"
+    prepare_localfile_backups(separate_dir)
     assert Storage.has_init_mark() is False
 
     Backups.init_repo()
@@ -643,3 +758,51 @@ def test_move_blocks_backups(backups, dummy_service, restore_strategy):
 
     with pytest.raises(ValueError):
         Backups.restore_snapshot(snap, restore_strategy)
+
+
+def test_double_lock_unlock(backups, dummy_service):
+    # notice that introducing stale locks is only safe for other tests if we erase repo in between
+    # which we do at the time of writing this test
+
+    Backups.provider().backupper.lock()
+    with pytest.raises(ValueError):
+        Backups.provider().backupper.lock()
+
+    Backups.provider().backupper.unlock()
+    Backups.provider().backupper.lock()
+
+    Backups.provider().backupper.unlock()
+    Backups.provider().backupper.unlock()
+
+
+def test_operations_while_locked(backups, dummy_service):
+    # Stale lock prevention test
+
+    # consider making it fully at the level of backupper?
+    # because this is where prevention lives?
+    # Backups singleton is here only so that we can run this against B2, S3 and whatever
+    # But maybe it is not necessary (if restic treats them uniformly enough)
+
+    Backups.provider().backupper.lock()
+    snap = Backups.back_up(dummy_service)
+    assert snap is not None
+
+    Backups.provider().backupper.lock()
+    # using lowlevel to make sure no caching interferes
+    assert Backups.provider().backupper.is_initted() is True
+
+    Backups.provider().backupper.lock()
+    assert Backups.snapshot_restored_size(snap.id) > 0
+
+    Backups.provider().backupper.lock()
+    Backups.restore_snapshot(snap)
+
+    Backups.provider().backupper.lock()
+    Backups.forget_snapshot(snap)
+
+    Backups.provider().backupper.lock()
+    assert Backups.provider().backupper.get_snapshots() == []
+
+    # check that no locks were left
+    Backups.provider().backupper.lock()
+    Backups.provider().backupper.unlock()

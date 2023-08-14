@@ -2,6 +2,7 @@
 This module contains the controller class for backups.
 """
 from datetime import datetime, timedelta
+import os
 from os import statvfs
 from typing import List, Optional
 
@@ -41,6 +42,13 @@ DEFAULT_JSON_PROVIDER = {
     "accountId": "",
     "accountKey": "",
     "bucket": "",
+}
+
+BACKUP_PROVIDER_ENVS = {
+    "kind": "BACKUP_KIND",
+    "login": "BACKUP_LOGIN",
+    "key": "BACKUP_KEY",
+    "location": "BACKUP_LOCATION",
 }
 
 
@@ -133,6 +141,24 @@ class Backups:
         return none_provider
 
     @staticmethod
+    def set_provider_from_envs():
+        for env in BACKUP_PROVIDER_ENVS.values():
+            if env not in os.environ.keys():
+                raise ValueError(
+                    f"Cannot set backup provider from envs, there is no {env} set"
+                )
+
+        kind_str = os.environ[BACKUP_PROVIDER_ENVS["kind"]]
+        kind_enum = BackupProviderEnum[kind_str]
+        provider = Backups._construct_provider(
+            kind=kind_enum,
+            login=os.environ[BACKUP_PROVIDER_ENVS["login"]],
+            key=os.environ[BACKUP_PROVIDER_ENVS["key"]],
+            location=os.environ[BACKUP_PROVIDER_ENVS["location"]],
+        )
+        Storage.store_provider(provider)
+
+    @staticmethod
     def _construct_provider(
         kind: BackupProviderEnum,
         login: str,
@@ -209,6 +235,14 @@ class Backups:
         """
         Backups.provider().backupper.init()
         Storage.mark_as_init()
+
+    @staticmethod
+    def erase_repo() -> None:
+        """
+        Completely empties the remote
+        """
+        Backups.provider().backupper.erase_repo()
+        Storage.mark_as_uninitted()
 
     @staticmethod
     def is_initted() -> bool:
@@ -405,9 +439,17 @@ class Backups:
 
     @staticmethod
     def forget_snapshot(snapshot: Snapshot) -> None:
-        """Deletes a snapshot from the storage"""
+        """Deletes a snapshot from the repo and from cache"""
         Backups.provider().backupper.forget_snapshot(snapshot.id)
         Storage.delete_cached_snapshot(snapshot)
+
+    @staticmethod
+    def forget_all_snapshots():
+        """deliberately erase all snapshots we made"""
+        # there is no dedicated optimized command for this,
+        # but maybe we can have a multi-erase
+        for snapshot in Backups.get_all_snapshots():
+            Backups.forget_snapshot(snapshot)
 
     @staticmethod
     def force_snapshot_cache_reload() -> None:
