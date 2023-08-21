@@ -12,6 +12,7 @@ from os.path import exists, join
 from os import listdir
 from time import sleep
 
+from selfprivacy_api.graphql.common_types.backup import BackupReason
 from selfprivacy_api.backup.util import output_yielder, sync
 from selfprivacy_api.backup.backuppers import AbstractBackupper
 from selfprivacy_api.models.backup.snapshot import Snapshot
@@ -84,7 +85,7 @@ class ResticBackupper(AbstractBackupper):
     def _password_command(self):
         return f"echo {LocalBackupSecret.get()}"
 
-    def restic_command(self, *args, tag: str = "") -> List[str]:
+    def restic_command(self, *args, tags: List[str] = []) -> List[str]:
         command = [
             "restic",
             "-o",
@@ -94,13 +95,14 @@ class ResticBackupper(AbstractBackupper):
             "--password-command",
             self._password_command(),
         ]
-        if tag != "":
-            command.extend(
-                [
-                    "--tag",
-                    tag,
-                ]
-            )
+        if tags != []:
+            for tag in tags:
+                command.extend(
+                    [
+                        "--tag",
+                        tag,
+                    ]
+                )
         if args:
             command.extend(ResticBackupper.__flatten_list(args))
         return command
@@ -164,7 +166,12 @@ class ResticBackupper(AbstractBackupper):
         return result
 
     @unlocked_repo
-    def start_backup(self, folders: List[str], tag: str) -> Snapshot:
+    def start_backup(
+        self,
+        folders: List[str],
+        service_name: str,
+        reason: BackupReason = BackupReason.EXPLICIT,
+    ) -> Snapshot:
         """
         Start backup with restic
         """
@@ -173,33 +180,35 @@ class ResticBackupper(AbstractBackupper):
         # of a string and an array of strings
         assert not isinstance(folders, str)
 
+        tags = [service_name, reason.value]
+
         backup_command = self.restic_command(
             "backup",
             "--json",
             folders,
-            tag=tag,
+            tags=tags,
         )
 
-        messages = []
-
-        service = get_service_by_id(tag)
+        service = get_service_by_id(service_name)
         if service is None:
-            raise ValueError("No service with id ", tag)
-
+            raise ValueError("No service with id ", service_name)
         job = get_backup_job(service)
+
+        messages = []
         output = []
         try:
             for raw_message in output_yielder(backup_command):
                 output.append(raw_message)
-                message = self.parse_message(
-                    raw_message,
-                    job,
-                )
+                message = self.parse_message(raw_message, job)
                 messages.append(message)
-            return ResticBackupper._snapshot_from_backup_messages(
-                messages,
-                tag,
+            id = ResticBackupper._snapshot_id_from_backup_messages(messages)
+            return Snapshot(
+                created_at=datetime.datetime.now(datetime.timezone.utc),
+                id=id,
+                service_name=service_name,
+                reason=reason,
             )
+
         except ValueError as error:
             raise ValueError(
                 "Could not create a snapshot: ",
@@ -210,13 +219,13 @@ class ResticBackupper(AbstractBackupper):
             ) from error
 
     @staticmethod
-    def _snapshot_from_backup_messages(messages, repo_name) -> Snapshot:
+    def _snapshot_id_from_backup_messages(messages) -> Snapshot:
         for message in messages:
             if message["message_type"] == "summary":
-                return ResticBackupper._snapshot_from_fresh_summary(
-                    message,
-                    repo_name,
-                )
+                # There is a discrepancy between versions of restic/rclone
+                # Some report short_id in this field and some full
+                return message["snapshot_id"][0:SHORT_ID_LEN]
+
         raise ValueError("no summary message in restic json output")
 
     def parse_message(self, raw_message_line: str, job=None) -> dict:
@@ -231,16 +240,6 @@ class ResticBackupper(AbstractBackupper):
                     progress=int(message["percent_done"] * 100),
                 )
         return message
-
-    @staticmethod
-    def _snapshot_from_fresh_summary(message: dict, repo_name) -> Snapshot:
-        return Snapshot(
-            # There is a discrepancy between versions of restic/rclone
-            # Some report short_id in this field and some full
-            id=message["snapshot_id"][0:SHORT_ID_LEN],
-            created_at=datetime.datetime.now(datetime.timezone.utc),
-            service_name=repo_name,
-        )
 
     def init(self) -> None:
         init_command = self.restic_command(
@@ -475,11 +474,19 @@ class ResticBackupper(AbstractBackupper):
     def get_snapshots(self) -> List[Snapshot]:
         """Get all snapshots from the repo"""
         snapshots = []
+
         for restic_snapshot in self._load_snapshots():
+            # Compatibility with previous snaps:
+            if len(restic_snapshot["tags"]) == 1:
+                reason = BackupReason.EXPLICIT
+            else:
+                reason = restic_snapshot["tags"][1]
+
             snapshot = Snapshot(
                 id=restic_snapshot["short_id"],
                 created_at=restic_snapshot["time"],
                 service_name=restic_snapshot["tags"][0],
+                reason=reason,
             )
 
             snapshots.append(snapshot)

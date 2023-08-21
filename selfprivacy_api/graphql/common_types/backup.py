@@ -8,3 +8,10 @@ from enum import Enum
 class RestoreStrategy(Enum):
     INPLACE = "INPLACE"
     DOWNLOAD_VERIFY_OVERWRITE = "DOWNLOAD_VERIFY_OVERWRITE"
+
+
+@strawberry.enum
+class BackupReason(Enum):
+    EXPLICIT = "EXPLICIT"
+    AUTO = "AUTO"
+    PRE_RESTORE = "PRE_RESTORE"

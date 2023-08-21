@@ -2,6 +2,7 @@ from typing import List
 
 from selfprivacy_api.models.backup.snapshot import Snapshot
 from selfprivacy_api.backup.backuppers import AbstractBackupper
+from selfprivacy_api.graphql.common_types.backup import BackupReason
 
 
 class NoneBackupper(AbstractBackupper):
@@ -13,7 +14,9 @@ class NoneBackupper(AbstractBackupper):
     def set_creds(self, account: str, key: str, repo: str):
         pass
 
-    def start_backup(self, folders: List[str], tag: str):
+    def start_backup(
+        self, folders: List[str], tag: str, reason: BackupReason = BackupReason.EXPLICIT
+    ):
         raise NotImplementedError
 
     def get_snapshots(self) -> List[Snapshot]:

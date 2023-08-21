@@ -14,7 +14,7 @@ from selfprivacy_api.services import Service, get_all_services
 from selfprivacy_api.services import get_service_by_id
 from selfprivacy_api.services.test_service import DummyService
 from selfprivacy_api.graphql.queries.providers import BackupProvider
-from selfprivacy_api.graphql.common_types.backup import RestoreStrategy
+from selfprivacy_api.graphql.common_types.backup import RestoreStrategy, BackupReason
 from selfprivacy_api.jobs import Jobs, JobStatus
 
 from selfprivacy_api.models.backup.snapshot import Snapshot
@@ -428,7 +428,10 @@ def test_forget_snapshot(backups, dummy_service):
 
 def test_forget_nonexistent_snapshot(backups, dummy_service):
     bogus = Snapshot(
-        id="gibberjibber", service_name="nohoho", created_at=datetime.now(timezone.utc)
+        id="gibberjibber",
+        service_name="nohoho",
+        created_at=datetime.now(timezone.utc),
+        reason=BackupReason.EXPLICIT,
     )
     with pytest.raises(ValueError):
         Backups.forget_snapshot(bogus)

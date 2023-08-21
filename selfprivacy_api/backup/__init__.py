@@ -23,7 +23,7 @@ from selfprivacy_api.jobs import Jobs, JobStatus, Job
 from selfprivacy_api.graphql.queries.providers import (
     BackupProvider as BackupProviderEnum,
 )
-from selfprivacy_api.graphql.common_types.backup import RestoreStrategy
+from selfprivacy_api.graphql.common_types.backup import RestoreStrategy, BackupReason
 
 from selfprivacy_api.models.backup.snapshot import Snapshot
 
@@ -264,10 +264,12 @@ class Backups:
     # Backup
 
     @staticmethod
-    def back_up(service: Service) -> Snapshot:
+    def back_up(
+        service: Service, reason: BackupReason = BackupReason.EXPLICIT
+    ) -> Snapshot:
         """The top-level function to back up a service"""
         folders = service.get_folders()
-        tag = service.get_id()
+        service_name = service.get_id()
 
         job = get_backup_job(service)
         if job is None:
@@ -278,9 +280,10 @@ class Backups:
             service.pre_backup()
             snapshot = Backups.provider().backupper.start_backup(
                 folders,
-                tag,
+                service_name,
+                reason=reason,
             )
-            Backups._store_last_snapshot(tag, snapshot)
+            Backups._store_last_snapshot(service_name, snapshot)
             service.post_restore()
         except Exception as error:
             Jobs.update(job, status=JobStatus.ERROR)
@@ -306,7 +309,7 @@ class Backups:
         snapshot: Snapshot,
         job: Job,
     ) -> None:
-        failsafe_snapshot = Backups.back_up(service)
+        failsafe_snapshot = Backups.back_up(service, BackupReason.PRE_RESTORE)
 
         Jobs.update(job, status=JobStatus.RUNNING)
         try:

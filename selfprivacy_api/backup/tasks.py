@@ -3,7 +3,7 @@ The tasks module contains the worker tasks that are used to back up and restore
 """
 from datetime import datetime, timezone
 
-from selfprivacy_api.graphql.common_types.backup import RestoreStrategy
+from selfprivacy_api.graphql.common_types.backup import RestoreStrategy, BackupReason
 
 from selfprivacy_api.models.backup.snapshot import Snapshot
 from selfprivacy_api.utils.huey import huey
@@ -22,11 +22,13 @@ def validate_datetime(dt: datetime) -> bool:
 
 # huey tasks need to return something
 @huey.task()
-def start_backup(service: Service) -> bool:
+def start_backup(
+    service: Service, reason: BackupReason = BackupReason.EXPLICIT
+) -> bool:
     """
     The worker task that starts the backup process.
     """
-    Backups.back_up(service)
+    Backups.back_up(service, reason)
     return True
 
 
@@ -49,4 +51,4 @@ def automatic_backup():
     """
     time = datetime.utcnow().replace(tzinfo=timezone.utc)
     for service in Backups.services_to_back_up(time):
-        start_backup(service)
+        start_backup(service, BackupReason.AUTO)
