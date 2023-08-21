@@ -26,6 +26,7 @@ REDIS_INITTED_CACHE = "backups:repo_initted"
 REDIS_PROVIDER_KEY = "backups:provider"
 REDIS_AUTOBACKUP_PERIOD_KEY = "backups:autobackup_period"
 
+REDIS_AUTOBACKUP_MAX_KEY = "backups:autobackup_cap"
 
 redis = RedisPool().get_connection()
 
@@ -39,6 +40,7 @@ class Storage:
         redis.delete(REDIS_PROVIDER_KEY)
         redis.delete(REDIS_AUTOBACKUP_PERIOD_KEY)
         redis.delete(REDIS_INITTED_CACHE)
+        redis.delete(REDIS_AUTOBACKUP_MAX_KEY)
 
         prefixes_to_clean = [
             REDIS_SNAPSHOTS_PREFIX,
@@ -175,3 +177,14 @@ class Storage:
     def mark_as_uninitted():
         """Marks the repository as initialized"""
         redis.delete(REDIS_INITTED_CACHE)
+
+    @staticmethod
+    def set_max_auto_snapshots(value: int):
+        redis.set(REDIS_AUTOBACKUP_MAX_KEY, value)
+
+    @staticmethod
+    def max_auto_snapshots():
+        if redis.exists(REDIS_AUTOBACKUP_MAX_KEY):
+            return int(redis.get(REDIS_AUTOBACKUP_MAX_KEY))
+        else:
+            return -1

@@ -283,7 +283,10 @@ class Backups:
                 service_name,
                 reason=reason,
             )
+
             Backups._store_last_snapshot(service_name, snapshot)
+            if reason == BackupReason.AUTO:
+                Backups._prune_auto_snaps(service)
             service.post_restore()
         except Exception as error:
             Jobs.update(job, status=JobStatus.ERROR)
@@ -291,6 +294,40 @@ class Backups:
 
         Jobs.update(job, status=JobStatus.FINISHED)
         return snapshot
+
+    @staticmethod
+    def _auto_snaps(service):
+        return [
+            snap
+            for snap in Backups.get_snapshots(service)
+            if snap.reason == BackupReason.AUTO
+        ]
+
+    @staticmethod
+    def _prune_auto_snaps(service) -> None:
+        max = Backups.max_auto_snapshots()
+        if max == -1:
+            return
+
+        auto_snaps = Backups._auto_snaps(service)
+        if len(auto_snaps) > max:
+            n_to_kill = len(auto_snaps) - max
+            sorted_snaps = sorted(auto_snaps, key=lambda s: s.created_at)
+            snaps_to_kill = sorted_snaps[:n_to_kill]
+            for snap in snaps_to_kill:
+                Backups.forget_snapshot(snap)
+
+    @staticmethod
+    def set_max_auto_snapshots(value: int) -> None:
+        """everything <=0 means unlimited"""
+        if value <= 0:
+            value = -1
+        Storage.set_max_auto_snapshots(value)
+
+    @staticmethod
+    def max_auto_snapshots() -> int:
+        """-1 means unlimited"""
+        return Storage.max_auto_snapshots()
 
     # Restoring
 

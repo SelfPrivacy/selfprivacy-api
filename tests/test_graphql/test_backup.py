@@ -298,6 +298,31 @@ def test_backup_reasons(backups, dummy_service):
     assert snaps[0].reason == BackupReason.AUTO
 
 
+def test_too_many_auto(backups, dummy_service):
+    assert Backups.max_auto_snapshots() == -1
+    Backups.set_max_auto_snapshots(2)
+    assert Backups.max_auto_snapshots() == 2
+
+    snap = Backups.back_up(dummy_service, BackupReason.AUTO)
+    assert len(Backups.get_snapshots(dummy_service)) == 1
+    snap2 = Backups.back_up(dummy_service, BackupReason.AUTO)
+    assert len(Backups.get_snapshots(dummy_service)) == 2
+    snap3 = Backups.back_up(dummy_service, BackupReason.AUTO)
+    assert len(Backups.get_snapshots(dummy_service)) == 2
+
+    snaps = Backups.get_snapshots(dummy_service)
+
+    assert snap2 in snaps
+    assert snap3 in snaps
+    assert snap not in snaps
+
+    Backups.set_max_auto_snapshots(-1)
+    snap4 = Backups.back_up(dummy_service, BackupReason.AUTO)
+    snaps = Backups.get_snapshots(dummy_service)
+    assert len(snaps) == 3
+    assert snap4 in snaps
+
+
 def folder_files(folder):
     return [
         path.join(folder, filename)
