@@ -286,6 +286,16 @@ def test_backup_returns_snapshot(backups, dummy_service):
     assert Backups.get_snapshot_by_id(snapshot.id) is not None
     assert snapshot.service_name == name
     assert snapshot.created_at is not None
+    assert snapshot.reason == BackupReason.EXPLICIT
+
+
+def test_backup_reasons(backups, dummy_service):
+    snap = Backups.back_up(dummy_service, BackupReason.AUTO)
+    assert snap.reason == BackupReason.AUTO
+
+    Backups.force_snapshot_cache_reload()
+    snaps = Backups.get_snapshots(dummy_service)
+    assert snaps[0].reason == BackupReason.AUTO
 
 
 def folder_files(folder):
@@ -495,6 +505,8 @@ def test_restore_snapshot_task(
     snaps = Backups.get_snapshots(dummy_service)
     if restore_strategy == RestoreStrategy.INPLACE:
         assert len(snaps) == 2
+        reasons = [snap.reason for snap in snaps]
+        assert BackupReason.PRE_RESTORE in reasons
     else:
         assert len(snaps) == 1
 
