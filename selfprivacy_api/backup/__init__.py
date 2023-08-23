@@ -283,7 +283,7 @@ class Backups:
             Backups._store_last_snapshot(tag, snapshot)
             service.post_restore()
         except Exception as error:
-            Jobs.update(job, status=JobStatus.ERROR)
+            Jobs.update(job, status=JobStatus.ERROR, status_text=str(error))
             raise error
 
         Jobs.update(job, status=JobStatus.FINISHED)
@@ -348,7 +348,7 @@ class Backups:
                 service.post_restore()
 
         except Exception as error:
-            Jobs.update(job, status=JobStatus.ERROR)
+            Jobs.update(job, status=JobStatus.ERROR, status_text=str(error))
             raise error
 
         Jobs.update(job, status=JobStatus.FINISHED)
