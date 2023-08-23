@@ -306,6 +306,9 @@ class Backups:
         snapshot: Snapshot,
         job: Job,
     ) -> None:
+        Jobs.update(
+            job, status=JobStatus.CREATED, status_text=f"Waiting for pre-restore backup"
+        )
         failsafe_snapshot = Backups.back_up(service)
 
         Jobs.update(
@@ -321,7 +324,7 @@ class Backups:
             Jobs.update(
                 job,
                 status=JobStatus.ERROR,
-                status_text=f" restore failed with {str(error)}, reverting to {failsafe_snapshot.id}",
+                status_text=f"Restore failed with {str(error)}, reverting to {failsafe_snapshot.id}",
             )
             Backups._restore_service_from_snapshot(
                 service, failsafe_snapshot.id, verify=False
@@ -329,7 +332,7 @@ class Backups:
             Jobs.update(
                 job,
                 status=JobStatus.ERROR,
-                status_text=f" restore failed with {str(error)}, reverted to {failsafe_snapshot.id}",
+                status_text=f"Restore failed with {str(error)}, reverted to {failsafe_snapshot.id}",
             )
             raise error
 
@@ -348,7 +351,7 @@ class Backups:
         try:
             Backups._assert_restorable(snapshot)
             Jobs.update(
-                job, status=JobStatus.CREATED, status_text="stopping the service"
+                job, status=JobStatus.RUNNING, status_text="Stopping the service"
             )
             with StoppedService(service):
                 Backups.assert_dead(service)
@@ -369,7 +372,7 @@ class Backups:
                     job,
                     status=JobStatus.RUNNING,
                     progress=90,
-                    status_text="restarting the service",
+                    status_text="Restarting the service",
                 )
 
         except Exception as error:
