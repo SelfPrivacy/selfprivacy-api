@@ -283,7 +283,7 @@ class StoppedService:
 
     def __enter__(self) -> Service:
         self.original_status = self.service.get_status()
-        if self.original_status != ServiceStatus.INACTIVE:
+        if self.original_status not in [ServiceStatus.INACTIVE, ServiceStatus.FAILED]:
             self.service.stop()
             wait_until_true(
                 lambda: self.service.get_status() == ServiceStatus.INACTIVE,

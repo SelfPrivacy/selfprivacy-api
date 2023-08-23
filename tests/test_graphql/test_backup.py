@@ -10,6 +10,7 @@ from subprocess import Popen
 
 import selfprivacy_api.services as services
 from selfprivacy_api.services import Service, get_all_services
+from selfprivacy_api.services.service import ServiceStatus
 
 from selfprivacy_api.services import get_service_by_id
 from selfprivacy_api.services.test_service import DummyService
@@ -462,10 +463,19 @@ def restore_strategy(request) -> RestoreStrategy:
         return RestoreStrategy.INPLACE
 
 
+@pytest.fixture(params=["failed", "healthy"])
+def failed(request) -> bool:
+    if request.param == "failed":
+        return True
+    return False
+
+
 def test_restore_snapshot_task(
-    backups, dummy_service, restore_strategy, simulated_service_stopping_delay
+    backups, dummy_service, restore_strategy, simulated_service_stopping_delay, failed
 ):
     dummy_service.set_delay(simulated_service_stopping_delay)
+    if failed:
+        dummy_service.set_status(ServiceStatus.FAILED)
 
     Backups.back_up(dummy_service)
     snaps = Backups.get_snapshots(dummy_service)
