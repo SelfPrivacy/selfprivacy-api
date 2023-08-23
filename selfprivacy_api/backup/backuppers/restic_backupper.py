@@ -9,8 +9,7 @@ from typing import List, TypeVar, Callable
 from collections.abc import Iterable
 from json.decoder import JSONDecodeError
 from os.path import exists, join
-from os import listdir, mkdir
-from time import sleep
+from os import mkdir
 from shutil import rmtree
 
 from selfprivacy_api.backup.util import output_yielder, sync
@@ -33,12 +32,12 @@ def unlocked_repo(func: T) -> T:
     def inner(self: ResticBackupper, *args, **kwargs):
         try:
             return func(self, *args, **kwargs)
-        except Exception as e:
-            if "unable to create lock" in str(e):
+        except Exception as error:
+            if "unable to create lock" in str(error):
                 self.unlock()
                 return func(self, *args, **kwargs)
             else:
-                raise e
+                raise error
 
     # Above, we manually guarantee that the type returned is compatible.
     return inner  # type: ignore
@@ -293,8 +292,8 @@ class ResticBackupper(AbstractBackupper):
                     break
                 if "unable" in line:
                     raise ValueError(line)
-        except Exception as e:
-            raise ValueError("could not lock repository") from e
+        except Exception as error:
+            raise ValueError("could not lock repository") from error
 
     @unlocked_repo
     def restored_size(self, snapshot_id: str) -> int:
