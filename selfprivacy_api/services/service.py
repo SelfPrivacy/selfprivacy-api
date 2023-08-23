@@ -13,7 +13,7 @@ from selfprivacy_api.services.owned_path import OwnedPath
 from selfprivacy_api import utils
 from selfprivacy_api.utils.waitloop import wait_until_true
 
-DEFAULT_START_STOP_TIMEOUT = 10 * 60
+DEFAULT_START_STOP_TIMEOUT = 5 * 60
 
 
 class ServiceStatus(Enum):
