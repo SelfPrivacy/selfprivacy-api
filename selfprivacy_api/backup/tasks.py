@@ -38,6 +38,7 @@ def restore_snapshot(
     """
     The worker task that starts the restore process.
     """
+    print(f"Restoring snapshot {snapshot.id} with strategy {strategy.name}")
     Backups.restore_snapshot(snapshot, strategy)
     return True
 

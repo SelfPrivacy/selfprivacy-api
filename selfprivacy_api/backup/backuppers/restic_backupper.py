@@ -332,23 +332,32 @@ class ResticBackupper(AbstractBackupper):
         if folders is None or folders == []:
             raise ValueError("cannot restore without knowing where to!")
 
+        print("getting temp dir")
         with tempfile.TemporaryDirectory() as temp_dir:
+            print(f"temp dir is {temp_dir}")
             if verify:
+                print("attempting verified restore")
                 self._raw_verified_restore(snapshot_id, target=temp_dir)
                 snapshot_root = temp_dir
                 for folder in folders:
+                    print(f"restoring {folder}")
                     src = join(snapshot_root, folder.strip("/"))
                     if not exists(src):
                         raise ValueError(
                             f"No such path: {src}. We tried to find {folder}"
                         )
                     dst = folder
+                    print(f"syncing {src} to {dst}")
                     sync(src, dst)
 
             else:  # attempting inplace restore
+                print("attempting inplace restore")
                 for folder in folders:
+                    print(f"restoring {folder}")
                     rmtree(folder)
+                    print(f"removed {folder}")
                     mkdir(folder)
+                    print(f"created {folder}")
                 self._raw_verified_restore(snapshot_id, target="/")
                 return
 
@@ -358,6 +367,7 @@ class ResticBackupper(AbstractBackupper):
             "restore", snapshot_id, "--target", target, "--verify"
         )
 
+        print(f"starting restore with {restore_command}")
         with subprocess.Popen(
             restore_command,
             stdout=subprocess.PIPE,
@@ -368,6 +378,7 @@ class ResticBackupper(AbstractBackupper):
             # for some reason restore does not support
             # nice reporting of progress via json
             output = handle.communicate()[0].decode("utf-8")
+            print(f"restore output: {output}")
             if "restoring" not in output:
                 raise ValueError("cannot restore a snapshot: " + output)
 

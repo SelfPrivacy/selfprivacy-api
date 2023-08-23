@@ -278,23 +278,34 @@ class StoppedService:
     """
 
     def __init__(self, service: Service):
+        print("Stopping service - init")
         self.service = service
         self.original_status = service.get_status()
+        print(f"Stopping service - original status: {self.original_status}")
 
     def __enter__(self) -> Service:
+        print(f"Stopping service - enter")
         self.original_status = self.service.get_status()
+        print(f"Stopping service - original status: {self.original_status}")
         if self.original_status != ServiceStatus.INACTIVE:
+            print("Original status is not inactive, stopping service")
             self.service.stop()
+            print("Waiting for service to stop")
             wait_until_true(
                 lambda: self.service.get_status() == ServiceStatus.INACTIVE,
                 timeout_sec=DEFAULT_START_STOP_TIMEOUT,
             )
+            print("Service stopped")
         return self.service
 
     def __exit__(self, type, value, traceback):
+        print(f"Stopping service - exit")
         if self.original_status in [ServiceStatus.ACTIVATING, ServiceStatus.ACTIVE]:
+            print("Original status is active, starting service")
             self.service.start()
+            print("Waiting for service to start")
             wait_until_true(
                 lambda: self.service.get_status() == ServiceStatus.ACTIVE,
                 timeout_sec=DEFAULT_START_STOP_TIMEOUT,
             )
+            print("Service started")
