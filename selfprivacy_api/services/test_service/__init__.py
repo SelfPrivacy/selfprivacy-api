@@ -135,8 +135,12 @@ class DummyService(Service):
 
     @classmethod
     def stop(cls):
-        cls.set_status(ServiceStatus.DEACTIVATING)
-        cls.change_status_with_async_delay(ServiceStatus.INACTIVE, cls.startstop_delay)
+        # simulate a failing service unable to stop
+        if not cls.get_status() == ServiceStatus.FAILED:
+            cls.set_status(ServiceStatus.DEACTIVATING)
+            cls.change_status_with_async_delay(
+                ServiceStatus.INACTIVE, cls.startstop_delay
+            )
 
     @classmethod
     def start(cls):
