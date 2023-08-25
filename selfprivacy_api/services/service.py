@@ -290,8 +290,10 @@ class StoppedService:
                     lambda: self.service.get_status() == ServiceStatus.INACTIVE,
                     timeout_sec=DEFAULT_START_STOP_TIMEOUT,
                 )
-            except TimeoutError as e:
-                raise TimeoutError(f"timed out waiting for {self.service.get_display_name()} to stop")
+            except TimeoutError as error:
+                raise TimeoutError(
+                    f"timed out waiting for {self.service.get_display_name()} to stop"
+                ) from error
         return self.service
 
     def __exit__(self, type, value, traceback):
@@ -302,5 +304,7 @@ class StoppedService:
                     lambda: self.service.get_status() == ServiceStatus.ACTIVE,
                     timeout_sec=DEFAULT_START_STOP_TIMEOUT,
                 )
-            except TimeoutError as e:
-                raise TimeoutError(f"timed out waiting for {self.service.get_display_name()} to start")
+            except TimeoutError as error:
+                raise TimeoutError(
+                    f"timed out waiting for {self.service.get_display_name()} to start"
+                ) from error
