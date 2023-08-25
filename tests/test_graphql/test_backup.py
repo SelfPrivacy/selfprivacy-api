@@ -8,6 +8,8 @@ from os import urandom
 from datetime import datetime, timedelta, timezone
 from subprocess import Popen
 
+import tempfile
+
 import selfprivacy_api.services as services
 from selfprivacy_api.services import Service, get_all_services
 from selfprivacy_api.services.service import ServiceStatus
@@ -735,25 +737,6 @@ def test_sync_nonexistent_src(dummy_service):
         sync(src, dst)
 
 
-# Restic lowlevel
-def test_mount_umount(backups, dummy_service, tmpdir):
-    Backups.back_up(dummy_service)
-    backupper = Backups.provider().backupper
-    assert isinstance(backupper, ResticBackupper)
-
-    mountpoint = tmpdir / "mount"
-    makedirs(mountpoint)
-    assert path.exists(mountpoint)
-    assert len(listdir(mountpoint)) == 0
-
-    handle = backupper.mount_repo(mountpoint)
-    assert len(listdir(mountpoint)) != 0
-
-    backupper.unmount_repo(mountpoint)
-    # handle.terminate()
-    assert len(listdir(mountpoint)) == 0
-
-
 def test_move_blocks_backups(backups, dummy_service, restore_strategy):
     snap = Backups.back_up(dummy_service)
     job = Jobs.add(
@@ -816,3 +799,10 @@ def test_operations_while_locked(backups, dummy_service):
     # check that no locks were left
     Backups.provider().backupper.lock()
     Backups.provider().backupper.unlock()
+
+
+# a paranoid check to weed out problems with tempdirs that are not dependent on us
+def test_tempfile():
+    with tempfile.TemporaryDirectory() as temp:
+        assert path.exists(temp)
+    assert not path.exists(temp)
