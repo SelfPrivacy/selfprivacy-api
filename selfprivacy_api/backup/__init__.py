@@ -23,7 +23,18 @@ from selfprivacy_api.jobs import Jobs, JobStatus, Job
 from selfprivacy_api.graphql.queries.providers import (
     BackupProvider as BackupProviderEnum,
 )
-from selfprivacy_api.graphql.common_types.backup import RestoreStrategy, BackupReason
+from selfprivacy_api.graphql.common_types.backup import (
+    RestoreStrategy,
+    BackupReason,
+    AutobackupQuotas,
+)
+from selfprivacy_api.backup.time import (
+    same_day,
+    same_month,
+    same_week,
+    same_year,
+    same_lifetime_of_the_universe,
+)
 
 from selfprivacy_api.models.backup.snapshot import Snapshot
 
@@ -304,18 +315,86 @@ class Backups:
         ]
 
     @staticmethod
+    def add_snap_but_with_quotas(
+        new_snap: Snapshot, snaps: List[Snapshot], quotas: AutobackupQuotas
+    ) -> None:
+        quotas_map = {
+            same_day: quotas.daily,
+            same_week: quotas.weekly,
+            same_month: quotas.monthly,
+            same_year: quotas.yearly,
+            same_lifetime_of_the_universe: quotas.total,
+        }
+
+        snaps.append(new_snap)
+
+        for is_same_period, quota in quotas_map.items():
+            if quota <= 0:
+                continue
+
+            cohort = [
+                snap
+                for snap in snaps
+                if is_same_period(snap.created_at, new_snap.created_at)
+            ]
+            sorted_cohort = sorted(cohort, key=lambda s: s.created_at)
+            n_to_kill = len(cohort) - quota
+            if n_to_kill > 0:
+                snaps_to_kill = sorted_cohort[:n_to_kill]
+                for snap in snaps_to_kill:
+                    snaps.remove(snap)
+
+    @staticmethod
+    def _prune_snaps_with_quotas(snapshots: List[Snapshot]) -> List[Snapshot]:
+        # Function broken out for testability
+        sorted_snaps = sorted(snapshots, key=lambda s: s.created_at)
+        quotas = Backups.autobackup_quotas()
+
+        new_snaplist: List[Snapshot] = []
+        for snap in sorted_snaps:
+            Backups.add_snap_but_with_quotas(snap, new_snaplist, quotas)
+
+        return new_snaplist
+
+    @staticmethod
     def _prune_auto_snaps(service) -> None:
-        max = Backups.max_auto_snapshots()
-        if max == -1:
-            return
+        # Not very testable by itself, so most testing is going on Backups._prune_snaps_with_quotas
+        # We can still test total limits and, say, daily limits
 
         auto_snaps = Backups._auto_snaps(service)
-        if len(auto_snaps) > max:
-            n_to_kill = len(auto_snaps) - max
-            sorted_snaps = sorted(auto_snaps, key=lambda s: s.created_at)
-            snaps_to_kill = sorted_snaps[:n_to_kill]
-            for snap in snaps_to_kill:
+        new_snaplist = Backups._prune_snaps_with_quotas(auto_snaps)
+
+        # TODO: Can be optimized since there is forgetting of an array in one restic op
+        # but most of the time this will be only one snap to forget.
+        for snap in auto_snaps:
+            if snap not in new_snaplist:
                 Backups.forget_snapshot(snap)
+
+    @staticmethod
+    def _standardize_quotas(i: int) -> int:
+        if i <= 0:
+            i = -1
+        return i
+
+    @staticmethod
+    def autobackup_quotas() -> AutobackupQuotas:
+        """everything <=0 means unlimited"""
+
+        return Storage.autobackup_quotas()
+
+    @staticmethod
+    def set_autobackup_quotas(quotas: AutobackupQuotas) -> None:
+        """everything <=0 means unlimited"""
+
+        Storage.set_autobackup_quotas(
+            AutobackupQuotas(
+                daily=Backups._standardize_quotas(quotas.daily),
+                weekly=Backups._standardize_quotas(quotas.weekly),
+                monthly=Backups._standardize_quotas(quotas.monthly),
+                yearly=Backups._standardize_quotas(quotas.yearly),
+                total=Backups._standardize_quotas(quotas.total),
+            )
+        )
 
     @staticmethod
     def set_max_auto_snapshots(value: int) -> None:
