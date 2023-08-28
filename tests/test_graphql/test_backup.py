@@ -490,29 +490,49 @@ def test_autobackup_snapshots_pruning_edgeweek(backups):
     ]
 
 
-# def test_too_many_auto(backups, dummy_service):
-#     assert Backups.autobackup_quotas()
-#     Backups.set_max_auto_snapshots(2)
-#     assert Backups.max_auto_snapshots() == 2
+def test_too_many_auto(backups, dummy_service):
+    assert Backups.autobackup_quotas()
+    quota = copy(unlimited_quotas)
+    quota.total = 2
+    Backups.set_autobackup_quotas(quota)
+    assert Backups.autobackup_quotas().total == 2
 
-#     snap = Backups.back_up(dummy_service, BackupReason.AUTO)
-#     assert len(Backups.get_snapshots(dummy_service)) == 1
-#     snap2 = Backups.back_up(dummy_service, BackupReason.AUTO)
-#     assert len(Backups.get_snapshots(dummy_service)) == 2
-#     snap3 = Backups.back_up(dummy_service, BackupReason.AUTO)
-#     assert len(Backups.get_snapshots(dummy_service)) == 2
+    snap = Backups.back_up(dummy_service, BackupReason.AUTO)
+    assert len(Backups.get_snapshots(dummy_service)) == 1
+    snap2 = Backups.back_up(dummy_service, BackupReason.AUTO)
+    assert len(Backups.get_snapshots(dummy_service)) == 2
+    snap3 = Backups.back_up(dummy_service, BackupReason.AUTO)
+    assert len(Backups.get_snapshots(dummy_service)) == 2
 
-#     snaps = Backups.get_snapshots(dummy_service)
+    snaps = Backups.get_snapshots(dummy_service)
+    assert snap2 in snaps
+    assert snap3 in snaps
+    assert snap not in snaps
 
-#     assert snap2 in snaps
-#     assert snap3 in snaps
-#     assert snap not in snaps
+    quota.total = -1
+    Backups.set_autobackup_quotas(quota)
+    snap4 = Backups.back_up(dummy_service, BackupReason.AUTO)
 
-#     Backups.set_max_auto_snapshots(-1)
-#     snap4 = Backups.back_up(dummy_service, BackupReason.AUTO)
-#     snaps = Backups.get_snapshots(dummy_service)
-#     assert len(snaps) == 3
-#     assert snap4 in snaps
+    snaps = Backups.get_snapshots(dummy_service)
+    assert len(snaps) == 3
+    assert snap4 in snaps
+
+    # Retroactivity
+    quota.total = 1
+    Backups.set_autobackup_quotas(quota)
+    snap5 = Backups.back_up(dummy_service, BackupReason.AUTO)
+
+    snaps = Backups.get_snapshots(dummy_service)
+    assert len(snaps) == 1
+    assert snap5 in snaps
+
+    # Explicit snaps are not affected
+    snap6 = Backups.back_up(dummy_service, BackupReason.EXPLICIT)
+
+    snaps = Backups.get_snapshots(dummy_service)
+    assert len(snaps) == 2
+    assert snap5 in snaps
+    assert snap6 in snaps
 
 
 def folder_files(folder):
