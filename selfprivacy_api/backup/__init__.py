@@ -396,18 +396,6 @@ class Backups:
             )
         )
 
-    @staticmethod
-    def set_max_auto_snapshots(value: int) -> None:
-        """everything <=0 means unlimited"""
-        if value <= 0:
-            value = -1
-        Storage.set_max_auto_snapshots(value)
-
-    @staticmethod
-    def max_auto_snapshots() -> int:
-        """-1 means unlimited"""
-        return Storage.max_auto_snapshots()
-
     # Restoring
 
     @staticmethod
