@@ -24,5 +24,6 @@ def same_month(a: datetime, b: datetime) -> bool:
 def same_year(a: datetime, b: datetime) -> bool:
     return a.year == b.year
 
+
 def same_lifetime_of_the_universe(a: datetime, b: datetime) -> bool:
     return True

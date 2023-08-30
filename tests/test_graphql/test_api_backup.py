@@ -4,7 +4,10 @@ from tests.common import generate_backup_query
 
 
 from selfprivacy_api.graphql.common_types.service import service_to_graphql_service
-from selfprivacy_api.graphql.common_types.backup import AutobackupQuotas
+from selfprivacy_api.graphql.common_types.backup import (
+    _AutobackupQuotas,
+    AutobackupQuotas,
+)
 from selfprivacy_api.jobs import Jobs, JobStatus
 
 API_RELOAD_SNAPSHOTS = """
@@ -41,7 +44,7 @@ mutation TestAutobackupPeriod($period: Int) {
 
 
 API_SET_AUTOBACKUP_QUOTAS_MUTATION = """
-mutation TestAutobackupQuotas($input: SetAutobackupQuotasInput!) {
+mutation TestAutobackupQuotas($input: AutobackupQuotasInput!) {
     backup {
         setAutobackupQuotas(quotas: $input) {
             success
@@ -54,7 +57,13 @@ mutation TestAutobackupQuotas($input: SetAutobackupQuotasInput!) {
                 autobackupPeriod
                 locationName
                 locationId
-                autobackupQuotas
+                autobackupQuotas {
+                    daily
+                    weekly
+                    monthly
+                    yearly
+                    total
+                }
             }
         }
     }
@@ -200,12 +209,12 @@ def api_set_period(authorized_client, period):
     return response
 
 
-def api_set_quotas(authorized_client, quotas):
+def api_set_quotas(authorized_client, quotas: _AutobackupQuotas):
     response = authorized_client.post(
         "/graphql",
         json={
             "query": API_SET_AUTOBACKUP_QUOTAS_MUTATION,
-            "variables": {"input": {"quotas": quotas}},
+            "variables": {"input": quotas.dict()},
         },
     )
     return response
@@ -358,7 +367,7 @@ def test_remove(authorized_client, generic_userdata):
 
 
 def test_autobackup_quotas_nonzero(authorized_client):
-    quotas = AutobackupQuotas(
+    quotas = _AutobackupQuotas(
         daily=2,
         weekly=4,
         monthly=13,

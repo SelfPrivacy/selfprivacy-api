@@ -12,8 +12,8 @@ from selfprivacy_api.graphql.queries.backup import Backup
 from selfprivacy_api.graphql.queries.providers import BackupProvider
 from selfprivacy_api.graphql.common_types.jobs import job_to_api_job
 from selfprivacy_api.graphql.common_types.backup import (
+    AutobackupQuotasInput,
     RestoreStrategy,
-    AutobackupQuotas,
 )
 
 from selfprivacy_api.backup import Backups
@@ -34,13 +34,6 @@ class InitializeRepositoryInput:
     # Key ID and key for Backblaze
     login: str
     password: str
-
-
-@strawberry.input
-class SetAutobackupQuotasInput:
-    """A single field input to reuse AutobackupQuotas"""
-
-    quotas: AutobackupQuotas
 
 
 @strawberry.type
@@ -102,7 +95,7 @@ class BackupMutations:
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def set_autobackup_quotas(
-        self, quotas: SetAutobackupQuotasInput
+        self, quotas: AutobackupQuotasInput
     ) -> GenericBackupConfigReturn:
         """
         Set autobackup quotas.

@@ -28,7 +28,7 @@ class BackupConfiguration:
     # If none, autobackups are disabled
     autobackup_period: typing.Optional[int]
     # None is equal to all quotas being unlimited (-1). Optional for compatibility reasons.
-    autobackup_quotas: typing.Optional[AutobackupQuotas]
+    autobackup_quotas: AutobackupQuotas
     # Bucket name for Backblaze, path for some other providers
     location_name: typing.Optional[str]
     location_id: typing.Optional[str]

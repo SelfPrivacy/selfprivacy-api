@@ -29,3 +29,8 @@ class _AutobackupQuotas(BaseModel):
 @strawberry.experimental.pydantic.type(model=_AutobackupQuotas, all_fields=True)
 class AutobackupQuotas:
     pass
+
+
+@strawberry.experimental.pydantic.input(model=_AutobackupQuotas, all_fields=True)
+class AutobackupQuotasInput:
+    pass
