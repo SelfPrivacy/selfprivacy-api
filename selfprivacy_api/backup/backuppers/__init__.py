@@ -37,6 +37,11 @@ class AbstractBackupper(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def erase_repo(self) -> None:
+        """Completely empties the remote"""
+        raise NotImplementedError
+
+    @abstractmethod
     def restore_from_backup(
         self,
         snapshot_id: str,
