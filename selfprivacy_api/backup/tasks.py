@@ -7,13 +7,17 @@ from selfprivacy_api.graphql.common_types.backup import RestoreStrategy
 
 from selfprivacy_api.models.backup.snapshot import Snapshot
 from selfprivacy_api.utils.huey import huey
+from huey import crontab
 from selfprivacy_api.services.service import Service
 from selfprivacy_api.backup import Backups
+
+SNAPSHOT_CACHE_TTL_HOURS = 6
 
 
 def validate_datetime(dt: datetime) -> bool:
     """
-    Validates that the datetime passed in is timezone-aware.
+    Validates that it is time to back up.
+    Also ensures that the timezone-aware time is used.
     """
     if dt.tzinfo is None:
         return Backups.is_time_to_backup(dt.replace(tzinfo=timezone.utc))
@@ -50,3 +54,8 @@ def automatic_backup():
     time = datetime.utcnow().replace(tzinfo=timezone.utc)
     for service in Backups.services_to_back_up(time):
         start_backup(service)
+
+
+@huey.periodic_task(crontab(hour=SNAPSHOT_CACHE_TTL_HOURS))
+def reload_snapshot_cache():
+    Backups.force_snapshot_cache_reload()

@@ -32,7 +32,11 @@ from selfprivacy_api.backup.backuppers.restic_backupper import ResticBackupper
 from selfprivacy_api.backup.jobs import add_backup_job, add_restore_job
 
 
-from selfprivacy_api.backup.tasks import start_backup, restore_snapshot
+from selfprivacy_api.backup.tasks import (
+    start_backup,
+    restore_snapshot,
+    reload_snapshot_cache,
+)
 from selfprivacy_api.backup.storage import Storage
 from selfprivacy_api.backup.jobs import get_backup_job
 
@@ -806,3 +810,16 @@ def test_tempfile():
     with tempfile.TemporaryDirectory() as temp:
         assert path.exists(temp)
     assert not path.exists(temp)
+
+
+# Storage
+def test_cache_invalidaton_task(backups, dummy_service):
+    Backups.back_up(dummy_service)
+    assert len(Storage.get_cached_snapshots()) == 1
+
+    # Does not trigger resync
+    Storage.invalidate_snapshot_storage()
+    assert Storage.get_cached_snapshots() == []
+
+    reload_snapshot_cache()
+    assert len(Storage.get_cached_snapshots()) == 1
