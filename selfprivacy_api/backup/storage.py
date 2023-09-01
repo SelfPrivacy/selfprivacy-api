@@ -16,16 +16,12 @@ from selfprivacy_api.utils.redis_model_storage import (
 from selfprivacy_api.backup.providers.provider import AbstractBackupProvider
 from selfprivacy_api.backup.providers import get_kind
 
-# a hack to store file path.
-REDIS_SNAPSHOT_CACHE_EXPIRE_SECONDS = 24 * 60 * 60  # one day
-
 REDIS_SNAPSHOTS_PREFIX = "backups:snapshots:"
 REDIS_LAST_BACKUP_PREFIX = "backups:last-backed-up:"
 REDIS_INITTED_CACHE = "backups:repo_initted"
 
 REDIS_PROVIDER_KEY = "backups:provider"
 REDIS_AUTOBACKUP_PERIOD_KEY = "backups:autobackup_period"
-
 
 redis = RedisPool().get_connection()
 
@@ -89,7 +85,6 @@ class Storage:
         """Stores snapshot metadata in redis for caching purposes"""
         snapshot_key = Storage.__snapshot_key(snapshot)
         store_model_as_hash(redis, snapshot_key, snapshot)
-        redis.expire(snapshot_key, REDIS_SNAPSHOT_CACHE_EXPIRE_SECONDS)
 
     @staticmethod
     def delete_cached_snapshot(snapshot: Snapshot) -> None:
