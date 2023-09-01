@@ -18,6 +18,8 @@ from selfprivacy_api.jobs import Jobs, JobStatus, Job
 
 SNAPSHOT_CACHE_TTL_HOURS = 6
 
+SNAPSHOT_CACHE_TTL_HOURS = 6
+
 
 def validate_datetime(dt: datetime) -> bool:
     """
