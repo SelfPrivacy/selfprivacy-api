@@ -396,6 +396,9 @@ class Backups:
             )
         )
 
+        for service in get_all_services():
+            Backups._prune_auto_snaps(service)
+
     # Restoring
 
     @staticmethod
