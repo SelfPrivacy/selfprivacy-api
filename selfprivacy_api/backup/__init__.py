@@ -4,7 +4,7 @@ This module contains the controller class for backups.
 from datetime import datetime, timedelta
 import os
 from os import statvfs
-from typing import List, Optional
+from typing import Callable, List, Optional
 
 from selfprivacy_api.utils import ReadUserData, WriteUserData
 
@@ -28,13 +28,7 @@ from selfprivacy_api.graphql.common_types.backup import (
     BackupReason,
     AutobackupQuotas,
 )
-from selfprivacy_api.backup.time import (
-    same_day,
-    same_month,
-    same_week,
-    same_year,
-    same_lifetime_of_the_universe,
-)
+
 
 from selfprivacy_api.models.backup.snapshot import Snapshot
 
@@ -79,6 +73,24 @@ class NotDeadError(AssertionError):
         Normally, this error is unreachable because we do try ensure this.
         Apparently, not this time.
         """
+
+
+class RotationBucket:
+    """
+    Bucket object used for rotation.
+    Has the following mutable fields:
+    - the counter, int
+    - the lambda function which takes datetime and the int and returns the int
+    - the last, int
+    """
+
+    def __init__(self, counter: int, last: int, rotation_lambda):
+        self.counter: int = counter
+        self.last: int = last
+        self.rotation_lambda: Callable[[datetime, int], int] = rotation_lambda
+
+    def __str__(self) -> str:
+        return f"Bucket(counter={self.counter}, last={self.last})"
 
 
 class Backups:
@@ -315,44 +327,53 @@ class Backups:
         ]
 
     @staticmethod
-    def add_snap_but_with_quotas(
-        new_snap: Snapshot, snaps: List[Snapshot], quotas: AutobackupQuotas
-    ) -> None:
-        quotas_map = {
-            same_day: quotas.daily,
-            same_week: quotas.weekly,
-            same_month: quotas.monthly,
-            same_year: quotas.yearly,
-            same_lifetime_of_the_universe: quotas.total,
-        }
-
-        snaps.append(new_snap)
-
-        for is_same_period, quota in quotas_map.items():
-            if quota <= 0:
-                continue
-
-            cohort = [
-                snap
-                for snap in snaps
-                if is_same_period(snap.created_at, new_snap.created_at)
-            ]
-            sorted_cohort = sorted(cohort, key=lambda s: s.created_at)
-            n_to_kill = len(cohort) - quota
-            if n_to_kill > 0:
-                snaps_to_kill = sorted_cohort[:n_to_kill]
-                for snap in snaps_to_kill:
-                    snaps.remove(snap)
-
-    @staticmethod
     def _prune_snaps_with_quotas(snapshots: List[Snapshot]) -> List[Snapshot]:
         # Function broken out for testability
-        sorted_snaps = sorted(snapshots, key=lambda s: s.created_at)
-        quotas = Backups.autobackup_quotas()
+        # Sorting newest first
+        sorted_snaps = sorted(snapshots, key=lambda s: s.created_at, reverse=True)
+        quotas: AutobackupQuotas = Backups.autobackup_quotas()
+
+        buckets: list[RotationBucket] = [
+            RotationBucket(
+                quotas.last,
+                -1,
+                lambda _, index: index,
+            ),
+            RotationBucket(
+                quotas.daily,
+                -1,
+                lambda date, _: date.year * 10000 + date.month * 100 + date.day,
+            ),
+            RotationBucket(
+                quotas.weekly,
+                -1,
+                lambda date, _: date.year * 100 + date.isocalendar()[1],
+            ),
+            RotationBucket(
+                quotas.monthly,
+                -1,
+                lambda date, _: date.year * 100 + date.month,
+            ),
+            RotationBucket(
+                quotas.yearly,
+                -1,
+                lambda date, _: date.year,
+            ),
+        ]
 
         new_snaplist: List[Snapshot] = []
-        for snap in sorted_snaps:
-            Backups.add_snap_but_with_quotas(snap, new_snaplist, quotas)
+        for i, snap in enumerate(sorted_snaps):
+            keep_snap = False
+            for bucket in buckets:
+                if (bucket.counter > 0) or (bucket.counter == -1):
+                    val = bucket.rotation_lambda(snap.created_at, i)
+                    if (val != bucket.last) or (i == len(sorted_snaps) - 1):
+                        bucket.last = val
+                        if bucket.counter > 0:
+                            bucket.counter -= 1
+                        if not keep_snap:
+                            new_snaplist.append(snap)
+                        keep_snap = True
 
         return new_snaplist
 
@@ -372,27 +393,27 @@ class Backups:
 
     @staticmethod
     def _standardize_quotas(i: int) -> int:
-        if i <= 0:
+        if i <= -1:
             i = -1
         return i
 
     @staticmethod
     def autobackup_quotas() -> AutobackupQuotas:
-        """everything <=0 means unlimited"""
+        """0 means do not keep, -1 means unlimited"""
 
         return Storage.autobackup_quotas()
 
     @staticmethod
     def set_autobackup_quotas(quotas: AutobackupQuotas) -> None:
-        """everything <=0 means unlimited"""
+        """0 means do not keep, -1 means unlimited"""
 
         Storage.set_autobackup_quotas(
             AutobackupQuotas(
+                last=Backups._standardize_quotas(quotas.last),
                 daily=Backups._standardize_quotas(quotas.daily),
                 weekly=Backups._standardize_quotas(quotas.weekly),
                 monthly=Backups._standardize_quotas(quotas.monthly),
                 yearly=Backups._standardize_quotas(quotas.yearly),
-                total=Backups._standardize_quotas(quotas.total),
             )
         )
 

@@ -193,11 +193,11 @@ class Storage:
         )
         if quotas_model is None:
             unlimited_quotas = AutobackupQuotas(
+                last=-1,
                 daily=-1,
                 weekly=-1,
                 monthly=-1,
                 yearly=-1,
-                total=-1,
             )
             return unlimited_quotas
-        return AutobackupQuotas.from_pydantic(quotas_model)
+        return AutobackupQuotas.from_pydantic(quotas_model)  # pylint: disable=no-member

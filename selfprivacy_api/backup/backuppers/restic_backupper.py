@@ -5,7 +5,7 @@ import json
 import datetime
 import tempfile
 
-from typing import List, TypeVar, Callable
+from typing import List, Optional, TypeVar, Callable
 from collections.abc import Iterable
 from json.decoder import JSONDecodeError
 from os.path import exists, join
@@ -33,12 +33,12 @@ def unlocked_repo(func: T) -> T:
     def inner(self: ResticBackupper, *args, **kwargs):
         try:
             return func(self, *args, **kwargs)
-        except Exception as e:
-            if "unable to create lock" in str(e):
+        except Exception as error:
+            if "unable to create lock" in str(error):
                 self.unlock()
                 return func(self, *args, **kwargs)
             else:
-                raise e
+                raise error
 
     # Above, we manually guarantee that the type returned is compatible.
     return inner  # type: ignore
@@ -85,7 +85,10 @@ class ResticBackupper(AbstractBackupper):
     def _password_command(self):
         return f"echo {LocalBackupSecret.get()}"
 
-    def restic_command(self, *args, tags: List[str] = []) -> List[str]:
+    def restic_command(self, *args, tags: Optional[List[str]] = None) -> List[str]:
+        if tags is None:
+            tags = []
+
         command = [
             "restic",
             "-o",
@@ -219,7 +222,7 @@ class ResticBackupper(AbstractBackupper):
             ) from error
 
     @staticmethod
-    def _snapshot_id_from_backup_messages(messages) -> Snapshot:
+    def _snapshot_id_from_backup_messages(messages) -> str:
         for message in messages:
             if message["message_type"] == "summary":
                 # There is a discrepancy between versions of restic/rclone
@@ -317,8 +320,8 @@ class ResticBackupper(AbstractBackupper):
                     break
                 if "unable" in line:
                     raise ValueError(line)
-        except Exception as e:
-            raise ValueError("could not lock repository") from e
+        except Exception as error:
+            raise ValueError("could not lock repository") from error
 
     @unlocked_repo
     def restored_size(self, snapshot_id: str) -> int:
@@ -415,6 +418,8 @@ class ResticBackupper(AbstractBackupper):
         forget_command = self.restic_command(
             "forget",
             snapshot_id,
+            # TODO: prune should be done in a separate process
+            "--prune",
         )
 
         with subprocess.Popen(

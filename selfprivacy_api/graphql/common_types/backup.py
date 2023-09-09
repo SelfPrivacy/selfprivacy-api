@@ -1,7 +1,7 @@
 """Backup"""
 # pylint: disable=too-few-public-methods
-import strawberry
 from enum import Enum
+import strawberry
 from pydantic import BaseModel
 
 
@@ -19,11 +19,11 @@ class BackupReason(Enum):
 
 
 class _AutobackupQuotas(BaseModel):
+    last: int
     daily: int
     weekly: int
     monthly: int
     yearly: int
-    total: int
 
 
 @strawberry.experimental.pydantic.type(model=_AutobackupQuotas, all_fields=True)

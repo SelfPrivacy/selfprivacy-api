@@ -58,11 +58,11 @@ mutation TestAutobackupQuotas($input: AutobackupQuotasInput!) {
                 locationName
                 locationId
                 autobackupQuotas {
+                    last
                     daily
                     weekly
                     monthly
                     yearly
-                    total
                 }
             }
         }
@@ -368,11 +368,11 @@ def test_remove(authorized_client, generic_userdata):
 
 def test_autobackup_quotas_nonzero(authorized_client):
     quotas = _AutobackupQuotas(
+        last=3,
         daily=2,
         weekly=4,
         monthly=13,
         yearly=14,
-        total=3,
     )
     response = api_set_quotas(authorized_client, quotas)
     data = get_data(response)["backup"]["setAutobackupQuotas"]

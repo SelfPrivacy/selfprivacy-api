@@ -305,11 +305,19 @@ def test_backup_reasons(backups, dummy_service):
 
 
 unlimited_quotas = AutobackupQuotas(
+    last=-1,
     daily=-1,
     weekly=-1,
     monthly=-1,
     yearly=-1,
-    total=-1,
+)
+
+zero_quotas = AutobackupQuotas(
+    last=0,
+    daily=0,
+    weekly=0,
+    monthly=0,
+    yearly=0,
 )
 
 
@@ -321,20 +329,66 @@ def test_get_empty_quotas(backups):
 
 def test_set_quotas(backups):
     quotas = AutobackupQuotas(
+        last=3,
         daily=2343,
         weekly=343,
         monthly=0,
         yearly=-34556,
-        total=563,
     )
     Backups.set_autobackup_quotas(quotas)
     assert Backups.autobackup_quotas() == AutobackupQuotas(
+        last=3,
         daily=2343,
         weekly=343,
+        monthly=0,
+        yearly=-1,
+    )
+
+
+def test_set_zero_quotas(backups):
+    quotas = AutobackupQuotas(
+        last=0,
+        daily=0,
+        weekly=0,
+        monthly=0,
+        yearly=0,
+    )
+    Backups.set_autobackup_quotas(quotas)
+    assert Backups.autobackup_quotas() == zero_quotas
+
+
+def test_set_unlimited_quotas(backups):
+    quotas = AutobackupQuotas(
+        last=-1,
+        daily=-1,
+        weekly=-1,
         monthly=-1,
         yearly=-1,
-        total=563,
     )
+    Backups.set_autobackup_quotas(quotas)
+    assert Backups.autobackup_quotas() == unlimited_quotas
+
+
+def test_set_zero_quotas_after_unlimited(backups):
+    quotas = AutobackupQuotas(
+        last=-1,
+        daily=-1,
+        weekly=-1,
+        monthly=-1,
+        yearly=-1,
+    )
+    Backups.set_autobackup_quotas(quotas)
+    assert Backups.autobackup_quotas() == unlimited_quotas
+
+    quotas = AutobackupQuotas(
+        last=0,
+        daily=0,
+        weekly=0,
+        monthly=0,
+        yearly=0,
+    )
+    Backups.set_autobackup_quotas(quotas)
+    assert Backups.autobackup_quotas() == zero_quotas
 
 
 def dummy_snapshot(date: datetime):
@@ -351,15 +405,24 @@ def test_autobackup_snapshots_pruning(backups):
     now = datetime(year=2023, month=1, day=25, hour=10)
 
     snaps = [
-        dummy_snapshot(now - timedelta(days=365 * 2)),
-        dummy_snapshot(now - timedelta(days=20)),
-        dummy_snapshot(now - timedelta(days=2)),
-        dummy_snapshot(now - timedelta(days=1, hours=3)),
-        dummy_snapshot(now - timedelta(days=1, hours=2)),
-        dummy_snapshot(now - timedelta(days=1)),
-        dummy_snapshot(now - timedelta(hours=2)),
-        dummy_snapshot(now - timedelta(minutes=5)),
         dummy_snapshot(now),
+        dummy_snapshot(now - timedelta(minutes=5)),
+        dummy_snapshot(now - timedelta(hours=2)),
+        dummy_snapshot(now - timedelta(hours=5)),
+        dummy_snapshot(now - timedelta(days=1)),
+        dummy_snapshot(now - timedelta(days=1, hours=2)),
+        dummy_snapshot(now - timedelta(days=1, hours=3)),
+        dummy_snapshot(now - timedelta(days=2)),
+        dummy_snapshot(now - timedelta(days=7)),
+        dummy_snapshot(now - timedelta(days=12)),
+        dummy_snapshot(now - timedelta(days=23)),
+        dummy_snapshot(now - timedelta(days=28)),
+        dummy_snapshot(now - timedelta(days=32)),
+        dummy_snapshot(now - timedelta(days=47)),
+        dummy_snapshot(now - timedelta(days=64)),
+        dummy_snapshot(now - timedelta(days=84)),
+        dummy_snapshot(now - timedelta(days=104)),
+        dummy_snapshot(now - timedelta(days=365 * 2)),
     ]
     old_len = len(snaps)
 
@@ -367,135 +430,190 @@ def test_autobackup_snapshots_pruning(backups):
     Backups.set_autobackup_quotas(quotas)
     assert Backups._prune_snaps_with_quotas(snaps) == snaps
 
-    quotas = copy(unlimited_quotas)
+    quotas = copy(zero_quotas)
+    quotas.last = 2
     quotas.daily = 2
     Backups.set_autobackup_quotas(quotas)
 
-    pruned_snaps = Backups._prune_snaps_with_quotas(snaps)
-    assert pruned_snaps == [
-        dummy_snapshot(now - timedelta(days=365 * 2)),
-        dummy_snapshot(now - timedelta(days=20)),
-        dummy_snapshot(now - timedelta(days=2)),
-        dummy_snapshot(now - timedelta(days=1, hours=2)),
-        dummy_snapshot(now - timedelta(days=1)),
-        dummy_snapshot(now - timedelta(minutes=5)),
+    snaps_to_keep = Backups._prune_snaps_with_quotas(snaps)
+    assert snaps_to_keep == [
         dummy_snapshot(now),
+        dummy_snapshot(now - timedelta(minutes=5)),
+        # dummy_snapshot(now - timedelta(hours=2)),
+        # dummy_snapshot(now - timedelta(hours=5)),
+        dummy_snapshot(now - timedelta(days=1)),
+        # dummy_snapshot(now - timedelta(days=1, hours=2)),
+        # dummy_snapshot(now - timedelta(days=1, hours=3)),
+        # dummy_snapshot(now - timedelta(days=2)),
+        # dummy_snapshot(now - timedelta(days=7)),
+        # dummy_snapshot(now - timedelta(days=12)),
+        # dummy_snapshot(now - timedelta(days=23)),
+        # dummy_snapshot(now - timedelta(days=28)),
+        # dummy_snapshot(now - timedelta(days=32)),
+        # dummy_snapshot(now - timedelta(days=47)),
+        # dummy_snapshot(now - timedelta(days=64)),
+        # dummy_snapshot(now - timedelta(days=84)),
+        # dummy_snapshot(now - timedelta(days=104)),
+        # dummy_snapshot(now - timedelta(days=365 * 2)),
     ]
 
     # checking that this function does not mutate the argument
-    assert snaps != pruned_snaps
+    assert snaps != snaps_to_keep
     assert len(snaps) == old_len
 
-    quotas = copy(unlimited_quotas)
+    quotas = copy(zero_quotas)
     quotas.weekly = 4
     Backups.set_autobackup_quotas(quotas)
 
-    pruned_snaps = Backups._prune_snaps_with_quotas(snaps)
-    assert pruned_snaps == [
-        dummy_snapshot(now - timedelta(days=365 * 2)),
-        dummy_snapshot(now - timedelta(days=20)),
-        dummy_snapshot(now - timedelta(days=1)),
-        dummy_snapshot(now - timedelta(hours=2)),
-        dummy_snapshot(now - timedelta(minutes=5)),
+    snaps_to_keep = Backups._prune_snaps_with_quotas(snaps)
+    assert snaps_to_keep == [
         dummy_snapshot(now),
+        # dummy_snapshot(now - timedelta(minutes=5)),
+        # dummy_snapshot(now - timedelta(hours=2)),
+        # dummy_snapshot(now - timedelta(hours=5)),
+        # dummy_snapshot(now - timedelta(days=1)),
+        # dummy_snapshot(now - timedelta(days=1, hours=2)),
+        # dummy_snapshot(now - timedelta(days=1, hours=3)),
+        # dummy_snapshot(now - timedelta(days=2)),
+        dummy_snapshot(now - timedelta(days=7)),
+        dummy_snapshot(now - timedelta(days=12)),
+        dummy_snapshot(now - timedelta(days=23)),
+        # dummy_snapshot(now - timedelta(days=28)),
+        # dummy_snapshot(now - timedelta(days=32)),
+        # dummy_snapshot(now - timedelta(days=47)),
+        # dummy_snapshot(now - timedelta(days=64)),
+        # dummy_snapshot(now - timedelta(days=84)),
+        # dummy_snapshot(now - timedelta(days=104)),
+        # dummy_snapshot(now - timedelta(days=365 * 2)),
     ]
 
-    quotas = copy(unlimited_quotas)
+    quotas = copy(zero_quotas)
     quotas.monthly = 7
     Backups.set_autobackup_quotas(quotas)
 
-    pruned_snaps = Backups._prune_snaps_with_quotas(snaps)
-    assert pruned_snaps == [
-        dummy_snapshot(now - timedelta(days=365 * 2)),
-        dummy_snapshot(now - timedelta(days=2)),
-        dummy_snapshot(now - timedelta(days=1, hours=3)),
-        dummy_snapshot(now - timedelta(days=1, hours=2)),
-        dummy_snapshot(now - timedelta(days=1)),
-        dummy_snapshot(now - timedelta(hours=2)),
-        dummy_snapshot(now - timedelta(minutes=5)),
+    snaps_to_keep = Backups._prune_snaps_with_quotas(snaps)
+    assert snaps_to_keep == [
         dummy_snapshot(now),
+        # dummy_snapshot(now - timedelta(minutes=5)),
+        # dummy_snapshot(now - timedelta(hours=2)),
+        # dummy_snapshot(now - timedelta(hours=5)),
+        # dummy_snapshot(now - timedelta(days=1)),
+        # dummy_snapshot(now - timedelta(days=1, hours=2)),
+        # dummy_snapshot(now - timedelta(days=1, hours=3)),
+        # dummy_snapshot(now - timedelta(days=2)),
+        # dummy_snapshot(now - timedelta(days=7)),
+        # dummy_snapshot(now - timedelta(days=12)),
+        # dummy_snapshot(now - timedelta(days=23)),
+        dummy_snapshot(now - timedelta(days=28)),
+        # dummy_snapshot(now - timedelta(days=32)),
+        # dummy_snapshot(now - timedelta(days=47)),
+        dummy_snapshot(now - timedelta(days=64)),
+        # dummy_snapshot(now - timedelta(days=84)),
+        dummy_snapshot(now - timedelta(days=104)),
+        dummy_snapshot(now - timedelta(days=365 * 2)),
     ]
 
 
 def test_autobackup_snapshots_pruning_yearly(backups):
     snaps = [
-        dummy_snapshot(datetime(year=2023, month=2, day=1)),
-        dummy_snapshot(datetime(year=2023, month=3, day=1)),
-        dummy_snapshot(datetime(year=2023, month=4, day=1)),
         dummy_snapshot(datetime(year=2055, month=3, day=1)),
+        dummy_snapshot(datetime(year=2055, month=2, day=1)),
+        dummy_snapshot(datetime(year=2023, month=4, day=1)),
+        dummy_snapshot(datetime(year=2023, month=3, day=1)),
+        dummy_snapshot(datetime(year=2023, month=2, day=1)),
+        dummy_snapshot(datetime(year=2021, month=2, day=1)),
     ]
-    quotas = copy(unlimited_quotas)
+    quotas = copy(zero_quotas)
     quotas.yearly = 2
     Backups.set_autobackup_quotas(quotas)
 
-    pruned_snaps = Backups._prune_snaps_with_quotas(snaps)
-    assert pruned_snaps == [
-        dummy_snapshot(datetime(year=2023, month=3, day=1)),
-        dummy_snapshot(datetime(year=2023, month=4, day=1)),
+    snaps_to_keep = Backups._prune_snaps_with_quotas(snaps)
+    assert snaps_to_keep == [
         dummy_snapshot(datetime(year=2055, month=3, day=1)),
+        dummy_snapshot(datetime(year=2023, month=4, day=1)),
     ]
 
 
 def test_autobackup_snapshots_pruning_bottleneck(backups):
     now = datetime(year=2023, month=1, day=25, hour=10)
     snaps = [
-        dummy_snapshot(now - timedelta(hours=4)),
-        dummy_snapshot(now - timedelta(hours=3)),
-        dummy_snapshot(now - timedelta(hours=2)),
-        dummy_snapshot(now - timedelta(minutes=5)),
         dummy_snapshot(now),
+        dummy_snapshot(now - timedelta(minutes=5)),
+        dummy_snapshot(now - timedelta(hours=2)),
+        dummy_snapshot(now - timedelta(hours=3)),
+        dummy_snapshot(now - timedelta(hours=4)),
     ]
 
-    yearly_quota = copy(unlimited_quotas)
+    yearly_quota = copy(zero_quotas)
     yearly_quota.yearly = 2
 
-    monthly_quota = copy(unlimited_quotas)
+    monthly_quota = copy(zero_quotas)
     monthly_quota.monthly = 2
 
-    weekly_quota = copy(unlimited_quotas)
+    weekly_quota = copy(zero_quotas)
     weekly_quota.weekly = 2
 
-    daily_quota = copy(unlimited_quotas)
+    daily_quota = copy(zero_quotas)
     daily_quota.daily = 2
 
-    total_quota = copy(unlimited_quotas)
-    total_quota.total = 2
+    last_quota = copy(zero_quotas)
+    last_quota.last = 1
+    last_quota.yearly = 2
 
-    for quota in [total_quota, yearly_quota, monthly_quota, weekly_quota, daily_quota]:
+    for quota in [last_quota, yearly_quota, monthly_quota, weekly_quota, daily_quota]:
+        print(quota)
         Backups.set_autobackup_quotas(quota)
-        pruned_snaps = Backups._prune_snaps_with_quotas(snaps)
-        assert pruned_snaps == [
-            dummy_snapshot(now - timedelta(minutes=5)),
+        snaps_to_keep = Backups._prune_snaps_with_quotas(snaps)
+        assert snaps_to_keep == [
             dummy_snapshot(now),
+            # If there is a vacant quota, we should keep the last snapshot even if it doesn't fit
+            dummy_snapshot(now - timedelta(hours=4)),
         ]
 
 
 def test_autobackup_snapshots_pruning_edgeweek(backups):
     # jan 1 2023 is Sunday
     snaps = [
-        dummy_snapshot(datetime(year=2022, month=12, day=30)),
-        dummy_snapshot(datetime(year=2022, month=12, day=31)),
-        dummy_snapshot(datetime(year=2023, month=1, day=1)),
         dummy_snapshot(datetime(year=2023, month=1, day=6)),
+        dummy_snapshot(datetime(year=2023, month=1, day=1)),
+        dummy_snapshot(datetime(year=2022, month=12, day=31)),
+        dummy_snapshot(datetime(year=2022, month=12, day=30)),
     ]
-    quotas = copy(unlimited_quotas)
+    quotas = copy(zero_quotas)
     quotas.weekly = 2
     Backups.set_autobackup_quotas(quotas)
 
-    pruned_snaps = Backups._prune_snaps_with_quotas(snaps)
-    assert pruned_snaps == [
-        dummy_snapshot(datetime(year=2022, month=12, day=31)),
-        dummy_snapshot(datetime(year=2023, month=1, day=1)),
+    snaps_to_keep = Backups._prune_snaps_with_quotas(snaps)
+    assert snaps_to_keep == [
         dummy_snapshot(datetime(year=2023, month=1, day=6)),
+        dummy_snapshot(datetime(year=2023, month=1, day=1)),
+    ]
+
+
+def test_autobackup_snapshots_pruning_big_gap(backups):
+    snaps = [
+        dummy_snapshot(datetime(year=2023, month=1, day=6)),
+        dummy_snapshot(datetime(year=2023, month=1, day=2)),
+        dummy_snapshot(datetime(year=2022, month=10, day=31)),
+        dummy_snapshot(datetime(year=2022, month=10, day=30)),
+    ]
+    quotas = copy(zero_quotas)
+    quotas.weekly = 2
+    Backups.set_autobackup_quotas(quotas)
+
+    snaps_to_keep = Backups._prune_snaps_with_quotas(snaps)
+    assert snaps_to_keep == [
+        dummy_snapshot(datetime(year=2023, month=1, day=6)),
+        dummy_snapshot(datetime(year=2022, month=10, day=31)),
     ]
 
 
 def test_too_many_auto(backups, dummy_service):
     assert Backups.autobackup_quotas()
-    quota = copy(unlimited_quotas)
-    quota.total = 2
+    quota = copy(zero_quotas)
+    quota.last = 2
     Backups.set_autobackup_quotas(quota)
-    assert Backups.autobackup_quotas().total == 2
+    assert Backups.autobackup_quotas().last == 2
 
     snap = Backups.back_up(dummy_service, BackupReason.AUTO)
     assert len(Backups.get_snapshots(dummy_service)) == 1
@@ -509,7 +627,7 @@ def test_too_many_auto(backups, dummy_service):
     assert snap3 in snaps
     assert snap not in snaps
 
-    quota.total = -1
+    quota.last = -1
     Backups.set_autobackup_quotas(quota)
     snap4 = Backups.back_up(dummy_service, BackupReason.AUTO)
 
@@ -518,7 +636,7 @@ def test_too_many_auto(backups, dummy_service):
     assert snap4 in snaps
 
     # Retroactivity
-    quota.total = 1
+    quota.last = 1
     Backups.set_autobackup_quotas(quota)
     snaps = Backups.get_snapshots(dummy_service)
     assert len(snaps) == 1
