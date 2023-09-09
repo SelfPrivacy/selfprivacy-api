@@ -77,6 +77,7 @@ class Backup:
                 id=snap.id,
                 service=service,
                 created_at=snap.created_at,
+                reason=snap.reason,
             )
             result.append(graphql_snap)
         return result

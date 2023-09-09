@@ -145,6 +145,7 @@ allSnapshots {
         id
     }
     createdAt
+    reason
 }
 """
 

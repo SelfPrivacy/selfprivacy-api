@@ -2,6 +2,7 @@ from enum import Enum
 import typing
 import strawberry
 import datetime
+from selfprivacy_api.graphql.common_types.backup import BackupReason
 from selfprivacy_api.graphql.common_types.dns import DnsRecord
 
 from selfprivacy_api.services import get_service_by_id, get_services_by_location
@@ -114,6 +115,7 @@ class SnapshotInfo:
     id: str
     service: Service
     created_at: datetime.datetime
+    reason: BackupReason
 
 
 def service_to_graphql_service(service: ServiceInterface) -> Service:
