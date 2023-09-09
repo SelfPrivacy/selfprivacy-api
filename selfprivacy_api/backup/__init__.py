@@ -335,27 +335,27 @@ class Backups:
 
         buckets: list[RotationBucket] = [
             RotationBucket(
-                quotas.last,
+                quotas.last,  # type: ignore
                 -1,
                 lambda _, index: index,
             ),
             RotationBucket(
-                quotas.daily,
+                quotas.daily,  # type: ignore
                 -1,
                 lambda date, _: date.year * 10000 + date.month * 100 + date.day,
             ),
             RotationBucket(
-                quotas.weekly,
+                quotas.weekly,  # type: ignore
                 -1,
                 lambda date, _: date.year * 100 + date.isocalendar()[1],
             ),
             RotationBucket(
-                quotas.monthly,
+                quotas.monthly,  # type: ignore
                 -1,
                 lambda date, _: date.year * 100 + date.month,
             ),
             RotationBucket(
-                quotas.yearly,
+                quotas.yearly,  # type: ignore
                 -1,
                 lambda date, _: date.year,
             ),
@@ -409,11 +409,11 @@ class Backups:
 
         Storage.set_autobackup_quotas(
             AutobackupQuotas(
-                last=Backups._standardize_quotas(quotas.last),
-                daily=Backups._standardize_quotas(quotas.daily),
-                weekly=Backups._standardize_quotas(quotas.weekly),
-                monthly=Backups._standardize_quotas(quotas.monthly),
-                yearly=Backups._standardize_quotas(quotas.yearly),
+                last=Backups._standardize_quotas(quotas.last),  # type: ignore
+                daily=Backups._standardize_quotas(quotas.daily),  # type: ignore
+                weekly=Backups._standardize_quotas(quotas.weekly),  # type: ignore
+                monthly=Backups._standardize_quotas(quotas.monthly),  # type: ignore
+                yearly=Backups._standardize_quotas(quotas.yearly),  # type: ignore
             )
         )
 
@@ -438,7 +438,7 @@ class Backups:
         job: Job,
     ) -> None:
         Jobs.update(
-            job, status=JobStatus.CREATED, status_text=f"Waiting for pre-restore backup"
+            job, status=JobStatus.CREATED, status_text="Waiting for pre-restore backup"
         )
         failsafe_snapshot = Backups.back_up(service, BackupReason.PRE_RESTORE)
 
