@@ -13,6 +13,7 @@ from selfprivacy_api.graphql.common_types.service import (
     SnapshotInfo,
     service_to_graphql_service,
 )
+from selfprivacy_api.graphql.common_types.backup import AutobackupQuotas
 from selfprivacy_api.services import get_service_by_id
 
 
@@ -26,6 +27,8 @@ class BackupConfiguration:
     is_initialized: bool
     # If none, autobackups are disabled
     autobackup_period: typing.Optional[int]
+    # None is equal to all quotas being unlimited (-1). Optional for compatibility reasons.
+    autobackup_quotas: AutobackupQuotas
     # Bucket name for Backblaze, path for some other providers
     location_name: typing.Optional[str]
     location_id: typing.Optional[str]
@@ -42,6 +45,7 @@ class Backup:
             autobackup_period=Backups.autobackup_period_minutes(),
             location_name=Backups.provider().location,
             location_id=Backups.provider().repo_id,
+            autobackup_quotas=Backups.autobackup_quotas(),
         )
 
     @strawberry.field

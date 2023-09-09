@@ -1,11 +1,14 @@
 from datetime import datetime
 from typing import Optional
+from enum import Enum
 
 
 def store_model_as_hash(redis, redis_key, model):
     for key, value in model.dict().items():
         if isinstance(value, datetime):
             value = value.isoformat()
+        if isinstance(value, Enum):
+            value = value.value
         redis.hset(redis_key, key, str(value))
 
 

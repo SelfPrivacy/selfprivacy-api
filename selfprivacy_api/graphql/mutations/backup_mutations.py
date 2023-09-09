@@ -11,7 +11,10 @@ from selfprivacy_api.graphql.queries.backup import BackupConfiguration
 from selfprivacy_api.graphql.queries.backup import Backup
 from selfprivacy_api.graphql.queries.providers import BackupProvider
 from selfprivacy_api.graphql.common_types.jobs import job_to_api_job
-from selfprivacy_api.graphql.common_types.backup import RestoreStrategy
+from selfprivacy_api.graphql.common_types.backup import (
+    AutobackupQuotasInput,
+    RestoreStrategy,
+)
 
 from selfprivacy_api.backup import Backups
 from selfprivacy_api.services import get_service_by_id
@@ -89,6 +92,33 @@ class BackupMutations:
             code=200,
             configuration=Backup().configuration(),
         )
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    def set_autobackup_quotas(
+        self, quotas: AutobackupQuotasInput
+    ) -> GenericBackupConfigReturn:
+        """
+        Set autobackup quotas.
+        Values <=0 for any timeframe mean no limits for that timeframe.
+        To disable autobackup use autobackup period setting, not this mutation.
+        """
+
+        try:
+            Backups.set_autobackup_quotas(quotas)
+            return GenericBackupConfigReturn(
+                success=True,
+                message="",
+                code=200,
+                configuration=Backup().configuration(),
+            )
+
+        except Exception as e:
+            return GenericBackupConfigReturn(
+                success=False,
+                message=str(e),
+                code=400,
+                configuration=Backup().configuration(),
+            )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def start_backup(self, service_id: str) -> GenericJobMutationReturn:

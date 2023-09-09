@@ -4,6 +4,10 @@ from tests.common import generate_backup_query
 
 
 from selfprivacy_api.graphql.common_types.service import service_to_graphql_service
+from selfprivacy_api.graphql.common_types.backup import (
+    _AutobackupQuotas,
+    AutobackupQuotas,
+)
 from selfprivacy_api.jobs import Jobs, JobStatus
 
 API_RELOAD_SNAPSHOTS = """
@@ -32,6 +36,34 @@ mutation TestAutobackupPeriod($period: Int) {
                 autobackupPeriod
                 locationName
                 locationId
+            }
+        }
+    }
+}
+"""
+
+
+API_SET_AUTOBACKUP_QUOTAS_MUTATION = """
+mutation TestAutobackupQuotas($input: AutobackupQuotasInput!) {
+    backup {
+        setAutobackupQuotas(quotas: $input) {
+            success
+            message
+            code
+            configuration {
+                provider
+                encryptionKey
+                isInitialized
+                autobackupPeriod
+                locationName
+                locationId
+                autobackupQuotas {
+                    last
+                    daily
+                    weekly
+                    monthly
+                    yearly
+                }
             }
         }
     }
@@ -172,6 +204,17 @@ def api_set_period(authorized_client, period):
         json={
             "query": API_SET_AUTOBACKUP_PERIOD_MUTATION,
             "variables": {"period": period},
+        },
+    )
+    return response
+
+
+def api_set_quotas(authorized_client, quotas: _AutobackupQuotas):
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_SET_AUTOBACKUP_QUOTAS_MUTATION,
+            "variables": {"input": quotas.dict()},
         },
     )
     return response
@@ -321,6 +364,22 @@ def test_remove(authorized_client, generic_userdata):
     # still generated every time it is missing
     assert len(configuration["encryptionKey"]) > 1
     assert configuration["isInitialized"] is False
+
+
+def test_autobackup_quotas_nonzero(authorized_client):
+    quotas = _AutobackupQuotas(
+        last=3,
+        daily=2,
+        weekly=4,
+        monthly=13,
+        yearly=14,
+    )
+    response = api_set_quotas(authorized_client, quotas)
+    data = get_data(response)["backup"]["setAutobackupQuotas"]
+    assert_ok(data)
+
+    configuration = data["configuration"]
+    assert configuration["autobackupQuotas"] == quotas
 
 
 def test_autobackup_period_nonzero(authorized_client):

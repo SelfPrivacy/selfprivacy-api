@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List
 
 from selfprivacy_api.models.backup.snapshot import Snapshot
+from selfprivacy_api.graphql.common_types.backup import BackupReason
 
 
 class AbstractBackupper(ABC):
@@ -22,7 +23,12 @@ class AbstractBackupper(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def start_backup(self, folders: List[str], tag: str) -> Snapshot:
+    def start_backup(
+        self,
+        folders: List[str],
+        service_name: str,
+        reason: BackupReason = BackupReason.EXPLICIT,
+    ) -> Snapshot:
         """Start a backup of the given folders"""
         raise NotImplementedError
 
