@@ -13,7 +13,7 @@ from selfprivacy_api.services.owned_path import OwnedPath
 from selfprivacy_api import utils
 from selfprivacy_api.utils.waitloop import wait_until_true
 
-DEFAULT_START_STOP_TIMEOUT = 10 * 60
+DEFAULT_START_STOP_TIMEOUT = 5 * 60
 
 
 class ServiceStatus(Enum):
@@ -283,18 +283,28 @@ class StoppedService:
 
     def __enter__(self) -> Service:
         self.original_status = self.service.get_status()
-        if self.original_status != ServiceStatus.INACTIVE:
-            self.service.stop()
-            wait_until_true(
-                lambda: self.service.get_status() == ServiceStatus.INACTIVE,
-                timeout_sec=DEFAULT_START_STOP_TIMEOUT,
-            )
+        if self.original_status not in [ServiceStatus.INACTIVE, ServiceStatus.FAILED]:
+            try:
+                self.service.stop()
+                wait_until_true(
+                    lambda: self.service.get_status() == ServiceStatus.INACTIVE,
+                    timeout_sec=DEFAULT_START_STOP_TIMEOUT,
+                )
+            except TimeoutError as error:
+                raise TimeoutError(
+                    f"timed out waiting for {self.service.get_display_name()} to stop"
+                ) from error
         return self.service
 
     def __exit__(self, type, value, traceback):
         if self.original_status in [ServiceStatus.ACTIVATING, ServiceStatus.ACTIVE]:
-            self.service.start()
-            wait_until_true(
-                lambda: self.service.get_status() == ServiceStatus.ACTIVE,
-                timeout_sec=DEFAULT_START_STOP_TIMEOUT,
-            )
+            try:
+                self.service.start()
+                wait_until_true(
+                    lambda: self.service.get_status() == ServiceStatus.ACTIVE,
+                    timeout_sec=DEFAULT_START_STOP_TIMEOUT,
+                )
+            except TimeoutError as error:
+                raise TimeoutError(
+                    f"timed out waiting for {self.service.get_display_name()} to start"
+                ) from error

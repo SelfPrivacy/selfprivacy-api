@@ -9,8 +9,8 @@ from typing import List, Optional, TypeVar, Callable
 from collections.abc import Iterable
 from json.decoder import JSONDecodeError
 from os.path import exists, join
-from os import listdir
-from time import sleep
+from os import mkdir
+from shutil import rmtree
 
 from selfprivacy_api.graphql.common_types.backup import BackupReason
 from selfprivacy_api.backup.util import output_yielder, sync
@@ -130,32 +130,6 @@ class ResticBackupper(AbstractBackupper):
                     ":",
                     output,
                 )
-
-    def mount_repo(self, mount_directory):
-        mount_command = self.restic_command("mount", mount_directory)
-        mount_command.insert(0, "nohup")
-        handle = subprocess.Popen(
-            mount_command,
-            stdout=subprocess.DEVNULL,
-            shell=False,
-        )
-        sleep(2)
-        if "ids" not in listdir(mount_directory):
-            raise IOError("failed to mount dir ", mount_directory)
-        return handle
-
-    def unmount_repo(self, mount_directory):
-        mount_command = ["umount", "-l", mount_directory]
-        with subprocess.Popen(
-            mount_command, stdout=subprocess.PIPE, shell=False
-        ) as handle:
-            output = handle.communicate()[0].decode("utf-8")
-            # TODO: check for exit code?
-            if "error" in output.lower():
-                return IOError("failed to unmount dir ", mount_directory, ": ", output)
-
-        if not listdir(mount_directory) == []:
-            return IOError("failed to unmount dir ", mount_directory)
 
     @staticmethod
     def __flatten_list(list_to_flatten):
@@ -364,20 +338,21 @@ class ResticBackupper(AbstractBackupper):
             if verify:
                 self._raw_verified_restore(snapshot_id, target=temp_dir)
                 snapshot_root = temp_dir
-            else:  # attempting inplace restore via mount + sync
-                self.mount_repo(temp_dir)
-                snapshot_root = join(temp_dir, "ids", snapshot_id)
+                for folder in folders:
+                    src = join(snapshot_root, folder.strip("/"))
+                    if not exists(src):
+                        raise ValueError(
+                            f"No such path: {src}. We tried to find {folder}"
+                        )
+                    dst = folder
+                    sync(src, dst)
 
-            assert snapshot_root is not None
-            for folder in folders:
-                src = join(snapshot_root, folder.strip("/"))
-                if not exists(src):
-                    raise ValueError(f"No such path: {src}. We tried to find {folder}")
-                dst = folder
-                sync(src, dst)
-
-            if not verify:
-                self.unmount_repo(temp_dir)
+            else:  # attempting inplace restore
+                for folder in folders:
+                    rmtree(folder)
+                    mkdir(folder)
+                self._raw_verified_restore(snapshot_id, target="/")
+                return
 
     def _raw_verified_restore(self, snapshot_id, target="/"):
         """barebones restic restore"""

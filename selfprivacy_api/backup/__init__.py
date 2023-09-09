@@ -312,7 +312,7 @@ class Backups:
                 Backups._prune_auto_snaps(service)
             service.post_restore()
         except Exception as error:
-            Jobs.update(job, status=JobStatus.ERROR)
+            Jobs.update(job, status=JobStatus.ERROR, status_text=str(error))
             raise error
 
         Jobs.update(job, status=JobStatus.FINISHED)
@@ -437,9 +437,14 @@ class Backups:
         snapshot: Snapshot,
         job: Job,
     ) -> None:
+        Jobs.update(
+            job, status=JobStatus.CREATED, status_text=f"Waiting for pre-restore backup"
+        )
         failsafe_snapshot = Backups.back_up(service, BackupReason.PRE_RESTORE)
 
-        Jobs.update(job, status=JobStatus.RUNNING)
+        Jobs.update(
+            job, status=JobStatus.RUNNING, status_text=f"Restoring from {snapshot.id}"
+        )
         try:
             Backups._restore_service_from_snapshot(
                 service,
@@ -447,8 +452,18 @@ class Backups:
                 verify=False,
             )
         except Exception as error:
+            Jobs.update(
+                job,
+                status=JobStatus.ERROR,
+                status_text=f"Restore failed with {str(error)}, reverting to {failsafe_snapshot.id}",
+            )
             Backups._restore_service_from_snapshot(
                 service, failsafe_snapshot.id, verify=False
+            )
+            Jobs.update(
+                job,
+                status=JobStatus.ERROR,
+                status_text=f"Restore failed with {str(error)}, reverted to {failsafe_snapshot.id}",
             )
             raise error
 
@@ -466,20 +481,33 @@ class Backups:
 
         try:
             Backups._assert_restorable(snapshot)
+            Jobs.update(
+                job, status=JobStatus.RUNNING, status_text="Stopping the service"
+            )
             with StoppedService(service):
                 Backups.assert_dead(service)
                 if strategy == RestoreStrategy.INPLACE:
                     Backups._inplace_restore(service, snapshot, job)
                 else:  # verify_before_download is our default
-                    Jobs.update(job, status=JobStatus.RUNNING)
+                    Jobs.update(
+                        job,
+                        status=JobStatus.RUNNING,
+                        status_text=f"Restoring from {snapshot.id}",
+                    )
                     Backups._restore_service_from_snapshot(
                         service, snapshot.id, verify=True
                     )
 
                 service.post_restore()
+                Jobs.update(
+                    job,
+                    status=JobStatus.RUNNING,
+                    progress=90,
+                    status_text="Restarting the service",
+                )
 
         except Exception as error:
-            Jobs.update(job, status=JobStatus.ERROR)
+            Jobs.update(job, status=JobStatus.ERROR, status_text=str(error))
             raise error
 
         Jobs.update(job, status=JobStatus.FINISHED)
