@@ -1,0 +1,92 @@
+{
+  "nodes": {
+    "hardware-configuration-nix": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1692731346,
+        "narHash": "sha256-rQIpYKwowqbbVVurEl5qNpuPfoRyEUMefoZXrUoO6p8=",
+        "path": "hardware-configuration.nix",
+        "type": "path"
+      },
+      "original": {
+        "id": "hardware-configuration-nix",
+        "type": "indirect"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1686476475,
+        "narHash": "sha256-W9yUePvCSDghn+YUXewuodyPxt+kJl/a7zdY4Q6r4MU=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "eef86b8a942913a828b9ef13722835f359deef29",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "nixpkgs": [
+          "selfprivacy-nixos-config",
+          "nixpkgs"
+        ],
+        "selfprivacy-nixos-config": "selfprivacy-nixos-config"
+      }
+    },
+    "selfprivacy-nixos-config": {
+      "inputs": {
+        "hardware-configuration-nix": "hardware-configuration-nix",
+        "nixpkgs": "nixpkgs",
+        "selfprivacy-overlay-path": "selfprivacy-overlay-path",
+        "userdata-json": "userdata-json"
+      },
+      "locked": {
+        "lastModified": 1692741993,
+        "narHash": "sha256-p1hrRJeMgj0o9VQpLTQ+PLVUwh++oZyUKNCfUFooenw=",
+        "ref": "flake-to-override",
+        "rev": "50c554e6e72b45f350af65c12e7fb19a46fc537f",
+        "revCount": 122,
+        "type": "git",
+        "url": "https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git"
+      },
+      "original": {
+        "type": "git",
+        "url": "https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git"
+      }
+    },
+    "selfprivacy-overlay-path": {
+      "locked": {
+        "lastModified": 1689554432,
+        "narHash": "sha256-hegMIgxBHUuRFbCecQpbjFfTHpduV3VZWr8OINtQO6k=",
+        "ref": "flakes",
+        "rev": "53ed9b3f5f70a7f2843ecbef7775307e23a2c1f4",
+        "revCount": 31,
+        "type": "git",
+        "url": "https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nix-repo.git"
+      },
+      "original": {
+        "type": "git",
+        "url": "https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nix-repo.git"
+      }
+    },
+    "userdata-json": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1689259484,
+        "narHash": "sha256-Co3QGsxCjDspP5Nzzu1zICkee5CEq+ORlxSF3bFqbCY=",
+        "path": "userdata/userdata.json",
+        "type": "path"
+      },
+      "original": {
+        "id": "userdata-json",
+        "type": "indirect"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}
