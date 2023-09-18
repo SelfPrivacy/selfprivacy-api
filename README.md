@@ -58,6 +58,8 @@ tests/test_rest_endpoints/services/test_ssh.py .....................            
 
 Current flake inherits nixpkgs from NixOS configuration flake. So there is no need to refer to extra nixpkgs dependency if you want to be aligned with exact NixOS configuration.
 
+![diagram](http://www.plantuml.com/plantuml/proxy?src=https://git.selfprivacy.org/SelfPrivacy/selfprivacy-rest-api/raw/branch/flake/nix-dependencies-diagram.puml)
+
 Nix code for NixOS service module for API is located in NixOS configuration repository.
 
 ## current issues
