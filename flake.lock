@@ -41,15 +41,15 @@
       "inputs": {
         "hardware-configuration-nix": "hardware-configuration-nix",
         "nixpkgs": "nixpkgs",
-        "selfprivacy-overlay-path": "selfprivacy-overlay-path",
+        "selfprivacy-overlay": "selfprivacy-overlay",
         "userdata-json": "userdata-json"
       },
       "locked": {
-        "lastModified": 1692741993,
-        "narHash": "sha256-p1hrRJeMgj0o9VQpLTQ+PLVUwh++oZyUKNCfUFooenw=",
+        "lastModified": 1695043402,
+        "narHash": "sha256-1zPdzEUQtuqVminXwrb1yfI7wydHfdtmBYSqUsgJlCA=",
         "ref": "flake-to-override",
-        "rev": "50c554e6e72b45f350af65c12e7fb19a46fc537f",
-        "revCount": 122,
+        "rev": "3bf91c25c36d0e6dcf18b146ad95883f057dbd0b",
+        "revCount": 124,
         "type": "git",
         "url": "https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git"
       },
@@ -58,7 +58,7 @@
         "url": "https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git"
       }
     },
-    "selfprivacy-overlay-path": {
+    "selfprivacy-overlay": {
       "locked": {
         "lastModified": 1689554432,
         "narHash": "sha256-hegMIgxBHUuRFbCecQpbjFfTHpduV3VZWr8OINtQO6k=",
