@@ -1,5 +1,6 @@
 from os import path
-from tests.test_graphql.test_backup import dummy_service, backups, raw_dummy_service
+from tests.test_graphql.test_backup import backups
+from tests.test_graphql.test_backup import raw_dummy_service, dummy_service
 from tests.common import generate_backup_query
 
 
@@ -301,7 +302,7 @@ def test_dummy_service_convertible_to_gql(dummy_service):
     assert gql_service is not None
 
 
-def test_snapshots_empty(authorized_client, dummy_service):
+def test_snapshots_empty(authorized_client, dummy_service, backups):
     snaps = api_snapshots(authorized_client)
     assert snaps == []
 
@@ -369,7 +370,6 @@ def test_remove(authorized_client, generic_userdata, backups):
     # still generated every time it is missing
     assert len(configuration["encryptionKey"]) > 1
     assert configuration["isInitialized"] is False
-
 
 def test_autobackup_quotas_nonzero(authorized_client, backups):
     quotas = _AutobackupQuotas(
