@@ -2,7 +2,6 @@ import pytest
 
 import os
 import os.path as path
-from os import makedirs
 from os import remove
 from os import listdir
 from os import urandom
@@ -15,7 +14,8 @@ from selfprivacy_api.utils.huey import huey
 
 import tempfile
 
-import selfprivacy_api.services as services
+from tests.test_common import dummy_service, raw_dummy_service
+
 from selfprivacy_api.services import Service, get_all_services
 from selfprivacy_api.services import get_service_by_id
 from selfprivacy_api.services.service import ServiceStatus
@@ -48,8 +48,6 @@ from selfprivacy_api.backup.tasks import (
 from selfprivacy_api.backup.storage import Storage
 
 
-TESTFILE_BODY = "testytest!"
-TESTFILE_2_BODY = "testissimo!"
 REPO_NAME = "test_backup"
 
 REPOFILE_NAME = "totallyunrelated"
@@ -78,7 +76,6 @@ def backups(tmpdir):
     else:
         prepare_localfile_backups(tmpdir)
     Jobs.reset()
-    # assert not repo_path
 
     Backups.init_repo()
     assert Backups.provider().location == str(tmpdir) + "/" + REPOFILE_NAME
@@ -89,49 +86,6 @@ def backups(tmpdir):
 @pytest.fixture()
 def backups_backblaze(generic_userdata):
     Backups.reset(reset_json=False)
-
-
-@pytest.fixture()
-def raw_dummy_service(tmpdir):
-    dirnames = ["test_service", "also_test_service"]
-    service_dirs = []
-    for d in dirnames:
-        service_dir = path.join(tmpdir, d)
-        makedirs(service_dir)
-        service_dirs.append(service_dir)
-
-    testfile_path_1 = path.join(service_dirs[0], "testfile.txt")
-    with open(testfile_path_1, "w") as file:
-        file.write(TESTFILE_BODY)
-
-    testfile_path_2 = path.join(service_dirs[1], "testfile2.txt")
-    with open(testfile_path_2, "w") as file:
-        file.write(TESTFILE_2_BODY)
-
-    # we need this to not change get_folders() much
-    class TestDummyService(DummyService, folders=service_dirs):
-        pass
-
-    service = TestDummyService()
-    return service
-
-
-@pytest.fixture()
-def dummy_service(tmpdir, backups, raw_dummy_service) -> Service:
-    service = raw_dummy_service
-
-    # register our service
-    services.services.append(service)
-
-    # make sure we are in immediate mode because this thing is non pickleable to store on queue.
-    huey.immediate = True
-    assert huey.immediate is True
-
-    assert get_service_by_id(service.get_id()) is not None
-    yield service
-
-    # cleanup because apparently it matters wrt tasks
-    services.services.remove(service)
 
 
 @pytest.fixture()

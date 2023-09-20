@@ -12,7 +12,7 @@ from selfprivacy_api.services.test_service import DummyService
 from selfprivacy_api.services.service import Service, ServiceStatus, StoppedService
 from selfprivacy_api.utils.waitloop import wait_until_true
 
-from tests.test_graphql.test_backup import raw_dummy_service
+from tests.test_common import raw_dummy_service
 
 
 def test_unimplemented_folders_raises():
