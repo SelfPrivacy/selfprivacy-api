@@ -52,9 +52,11 @@ TESTFILE_BODY = "testytest!"
 TESTFILE_2_BODY = "testissimo!"
 REPO_NAME = "test_backup"
 
+REPOFILE_NAME = "totallyunrelated"
+
 
 def prepare_localfile_backups(temp_dir):
-    test_repo_path = path.join(temp_dir, "totallyunrelated")
+    test_repo_path = path.join(temp_dir, REPOFILE_NAME)
     assert not path.exists(test_repo_path)
     Backups.set_localfile_repo(test_repo_path)
 
@@ -79,6 +81,7 @@ def backups(tmpdir):
     # assert not repo_path
 
     Backups.init_repo()
+    assert Backups.provider().location == str(tmpdir) + "/" + REPOFILE_NAME
     yield
     Backups.erase_repo()
 

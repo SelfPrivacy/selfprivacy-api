@@ -197,6 +197,7 @@ class ResticBackupper(AbstractBackupper):
                 output,
                 "parsed messages:",
                 messages,
+                backup_command,
             ) from error
 
     @staticmethod
