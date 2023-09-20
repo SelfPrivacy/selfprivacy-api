@@ -371,6 +371,7 @@ def test_remove(authorized_client, generic_userdata, backups):
     assert len(configuration["encryptionKey"]) > 1
     assert configuration["isInitialized"] is False
 
+
 def test_autobackup_quotas_nonzero(authorized_client, backups):
     quotas = _AutobackupQuotas(
         last=3,
