@@ -225,6 +225,14 @@ class Jobs:
         return job
 
     @staticmethod
+    def set_expiration(job: Job, expiration_seconds: int) -> Job:
+        redis = RedisPool().get_connection()
+        key = _redis_key_from_uuid(job.uid)
+        if redis.exists(key):
+            redis.expire(key, expiration_seconds)
+        return job
+
+    @staticmethod
     def get_job(uid: str) -> typing.Optional[Job]:
         """
         Get a job from the jobs list.
