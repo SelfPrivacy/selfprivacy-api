@@ -56,6 +56,8 @@ BACKUP_PROVIDER_ENVS = {
     "location": "BACKUP_LOCATION",
 }
 
+AUTOBACKUP_JOB_EXPIRATION_SECONDS = 60 * 60  # one hour
+
 
 class NotDeadError(AssertionError):
     """
@@ -316,6 +318,8 @@ class Backups:
             raise error
 
         Jobs.update(job, status=JobStatus.FINISHED)
+        if reason in [BackupReason.AUTO, BackupReason.PRE_RESTORE]:
+            Jobs.set_expiration(job, AUTOBACKUP_JOB_EXPIRATION_SECONDS)
         return snapshot
 
     @staticmethod
