@@ -7,7 +7,7 @@ from selfprivacy_api.services.service import Service, ServiceStatus
 import tests.test_graphql.test_api_backup
 from tests.test_common import raw_dummy_service, dummy_service
 from tests.common import generate_service_query
-from tests.test_graphql.common import get_data
+from tests.test_graphql.common import assert_ok, get_data
 
 
 @pytest.fixture()
@@ -62,7 +62,7 @@ allServices {
 """
 
 
-def api_start(client, service: Service):
+def api_start(client, service: Service) -> dict:
     response = client.post(
         "/graphql",
         json={
@@ -73,7 +73,7 @@ def api_start(client, service: Service):
     return response
 
 
-def api_stop(client, service: Service):
+def api_stop(client, service: Service) -> dict:
     response = client.post(
         "/graphql",
         json={
@@ -110,6 +110,26 @@ def test_get_services(authorized_client, only_dummy_service):
     assert api_dummy_service["id"] == "testservice"
     assert api_dummy_service["status"] == ServiceStatus.ACTIVE.value
     assert api_dummy_service["isEnabled"] is True
+
+
+def test_start_return_value(authorized_client, only_dummy_service):
+    dummy_service = only_dummy_service
+    mutation_response = api_start(authorized_client, dummy_service)
+    data = get_data(mutation_response)["services"]["startService"]
+    assert_ok(data)
+    service = data["service"]
+    assert service["id"] == dummy_service.get_id()
+    assert service["status"] == ServiceStatus.ACTIVE.value
+
+
+def test_stop_return_value(authorized_client, only_dummy_service):
+    dummy_service = only_dummy_service
+    mutation_response = api_stop(authorized_client, dummy_service)
+    data = get_data(mutation_response)["services"]["stopService"]
+    assert_ok(data)
+    service = data["service"]
+    assert service["id"] == dummy_service.get_id()
+    assert service["status"] == ServiceStatus.INACTIVE.value
 
 
 def test_stop_start(authorized_client, only_dummy_service):
