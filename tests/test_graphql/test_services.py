@@ -249,6 +249,15 @@ def test_stop_nonexistent(authorized_client, only_dummy_service):
     assert data["service"] is None
 
 
+def test_enable_nonexistent(authorized_client, only_dummy_service):
+    dummy_service = only_dummy_service
+    mutation_response = api_enable_by_name(authorized_client, "bogus_service")
+    data = get_data(mutation_response)["services"]["enableService"]
+    assert_notfound(data)
+
+    assert data["service"] is None
+
+
 def test_stop_start(authorized_client, only_dummy_service):
     dummy_service = only_dummy_service
 
