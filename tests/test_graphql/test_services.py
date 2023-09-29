@@ -239,6 +239,30 @@ def test_start_unauthorized(client, only_dummy_service):
     assert mutation_response.json().get("data") is None
 
 
+def test_stop_unauthorized(client, only_dummy_service):
+    dummy_service = only_dummy_service
+    mutation_response = api_stop(client, dummy_service)
+
+    assert mutation_response.status_code == 200
+    assert mutation_response.json().get("data") is None
+
+
+def test_enable_unauthorized(client, only_dummy_service):
+    dummy_service = only_dummy_service
+    mutation_response = api_enable(client, dummy_service)
+
+    assert mutation_response.status_code == 200
+    assert mutation_response.json().get("data") is None
+
+
+def test_disable_unauthorized(client, only_dummy_service):
+    dummy_service = only_dummy_service
+    mutation_response = api_disable(client, dummy_service)
+
+    assert mutation_response.status_code == 200
+    assert mutation_response.json().get("data") is None
+
+
 def test_start_nonexistent(authorized_client, only_dummy_service):
     dummy_service = only_dummy_service
     mutation_response = api_start_by_name(authorized_client, "bogus_service")
