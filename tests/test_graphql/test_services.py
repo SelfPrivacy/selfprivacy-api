@@ -93,6 +93,16 @@ allServices {
 """
 
 
+def assert_notfound(data):
+    assert_errorcode(data, 404)
+
+
+def assert_errorcode(data, errorcode):
+    assert data["code"] == errorcode
+    assert data["success"] is False
+    assert data["message"] is not None
+
+
 def api_enable(client, service: Service) -> dict:
     return api_enable_by_name(client, service.get_id())
 
@@ -219,6 +229,15 @@ def test_stop_return_value(authorized_client, only_dummy_service):
     service = data["service"]
     assert service["id"] == dummy_service.get_id()
     assert service["status"] == ServiceStatus.INACTIVE.value
+
+
+def test_start_nonexistent(authorized_client, only_dummy_service):
+    dummy_service = only_dummy_service
+    mutation_response = api_start_by_name(authorized_client, "bogus_service")
+    data = get_data(mutation_response)["services"]["startService"]
+    assert_notfound(data)
+
+    assert data["service"] is None
 
 
 def test_stop_start(authorized_client, only_dummy_service):
