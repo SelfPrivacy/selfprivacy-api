@@ -61,7 +61,7 @@ allServices {
 """
 
 
-def api_start(client, service):
+def api_start(client, service: Service):
     response = client.post(
         "/graphql",
         json={
@@ -72,7 +72,7 @@ def api_start(client, service):
     return response
 
 
-def api_stop(client, service):
+def api_stop(client, service: Service):
     response = client.post(
         "/graphql",
         json={
@@ -107,4 +107,29 @@ def test_get_services(authorized_client, only_dummy_service):
 
     api_dummy_service = services[0]
     assert api_dummy_service["id"] == "testservice"
+    assert api_dummy_service["status"] == ServiceStatus.ACTIVE.value
+
+
+def test_stop_start(authorized_client, only_dummy_service):
+    dummy_service = only_dummy_service
+
+    api_dummy_service = api_all_services(authorized_client)[0]
+    assert api_dummy_service["status"] == ServiceStatus.ACTIVE.value
+
+    # attempting to start an already started service
+    api_start(authorized_client, dummy_service)
+    api_dummy_service = api_all_services(authorized_client)[0]
+    assert api_dummy_service["status"] == ServiceStatus.ACTIVE.value
+
+    api_stop(authorized_client, dummy_service)
+    api_dummy_service = api_all_services(authorized_client)[0]
+    assert api_dummy_service["status"] == ServiceStatus.INACTIVE.value
+
+    # attempting to stop an already stopped service
+    api_stop(authorized_client, dummy_service)
+    api_dummy_service = api_all_services(authorized_client)[0]
+    assert api_dummy_service["status"] == ServiceStatus.INACTIVE.value
+
+    api_start(authorized_client, dummy_service)
+    api_dummy_service = api_all_services(authorized_client)[0]
     assert api_dummy_service["status"] == ServiceStatus.ACTIVE.value
