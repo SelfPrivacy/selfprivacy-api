@@ -63,22 +63,30 @@ allServices {
 
 
 def api_start(client, service: Service) -> dict:
+    return api_start_by_name(client, service.get_id())
+
+
+def api_start_by_name(client, service_id: str) -> dict:
     response = client.post(
         "/graphql",
         json={
             "query": API_START_MUTATION,
-            "variables": {"service_id": service.get_id()},
+            "variables": {"service_id": service_id},
         },
     )
     return response
 
 
 def api_stop(client, service: Service) -> dict:
+    return api_stop_by_name(client, service.get_id())
+
+
+def api_stop_by_name(client, service_id: str) -> dict:
     response = client.post(
         "/graphql",
         json={
             "query": API_STOP_MUTATION,
-            "variables": {"service_id": service.get_id()},
+            "variables": {"service_id": service_id},
         },
     )
     return response
