@@ -30,9 +30,10 @@ class DummyService(Service):
 
     def __init__(self):
         super().__init__()
-        status_file = self.status_file()
-        with open(status_file, "w") as file:
+        with open(self.status_file(), "w") as file:
             file.write(ServiceStatus.ACTIVE.value)
+        with open(self.enabled_file(), "w") as file:
+            file.write("True")
 
     @staticmethod
     def get_id() -> str:
@@ -82,6 +83,26 @@ class DummyService(Service):
         dir = cls.folders[0]
         # we do not REALLY want to store our state in our declared folders
         return path.join(dir, "..", "service_status")
+
+    @classmethod
+    def enabled_file(cls) -> str:
+        dir = cls.folders[0]
+        return path.join(dir, "..", "service_enabled")
+
+    @classmethod
+    def get_enabled(cls) -> bool:
+        with open(cls.enabled_file(), "r") as file:
+            string = file.read().strip()
+        if "True" in string:
+            return True
+        if "False" in string:
+            return False
+        raise ValueError("test service enabled/disabled status file got corrupted")
+
+    @classmethod
+    def set_enabled(cls, enabled: bool):
+        with open(cls.enabled_file(), "w") as file:
+            status_string = file.write(str(enabled))
 
     @classmethod
     def set_status(cls, status: ServiceStatus):

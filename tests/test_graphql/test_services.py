@@ -57,6 +57,7 @@ API_SERVICES_QUERY = """
 allServices {
     id
     status
+    isEnabled
 }
 """
 
@@ -108,6 +109,7 @@ def test_get_services(authorized_client, only_dummy_service):
     api_dummy_service = services[0]
     assert api_dummy_service["id"] == "testservice"
     assert api_dummy_service["status"] == ServiceStatus.ACTIVE.value
+    assert api_dummy_service["isEnabled"] is True
 
 
 def test_stop_start(authorized_client, only_dummy_service):
