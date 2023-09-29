@@ -74,9 +74,9 @@ class DummyService(Service):
     def get_backup_description() -> str:
         return "How did we get here?"
 
-    @staticmethod
-    def is_enabled() -> bool:
-        return True
+    @classmethod
+    def is_enabled(cls) -> bool:
+        return cls.get_enabled()
 
     @classmethod
     def status_file(cls) -> str:
@@ -144,11 +144,11 @@ class DummyService(Service):
 
     @classmethod
     def enable(cls):
-        pass
+        cls.set_enabled(True)
 
     @classmethod
-    def disable(cls, delay):
-        pass
+    def disable(cls):
+        cls.set_enabled(False)
 
     @classmethod
     def set_delay(cls, new_delay):

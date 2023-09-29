@@ -37,6 +37,37 @@ mutation TestStartService($service_id: String!) {
 }
 """
 
+API_ENABLE_MUTATION = """
+mutation TestStartService($service_id: String!) {
+    services {
+        enableService(serviceId: $service_id) {
+            success
+            message
+            code
+            service {
+                id
+                isEnabled
+            }
+        }
+    }
+}
+"""
+API_DISABLE_MUTATION = """
+mutation TestStartService($service_id: String!) {
+    services {
+        disableService(serviceId: $service_id) {
+            success
+            message
+            code
+            service {
+                id
+                isEnabled
+            }
+        }
+    }
+}
+"""
+
 API_STOP_MUTATION = """
 mutation TestStopService($service_id: String!) {
     services {
@@ -60,6 +91,36 @@ allServices {
     isEnabled
 }
 """
+
+
+def api_enable(client, service: Service) -> dict:
+    return api_enable_by_name(client, service.get_id())
+
+
+def api_enable_by_name(client, service_id: str) -> dict:
+    response = client.post(
+        "/graphql",
+        json={
+            "query": API_ENABLE_MUTATION,
+            "variables": {"service_id": service_id},
+        },
+    )
+    return response
+
+
+def api_disable(client, service: Service) -> dict:
+    return api_disable_by_name(client, service.get_id())
+
+
+def api_disable_by_name(client, service_id: str) -> dict:
+    response = client.post(
+        "/graphql",
+        json={
+            "query": API_DISABLE_MUTATION,
+            "variables": {"service_id": service_id},
+        },
+    )
+    return response
 
 
 def api_start(client, service: Service) -> dict:
@@ -118,6 +179,26 @@ def test_get_services(authorized_client, only_dummy_service):
     assert api_dummy_service["id"] == "testservice"
     assert api_dummy_service["status"] == ServiceStatus.ACTIVE.value
     assert api_dummy_service["isEnabled"] is True
+
+
+def test_enable_return_value(authorized_client, only_dummy_service):
+    dummy_service = only_dummy_service
+    mutation_response = api_enable(authorized_client, dummy_service)
+    data = get_data(mutation_response)["services"]["enableService"]
+    assert_ok(data)
+    service = data["service"]
+    assert service["id"] == dummy_service.get_id()
+    assert service["isEnabled"] == True
+
+
+def test_disable_return_value(authorized_client, only_dummy_service):
+    dummy_service = only_dummy_service
+    mutation_response = api_disable(authorized_client, dummy_service)
+    data = get_data(mutation_response)["services"]["disableService"]
+    assert_ok(data)
+    service = data["service"]
+    assert service["id"] == dummy_service.get_id()
+    assert service["isEnabled"] == False
 
 
 def test_start_return_value(authorized_client, only_dummy_service):
