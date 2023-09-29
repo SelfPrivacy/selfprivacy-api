@@ -164,14 +164,18 @@ def api_stop_by_name(client, service_id: str) -> dict:
 
 
 def api_all_services(authorized_client):
-    response = authorized_client.post(
-        "/graphql",
-        json={"query": generate_service_query([API_SERVICES_QUERY])},
-    )
+    response = api_all_services_raw(authorized_client)
     data = get_data(response)
     result = data["services"]["allServices"]
     assert result is not None
     return result
+
+
+def api_all_services_raw(client):
+    return client.post(
+        "/graphql",
+        json={"query": generate_service_query([API_SERVICES_QUERY])},
+    )
 
 
 def api_service(authorized_client, service: Service):
@@ -229,6 +233,14 @@ def test_stop_return_value(authorized_client, only_dummy_service):
     service = data["service"]
     assert service["id"] == dummy_service.get_id()
     assert service["status"] == ServiceStatus.INACTIVE.value
+
+
+def test_allservices_unauthorized(client, only_dummy_service):
+    dummy_service = only_dummy_service
+    response = api_all_services_raw(client)
+
+    assert response.status_code == 200
+    assert response.json().get("data") is None
 
 
 def test_start_unauthorized(client, only_dummy_service):
