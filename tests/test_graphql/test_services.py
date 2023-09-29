@@ -2,7 +2,7 @@ import pytest
 
 from selfprivacy_api.graphql.mutations.services_mutations import ServicesMutations
 import selfprivacy_api.services as service_module
-from selfprivacy_api.services.service import Service
+from selfprivacy_api.services.service import Service, ServiceStatus
 
 import tests.test_graphql.test_api_backup
 from tests.test_common import raw_dummy_service, dummy_service
@@ -19,7 +19,6 @@ def only_dummy_service(dummy_service):
     yield dummy_service
     service_module.services.clear()
     service_module.services.extend(back_copy)
-
 
 
 API_START_MUTATION = """
@@ -103,4 +102,9 @@ def api_service(authorized_client, service: Service):
 
 
 def test_get_services(authorized_client, only_dummy_service):
-    assert len(api_all_services(authorized_client)) == 1
+    services = api_all_services(authorized_client)
+    assert len(services) == 1
+
+    api_dummy_service = services[0]
+    assert api_dummy_service["id"] == "testservice"
+    assert api_dummy_service["status"] == ServiceStatus.ACTIVE.value
