@@ -247,6 +247,8 @@ class Service(ABC):
 
     @abstractmethod
     def move_to_volume(self, volume: BlockDevice) -> Job:
+        """Cannot raise errors.
+        Returns errors as an errored out Job instead."""
         pass
 
     @classmethod

@@ -110,6 +110,26 @@ allServices {
 }
 """
 
+API_MOVE_MUTATION = """
+mutation TestMoveService($input: MoveServiceInput!) {
+    services {
+        moveService(input: $input) {
+            success
+            message
+            code
+            job {
+                uid
+                status
+            }
+            service {
+                id
+                status
+            }
+        }
+    }
+}
+"""
+
 
 def assert_notfound(data):
     assert_errorcode(data, 404)
@@ -161,6 +181,26 @@ def api_start_by_name(client, service_id: str) -> dict:
         json={
             "query": API_START_MUTATION,
             "variables": {"service_id": service_id},
+        },
+    )
+    return response
+
+
+def api_move(client, service: Service, location: str) -> dict:
+    return api_move_by_name(client, service.get_id(), location)
+
+
+def api_move_by_name(client, service_id: str, location: str) -> dict:
+    response = client.post(
+        "/graphql",
+        json={
+            "query": API_MOVE_MUTATION,
+            "variables": {
+                "input": {
+                    "serviceId": service_id,
+                    "location": location,
+                }
+            },
         },
     )
     return response
@@ -327,6 +367,16 @@ def test_disable_unauthorized(client, only_dummy_service):
     assert mutation_response.json().get("data") is None
 
 
+def test_move_nonexistent(authorized_client, only_dummy_service):
+    dummy_service = only_dummy_service
+    mutation_response = api_move_by_name(authorized_client, "bogus_service", "sda1")
+    data = get_data(mutation_response)["services"]["moveService"]
+    assert_notfound(data)
+
+    assert data["service"] is None
+    assert data["job"] is None
+
+
 def test_start_nonexistent(authorized_client, only_dummy_service):
     dummy_service = only_dummy_service
     mutation_response = api_start_by_name(authorized_client, "bogus_service")
@@ -395,3 +445,26 @@ def test_stop_start(authorized_client, only_dummy_service):
     api_start(authorized_client, dummy_service)
     api_dummy_service = api_all_services(authorized_client)[0]
     assert api_dummy_service["status"] == ServiceStatus.ACTIVE.value
+
+
+def test_move_immovable(authorized_client, only_dummy_service):
+    dummy_service = only_dummy_service
+    dummy_service.set_movable(False)
+    mutation_response = api_move(authorized_client, dummy_service, "sda1")
+    data = get_data(mutation_response)["services"]["moveService"]
+    assert_errorcode(data, 400)
+
+    # is there a meaning in returning the service in this?
+    assert data["service"] is not None
+    assert data["job"] is None
+
+
+def test_move_no_such_volume(authorized_client, only_dummy_service):
+    dummy_service = only_dummy_service
+    mutation_response = api_move(authorized_client, dummy_service, "bogus_volume")
+    data = get_data(mutation_response)["services"]["moveService"]
+    assert_notfound(data)
+
+    # is there a meaning in returning the service in this?
+    assert data["service"] is not None
+    assert data["job"] is None

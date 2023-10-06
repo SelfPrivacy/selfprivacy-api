@@ -24,6 +24,7 @@ class DummyService(Service):
     folders: List[str] = []
     startstop_delay = 0.0
     backuppable = True
+    movable = True
 
     def __init_subclass__(cls, folders: List[str]):
         cls.folders = folders
@@ -62,9 +63,9 @@ class DummyService(Service):
         domain = "test.com"
         return f"https://password.{domain}"
 
-    @staticmethod
-    def is_movable() -> bool:
-        return True
+    @classmethod
+    def is_movable(cls) -> bool:
+        return cls.movable
 
     @staticmethod
     def is_required() -> bool:
@@ -136,6 +137,12 @@ class DummyService(Service):
         """For tests: because can_be_backed_up is static,
         we can only set it up dynamically for tests via a classmethod"""
         cls.backuppable = new_value
+
+    @classmethod
+    def set_movable(cls, new_value: bool) -> None:
+        """For tests: because is_movale is static,
+        we can only set it up dynamically for tests via a classmethod"""
+        cls.movable = new_value
 
     @classmethod
     def can_be_backed_up(cls) -> bool:
