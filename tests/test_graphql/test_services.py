@@ -1,8 +1,10 @@
 import pytest
+from typing import Generator
 
 from selfprivacy_api.graphql.mutations.services_mutations import ServicesMutations
 import selfprivacy_api.services as service_module
 from selfprivacy_api.services.service import Service, ServiceStatus
+from selfprivacy_api.services.test_service import DummyService
 
 import tests.test_graphql.test_api_backup
 from tests.test_common import raw_dummy_service, dummy_service
@@ -11,7 +13,7 @@ from tests.test_graphql.common import assert_ok, get_data
 
 
 @pytest.fixture()
-def only_dummy_service(dummy_service):
+def only_dummy_service(dummy_service) -> Generator[DummyService, None, None]:
     # because queries to services that are not really there error out
     back_copy = service_module.services.copy()
     service_module.services.clear()
@@ -25,6 +27,22 @@ API_START_MUTATION = """
 mutation TestStartService($service_id: String!) {
     services {
         startService(serviceId: $service_id) {
+            success
+            message
+            code
+            service {
+                id
+                status
+            }
+        }
+    }
+}
+"""
+
+API_RESTART_MUTATION = """
+mutation TestRestartService($service_id: String!) {
+    services {
+        restartService(serviceId: $service_id) {
             success
             message
             code
@@ -148,6 +166,21 @@ def api_start_by_name(client, service_id: str) -> dict:
     return response
 
 
+def api_restart(client, service: Service) -> dict:
+    return api_restart_by_name(client, service.get_id())
+
+
+def api_restart_by_name(client, service_id: str) -> dict:
+    response = client.post(
+        "/graphql",
+        json={
+            "query": API_RESTART_MUTATION,
+            "variables": {"service_id": service_id},
+        },
+    )
+    return response
+
+
 def api_stop(client, service: Service) -> dict:
     return api_stop_by_name(client, service.get_id())
 
@@ -225,6 +258,17 @@ def test_start_return_value(authorized_client, only_dummy_service):
     assert service["status"] == ServiceStatus.ACTIVE.value
 
 
+def test_restart(authorized_client, only_dummy_service):
+    dummy_service = only_dummy_service
+    dummy_service.set_delay(0.3)
+    mutation_response = api_restart(authorized_client, dummy_service)
+    data = get_data(mutation_response)["services"]["restartService"]
+    assert_ok(data)
+    service = data["service"]
+    assert service["id"] == dummy_service.get_id()
+    assert service["status"] == ServiceStatus.RELOADING.value
+
+
 def test_stop_return_value(authorized_client, only_dummy_service):
     dummy_service = only_dummy_service
     mutation_response = api_stop(authorized_client, dummy_service)
@@ -246,6 +290,14 @@ def test_allservices_unauthorized(client, only_dummy_service):
 def test_start_unauthorized(client, only_dummy_service):
     dummy_service = only_dummy_service
     mutation_response = api_start(client, dummy_service)
+
+    assert mutation_response.status_code == 200
+    assert mutation_response.json().get("data") is None
+
+
+def test_restart_unauthorized(client, only_dummy_service):
+    dummy_service = only_dummy_service
+    mutation_response = api_restart(client, dummy_service)
 
     assert mutation_response.status_code == 200
     assert mutation_response.json().get("data") is None
@@ -279,6 +331,15 @@ def test_start_nonexistent(authorized_client, only_dummy_service):
     dummy_service = only_dummy_service
     mutation_response = api_start_by_name(authorized_client, "bogus_service")
     data = get_data(mutation_response)["services"]["startService"]
+    assert_notfound(data)
+
+    assert data["service"] is None
+
+
+def test_restart_nonexistent(authorized_client, only_dummy_service):
+    dummy_service = only_dummy_service
+    mutation_response = api_restart_by_name(authorized_client, "bogus_service")
+    data = get_data(mutation_response)["services"]["restartService"]
     assert_notfound(data)
 
     assert data["service"] is None

@@ -22,7 +22,7 @@ class DummyService(Service):
     """A test service"""
 
     folders: List[str] = []
-    startstop_delay = 0
+    startstop_delay = 0.0
     backuppable = True
 
     def __init_subclass__(cls, folders: List[str]):
@@ -151,8 +151,8 @@ class DummyService(Service):
         cls.set_enabled(False)
 
     @classmethod
-    def set_delay(cls, new_delay):
-        cls.startstop_delay = new_delay
+    def set_delay(cls, new_delay_sec: float) -> None:
+        cls.startstop_delay = new_delay_sec
 
     @classmethod
     def stop(cls):
