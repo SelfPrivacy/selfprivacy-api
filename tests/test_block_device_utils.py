@@ -13,6 +13,7 @@ from selfprivacy_api.utils.block_devices import (
     resize_block_device,
 )
 from tests.common import read_json
+from tests.test_common import dummy_service, raw_dummy_service
 
 SINGLE_LSBLK_OUTPUT = b"""
 {
@@ -416,32 +417,37 @@ def lsblk_full_mock(mocker):
 def test_get_block_devices(lsblk_full_mock, authorized_client):
     block_devices = BlockDevices().get_block_devices()
     assert len(block_devices) == 2
-    assert block_devices[0].name == "sda1"
-    assert block_devices[0].path == "/dev/sda1"
-    assert block_devices[0].fsavail == "4605702144"
-    assert block_devices[0].fssize == "19814920192"
-    assert block_devices[0].fstype == "ext4"
-    assert block_devices[0].fsused == "14353719296"
-    assert block_devices[0].mountpoints == ["/nix/store", "/"]
-    assert block_devices[0].label is None
-    assert block_devices[0].uuid == "ec80c004-baec-4a2c-851d-0e1807135511"
-    assert block_devices[0].size == "20210236928"
-    assert block_devices[0].model is None
-    assert block_devices[0].serial is None
-    assert block_devices[0].type == "part"
-    assert block_devices[1].name == "sdb"
-    assert block_devices[1].path == "/dev/sdb"
-    assert block_devices[1].fsavail == "11888545792"
-    assert block_devices[1].fssize == "12573614080"
-    assert block_devices[1].fstype == "ext4"
-    assert block_devices[1].fsused == "24047616"
-    assert block_devices[1].mountpoints == ["/volumes/sdb"]
-    assert block_devices[1].label is None
-    assert block_devices[1].uuid == "fa9d0026-ee23-4047-b8b1-297ae16fa751"
-    assert block_devices[1].size == "12884901888"
-    assert block_devices[1].model == "Volume"
-    assert block_devices[1].serial == "21378102"
-    assert block_devices[1].type == "disk"
+    devices_by_name = {device.name: device for device in block_devices}
+    sda1 = devices_by_name["sda1"]
+    sdb = devices_by_name["sdb"]
+
+    assert sda1.name == "sda1"
+    assert sda1.path == "/dev/sda1"
+    assert sda1.fsavail == "4605702144"
+    assert sda1.fssize == "19814920192"
+    assert sda1.fstype == "ext4"
+    assert sda1.fsused == "14353719296"
+    assert sda1.mountpoints == ["/nix/store", "/"]
+    assert sda1.label is None
+    assert sda1.uuid == "ec80c004-baec-4a2c-851d-0e1807135511"
+    assert sda1.size == "20210236928"
+    assert sda1.model is None
+    assert sda1.serial is None
+    assert sda1.type == "part"
+
+    assert sdb.name == "sdb"
+    assert sdb.path == "/dev/sdb"
+    assert sdb.fsavail == "11888545792"
+    assert sdb.fssize == "12573614080"
+    assert sdb.fstype == "ext4"
+    assert sdb.fsused == "24047616"
+    assert sdb.mountpoints == ["/volumes/sdb"]
+    assert sdb.label is None
+    assert sdb.uuid == "fa9d0026-ee23-4047-b8b1-297ae16fa751"
+    assert sdb.size == "12884901888"
+    assert sdb.model == "Volume"
+    assert sdb.serial == "21378102"
+    assert sdb.type == "disk"
 
 
 def test_get_block_device(lsblk_full_mock, authorized_client):
@@ -506,3 +512,31 @@ def test_get_root_block_device(lsblk_full_mock, authorized_client):
     assert block_device.model is None
     assert block_device.serial is None
     assert block_device.type == "part"
+
+
+# Unassuming sanity check, yes this did fail
+def test_get_real_devices():
+    block_devices = BlockDevices().get_block_devices()
+
+    assert block_devices is not None
+    assert len(block_devices) > 0
+
+
+# Unassuming sanity check
+def test_get_real_root_device():
+    BlockDevices().update()
+    devices = BlockDevices().get_block_devices()
+    try:
+        block_device = BlockDevices().get_root_block_device()
+    except Exception as e:
+        raise Exception("cannot get root device:", e, "devices found:", devices)
+    assert block_device is not None
+    assert block_device.name is not None
+    assert block_device.name != ""
+
+
+def test_get_real_root_device_raw(authorized_client):
+    block_device = BlockDevices().get_root_block_device()
+    assert block_device is not None
+    assert block_device.name is not None
+    assert block_device.name != ""
