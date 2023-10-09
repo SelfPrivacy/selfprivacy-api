@@ -88,10 +88,12 @@ class ReadUserData(object):
 
 
 def validate_ssh_public_key(key):
-    """Validate SSH public key. It may be ssh-ed25519 or ssh-rsa."""
+    """Validate SSH public key.
+    It may be ssh-ed25519, ssh-rsa or ecdsa-sha2-nistp256."""
     if not key.startswith("ssh-ed25519"):
         if not key.startswith("ssh-rsa"):
-            return False
+            if not key.startswith("ecdsa-sha2-nistp256"):
+                return False
     return True
 
 

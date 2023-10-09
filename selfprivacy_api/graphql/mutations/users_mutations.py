@@ -147,7 +147,7 @@ class UsersMutations:
         except InvalidPublicKey:
             return UserMutationReturn(
                 success=False,
-                message="Invalid key type. Only ssh-ed25519 and ssh-rsa are supported",
+                message="Invalid key type. Only ssh-ed25519, ssh-rsa and ecdsa are supported",
                 code=400,
             )
         except UserNotFound:
