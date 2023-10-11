@@ -5,6 +5,7 @@ from selfprivacy_api.graphql.mutations.services_mutations import ServicesMutatio
 import selfprivacy_api.services as service_module
 from selfprivacy_api.services.service import Service, ServiceStatus
 from selfprivacy_api.services.test_service import DummyService
+from selfprivacy_api.utils.block_devices import BlockDevices
 
 import tests.test_graphql.test_api_backup
 from tests.test_common import raw_dummy_service, dummy_service
@@ -468,3 +469,20 @@ def test_move_no_such_volume(authorized_client, only_dummy_service):
     # is there a meaning in returning the service in this?
     assert data["service"] is not None
     assert data["job"] is None
+
+
+def test_move_same_volume(authorized_client, dummy_service):
+    # dummy_service = only_dummy_service
+
+    # we need a drive that actually exists
+    root_volume = BlockDevices().get_root_block_device()
+    dummy_service.set_simulated_moves(False)
+    dummy_service.set_drive(root_volume.name)
+
+    mutation_response = api_move(authorized_client, dummy_service, root_volume.name)
+    data = get_data(mutation_response)["services"]["moveService"]
+    assert_errorcode(data, 400)
+
+    # is there a meaning in returning the service in this?
+    assert data["service"] is not None
+    assert data["job"] is not None
