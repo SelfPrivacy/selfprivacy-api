@@ -98,7 +98,7 @@ def get_dead_packages(output):
 
 
 @huey.task()
-def calculate_and_clear_dead_packages(job: Job):
+def calculate_and_clear_dead_packages(job: Jobs):
     Jobs.update(
         job=Job,
         status=JobStatus.RUNNING,
