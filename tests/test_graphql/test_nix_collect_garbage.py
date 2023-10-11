@@ -65,16 +65,6 @@ log_event = []
 
 
 @pytest.fixture
-def mock_set_job_status(mocker):
-    mock = mocker.patch(
-        "selfprivacy_api.jobs.nix_collect_garbage.set_job_status_wrapper",
-        autospec=True,
-        return_value=set_job_status,
-    )
-    return mock
-
-
-@pytest.fixture
 def job_reset():
     Jobs.reset()
 
@@ -118,7 +108,7 @@ mutation CollectGarbage {
         nixCollectGarbage {
             success
             message
-            code
+            code 
         }
     }
 }
@@ -135,7 +125,6 @@ def test_graphql_nix_collect_garbage(authorized_client):
 
     assert response.status_code == 200
     assert response.json().get("data") is not None
-    assert response.json()["data"]["system"]["nixCollectGarbage"]["success"] is True
     assert response.json()["data"]["system"]["nixCollectGarbage"]["message"] is not None
-    assert response.json()["data"]["system"]["nixCollectGarbage"]["success"] == True
+    assert response.json()["data"]["system"]["nixCollectGarbage"]["success"] is True
     assert response.json()["data"]["system"]["nixCollectGarbage"]["code"] == 200

@@ -137,6 +137,6 @@ class SystemMutations:
         return GenericJobMutationReturn(
             success=True,
             code=200,
-            message="Cleaning started..,",
+            message="Garbage collector started...",
             job=job_to_api_job(job),
         )
