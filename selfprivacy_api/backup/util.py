@@ -1,8 +1,10 @@
 import subprocess
 from os.path import exists
+from typing import Generator
 
 
-def output_yielder(command):
+def output_yielder(command) -> Generator[str, None, None]:
+    """Note: If you break during iteration, it kills the process"""
     with subprocess.Popen(
         command,
         shell=False,
@@ -10,9 +12,15 @@ def output_yielder(command):
         stderr=subprocess.STDOUT,
         universal_newlines=True,
     ) as handle:
-        for line in iter(handle.stdout.readline, ""):
-            if "NOTICE:" not in line:
-                yield line
+        if handle is None or handle.stdout is None:
+            raise ValueError("could not run command: ", command)
+
+        try:
+            for line in iter(handle.stdout.readline, ""):
+                if "NOTICE:" not in line:
+                    yield line
+        except GeneratorExit:
+            handle.kill()
 
 
 def sync(src_path: str, dest_path: str):

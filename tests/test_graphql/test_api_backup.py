@@ -94,6 +94,18 @@ mutation TestRestoreService($snapshot_id: String!) {
 }
 """
 
+API_FORGET_MUTATION = """
+mutation TestForgetSnapshot($snapshot_id: String!) {
+    backup {
+        forgetSnapshot(snapshotId: $snapshot_id) {
+            success
+            message
+            code
+        }
+    }
+}
+"""
+
 API_SNAPSHOTS_QUERY = """
 allSnapshots {
     id
@@ -138,6 +150,17 @@ def api_backup(authorized_client, service):
         json={
             "query": API_BACK_UP_MUTATION,
             "variables": {"service_id": service.get_id()},
+        },
+    )
+    return response
+
+
+def api_forget(authorized_client, snapshot_id):
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_FORGET_MUTATION,
+            "variables": {"snapshot_id": snapshot_id},
         },
     )
     return response
@@ -370,3 +393,30 @@ def test_reload_snapshots(authorized_client, dummy_service):
 
     snaps = api_snapshots(authorized_client)
     assert len(snaps) == 1
+
+
+def test_forget_snapshot(authorized_client, dummy_service):
+    response = api_backup(authorized_client, dummy_service)
+    data = get_data(response)["backup"]["startBackup"]
+
+    snaps = api_snapshots(authorized_client)
+    assert len(snaps) == 1
+
+    response = api_forget(authorized_client, snaps[0]["id"])
+    data = get_data(response)["backup"]["forgetSnapshot"]
+    assert_ok(data)
+
+    snaps = api_snapshots(authorized_client)
+    assert len(snaps) == 0
+
+
+def test_forget_nonexistent_snapshot(authorized_client, dummy_service):
+    snaps = api_snapshots(authorized_client)
+    assert len(snaps) == 0
+    response = api_forget(authorized_client, "898798uekiodpjoiweoiwuoeirueor")
+    data = get_data(response)["backup"]["forgetSnapshot"]
+    assert data["code"] == 404
+    assert data["success"] is False
+
+    snaps = api_snapshots(authorized_client)
+    assert len(snaps) == 0
