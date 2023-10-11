@@ -108,7 +108,21 @@ mutation CollectGarbage {
         nixCollectGarbage {
             success
             message
-            code 
+            code
+            job {
+                uid,
+                typeId,
+                name,
+                description,
+                status,
+                statusText,
+                progress,
+                createdAt,
+                updatedAt,
+                finishedAt,
+                error,
+                result,
+            }
         }
     }
 }
@@ -128,3 +142,5 @@ def test_graphql_nix_collect_garbage(authorized_client):
     assert response.json()["data"]["system"]["nixCollectGarbage"]["message"] is not None
     assert response.json()["data"]["system"]["nixCollectGarbage"]["success"] is True
     assert response.json()["data"]["system"]["nixCollectGarbage"]["code"] == 200
+
+    assert response.json()["data"]["system"]["nixCollectGarbage"]["job"] is not None
