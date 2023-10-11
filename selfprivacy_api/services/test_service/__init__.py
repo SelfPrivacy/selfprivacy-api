@@ -8,9 +8,10 @@ from os import path
 
 # from enum import Enum
 
-from selfprivacy_api.jobs import Job
+from selfprivacy_api.jobs import Job, Jobs, JobStatus
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
 from selfprivacy_api.utils.block_devices import BlockDevice
+from selfprivacy_api.services.generic_service_mover import move_service, FolderMoveNames
 import selfprivacy_api.utils.network as network_utils
 
 from selfprivacy_api.services.test_service.icon import BITWARDEN_ICON
@@ -25,6 +26,9 @@ class DummyService(Service):
     startstop_delay = 0.0
     backuppable = True
     movable = True
+    # if False, we try to actually move
+    simulate_moving = True
+    drive = "sda1"
 
     def __init_subclass__(cls, folders: List[str]):
         cls.folders = folders
@@ -162,6 +166,16 @@ class DummyService(Service):
         cls.startstop_delay = new_delay_sec
 
     @classmethod
+    def set_drive(cls, new_drive: str) -> None:
+        cls.drive = new_drive
+
+    @classmethod
+    def set_simulated_moves(cls, enabled: bool) -> None:
+        """If True, this service will not actually call moving code
+        when moved"""
+        cls.simulate_moving = enabled
+
+    @classmethod
     def stop(cls):
         # simulate a failing service unable to stop
         if not cls.get_status() == ServiceStatus.FAILED:
@@ -197,9 +211,9 @@ class DummyService(Service):
         storage_usage = 0
         return storage_usage
 
-    @staticmethod
-    def get_drive() -> str:
-        return "sda1"
+    @classmethod
+    def get_drive(cls) -> str:
+        return cls.drive
 
     @classmethod
     def get_folders(cls) -> List[str]:
@@ -226,4 +240,22 @@ class DummyService(Service):
         ]
 
     def move_to_volume(self, volume: BlockDevice) -> Job:
-        pass
+        job = Jobs.add(
+            type_id=f"services.{self.get_id()}.move",
+            name=f"Move {self.get_display_name()}",
+            description=f"Moving {self.get_display_name()} data to {volume.name}",
+        )
+        if self.simulate_moving is False:
+            # completely generic code, TODO: make it the default impl.
+            move_service(
+                self,
+                volume,
+                job,
+                FolderMoveNames.default_foldermoves(self),
+                self.get_id(),
+            )
+        else:
+            Jobs.update(job, status=JobStatus.FINISHED)
+
+        self.set_drive(volume.name)
+        return job
