@@ -100,7 +100,7 @@ def calculate_and_clear_dead_packages(job: Job):
         status_text="Calculate the number of dead packages...",
     )
 
-    dead_packages, package_equal_to_percent = get_dead_packages(stream_process
+    dead_packages, package_equal_to_percent = get_dead_packages(
         run_nix_store_print_dead()
     )
 

@@ -14,7 +14,7 @@ from selfprivacy_api.jobs.nix_collect_garbage import (
     parse_line,
     CLEAR_COMPLETED,
     COMPLETED_WITH_ERROR,
-    stream_process,
+    process_stream,
     RESULT_WAS_NOT_FOUND_ERROR,
 )
 
