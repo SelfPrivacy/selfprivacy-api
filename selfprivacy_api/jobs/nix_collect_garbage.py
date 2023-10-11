@@ -43,7 +43,7 @@ def parse_line(line):
 
     if match is None:
         return (
-            JobStatus.FINISHED,
+            JobStatus.ERROR,
             100,
             COMPLETED_WITH_ERROR,
             RESULT_WAS_NOT_FOUND_ERROR,
@@ -98,7 +98,7 @@ def get_dead_packages(output):
 
 
 @huey.task()
-def calculate_and_clear_dead_packages(job: Jobs):
+def calculate_and_clear_dead_packages(job: Job):
     Jobs.update(
         job=Job,
         status=JobStatus.RUNNING,

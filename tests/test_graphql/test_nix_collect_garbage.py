@@ -86,7 +86,7 @@ def test_parse_line(job_reset):
 def test_parse_line_with_blank_line(job_reset):
     txt = ""
     output = (
-        JobStatus.FINISHED,
+        JobStatus.ERROR,
         100,
         COMPLETED_WITH_ERROR,
         RESULT_WAS_NOT_FOUND_ERROR,
