@@ -32,6 +32,12 @@ def run_nix_collect_garbage() -> subprocess.Popen:
 
 
 def parse_line(line):
+    """
+    We parse the string for the presence of a final line,
+    with the final amount of space cleared.
+    Simply put, we're just looking for a similar string:
+    "1537 store paths deleted, 339.84 MiB freed".
+    """
     pattern = re.compile(r"[+-]?\d+\.\d+ \w+(?= freed)")
     match = re.search(pattern, line)
 
@@ -65,7 +71,7 @@ def process_stream(job, stream, total_dead_packages):
 
             if percent - prev_progress >= 5:
                 Jobs.update(
-                    job=job,
+                    job=Job,
                     status=JobStatus.RUNNING,
                     progress=percent,
                     status_text="Cleaning...",
@@ -75,7 +81,7 @@ def process_stream(job, stream, total_dead_packages):
         elif "store paths deleted," in line:
             status = parse_line(line)
             Jobs.update(
-                job=job,
+                job=Job,
                 status=status[0],
                 progress=status[1],
                 status_text=status[2],
@@ -94,7 +100,7 @@ def get_dead_packages(output):
 @huey.task()
 def calculate_and_clear_dead_packages(job: Job):
     Jobs.update(
-        job=job,
+        job=Job,
         status=JobStatus.RUNNING,
         progress=0,
         status_text="Calculate the number of dead packages...",
@@ -106,7 +112,7 @@ def calculate_and_clear_dead_packages(job: Job):
 
     if dead_packages == 0:
         Jobs.update(
-            job=job,
+            job=Job,
             status=JobStatus.FINISHED,
             progress=100,
             status_text="Nothing to clear",
@@ -115,7 +121,7 @@ def calculate_and_clear_dead_packages(job: Job):
         return
 
     Jobs.update(
-        job=job,
+        job=Job,
         status=JobStatus.RUNNING,
         progress=0,
         status_text=f"Found {dead_packages} packages to remove!",
