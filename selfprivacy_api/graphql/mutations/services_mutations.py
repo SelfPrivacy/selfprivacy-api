@@ -4,6 +4,7 @@ import typing
 import strawberry
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.common_types.jobs import job_to_api_job
+from selfprivacy_api.jobs import JobStatus
 
 from selfprivacy_api.graphql.common_types.service import (
     Service,
@@ -160,10 +161,19 @@ class ServicesMutations:
                 service=service_to_graphql_service(service),
             )
         job = service.move_to_volume(volume)
-        return ServiceJobMutationReturn(
-            success=True,
-            message="Service moved.",
-            code=200,
-            service=service_to_graphql_service(service),
-            job=job_to_api_job(job),
-        )
+        if job.status == JobStatus.FINISHED:
+            return ServiceJobMutationReturn(
+                success=True,
+                message="Service moved.",
+                code=200,
+                service=service_to_graphql_service(service),
+                job=job_to_api_job(job),
+            )
+        else:
+            return ServiceJobMutationReturn(
+                success=False,
+                message=f"Service move failure: {job.status_text}",
+                code=400,
+                service=service_to_graphql_service(service),
+                job=job_to_api_job(job),
+            )
