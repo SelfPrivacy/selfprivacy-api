@@ -148,7 +148,7 @@ class BackupMutations:
             )
 
         job = add_backup_job(service)
-        start_backup(service)
+        start_backup(service_id)
 
         return GenericJobMutationReturn(
             success=True,

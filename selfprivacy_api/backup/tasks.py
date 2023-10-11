@@ -11,7 +11,9 @@ from selfprivacy_api.graphql.common_types.backup import (
 from selfprivacy_api.models.backup.snapshot import Snapshot
 from selfprivacy_api.utils.huey import huey
 from huey import crontab
+
 from selfprivacy_api.services.service import Service
+from selfprivacy_api.services import get_service_by_id
 from selfprivacy_api.backup import Backups
 from selfprivacy_api.jobs import Jobs, JobStatus, Job
 
@@ -34,11 +36,14 @@ def validate_datetime(dt: datetime) -> bool:
 # huey tasks need to return something
 @huey.task()
 def start_backup(
-    service: Service, reason: BackupReason = BackupReason.EXPLICIT
+    service_id: str, reason: BackupReason = BackupReason.EXPLICIT
 ) -> bool:
     """
     The worker task that starts the backup process.
     """
+    service = get_service_by_id(service_id)
+    if service is None:
+        raise ValueError(f"No such service: {service_id}")
     Backups.back_up(service, reason)
     return True
 

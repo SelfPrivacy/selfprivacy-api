@@ -14,6 +14,8 @@ from selfprivacy_api.utils.huey import huey
 
 import tempfile
 
+from selfprivacy_api.utils.huey import huey
+
 from tests.test_common import dummy_service, raw_dummy_service
 
 from selfprivacy_api.services import Service, get_all_services
@@ -69,7 +71,15 @@ def backups_local(tmpdir):
 
 @pytest.fixture(scope="function")
 def backups(tmpdir):
-    # for those tests that are supposed to pass with any repo
+    """
+    For those tests that are supposed to pass with
+    both local and cloud repos
+    """
+
+    # Sometimes this is false. Idk why.
+    huey.immediate = True
+    assert huey.immediate is True
+
     Backups.reset()
     if BACKUP_PROVIDER_ENVS["kind"] in os.environ.keys():
         Backups.set_provider_from_envs()
@@ -736,7 +746,7 @@ def simulated_service_stopping_delay(request) -> float:
 def test_backup_service_task(backups, dummy_service, simulated_service_stopping_delay):
     dummy_service.set_delay(simulated_service_stopping_delay)
 
-    handle = start_backup(dummy_service)
+    handle = start_backup(dummy_service.get_id())
     handle(blocking=True)
 
     snaps = Backups.get_snapshots(dummy_service)
@@ -781,7 +791,7 @@ def test_backup_larger_file(backups, dummy_service):
     mega = 2**20
     make_large_file(dir, 100 * mega)
 
-    handle = start_backup(dummy_service)
+    handle = start_backup(dummy_service.get_id())
     handle(blocking=True)
 
     # results will be slightly different on different machines. if someone has troubles with it on their machine, consider dropping this test.
