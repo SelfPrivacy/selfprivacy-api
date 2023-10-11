@@ -524,7 +524,6 @@ def test_get_real_devices():
 
 # Unassuming sanity check
 def test_get_real_root_device():
-    BlockDevices().update()
     devices = BlockDevices().get_block_devices()
     try:
         block_device = BlockDevices().get_root_block_device()
