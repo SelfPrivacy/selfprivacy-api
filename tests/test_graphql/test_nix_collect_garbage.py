@@ -18,9 +18,6 @@ from selfprivacy_api.jobs.nix_collect_garbage import (
     RESULT_WAS_NOT_FOUND_ERROR,
 )
 
-pytest_plugins = ("pytest_asyncio",)
-
-
 OUTPUT_PRINT_DEAD = """
 finding garbage collector roots...
 determining live/dead paths...
@@ -102,7 +99,7 @@ def test_get_dead_packages_zero(job_reset):
     assert get_dead_packages("") == (0, 0)
 
 
-RUN_NIX_COLLECT_GARBAGE_QUERY = """
+RUN_NIX_COLLECT_GARBAGE_MUTATION = """
 mutation CollectGarbage {
     system {
         nixCollectGarbage {
@@ -133,7 +130,7 @@ def test_graphql_nix_collect_garbage(authorized_client):
     response = authorized_client.post(
         "/graphql",
         json={
-            "query": RUN_NIX_COLLECT_GARBAGE_QUERY,
+            "query": RUN_NIX_COLLECT_GARBAGE_MUTATION,
         },
     )
 
