@@ -72,22 +72,6 @@ class Gitea(Service):
         return get_service_status("gitea.service")
 
     @staticmethod
-    def enable():
-        """Enable Gitea service."""
-        with WriteUserData() as user_data:
-            if "gitea" not in user_data:
-                user_data["gitea"] = {}
-            user_data["gitea"]["enable"] = True
-
-    @staticmethod
-    def disable():
-        """Disable Gitea service."""
-        with WriteUserData() as user_data:
-            if "gitea" not in user_data:
-                user_data["gitea"] = {}
-            user_data["gitea"]["enable"] = False
-
-    @staticmethod
     def stop():
         subprocess.run(["systemctl", "stop", "gitea.service"])
 
