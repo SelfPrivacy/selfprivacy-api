@@ -56,31 +56,10 @@ class Jitsi(Service):
         return "Secrets that are used to encrypt the communication."
 
     @staticmethod
-    def is_enabled() -> bool:
-        with ReadUserData() as user_data:
-            return user_data.get("jitsi", {}).get("enable", False)
-
-    @staticmethod
     def get_status() -> ServiceStatus:
         return get_service_status_from_several_units(
             ["jitsi-videobridge.service", "jicofo.service"]
         )
-
-    @staticmethod
-    def enable():
-        """Enable Jitsi service."""
-        with WriteUserData() as user_data:
-            if "jitsi" not in user_data:
-                user_data["jitsi"] = {}
-            user_data["jitsi"]["enable"] = True
-
-    @staticmethod
-    def disable():
-        """Disable Gitea service."""
-        with WriteUserData() as user_data:
-            if "jitsi" not in user_data:
-                user_data["jitsi"] = {}
-            user_data["jitsi"]["enable"] = False
 
     @staticmethod
     def stop():
