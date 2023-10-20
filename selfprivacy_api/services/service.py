@@ -126,11 +126,12 @@ class Service(ABC):
         """
         pass
 
-    @staticmethod
-    @abstractmethod
-    def is_enabled() -> bool:
+    @classmethod
+    def is_enabled(cls) -> bool:
         """`True` if the service is enabled."""
-        pass
+        name = cls.get_id()
+        with ReadUserData() as user_data:
+            return user_data.get(name, {}).get("enable", False)
 
     @staticmethod
     @abstractmethod
