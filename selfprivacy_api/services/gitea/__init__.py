@@ -55,11 +55,6 @@ class Gitea(Service):
         return "Git repositories, database and user data."
 
     @staticmethod
-    def is_enabled() -> bool:
-        with ReadUserData() as user_data:
-            return user_data.get("gitea", {}).get("enable", False)
-
-    @staticmethod
     def get_status() -> ServiceStatus:
         """
         Return Gitea status from systemd.
