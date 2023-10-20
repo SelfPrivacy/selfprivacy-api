@@ -448,6 +448,35 @@ def test_stop_start(authorized_client, only_dummy_service):
     assert api_dummy_service["status"] == ServiceStatus.ACTIVE.value
 
 
+def test_disable_enable(authorized_client, only_dummy_service):
+    dummy_service = only_dummy_service
+
+    api_dummy_service = api_all_services(authorized_client)[0]
+    assert api_dummy_service["isEnabled"] is True
+
+    # attempting to enable an already enableed service
+    api_enable(authorized_client, dummy_service)
+    api_dummy_service = api_all_services(authorized_client)[0]
+    assert api_dummy_service["isEnabled"] is True
+    assert api_dummy_service["status"] == ServiceStatus.ACTIVE.value
+
+    api_disable(authorized_client, dummy_service)
+    api_dummy_service = api_all_services(authorized_client)[0]
+    assert api_dummy_service["isEnabled"] is False
+    assert api_dummy_service["status"] == ServiceStatus.ACTIVE.value
+
+    # attempting to disable an already disableped service
+    api_disable(authorized_client, dummy_service)
+    api_dummy_service = api_all_services(authorized_client)[0]
+    assert api_dummy_service["isEnabled"] is False
+    assert api_dummy_service["status"] == ServiceStatus.ACTIVE.value
+
+    api_enable(authorized_client, dummy_service)
+    api_dummy_service = api_all_services(authorized_client)[0]
+    assert api_dummy_service["isEnabled"] is True
+    assert api_dummy_service["status"] == ServiceStatus.ACTIVE.value
+
+
 def test_move_immovable(authorized_client, only_dummy_service):
     dummy_service = only_dummy_service
     dummy_service.set_movable(False)
