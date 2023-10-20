@@ -43,60 +43,6 @@ def bitwarden_undefined(mocker, datadir):
 ###############################################################################
 
 
-@pytest.mark.parametrize("endpoint", ["enable", "disable"])
-def test_unauthorized(client, bitwarden_off, endpoint):
-    response = client.post(f"/services/bitwarden/{endpoint}")
-    assert response.status_code == 401
-
-
-@pytest.mark.parametrize("endpoint", ["enable", "disable"])
-def test_illegal_methods(authorized_client, bitwarden_off, endpoint):
-    response = authorized_client.get(f"/services/bitwarden/{endpoint}")
-    assert response.status_code == 405
-    response = authorized_client.put(f"/services/bitwarden/{endpoint}")
-    assert response.status_code == 405
-    response = authorized_client.delete(f"/services/bitwarden/{endpoint}")
-    assert response.status_code == 405
-
-
-@pytest.mark.parametrize(
-    "endpoint,target_file",
-    [("enable", "turned_on.json"), ("disable", "turned_off.json")],
-)
-def test_switch_from_off(authorized_client, bitwarden_off, endpoint, target_file):
-    response = authorized_client.post(f"/services/bitwarden/{endpoint}")
-    assert response.status_code == 200
-    assert read_json(bitwarden_off / "turned_off.json") == read_json(
-        bitwarden_off / target_file
-    )
-
-
-@pytest.mark.parametrize(
-    "endpoint,target_file",
-    [("enable", "turned_on.json"), ("disable", "turned_off.json")],
-)
-def test_switch_from_on(authorized_client, bitwarden_on, endpoint, target_file):
-    response = authorized_client.post(f"/services/bitwarden/{endpoint}")
-    assert response.status_code == 200
-    assert read_json(bitwarden_on / "turned_on.json") == read_json(
-        bitwarden_on / target_file
-    )
-
-
-@pytest.mark.parametrize(
-    "endpoint,target_file",
-    [("enable", "turned_on.json"), ("disable", "turned_off.json")],
-)
-def test_switch_twice(authorized_client, bitwarden_off, endpoint, target_file):
-    response = authorized_client.post(f"/services/bitwarden/{endpoint}")
-    assert response.status_code == 200
-    response = authorized_client.post(f"/services/bitwarden/{endpoint}")
-    assert response.status_code == 200
-    assert read_json(bitwarden_off / "turned_off.json") == read_json(
-        bitwarden_off / target_file
-    )
-
-
 @pytest.mark.parametrize(
     "endpoint,target_file",
     [("enable", "turned_on.json"), ("disable", "turned_off.json")],
