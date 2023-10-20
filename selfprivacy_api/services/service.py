@@ -12,6 +12,7 @@ from selfprivacy_api.services.generic_size_counter import get_storage_usage
 from selfprivacy_api.services.owned_path import OwnedPath
 from selfprivacy_api import utils
 from selfprivacy_api.utils.waitloop import wait_until_true
+from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
 
 DEFAULT_START_STOP_TIMEOUT = 5 * 60
 
@@ -137,17 +138,24 @@ class Service(ABC):
         """The status of the service, reported by systemd."""
         pass
 
-    @staticmethod
-    @abstractmethod
-    def enable():
+    # But they do not really enable?
+    @classmethod
+    def enable(cls):
         """Enable the service. Usually this means enabling systemd unit."""
-        pass
+        name = cls.get_id()
+        with WriteUserData() as user_data:
+            if "gitea" not in user_data:
+                user_data[name] = {}
+            user_data[name]["enable"] = True
 
-    @staticmethod
-    @abstractmethod
-    def disable():
+    @classmethod
+    def disable(cls):
         """Disable the service. Usually this means disabling systemd unit."""
-        pass
+        name = cls.get_id()
+        with WriteUserData() as user_data:
+            if "gitea" not in user_data:
+                user_data[name] = {}
+            user_data[name]["enable"] = False
 
     @staticmethod
     @abstractmethod
