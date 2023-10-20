@@ -5,6 +5,7 @@ import os
 import pytest
 
 from selfprivacy_api.utils import WriteUserData, ReadUserData
+from selfprivacy_api.utils.huey import huey
 
 from os import path
 from os import makedirs
@@ -52,6 +53,9 @@ def dummy_service(tmpdir, raw_dummy_service) -> Generator[Service, None, None]:
 
     # register our service
     services.services.append(service)
+
+    huey.immediate = True
+    assert huey.immediate is True
 
     assert get_service_by_id(service.get_id()) is not None
     yield service
