@@ -40,6 +40,10 @@ def generate_users_query(query_array):
     return "query TestUsers {\n users {" + "\n".join(query_array) + "}\n}"
 
 
+def generate_backup_query(query_array):
+    return "query TestBackup {\n backup {" + "\n".join(query_array) + "}\n}"
+
+
 def mnemonic_to_hex(mnemonic):
     return Mnemonic(language="english").to_entropy(mnemonic).hex()
 

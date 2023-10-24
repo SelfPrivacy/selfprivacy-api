@@ -2,9 +2,7 @@
 import base64
 import subprocess
 import typing
-from selfprivacy_api.jobs import Job, Jobs
-from selfprivacy_api.services.generic_service_mover import FolderMoveNames, move_service
-from selfprivacy_api.services.generic_size_counter import get_storage_usage
+from selfprivacy_api.jobs import Job
 from selfprivacy_api.services.generic_status_getter import get_service_status
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
 from selfprivacy_api.utils import ReadUserData, WriteUserData
@@ -46,6 +44,14 @@ class Ocserv(Service):
         return False
 
     @staticmethod
+    def can_be_backed_up() -> bool:
+        return False
+
+    @staticmethod
+    def get_backup_description() -> str:
+        return "Nothing to backup."
+
+    @staticmethod
     def is_enabled() -> bool:
         with ReadUserData() as user_data:
             return user_data.get("ocserv", {}).get("enable", False)
@@ -70,15 +76,15 @@ class Ocserv(Service):
 
     @staticmethod
     def stop():
-        subprocess.run(["systemctl", "stop", "ocserv.service"])
+        subprocess.run(["systemctl", "stop", "ocserv.service"], check=False)
 
     @staticmethod
     def start():
-        subprocess.run(["systemctl", "start", "ocserv.service"])
+        subprocess.run(["systemctl", "start", "ocserv.service"], check=False)
 
     @staticmethod
     def restart():
-        subprocess.run(["systemctl", "restart", "ocserv.service"])
+        subprocess.run(["systemctl", "restart", "ocserv.service"], check=False)
 
     @staticmethod
     def get_configuration():
@@ -91,10 +97,6 @@ class Ocserv(Service):
     @staticmethod
     def get_logs():
         return ""
-
-    @staticmethod
-    def get_location() -> str:
-        return "sda1"
 
     @staticmethod
     def get_dns_records() -> typing.List[ServiceDnsRecord]:
@@ -114,8 +116,8 @@ class Ocserv(Service):
         ]
 
     @staticmethod
-    def get_storage_usage() -> int:
-        return 0
+    def get_folders() -> typing.List[str]:
+        return []
 
     def move_to_volume(self, volume: BlockDevice) -> Job:
         raise NotImplementedError("ocserv service is not movable")

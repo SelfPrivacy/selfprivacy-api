@@ -3,17 +3,13 @@ import base64
 import subprocess
 import typing
 
-from selfprivacy_api.jobs import Job, Jobs
-from selfprivacy_api.services.generic_service_mover import FolderMoveNames, move_service
-from selfprivacy_api.services.generic_size_counter import get_storage_usage
+from selfprivacy_api.jobs import Job
 from selfprivacy_api.services.generic_status_getter import (
-    get_service_status,
     get_service_status_from_several_units,
 )
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
 from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
 from selfprivacy_api.utils.block_devices import BlockDevice
-from selfprivacy_api.utils.huey import huey
 import selfprivacy_api.utils.network as network_utils
 from selfprivacy_api.services.jitsi.icon import JITSI_ICON
 
@@ -56,6 +52,10 @@ class Jitsi(Service):
         return False
 
     @staticmethod
+    def get_backup_description() -> str:
+        return "Secrets that are used to encrypt the communication."
+
+    @staticmethod
     def is_enabled() -> bool:
         with ReadUserData() as user_data:
             return user_data.get("jitsi", {}).get("enable", False)
@@ -84,18 +84,27 @@ class Jitsi(Service):
 
     @staticmethod
     def stop():
-        subprocess.run(["systemctl", "stop", "jitsi-videobridge.service"])
-        subprocess.run(["systemctl", "stop", "jicofo.service"])
+        subprocess.run(
+            ["systemctl", "stop", "jitsi-videobridge.service"],
+            check=False,
+        )
+        subprocess.run(["systemctl", "stop", "jicofo.service"], check=False)
 
     @staticmethod
     def start():
-        subprocess.run(["systemctl", "start", "jitsi-videobridge.service"])
-        subprocess.run(["systemctl", "start", "jicofo.service"])
+        subprocess.run(
+            ["systemctl", "start", "jitsi-videobridge.service"],
+            check=False,
+        )
+        subprocess.run(["systemctl", "start", "jicofo.service"], check=False)
 
     @staticmethod
     def restart():
-        subprocess.run(["systemctl", "restart", "jitsi-videobridge.service"])
-        subprocess.run(["systemctl", "restart", "jicofo.service"])
+        subprocess.run(
+            ["systemctl", "restart", "jitsi-videobridge.service"],
+            check=False,
+        )
+        subprocess.run(["systemctl", "restart", "jicofo.service"], check=False)
 
     @staticmethod
     def get_configuration():
@@ -110,14 +119,8 @@ class Jitsi(Service):
         return ""
 
     @staticmethod
-    def get_storage_usage() -> int:
-        storage_usage = 0
-        storage_usage += get_storage_usage("/var/lib/jitsi-meet")
-        return storage_usage
-
-    @staticmethod
-    def get_location() -> str:
-        return "sda1"
+    def get_folders() -> typing.List[str]:
+        return ["/var/lib/jitsi-meet"]
 
     @staticmethod
     def get_dns_records() -> typing.List[ServiceDnsRecord]:

@@ -1,6 +1,8 @@
 from enum import Enum
 import typing
 import strawberry
+import datetime
+from selfprivacy_api.graphql.common_types.backup import BackupReason
 from selfprivacy_api.graphql.common_types.dns import DnsRecord
 
 from selfprivacy_api.services import get_service_by_id, get_services_by_location
@@ -15,7 +17,7 @@ def get_usages(root: "StorageVolume") -> list["StorageUsageInterface"]:
             service=service_to_graphql_service(service),
             title=service.get_display_name(),
             used_space=str(service.get_storage_usage()),
-            volume=get_volume_by_id(service.get_location()),
+            volume=get_volume_by_id(service.get_drive()),
         )
         for service in get_services_by_location(root.name)
     ]
@@ -79,7 +81,7 @@ def get_storage_usage(root: "Service") -> ServiceStorageUsage:
         service=service_to_graphql_service(service),
         title=service.get_display_name(),
         used_space=str(service.get_storage_usage()),
-        volume=get_volume_by_id(service.get_location()),
+        volume=get_volume_by_id(service.get_drive()),
     )
 
 
@@ -92,6 +94,8 @@ class Service:
     is_movable: bool
     is_required: bool
     is_enabled: bool
+    can_be_backed_up: bool
+    backup_description: str
     status: ServiceStatusEnum
     url: typing.Optional[str]
     dns_records: typing.Optional[typing.List[DnsRecord]]
@@ -100,6 +104,18 @@ class Service:
     def storage_usage(self) -> ServiceStorageUsage:
         """Get storage usage for a service"""
         return get_storage_usage(self)
+
+    @strawberry.field
+    def backup_snapshots(self) -> typing.Optional[typing.List["SnapshotInfo"]]:
+        return None
+
+
+@strawberry.type
+class SnapshotInfo:
+    id: str
+    service: Service
+    created_at: datetime.datetime
+    reason: BackupReason
 
 
 def service_to_graphql_service(service: ServiceInterface) -> Service:
@@ -112,6 +128,8 @@ def service_to_graphql_service(service: ServiceInterface) -> Service:
         is_movable=service.is_movable(),
         is_required=service.is_required(),
         is_enabled=service.is_enabled(),
+        can_be_backed_up=service.can_be_backed_up(),
+        backup_description=service.get_backup_description(),
         status=ServiceStatusEnum(service.get_status().value),
         url=service.get_url(),
         dns_records=[

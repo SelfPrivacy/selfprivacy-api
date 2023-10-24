@@ -3,6 +3,8 @@
 # pylint: disable=unused-argument
 import os
 import pytest
+from os import path
+
 from fastapi.testclient import TestClient
 import os.path as path
 import datetime
@@ -92,6 +94,20 @@ def tokens_file(empty_redis_repo, tmpdir):
 def jobs_file(mocker, shared_datadir):
     """Mock tokens file."""
     mock = mocker.patch("selfprivacy_api.utils.JOBS_FILE", shared_datadir / "jobs.json")
+    return mock
+
+
+@pytest.fixture
+def generic_userdata(mocker, tmpdir):
+    filename = "turned_on.json"
+    source_path = path.join(global_data_dir(), filename)
+    userdata_path = path.join(tmpdir, filename)
+
+    with open(userdata_path, "w") as file:
+        with open(source_path, "r") as source:
+            file.write(source.read())
+
+    mock = mocker.patch("selfprivacy_api.utils.USERDATA_FILE", new=userdata_path)
     return mock
 
 

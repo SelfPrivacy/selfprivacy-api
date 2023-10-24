@@ -4,17 +4,14 @@ import base64
 import subprocess
 import typing
 
-from selfprivacy_api.jobs import Job, JobStatus, Jobs
+from selfprivacy_api.jobs import Job, Jobs
 from selfprivacy_api.services.generic_service_mover import FolderMoveNames, move_service
-from selfprivacy_api.services.generic_size_counter import get_storage_usage
 from selfprivacy_api.services.generic_status_getter import (
-    get_service_status,
     get_service_status_from_several_units,
 )
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
-import selfprivacy_api.utils as utils
+from selfprivacy_api import utils
 from selfprivacy_api.utils.block_devices import BlockDevice
-from selfprivacy_api.utils.huey import huey
 import selfprivacy_api.utils.network as network_utils
 from selfprivacy_api.services.mailserver.icon import MAILSERVER_ICON
 
@@ -24,7 +21,7 @@ class MailServer(Service):
 
     @staticmethod
     def get_id() -> str:
-        return "mailserver"
+        return "email"
 
     @staticmethod
     def get_display_name() -> str:
@@ -39,6 +36,10 @@ class MailServer(Service):
         return base64.b64encode(MAILSERVER_ICON.encode("utf-8")).decode("utf-8")
 
     @staticmethod
+    def get_user() -> str:
+        return "virtualMail"
+
+    @staticmethod
     def get_url() -> typing.Optional[str]:
         """Return service url."""
         return None
@@ -50,6 +51,10 @@ class MailServer(Service):
     @staticmethod
     def is_required() -> bool:
         return True
+
+    @staticmethod
+    def get_backup_description() -> str:
+        return "Mail boxes and filters."
 
     @staticmethod
     def is_enabled() -> bool:
@@ -71,18 +76,18 @@ class MailServer(Service):
 
     @staticmethod
     def stop():
-        subprocess.run(["systemctl", "stop", "dovecot2.service"])
-        subprocess.run(["systemctl", "stop", "postfix.service"])
+        subprocess.run(["systemctl", "stop", "dovecot2.service"], check=False)
+        subprocess.run(["systemctl", "stop", "postfix.service"], check=False)
 
     @staticmethod
     def start():
-        subprocess.run(["systemctl", "start", "dovecot2.service"])
-        subprocess.run(["systemctl", "start", "postfix.service"])
+        subprocess.run(["systemctl", "start", "dovecot2.service"], check=False)
+        subprocess.run(["systemctl", "start", "postfix.service"], check=False)
 
     @staticmethod
     def restart():
-        subprocess.run(["systemctl", "restart", "dovecot2.service"])
-        subprocess.run(["systemctl", "restart", "postfix.service"])
+        subprocess.run(["systemctl", "restart", "dovecot2.service"], check=False)
+        subprocess.run(["systemctl", "restart", "postfix.service"], check=False)
 
     @staticmethod
     def get_configuration():
@@ -97,16 +102,8 @@ class MailServer(Service):
         return ""
 
     @staticmethod
-    def get_storage_usage() -> int:
-        return get_storage_usage("/var/vmail")
-
-    @staticmethod
-    def get_location() -> str:
-        with utils.ReadUserData() as user_data:
-            if user_data.get("useBinds", False):
-                return user_data.get("mailserver", {}).get("location", "sda1")
-            else:
-                return "sda1"
+    def get_folders() -> typing.List[str]:
+        return ["/var/vmail", "/var/sieve"]
 
     @staticmethod
     def get_dns_records() -> typing.List[ServiceDnsRecord]:
@@ -135,7 +132,7 @@ class MailServer(Service):
                 type="MX", name=domain, content=domain, ttl=3600, priority=10
             ),
             ServiceDnsRecord(
-                type="TXT", name="_dmarc", content=f"v=DMARC1; p=none", ttl=18000
+                type="TXT", name="_dmarc", content="v=DMARC1; p=none", ttl=18000
             ),
             ServiceDnsRecord(
                 type="TXT",
@@ -150,7 +147,7 @@ class MailServer(Service):
 
     def move_to_volume(self, volume: BlockDevice) -> Job:
         job = Jobs.add(
-            type_id="services.mailserver.move",
+            type_id="services.email.move",
             name="Move Mail Server",
             description=f"Moving mailserver data to {volume.name}",
         )
@@ -159,21 +156,8 @@ class MailServer(Service):
             self,
             volume,
             job,
-            [
-                FolderMoveNames(
-                    name="vmail",
-                    bind_location="/var/vmail",
-                    group="virtualMail",
-                    owner="virtualMail",
-                ),
-                FolderMoveNames(
-                    name="sieve",
-                    bind_location="/var/sieve",
-                    group="virtualMail",
-                    owner="virtualMail",
-                ),
-            ],
-            "mailserver",
+            FolderMoveNames.default_foldermoves(self),
+            "email",
         )
 
         return job

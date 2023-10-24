@@ -4,7 +4,6 @@ import subprocess
 import typing
 from selfprivacy_api.jobs import Job, Jobs
 from selfprivacy_api.services.generic_service_mover import FolderMoveNames, move_service
-from selfprivacy_api.services.generic_size_counter import get_storage_usage
 from selfprivacy_api.services.generic_status_getter import get_service_status
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
 from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
@@ -49,6 +48,10 @@ class Nextcloud(Service):
     @staticmethod
     def is_required() -> bool:
         return False
+
+    @staticmethod
+    def get_backup_description() -> str:
+        return "All the files and other data stored in Nextcloud."
 
     @staticmethod
     def is_enabled() -> bool:
@@ -114,22 +117,8 @@ class Nextcloud(Service):
         return ""
 
     @staticmethod
-    def get_storage_usage() -> int:
-        """
-        Calculate the real storage usage of /var/lib/nextcloud and all subdirectories.
-        Calculate using pathlib.
-        Do not follow symlinks.
-        """
-        return get_storage_usage("/var/lib/nextcloud")
-
-    @staticmethod
-    def get_location() -> str:
-        """Get the name of disk where Nextcloud is installed."""
-        with ReadUserData() as user_data:
-            if user_data.get("useBinds", False):
-                return user_data.get("nextcloud", {}).get("location", "sda1")
-            else:
-                return "sda1"
+    def get_folders() -> typing.List[str]:
+        return ["/var/lib/nextcloud"]
 
     @staticmethod
     def get_dns_records() -> typing.List[ServiceDnsRecord]:
@@ -158,14 +147,7 @@ class Nextcloud(Service):
             self,
             volume,
             job,
-            [
-                FolderMoveNames(
-                    name="nextcloud",
-                    bind_location="/var/lib/nextcloud",
-                    owner="nextcloud",
-                    group="nextcloud",
-                ),
-            ],
+            FolderMoveNames.default_foldermoves(self),
             "nextcloud",
         )
         return job

@@ -76,10 +76,12 @@ def test_graphql_tokens_info_unauthorized(client, tokens_file):
 
 DELETE_TOKEN_MUTATION = """
 mutation DeleteToken($device: String!) {
-    deleteDeviceApiToken(device: $device) {
-        success
-        message
-        code
+    api {
+        deleteDeviceApiToken(device: $device) {
+            success
+            message
+            code
+        }
     }
 }
 """
@@ -132,7 +134,10 @@ def test_graphql_delete_self_token(authorized_client, tokens_file):
     assert_original(authorized_client)
 
 
-def test_graphql_delete_nonexistent_token(authorized_client, tokens_file):
+def test_graphql_delete_nonexistent_token(
+    authorized_client,
+    tokens_file,
+):
     response = authorized_client.post(
         "/graphql",
         json={
@@ -149,11 +154,13 @@ def test_graphql_delete_nonexistent_token(authorized_client, tokens_file):
 
 REFRESH_TOKEN_MUTATION = """
 mutation RefreshToken {
-    refreshDeviceApiToken {
-        success
-        message
-        code
-        token
+    api {
+        refreshDeviceApiToken {
+            success
+            message
+            code
+            token
+        }
     }
 }
 """
@@ -184,17 +191,22 @@ def test_graphql_refresh_token(authorized_client, client, tokens_file):
 
 NEW_DEVICE_KEY_MUTATION = """
 mutation NewDeviceKey {
-    getNewDeviceApiKey {
-        success
-        message
-        code
-        key
+    api {
+        getNewDeviceApiKey {
+            success
+            message
+            code
+            key
+        }
     }
 }
 """
 
 
-def test_graphql_get_new_device_auth_key_unauthorized(client, tokens_file):
+def test_graphql_get_new_device_auth_key_unauthorized(
+    client,
+    tokens_file,
+):
     response = client.post(
         "/graphql",
         json={"query": NEW_DEVICE_KEY_MUTATION},
@@ -204,20 +216,25 @@ def test_graphql_get_new_device_auth_key_unauthorized(client, tokens_file):
 
 INVALIDATE_NEW_DEVICE_KEY_MUTATION = """
 mutation InvalidateNewDeviceKey {
-    invalidateNewDeviceApiKey {
-        success
-        message
-        code
+    api {
+        invalidateNewDeviceApiKey {
+            success
+            message
+            code
+        }
     }
 }
 """
 
 
-def test_graphql_invalidate_new_device_token_unauthorized(client, tokens_file):
+def test_graphql_invalidate_new_device_token_unauthorized(
+    client,
+    tokens_file,
+):
     response = client.post(
         "/graphql",
         json={
-            "query": DELETE_TOKEN_MUTATION,
+            "query": INVALIDATE_NEW_DEVICE_KEY_MUTATION,
             "variables": {
                 "device": "test_token",
             },
@@ -241,11 +258,13 @@ def test_graphql_get_and_delete_new_device_key(client, authorized_client, tokens
 
 AUTHORIZE_WITH_NEW_DEVICE_KEY_MUTATION = """
 mutation AuthorizeWithNewDeviceKey($input: UseNewDeviceKeyInput!) {
-    authorizeWithNewDeviceApiKey(input: $input) {
-        success
-        message
-        code
-        token
+    api {
+        authorizeWithNewDeviceApiKey(input: $input) {
+            success
+            message
+            code
+            token
+        }
     }
 }
 """
@@ -293,7 +312,10 @@ def test_graphql_get_and_authorize_key_after_12_minutes(
     assert_errorcode(response, "authorizeWithNewDeviceApiKey", 404)
 
 
-def test_graphql_authorize_without_token(client, tokens_file):
+def test_graphql_authorize_without_token(
+    client,
+    tokens_file,
+):
     response = client.post(
         "/graphql",
         json={

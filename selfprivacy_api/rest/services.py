@@ -16,8 +16,6 @@ from selfprivacy_api.actions.ssh import (
 from selfprivacy_api.actions.users import UserNotFound, get_user_by_username
 
 from selfprivacy_api.dependencies import get_token_header
-from selfprivacy_api.restic_controller import ResticController, ResticStates
-from selfprivacy_api.restic_controller import tasks as restic_tasks
 from selfprivacy_api.services.bitwarden import Bitwarden
 from selfprivacy_api.services.gitea import Gitea
 from selfprivacy_api.services.mailserver import MailServer
@@ -25,7 +23,7 @@ from selfprivacy_api.services.nextcloud import Nextcloud
 from selfprivacy_api.services.ocserv import Ocserv
 from selfprivacy_api.services.pleroma import Pleroma
 from selfprivacy_api.services.service import ServiceStatus
-from selfprivacy_api.utils import WriteUserData, get_dkim_key, get_domain
+from selfprivacy_api.utils import get_dkim_key, get_domain
 
 router = APIRouter(
     prefix="/services",
@@ -186,44 +184,34 @@ async def disable_pleroma():
 
 @router.get("/restic/backup/list")
 async def get_restic_backup_list():
-    restic = ResticController()
-    return restic.snapshot_list
+    raise HTTPException(
+        status_code=410,
+        detail="This endpoint is deprecated, please use GraphQL API",
+    )
 
 
 @router.put("/restic/backup/create")
 async def create_restic_backup():
-    restic = ResticController()
-    if restic.state is ResticStates.NO_KEY:
-        raise HTTPException(status_code=400, detail="Backup key not provided")
-    if restic.state is ResticStates.INITIALIZING:
-        raise HTTPException(status_code=400, detail="Backup is initializing")
-    if restic.state is ResticStates.BACKING_UP:
-        raise HTTPException(status_code=409, detail="Backup is already running")
-    restic_tasks.start_backup()
-    return {
-        "status": 0,
-        "message": "Backup creation has started",
-    }
+    raise HTTPException(
+        status_code=410,
+        detail="This endpoint is deprecated, please use GraphQL API",
+    )
 
 
 @router.get("/restic/backup/status")
 async def get_restic_backup_status():
-    restic = ResticController()
-
-    return {
-        "status": restic.state.name,
-        "progress": restic.progress,
-        "error_message": restic.error_message,
-    }
+    raise HTTPException(
+        status_code=410,
+        detail="This endpoint is deprecated, please use GraphQL API",
+    )
 
 
 @router.get("/restic/backup/reload")
 async def reload_restic_backup():
-    restic_tasks.load_snapshots()
-    return {
-        "status": 0,
-        "message": "Snapshots reload started",
-    }
+    raise HTTPException(
+        status_code=410,
+        detail="This endpoint is deprecated, please use GraphQL API",
+    )
 
 
 class BackupRestoreInput(BaseModel):
@@ -232,29 +220,10 @@ class BackupRestoreInput(BaseModel):
 
 @router.put("/restic/backup/restore")
 async def restore_restic_backup(backup: BackupRestoreInput):
-    restic = ResticController()
-    if restic.state is ResticStates.NO_KEY:
-        raise HTTPException(status_code=400, detail="Backup key not provided")
-    if restic.state is ResticStates.NOT_INITIALIZED:
-        raise HTTPException(
-            status_code=400, detail="Backups repository is not initialized"
-        )
-    if restic.state is ResticStates.BACKING_UP:
-        raise HTTPException(status_code=409, detail="Backup is already running")
-    if restic.state is ResticStates.INITIALIZING:
-        raise HTTPException(status_code=400, detail="Repository is initializing")
-    if restic.state is ResticStates.RESTORING:
-        raise HTTPException(status_code=409, detail="Restore is already running")
-
-    for backup_item in restic.snapshot_list:
-        if backup_item["short_id"] == backup.backupId:
-            restic_tasks.restore_from_backup(backup.backupId)
-            return {
-                "status": 0,
-                "message": "Backup restoration procedure started",
-            }
-
-    raise HTTPException(status_code=404, detail="Backup not found")
+    raise HTTPException(
+        status_code=410,
+        detail="This endpoint is deprecated, please use GraphQL API",
+    )
 
 
 class BackupConfigInput(BaseModel):
@@ -265,17 +234,10 @@ class BackupConfigInput(BaseModel):
 
 @router.put("/restic/backblaze/config")
 async def set_backblaze_config(backup_config: BackupConfigInput):
-    with WriteUserData() as data:
-        if "backup" not in data:
-            data["backup"] = {}
-        data["backup"]["provider"] = "BACKBLAZE"
-        data["backup"]["accountId"] = backup_config.accountId
-        data["backup"]["accountKey"] = backup_config.accountKey
-        data["backup"]["bucket"] = backup_config.bucket
-
-    restic_tasks.update_keys_from_userdata()
-
-    return "New backup settings saved"
+    raise HTTPException(
+        status_code=410,
+        detail="This endpoint is deprecated, please use GraphQL API",
+    )
 
 
 @router.post("/ssh/enable")

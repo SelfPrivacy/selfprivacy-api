@@ -4,9 +4,9 @@ import subprocess
 import typing
 from selfprivacy_api.jobs import Job, Jobs
 from selfprivacy_api.services.generic_service_mover import FolderMoveNames, move_service
-from selfprivacy_api.services.generic_size_counter import get_storage_usage
 from selfprivacy_api.services.generic_status_getter import get_service_status
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
+from selfprivacy_api.services.owned_path import OwnedPath
 from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
 from selfprivacy_api.utils.block_devices import BlockDevice
 import selfprivacy_api.utils.network as network_utils
@@ -45,6 +45,10 @@ class Pleroma(Service):
     @staticmethod
     def is_required() -> bool:
         return False
+
+    @staticmethod
+    def get_backup_description() -> str:
+        return "Your Pleroma accounts, posts and media."
 
     @staticmethod
     def is_enabled() -> bool:
@@ -97,19 +101,23 @@ class Pleroma(Service):
         return ""
 
     @staticmethod
-    def get_storage_usage() -> int:
-        storage_usage = 0
-        storage_usage += get_storage_usage("/var/lib/pleroma")
-        storage_usage += get_storage_usage("/var/lib/postgresql")
-        return storage_usage
-
-    @staticmethod
-    def get_location() -> str:
-        with ReadUserData() as user_data:
-            if user_data.get("useBinds", False):
-                return user_data.get("pleroma", {}).get("location", "sda1")
-            else:
-                return "sda1"
+    def get_owned_folders() -> typing.List[OwnedPath]:
+        """
+        Get a list of occupied directories with ownership info
+        pleroma has folders that are owned by different users
+        """
+        return [
+            OwnedPath(
+                path="/var/lib/pleroma",
+                owner="pleroma",
+                group="pleroma",
+            ),
+            OwnedPath(
+                path="/var/lib/postgresql",
+                owner="postgres",
+                group="postgres",
+            ),
+        ]
 
     @staticmethod
     def get_dns_records() -> typing.List[ServiceDnsRecord]:
@@ -138,20 +146,7 @@ class Pleroma(Service):
             self,
             volume,
             job,
-            [
-                FolderMoveNames(
-                    name="pleroma",
-                    bind_location="/var/lib/pleroma",
-                    owner="pleroma",
-                    group="pleroma",
-                ),
-                FolderMoveNames(
-                    name="postgresql",
-                    bind_location="/var/lib/postgresql",
-                    owner="postgres",
-                    group="postgres",
-                ),
-            ],
+            FolderMoveNames.default_foldermoves(self),
             "pleroma",
         )
         return job

@@ -45,13 +45,15 @@ def some_users(mocker, datadir):
 
 API_CREATE_SSH_KEY_MUTATION = """
 mutation addSshKey($sshInput: SshMutationInput!) {
-    addSshKey(sshInput: $sshInput) {
-        success
-        message
-        code
-        user {
-            username
-            sshKeys
+    users {
+        addSshKey(sshInput: $sshInput) {
+            success
+            message
+            code
+            user {
+                username
+                sshKeys
+            }
         }
     }
 }
@@ -90,12 +92,12 @@ def test_graphql_add_ssh_key(authorized_client, some_users, mock_subprocess_pope
     assert response.status_code == 200
     assert response.json().get("data") is not None
 
-    assert response.json()["data"]["addSshKey"]["code"] == 201
-    assert response.json()["data"]["addSshKey"]["message"] is not None
-    assert response.json()["data"]["addSshKey"]["success"] is True
+    assert response.json()["data"]["users"]["addSshKey"]["code"] == 201
+    assert response.json()["data"]["users"]["addSshKey"]["message"] is not None
+    assert response.json()["data"]["users"]["addSshKey"]["success"] is True
 
-    assert response.json()["data"]["addSshKey"]["user"]["username"] == "user1"
-    assert response.json()["data"]["addSshKey"]["user"]["sshKeys"] == [
+    assert response.json()["data"]["users"]["addSshKey"]["user"]["username"] == "user1"
+    assert response.json()["data"]["users"]["addSshKey"]["user"]["sshKeys"] == [
         "ssh-rsa KEY user1@pc",
         "ssh-rsa KEY test_key@pc",
     ]
@@ -117,12 +119,12 @@ def test_graphql_add_root_ssh_key(authorized_client, some_users, mock_subprocess
     assert response.status_code == 200
     assert response.json().get("data") is not None
 
-    assert response.json()["data"]["addSshKey"]["code"] == 201
-    assert response.json()["data"]["addSshKey"]["message"] is not None
-    assert response.json()["data"]["addSshKey"]["success"] is True
+    assert response.json()["data"]["users"]["addSshKey"]["code"] == 201
+    assert response.json()["data"]["users"]["addSshKey"]["message"] is not None
+    assert response.json()["data"]["users"]["addSshKey"]["success"] is True
 
-    assert response.json()["data"]["addSshKey"]["user"]["username"] == "root"
-    assert response.json()["data"]["addSshKey"]["user"]["sshKeys"] == [
+    assert response.json()["data"]["users"]["addSshKey"]["user"]["username"] == "root"
+    assert response.json()["data"]["users"]["addSshKey"]["user"]["sshKeys"] == [
         "ssh-ed25519 KEY test@pc",
         "ssh-rsa KEY test_key@pc",
     ]
@@ -144,12 +146,12 @@ def test_graphql_add_main_ssh_key(authorized_client, some_users, mock_subprocess
     assert response.status_code == 200
     assert response.json().get("data") is not None
 
-    assert response.json()["data"]["addSshKey"]["code"] == 201
-    assert response.json()["data"]["addSshKey"]["message"] is not None
-    assert response.json()["data"]["addSshKey"]["success"] is True
+    assert response.json()["data"]["users"]["addSshKey"]["code"] == 201
+    assert response.json()["data"]["users"]["addSshKey"]["message"] is not None
+    assert response.json()["data"]["users"]["addSshKey"]["success"] is True
 
-    assert response.json()["data"]["addSshKey"]["user"]["username"] == "tester"
-    assert response.json()["data"]["addSshKey"]["user"]["sshKeys"] == [
+    assert response.json()["data"]["users"]["addSshKey"]["user"]["username"] == "tester"
+    assert response.json()["data"]["users"]["addSshKey"]["user"]["sshKeys"] == [
         "ssh-rsa KEY test@pc",
         "ssh-rsa KEY test_key@pc",
     ]
@@ -171,9 +173,9 @@ def test_graphql_add_bad_ssh_key(authorized_client, some_users, mock_subprocess_
     assert response.status_code == 200
     assert response.json().get("data") is not None
 
-    assert response.json()["data"]["addSshKey"]["code"] == 400
-    assert response.json()["data"]["addSshKey"]["message"] is not None
-    assert response.json()["data"]["addSshKey"]["success"] is False
+    assert response.json()["data"]["users"]["addSshKey"]["code"] == 400
+    assert response.json()["data"]["users"]["addSshKey"]["message"] is not None
+    assert response.json()["data"]["users"]["addSshKey"]["success"] is False
 
 
 def test_graphql_add_ssh_key_nonexistent_user(
@@ -194,20 +196,22 @@ def test_graphql_add_ssh_key_nonexistent_user(
     assert response.status_code == 200
     assert response.json().get("data") is not None
 
-    assert response.json()["data"]["addSshKey"]["code"] == 404
-    assert response.json()["data"]["addSshKey"]["message"] is not None
-    assert response.json()["data"]["addSshKey"]["success"] is False
+    assert response.json()["data"]["users"]["addSshKey"]["code"] == 404
+    assert response.json()["data"]["users"]["addSshKey"]["message"] is not None
+    assert response.json()["data"]["users"]["addSshKey"]["success"] is False
 
 
 API_REMOVE_SSH_KEY_MUTATION = """
 mutation removeSshKey($sshInput: SshMutationInput!) {
-    removeSshKey(sshInput: $sshInput) {
-        success
-        message
-        code
-        user {
-            username
-            sshKeys
+    users {
+        removeSshKey(sshInput: $sshInput) {
+            success
+            message
+            code
+            user {
+                username
+                sshKeys
+            }
         }
     }
 }
@@ -246,12 +250,14 @@ def test_graphql_remove_ssh_key(authorized_client, some_users, mock_subprocess_p
     assert response.status_code == 200
     assert response.json().get("data") is not None
 
-    assert response.json()["data"]["removeSshKey"]["code"] == 200
-    assert response.json()["data"]["removeSshKey"]["message"] is not None
-    assert response.json()["data"]["removeSshKey"]["success"] is True
+    assert response.json()["data"]["users"]["removeSshKey"]["code"] == 200
+    assert response.json()["data"]["users"]["removeSshKey"]["message"] is not None
+    assert response.json()["data"]["users"]["removeSshKey"]["success"] is True
 
-    assert response.json()["data"]["removeSshKey"]["user"]["username"] == "user1"
-    assert response.json()["data"]["removeSshKey"]["user"]["sshKeys"] == []
+    assert (
+        response.json()["data"]["users"]["removeSshKey"]["user"]["username"] == "user1"
+    )
+    assert response.json()["data"]["users"]["removeSshKey"]["user"]["sshKeys"] == []
 
 
 def test_graphql_remove_root_ssh_key(
@@ -272,12 +278,14 @@ def test_graphql_remove_root_ssh_key(
     assert response.status_code == 200
     assert response.json().get("data") is not None
 
-    assert response.json()["data"]["removeSshKey"]["code"] == 200
-    assert response.json()["data"]["removeSshKey"]["message"] is not None
-    assert response.json()["data"]["removeSshKey"]["success"] is True
+    assert response.json()["data"]["users"]["removeSshKey"]["code"] == 200
+    assert response.json()["data"]["users"]["removeSshKey"]["message"] is not None
+    assert response.json()["data"]["users"]["removeSshKey"]["success"] is True
 
-    assert response.json()["data"]["removeSshKey"]["user"]["username"] == "root"
-    assert response.json()["data"]["removeSshKey"]["user"]["sshKeys"] == []
+    assert (
+        response.json()["data"]["users"]["removeSshKey"]["user"]["username"] == "root"
+    )
+    assert response.json()["data"]["users"]["removeSshKey"]["user"]["sshKeys"] == []
 
 
 def test_graphql_remove_main_ssh_key(
@@ -298,12 +306,14 @@ def test_graphql_remove_main_ssh_key(
     assert response.status_code == 200
     assert response.json().get("data") is not None
 
-    assert response.json()["data"]["removeSshKey"]["code"] == 200
-    assert response.json()["data"]["removeSshKey"]["message"] is not None
-    assert response.json()["data"]["removeSshKey"]["success"] is True
+    assert response.json()["data"]["users"]["removeSshKey"]["code"] == 200
+    assert response.json()["data"]["users"]["removeSshKey"]["message"] is not None
+    assert response.json()["data"]["users"]["removeSshKey"]["success"] is True
 
-    assert response.json()["data"]["removeSshKey"]["user"]["username"] == "tester"
-    assert response.json()["data"]["removeSshKey"]["user"]["sshKeys"] == []
+    assert (
+        response.json()["data"]["users"]["removeSshKey"]["user"]["username"] == "tester"
+    )
+    assert response.json()["data"]["users"]["removeSshKey"]["user"]["sshKeys"] == []
 
 
 def test_graphql_remove_nonexistent_ssh_key(
@@ -324,9 +334,9 @@ def test_graphql_remove_nonexistent_ssh_key(
     assert response.status_code == 200
     assert response.json().get("data") is not None
 
-    assert response.json()["data"]["removeSshKey"]["code"] == 404
-    assert response.json()["data"]["removeSshKey"]["message"] is not None
-    assert response.json()["data"]["removeSshKey"]["success"] is False
+    assert response.json()["data"]["users"]["removeSshKey"]["code"] == 404
+    assert response.json()["data"]["users"]["removeSshKey"]["message"] is not None
+    assert response.json()["data"]["users"]["removeSshKey"]["success"] is False
 
 
 def test_graphql_remove_ssh_key_nonexistent_user(
@@ -347,6 +357,6 @@ def test_graphql_remove_ssh_key_nonexistent_user(
     assert response.status_code == 200
     assert response.json().get("data") is not None
 
-    assert response.json()["data"]["removeSshKey"]["code"] == 404
-    assert response.json()["data"]["removeSshKey"]["message"] is not None
-    assert response.json()["data"]["removeSshKey"]["success"] is False
+    assert response.json()["data"]["users"]["removeSshKey"]["code"] == 404
+    assert response.json()["data"]["users"]["removeSshKey"]["message"] is not None
+    assert response.json()["data"]["users"]["removeSshKey"]["success"] is False

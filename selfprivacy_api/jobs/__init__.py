@@ -26,8 +26,11 @@ from selfprivacy_api.utils.redis_pool import RedisPool
 
 JOB_EXPIRATION_SECONDS = 10 * 24 * 60 * 60  # ten days
 
+STATUS_LOGS_PREFIX = "jobs_logs:status:"
+PROGRESS_LOGS_PREFIX = "jobs_logs:progress:"
 
-class JobStatus(Enum):
+
+class JobStatus(str, Enum):
     """
     Status of a job.
     """
@@ -70,6 +73,7 @@ class Jobs:
         jobs = Jobs.get_jobs()
         for job in jobs:
             Jobs.remove(job)
+        Jobs.reset_logs()
 
     @staticmethod
     def add(
@@ -121,6 +125,60 @@ class Jobs:
         return False
 
     @staticmethod
+    def reset_logs() -> None:
+        redis = RedisPool().get_connection()
+        for key in redis.keys(STATUS_LOGS_PREFIX + "*"):
+            redis.delete(key)
+
+    @staticmethod
+    def log_status_update(job: Job, status: JobStatus) -> None:
+        redis = RedisPool().get_connection()
+        key = _status_log_key_from_uuid(job.uid)
+        redis.lpush(key, status.value)
+        redis.expire(key, 10)
+
+    @staticmethod
+    def log_progress_update(job: Job, progress: int) -> None:
+        redis = RedisPool().get_connection()
+        key = _progress_log_key_from_uuid(job.uid)
+        redis.lpush(key, progress)
+        redis.expire(key, 10)
+
+    @staticmethod
+    def status_updates(job: Job) -> list[JobStatus]:
+        result: list[JobStatus] = []
+
+        redis = RedisPool().get_connection()
+        key = _status_log_key_from_uuid(job.uid)
+        if not redis.exists(key):
+            return []
+
+        status_strings: list[str] = redis.lrange(key, 0, -1)  # type: ignore
+        for status in status_strings:
+            try:
+                result.append(JobStatus[status])
+            except KeyError as error:
+                raise ValueError("impossible job status: " + status) from error
+        return result
+
+    @staticmethod
+    def progress_updates(job: Job) -> list[int]:
+        result: list[int] = []
+
+        redis = RedisPool().get_connection()
+        key = _progress_log_key_from_uuid(job.uid)
+        if not redis.exists(key):
+            return []
+
+        progress_strings: list[str] = redis.lrange(key, 0, -1)  # type: ignore
+        for progress in progress_strings:
+            try:
+                result.append(int(progress))
+            except KeyError as error:
+                raise ValueError("impossible job progress: " + progress) from error
+        return result
+
+    @staticmethod
     def update(
         job: Job,
         status: JobStatus,
@@ -140,9 +198,17 @@ class Jobs:
             job.description = description
         if status_text is not None:
             job.status_text = status_text
-        if progress is not None:
+
+        # if it is finished it is 100
+        # unless user says otherwise
+        if status == JobStatus.FINISHED and progress is None:
+            progress = 100
+        if progress is not None and job.progress != progress:
             job.progress = progress
+            Jobs.log_progress_update(job, progress)
+
         job.status = status
+        Jobs.log_status_update(job, status)
         job.updated_at = datetime.datetime.now()
         job.error = error
         job.result = result
@@ -156,6 +222,14 @@ class Jobs:
             if status in (JobStatus.FINISHED, JobStatus.ERROR):
                 redis.expire(key, JOB_EXPIRATION_SECONDS)
 
+        return job
+
+    @staticmethod
+    def set_expiration(job: Job, expiration_seconds: int) -> Job:
+        redis = RedisPool().get_connection()
+        key = _redis_key_from_uuid(job.uid)
+        if redis.exists(key):
+            redis.expire(key, expiration_seconds)
         return job
 
     @staticmethod
@@ -194,11 +268,19 @@ class Jobs:
         return False
 
 
-def _redis_key_from_uuid(uuid_string):
+def _redis_key_from_uuid(uuid_string) -> str:
     return "jobs:" + str(uuid_string)
 
 
-def _store_job_as_hash(redis, redis_key, model):
+def _status_log_key_from_uuid(uuid_string) -> str:
+    return STATUS_LOGS_PREFIX + str(uuid_string)
+
+
+def _progress_log_key_from_uuid(uuid_string) -> str:
+    return PROGRESS_LOGS_PREFIX + str(uuid_string)
+
+
+def _store_job_as_hash(redis, redis_key, model) -> None:
     for key, value in model.dict().items():
         if isinstance(value, uuid.UUID):
             value = str(value)
@@ -209,7 +291,7 @@ def _store_job_as_hash(redis, redis_key, model):
         redis.hset(redis_key, key, str(value))
 
 
-def _job_from_hash(redis, redis_key):
+def _job_from_hash(redis, redis_key) -> typing.Optional[Job]:
     if redis.exists(redis_key):
         job_dict = redis.hgetall(redis_key)
         for date in [

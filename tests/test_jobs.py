@@ -1,6 +1,7 @@
 # pylint: disable=redefined-outer-name
 # pylint: disable=unused-argument
 import pytest
+from time import sleep
 
 from selfprivacy_api.jobs import Jobs, JobStatus
 import selfprivacy_api.jobs as jobsmodule
@@ -49,6 +50,20 @@ def test_remove_get_nonexistent(jobs_with_one_job):
     assert jobs_with_one_job.get_job(uid_str) is None
 
 
+def test_set_zeroing_ttl(jobs_with_one_job):
+    test_job = jobs_with_one_job.get_jobs()[0]
+    jobs_with_one_job.set_expiration(test_job, 0)
+    assert jobs_with_one_job.get_jobs() == []
+
+
+def test_not_zeroing_ttl(jobs_with_one_job):
+    test_job = jobs_with_one_job.get_jobs()[0]
+    jobs_with_one_job.set_expiration(test_job, 1)
+    assert len(jobs_with_one_job.get_jobs()) == 1
+    sleep(1.2)
+    assert len(jobs_with_one_job.get_jobs()) == 0
+
+
 def test_jobs(jobs_with_one_job):
     jobs = jobs_with_one_job
     test_job = jobs_with_one_job.get_jobs()[0]
@@ -78,6 +93,29 @@ def test_jobs(jobs_with_one_job):
 
     assert jobs.get_jobs() == []
     jobsmodule.JOB_EXPIRATION_SECONDS = backup
+
+
+def test_finishing_equals_100(jobs_with_one_job):
+    jobs = jobs_with_one_job
+    test_job = jobs.get_jobs()[0]
+    assert not jobs.is_busy()
+    assert test_job.progress != 100
+
+    jobs.update(job=test_job, status=JobStatus.FINISHED)
+
+    assert test_job.progress == 100
+
+
+def test_finishing_equals_100_unless_stated_otherwise(jobs_with_one_job):
+    jobs = jobs_with_one_job
+    test_job = jobs.get_jobs()[0]
+    assert not jobs.is_busy()
+    assert test_job.progress != 100
+    assert test_job.progress != 23
+
+    jobs.update(job=test_job, status=JobStatus.FINISHED, progress=23)
+
+    assert test_job.progress == 23
 
 
 @pytest.fixture

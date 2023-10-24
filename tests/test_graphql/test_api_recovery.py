@@ -118,22 +118,26 @@ def test_graphql_recovery_key_status_when_none_exists(authorized_client, tokens_
 
 API_RECOVERY_KEY_GENERATE_MUTATION = """
 mutation TestGenerateRecoveryKey($limits: RecoveryKeyLimitsInput) {
-    getNewRecoveryApiKey(limits: $limits) {
-        success
-        message
-        code
-        key
+    api {
+        getNewRecoveryApiKey(limits: $limits) {
+            success
+            message
+            code
+            key
+        }
     }
 }
 """
 
 API_RECOVERY_KEY_USE_MUTATION = """
 mutation TestUseRecoveryKey($input: UseRecoveryKeyInput!) {
-    useRecoveryApiKey(input: $input) {
-        success
-        message
-        code
-        token
+    api {
+        useRecoveryApiKey(input: $input) {
+            success
+            message
+            code
+            token
+        }
     }
 }
 """
