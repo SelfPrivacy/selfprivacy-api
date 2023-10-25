@@ -4,6 +4,7 @@ Token repository using Redis as backend.
 from typing import Any, Optional
 from datetime import datetime
 from hashlib import md5
+from datetime import timezone
 
 from selfprivacy_api.repositories.tokens.abstract_tokens_repository import (
     AbstractTokensRepository,
@@ -53,6 +54,7 @@ class RedisTokensRepository(AbstractTokensRepository):
             token = self._token_from_hash(key)
             if token == input_token:
                 return key
+        return None
 
     def delete_token(self, input_token: Token) -> None:
         """Delete the token"""
@@ -148,6 +150,7 @@ class RedisTokensRepository(AbstractTokensRepository):
         if token is not None:
             token.created_at = token.created_at.replace(tzinfo=None)
             return token
+        return None
 
     def _recovery_key_from_hash(self, redis_key: str) -> Optional[RecoveryKey]:
         return self._hash_as_model(redis_key, RecoveryKey)
