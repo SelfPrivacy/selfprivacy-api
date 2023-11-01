@@ -11,8 +11,8 @@ from tests.common import (
     NearFuture,
     assert_recovery_recent,
 )
-from tests.common import FIVE_MINUTES_INTO_FUTURE_NAIVE as FIVE_MINUTES_INTO_FUTURE
-from tests.common import FIVE_MINUTES_INTO_PAST_NAIVE as FIVE_MINUTES_INTO_PAST
+from tests.common import five_minutes_into_future_naive as five_minutes_into_future
+from tests.common import five_minutes_into_past_naive as five_minutes_into_past
 
 DATE_FORMATS = [
     "%Y-%m-%dT%H:%M:%S.%fZ",
@@ -76,6 +76,8 @@ def rest_make_recovery_token(client, expires_at=None, timeformat=None, uses=None
             json=json,
         )
 
+    if not response.status_code == 200:
+        raise ValueError(response.reason, response.text, response.json()["detail"])
     assert response.status_code == 200
     assert "token" in response.json()
     return response.json()["token"]
@@ -323,7 +325,7 @@ def test_generate_recovery_token_with_expiration_date(
 ):
     # Generate token with expiration date
     # Generate expiration date in the future
-    expiration_date = FIVE_MINUTES_INTO_FUTURE
+    expiration_date = five_minutes_into_future()
     mnemonic_token = rest_make_recovery_token(
         authorized_client, expires_at=expiration_date, timeformat=timeformat
     )
@@ -362,7 +364,7 @@ def test_generate_recovery_token_with_expiration_in_the_past(
     authorized_client, tokens_file, timeformat
 ):
     # Server must return 400 if expiration date is in the past
-    expiration_date = FIVE_MINUTES_INTO_PAST
+    expiration_date = five_minutes_into_past()
     expiration_date_str = expiration_date.strftime(timeformat)
     response = authorized_client.post(
         "/auth/recovery_token",

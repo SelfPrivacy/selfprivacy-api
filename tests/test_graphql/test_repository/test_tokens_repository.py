@@ -27,7 +27,7 @@ from selfprivacy_api.repositories.tokens.abstract_tokens_repository import (
     AbstractTokensRepository,
 )
 
-from tests.common import FIVE_MINUTES_INTO_PAST, FIVE_MINUTES_INTO_FUTURE
+from tests.common import five_minutes_into_past, five_minutes_into_future
 
 
 ORIGINAL_DEVICE_NAMES = [
@@ -363,7 +363,7 @@ def test_use_mnemonic_expired_recovery_key(
     some_tokens_repo,
 ):
     repo = some_tokens_repo
-    expiration = FIVE_MINUTES_INTO_PAST
+    expiration = five_minutes_into_past()
     assert repo.create_recovery_key(uses_left=2, expiration=expiration) is not None
     recovery_key = repo.get_recovery_key()
     # TODO: do not ignore timezone once json backend is deleted
@@ -543,7 +543,7 @@ def test_use_mnemonic_expired_new_device_key(
     some_tokens_repo,
 ):
     repo = some_tokens_repo
-    expiration = FIVE_MINUTES_INTO_PAST
+    expiration = five_minutes_into_past()
 
     key = repo.get_new_device_key()
     assert key is not None
@@ -601,5 +601,5 @@ def test_clone_json_to_redis_full(some_tokens_repo):
     repo = some_tokens_repo
     if isinstance(repo, JsonTokensRepository):
         repo.get_new_device_key()
-        repo.create_recovery_key(FIVE_MINUTES_INTO_FUTURE, 2)
+        repo.create_recovery_key(five_minutes_into_future(), 2)
         clone_to_redis(repo)

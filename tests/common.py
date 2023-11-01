@@ -6,10 +6,21 @@ from mnemonic import Mnemonic
 RECOVERY_KEY_VALIDATION_DATETIME = "selfprivacy_api.models.tokens.time.datetime"
 DEVICE_KEY_VALIDATION_DATETIME = RECOVERY_KEY_VALIDATION_DATETIME
 
-FIVE_MINUTES_INTO_FUTURE_NAIVE = datetime.now() + timedelta(minutes=5)
-FIVE_MINUTES_INTO_FUTURE = datetime.now(timezone.utc) + timedelta(minutes=5)
-FIVE_MINUTES_INTO_PAST_NAIVE = datetime.now() - timedelta(minutes=5)
-FIVE_MINUTES_INTO_PAST = datetime.now(timezone.utc) - timedelta(minutes=5)
+
+def five_minutes_into_future_naive():
+    return datetime.now() + timedelta(minutes=5)
+
+
+def five_minutes_into_future():
+    return datetime.now(timezone.utc) + timedelta(minutes=5)
+
+
+def five_minutes_into_past_naive():
+    return datetime.now() - timedelta(minutes=5)
+
+
+def five_minutes_into_past():
+    return datetime.now(timezone.utc) - timedelta(minutes=5)
 
 
 class NearFuture(datetime):
