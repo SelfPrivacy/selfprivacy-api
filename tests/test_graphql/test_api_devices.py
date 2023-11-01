@@ -8,7 +8,7 @@ from tests.common import (
     generate_api_query,
 )
 from tests.conftest import DEVICE_WE_AUTH_TESTS_WITH, TOKENS_FILE_CONTENTS
-from tests.test_graphql.common import (
+from tests.test_graphql.api_common import (
     assert_data,
     assert_empty,
     assert_ok,
@@ -38,7 +38,7 @@ def graphql_get_new_device_key(authorized_client) -> str:
     )
     assert_ok(response, "getNewDeviceApiKey")
 
-    key = response.json()["data"]["getNewDeviceApiKey"]["key"]
+    key = response.json()["data"]["api"]["getNewDeviceApiKey"]["key"]
     assert key.split(" ").__len__() == 12
     return key
 
@@ -61,7 +61,7 @@ def graphql_try_auth_new_device(client, mnemonic_key, device_name):
 def graphql_authorize_new_device(client, mnemonic_key, device_name) -> str:
     response = graphql_try_auth_new_device(client, mnemonic_key, "new_device")
     assert_ok(response, "authorizeWithNewDeviceApiKey")
-    token = response.json()["data"]["authorizeWithNewDeviceApiKey"]["token"]
+    token = response.json()["data"]["api"]["authorizeWithNewDeviceApiKey"]["token"]
     assert_token_valid(client, token)
 
 
@@ -182,7 +182,7 @@ def test_graphql_refresh_token(authorized_client, client, tokens_file):
     )
     assert_ok(response, "refreshDeviceApiToken")
 
-    new_token = response.json()["data"]["refreshDeviceApiToken"]["token"]
+    new_token = response.json()["data"]["api"]["refreshDeviceApiToken"]["token"]
     assert_token_valid(client, new_token)
 
     set_client_token(client, new_token)

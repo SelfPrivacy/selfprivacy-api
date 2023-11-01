@@ -13,7 +13,7 @@ from tests.common import (
 from tests.common import FIVE_MINUTES_INTO_FUTURE_NAIVE as FIVE_MINUTES_INTO_FUTURE
 from tests.common import FIVE_MINUTES_INTO_PAST_NAIVE as FIVE_MINUTES_INTO_PAST
 
-from tests.test_graphql.common import (
+from tests.test_graphql.api_common import (
     assert_empty,
     assert_data,
     assert_ok,
@@ -46,7 +46,7 @@ def graphql_recovery_status(client):
     response = request_recovery_status(client)
     data = assert_data(response)
 
-    status = data["api"]["recoveryKey"]
+    status = data["recoveryKey"]
     assert status is not None
     return status
 
@@ -70,7 +70,7 @@ def request_make_new_recovery_key(client, expires_at=None, uses=None):
 def graphql_make_new_recovery_key(client, expires_at=None, uses=None):
     response = request_make_new_recovery_key(client, expires_at, uses)
     assert_ok(response, "getNewRecoveryApiKey")
-    key = response.json()["data"]["getNewRecoveryApiKey"]["key"]
+    key = response.json()["data"]["api"]["getNewRecoveryApiKey"]["key"]
     assert key is not None
     assert key.split(" ").__len__() == 18
     return key
@@ -94,7 +94,7 @@ def request_recovery_auth(client, key, device_name):
 def graphql_use_recovery_key(client, key, device_name):
     response = request_recovery_auth(client, key, device_name)
     assert_ok(response, "useRecoveryApiKey")
-    token = response.json()["data"]["useRecoveryApiKey"]["token"]
+    token = response.json()["data"]["api"]["useRecoveryApiKey"]["token"]
     assert token is not None
     assert_token_valid(client, token)
     set_client_token(client, token)
@@ -187,7 +187,7 @@ def test_graphql_use_recovery_key_after_expiration(
 
     response = request_recovery_auth(client, key, "new_test_token3")
     assert_errorcode(response, "useRecoveryApiKey", 404)
-    assert response.json()["data"]["useRecoveryApiKey"]["token"] is None
+    assert response.json()["data"]["api"]["useRecoveryApiKey"]["token"] is None
     assert_original(authorized_client)
 
     status = graphql_recovery_status(authorized_client)
@@ -207,7 +207,7 @@ def test_graphql_generate_recovery_key_with_expiration_in_the_past(
     )
 
     assert_errorcode(response, "getNewRecoveryApiKey", 400)
-    assert response.json()["data"]["getNewRecoveryApiKey"]["key"] is None
+    assert response.json()["data"]["api"]["getNewRecoveryApiKey"]["key"] is None
     assert graphql_recovery_status(authorized_client)["exists"] is False
 
 
@@ -273,12 +273,12 @@ def test_graphql_generate_recovery_key_with_negative_uses(
     response = request_make_new_recovery_key(authorized_client, uses=-1)
 
     assert_errorcode(response, "getNewRecoveryApiKey", 400)
-    assert response.json()["data"]["getNewRecoveryApiKey"]["key"] is None
+    assert response.json()["data"]["api"]["getNewRecoveryApiKey"]["key"] is None
 
 
 def test_graphql_generate_recovery_key_with_zero_uses(authorized_client, tokens_file):
     response = request_make_new_recovery_key(authorized_client, uses=0)
 
     assert_errorcode(response, "getNewRecoveryApiKey", 400)
-    assert response.json()["data"]["getNewRecoveryApiKey"]["key"] is None
+    assert response.json()["data"]["api"]["getNewRecoveryApiKey"]["key"] is None
     assert graphql_recovery_status(authorized_client)["exists"] is False
