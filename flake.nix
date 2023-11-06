@@ -1,14 +1,7 @@
 {
   description = "SelfPrivacy API application flake";
 
-  inputs = {
-    selfprivacy-nixos-config.url =
-      "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git";
-
-    # nixpkgs is inherited from selfprivacy-nixos-config
-    # but can be overridden with `--override-input` option for nix build/flake
-    nixpkgs.follows = "selfprivacy-nixos-config/nixpkgs";
-  };
+  inputs.nixpkgs.url = "github:nixos/nixpkgs";
 
   outputs = { nixpkgs, ... }:
   let

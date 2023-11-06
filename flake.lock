@@ -1,18 +1,5 @@
 {
   "nodes": {
-    "hardware-configuration-nix": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1692731346,
-        "narHash": "sha256-rQIpYKwowqbbVVurEl5qNpuPfoRyEUMefoZXrUoO6p8=",
-        "path": "hardware-configuration.nix",
-        "type": "path"
-      },
-      "original": {
-        "id": "hardware-configuration-nix",
-        "type": "indirect"
-      }
-    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1686476475,
@@ -30,60 +17,7 @@
     },
     "root": {
       "inputs": {
-        "nixpkgs": [
-          "selfprivacy-nixos-config",
-          "nixpkgs"
-        ],
-        "selfprivacy-nixos-config": "selfprivacy-nixos-config"
-      }
-    },
-    "selfprivacy-nixos-config": {
-      "inputs": {
-        "hardware-configuration-nix": "hardware-configuration-nix",
-        "nixpkgs": "nixpkgs",
-        "selfprivacy-overlay": "selfprivacy-overlay",
-        "userdata-json": "userdata-json"
-      },
-      "locked": {
-        "lastModified": 1695043402,
-        "narHash": "sha256-1zPdzEUQtuqVminXwrb1yfI7wydHfdtmBYSqUsgJlCA=",
-        "ref": "flake-to-override",
-        "rev": "3bf91c25c36d0e6dcf18b146ad95883f057dbd0b",
-        "revCount": 124,
-        "type": "git",
-        "url": "https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git"
-      },
-      "original": {
-        "type": "git",
-        "url": "https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git"
-      }
-    },
-    "selfprivacy-overlay": {
-      "locked": {
-        "lastModified": 1689554432,
-        "narHash": "sha256-hegMIgxBHUuRFbCecQpbjFfTHpduV3VZWr8OINtQO6k=",
-        "ref": "flakes",
-        "rev": "53ed9b3f5f70a7f2843ecbef7775307e23a2c1f4",
-        "revCount": 31,
-        "type": "git",
-        "url": "https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nix-repo.git"
-      },
-      "original": {
-        "type": "git",
-        "url": "https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nix-repo.git"
-      }
-    },
-    "userdata-json": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1689259484,
-        "narHash": "sha256-Co3QGsxCjDspP5Nzzu1zICkee5CEq+ORlxSF3bFqbCY=",
-        "path": "userdata/userdata.json",
-        "type": "path"
-      },
-      "original": {
-        "id": "userdata-json",
-        "type": "indirect"
+        "nixpkgs": "nixpkgs"
       }
     }
   },
