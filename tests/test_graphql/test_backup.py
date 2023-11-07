@@ -14,6 +14,8 @@ import secrets
 
 import tempfile
 
+from selfprivacy_api.utils.huey import huey
+
 import selfprivacy_api.services as services
 from selfprivacy_api.services import Service, get_all_services
 from selfprivacy_api.services.service import ServiceStatus
@@ -118,6 +120,10 @@ def dummy_service(tmpdir, backups, raw_dummy_service) -> Service:
 
     # register our service
     services.services.append(service)
+
+    # make sure we are in immediate mode because this thing is non pickleable to store on queue.
+    huey.immediate = True
+    assert huey.immediate is True
 
     assert get_service_by_id(service.get_id()) is not None
     yield service
@@ -994,6 +1000,32 @@ def test_autobackup_timing(backups, dummy_service):
 
     future = datetime.now(timezone.utc) + timedelta(minutes=backup_period + 2)
     assert Backups.is_time_to_backup_service(dummy_service, future)
+
+
+def test_backup_unbackuppable(backups, dummy_service):
+    dummy_service.set_backuppable(False)
+    assert dummy_service.can_be_backed_up() is False
+    with pytest.raises(ValueError):
+        Backups.back_up(dummy_service)
+
+
+def test_failed_autoback_prevents_more_autobackup(backups, dummy_service):
+    backup_period = 13  # minutes
+    now = datetime.now(timezone.utc)
+
+    Backups.set_autobackup_period_minutes(backup_period)
+    assert Backups.is_time_to_backup_service(dummy_service, now)
+
+    # artificially making an errored out backup job
+    dummy_service.set_backuppable(False)
+    with pytest.raises(ValueError):
+        Backups.back_up(dummy_service)
+    dummy_service.set_backuppable(True)
+
+    assert Backups.get_last_backed_up(dummy_service) is None
+    assert Backups.get_last_backup_error_time(dummy_service) is not None
+
+    assert Backups.is_time_to_backup_service(dummy_service, now) is False
 
 
 # Storage
