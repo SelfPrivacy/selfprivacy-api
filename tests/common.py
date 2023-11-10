@@ -11,12 +11,20 @@ def five_minutes_into_future_naive():
     return datetime.now() + timedelta(minutes=5)
 
 
+def five_minutes_into_future_naive_utc():
+    return datetime.utcnow() + timedelta(minutes=5)
+
+
 def five_minutes_into_future():
     return datetime.now(timezone.utc) + timedelta(minutes=5)
 
 
 def five_minutes_into_past_naive():
     return datetime.now() - timedelta(minutes=5)
+
+
+def five_minutes_into_past_naive_utc():
+    return datetime.utcnow() - timedelta(minutes=5)
 
 
 def five_minutes_into_past():
