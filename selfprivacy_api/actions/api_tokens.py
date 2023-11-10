@@ -7,6 +7,7 @@ from typing import Optional
 from pydantic import BaseModel
 from mnemonic import Mnemonic
 
+from selfprivacy_api.utils.timeutils import ensure_tz_aware
 from selfprivacy_api.repositories.tokens.redis_tokens_repository import (
     RedisTokensRepository,
 )
@@ -121,8 +122,9 @@ def get_new_api_recovery_key(
 ) -> str:
     """Get new recovery key"""
     if expiration_date is not None:
-        current_time = datetime.now().timestamp()
-        if expiration_date.timestamp() < current_time:
+        expiration_date = ensure_tz_aware(expiration_date)
+        current_time = datetime.now(timezone.utc)
+        if expiration_date < current_time:
             raise InvalidExpirationDate("Expiration date is in the past")
     if uses_left is not None:
         if uses_left <= 0:
