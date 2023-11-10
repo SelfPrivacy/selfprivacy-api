@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Optional
@@ -86,13 +88,15 @@ class AbstractTokensRepository(ABC):
     def get_recovery_key(self) -> Optional[RecoveryKey]:
         """Get the recovery key"""
 
-    @abstractmethod
     def create_recovery_key(
         self,
         expiration: Optional[datetime],
         uses_left: Optional[int],
     ) -> RecoveryKey:
         """Create the recovery key"""
+        recovery_key = RecoveryKey.generate(expiration, uses_left)
+        self._store_recovery_key(recovery_key)
+        return recovery_key
 
     def use_mnemonic_recovery_key(
         self, mnemonic_phrase: str, device_name: str
@@ -122,6 +126,14 @@ class AbstractTokensRepository(ABC):
         if recovery_key is None:
             return False
         return recovery_key.is_valid()
+
+    @abstractmethod
+    def _store_recovery_key(self, recovery_key: RecoveryKey) -> None:
+        """Store recovery key directly"""
+
+    @abstractmethod
+    def _delete_recovery_key(self) -> None:
+        """Delete the recovery key"""
 
     def get_new_device_key(self) -> NewDeviceKey:
         """Creates and returns the new device key"""
@@ -155,6 +167,26 @@ class AbstractTokensRepository(ABC):
         self.delete_new_device_key()
 
         return new_token
+
+    def reset(self):
+        for token in self.get_tokens():
+            self.delete_token(token)
+        self.delete_new_device_key()
+        self._delete_recovery_key()
+
+    def clone(self, source: AbstractTokensRepository) -> None:
+        """Clone the state of another repository to this one"""
+        self.reset()
+        for token in source.get_tokens():
+            self._store_token(token)
+
+        recovery_key = source.get_recovery_key()
+        if recovery_key is not None:
+            self._store_recovery_key(recovery_key)
+
+        new_device_key = source._get_stored_new_device_key()
+        if new_device_key is not None:
+            self._store_new_device_key(new_device_key)
 
     @abstractmethod
     def _store_token(self, new_token: Token):

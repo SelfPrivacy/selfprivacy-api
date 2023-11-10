@@ -4,6 +4,7 @@ Token repository using Redis as backend.
 from typing import Any, Optional
 from datetime import datetime
 from hashlib import md5
+from datetime import timezone
 
 from selfprivacy_api.repositories.tokens.abstract_tokens_repository import (
     AbstractTokensRepository,
@@ -53,6 +54,7 @@ class RedisTokensRepository(AbstractTokensRepository):
             token = self._token_from_hash(key)
             if token == input_token:
                 return key
+        return None
 
     def delete_token(self, input_token: Token) -> None:
         """Delete the token"""
@@ -62,13 +64,6 @@ class RedisTokensRepository(AbstractTokensRepository):
             raise TokenNotFound
         redis.delete(key)
 
-    def reset(self):
-        for token in self.get_tokens():
-            self.delete_token(token)
-        self.delete_new_device_key()
-        redis = self.connection
-        redis.delete(RECOVERY_KEY_REDIS_KEY)
-
     def get_recovery_key(self) -> Optional[RecoveryKey]:
         """Get the recovery key"""
         redis = self.connection
@@ -76,15 +71,13 @@ class RedisTokensRepository(AbstractTokensRepository):
             return self._recovery_key_from_hash(RECOVERY_KEY_REDIS_KEY)
         return None
 
-    def create_recovery_key(
-        self,
-        expiration: Optional[datetime],
-        uses_left: Optional[int],
-    ) -> RecoveryKey:
-        """Create the recovery key"""
-        recovery_key = RecoveryKey.generate(expiration=expiration, uses_left=uses_left)
+    def _store_recovery_key(self, recovery_key: RecoveryKey) -> None:
         self._store_model_as_hash(RECOVERY_KEY_REDIS_KEY, recovery_key)
-        return recovery_key
+
+    def _delete_recovery_key(self) -> None:
+        """Delete the recovery key"""
+        redis = self.connection
+        redis.delete(RECOVERY_KEY_REDIS_KEY)
 
     def _store_new_device_key(self, new_device_key: NewDeviceKey) -> None:
         """Store new device key directly"""
@@ -157,6 +150,7 @@ class RedisTokensRepository(AbstractTokensRepository):
         if token is not None:
             token.created_at = token.created_at.replace(tzinfo=None)
             return token
+        return None
 
     def _recovery_key_from_hash(self, redis_key: str) -> Optional[RecoveryKey]:
         return self._hash_as_model(redis_key, RecoveryKey)
@@ -168,5 +162,7 @@ class RedisTokensRepository(AbstractTokensRepository):
         redis = self.connection
         for key, value in model.dict().items():
             if isinstance(value, datetime):
+                if value.tzinfo is None:
+                    value = value.replace(tzinfo=timezone.utc)
                 value = value.isoformat()
             redis.hset(redis_key, key, str(value))

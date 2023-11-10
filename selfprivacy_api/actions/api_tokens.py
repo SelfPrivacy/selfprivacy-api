@@ -1,11 +1,14 @@
-"""App tokens actions"""
-from datetime import datetime
+"""
+App tokens actions. 
+The only actions on tokens that are accessible from APIs
+"""
+from datetime import datetime, timezone
 from typing import Optional
 from pydantic import BaseModel
 from mnemonic import Mnemonic
 
-from selfprivacy_api.repositories.tokens.json_tokens_repository import (
-    JsonTokensRepository,
+from selfprivacy_api.repositories.tokens.redis_tokens_repository import (
+    RedisTokensRepository,
 )
 from selfprivacy_api.repositories.tokens.exceptions import (
     TokenNotFound,
@@ -14,7 +17,7 @@ from selfprivacy_api.repositories.tokens.exceptions import (
     NewDeviceKeyNotFound,
 )
 
-TOKEN_REPO = JsonTokensRepository()
+TOKEN_REPO = RedisTokensRepository()
 
 
 class TokenInfoWithIsCaller(BaseModel):
@@ -23,6 +26,14 @@ class TokenInfoWithIsCaller(BaseModel):
     name: str
     date: datetime
     is_caller: bool
+
+
+def _naive(date_time: datetime) -> datetime:
+    if date_time is None:
+        return None
+    if date_time.tzinfo is not None:
+        date_time.astimezone(timezone.utc)
+    return date_time.replace(tzinfo=None)
 
 
 def get_api_tokens_with_caller_flag(caller_token: str) -> list[TokenInfoWithIsCaller]:
@@ -91,8 +102,8 @@ def get_api_recovery_token_status() -> RecoveryTokenStatus:
     return RecoveryTokenStatus(
         exists=True,
         valid=is_valid,
-        date=token.created_at,
-        expiration=token.expires_at,
+        date=_naive(token.created_at),
+        expiration=_naive(token.expires_at),
         uses_left=token.uses_left,
     )
 
