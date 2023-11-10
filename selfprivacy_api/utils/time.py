@@ -1,6 +1,29 @@
 from datetime import datetime, timezone
 
 
+def ensure_tz_aware(dt: datetime) -> datetime:
+    """
+    returns timezone-aware datetime
+    assumes utc on naive datetime input
+    """
+    if dt.tzinfo is None:
+        dt = dt.astimezone(timezone.utc)
+    return dt
+
+
+def ensure_tz_aware_strict(dt: datetime) -> datetime:
+    """
+    returns timezone-aware datetime
+    raises error if input is a naive datetime
+    """
+    if dt.tzinfo is None:
+        raise ValueError(
+            "no timezone in datetime (tz-aware datetime is required for this operation)",
+            dt,
+        )
+    return dt
+
+
 def tzaware_parse_time(iso_timestamp: str) -> datetime:
     """
     parse an iso8601 timestamp into timezone-aware datetime
@@ -10,8 +33,7 @@ def tzaware_parse_time(iso_timestamp: str) -> datetime:
 
     """
     dt = datetime.fromisoformat(iso_timestamp)
-    if dt.tzinfo is None:
-        dt = dt.astimezone(timezone.utc)
+    dt = ensure_tz_aware(dt)
     return dt
 
 
@@ -24,7 +46,5 @@ def tzaware_parse_time_strict(iso_timestamp: str) -> datetime:
 
     """
     dt = datetime.fromisoformat(iso_timestamp)
-    if dt.tzinfo is None:
-        raise ValueError("no timezone in timestamp", iso_timestamp)
-        dt = dt.astimezone(timezone.utc)
+    dt = ensure_tz_aware_strict(dt)
     return dt
