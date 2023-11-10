@@ -10,8 +10,8 @@ from tests.common import (
 )
 
 # Graphql API's output should be timezone-naive
-from tests.common import five_minutes_into_future_naive as five_minutes_into_future
-from tests.common import five_minutes_into_past_naive as five_minutes_into_past
+from tests.common import five_minutes_into_future_naive_utc as five_minutes_into_future
+from tests.common import five_minutes_into_past_naive_utc as five_minutes_into_past
 
 from tests.test_graphql.api_common import (
     assert_empty,
