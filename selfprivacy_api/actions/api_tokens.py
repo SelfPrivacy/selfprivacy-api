@@ -7,7 +7,7 @@ from typing import Optional
 from pydantic import BaseModel
 from mnemonic import Mnemonic
 
-from selfprivacy_api.utils.timeutils import ensure_tz_aware
+from selfprivacy_api.utils.timeutils import ensure_tz_aware, ensure_tz_aware_strict
 from selfprivacy_api.repositories.tokens.redis_tokens_repository import (
     RedisTokensRepository,
 )
@@ -95,16 +95,22 @@ class RecoveryTokenStatus(BaseModel):
 
 
 def get_api_recovery_token_status() -> RecoveryTokenStatus:
-    """Get the recovery token status"""
+    """Get the recovery token status, timezone-aware"""
     token = TOKEN_REPO.get_recovery_key()
     if token is None:
         return RecoveryTokenStatus(exists=False, valid=False)
     is_valid = TOKEN_REPO.is_recovery_key_valid()
+
+    # New tokens are tz-aware, but older ones might not be
+    expiry_date = token.expires_at
+    if expiry_date is not None:
+        expiry_date = ensure_tz_aware_strict(expiry_date)
+
     return RecoveryTokenStatus(
         exists=True,
         valid=is_valid,
-        date=_naive(token.created_at),
-        expiration=_naive(token.expires_at),
+        date=ensure_tz_aware_strict(token.created_at),
+        expiration=expiry_date,
         uses_left=token.uses_left,
     )
 

@@ -2,6 +2,7 @@
 # pylint: disable=unused-argument
 # pylint: disable=missing-function-docstring
 import datetime
+from datetime import timezone
 import pytest
 
 from tests.conftest import TOKENS_FILE_CONTENTS
@@ -337,7 +338,7 @@ def test_generate_recovery_token_with_expiration_date(
         "exists": True,
         "valid": True,
         "date": time_generated,
-        "expiration": expiration_date.isoformat(),
+        "expiration": expiration_date.astimezone(timezone.utc).isoformat(),
         "uses_left": None,
     }
 
