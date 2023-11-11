@@ -44,7 +44,6 @@ def parse_line(line: str):
     if match is None:
         return (
             JobStatus.ERROR,
-            100,
             COMPLETED_WITH_ERROR,
             RESULT_WAS_NOT_FOUND_ERROR,
         )
@@ -52,7 +51,6 @@ def parse_line(line: str):
     else:
         return (
             JobStatus.FINISHED,
-            100,
             CLEAR_COMPLETED,
             f"{match.group(0)} have been cleared",
         )
@@ -83,9 +81,8 @@ def process_stream(job: Job, stream: Iterable[bytes], total_dead_packages: int) 
             Jobs.update(
                 job=Job,
                 status=status[0],
-                progress=status[1],
-                status_text=status[2],
-                result=status[3],
+                status_text=status[1],
+                result=status[2],
             )
 
 
@@ -114,7 +111,6 @@ def calculate_and_clear_dead_packages(job: Job):
         Jobs.update(
             job=Job,
             status=JobStatus.FINISHED,
-            progress=100,
             status_text="Nothing to clear",
             result="System is clear",
         )

@@ -3,7 +3,6 @@
 # pylint: disable=missing-function-docstring
 
 import pytest
-import strawberry
 
 from selfprivacy_api.jobs import JobStatus, Jobs
 
@@ -70,7 +69,6 @@ def test_parse_line(job_reset):
     txt = "190 store paths deleted, 425.51 MiB freed"
     output = (
         JobStatus.FINISHED,
-        100,
         CLEAR_COMPLETED,
         "425.51 MiB have been cleared",
     )
@@ -81,7 +79,6 @@ def test_parse_line_with_blank_line(job_reset):
     txt = ""
     output = (
         JobStatus.ERROR,
-        100,
         COMPLETED_WITH_ERROR,
         RESULT_WAS_NOT_FOUND_ERROR,
     )
