@@ -1,6 +1,5 @@
 import re
 import subprocess
-from subprocess import Popen, PIPE
 from typing import Tuple, Iterable, IO, Any, Optional
 
 from selfprivacy_api.utils.huey import huey
@@ -9,9 +8,9 @@ from selfprivacy_api.jobs import JobStatus, Jobs, Job
 
 
 COMPLETED_WITH_ERROR = (
-    "We are sorry, сompleted with an error, report it to support chat"
+    "We are sorry, сompleted with an error, report it to support chat."
 )
-RESULT_WAS_NOT_FOUND_ERROR = "We are sorry, garbage collection result was not found, something went wrong, report it to support chat :("
+RESULT_WAS_NOT_FOUND_ERROR = "We are sorry, garbage collection result was not found, something went wrong, report it to support chat."
 CLEAR_COMPLETED = "Cleaning completed."
 
 
@@ -24,6 +23,7 @@ def run_nix_store_print_dead() -> IO[Any]:
     return subprocess.check_output(["nix-store", "--gc", "--print-dead"]).decode(
         "utf-8"
     )
+
 
 def run_nix_collect_garbage() -> Optional[IO[bytes]]:
     return subprocess.Popen(
