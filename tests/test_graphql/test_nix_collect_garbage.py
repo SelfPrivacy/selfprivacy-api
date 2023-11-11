@@ -6,15 +6,12 @@ import pytest
 import strawberry
 
 from selfprivacy_api.jobs import JobStatus, Jobs
-from selfprivacy_api.graphql import schema
-
 
 from selfprivacy_api.jobs.nix_collect_garbage import (
     get_dead_packages,
     parse_line,
     CLEAR_COMPLETED,
     COMPLETED_WITH_ERROR,
-    process_stream,
     RESULT_WAS_NOT_FOUND_ERROR,
 )
 
