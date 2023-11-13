@@ -6,16 +6,16 @@ ORIGINAL_DEVICES = TOKENS_FILE_CONTENTS["tokens"]
 
 def assert_ok(response, request):
     data = assert_data(response)
-    data[request]["success"] is True
-    data[request]["message"] is not None
-    data[request]["code"] == 200
+    assert data[request]["success"] is True
+    assert data[request]["message"] is not None
+    assert data[request]["code"] == 200
 
 
 def assert_errorcode(response, request, code):
     data = assert_data(response)
-    data[request]["success"] is False
-    data[request]["message"] is not None
-    data[request]["code"] == code
+    assert data[request]["success"] is False
+    assert data[request]["message"] is not None
+    assert data[request]["code"] == code
 
 
 def assert_empty(response):

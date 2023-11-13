@@ -7,7 +7,9 @@ def ensure_tz_aware(dt: datetime) -> datetime:
     assumes utc on naive datetime input
     """
     if dt.tzinfo is None:
-        dt = dt.astimezone(timezone.utc)
+        # astimezone() is dangerous, it makes an implicit assumption that
+        # the time is localtime
+        dt = dt.replace(tzinfo=timezone.utc)
     return dt
 
 

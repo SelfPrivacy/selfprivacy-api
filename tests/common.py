@@ -36,6 +36,10 @@ class NearFuture(datetime):
     def now(cls, tz=None):
         return datetime.now(tz) + timedelta(minutes=13)
 
+    @classmethod
+    def utcnow(cls):
+        return datetime.utcnow() + timedelta(minutes=13)
+
 
 def read_json(file_path):
     with open(file_path, "r", encoding="utf-8") as file:

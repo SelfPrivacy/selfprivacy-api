@@ -12,8 +12,8 @@ from tests.common import (
     NearFuture,
     assert_recovery_recent,
 )
-from tests.common import five_minutes_into_future_naive as five_minutes_into_future
-from tests.common import five_minutes_into_past_naive as five_minutes_into_past
+from tests.common import five_minutes_into_future_naive_utc as five_minutes_into_future
+from tests.common import five_minutes_into_past_naive_utc as five_minutes_into_past
 
 DATE_FORMATS = [
     "%Y-%m-%dT%H:%M:%S.%fZ",
@@ -338,7 +338,7 @@ def test_generate_recovery_token_with_expiration_date(
         "exists": True,
         "valid": True,
         "date": time_generated,
-        "expiration": expiration_date.astimezone(timezone.utc).isoformat(),
+        "expiration": expiration_date.replace(tzinfo=timezone.utc).isoformat(),
         "uses_left": None,
     }
 

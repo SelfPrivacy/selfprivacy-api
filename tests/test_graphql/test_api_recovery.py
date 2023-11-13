@@ -177,9 +177,9 @@ def test_graphql_generate_recovery_key_with_expiration_date(
     assert_recovery_recent(status["creationDate"])
 
     # timezone-aware comparison. Should pass regardless of server's tz
-    assert datetime.fromisoformat(
-        status["expirationDate"]
-    ) == expiration_date.astimezone(timezone.utc)
+    assert datetime.fromisoformat(status["expirationDate"]) == expiration_date.replace(
+        tzinfo=timezone.utc
+    )
 
     assert status["usesLeft"] is None
 
@@ -208,9 +208,9 @@ def test_graphql_use_recovery_key_after_expiration(
     assert_recovery_recent(status["creationDate"])
 
     # timezone-aware comparison. Should pass regardless of server's tz
-    assert datetime.fromisoformat(
-        status["expirationDate"]
-    ) == expiration_date.astimezone(timezone.utc)
+    assert datetime.fromisoformat(status["expirationDate"]) == expiration_date.replace(
+        tzinfo=timezone.utc
+    )
     assert status["usesLeft"] is None
 
 
