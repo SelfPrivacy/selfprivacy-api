@@ -708,7 +708,9 @@ class Backups:
                 # assume it is in localtime
                 offset = timedelta(seconds=time.localtime().tm_gmtoff)
                 datetime_created = datetime_created - offset
-                return datetime.combine(datetime_created.date(), datetime_created.time(),timezone.utc)
+                return datetime.combine(
+                    datetime_created.date(), datetime_created.time(), timezone.utc
+                )
             return datetime_created
         return None
 
