@@ -22,7 +22,7 @@ class NewDeviceKey(BaseModel):
 
     def is_valid(self) -> bool:
         """
-        Check if the recovery key is valid.
+        Check if key is valid.
         """
         if is_past(self.expires_at):
             return False
@@ -30,7 +30,7 @@ class NewDeviceKey(BaseModel):
 
     def as_mnemonic(self) -> str:
         """
-        Get the recovery key as a mnemonic.
+        Get the key as a mnemonic.
         """
         return Mnemonic(language="english").to_mnemonic(bytes.fromhex(self.key))
 

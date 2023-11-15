@@ -11,12 +11,20 @@ def five_minutes_into_future_naive():
     return datetime.now() + timedelta(minutes=5)
 
 
+def five_minutes_into_future_naive_utc():
+    return datetime.utcnow() + timedelta(minutes=5)
+
+
 def five_minutes_into_future():
     return datetime.now(timezone.utc) + timedelta(minutes=5)
 
 
 def five_minutes_into_past_naive():
     return datetime.now() - timedelta(minutes=5)
+
+
+def five_minutes_into_past_naive_utc():
+    return datetime.utcnow() - timedelta(minutes=5)
 
 
 def five_minutes_into_past():
@@ -27,6 +35,10 @@ class NearFuture(datetime):
     @classmethod
     def now(cls, tz=None):
         return datetime.now(tz) + timedelta(minutes=13)
+
+    @classmethod
+    def utcnow(cls):
+        return datetime.utcnow() + timedelta(minutes=13)
 
 
 def read_json(file_path):
@@ -59,8 +71,7 @@ def mnemonic_to_hex(mnemonic):
     return Mnemonic(language="english").to_entropy(mnemonic).hex()
 
 
-def assert_recovery_recent(time_generated):
-    assert (
-        datetime.strptime(time_generated, "%Y-%m-%dT%H:%M:%S.%f") - timedelta(seconds=5)
-        < datetime.now()
+def assert_recovery_recent(time_generated: str):
+    assert datetime.fromisoformat(time_generated) - timedelta(seconds=5) < datetime.now(
+        timezone.utc
     )

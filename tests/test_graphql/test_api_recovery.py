@@ -2,6 +2,10 @@
 # pylint: disable=unused-argument
 # pylint: disable=missing-function-docstring
 
+import pytest
+
+from datetime import datetime, timezone
+
 from tests.common import (
     generate_api_query,
     assert_recovery_recent,
@@ -10,8 +14,9 @@ from tests.common import (
 )
 
 # Graphql API's output should be timezone-naive
-from tests.common import five_minutes_into_future_naive as five_minutes_into_future
-from tests.common import five_minutes_into_past_naive as five_minutes_into_past
+from tests.common import five_minutes_into_future_naive_utc as five_minutes_into_future
+from tests.common import five_minutes_into_future as five_minutes_into_future_tz
+from tests.common import five_minutes_into_past_naive_utc as five_minutes_into_past
 
 from tests.test_graphql.api_common import (
     assert_empty,
@@ -158,17 +163,24 @@ def test_graphql_generate_recovery_key(client, authorized_client, tokens_file):
     graphql_use_recovery_key(client, key, "new_test_token2")
 
 
+@pytest.mark.parametrize(
+    "expiration_date", [five_minutes_into_future(), five_minutes_into_future_tz()]
+)
 def test_graphql_generate_recovery_key_with_expiration_date(
-    client, authorized_client, tokens_file
+    client, authorized_client, tokens_file, expiration_date: datetime
 ):
-    expiration_date = five_minutes_into_future()
     key = graphql_make_new_recovery_key(authorized_client, expires_at=expiration_date)
 
     status = graphql_recovery_status(authorized_client)
     assert status["exists"] is True
     assert status["valid"] is True
     assert_recovery_recent(status["creationDate"])
-    assert status["expirationDate"] == expiration_date.isoformat()
+
+    # timezone-aware comparison. Should pass regardless of server's tz
+    assert datetime.fromisoformat(status["expirationDate"]) == expiration_date.replace(
+        tzinfo=timezone.utc
+    )
+
     assert status["usesLeft"] is None
 
     graphql_use_recovery_key(client, key, "new_test_token")
@@ -194,7 +206,11 @@ def test_graphql_use_recovery_key_after_expiration(
     assert status["exists"] is True
     assert status["valid"] is False
     assert_recovery_recent(status["creationDate"])
-    assert status["expirationDate"] == expiration_date.isoformat()
+
+    # timezone-aware comparison. Should pass regardless of server's tz
+    assert datetime.fromisoformat(status["expirationDate"]) == expiration_date.replace(
+        tzinfo=timezone.utc
+    )
     assert status["usesLeft"] is None
 
 

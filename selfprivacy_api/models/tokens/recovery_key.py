@@ -47,6 +47,7 @@ class RecoveryKey(BaseModel):
     ) -> "RecoveryKey":
         """
         Factory to generate a random token.
+        If passed naive time as expiration, assumes utc
         """
         creation_date = datetime.now(timezone.utc)
         if expiration is not None:
