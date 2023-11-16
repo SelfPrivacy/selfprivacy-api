@@ -8,8 +8,8 @@ A job is a dictionary with the following keys:
     - name: name of the job
     - description: description of the job
     - status: status of the job
-    - created_at: date of creation of the job
-    - updated_at: date of last update of the job
+    - created_at: date of creation of the job, naive localtime
+    - updated_at: date of last update of the job, naive localtime
     - finished_at: date of finish of the job
     - error: error message if the job failed
     - result: result of the job

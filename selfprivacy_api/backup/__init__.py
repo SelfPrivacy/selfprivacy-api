@@ -1,7 +1,8 @@
 """
 This module contains the controller class for backups.
 """
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+import time
 import os
 from os import statvfs
 from typing import Callable, List, Optional
@@ -37,6 +38,7 @@ from selfprivacy_api.backup.providers import get_provider
 from selfprivacy_api.backup.storage import Storage
 from selfprivacy_api.backup.jobs import (
     get_backup_job,
+    get_backup_fail,
     add_backup_job,
     get_restore_job,
     add_restore_job,
@@ -292,9 +294,9 @@ class Backups:
     def back_up(
         service: Service, reason: BackupReason = BackupReason.EXPLICIT
     ) -> Snapshot:
-        """The top-level function to back up a service"""
-        folders = service.get_folders()
-        service_name = service.get_id()
+        """The top-level function to back up a service
+        If it fails for any reason at all, it should both mark job as
+        errored and re-raise an error"""
 
         job = get_backup_job(service)
         if job is None:
@@ -302,6 +304,10 @@ class Backups:
         Jobs.update(job, status=JobStatus.RUNNING)
 
         try:
+            if service.can_be_backed_up() is False:
+                raise ValueError("cannot backup a non-backuppable service")
+            folders = service.get_folders()
+            service_name = service.get_id()
             service.pre_backup()
             snapshot = Backups.provider().backupper.start_backup(
                 folders,
@@ -693,22 +699,44 @@ class Backups:
         return Storage.get_last_backup_time(service.get_id())
 
     @staticmethod
+    def get_last_backup_error_time(service: Service) -> Optional[datetime]:
+        """Get a timezone-aware time of the last backup of a service"""
+        job = get_backup_fail(service)
+        if job is not None:
+            datetime_created = job.created_at
+            if datetime_created.tzinfo is None:
+                # assume it is in localtime
+                offset = timedelta(seconds=time.localtime().tm_gmtoff)
+                datetime_created = datetime_created - offset
+                return datetime.combine(
+                    datetime_created.date(), datetime_created.time(), timezone.utc
+                )
+            return datetime_created
+        return None
+
+    @staticmethod
     def is_time_to_backup_service(service: Service, time: datetime):
         """Returns True if it is time to back up a service"""
         period = Backups.autobackup_period_minutes()
-        service_id = service.get_id()
         if not service.can_be_backed_up():
             return False
         if period is None:
             return False
 
-        last_backup = Storage.get_last_backup_time(service_id)
+        last_error = Backups.get_last_backup_error_time(service)
+
+        if last_error is not None:
+            if time < last_error + timedelta(seconds=AUTOBACKUP_JOB_EXPIRATION_SECONDS):
+                return False
+
+        last_backup = Backups.get_last_backed_up(service)
         if last_backup is None:
             # queue a backup immediately if there are no previous backups
             return True
 
         if time > last_backup + timedelta(minutes=period):
             return True
+
         return False
 
     # Helpers
