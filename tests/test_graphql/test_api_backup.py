@@ -265,6 +265,10 @@ def api_init_without_key(
 
 
 def assert_ok(data):
+    if data["success"] is False:
+        # convenience for debugging, this should display error
+        # if empty, consider adding helpful messages
+        raise ValueError(data["code"], data["message"])
     assert data["code"] == 200
     assert data["success"] is True
 
@@ -302,7 +306,7 @@ def test_snapshots_empty(authorized_client, dummy_service):
     assert snaps == []
 
 
-def test_start_backup(authorized_client, dummy_service):
+def test_start_backup(authorized_client, dummy_service, backups):
     response = api_backup(authorized_client, dummy_service)
     data = get_data(response)["backup"]["startBackup"]
     assert data["success"] is True
@@ -318,7 +322,7 @@ def test_start_backup(authorized_client, dummy_service):
     assert snap["service"]["id"] == "testservice"
 
 
-def test_restore(authorized_client, dummy_service):
+def test_restore(authorized_client, dummy_service, backups):
     api_backup(authorized_client, dummy_service)
     snap = api_snapshots(authorized_client)[0]
     assert snap["id"] is not None
@@ -331,7 +335,7 @@ def test_restore(authorized_client, dummy_service):
     assert Jobs.get_job(job["uid"]).status == JobStatus.FINISHED
 
 
-def test_reinit(authorized_client, dummy_service, tmpdir):
+def test_reinit(authorized_client, dummy_service, tmpdir, backups):
     test_repo_path = path.join(tmpdir, "not_at_all_sus")
     response = api_init_without_key(
         authorized_client, "FILE", "", "", test_repo_path, ""
@@ -353,7 +357,7 @@ def test_reinit(authorized_client, dummy_service, tmpdir):
     assert Jobs.get_job(job["uid"]).status == JobStatus.FINISHED
 
 
-def test_remove(authorized_client, generic_userdata):
+def test_remove(authorized_client, generic_userdata, backups):
     response = api_remove(authorized_client)
     data = get_data(response)["backup"]["removeRepository"]
     assert_ok(data)
@@ -367,7 +371,7 @@ def test_remove(authorized_client, generic_userdata):
     assert configuration["isInitialized"] is False
 
 
-def test_autobackup_quotas_nonzero(authorized_client):
+def test_autobackup_quotas_nonzero(authorized_client, backups):
     quotas = _AutobackupQuotas(
         last=3,
         daily=2,
@@ -383,7 +387,7 @@ def test_autobackup_quotas_nonzero(authorized_client):
     assert configuration["autobackupQuotas"] == quotas
 
 
-def test_autobackup_period_nonzero(authorized_client):
+def test_autobackup_period_nonzero(authorized_client, backups):
     new_period = 11
     response = api_set_period(authorized_client, new_period)
     data = get_data(response)["backup"]["setAutobackupPeriod"]
@@ -393,7 +397,7 @@ def test_autobackup_period_nonzero(authorized_client):
     assert configuration["autobackupPeriod"] == new_period
 
 
-def test_autobackup_period_zero(authorized_client):
+def test_autobackup_period_zero(authorized_client, backups):
     new_period = 0
     # since it is none by default, we better first set it to something non-negative
     response = api_set_period(authorized_client, 11)
@@ -406,7 +410,7 @@ def test_autobackup_period_zero(authorized_client):
     assert configuration["autobackupPeriod"] == None
 
 
-def test_autobackup_period_none(authorized_client):
+def test_autobackup_period_none(authorized_client, backups):
     # since it is none by default, we better first set it to something non-negative
     response = api_set_period(authorized_client, 11)
     # and now we nullify it
@@ -418,7 +422,7 @@ def test_autobackup_period_none(authorized_client):
     assert configuration["autobackupPeriod"] == None
 
 
-def test_autobackup_period_negative(authorized_client):
+def test_autobackup_period_negative(authorized_client, backups):
     # since it is none by default, we better first set it to something non-negative
     response = api_set_period(authorized_client, 11)
     # and now we nullify it
@@ -432,7 +436,7 @@ def test_autobackup_period_negative(authorized_client):
 
 # We cannot really check the effect at this level, we leave it to backend tests
 # But we still make it run in both empty and full scenarios and ask for snaps afterwards
-def test_reload_snapshots_bare_bare_bare(authorized_client, dummy_service):
+def test_reload_snapshots_bare_bare_bare(authorized_client, dummy_service, backups):
     api_remove(authorized_client)
 
     response = api_reload_snapshots(authorized_client)
@@ -443,7 +447,7 @@ def test_reload_snapshots_bare_bare_bare(authorized_client, dummy_service):
     assert snaps == []
 
 
-def test_reload_snapshots(authorized_client, dummy_service):
+def test_reload_snapshots(authorized_client, dummy_service, backups):
     response = api_backup(authorized_client, dummy_service)
     data = get_data(response)["backup"]["startBackup"]
 
@@ -455,7 +459,7 @@ def test_reload_snapshots(authorized_client, dummy_service):
     assert len(snaps) == 1
 
 
-def test_forget_snapshot(authorized_client, dummy_service):
+def test_forget_snapshot(authorized_client, dummy_service, backups):
     response = api_backup(authorized_client, dummy_service)
     data = get_data(response)["backup"]["startBackup"]
 
@@ -470,7 +474,7 @@ def test_forget_snapshot(authorized_client, dummy_service):
     assert len(snaps) == 0
 
 
-def test_forget_nonexistent_snapshot(authorized_client, dummy_service):
+def test_forget_nonexistent_snapshot(authorized_client, dummy_service, backups):
     snaps = api_snapshots(authorized_client)
     assert len(snaps) == 0
     response = api_forget(authorized_client, "898798uekiodpjoiweoiwuoeirueor")

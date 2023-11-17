@@ -115,7 +115,7 @@ class BackupMutations:
         except Exception as e:
             return GenericBackupConfigReturn(
                 success=False,
-                message=str(e),
+                message=type(e).__name__ + ":" + str(e),
                 code=400,
                 configuration=Backup().configuration(),
             )
