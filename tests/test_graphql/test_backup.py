@@ -651,6 +651,7 @@ def test_too_many_auto(backups, dummy_service):
     # Retroactivity
     quota.last = 1
     Backups.set_autobackup_quotas(quota)
+    Backups.prune_all_autosnaps()
     snaps = Backups.get_snapshots(dummy_service)
     assert len(snaps) == 1
 

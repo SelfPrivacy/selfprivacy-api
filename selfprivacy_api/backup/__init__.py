@@ -425,7 +425,10 @@ class Backups:
                 yearly=Backups._standardize_quotas(quotas.yearly),  # type: ignore
             )
         )
+        # do not prune all autosnaps right away, this will be done by an async task
 
+    @staticmethod
+    def prune_all_autosnaps() -> None:
         for service in get_all_services():
             Backups._prune_auto_snaps(service)
 
