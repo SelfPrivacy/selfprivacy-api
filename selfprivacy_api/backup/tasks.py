@@ -43,7 +43,7 @@ def start_backup(
 
 
 @huey.task()
-def prune_autobackup_snapshots(quotas: AutobackupQuotas, job: Job) -> bool:
+def prune_autobackup_snapshots(job: Job) -> bool:
     """
     Remove all autobackup snapshots that do not fit into quotas set
     """
