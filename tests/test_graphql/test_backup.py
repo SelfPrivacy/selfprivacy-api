@@ -44,6 +44,7 @@ from selfprivacy_api.backup.tasks import (
     start_backup,
     restore_snapshot,
     reload_snapshot_cache,
+    prune_autobackup_snapshots
 )
 from selfprivacy_api.backup.storage import Storage
 from selfprivacy_api.backup.jobs import get_backup_job
@@ -651,7 +652,9 @@ def test_too_many_auto(backups, dummy_service):
     # Retroactivity
     quota.last = 1
     Backups.set_autobackup_quotas(quota)
-    Backups.prune_all_autosnaps()
+    job = Jobs.add("trimming", "test.autobackup_trimming", "trimming the snaps!")
+    handle=prune_autobackup_snapshots(job) 
+    handle(blocking=True)
     snaps = Backups.get_snapshots(dummy_service)
     assert len(snaps) == 1
 
