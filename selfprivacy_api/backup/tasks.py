@@ -3,13 +3,19 @@ The tasks module contains the worker tasks that are used to back up and restore
 """
 from datetime import datetime, timezone
 
-from selfprivacy_api.graphql.common_types.backup import RestoreStrategy, BackupReason
+from selfprivacy_api.graphql.common_types.backup import (
+    RestoreStrategy,
+    BackupReason,
+    AutobackupQuotas,
+)
 
 from selfprivacy_api.models.backup.snapshot import Snapshot
 from selfprivacy_api.utils.huey import huey
 from huey import crontab
 from selfprivacy_api.services.service import Service
 from selfprivacy_api.backup import Backups
+from selfprivacy_api.jobs import Jobs, JobStatus, Job
+
 
 SNAPSHOT_CACHE_TTL_HOURS = 6
 
@@ -33,6 +39,25 @@ def start_backup(
     The worker task that starts the backup process.
     """
     Backups.back_up(service, reason)
+    return True
+
+
+@huey.task()
+def set_autobackup_quotas(quotas: AutobackupQuotas, job: Job) -> bool:
+    job = Jobs.add(
+        name="trimming autobackup snapshots",
+        type_id="backups.autobackup_trimming",
+        description="Pruning the excessive snapshots after the new autobackup quotas are set",
+        status=JobStatus.RUNNING,
+    )
+    Jobs.update(job, JobStatus.RUNNING)
+    try:
+        Backups.set_autobackup_quotas(quotas)
+    except Exception as e:
+        Jobs.update(job, JobStatus.ERROR, error=type(e).__name__ + ":" + str(e))
+        return False
+
+    Jobs.update(job, JobStatus.FINISHED)
     return True
 
 
