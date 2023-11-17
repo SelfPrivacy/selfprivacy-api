@@ -629,8 +629,7 @@ class Backups:
         """deliberately erase all snapshots we made"""
         # there is no dedicated optimized command for this,
         # but maybe we can have a multi-erase
-        for snapshot in Backups.get_all_snapshots():
-            Backups.forget_snapshot(snapshot)
+        Backups.forget_snapshots(Backups.get_all_snapshots())
 
     @staticmethod
     def force_snapshot_cache_reload() -> None:
