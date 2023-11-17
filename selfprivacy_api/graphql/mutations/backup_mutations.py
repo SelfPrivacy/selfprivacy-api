@@ -23,7 +23,7 @@ from selfprivacy_api.services import get_service_by_id
 from selfprivacy_api.backup.tasks import (
     start_backup,
     restore_snapshot,
-    set_autobackup_quotas,
+    prune_autobackup_snapshots,
 )
 from selfprivacy_api.backup.jobs import add_backup_job, add_restore_job
 
@@ -116,8 +116,9 @@ class BackupMutations:
         )
 
         try:
-            # this is async and can fail with only a job to report the error
-            set_autobackup_quotas(quotas, job)
+            Backups.set_autobackup_quotas(quotas)
+            # this task is async and can fail with only a job to report the error
+            prune_autobackup_snapshots(job)
             return GenericBackupConfigReturn(
                 success=True,
                 message="",

@@ -43,16 +43,13 @@ def start_backup(
 
 
 @huey.task()
-def set_autobackup_quotas(quotas: AutobackupQuotas, job: Job) -> bool:
-    job = Jobs.add(
-        name="trimming autobackup snapshots",
-        type_id="backups.autobackup_trimming",
-        description="Pruning the excessive snapshots after the new autobackup quotas are set",
-        status=JobStatus.RUNNING,
-    )
+def prune_autobackup_snapshots(quotas: AutobackupQuotas, job: Job) -> bool:
+    """
+    Remove all autobackup snapshots that do not fit into quotas set
+    """
     Jobs.update(job, JobStatus.RUNNING)
     try:
-        Backups.set_autobackup_quotas(quotas)
+        Backups.prune_all_autosnaps()
     except Exception as e:
         Jobs.update(job, JobStatus.ERROR, error=type(e).__name__ + ":" + str(e))
         return False
