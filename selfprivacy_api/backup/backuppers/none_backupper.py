@@ -39,4 +39,7 @@ class NoneBackupper(AbstractBackupper):
         raise NotImplementedError
 
     def forget_snapshot(self, snapshot_id):
-        raise NotImplementedError
+        raise NotImplementedError("forget_snapshot")
+
+    def forget_snapshots(self, snapshots):
+        raise NotImplementedError("forget_snapshots")

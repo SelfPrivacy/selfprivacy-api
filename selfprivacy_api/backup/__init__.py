@@ -397,9 +397,8 @@ class Backups:
 
         # TODO: Can be optimized since there is forgetting of an array in one restic op
         # but most of the time this will be only one snap to forget.
-        for snap in auto_snaps:
-            if snap not in new_snaplist:
-                Backups.forget_snapshot(snap)
+        deletable_snaps = [snap for snap in auto_snaps if snap not in new_snaplist]
+        Backups.forget_snapshots(deletable_snaps)
 
     @staticmethod
     def _standardize_quotas(i: int) -> int:
@@ -605,6 +604,19 @@ class Backups:
         snap = Storage.get_cached_snapshot_by_id(snapshot_id)
 
         return snap
+
+    @staticmethod
+    def forget_snapshots(snapshots: List[Snapshot]) -> None:
+        """
+        Deletes a batch of snapshots from the repo and from cache
+        Optimized
+        """
+        ids = [snapshot.id for snapshot in snapshots]
+        Backups.provider().backupper.forget_snapshots(ids)
+
+        # less critical
+        for snapshot in snapshots:
+            Storage.delete_cached_snapshot(snapshot)
 
     @staticmethod
     def forget_snapshot(snapshot: Snapshot) -> None:
