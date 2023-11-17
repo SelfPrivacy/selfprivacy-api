@@ -66,3 +66,8 @@ class AbstractBackupper(ABC):
     def forget_snapshot(self, snapshot_id) -> None:
         """Forget a snapshot"""
         raise NotImplementedError
+
+    @abstractmethod
+    def forget_snapshots(self, snapshot_ids: List[str]) -> None:
+        """Maybe optimized deletion of a batch of snapshots, just cycling if unsupported"""
+        raise NotImplementedError
