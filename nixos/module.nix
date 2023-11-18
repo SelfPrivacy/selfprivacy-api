@@ -105,45 +105,45 @@ in
     };
     # One shot systemd service to rebuild NixOS using nixos-rebuild
     systemd.services.sp-nixos-rebuild = {
-      description = "Upgrade NixOS using nixos-rebuild";
+      description = "nixos-rebuild switch";
       environment = config.nix.envVars // {
-        inherit (config.environment.sessionVariables) NIX_PATH;
         HOME = "/root";
       } // config.networking.proxy.envVars;
       path = [ pkgs.coreutils pkgs.gnutar pkgs.xz.bin pkgs.gzip pkgs.gitMinimal config.nix.package.out pkgs.nixos-rebuild ];
       serviceConfig = {
         User = "root";
-        ExecStart = "${pkgs.nixos-rebuild}/bin/nixos-rebuild switch";
+        ExecStart = "${pkgs.nixos-rebuild}/bin/nixos-rebuild switch --flake /etc/nixos";
         KillMode = "none";
         SendSIGKILL = "no";
       };
     };
     # One shot systemd service to upgrade NixOS using nixos-rebuild
     systemd.services.sp-nixos-upgrade = {
-      description = "Upgrade NixOS using nixos-rebuild";
+      description = "Upgrade NixOS to the latest base configuration";
       environment = config.nix.envVars // {
-        inherit (config.environment.sessionVariables) NIX_PATH;
         HOME = "/root";
       } // config.networking.proxy.envVars;
       path = [ pkgs.coreutils pkgs.gnutar pkgs.xz.bin pkgs.gzip pkgs.gitMinimal config.nix.package.out pkgs.nixos-rebuild ];
       serviceConfig = {
         User = "root";
-        ExecStart = "${pkgs.nixos-rebuild}/bin/nixos-rebuild switch --upgrade";
         KillMode = "none";
         SendSIGKILL = "no";
       };
+      script = ''
+        ${pkgs.nix}/bin/nix flake lock --override-input selfprivacy-nixos-config "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes"
+        ${pkgs.nixos-rebuild}/bin/nixos-rebuild switch --flake /etc/nixos
+      '';
     };
     # One shot systemd service to rollback NixOS using nixos-rebuild
     systemd.services.sp-nixos-rollback = {
       description = "Rollback NixOS using nixos-rebuild";
       environment = config.nix.envVars // {
-        inherit (config.environment.sessionVariables) NIX_PATH;
         HOME = "/root";
       } // config.networking.proxy.envVars;
       path = [ pkgs.coreutils pkgs.gnutar pkgs.xz.bin pkgs.gzip pkgs.gitMinimal config.nix.package.out pkgs.nixos-rebuild ];
       serviceConfig = {
         User = "root";
-        ExecStart = "${pkgs.nixos-rebuild}/bin/nixos-rebuild switch --rollback";
+        ExecStart = "${pkgs.nixos-rebuild}/bin/nixos-rebuild switch --rollback --flake /etc/nixos";
         KillMode = "none";
         SendSIGKILL = "no";
       };
