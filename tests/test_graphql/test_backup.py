@@ -1,34 +1,34 @@
 import pytest
+
 import os
 import os.path as path
 from os import makedirs
 from os import remove
 from os import listdir
 from os import urandom
-from datetime import datetime, timedelta, timezone, date, time
-from subprocess import Popen
+
+from datetime import datetime, timedelta, timezone
 from copy import copy
-
-import secrets
-
-
 import tempfile
 
 from selfprivacy_api.utils.huey import huey
 
 import selfprivacy_api.services as services
 from selfprivacy_api.services import Service, get_all_services
-from selfprivacy_api.services.service import ServiceStatus
-
 from selfprivacy_api.services import get_service_by_id
+from selfprivacy_api.services.service import ServiceStatus
 from selfprivacy_api.services.test_service import DummyService
+
 from selfprivacy_api.graphql.queries.providers import BackupProvider
-from selfprivacy_api.graphql.common_types.backup import RestoreStrategy, BackupReason
+from selfprivacy_api.graphql.common_types.backup import (
+    RestoreStrategy,
+    BackupReason,
+    AutobackupQuotas,
+)
+
 from selfprivacy_api.jobs import Jobs, JobStatus
 
 from selfprivacy_api.models.backup.snapshot import Snapshot
-
-from selfprivacy_api.graphql.common_types.backup import AutobackupQuotas
 
 from selfprivacy_api.backup import Backups, BACKUP_PROVIDER_ENVS
 import selfprivacy_api.backup.providers as providers
@@ -36,18 +36,14 @@ from selfprivacy_api.backup.providers import AbstractBackupProvider
 from selfprivacy_api.backup.providers.backblaze import Backblaze
 from selfprivacy_api.backup.providers.none import NoBackups
 from selfprivacy_api.backup.util import sync
-from selfprivacy_api.backup.backuppers.restic_backupper import ResticBackupper
-from selfprivacy_api.backup.jobs import add_backup_job, add_restore_job
-
 
 from selfprivacy_api.backup.tasks import (
     start_backup,
     restore_snapshot,
     reload_snapshot_cache,
-    prune_autobackup_snapshots
+    prune_autobackup_snapshots,
 )
 from selfprivacy_api.backup.storage import Storage
-from selfprivacy_api.backup.jobs import get_backup_job
 
 
 TESTFILE_BODY = "testytest!"
@@ -653,7 +649,7 @@ def test_too_many_auto(backups, dummy_service):
     quota.last = 1
     Backups.set_autobackup_quotas(quota)
     job = Jobs.add("trimming", "test.autobackup_trimming", "trimming the snaps!")
-    handle=prune_autobackup_snapshots(job) 
+    handle = prune_autobackup_snapshots(job)
     handle(blocking=True)
     snaps = Backups.get_snapshots(dummy_service)
     assert len(snaps) == 1
