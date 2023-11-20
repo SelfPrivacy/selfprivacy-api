@@ -1,6 +1,8 @@
 import typing
 import strawberry
 
+from selfprivacy_api.jobs import Jobs
+
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericMutationReturn,
@@ -18,7 +20,11 @@ from selfprivacy_api.graphql.common_types.backup import (
 
 from selfprivacy_api.backup import Backups
 from selfprivacy_api.services import get_service_by_id
-from selfprivacy_api.backup.tasks import start_backup, restore_snapshot
+from selfprivacy_api.backup.tasks import (
+    start_backup,
+    restore_snapshot,
+    prune_autobackup_snapshots,
+)
 from selfprivacy_api.backup.jobs import add_backup_job, add_restore_job
 
 
@@ -103,8 +109,16 @@ class BackupMutations:
         To disable autobackup use autobackup period setting, not this mutation.
         """
 
+        job = Jobs.add(
+            name="Trimming autobackup snapshots",
+            type_id="backups.autobackup_trimming",
+            description="Pruning the excessive snapshots after the new autobackup quotas are set",
+        )
+
         try:
             Backups.set_autobackup_quotas(quotas)
+            # this task is async and can fail with only a job to report the error
+            prune_autobackup_snapshots(job)
             return GenericBackupConfigReturn(
                 success=True,
                 message="",
@@ -115,7 +129,7 @@ class BackupMutations:
         except Exception as e:
             return GenericBackupConfigReturn(
                 success=False,
-                message=str(e),
+                message=type(e).__name__ + ":" + str(e),
                 code=400,
                 configuration=Backup().configuration(),
             )

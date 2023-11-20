@@ -395,11 +395,8 @@ class Backups:
         auto_snaps = Backups._auto_snaps(service)
         new_snaplist = Backups._prune_snaps_with_quotas(auto_snaps)
 
-        # TODO: Can be optimized since there is forgetting of an array in one restic op
-        # but most of the time this will be only one snap to forget.
-        for snap in auto_snaps:
-            if snap not in new_snaplist:
-                Backups.forget_snapshot(snap)
+        deletable_snaps = [snap for snap in auto_snaps if snap not in new_snaplist]
+        Backups.forget_snapshots(deletable_snaps)
 
     @staticmethod
     def _standardize_quotas(i: int) -> int:
@@ -426,7 +423,10 @@ class Backups:
                 yearly=Backups._standardize_quotas(quotas.yearly),  # type: ignore
             )
         )
+        # do not prune all autosnaps right away, this will be done by an async task
 
+    @staticmethod
+    def prune_all_autosnaps() -> None:
         for service in get_all_services():
             Backups._prune_auto_snaps(service)
 
@@ -607,6 +607,19 @@ class Backups:
         return snap
 
     @staticmethod
+    def forget_snapshots(snapshots: List[Snapshot]) -> None:
+        """
+        Deletes a batch of snapshots from the repo and from cache
+        Optimized
+        """
+        ids = [snapshot.id for snapshot in snapshots]
+        Backups.provider().backupper.forget_snapshots(ids)
+
+        # less critical
+        for snapshot in snapshots:
+            Storage.delete_cached_snapshot(snapshot)
+
+    @staticmethod
     def forget_snapshot(snapshot: Snapshot) -> None:
         """Deletes a snapshot from the repo and from cache"""
         Backups.provider().backupper.forget_snapshot(snapshot.id)
@@ -614,11 +627,11 @@ class Backups:
 
     @staticmethod
     def forget_all_snapshots():
-        """deliberately erase all snapshots we made"""
-        # there is no dedicated optimized command for this,
-        # but maybe we can have a multi-erase
-        for snapshot in Backups.get_all_snapshots():
-            Backups.forget_snapshot(snapshot)
+        """
+        Mark all snapshots we have made for deletion and make them inaccessible
+        (this is done by cloud, we only issue a command)
+        """
+        Backups.forget_snapshots(Backups.get_all_snapshots())
 
     @staticmethod
     def force_snapshot_cache_reload() -> None:

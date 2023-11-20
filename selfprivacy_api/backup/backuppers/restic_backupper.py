@@ -86,6 +86,10 @@ class ResticBackupper(AbstractBackupper):
         return f"echo {LocalBackupSecret.get()}"
 
     def restic_command(self, *args, tags: Optional[List[str]] = None) -> List[str]:
+        """
+        Construct a restic command against the currently configured repo
+        Can support [nested] arrays as arguments, will flatten them into the final commmand
+        """
         if tags is None:
             tags = []
 
@@ -384,15 +388,15 @@ class ResticBackupper(AbstractBackupper):
                     output,
                 )
 
+    def forget_snapshot(self, snapshot_id: str) -> None:
+        self.forget_snapshots([snapshot_id])
+
     @unlocked_repo
-    def forget_snapshot(self, snapshot_id) -> None:
-        """
-        Either removes snapshot or marks it for deletion later,
-        depending on server settings
-        """
+    def forget_snapshots(self, snapshot_ids: List[str]) -> None:
+        # in case the backupper program supports batching, otherwise implement it by cycling
         forget_command = self.restic_command(
             "forget",
-            snapshot_id,
+            [snapshot_ids],
             # TODO: prune should be done in a separate process
             "--prune",
         )
@@ -414,7 +418,7 @@ class ResticBackupper(AbstractBackupper):
 
             if "no matching ID found" in err:
                 raise ValueError(
-                    "trying to delete, but no such snapshot: ", snapshot_id
+                    "trying to delete, but no such snapshot(s): ", snapshot_ids
                 )
 
             assert (
