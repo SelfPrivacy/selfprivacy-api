@@ -8,7 +8,8 @@ import subprocess
 import portalocker
 
 
-USERDATA_FILE = "/etc/nixos/userdata/userdata.json"
+USERDATA_FILE = "/etc/nixos/userdata.json"
+# TODO SECRETS_FILE = "/etc/selfprivacy/secrets.json"
 TOKENS_FILE = "/etc/nixos/userdata/tokens.json"
 JOBS_FILE = "/etc/nixos/userdata/jobs.json"
 DOMAIN_FILE = "/var/domain"
