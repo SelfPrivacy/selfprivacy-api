@@ -110,7 +110,7 @@ class BackupMutations:
         """
 
         job = Jobs.add(
-            name="trimming autobackup snapshots",
+            name="Trimming autobackup snapshots",
             type_id="backups.autobackup_trimming",
             description="Pruning the excessive snapshots after the new autobackup quotas are set",
         )

@@ -6,7 +6,6 @@ from datetime import datetime, timezone
 from selfprivacy_api.graphql.common_types.backup import (
     RestoreStrategy,
     BackupReason,
-    AutobackupQuotas,
 )
 
 from selfprivacy_api.models.backup.snapshot import Snapshot

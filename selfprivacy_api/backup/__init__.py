@@ -395,8 +395,6 @@ class Backups:
         auto_snaps = Backups._auto_snaps(service)
         new_snaplist = Backups._prune_snaps_with_quotas(auto_snaps)
 
-        # TODO: Can be optimized since there is forgetting of an array in one restic op
-        # but most of the time this will be only one snap to forget.
         deletable_snaps = [snap for snap in auto_snaps if snap not in new_snaplist]
         Backups.forget_snapshots(deletable_snaps)
 
@@ -629,9 +627,10 @@ class Backups:
 
     @staticmethod
     def forget_all_snapshots():
-        """deliberately erase all snapshots we made"""
-        # there is no dedicated optimized command for this,
-        # but maybe we can have a multi-erase
+        """
+        Mark all snapshots we have made for deletion and make them inaccessible
+        (this is done by cloud, we only issue a command)
+        """
         Backups.forget_snapshots(Backups.get_all_snapshots())
 
     @staticmethod
