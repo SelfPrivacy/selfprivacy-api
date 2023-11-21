@@ -10,9 +10,6 @@ import os.path as path
 import datetime
 
 from selfprivacy_api.models.tokens.token import Token
-from selfprivacy_api.repositories.tokens.json_tokens_repository import (
-    JsonTokensRepository,
-)
 from selfprivacy_api.repositories.tokens.redis_tokens_repository import (
     RedisTokensRepository,
 )
@@ -49,25 +46,6 @@ def global_data_dir():
 
 
 @pytest.fixture
-def empty_tokens(mocker, tmpdir):
-    tokenfile = tmpdir / "empty_tokens.json"
-    with open(tokenfile, "w") as file:
-        file.write(EMPTY_TOKENS_JSON)
-    mocker.patch("selfprivacy_api.utils.TOKENS_FILE", new=tokenfile)
-    assert read_json(tokenfile)["tokens"] == []
-    return tmpdir
-
-
-@pytest.fixture
-def empty_json_repo(empty_tokens):
-    repo = JsonTokensRepository()
-    for token in repo.get_tokens():
-        repo.delete_token(token)
-    assert repo.get_tokens() == []
-    return repo
-
-
-@pytest.fixture
 def empty_redis_repo():
     repo = RedisTokensRepository()
     repo.reset()
@@ -88,13 +66,6 @@ def tokens_file(empty_redis_repo, tmpdir):
             )
         )
     return repo
-
-
-@pytest.fixture
-def jobs_file(mocker, shared_datadir):
-    """Mock tokens file."""
-    mock = mocker.patch("selfprivacy_api.utils.JOBS_FILE", shared_datadir / "jobs.json")
-    return mock
 
 
 @pytest.fixture
@@ -121,14 +92,14 @@ def huey_database(mocker, shared_datadir):
 
 
 @pytest.fixture
-def client(tokens_file, huey_database, jobs_file):
+def client(tokens_file, huey_database):
     from selfprivacy_api.app import app
 
     return TestClient(app)
 
 
 @pytest.fixture
-def authorized_client(tokens_file, huey_database, jobs_file):
+def authorized_client(tokens_file, huey_database):
     """Authorized test client fixture."""
     from selfprivacy_api.app import app
 
@@ -140,7 +111,7 @@ def authorized_client(tokens_file, huey_database, jobs_file):
 
 
 @pytest.fixture
-def wrong_auth_client(tokens_file, huey_database, jobs_file):
+def wrong_auth_client(tokens_file, huey_database):
     """Wrong token test client fixture."""
     from selfprivacy_api.app import app
 

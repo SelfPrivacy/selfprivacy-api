@@ -10,11 +10,6 @@
     "domain": "test.tld",
     "hashedMasterPassword": "HASHED_PASSWORD",
     "hostname": "test-instance",
-    "nextcloud": {
-        "adminPassword": "ADMIN",
-        "databasePassword": "ADMIN",
-        "enable": true
-    },
     "resticPassword": "PASS",
     "ssh": {
         "enable": true,
@@ -51,10 +46,12 @@
     "server": {
         "provider": "HETZNER"
     },
-    "backup": {
-        "provider": "BACKBLAZE",
-        "accountId": "ID",
-        "accountKey": "KEY",
-        "bucket": "selfprivacy"
+    "modules": {
+        "nextcloud": {
+            "enable": true
+        },
+        "simple-nixos-mailserver": {
+            "enable": true
+        }
     }
 }

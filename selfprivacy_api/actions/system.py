@@ -13,7 +13,7 @@ def get_timezone() -> str:
     with ReadUserData() as user_data:
         if "timezone" in user_data:
             return user_data["timezone"]
-        return "Europe/Uzhgorod"
+        return "Etc/UTC"
 
 
 class InvalidTimezone(Exception):

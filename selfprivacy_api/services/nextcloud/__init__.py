@@ -56,7 +56,9 @@ class Nextcloud(Service):
     @staticmethod
     def is_enabled() -> bool:
         with ReadUserData() as user_data:
-            return user_data.get("nextcloud", {}).get("enable", False)
+            return (
+                user_data.get("modules", {}).get("nextcloud", {}).get("enable", False)
+            )
 
     @staticmethod
     def get_status() -> ServiceStatus:
@@ -75,6 +77,8 @@ class Nextcloud(Service):
     def enable():
         """Enable Nextcloud service."""
         with WriteUserData() as user_data:
+            if "modules" not in user_data:
+                user_data["modules"] = {}
             if "nextcloud" not in user_data:
                 user_data["nextcloud"] = {}
             user_data["nextcloud"]["enable"] = True
@@ -83,6 +87,8 @@ class Nextcloud(Service):
     def disable():
         """Disable Nextcloud service."""
         with WriteUserData() as user_data:
+            if "modules" not in user_data:
+                user_data["modules"] = {}
             if "nextcloud" not in user_data:
                 user_data["nextcloud"] = {}
             user_data["nextcloud"]["enable"] = False

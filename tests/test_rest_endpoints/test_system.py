@@ -129,7 +129,7 @@ def test_get_timezone(authorized_client, turned_on):
 def test_get_timezone_on_undefined(authorized_client, undefined_config):
     response = authorized_client.get("/system/configuration/timezone")
     assert response.status_code == 200
-    assert response.json() == "Europe/Uzhgorod"
+    assert response.json() == "Etc/UTC"
 
 
 def test_put_timezone_unauthorized(client, turned_on):

@@ -2,7 +2,7 @@
 import os
 from huey import SqliteHuey
 
-HUEY_DATABASE = "/etc/nixos/userdata/tasks.db"
+HUEY_DATABASE = "/etc/selfprivacy/tasks.db"
 
 # Singleton instance containing the huey database.
 

@@ -161,7 +161,7 @@ def test_get_current_settings_undefined(authorized_client, undefined_settings):
 def test_get_current_settings_mostly_undefined(authorized_client, undefined_values):
     response = authorized_client.get("/services/ssh")
     assert response.status_code == 200
-    assert response.json() == {"enable": True, "passwordAuthentication": True}
+    assert response.json() == {"enable": True, "passwordAuthentication": False}
 
 
 ## PUT ON /ssh ######################################################

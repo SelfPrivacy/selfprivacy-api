@@ -273,6 +273,8 @@ def test_graphql_get_domain(
     assert is_dns_record_in_array(
         dns_records, dns_record(name="api", record_type="AAAA")
     )
+    print(dns_records)
+    print(dns_record(name="cloud"))
     assert is_dns_record_in_array(dns_records, dns_record(name="cloud"))
     assert is_dns_record_in_array(
         dns_records, dns_record(name="cloud", record_type="AAAA")
@@ -373,9 +375,7 @@ def test_graphql_get_timezone_on_undefined(authorized_client, undefined_config):
     )
     assert response.status_code == 200
     assert response.json().get("data") is not None
-    assert (
-        response.json()["data"]["system"]["settings"]["timezone"] == "Europe/Uzhgorod"
-    )
+    assert response.json()["data"]["system"]["settings"]["timezone"] == "Etc/UTC"
 
 
 API_CHANGE_TIMEZONE_MUTATION = """

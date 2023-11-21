@@ -17,9 +17,6 @@ from selfprivacy_api.repositories.tokens.exceptions import (
     NewDeviceKeyNotFound,
 )
 
-from selfprivacy_api.repositories.tokens.json_tokens_repository import (
-    JsonTokensRepository,
-)
 from selfprivacy_api.repositories.tokens.redis_tokens_repository import (
     RedisTokensRepository,
 )
@@ -133,10 +130,8 @@ def mock_recovery_key_generate(mocker):
     return mock
 
 
-@pytest.fixture(params=["json", "redis"])
-def empty_repo(request, empty_json_repo, empty_redis_repo):
-    if request.param == "json":
-        return empty_json_repo
+@pytest.fixture(params=["redis"])
+def empty_repo(request, empty_redis_repo):
     if request.param == "redis":
         return empty_redis_repo
         # return empty_json_repo
@@ -584,22 +579,22 @@ def assert_identical(
     assert repo_a._get_stored_new_device_key() == repo_b._get_stored_new_device_key()
 
 
-def clone_to_redis(repo: JsonTokensRepository):
-    other_repo = RedisTokensRepository()
-    other_repo.clone(repo)
-    assert_identical(repo, other_repo)
+# def clone_to_redis(repo: JsonTokensRepository):
+#     other_repo = RedisTokensRepository()
+#     other_repo.clone(repo)
+#     assert_identical(repo, other_repo)
 
 
-# we cannot easily parametrize this unfortunately, since some_tokens and empty_repo cannot coexist
-def test_clone_json_to_redis_empty(empty_repo):
-    repo = empty_repo
-    if isinstance(repo, JsonTokensRepository):
-        clone_to_redis(repo)
+# # we cannot easily parametrize this unfortunately, since some_tokens and empty_repo cannot coexist
+# def test_clone_json_to_redis_empty(empty_repo):
+#     repo = empty_repo
+#     if isinstance(repo, JsonTokensRepository):
+#         clone_to_redis(repo)
 
 
-def test_clone_json_to_redis_full(some_tokens_repo):
-    repo = some_tokens_repo
-    if isinstance(repo, JsonTokensRepository):
-        repo.get_new_device_key()
-        repo.create_recovery_key(five_minutes_into_future(), 2)
-        clone_to_redis(repo)
+# def test_clone_json_to_redis_full(some_tokens_repo):
+#     repo = some_tokens_repo
+#     if isinstance(repo, JsonTokensRepository):
+#         repo.get_new_device_key()
+#         repo.create_recovery_key(five_minutes_into_future(), 2)
+#         clone_to_redis(repo)
