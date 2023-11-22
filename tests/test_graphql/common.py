@@ -4,18 +4,20 @@ from tests.conftest import TOKENS_FILE_CONTENTS, DEVICE_WE_AUTH_TESTS_WITH
 ORIGINAL_DEVICES = TOKENS_FILE_CONTENTS["tokens"]
 
 
-def assert_ok(response, request):
-    data = assert_data(response)
-    data[request]["success"] is True
-    data[request]["message"] is not None
-    data[request]["code"] == 200
+def assert_ok(output: dict) -> None:
+    if output["success"] is False:
+        # convenience for debugging, this should display error
+        # if message is  empty, consider adding helpful messages
+        raise ValueError(output["code"], output["message"])
+    assert output["success"] is True
+    assert output["message"] is not None
+    assert output["code"] == 200
 
 
-def assert_errorcode(response, request, code):
-    data = assert_data(response)
-    data[request]["success"] is False
-    data[request]["message"] is not None
-    data[request]["code"] == code
+def assert_errorcode(output: dict, code) -> None:
+    assert output["success"] is False
+    assert output["message"] is not None
+    assert output["code"] == code
 
 
 def assert_empty(response):
@@ -23,7 +25,7 @@ def assert_empty(response):
     assert response.json().get("data") is None
 
 
-def assert_data(response):
+def get_data(response):
     assert response.status_code == 200
     response = response.json()
 
@@ -54,7 +56,7 @@ def request_devices(client):
 
 def graphql_get_devices(client):
     response = request_devices(client)
-    data = assert_data(response)
+    data = get_data(response)
     devices = data["api"]["devices"]
     assert devices is not None
     return devices

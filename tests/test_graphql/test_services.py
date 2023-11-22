@@ -10,7 +10,7 @@ from selfprivacy_api.services.test_service import DummyService
 
 from tests.test_common import raw_dummy_service, dummy_service
 from tests.common import generate_service_query
-from tests.test_graphql.test_api_backup import assert_ok, get_data
+from tests.test_graphql.common import assert_empty, assert_ok, get_data
 
 
 @pytest.fixture()
@@ -330,52 +330,38 @@ def test_allservices_unauthorized(client, only_dummy_service):
 
 def test_start_unauthorized(client, only_dummy_service):
     dummy_service = only_dummy_service
-    mutation_response = api_start(client, dummy_service)
-
-    assert mutation_response.status_code == 200
-    assert mutation_response.json().get("data") is None
+    response = api_start(client, dummy_service)
+    assert_empty(response)
 
 
 def test_restart_unauthorized(client, only_dummy_service):
     dummy_service = only_dummy_service
-    mutation_response = api_restart(client, dummy_service)
-
-    assert mutation_response.status_code == 200
-    assert mutation_response.json().get("data") is None
+    response = api_restart(client, dummy_service)
+    assert_empty(response)
 
 
 def test_stop_unauthorized(client, only_dummy_service):
     dummy_service = only_dummy_service
-    mutation_response = api_stop(client, dummy_service)
-
-    assert mutation_response.status_code == 200
-    assert mutation_response.json().get("data") is None
+    response = api_stop(client, dummy_service)
+    assert_empty(response)
 
 
 def test_enable_unauthorized(client, only_dummy_service):
     dummy_service = only_dummy_service
-    mutation_response = api_enable(client, dummy_service)
-
-    assert mutation_response.status_code == 200
-    assert mutation_response.json().get("data") is None
+    response = api_enable(client, dummy_service)
+    assert_empty(response)
 
 
 def test_disable_unauthorized(client, only_dummy_service):
     dummy_service = only_dummy_service
-    mutation_response = api_disable(client, dummy_service)
-
-    assert mutation_response.status_code == 200
-    assert mutation_response.json().get("data") is None
+    response = api_disable(client, dummy_service)
+    assert_empty(response)
 
 
-def test_move_nonexistent(authorized_client, only_dummy_service):
+def test_move_unauthorized(client, only_dummy_service):
     dummy_service = only_dummy_service
-    mutation_response = api_move_by_name(authorized_client, "bogus_service", "sda1")
-    data = get_data(mutation_response)["services"]["moveService"]
-    assert_notfound(data)
-
-    assert data["service"] is None
-    assert data["job"] is None
+    response = api_move(client, dummy_service, "sda1")
+    assert_empty(response)
 
 
 def test_start_nonexistent(authorized_client, only_dummy_service):

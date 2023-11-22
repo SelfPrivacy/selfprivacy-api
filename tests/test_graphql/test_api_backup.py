@@ -280,7 +280,7 @@ def get_data(response):
     if (
         "errors" in response.keys()
     ):  # convenience for debugging, this will display error
-        assert response["errors"] == []
+        raise ValueError(response["errors"])
     assert response["data"] is not None
     data = response["data"]
     return data
