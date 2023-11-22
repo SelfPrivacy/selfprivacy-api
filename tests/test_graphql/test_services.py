@@ -1,12 +1,14 @@
 import pytest
 from typing import Generator
 
+from selfprivacy_api.utils import ReadUserData, WriteUserData
+from selfprivacy_api.utils.block_devices import BlockDevices
+
 from selfprivacy_api.graphql.mutations.services_mutations import ServicesMutations
 import selfprivacy_api.services as service_module
 from selfprivacy_api.services import get_service_by_id
 from selfprivacy_api.services.service import Service, ServiceStatus
 from selfprivacy_api.services.test_service import DummyService
-from selfprivacy_api.utils.block_devices import BlockDevices
 
 import tests.test_graphql.test_api_backup
 from tests.test_common import raw_dummy_service, dummy_service
@@ -531,3 +533,12 @@ def test_mailservice_cannot_enable_disable(authorized_client):
     data = get_data(mutation_response)["services"]["disableService"]
     assert_errorcode(data, 400)
     # assert data["service"] is not None
+
+
+def enabling_disabling_reads_json(dummy_service: DummyService):
+    with WriteUserData() as data:
+        data[dummy_service.get_id()]["enabled"] = False
+    assert dummy_service.is_enabled() is False
+    with WriteUserData() as data:
+        data[dummy_service.get_id()]["enabled"] = True
+    assert dummy_service.is_enabled() is True
