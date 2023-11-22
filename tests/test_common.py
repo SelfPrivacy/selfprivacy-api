@@ -48,7 +48,9 @@ def raw_dummy_service(tmpdir):
 
 
 @pytest.fixture()
-def dummy_service(tmpdir, raw_dummy_service) -> Generator[Service, None, None]:
+def dummy_service(
+    tmpdir, raw_dummy_service, generic_userdata
+) -> Generator[Service, None, None]:
     service = raw_dummy_service
 
     # register our service
@@ -58,6 +60,7 @@ def dummy_service(tmpdir, raw_dummy_service) -> Generator[Service, None, None]:
     assert huey.immediate is True
 
     assert get_service_by_id(service.get_id()) is not None
+    service.enable()
     yield service
 
     # cleanup because apparently it matters wrt tasks

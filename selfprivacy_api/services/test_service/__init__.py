@@ -37,8 +37,6 @@ class DummyService(Service):
         super().__init__()
         with open(self.status_file(), "w") as file:
             file.write(ServiceStatus.ACTIVE.value)
-        with open(self.enabled_file(), "w") as file:
-            file.write("True")
 
     @staticmethod
     def get_id() -> str:
@@ -80,34 +78,10 @@ class DummyService(Service):
         return "How did we get here?"
 
     @classmethod
-    def is_enabled(cls) -> bool:
-        return cls.get_enabled()
-
-    @classmethod
     def status_file(cls) -> str:
         dir = cls.folders[0]
         # we do not REALLY want to store our state in our declared folders
         return path.join(dir, "..", "service_status")
-
-    @classmethod
-    def enabled_file(cls) -> str:
-        dir = cls.folders[0]
-        return path.join(dir, "..", "service_enabled")
-
-    @classmethod
-    def get_enabled(cls) -> bool:
-        with open(cls.enabled_file(), "r") as file:
-            string = file.read().strip()
-        if "True" in string:
-            return True
-        if "False" in string:
-            return False
-        raise ValueError("test service enabled/disabled status file got corrupted")
-
-    @classmethod
-    def set_enabled(cls, enabled: bool):
-        with open(cls.enabled_file(), "w") as file:
-            status_string = file.write(str(enabled))
 
     @classmethod
     def set_status(cls, status: ServiceStatus):
@@ -152,14 +126,6 @@ class DummyService(Service):
     def can_be_backed_up(cls) -> bool:
         """`True` if the service can be backed up."""
         return cls.backuppable
-
-    @classmethod
-    def enable(cls):
-        cls.set_enabled(True)
-
-    @classmethod
-    def disable(cls):
-        cls.set_enabled(False)
 
     @classmethod
     def set_delay(cls, new_delay_sec: float) -> None:
