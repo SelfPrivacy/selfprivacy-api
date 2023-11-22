@@ -3,6 +3,7 @@ from typing import Generator
 
 from selfprivacy_api.graphql.mutations.services_mutations import ServicesMutations
 import selfprivacy_api.services as service_module
+from selfprivacy_api.services import get_service_by_id
 from selfprivacy_api.services.service import Service, ServiceStatus
 from selfprivacy_api.services.test_service import DummyService
 from selfprivacy_api.utils.block_devices import BlockDevices
@@ -515,3 +516,18 @@ def test_move_same_volume(authorized_client, dummy_service):
     # is there a meaning in returning the service in this?
     assert data["service"] is not None
     assert data["job"] is not None
+
+
+def test_mailservice_cannot_enable_disable(authorized_client):
+    mailservice = get_service_by_id("email")
+
+    mutation_response = api_enable(authorized_client, mailservice)
+    data = get_data(mutation_response)["services"]["enableService"]
+    assert_errorcode(data, 400)
+    # TODO?: we cannot convert mailservice to graphql Service without /var/domain yet
+    # assert data["service"] is not None
+
+    mutation_response = api_disable(authorized_client, mailservice)
+    data = get_data(mutation_response)["services"]["disableService"]
+    assert_errorcode(data, 400)
+    # assert data["service"] is not None
