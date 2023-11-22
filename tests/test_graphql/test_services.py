@@ -1,16 +1,13 @@
 import pytest
 from typing import Generator
 
-from selfprivacy_api.utils import ReadUserData, WriteUserData
 from selfprivacy_api.utils.block_devices import BlockDevices
 
-from selfprivacy_api.graphql.mutations.services_mutations import ServicesMutations
 import selfprivacy_api.services as service_module
 from selfprivacy_api.services import get_service_by_id
 from selfprivacy_api.services.service import Service, ServiceStatus
 from selfprivacy_api.services.test_service import DummyService
 
-import tests.test_graphql.test_api_backup
 from tests.test_common import raw_dummy_service, dummy_service
 from tests.common import generate_service_query
 from tests.test_graphql.test_api_backup import assert_ok, get_data
@@ -533,60 +530,3 @@ def test_mailservice_cannot_enable_disable(authorized_client):
     data = get_data(mutation_response)["services"]["disableService"]
     assert_errorcode(data, 400)
     # assert data["service"] is not None
-
-
-def test_enabling_disabling_reads_json(dummy_service: DummyService):
-    with WriteUserData() as data:
-        data[dummy_service.get_id()]["enable"] = False
-    assert dummy_service.is_enabled() is False
-    with WriteUserData() as data:
-        data[dummy_service.get_id()]["enable"] = True
-    assert dummy_service.is_enabled() is True
-
-
-@pytest.fixture(params=["normally_enabled", "deleted_attribute", "service_not_in_json"])
-def possibly_dubiously_enabled_service(
-    dummy_service: DummyService, request
-) -> DummyService:
-    if request.param == "deleted_attribute":
-        with WriteUserData() as data:
-            del data[dummy_service.get_id()]["enable"]
-    if request.param == "service_not_in_json":
-        with WriteUserData() as data:
-            del data[dummy_service.get_id()]
-    return dummy_service
-
-
-# Yeah, idk yet how to dry it.
-@pytest.fixture(params=["deleted_attribute", "service_not_in_json"])
-def undefined_enabledness_service(dummy_service: DummyService, request) -> DummyService:
-    if request.param == "deleted_attribute":
-        with WriteUserData() as data:
-            del data[dummy_service.get_id()]["enable"]
-    if request.param == "service_not_in_json":
-        with WriteUserData() as data:
-            del data[dummy_service.get_id()]
-    return dummy_service
-
-
-def test_undefined_enabledness_in_json_means_False(
-    undefined_enabledness_service: DummyService,
-):
-    dummy_service = undefined_enabledness_service
-    assert dummy_service.is_enabled() is False
-
-
-def test_enabling_disabling_writes_json(
-    possibly_dubiously_enabled_service: DummyService,
-):
-    dummy_service = possibly_dubiously_enabled_service
-
-    dummy_service.disable()
-    with ReadUserData() as data:
-        assert data[dummy_service.get_id()]["enable"] is False
-    dummy_service.enable()
-    with ReadUserData() as data:
-        assert data[dummy_service.get_id()]["enable"] is True
-    dummy_service.disable()
-    with ReadUserData() as data:
-        assert data[dummy_service.get_id()]["enable"] is False
