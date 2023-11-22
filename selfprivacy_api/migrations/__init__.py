@@ -8,36 +8,12 @@ at api.skippedMigrations in userdata.json and populating it
 with IDs of the migrations to skip.
 Adding DISABLE_ALL to that array disables the migrations module entirely.
 """
-# from selfprivacy_api.migrations.check_for_failed_binds_migration import (
-#     CheckForFailedBindsMigration,
-# )
-from selfprivacy_api.utils import ReadUserData, UserDataFiles
 
-# from selfprivacy_api.migrations.fix_nixos_config_branch import FixNixosConfigBranch
-# from selfprivacy_api.migrations.create_tokens_json import CreateTokensJson
-# from selfprivacy_api.migrations.migrate_to_selfprivacy_channel import (
-#     MigrateToSelfprivacyChannel,
-# )
-# from selfprivacy_api.migrations.mount_volume import MountVolume
-# from selfprivacy_api.migrations.providers import CreateProviderFields
-# from selfprivacy_api.migrations.prepare_for_nixos_2211 import (
-#     MigrateToSelfprivacyChannelFrom2205,
-# )
-# from selfprivacy_api.migrations.prepare_for_nixos_2305 import (
-#     MigrateToSelfprivacyChannelFrom2211,
-# )
-# from selfprivacy_api.migrations.redis_tokens import LoadTokensToRedis
+from selfprivacy_api.utils import ReadUserData, UserDataFiles
+from selfprivacy_api.migrations.write_token_to_redis import WriteTokenToRedis
 
 migrations = [
-    # FixNixosConfigBranch(),
-    # CreateTokensJson(),
-    # MigrateToSelfprivacyChannel(),
-    # MountVolume(),
-    # CheckForFailedBindsMigration(),
-    # CreateProviderFields(),
-    # MigrateToSelfprivacyChannelFrom2205(),
-    # MigrateToSelfprivacyChannelFrom2211(),
-    # LoadTokensToRedis(),
+    WriteTokenToRedis(),
 ]
 
 
