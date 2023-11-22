@@ -20,15 +20,23 @@
         ];
       };
       devShells.${system}.default = pkgs.mkShell {
-        inputsFrom = [ selfprivacy-graphql-api ];
-        packages = with pkgs; [
-          black
-          rclone
-          redis
-          restic
-        ];
-        # FIXME is it still needed inside shellHook?
-        # PYTHONPATH=${sp-python}/${sp-python.sitePackages}
+        packages =
+          let
+            # TODO is there a better way to get environment for VS Code?
+            python3 =
+              nixpkgs.lib.findFirst (p: p.pname == "python3") (abort "wtf")
+                self.packages.${system}.default.propagatedBuildInputs;
+            python-env =
+              python3.withPackages
+                (_: self.packages.${system}.default.propagatedBuildInputs);
+          in
+          with pkgs; [
+            python-env
+            black
+            rclone
+            redis
+            restic
+          ];
         shellHook = ''
           # envs set with export and as attributes are treated differently.
           # for example. printenv <Name> will not fetch the value of an attribute.

@@ -27,8 +27,4 @@ pythonPackages.buildPythonApplication rec {
       SelfPrivacy Server Management API
     '';
   };
-  passthru = {
-    # TODO explain what's the purpose of this?
-    pythonPath = pythonPackages.makePythonPath propagatedBuildInputs;
-  };
 }
