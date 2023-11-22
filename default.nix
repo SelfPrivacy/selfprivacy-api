@@ -1,9 +1,10 @@
 { pythonPackages, rev ? "local" }:
 
-pythonPackages.buildPythonApplication rec {
+pythonPackages.buildPythonPackage rec {
   pname = "selfprivacy-graphql-api";
   version = rev;
   src = builtins.filterSource (p: t: p != ".git" && t != "symlink") ./.;
+  nativeCheckInputs = [ pythonPackages.pytestCheckHook ];
   propagatedBuildInputs = with pythonPackages; [
     fastapi
     gevent
@@ -22,6 +23,8 @@ pythonPackages.buildPythonApplication rec {
     typing-extensions
     uvicorn
   ];
+  pythonImportsCheck = [ "selfprivacy_api" ];
+  doCheck = true;
   meta = {
     description = ''
       SelfPrivacy Server Management API
