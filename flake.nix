@@ -9,6 +9,7 @@
       pkgs = nixpkgs.legacyPackages.${system};
       selfprivacy-graphql-api = pkgs.callPackage ./default.nix {
         pythonPackages = pkgs.python310Packages;
+        rev = self.shortRev or self.dirtyShortRev or "dirty";
       };
     in
     {

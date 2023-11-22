@@ -1,8 +1,8 @@
-{ pythonPackages }:
+{ pythonPackages, rev ? "local" }:
 
 pythonPackages.buildPythonApplication rec {
   pname = "selfprivacy-graphql-api";
-  version = "local";
+  version = rev;
   src = builtins.filterSource (p: t: p != ".git" && t != "symlink") ./.;
   propagatedBuildInputs = with pythonPackages; [
     fastapi
