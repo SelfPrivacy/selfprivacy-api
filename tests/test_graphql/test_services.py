@@ -542,3 +542,15 @@ def enabling_disabling_reads_json(dummy_service: DummyService):
     with WriteUserData() as data:
         data[dummy_service.get_id()]["enabled"] = True
     assert dummy_service.is_enabled() is True
+
+
+def enabling_disabling_writes_json(dummy_service: DummyService):
+    dummy_service.disable()
+    with ReadUserData() as data:
+        assert data[dummy_service.get_id()]["enabled"] is False
+    dummy_service.enable()
+    with ReadUserData() as data:
+        assert data[dummy_service.get_id()]["enabled"] is True
+    dummy_service.disable()
+    with ReadUserData() as data:
+        assert data[dummy_service.get_id()]["enabled"] is False
