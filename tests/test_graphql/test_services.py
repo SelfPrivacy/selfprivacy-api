@@ -535,22 +535,23 @@ def test_mailservice_cannot_enable_disable(authorized_client):
     # assert data["service"] is not None
 
 
-def enabling_disabling_reads_json(dummy_service: DummyService):
+def test_enabling_disabling_reads_json(dummy_service: DummyService):
     with WriteUserData() as data:
-        data[dummy_service.get_id()]["enabled"] = False
+        data[dummy_service.get_id()]["enable"] = False
     assert dummy_service.is_enabled() is False
     with WriteUserData() as data:
-        data[dummy_service.get_id()]["enabled"] = True
+        data[dummy_service.get_id()]["enable"] = True
     assert dummy_service.is_enabled() is True
 
 
-def enabling_disabling_writes_json(dummy_service: DummyService):
+def test_enabling_disabling_writes_json(dummy_service: DummyService):
+
     dummy_service.disable()
     with ReadUserData() as data:
-        assert data[dummy_service.get_id()]["enabled"] is False
+        assert data[dummy_service.get_id()]["enable"] is False
     dummy_service.enable()
     with ReadUserData() as data:
-        assert data[dummy_service.get_id()]["enabled"] is True
+        assert data[dummy_service.get_id()]["enable"] is True
     dummy_service.disable()
     with ReadUserData() as data:
-        assert data[dummy_service.get_id()]["enabled"] is False
+        assert data[dummy_service.get_id()]["enable"] is False
