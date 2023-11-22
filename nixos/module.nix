@@ -37,7 +37,6 @@ in
     systemd.services.selfprivacy-api = {
       description = "API Server used to control system from the mobile application";
       environment = config.nix.envVars // {
-        inherit (config.environment.sessionVariables) NIX_PATH;
         HOME = "/root";
         PYTHONUNBUFFERED = "1";
         ENABLE_SWAGGER = (if cfg.enableSwagger then "1" else "0");
@@ -71,12 +70,10 @@ in
     systemd.services.selfprivacy-api-worker = {
       description = "Task worker for SelfPrivacy API";
       environment = config.nix.envVars // {
-        inherit (config.environment.sessionVariables) NIX_PATH;
         HOME = "/root";
         PYTHONUNBUFFERED = "1";
         ENABLE_SWAGGER = (if cfg.enableSwagger then "1" else "0");
         B2_BUCKET = cfg.b2Bucket;
-        PYTHONPATH = selfprivacy-graphql-api.pythonPath + ":${selfprivacy-graphql-api}/lib/python3.10/site-packages/";
       } // config.networking.proxy.envVars;
       path = [
         "/var/"
