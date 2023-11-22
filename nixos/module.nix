@@ -74,6 +74,8 @@ in
         PYTHONUNBUFFERED = "1";
         ENABLE_SWAGGER = (if cfg.enableSwagger then "1" else "0");
         B2_BUCKET = cfg.b2Bucket;
+        PYTHONPATH =
+          pkgs.python310Packages.makePythonPath [ selfprivacy-graphql-api ];
       } // config.networking.proxy.envVars;
       path = [
         "/var/"
