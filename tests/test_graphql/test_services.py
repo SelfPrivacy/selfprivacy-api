@@ -557,6 +557,25 @@ def possibly_dubiously_enabled_service(
     return dummy_service
 
 
+# Yeah, idk yet how to dry it.
+@pytest.fixture(params=["deleted_attribute", "service_not_in_json"])
+def undefined_enabledness_service(dummy_service: DummyService, request) -> DummyService:
+    if request.param == "deleted_attribute":
+        with WriteUserData() as data:
+            del data[dummy_service.get_id()]["enable"]
+    if request.param == "service_not_in_json":
+        with WriteUserData() as data:
+            del data[dummy_service.get_id()]
+    return dummy_service
+
+
+def test_undefined_enabledness_in_json_means_False(
+    undefined_enabledness_service: DummyService,
+):
+    dummy_service = undefined_enabledness_service
+    assert dummy_service.is_enabled() is False
+
+
 def test_enabling_disabling_writes_json(
     possibly_dubiously_enabled_service: DummyService,
 ):

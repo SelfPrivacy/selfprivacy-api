@@ -128,7 +128,12 @@ class Service(ABC):
 
     @classmethod
     def is_enabled(cls) -> bool:
-        """`True` if the service is enabled."""
+        """
+        `True` if the service is enabled.
+        `False` if it is not enabled or not defined in file
+        If there is nothing in the file, this is equivalent to False
+        because NixOS won't enable it then.
+        """
         name = cls.get_id()
         with ReadUserData() as user_data:
             return user_data.get(name, {}).get("enable", False)
