@@ -145,7 +145,7 @@ class Service(ABC):
         """Enable the service. Usually this means enabling systemd unit."""
         name = cls.get_id()
         with WriteUserData() as user_data:
-            if "gitea" not in user_data:
+            if name not in user_data:
                 user_data[name] = {}
             user_data[name]["enable"] = True
 
@@ -154,7 +154,7 @@ class Service(ABC):
         """Disable the service. Usually this means disabling systemd unit."""
         name = cls.get_id()
         with WriteUserData() as user_data:
-            if "gitea" not in user_data:
+            if name not in user_data:
                 user_data[name] = {}
             user_data[name]["enable"] = False
 
