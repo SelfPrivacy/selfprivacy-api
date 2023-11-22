@@ -544,7 +544,23 @@ def test_enabling_disabling_reads_json(dummy_service: DummyService):
     assert dummy_service.is_enabled() is True
 
 
-def test_enabling_disabling_writes_json(dummy_service: DummyService):
+@pytest.fixture(params=["normally_enabled", "deleted_attribute", "service_not_in_json"])
+def possibly_dubiously_enabled_service(
+    dummy_service: DummyService, request
+) -> DummyService:
+    if request.param == "deleted_attribute":
+        with WriteUserData() as data:
+            del data[dummy_service.get_id()]["enable"]
+    if request.param == "service_not_in_json":
+        with WriteUserData() as data:
+            del data[dummy_service.get_id()]
+    return dummy_service
+
+
+def test_enabling_disabling_writes_json(
+    possibly_dubiously_enabled_service: DummyService,
+):
+    dummy_service = possibly_dubiously_enabled_service
 
     dummy_service.disable()
     with ReadUserData() as data:
