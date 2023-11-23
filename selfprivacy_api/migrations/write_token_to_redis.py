@@ -1,4 +1,7 @@
+from datetime import datetime
+from typing import Optional
 from selfprivacy_api.migrations.migration import Migration
+from selfprivacy_api.models.tokens.token import Token
 
 from selfprivacy_api.repositories.tokens.redis_tokens_repository import (
     RedisTokensRepository,
@@ -23,10 +26,14 @@ class WriteTokenToRedis(Migration):
             return False
         return True
 
-    def get_token_from_json(self):
+    def get_token_from_json(self) -> Optional[Token]:
         try:
             with ReadUserData(UserDataFiles.SECRETS) as userdata:
-                return userdata["api"]["token"]
+                return Token(
+                    token=userdata["api"]["token"],
+                    device_name="Initial device",
+                    created_at=datetime.now(),
+                )
         except Exception as e:
             print(e)
             return None
