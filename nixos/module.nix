@@ -111,10 +111,13 @@ in
       path = [ pkgs.coreutils pkgs.gnutar pkgs.xz.bin pkgs.gzip pkgs.gitMinimal config.nix.package.out pkgs.nixos-rebuild ];
       serviceConfig = {
         User = "root";
-        ExecStart = "${pkgs.nixos-rebuild}/bin/nixos-rebuild switch --flake /etc/nixos#sp-nixos";
         KillMode = "none";
         SendSIGKILL = "no";
       };
+      script = ''
+        ${config.nix.package}/bin/nix flake lock --update-input sp-modules"
+        ${pkgs.nixos-rebuild}/bin/nixos-rebuild switch --flake /etc/nixos#sp-nixos
+      '';
     };
     # One shot systemd service to upgrade NixOS using nixos-rebuild
     systemd.services.sp-nixos-upgrade = {
@@ -129,7 +132,7 @@ in
         SendSIGKILL = "no";
       };
       script = ''
-        ${pkgs.nix}/bin/nix flake lock --override-input selfprivacy-nixos-config "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes"
+        ${config.nix.package}/bin/nix flake update --override-input selfprivacy-nixos-config "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes"
         ${pkgs.nixos-rebuild}/bin/nixos-rebuild switch --flake /etc/nixos#sp-nixos
       '';
     };
