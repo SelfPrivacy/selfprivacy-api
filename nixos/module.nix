@@ -115,7 +115,7 @@ in
         SendSIGKILL = "no";
       };
       script = ''
-        ${config.nix.package}/bin/nix flake lock --update-input sp-modules"
+        ${config.nix.package}/bin/nix flake lock --update-input sp-modules
         ${pkgs.nixos-rebuild}/bin/nixos-rebuild switch --flake /etc/nixos#sp-nixos
       '';
     };
