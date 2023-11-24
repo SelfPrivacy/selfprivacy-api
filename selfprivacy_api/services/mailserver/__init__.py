@@ -121,27 +121,43 @@ class MailServer(Service):
                 name=domain,
                 content=ip4,
                 ttl=3600,
+                display_name="Root Domain",
             ),
             ServiceDnsRecord(
                 type="AAAA",
                 name=domain,
                 content=ip6,
                 ttl=3600,
+                display_name="Root Domain (IPv6)",
             ),
             ServiceDnsRecord(
-                type="MX", name=domain, content=domain, ttl=3600, priority=10
+                type="MX",
+                name=domain,
+                content=domain,
+                ttl=3600,
+                priority=10,
+                display_name="Mail server record",
             ),
             ServiceDnsRecord(
-                type="TXT", name="_dmarc", content="v=DMARC1; p=none", ttl=18000
+                type="TXT",
+                name="_dmarc",
+                content="v=DMARC1; p=none",
+                ttl=18000,
+                display_name="DMARC record",
             ),
             ServiceDnsRecord(
                 type="TXT",
                 name=domain,
                 content=f"v=spf1 a mx ip4:{ip4} -all",
                 ttl=18000,
+                display_name="SPF record",
             ),
             ServiceDnsRecord(
-                type="TXT", name="selector._domainkey", content=dkim_record, ttl=18000
+                type="TXT",
+                name="selector._domainkey",
+                content=dkim_record,
+                ttl=18000,
+                display_name="DKIM key",
             ),
         ]
 

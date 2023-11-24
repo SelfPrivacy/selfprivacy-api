@@ -135,12 +135,14 @@ class Bitwarden(Service):
                 name="password",
                 content=network_utils.get_ip4(),
                 ttl=3600,
+                display_name="Bitwarden",
             ),
             ServiceDnsRecord(
                 type="AAAA",
                 name="password",
                 content=network_utils.get_ip6(),
                 ttl=3600,
+                display_name="Bitwarden (IPv6)",
             ),
         ]
 

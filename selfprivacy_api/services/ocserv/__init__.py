@@ -110,12 +110,14 @@ class Ocserv(Service):
                 name="vpn",
                 content=network_utils.get_ip4(),
                 ttl=3600,
+                display_name="OpenConnect VPN",
             ),
             ServiceDnsRecord(
                 type="AAAA",
                 name="vpn",
                 content=network_utils.get_ip6(),
                 ttl=3600,
+                display_name="OpenConnect VPN (IPv6)",
             ),
         ]
 
