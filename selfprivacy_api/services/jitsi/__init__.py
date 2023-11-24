@@ -132,12 +132,14 @@ class Jitsi(Service):
                 name="meet",
                 content=ip4,
                 ttl=3600,
+                display_name="Jitsi",
             ),
             ServiceDnsRecord(
                 type="AAAA",
                 name="meet",
                 content=ip6,
                 ttl=3600,
+                display_name="Jitsi (IPv6)",
             ),
         ]
 

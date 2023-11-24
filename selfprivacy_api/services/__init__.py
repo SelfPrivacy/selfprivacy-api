@@ -54,12 +54,14 @@ def get_all_required_dns_records() -> list[ServiceDnsRecord]:
             name="api",
             content=ip4,
             ttl=3600,
+            display_name="SelfPrivacy API",
         ),
         ServiceDnsRecord(
             type="AAAA",
             name="api",
             content=ip6,
             ttl=3600,
+            display_name="SelfPrivacy API (IPv6)",
         ),
     ]
     for service in get_enabled_services():

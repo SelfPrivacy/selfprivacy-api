@@ -33,6 +33,7 @@ class ServiceDnsRecord(BaseModel):
     name: str
     content: str
     ttl: int
+    display_name: str
     priority: typing.Optional[int] = None
 
 

@@ -123,12 +123,14 @@ class Gitea(Service):
                 name="git",
                 content=network_utils.get_ip4(),
                 ttl=3600,
+                display_name="Gitea",
             ),
             ServiceDnsRecord(
                 type="AAAA",
                 name="git",
                 content=network_utils.get_ip6(),
                 ttl=3600,
+                display_name="Gitea (IPv6)",
             ),
         ]
 

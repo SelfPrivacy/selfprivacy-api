@@ -128,12 +128,14 @@ class Nextcloud(Service):
                 name="cloud",
                 content=network_utils.get_ip4(),
                 ttl=3600,
+                display_name="Nextcloud",
             ),
             ServiceDnsRecord(
                 type="AAAA",
                 name="cloud",
                 content=network_utils.get_ip6(),
                 ttl=3600,
+                display_name="Nextcloud (IPv6)",
             ),
         ]
 

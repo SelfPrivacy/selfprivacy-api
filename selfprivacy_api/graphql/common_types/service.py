@@ -139,6 +139,7 @@ def service_to_graphql_service(service: ServiceInterface) -> Service:
                 content=record.content,
                 ttl=record.ttl,
                 priority=record.priority,
+                display_name=record.display_name,
             )
             for record in service.get_dns_records()
         ],

@@ -127,12 +127,14 @@ class Pleroma(Service):
                 name="social",
                 content=network_utils.get_ip4(),
                 ttl=3600,
+                display_name="Pleroma",
             ),
             ServiceDnsRecord(
                 type="AAAA",
                 name="social",
                 content=network_utils.get_ip6(),
                 ttl=3600,
+                display_name="Pleroma (IPv6)",
             ),
         ]
 
