@@ -6,6 +6,7 @@ import pytest
 
 from tests.common import generate_system_query, read_json
 from tests.test_graphql.common import assert_empty
+from tests.test_dkim import mock_no_dkim_file
 
 
 @pytest.fixture
@@ -330,6 +331,29 @@ def test_graphql_get_domain(
             ttl=18000,
         ),
     )
+
+
+def test_graphql_get_domain_no_dkim(
+    authorized_client,
+    domain_file,
+    mock_get_ip4,
+    mock_get_ip6,
+    mock_no_dkim_file,
+    turned_on,
+):
+    """Test no DKIM file situation gets properly handled"""
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": generate_system_query([API_GET_DOMAIN_INFO]),
+        },
+    )
+    assert response.status_code == 200
+    assert response.json().get("data") is not None
+    dns_records = response.json()["data"]["system"]["domainInfo"]["requiredDnsRecords"]
+    for record in dns_records:
+        if record["name"] == "selector._domainkey":
+            raise ValueError("unexpected record found:", record)
 
 
 API_GET_TIMEZONE = """

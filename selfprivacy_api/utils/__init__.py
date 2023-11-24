@@ -6,6 +6,7 @@ import json
 import os
 import subprocess
 import portalocker
+import typing
 
 
 USERDATA_FILE = "/etc/nixos/userdata/userdata.json"
@@ -166,9 +167,10 @@ def parse_date(date_str: str) -> datetime.datetime:
     raise ValueError("Invalid date string")
 
 
-def get_dkim_key(domain, parse=True):
+def get_dkim_key(domain: str, parse: bool = True) -> typing.Optional[str]:
     """Get DKIM key from /var/dkim/<domain>.selector.txt"""
     if os.path.exists("/var/dkim/" + domain + ".selector.txt"):
+        # Is this really neccessary to use Popen here?
         cat_process = subprocess.Popen(
             ["cat", "/var/dkim/" + domain + ".selector.txt"], stdout=subprocess.PIPE
         )
