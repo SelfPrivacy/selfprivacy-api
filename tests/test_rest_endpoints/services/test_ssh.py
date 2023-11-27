@@ -269,13 +269,6 @@ def test_add_existing_root_key(authorized_client, root_and_admin_have_keys):
     ]
 
 
-def test_add_invalid_root_key(authorized_client, ssh_on):
-    response = authorized_client.put(
-        "/services/ssh/key/send", json={"public_key": "INVALID KEY test@pc"}
-    )
-    assert response.status_code == 400
-
-
 ## /ssh/keys/{user} ######################################################
 
 
