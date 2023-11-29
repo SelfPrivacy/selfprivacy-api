@@ -8,10 +8,11 @@ from selfprivacy_api.jobs import JobStatus, Jobs, Job
 
 
 COMPLETED_WITH_ERROR = (
-    "We are sorry, сompleted with an error, report it to support chat."
+    "Error occured, please report this to the support chat."
 )
-RESULT_WAS_NOT_FOUND_ERROR = "We are sorry, garbage collection result was not found, something went wrong, report it to support chat."
-CLEAR_COMPLETED = "Cleaning completed."
+RESULT_WAS_NOT_FOUND_ERROR = "We are sorry, garbage collection result was not found. " \
+    "Something went wrong, please report this to the support chat."
+CLEAR_COMPLETED = "Garbage collection completed."
 
 
 def run_nix_store_print_dead() -> str:
@@ -32,7 +33,7 @@ def run_nix_collect_garbage() -> Iterable[bytes]:
     return process.stdout if process.stdout else iter([])
 
 
-def parse_line(line: str):
+def parse_line(job: Job, line: str) -> Job:
     """
     We parse the string for the presence of a final line,
     with the final amount of space cleared.
@@ -43,18 +44,21 @@ def parse_line(line: str):
     match = re.search(pattern, line)
 
     if match is None:
-        return (
-            JobStatus.ERROR,
-            COMPLETED_WITH_ERROR,
-            RESULT_WAS_NOT_FOUND_ERROR,
+        Jobs.update(
+            job=job,
+            status=JobStatus.ERROR,
+            status_text=COMPLETED_WITH_ERROR,
+            error=RESULT_WAS_NOT_FOUND_ERROR,
         )
 
     else:
-        return (
-            JobStatus.FINISHED,
-            CLEAR_COMPLETED,
-            f"{match.group(0)} have been cleared",
+        Jobs.update(
+            job=job,
+            status=JobStatus.FINISHED,
+            status_text=CLEAR_COMPLETED,
+            result=f"{match.group(0)} have been cleared",
         )
+    return job
 
 
 def process_stream(job: Job, stream: Iterable[bytes], total_dead_packages: int) -> None:
@@ -78,13 +82,7 @@ def process_stream(job: Job, stream: Iterable[bytes], total_dead_packages: int) 
                 prev_progress = percent
 
         elif "store paths deleted," in line:
-            status = parse_line(line)
-            Jobs.update(
-                job=job,
-                status=status[0],
-                status_text=status[1],
-                result=status[2],
-            )
+            parse_line(job, line)
 
 
 def get_dead_packages(output) -> Tuple[int, float]:

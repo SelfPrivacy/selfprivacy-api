@@ -4,7 +4,7 @@
 
 import pytest
 
-from selfprivacy_api.jobs import JobStatus, Jobs
+from selfprivacy_api.jobs import JobStatus, Jobs, Job
 
 from selfprivacy_api.jobs.nix_collect_garbage import (
     get_dead_packages,
@@ -57,39 +57,43 @@ determining live/dead paths...
 log_event = []
 
 
-@pytest.fixture
-def job_reset():
-    Jobs.reset()
-
-
 # ---
 
 
-def test_parse_line(job_reset):
-    txt = "190 store paths deleted, 425.51 MiB freed"
-    output = (
-        JobStatus.FINISHED,
-        CLEAR_COMPLETED,
-        "425.51 MiB have been cleared",
+def test_parse_line():
+    txt = "note: currently hard linking saves -0.00 MiB 190 store paths deleted, 425.51 MiB freed"
+
+    job = Jobs.add(
+        name="name",
+        type_id="parse_line",
+        description="description",
     )
-    assert parse_line(txt) == output
+
+    output = parse_line(job, txt)
+    assert output.result == '425.51 MiB have been cleared'
+    assert output.status == JobStatus.FINISHED
+    assert output.error is None
 
 
-def test_parse_line_with_blank_line(job_reset):
+def test_parse_line_with_blank_line():
     txt = ""
-    output = (
-        JobStatus.ERROR,
-        COMPLETED_WITH_ERROR,
-        RESULT_WAS_NOT_FOUND_ERROR,
+    job = Jobs.add(
+        name="name",
+        type_id="parse_line",
+        description="description",
     )
-    assert parse_line(txt) == output
+
+    output = parse_line(job, txt)
+    assert output.error == RESULT_WAS_NOT_FOUND_ERROR
+    assert output.status_text == COMPLETED_WITH_ERROR
+    assert output.status == JobStatus.ERROR
 
 
-def test_get_dead_packages(job_reset):
+def test_get_dead_packages():
     assert get_dead_packages(OUTPUT_PRINT_DEAD) == (5, 20.0)
 
 
-def test_get_dead_packages_zero(job_reset):
+def test_get_dead_packages_zero():
     assert get_dead_packages("") == (0, 0)
 
 
