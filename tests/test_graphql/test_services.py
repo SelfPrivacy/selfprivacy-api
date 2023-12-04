@@ -10,7 +10,7 @@ from selfprivacy_api.utils.block_devices import BlockDevices
 import tests.test_graphql.test_api_backup
 from tests.test_common import raw_dummy_service, dummy_service
 from tests.common import generate_service_query
-from tests.test_graphql.common import assert_ok, get_data
+from tests.test_graphql.test_api_backup import assert_ok, get_data
 
 
 @pytest.fixture()

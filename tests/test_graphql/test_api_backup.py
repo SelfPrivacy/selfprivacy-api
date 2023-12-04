@@ -1,6 +1,6 @@
 from os import path
-from tests.test_graphql.test_backup import backups
-from tests.test_graphql.test_backup import raw_dummy_service, dummy_service
+from tests.test_backup import backups
+from tests.test_common import raw_dummy_service, dummy_service
 from tests.common import generate_backup_query
 
 
