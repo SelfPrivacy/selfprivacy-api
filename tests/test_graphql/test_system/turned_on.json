@@ -3,9 +3,6 @@
         "token": "TEST_TOKEN",
         "enableSwagger": false
     },
-    "bitwarden": {
-        "enable": true
-    },
     "databasePassword": "PASSWORD",
     "domain": "test.tld",
     "hashedMasterPassword": "HASHED_PASSWORD",
@@ -19,18 +16,6 @@
         ]
     },
     "username": "tester",
-    "gitea": {
-        "enable": true
-    },
-    "ocserv": {
-        "enable": true
-    },
-    "pleroma": {
-        "enable": true
-    },
-    "jitsi": {
-        "enable": true
-    },
     "autoUpgrade": {
         "enable": true,
         "allowReboot": true
@@ -48,6 +33,21 @@
     },
     "modules": {
         "nextcloud": {
+            "enable": true
+        },
+        "bitwarden": {
+            "enable": true
+        },
+        "gitea": {
+            "enable": true
+        },
+        "ocserv": {
+            "enable": true
+        },
+        "pleroma": {
+            "enable": true
+        },
+        "jitsi": {
             "enable": true
         },
         "simple-nixos-mailserver": {

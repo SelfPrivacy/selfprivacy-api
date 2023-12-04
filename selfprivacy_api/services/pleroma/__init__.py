@@ -53,7 +53,7 @@ class Pleroma(Service):
     @staticmethod
     def is_enabled() -> bool:
         with ReadUserData() as user_data:
-            return user_data.get("pleroma", {}).get("enable", False)
+            return user_data.get("modules", {}).get("pleroma", {}).get("enable", False)
 
     @staticmethod
     def get_status() -> ServiceStatus:
@@ -62,16 +62,20 @@ class Pleroma(Service):
     @staticmethod
     def enable():
         with WriteUserData() as user_data:
-            if "pleroma" not in user_data:
-                user_data["pleroma"] = {}
-            user_data["pleroma"]["enable"] = True
+            if "modules" not in user_data:
+                user_data["modules"] = {}
+            if "pleroma" not in user_data["modules"]:
+                user_data["modules"]["pleroma"] = {}
+            user_data["modules"]["pleroma"]["enable"] = True
 
     @staticmethod
     def disable():
         with WriteUserData() as user_data:
-            if "pleroma" not in user_data:
-                user_data["pleroma"] = {}
-            user_data["pleroma"]["enable"] = False
+            if "modules" not in user_data:
+                user_data["modules"] = {}
+            if "pleroma" not in user_data["modules"]:
+                user_data["modules"]["pleroma"] = {}
+            user_data["modules"]["pleroma"]["enable"] = False
 
     @staticmethod
     def stop():

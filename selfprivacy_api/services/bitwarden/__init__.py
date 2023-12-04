@@ -61,7 +61,9 @@ class Bitwarden(Service):
     @staticmethod
     def is_enabled() -> bool:
         with ReadUserData() as user_data:
-            return user_data.get("bitwarden", {}).get("enable", False)
+            return (
+                user_data.get("modules", {}).get("bitwarden", {}).get("enable", False)
+            )
 
     @staticmethod
     def get_status() -> ServiceStatus:
@@ -80,17 +82,21 @@ class Bitwarden(Service):
     def enable():
         """Enable Bitwarden service."""
         with WriteUserData() as user_data:
-            if "bitwarden" not in user_data:
-                user_data["bitwarden"] = {}
-            user_data["bitwarden"]["enable"] = True
+            if "modules" not in user_data:
+                user_data["modules"] = {}
+            if "bitwarden" not in user_data["modules"]:
+                user_data["modules"]["bitwarden"] = {}
+            user_data["modules"]["bitwarden"]["enable"] = True
 
     @staticmethod
     def disable():
         """Disable Bitwarden service."""
         with WriteUserData() as user_data:
-            if "bitwarden" not in user_data:
-                user_data["bitwarden"] = {}
-            user_data["bitwarden"]["enable"] = False
+            if "modules" not in user_data:
+                user_data["modules"] = {}
+            if "bitwarden" not in user_data["modules"]:
+                user_data["modules"]["bitwarden"] = {}
+            user_data["modules"]["bitwarden"]["enable"] = False
 
     @staticmethod
     def stop():

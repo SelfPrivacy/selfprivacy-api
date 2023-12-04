@@ -54,7 +54,7 @@ class Ocserv(Service):
     @staticmethod
     def is_enabled() -> bool:
         with ReadUserData() as user_data:
-            return user_data.get("ocserv", {}).get("enable", False)
+            return user_data.get("modules", {}).get("ocserv", {}).get("enable", False)
 
     @staticmethod
     def get_status() -> ServiceStatus:
@@ -63,16 +63,20 @@ class Ocserv(Service):
     @staticmethod
     def enable():
         with WriteUserData() as user_data:
-            if "ocserv" not in user_data:
-                user_data["ocserv"] = {}
-            user_data["ocserv"]["enable"] = True
+            if "modules" not in user_data:
+                user_data["modules"] = {}
+            if "ocserv" not in user_data["modules"]:
+                user_data["modules"]["ocserv"] = {}
+            user_data["modules"]["ocserv"]["enable"] = True
 
     @staticmethod
     def disable():
         with WriteUserData() as user_data:
-            if "ocserv" not in user_data:
-                user_data["ocserv"] = {}
-            user_data["ocserv"]["enable"] = False
+            if "modules" not in user_data:
+                user_data["modules"] = {}
+            if "ocserv" not in user_data["modules"]:
+                user_data["modules"]["ocserv"] = {}
+            user_data["modules"]["ocserv"]["enable"] = False
 
     @staticmethod
     def stop():

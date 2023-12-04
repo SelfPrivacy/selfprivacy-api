@@ -57,7 +57,7 @@ class Gitea(Service):
     @staticmethod
     def is_enabled() -> bool:
         with ReadUserData() as user_data:
-            return user_data.get("gitea", {}).get("enable", False)
+            return user_data.get("modules", {}).get("gitea", {}).get("enable", False)
 
     @staticmethod
     def get_status() -> ServiceStatus:
@@ -75,17 +75,21 @@ class Gitea(Service):
     def enable():
         """Enable Gitea service."""
         with WriteUserData() as user_data:
-            if "gitea" not in user_data:
-                user_data["gitea"] = {}
-            user_data["gitea"]["enable"] = True
+            if "modules" not in user_data:
+                user_data["modules"] = {}
+            if "gitea" not in user_data["modules"]:
+                user_data["modules"]["gitea"] = {}
+            user_data["modules"]["gitea"]["enable"] = True
 
     @staticmethod
     def disable():
         """Disable Gitea service."""
         with WriteUserData() as user_data:
-            if "gitea" not in user_data:
-                user_data["gitea"] = {}
-            user_data["gitea"]["enable"] = False
+            if "modules" not in user_data:
+                user_data["modules"] = {}
+            if "gitea" not in user_data["modules"]:
+                user_data["modules"]["gitea"] = {}
+            user_data["modules"]["gitea"]["enable"] = False
 
     @staticmethod
     def stop():

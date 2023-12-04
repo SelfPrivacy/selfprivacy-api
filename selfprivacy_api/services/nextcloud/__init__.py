@@ -79,9 +79,9 @@ class Nextcloud(Service):
         with WriteUserData() as user_data:
             if "modules" not in user_data:
                 user_data["modules"] = {}
-            if "nextcloud" not in user_data:
-                user_data["nextcloud"] = {}
-            user_data["nextcloud"]["enable"] = True
+            if "nextcloud" not in user_data["modules"]:
+                user_data["modules"]["nextcloud"] = {}
+            user_data["modules"]["nextcloud"]["enable"] = True
 
     @staticmethod
     def disable():
@@ -89,9 +89,9 @@ class Nextcloud(Service):
         with WriteUserData() as user_data:
             if "modules" not in user_data:
                 user_data["modules"] = {}
-            if "nextcloud" not in user_data:
-                user_data["nextcloud"] = {}
-            user_data["nextcloud"]["enable"] = False
+            if "nextcloud" not in user_data["modules"]:
+                user_data["modules"]["nextcloud"] = {}
+            user_data["modules"]["nextcloud"]["enable"] = False
 
     @staticmethod
     def stop():
