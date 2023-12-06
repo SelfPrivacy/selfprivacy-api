@@ -25,7 +25,13 @@ def assert_empty(response):
 
 def assert_data(response):
     assert response.status_code == 200
-    data = response.json().get("data")
+    response = response.json()
+
+    if (
+        "errors" in response.keys()
+    ):  # convenience for debugging, this will display error
+        raise ValueError(response["errors"])
+    data = response.get("data")
     assert data is not None
     return data
 
