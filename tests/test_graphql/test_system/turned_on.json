@@ -47,7 +47,7 @@
         "pleroma": {
             "enable": true
         },
-        "jitsi": {
+        "jitsi-meet": {
             "enable": true
         },
         "simple-nixos-mailserver": {

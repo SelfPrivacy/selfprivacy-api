@@ -1,4 +1,4 @@
-"""Class representing Jitsi service"""
+"""Class representing Jitsi Meet service"""
 import base64
 import subprocess
 import typing
@@ -11,26 +11,26 @@ from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceS
 from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
 from selfprivacy_api.utils.block_devices import BlockDevice
 import selfprivacy_api.utils.network as network_utils
-from selfprivacy_api.services.jitsi.icon import JITSI_ICON
+from selfprivacy_api.services.jitsimeet.icon import JITSI_ICON
 
 
-class Jitsi(Service):
-    """Class representing Jitsi service"""
+class JitsiMeet(Service):
+    """Class representing Jitsi Meet service"""
 
     @staticmethod
     def get_id() -> str:
         """Return service id."""
-        return "jitsi"
+        return "jitsi-meet"
 
     @staticmethod
     def get_display_name() -> str:
         """Return service display name."""
-        return "Jitsi"
+        return "JitsiMeet"
 
     @staticmethod
     def get_description() -> str:
         """Return service description."""
-        return "Jitsi is a free and open-source video conferencing solution."
+        return "Jitsi Meet is a free and open-source video conferencing solution."
 
     @staticmethod
     def get_svg_icon() -> str:
@@ -58,7 +58,7 @@ class Jitsi(Service):
     @staticmethod
     def is_enabled() -> bool:
         with ReadUserData() as user_data:
-            return user_data.get("modules", {}).get("jitsi", {}).get("enable", False)
+            return user_data.get("modules", {}).get("jitsi-meet", {}).get("enable", False)
 
     @staticmethod
     def get_status() -> ServiceStatus:
@@ -68,13 +68,13 @@ class Jitsi(Service):
 
     @staticmethod
     def enable():
-        """Enable Jitsi service."""
+        """Enable Jitsi Meet service."""
         with WriteUserData() as user_data:
             if "modules" not in user_data:
                 user_data["modules"] = {}
-            if "jitsi" not in user_data["modules"]:
-                user_data["modules"]["jitsi"] = {}
-            user_data["modules"]["jitsi"]["enable"] = True
+            if "jitsi-meet" not in user_data["modules"]:
+                user_data["modules"]["jitsi-meet"] = {}
+            user_data["modules"]["jitsi-meet"]["enable"] = True
 
     @staticmethod
     def disable():
@@ -82,9 +82,9 @@ class Jitsi(Service):
         with WriteUserData() as user_data:
             if "modules" not in user_data:
                 user_data["modules"] = {}
-            if "jitsi" not in user_data["modules"]:
-                user_data["modules"]["jitsi"] = {}
-            user_data["modules"]["jitsi"]["enable"] = False
+            if "jitsi-meet" not in user_data["modules"]:
+                user_data["modules"]["jitsi-meet"] = {}
+            user_data["modules"]["jitsi-meet"]["enable"] = False
 
     @staticmethod
     def stop():
@@ -146,4 +146,4 @@ class Jitsi(Service):
         ]
 
     def move_to_volume(self, volume: BlockDevice) -> Job:
-        raise NotImplementedError("jitsi service is not movable")
+        raise NotImplementedError("jitsi-meet service is not movable")
