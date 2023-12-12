@@ -1,32 +1,26 @@
 selfprivacy-graphql-api: { config, lib, pkgs, ... }:
 
-with lib;
-
 let
   cfg = config.services.selfprivacy-api;
-  directionArg =
-    if cfg.direction == ""
-    then ""
-    else "--direction=${cfg.direction}";
 in
 {
   options.services.selfprivacy-api = {
-    enable = mkOption {
+    enable = lib.mkOption {
       default = true;
-      type = types.bool;
+      type = lib.types.bool;
       description = ''
         Enable SelfPrivacy API service
       '';
     };
-    enableSwagger = mkOption {
+    enableSwagger = lib.mkOption {
       default = false;
-      type = types.bool;
+      type = lib.types.bool;
       description = ''
         Enable Swagger UI
       '';
     };
-    b2Bucket = mkOption {
-      type = types.str;
+    b2Bucket = lib.mkOption {
+      type = lib.types.str;
       description = ''
         B2 bucket
       '';
@@ -109,19 +103,23 @@ in
         HOME = "/root";
       } // config.networking.proxy.envVars;
       path = [ pkgs.coreutils pkgs.gnutar pkgs.xz.bin pkgs.gzip pkgs.gitMinimal config.nix.package.out pkgs.nixos-rebuild ];
+      # TODO set proper timeout for reboot instead of service restart
       serviceConfig = {
         User = "root";
         KillMode = "none";
         SendSIGKILL = "no";
       };
       script = ''
-        ${config.nix.package}/bin/nix flake lock --update-input sp-modules
+        # relock sp-modules to absolute path (in terms of Nix) due to Nix bugs:
+        # https://github.com/NixOS/nix/issues/9339
+        ${config.nix.package}/bin/nix flake lock /etc/nixos --override-input sp-modules /etc/nixos/sp-modules
+
         ${pkgs.nixos-rebuild}/bin/nixos-rebuild switch --flake /etc/nixos#sp-nixos
       '';
     };
     # One shot systemd service to upgrade NixOS using nixos-rebuild
     systemd.services.sp-nixos-upgrade = {
-      description = "Upgrade NixOS to the latest base configuration";
+      description = "Upgrade NixOS and SP modules to latest versions";
       environment = config.nix.envVars // {
         HOME = "/root";
       } // config.networking.proxy.envVars;
@@ -132,7 +130,10 @@ in
         SendSIGKILL = "no";
       };
       script = ''
-        ${config.nix.package}/bin/nix flake update --override-input selfprivacy-nixos-config "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes"
+        # FIXME get URL from systemd parameter
+        # relock sp-modules to absolute path (in terms of Nix)
+        ${config.nix.package}/bin/nix flake update /etc/nixos --override-input selfprivacy-nixos-config git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes
+
         ${pkgs.nixos-rebuild}/bin/nixos-rebuild switch --flake /etc/nixos#sp-nixos
       '';
     };
