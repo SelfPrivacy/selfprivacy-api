@@ -4,6 +4,7 @@ import pytest
 
 from tests.common import read_json
 from tests.test_graphql.common import assert_empty
+from selfprivacy_api.graphql.mutations.system_mutations import SystemMutations
 
 
 class ProcessMock:
@@ -58,6 +59,38 @@ mutation addSshKey($sshInput: SshMutationInput!) {
     }
 }
 """
+
+API_SET_SSH_SETTINGS = """
+mutation enableSsh($sshInput: SSHSettingsInput!) {
+    system {
+        changeSshSettings(sshInput: $sshInput) {
+            success
+            message
+            code
+            enable
+            password_authentication
+        }
+    }
+}
+"""
+
+
+def test_graphql_change_ssh_settings_unauthorized(
+    client, some_users, mock_subprocess_popen
+):
+    response = client.post(
+        "/graphql",
+        json={
+            "query": API_SET_SSH_SETTINGS,
+            "variables": {
+                "sshInput": {
+                    "enable": True,
+                    "passwordAuthentication": True,
+                },
+            },
+        },
+    )
+    assert_empty(response)
 
 
 def test_graphql_add_ssh_key_unauthorized(client, some_users, mock_subprocess_popen):

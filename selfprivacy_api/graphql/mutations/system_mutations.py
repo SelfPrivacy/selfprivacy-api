@@ -9,6 +9,7 @@ from selfprivacy_api.graphql.mutations.mutation_interface import (
 )
 
 import selfprivacy_api.actions.system as system_actions
+import selfprivacy_api.actions.ssh as ssh_actions
 
 
 @strawberry.type
@@ -24,6 +25,22 @@ class AutoUpgradeSettingsMutationReturn(MutationReturnInterface):
 
     enableAutoUpgrade: bool
     allowReboot: bool
+
+
+@strawberry.type
+class SSHSettingsMutationReturn(MutationReturnInterface):
+    """A return type for after changing SSH settings"""
+
+    enable: bool
+    password_authentication: bool
+
+
+@strawberry.input
+class SSHSettingsInput:
+    """Input type for SSH settings"""
+
+    enable: bool
+    password_authentication: bool
 
 
 @strawberry.input
@@ -74,6 +91,26 @@ class SystemMutations:
             code=200,
             enableAutoUpgrade=new_settings.enable,
             allowReboot=new_settings.allowReboot,
+        )
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    def change_ssh_settings(
+        self, settings: SSHSettingsInput
+    ) -> SSHSettingsMutationReturn:
+        """Change ssh settings of the server."""
+        ssh_actions.set_ssh_settings(
+            enable=settings.enable,
+            password_authentication=settings.password_authentication,
+        )
+
+        new_settings = ssh_actions.get_ssh_settings()
+
+        return SSHSettingsMutationReturn(
+            success=True,
+            message="SSH settings changed",
+            code=200,
+            enable=new_settings.enable,
+            password_authentication=new_settings.passwordAuthentication,
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
