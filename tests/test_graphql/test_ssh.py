@@ -140,11 +140,28 @@ def test_graphql_change_ssh_settings_unauthorized(
     assert_empty(response)
 
 
-def test_graphql_disable_ssh(authorized_client, some_users, mock_subprocess_popen):
+def test_graphql_disable_enable_ssh(
+    authorized_client, some_users, mock_subprocess_popen
+):
     output = api_set_ssh_settings(authorized_client, enable=False, password_auth=False)
     assert_ok(output)
     assert output["enable"] == False
     assert output["passwordAuthentication"] == False
+
+    output = api_set_ssh_settings(authorized_client, enable=True, password_auth=True)
+    assert_ok(output)
+    assert output["enable"] == True
+    assert output["passwordAuthentication"] == True
+
+    output = api_set_ssh_settings(authorized_client, enable=True, password_auth=False)
+    assert_ok(output)
+    assert output["enable"] == True
+    assert output["passwordAuthentication"] == False
+
+    output = api_set_ssh_settings(authorized_client, enable=False, password_auth=True)
+    assert_ok(output)
+    assert output["enable"] == False
+    assert output["passwordAuthentication"] == True
 
 
 def test_graphql_add_ssh_key_unauthorized(client, some_users, mock_subprocess_popen):
