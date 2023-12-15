@@ -140,6 +140,11 @@ def test_graphql_change_ssh_settings_unauthorized(
     assert_empty(response)
 
 
+def assert_includes(smaller_dict: dict, bigger_dict: dict):
+    for item in smaller_dict.items():
+        assert item in bigger_dict.items()
+
+
 def test_graphql_disable_enable_ssh(
     authorized_client, some_users, mock_subprocess_popen
 ):
@@ -147,21 +152,25 @@ def test_graphql_disable_enable_ssh(
     assert_ok(output)
     assert output["enable"] == False
     assert output["passwordAuthentication"] == False
+    assert_includes(api_ssh_settings(authorized_client), output)
 
     output = api_set_ssh_settings(authorized_client, enable=True, password_auth=True)
     assert_ok(output)
     assert output["enable"] == True
     assert output["passwordAuthentication"] == True
+    assert_includes(api_ssh_settings(authorized_client), output)
 
     output = api_set_ssh_settings(authorized_client, enable=True, password_auth=False)
     assert_ok(output)
     assert output["enable"] == True
     assert output["passwordAuthentication"] == False
+    assert_includes(api_ssh_settings(authorized_client), output)
 
     output = api_set_ssh_settings(authorized_client, enable=False, password_auth=True)
     assert_ok(output)
     assert output["enable"] == False
     assert output["passwordAuthentication"] == True
+    assert_includes(api_ssh_settings(authorized_client), output)
 
 
 def test_graphql_add_ssh_key_unauthorized(client, some_users, mock_subprocess_popen):
