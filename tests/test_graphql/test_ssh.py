@@ -2,9 +2,11 @@
 # pylint: disable=unused-argument
 import pytest
 
-from tests.common import read_json
-from tests.test_graphql.common import assert_empty
 from selfprivacy_api.graphql.mutations.system_mutations import SystemMutations
+from selfprivacy_api.graphql.queries.system import System
+
+from tests.common import read_json, generate_system_query
+from tests.test_graphql.common import assert_empty, get_data
 
 
 class ProcessMock:
@@ -68,11 +70,38 @@ mutation enableSsh($sshInput: SSHSettingsInput!) {
             message
             code
             enable
-            password_authentication
+            passwordAuthentication
         }
     }
 }
 """
+
+API_SSH_SETTINGS_QUERY = """
+settings {
+    ssh {
+        enable
+        passwordAuthentication
+    }
+}
+"""
+
+
+def api_ssh_settings(authorized_client):
+    response = authorized_client.post(
+        "/graphql",
+        json={"query": generate_system_query([API_SSH_SETTINGS_QUERY])},
+    )
+    data = get_data(response)
+    result = data["system"]["settings"]["ssh"]
+    assert result is not None
+    return result
+
+
+def test_graphql_ssh_enabled_by_default(authorized_client, some_users):
+    # TODO: Should it be enabled by default though if there are no keys anyway?
+    settings = api_ssh_settings(authorized_client)
+    assert settings["enable"] is True
+    assert settings["passwordAuthentication"] is True
 
 
 def test_graphql_change_ssh_settings_unauthorized(
