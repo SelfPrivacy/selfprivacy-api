@@ -173,6 +173,32 @@ def test_graphql_disable_enable_ssh(
     assert_includes(api_ssh_settings(authorized_client), output)
 
 
+def test_graphql_disable_twice(authorized_client, some_users, mock_subprocess_popen):
+    output = api_set_ssh_settings(authorized_client, enable=False, password_auth=False)
+    assert_ok(output)
+    assert output["enable"] == False
+    assert output["passwordAuthentication"] == False
+
+    output = api_set_ssh_settings(authorized_client, enable=False, password_auth=False)
+    assert_ok(output)
+    assert output["enable"] == False
+    assert output["passwordAuthentication"] == False
+
+
+def test_graphql_enable_twice(authorized_client, some_users, mock_subprocess_popen):
+    output = api_set_ssh_settings(authorized_client, enable=True, password_auth=True)
+    assert_ok(output)
+    assert output["enable"] == True
+    assert output["passwordAuthentication"] == True
+    assert_includes(api_ssh_settings(authorized_client), output)
+
+    output = api_set_ssh_settings(authorized_client, enable=True, password_auth=True)
+    assert_ok(output)
+    assert output["enable"] == True
+    assert output["passwordAuthentication"] == True
+    assert_includes(api_ssh_settings(authorized_client), output)
+
+
 def test_graphql_add_ssh_key_unauthorized(client, some_users, mock_subprocess_popen):
     response = client.post(
         "/graphql",
