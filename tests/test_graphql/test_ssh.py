@@ -6,7 +6,7 @@ from selfprivacy_api.graphql.mutations.system_mutations import SystemMutations
 from selfprivacy_api.graphql.queries.system import System
 
 from tests.common import read_json, generate_system_query
-from tests.test_graphql.common import assert_empty, get_data
+from tests.test_graphql.common import assert_empty, assert_ok, get_data
 
 
 class ProcessMock:
@@ -63,9 +63,9 @@ mutation addSshKey($sshInput: SshMutationInput!) {
 """
 
 API_SET_SSH_SETTINGS = """
-mutation enableSsh($sshInput: SSHSettingsInput!) {
+mutation enableSsh($settings: SSHSettingsInput!) {
     system {
-        changeSshSettings(sshInput: $sshInput) {
+        changeSshSettings(settings: $settings) {
             success
             message
             code
@@ -97,8 +97,26 @@ def api_ssh_settings(authorized_client):
     return result
 
 
-def test_graphql_ssh_enabled_by_default(authorized_client, some_users):
-    # TODO: Should it be enabled by default though if there are no keys anyway?
+def api_set_ssh_settings(authorized_client, enable: bool, password_auth: bool):
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_SET_SSH_SETTINGS,
+            "variables": {
+                "settings": {
+                    "enable": enable,
+                    "passwordAuthentication": password_auth,
+                },
+            },
+        },
+    )
+    data = get_data(response)
+    result = data["system"]["changeSshSettings"]
+    assert result is not None
+    return result
+
+
+def test_graphql_ssh_query(authorized_client, some_users):
     settings = api_ssh_settings(authorized_client)
     assert settings["enable"] is True
     assert settings["passwordAuthentication"] is True
@@ -120,6 +138,13 @@ def test_graphql_change_ssh_settings_unauthorized(
         },
     )
     assert_empty(response)
+
+
+def test_graphql_disable_ssh(authorized_client, some_users, mock_subprocess_popen):
+    output = api_set_ssh_settings(authorized_client, enable=False, password_auth=False)
+    assert_ok(output)
+    assert output["enable"] == False
+    assert output["passwordAuthentication"] == False
 
 
 def test_graphql_add_ssh_key_unauthorized(client, some_users, mock_subprocess_popen):
