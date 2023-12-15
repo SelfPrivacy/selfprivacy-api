@@ -16,7 +16,7 @@ class ProcessMock:
         self.args = args
         self.kwargs = kwargs
 
-    def communicate():  # pylint: disable=no-method-argument
+    def communicate(self):  # pylint: disable=no-method-argument
         return (b"NEW_HASHED", None)
 
     returncode = 0
@@ -150,52 +150,52 @@ def test_graphql_disable_enable_ssh(
 ):
     output = api_set_ssh_settings(authorized_client, enable=False, password_auth=False)
     assert_ok(output)
-    assert output["enable"] == False
-    assert output["passwordAuthentication"] == False
+    assert output["enable"] is False
+    assert output["passwordAuthentication"] is False
     assert_includes(api_ssh_settings(authorized_client), output)
 
     output = api_set_ssh_settings(authorized_client, enable=True, password_auth=True)
     assert_ok(output)
-    assert output["enable"] == True
-    assert output["passwordAuthentication"] == True
+    assert output["enable"] is True
+    assert output["passwordAuthentication"] is True
     assert_includes(api_ssh_settings(authorized_client), output)
 
     output = api_set_ssh_settings(authorized_client, enable=True, password_auth=False)
     assert_ok(output)
-    assert output["enable"] == True
-    assert output["passwordAuthentication"] == False
+    assert output["enable"] is True
+    assert output["passwordAuthentication"] is False
     assert_includes(api_ssh_settings(authorized_client), output)
 
     output = api_set_ssh_settings(authorized_client, enable=False, password_auth=True)
     assert_ok(output)
-    assert output["enable"] == False
-    assert output["passwordAuthentication"] == True
+    assert output["enable"] is False
+    assert output["passwordAuthentication"] is True
     assert_includes(api_ssh_settings(authorized_client), output)
 
 
-def test_graphql_disable_twice(authorized_client, some_users, mock_subprocess_popen):
+def test_graphql_disable_twice(authorized_client, some_users):
     output = api_set_ssh_settings(authorized_client, enable=False, password_auth=False)
     assert_ok(output)
-    assert output["enable"] == False
-    assert output["passwordAuthentication"] == False
+    assert output["enable"] is False
+    assert output["passwordAuthentication"] is False
 
     output = api_set_ssh_settings(authorized_client, enable=False, password_auth=False)
     assert_ok(output)
-    assert output["enable"] == False
-    assert output["passwordAuthentication"] == False
+    assert output["enable"] is False
+    assert output["passwordAuthentication"] is False
 
 
-def test_graphql_enable_twice(authorized_client, some_users, mock_subprocess_popen):
+def test_graphql_enable_twice(authorized_client, some_users):
     output = api_set_ssh_settings(authorized_client, enable=True, password_auth=True)
     assert_ok(output)
-    assert output["enable"] == True
-    assert output["passwordAuthentication"] == True
+    assert output["enable"] is True
+    assert output["passwordAuthentication"] is True
     assert_includes(api_ssh_settings(authorized_client), output)
 
     output = api_set_ssh_settings(authorized_client, enable=True, password_auth=True)
     assert_ok(output)
-    assert output["enable"] == True
-    assert output["passwordAuthentication"] == True
+    assert output["enable"] is True
+    assert output["passwordAuthentication"] is True
     assert_includes(api_ssh_settings(authorized_client), output)
 
 
