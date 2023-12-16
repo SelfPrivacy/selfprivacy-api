@@ -14,12 +14,8 @@
     in
     {
       packages.${system}.default = selfprivacy-graphql-api;
-      nixosModules.default = {
-        imports = [
-          (import ./nixos/module.nix self.packages.${system}.default)
-          ./nixos/config.nix
-        ];
-      };
+      nixosModules.default =
+        import ./nixos/module.nix self.packages.${system}.default;
       devShells.${system}.default = pkgs.mkShell {
         packages =
           let

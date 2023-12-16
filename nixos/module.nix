@@ -12,29 +12,21 @@ in
         Enable SelfPrivacy API service
       '';
     };
-    enableSwagger = lib.mkOption {
-      default = false;
-      type = lib.types.bool;
-      description = ''
-        Enable Swagger UI
-      '';
-    };
-    b2Bucket = lib.mkOption {
-      type = lib.types.str;
-      description = ''
-        B2 bucket
-      '';
-    };
   };
   config = lib.mkIf cfg.enable {
+    users.users."selfprivacy-api" = {
+      isNormalUser = false;
+      isSystemUser = true;
+      extraGroups = [ "opendkim" ];
+      group = "selfprivacy-api";
+    };
+    users.groups."selfprivacy-api".members = [ "selfprivacy-api" ];
 
     systemd.services.selfprivacy-api = {
       description = "API Server used to control system from the mobile application";
       environment = config.nix.envVars // {
         HOME = "/root";
         PYTHONUNBUFFERED = "1";
-        ENABLE_SWAGGER = (if cfg.enableSwagger then "1" else "0");
-        B2_BUCKET = cfg.b2Bucket;
       } // config.networking.proxy.envVars;
       path = [
         "/var/"
@@ -66,8 +58,6 @@ in
       environment = config.nix.envVars // {
         HOME = "/root";
         PYTHONUNBUFFERED = "1";
-        ENABLE_SWAGGER = (if cfg.enableSwagger then "1" else "0");
-        B2_BUCKET = cfg.b2Bucket;
         PYTHONPATH =
           pkgs.python310Packages.makePythonPath [ selfprivacy-graphql-api ];
       } // config.networking.proxy.envVars;
