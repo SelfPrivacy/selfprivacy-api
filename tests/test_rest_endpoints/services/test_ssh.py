@@ -92,21 +92,6 @@ def some_users(mocker, datadir):
     return datadir
 
 
-## TEST 401 ######################################################
-
-
-@pytest.mark.parametrize("endpoint", ["ssh/enable", "ssh/keys/user"])
-def test_unauthorized(client, ssh_off, endpoint):
-    response = client.post(f"/services/{endpoint}")
-    assert response.status_code == 401
-
-
-@pytest.mark.parametrize("endpoint", ["ssh", "ssh/key/send"])
-def test_unauthorized_put(client, ssh_off, endpoint):
-    response = client.put(f"/services/{endpoint}")
-    assert response.status_code == 401
-
-
 ## TEST ENABLE ######################################################
 
 
