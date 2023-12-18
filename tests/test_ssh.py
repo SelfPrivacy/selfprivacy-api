@@ -57,6 +57,31 @@ def get_raw_json_ssh_setting(setting: str):
         return (data.get("ssh") or {}).get(setting)
 
 
+def test_read_json(possibly_undefined_ssh_settings):
+    with ReadUserData() as data:
+        if "ssh" not in data.keys():
+            assert get_ssh_settings().enable is not None
+            assert get_ssh_settings().passwordAuthentication is not None
+
+            # TODO: Is it really a good idea to have password ssh enabled by default?
+            assert get_ssh_settings().enable is True
+            assert get_ssh_settings().passwordAuthentication is True
+            return
+
+        if "enable" not in data["ssh"].keys():
+            assert get_ssh_settings().enable is True
+        else:
+            assert get_ssh_settings().enable == data["ssh"]["enable"]
+
+        if "passwordAuthentication" not in data["ssh"].keys():
+            assert get_ssh_settings().passwordAuthentication is True
+        else:
+            assert (
+                get_ssh_settings().passwordAuthentication
+                == data["ssh"]["passwordAuthentication"]
+            )
+
+
 def test_enabling_disabling_writes_json(
     possibly_undefined_ssh_settings, ssh_enable_spectrum, password_auth_spectrum
 ):
