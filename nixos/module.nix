@@ -121,9 +121,8 @@ in
       };
       script = ''
         # FIXME get URL from systemd parameter
-        # relock sp-modules to absolute path (in terms of Nix)
+        ${config.nix.package}/bin/nix flake update /etc/nixos/sp-modules/
         ${config.nix.package}/bin/nix flake update /etc/nixos --override-input selfprivacy-nixos-config git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes
-
         ${pkgs.nixos-rebuild}/bin/nixos-rebuild switch --flake /etc/nixos#sp-nixos
       '';
     };
