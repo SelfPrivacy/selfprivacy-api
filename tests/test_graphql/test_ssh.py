@@ -86,11 +86,15 @@ settings {
 """
 
 
-def api_ssh_settings(authorized_client):
-    response = authorized_client.post(
+def api_ssh_settings_raw(client):
+    return client.post(
         "/graphql",
         json={"query": generate_system_query([API_SSH_SETTINGS_QUERY])},
     )
+
+
+def api_ssh_settings(authorized_client):
+    response = api_ssh_settings_raw(authorized_client)
     data = get_data(response)
     result = data["system"]["settings"]["ssh"]
     assert result is not None
@@ -122,9 +126,12 @@ def test_graphql_ssh_query(authorized_client, some_users):
     assert settings["passwordAuthentication"] is True
 
 
-def test_graphql_change_ssh_settings_unauthorized(
-    client, some_users, mock_subprocess_popen
-):
+def test_graphql_get_ssh_settings_unauthorized(client, some_users):
+    response = api_ssh_settings_raw(client)
+    assert_empty(response)
+
+
+def test_graphql_change_ssh_settings_unauthorized(client, some_users):
     response = client.post(
         "/graphql",
         json={
@@ -148,18 +155,21 @@ def assert_includes(smaller_dict: dict, bigger_dict: dict):
 def test_graphql_disable_enable_ssh(
     authorized_client, some_users, mock_subprocess_popen
 ):
+    # Off
     output = api_set_ssh_settings(authorized_client, enable=False, password_auth=False)
     assert_ok(output)
     assert output["enable"] is False
     assert output["passwordAuthentication"] is False
     assert_includes(api_ssh_settings(authorized_client), output)
 
+    # On
     output = api_set_ssh_settings(authorized_client, enable=True, password_auth=True)
     assert_ok(output)
     assert output["enable"] is True
     assert output["passwordAuthentication"] is True
     assert_includes(api_ssh_settings(authorized_client), output)
 
+    # Criss-Cross
     output = api_set_ssh_settings(authorized_client, enable=True, password_auth=False)
     assert_ok(output)
     assert output["enable"] is True
