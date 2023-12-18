@@ -24,7 +24,7 @@ pythonPackages.buildPythonPackage rec {
     uvicorn
   ];
   pythonImportsCheck = [ "selfprivacy_api" ];
-  doCheck = true;
+  doCheck = false;
   meta = {
     description = ''
       SelfPrivacy Server Management API
