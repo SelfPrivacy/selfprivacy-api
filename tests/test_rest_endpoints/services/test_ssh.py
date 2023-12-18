@@ -92,30 +92,6 @@ def some_users(mocker, datadir):
     return datadir
 
 
-## TEST ENABLE ######################################################
-
-
-def test_legacy_enable(authorized_client, ssh_off):
-    response = authorized_client.post("/services/ssh/enable")
-    assert response.status_code == 200
-    assert read_json(ssh_off / "turned_off.json") == read_json(
-        ssh_off / "turned_on.json"
-    )
-
-
-def test_legacy_on_undefined(authorized_client, undefined_settings):
-    response = authorized_client.post("/services/ssh/enable")
-    assert response.status_code == 200
-    data = read_json(undefined_settings / "undefined.json")
-    assert data["ssh"]["enable"] == True
-
-
-def test_legacy_enable_when_enabled(authorized_client, ssh_on):
-    response = authorized_client.post("/services/ssh/enable")
-    assert response.status_code == 200
-    assert read_json(ssh_on / "turned_on.json") == read_json(ssh_on / "turned_on.json")
-
-
 ## GET ON /ssh ######################################################
 
 
