@@ -101,16 +101,13 @@ def api_ssh_settings(authorized_client):
     return result
 
 
-def api_set_ssh_settings(authorized_client, enable: bool, password_auth: bool):
+def api_set_ssh_settings_dict(authorized_client, dict):
     response = authorized_client.post(
         "/graphql",
         json={
             "query": API_SET_SSH_SETTINGS,
             "variables": {
-                "settings": {
-                    "enable": enable,
-                    "passwordAuthentication": password_auth,
-                },
+                "settings": dict,
             },
         },
     )
@@ -118,6 +115,16 @@ def api_set_ssh_settings(authorized_client, enable: bool, password_auth: bool):
     result = data["system"]["changeSshSettings"]
     assert result is not None
     return result
+
+
+def api_set_ssh_settings(authorized_client, enable: bool, password_auth: bool):
+    return api_set_ssh_settings_dict(
+        authorized_client,
+        {
+            "enable": enable,
+            "passwordAuthentication": password_auth,
+        },
+    )
 
 
 def test_graphql_ssh_query(authorized_client, some_users):
@@ -152,35 +159,57 @@ def assert_includes(smaller_dict: dict, bigger_dict: dict):
         assert item in bigger_dict.items()
 
 
-def test_graphql_disable_enable_ssh(
-    authorized_client, some_users, mock_subprocess_popen
+available_settings = [
+    {"enable": True, "passwordAuthentication": True},
+    {"enable": True, "passwordAuthentication": False},
+    {"enable": False, "passwordAuthentication": True},
+    {"enable": False, "passwordAuthentication": False},
+]
+
+
+original_settings = [
+    {"enable": True, "passwordAuthentication": True},
+    {"enable": True, "passwordAuthentication": False},
+    {"enable": False, "passwordAuthentication": True},
+    {"enable": False, "passwordAuthentication": False},
+]
+
+
+@pytest.mark.parametrize("original_settings", original_settings)
+@pytest.mark.parametrize("settings", available_settings)
+def test_graphql_readwrite_ssh_settings(
+    authorized_client, some_users, settings, original_settings
 ):
-    # Off
-    output = api_set_ssh_settings(authorized_client, enable=False, password_auth=False)
-    assert_ok(output)
-    assert output["enable"] is False
-    assert output["passwordAuthentication"] is False
+
+    # Userdata-related tests like undefined fields are in actions-level tests.
+    output = api_set_ssh_settings_dict(authorized_client, original_settings)
     assert_includes(api_ssh_settings(authorized_client), output)
 
-    # On
-    output = api_set_ssh_settings(authorized_client, enable=True, password_auth=True)
+    output = api_set_ssh_settings_dict(authorized_client, settings)
     assert_ok(output)
-    assert output["enable"] is True
-    assert output["passwordAuthentication"] is True
+    assert_includes(settings, output)
+    if "enable" not in settings.keys():
+        assert output["enable"] == original_settings["enable"]
     assert_includes(api_ssh_settings(authorized_client), output)
 
-    # Criss-Cross
-    output = api_set_ssh_settings(authorized_client, enable=True, password_auth=False)
-    assert_ok(output)
-    assert output["enable"] is True
-    assert output["passwordAuthentication"] is False
-    assert_includes(api_ssh_settings(authorized_client), output)
 
-    output = api_set_ssh_settings(authorized_client, enable=False, password_auth=True)
-    assert_ok(output)
-    assert output["enable"] is False
-    assert output["passwordAuthentication"] is True
-    assert_includes(api_ssh_settings(authorized_client), output)
+forbidden_settings = [
+    # we include this here so that if the next version makes the fields
+    # optional, the tests will remind the person that tests are to be extended accordingly
+    {"enable": True},
+    {"passwordAuthentication": True},
+]
+
+
+@pytest.mark.parametrize("original_settings", original_settings)
+@pytest.mark.parametrize("settings", forbidden_settings)
+def test_graphql_readwrite_ssh_settings_partial(
+    authorized_client, some_users, settings, original_settings
+):
+
+    output = api_set_ssh_settings_dict(authorized_client, original_settings)
+    with pytest.raises(Exception):
+        output = api_set_ssh_settings_dict(authorized_client, settings)
 
 
 def test_graphql_disable_twice(authorized_client, some_users):
