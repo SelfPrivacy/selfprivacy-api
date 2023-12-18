@@ -109,6 +109,8 @@ in
     };
     # One shot systemd service to upgrade NixOS using nixos-rebuild
     systemd.services.sp-nixos-upgrade = {
+      # protection against simultaneous runs
+      after = [ "sp-nixos-rebuild.service" ];
       description = "Upgrade NixOS and SP modules to latest versions";
       environment = config.nix.envVars // {
         HOME = "/root";
@@ -128,6 +130,8 @@ in
     };
     # One shot systemd service to rollback NixOS using nixos-rebuild
     systemd.services.sp-nixos-rollback = {
+      # protection against simultaneous runs
+      after = [ "sp-nixos-rebuild.service" "sp-nixos-upgrade.service" ];
       description = "Rollback NixOS using nixos-rebuild";
       environment = config.nix.envVars // {
         HOME = "/root";
