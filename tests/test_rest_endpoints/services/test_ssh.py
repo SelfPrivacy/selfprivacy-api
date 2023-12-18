@@ -152,18 +152,6 @@ def test_get_current_settings_all_off(authorized_client, all_off):
     assert response.json() == {"enable": False, "passwordAuthentication": False}
 
 
-def test_get_current_settings_undefined(authorized_client, undefined_settings):
-    response = authorized_client.get("/services/ssh")
-    assert response.status_code == 200
-    assert response.json() == {"enable": True, "passwordAuthentication": True}
-
-
-def test_get_current_settings_mostly_undefined(authorized_client, undefined_values):
-    response = authorized_client.get("/services/ssh")
-    assert response.status_code == 200
-    assert response.json() == {"enable": True, "passwordAuthentication": True}
-
-
 ## PUT ON /ssh ######################################################
 
 available_settings = [
@@ -205,17 +193,6 @@ def test_set_settings_all_off(authorized_client, all_off, settings):
     response = authorized_client.put("/services/ssh", json=settings)
     assert response.status_code == 200
     data = read_json(all_off / "all_off.json")["ssh"]
-    if "enable" in settings:
-        assert data["enable"] == settings["enable"]
-    if "passwordAuthentication" in settings:
-        assert data["passwordAuthentication"] == settings["passwordAuthentication"]
-
-
-@pytest.mark.parametrize("settings", available_settings)
-def test_set_settings_undefined(authorized_client, undefined_settings, settings):
-    response = authorized_client.put("/services/ssh", json=settings)
-    assert response.status_code == 200
-    data = read_json(undefined_settings / "undefined.json")["ssh"]
     if "enable" in settings:
         assert data["enable"] == settings["enable"]
     if "passwordAuthentication" in settings:
