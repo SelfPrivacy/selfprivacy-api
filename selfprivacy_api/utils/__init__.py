@@ -10,7 +10,6 @@ import portalocker
 
 USERDATA_FILE = "/etc/nixos/userdata.json"
 SECRETS_FILE = "/etc/selfprivacy/secrets.json"
-DOMAIN_FILE = "/var/domain"
 
 
 class UserDataFiles(Enum):
@@ -21,10 +20,9 @@ class UserDataFiles(Enum):
 
 
 def get_domain():
-    """Get domain from /var/domain without trailing new line"""
-    with open(DOMAIN_FILE, "r", encoding="utf-8") as domain_file:
-        domain = domain_file.readline().rstrip()
-    return domain
+    """Get domain from userdata.json"""
+    with ReadUserData() as user_data:
+        return user_data["domain"]
 
 
 class WriteUserData(object):
