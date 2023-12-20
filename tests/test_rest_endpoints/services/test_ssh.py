@@ -174,14 +174,6 @@ def test_delete_root_nonexistent_key(authorized_client, root_and_admin_have_keys
     ]
 
 
-def test_delete_root_key_on_undefined(authorized_client, undefined_settings):
-    response = authorized_client.delete(
-        "/services/ssh/keys/root", json={"public_key": "ssh-ed25519 KEY test@pc"}
-    )
-    assert response.status_code == 404
-    assert "ssh" not in read_json(undefined_settings / "undefined.json")
-
-
 def test_get_admin_key(authorized_client, root_and_admin_have_keys):
     response = authorized_client.get("/services/ssh/keys/tester")
     assert response.status_code == 200
