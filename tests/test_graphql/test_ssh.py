@@ -5,6 +5,9 @@ import pytest
 from selfprivacy_api.graphql.mutations.system_mutations import SystemMutations
 from selfprivacy_api.graphql.queries.system import System
 
+# only allowed in fixtures
+from selfprivacy_api.actions.ssh import remove_ssh_key, get_ssh_settings
+
 from tests.common import read_json, generate_system_query
 from tests.test_graphql.common import assert_empty, assert_ok, get_data
 
@@ -41,6 +44,13 @@ def some_users(mocker, datadir):
         {"username": "user3", "hashedPassword": "HASHED_PASSWORD_3"},
     ]
     return datadir
+
+
+@pytest.fixture
+def no_rootkeys(generic_userdata):
+    for rootkey in get_ssh_settings().rootKeys:
+        remove_ssh_key("root", rootkey)
+    assert get_ssh_settings().rootKeys == []
 
 
 # TESTS ########################################################
@@ -281,7 +291,7 @@ def test_graphql_add_ssh_key(authorized_client, some_users, mock_subprocess_pope
     ]
 
 
-def test_graphql_add_root_ssh_key(authorized_client, some_users, mock_subprocess_popen):
+def test_graphql_add_root_ssh_key(authorized_client, no_rootkeys):
     response = authorized_client.post(
         "/graphql",
         json={
@@ -303,7 +313,6 @@ def test_graphql_add_root_ssh_key(authorized_client, some_users, mock_subprocess
 
     assert response.json()["data"]["users"]["addSshKey"]["user"]["username"] == "root"
     assert response.json()["data"]["users"]["addSshKey"]["user"]["sshKeys"] == [
-        "ssh-ed25519 KEY test@pc",
         "ssh-rsa KEY test_key@pc",
     ]
 
