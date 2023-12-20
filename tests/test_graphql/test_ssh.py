@@ -84,6 +84,7 @@ mutation enableSsh($settings: SSHSettingsInput!) {
         }
     }
 }
+
 """
 
 API_SSH_SETTINGS_QUERY = """
@@ -96,11 +97,54 @@ settings {
 """
 
 
+API_ROOTKEYS_QUERY = """
+settings {
+    ssh {
+        rootSshKeys
+    }
+}
+"""
+
+
 def api_ssh_settings_raw(client):
     return client.post(
         "/graphql",
         json={"query": generate_system_query([API_SSH_SETTINGS_QUERY])},
     )
+
+
+def api_rootkeys_raw(client):
+    return client.post(
+        "/graphql",
+        json={"query": generate_system_query([API_ROOTKEYS_QUERY])},
+    )
+
+
+def api_add_ssh_key(authorized_client, user: str, key: str):
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_CREATE_SSH_KEY_MUTATION,
+            "variables": {
+                "sshInput": {
+                    "username": user,
+                    "sshKey": key,
+                },
+            },
+        },
+    )
+    data = get_data(response)
+    result = data["users"]["addSshKey"]
+    assert result is not None
+    return result
+
+
+def api_rootkeys(authorized_client):
+    response = api_rootkeys_raw(authorized_client)
+    data = get_data(response)
+    result = data["system"]["settings"]["ssh"]["rootSshKeys"]
+    assert result is not None
+    return result
 
 
 def api_ssh_settings(authorized_client):
@@ -248,6 +292,9 @@ def test_graphql_enable_twice(authorized_client, some_users):
     assert_includes(api_ssh_settings(authorized_client), output)
 
 
+############## KEYS
+
+
 def test_graphql_add_ssh_key_unauthorized(client, some_users, mock_subprocess_popen):
     response = client.post(
         "/graphql",
@@ -292,29 +339,35 @@ def test_graphql_add_ssh_key(authorized_client, some_users, mock_subprocess_pope
 
 
 def test_graphql_add_root_ssh_key(authorized_client, no_rootkeys):
-    response = authorized_client.post(
-        "/graphql",
-        json={
-            "query": API_CREATE_SSH_KEY_MUTATION,
-            "variables": {
-                "sshInput": {
-                    "username": "root",
-                    "sshKey": "ssh-rsa KEY test_key@pc",
-                },
-            },
-        },
-    )
-    assert response.status_code == 200
-    assert response.json().get("data") is not None
+    output = api_add_ssh_key(authorized_client, "root", "ssh-rsa KEY test_key@pc")
 
-    assert response.json()["data"]["users"]["addSshKey"]["code"] == 201
-    assert response.json()["data"]["users"]["addSshKey"]["message"] is not None
-    assert response.json()["data"]["users"]["addSshKey"]["success"] is True
+    assert output["code"] == 201
+    assert output["message"] is not None
+    assert output["success"] is True
 
-    assert response.json()["data"]["users"]["addSshKey"]["user"]["username"] == "root"
-    assert response.json()["data"]["users"]["addSshKey"]["user"]["sshKeys"] == [
+    assert output["user"]["username"] == "root"
+    assert output["user"]["sshKeys"] == ["ssh-rsa KEY test_key@pc"]
+    assert api_rootkeys(authorized_client) == ["ssh-rsa KEY test_key@pc"]
+
+
+def test_graphql_add_root_ssh_key_one_more(authorized_client, no_rootkeys):
+    output = api_add_ssh_key(authorized_client, "root", "ssh-rsa KEY test_key@pc")
+    assert output["user"]["sshKeys"] == ["ssh-rsa KEY test_key@pc"]
+
+    output = api_add_ssh_key(authorized_client, "root", "ssh-rsa KEY2 test_key@pc")
+    assert output["code"] == 201
+    assert output["message"] is not None
+    assert output["success"] is True
+
+    assert output["user"]["username"] == "root"
+
+    expected_keys = [
         "ssh-rsa KEY test_key@pc",
+        "ssh-rsa KEY2 test_key@pc",
     ]
+
+    assert output["user"]["sshKeys"] == expected_keys
+    assert api_rootkeys(authorized_client) == expected_keys
 
 
 def test_graphql_add_main_ssh_key(authorized_client, some_users, mock_subprocess_popen):
