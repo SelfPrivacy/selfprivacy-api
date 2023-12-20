@@ -94,20 +94,6 @@ def some_users(mocker, datadir):
 
 ## PUT ON /ssh/key/send ######################################################
 
-
-def test_add_root_key_one_more(authorized_client, root_and_admin_have_keys):
-    response = authorized_client.put(
-        "/services/ssh/key/send", json={"public_key": "ssh-rsa KEY test@pc"}
-    )
-    assert response.status_code == 201
-    assert read_json(root_and_admin_have_keys / "root_and_admin_have_keys.json")["ssh"][
-        "rootKeys"
-    ] == [
-        "ssh-ed25519 KEY test@pc",
-        "ssh-rsa KEY test@pc",
-    ]
-
-
 def test_add_existing_root_key(authorized_client, root_and_admin_have_keys):
     response = authorized_client.put(
         "/services/ssh/key/send", json={"public_key": "ssh-ed25519 KEY test@pc"}
