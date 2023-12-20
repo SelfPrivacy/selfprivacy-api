@@ -1,3 +1,8 @@
+"""
+Action-level tests of ssh
+(For API-independent logic incl. connection to persistent storage)
+"""
+
 import pytest
 
 from selfprivacy_api.actions.ssh import (
