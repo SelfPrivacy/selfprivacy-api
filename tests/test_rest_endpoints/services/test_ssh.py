@@ -105,15 +105,6 @@ def test_add_root_key(authorized_client, ssh_on):
     ]
 
 
-def test_add_root_key_on_undefined(authorized_client, undefined_settings):
-    response = authorized_client.put(
-        "/services/ssh/key/send", json={"public_key": "ssh-rsa KEY test@pc"}
-    )
-    assert response.status_code == 201
-    data = read_json(undefined_settings / "undefined.json")
-    assert data["ssh"]["rootKeys"] == ["ssh-rsa KEY test@pc"]
-
-
 def test_add_root_key_one_more(authorized_client, root_and_admin_have_keys):
     response = authorized_client.put(
         "/services/ssh/key/send", json={"public_key": "ssh-rsa KEY test@pc"}
@@ -149,12 +140,6 @@ def test_get_root_key(authorized_client, root_and_admin_have_keys):
 
 
 def test_get_root_key_when_none(authorized_client, ssh_on):
-    response = authorized_client.get("/services/ssh/keys/root")
-    assert response.status_code == 200
-    assert response.json() == []
-
-
-def test_get_root_key_on_undefined(authorized_client, undefined_settings):
     response = authorized_client.get("/services/ssh/keys/root")
     assert response.status_code == 200
     assert response.json() == []

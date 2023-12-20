@@ -10,6 +10,7 @@ from selfprivacy_api.actions.ssh import (
     get_ssh_settings,
     create_ssh_key,
     remove_ssh_key,
+    KeyNotFound,
 )
 from selfprivacy_api.actions.users import get_users
 from selfprivacy_api.utils import WriteUserData, ReadUserData
@@ -162,6 +163,29 @@ def test_removing_root_key_writes_json(generic_userdata):
         assert "ssh" in data
         assert "rootKeys" in data["ssh"]
         assert data["ssh"]["rootKeys"] == []
+
+
+def test_remove_root_key_on_undefined(generic_userdata):
+    # generic userdata has a a single root key
+    rootkeys = get_ssh_settings().rootKeys
+    assert len(rootkeys) == 1
+    key1 = rootkeys[0]
+
+    with WriteUserData() as data:
+        del data["ssh"]["rootKeys"]
+
+    with pytest.raises(KeyNotFound):
+        remove_ssh_key("root", key1)
+    rootkeys = get_ssh_settings().rootKeys
+    assert len(rootkeys) == 0
+
+    with WriteUserData() as data:
+        del data["ssh"]
+
+    with pytest.raises(KeyNotFound):
+        remove_ssh_key("root", key1)
+    rootkeys = get_ssh_settings().rootKeys
+    assert len(rootkeys) == 0
 
 
 def test_adding_root_key_writes_json(generic_userdata):
