@@ -9,7 +9,7 @@ from selfprivacy_api.graphql.queries.system import System
 from selfprivacy_api.actions.ssh import remove_ssh_key, get_ssh_settings
 
 from tests.common import read_json, generate_system_query
-from tests.test_graphql.common import assert_empty, assert_ok, get_data
+from tests.test_graphql.common import assert_empty, assert_ok, get_data, assert_errorcode
 
 
 class ProcessMock:
@@ -369,6 +369,13 @@ def test_graphql_add_root_ssh_key_one_more(authorized_client, no_rootkeys):
     assert output["user"]["sshKeys"] == expected_keys
     assert api_rootkeys(authorized_client) == expected_keys
 
+def test_graphql_add_root_ssh_key_same(authorized_client, no_rootkeys):
+    key = "ssh-rsa KEY test_key@pc"
+    output = api_add_ssh_key(authorized_client, "root", key)
+    assert output["user"]["sshKeys"] == [key]
+
+    output = api_add_ssh_key(authorized_client, "root", key)
+    assert_errorcode(output, 409)
 
 def test_graphql_add_main_ssh_key(authorized_client, some_users, mock_subprocess_popen):
     response = authorized_client.post(
