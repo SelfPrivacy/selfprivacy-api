@@ -4,6 +4,7 @@ Action-level tests of ssh
 """
 
 import pytest
+from typing import Optional
 
 from selfprivacy_api.actions.ssh import (
     set_ssh_settings,
@@ -12,7 +13,11 @@ from selfprivacy_api.actions.ssh import (
     remove_ssh_key,
     KeyNotFound,
 )
-from selfprivacy_api.actions.users import get_users
+from selfprivacy_api.actions.users import (
+    get_users,
+    get_user_by_username,
+    UserDataUserOrigin,
+)
 from selfprivacy_api.utils import WriteUserData, ReadUserData
 
 
@@ -62,6 +67,14 @@ def ssh_enable_spectrum(request):
 @pytest.fixture(params=[True, False, None])
 def password_auth_spectrum(request):
     return request.param
+
+
+def admin_name() -> Optional[str]:
+    users = get_users()
+    for user in users:
+        if user.origin == UserDataUserOrigin.PRIMARY:
+            return user.username
+    return None
 
 
 def get_raw_json_ssh_setting(setting: str):
@@ -119,6 +132,9 @@ def test_enabling_disabling_writes_json(
                 get_raw_json_ssh_setting("passwordAuthentication")
                 == password_auth_spectrum
             )
+
+
+############### ROOTKEYS
 
 
 def test_read_root_keys_from_json(generic_userdata):
@@ -216,3 +232,85 @@ def test_adding_root_key_writes_json(generic_userdata):
         assert "rootKeys" in data["ssh"]
         # order is irrelevant
         assert set(data["ssh"]["rootKeys"]) == set([key1, key2])
+
+
+############### ADMIN KEYS
+
+
+def test_read_admin_keys_from_json(generic_userdata):
+    admin_name = "tester"
+    assert get_user_by_username(admin_name).ssh_keys == ["ssh-rsa KEY test@pc"]
+    new_keys = ["ssh-rsa KEY test@pc", "ssh-ed25519 KEY2 test@pc"]
+
+    with WriteUserData() as data:
+        data["sshKeys"] = new_keys
+
+    get_user_by_username(admin_name).ssh_keys == new_keys
+
+    with WriteUserData() as data:
+        del data["sshKeys"]
+
+    get_user_by_username(admin_name).ssh_keys == []
+
+
+def test_adding_admin_key_writes_json(generic_userdata):
+    admin_name = "tester"
+
+    with WriteUserData() as data:
+        del data["sshKeys"]
+    key1 = "ssh-ed25519 KEY test@pc"
+    key2 = "ssh-ed25519 KEY2 test@pc"
+    create_ssh_key(admin_name, key1)
+
+    with ReadUserData() as data:
+        assert "sshKeys" in data
+        assert data["sshKeys"] == [key1]
+
+    create_ssh_key(admin_name, key2)
+
+    with ReadUserData() as data:
+        assert "sshKeys" in data
+        # order is irrelevant
+        assert set(data["sshKeys"]) == set([key1, key2])
+
+
+def test_removing_admin_key_writes_json(generic_userdata):
+    # generic userdata has a a single root key
+    admin_name = "tester"
+
+    admin_keys = get_user_by_username(admin_name).ssh_keys
+    assert len(admin_keys) == 1
+    key1 = admin_keys[0]
+    key2 = "ssh-rsa MYSUPERKEY admin@pc"
+
+    create_ssh_key(admin_name, key2)
+    admin_keys = get_user_by_username(admin_name).ssh_keys
+    assert len(admin_keys) == 2
+
+    remove_ssh_key(admin_name, key2)
+
+    with ReadUserData() as data:
+        assert "sshKeys" in data
+        assert data["sshKeys"] == [key1]
+
+    remove_ssh_key(admin_name, key1)
+    with ReadUserData() as data:
+        assert "sshKeys" in data
+        assert data["sshKeys"] == []
+
+
+def test_remove_admin_key_on_undefined(generic_userdata):
+    # generic userdata has a a single root key
+    admin_name = "tester"
+
+    admin_keys = get_user_by_username(admin_name).ssh_keys
+    assert len(admin_keys) == 1
+    key1 = admin_keys[0]
+
+    with WriteUserData() as data:
+        del data["sshKeys"]
+
+    with pytest.raises(KeyNotFound):
+        remove_ssh_key(admin_name, key1)
+    admin_keys = get_user_by_username(admin_name).ssh_keys
+    assert len(admin_keys) == 0

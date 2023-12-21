@@ -95,14 +95,6 @@ def some_users(mocker, datadir):
 ## /ssh/keys/{user} ######################################################
 
 
-def test_delete_admin_key_on_undefined(authorized_client, undefined_settings):
-    response = authorized_client.delete(
-        "/services/ssh/keys/tester", json={"public_key": "ssh-rsa KEY test@pc"}
-    )
-    assert response.status_code == 404
-    assert "sshKeys" not in read_json(undefined_settings / "undefined.json")
-
-
 def test_add_admin_key(authorized_client, ssh_on):
     response = authorized_client.post(
         "/services/ssh/keys/tester", json={"public_key": "ssh-rsa KEY test@pc"}
