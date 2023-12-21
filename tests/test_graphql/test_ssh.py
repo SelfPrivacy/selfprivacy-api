@@ -522,9 +522,7 @@ def test_graphql_remove_ssh_key(authorized_client, some_users, mock_subprocess_p
     assert response.json()["data"]["users"]["removeSshKey"]["user"]["sshKeys"] == []
 
 
-def test_graphql_remove_root_ssh_key(
-    authorized_client, some_users, mock_subprocess_popen
-):
+def test_graphql_remove_root_ssh_key(authorized_client, some_users):
     response = authorized_client.post(
         "/graphql",
         json={
