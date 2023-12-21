@@ -93,9 +93,6 @@ def api_get_user_keys(authorized_client, user: str):
     return None
 
 
-# TESTS ########################################################
-
-
 API_CREATE_SSH_KEY_MUTATION = """
 mutation addSshKey($sshInput: SshMutationInput!) {
     users {
@@ -238,6 +235,9 @@ def api_set_ssh_settings(authorized_client, enable: bool, password_auth: bool):
             "passwordAuthentication": password_auth,
         },
     )
+
+
+# TESTS ########################################################
 
 
 def test_graphql_ssh_query(authorized_client, some_users):
@@ -638,40 +638,17 @@ def test_graphql_remove_main_ssh_key(
     assert response.json()["data"]["users"]["removeSshKey"]["user"]["sshKeys"] == []
 
 
-def test_graphql_remove_nonexistent_ssh_key(
-    authorized_client, some_users, mock_subprocess_popen
-):
-    output = api_remove_ssh_key(authorized_client, "user1", "ssh-rsa KEY test_key@pc")
-    assert_errorcode(output, 404)
+key_users = ["root", "tester", "user1"]
 
 
-def test_graphql_remove_nonexistent_root_key(
-    authorized_client, some_users, mock_subprocess_popen
-):
-    output = api_remove_ssh_key(
-        authorized_client, "root", "ssh-rsa gone in a puff of logic"
-    )
+@pytest.mark.parametrize("user", key_users)
+def test_graphql_remove_nonexistent_ssh_key(authorized_client, some_users, user):
+    output = api_remove_ssh_key(authorized_client, user, "ssh-rsa nonexistent")
     assert_errorcode(output, 404)
 
 
 def test_graphql_remove_ssh_key_nonexistent_user(
     authorized_client, some_users, mock_subprocess_popen
 ):
-    response = authorized_client.post(
-        "/graphql",
-        json={
-            "query": API_REMOVE_SSH_KEY_MUTATION,
-            "variables": {
-                "sshInput": {
-                    "username": "user666",
-                    "sshKey": "ssh-rsa KEY test_key@pc",
-                },
-            },
-        },
-    )
-    assert response.status_code == 200
-    assert response.json().get("data") is not None
-
-    assert response.json()["data"]["users"]["removeSshKey"]["code"] == 404
-    assert response.json()["data"]["users"]["removeSshKey"]["message"] is not None
-    assert response.json()["data"]["users"]["removeSshKey"]["success"] is False
+    output = api_remove_ssh_key(authorized_client, "user666", "ssh-rsa KEY test_key@pc")
+    assert_errorcode(output, 404)

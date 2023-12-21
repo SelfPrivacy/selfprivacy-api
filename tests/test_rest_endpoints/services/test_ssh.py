@@ -95,27 +95,6 @@ def some_users(mocker, datadir):
 ## /ssh/keys/{user} ######################################################
 
 
-def test_delete_admin_key(authorized_client, root_and_admin_have_keys):
-    response = authorized_client.delete(
-        "/services/ssh/keys/tester", json={"public_key": "ssh-rsa KEY test@pc"}
-    )
-    assert response.status_code == 200
-    assert (
-        read_json(root_and_admin_have_keys / "root_and_admin_have_keys.json")["sshKeys"]
-        == []
-    )
-
-
-def test_delete_nonexistent_admin_key(authorized_client, root_and_admin_have_keys):
-    response = authorized_client.delete(
-        "/services/ssh/keys/tester", json={"public_key": "ssh-rsa NO KEY test@pc"}
-    )
-    assert response.status_code == 404
-    assert read_json(root_and_admin_have_keys / "root_and_admin_have_keys.json")[
-        "sshKeys"
-    ] == ["ssh-rsa KEY test@pc"]
-
-
 def test_delete_admin_key_on_undefined(authorized_client, undefined_settings):
     response = authorized_client.delete(
         "/services/ssh/keys/tester", json={"public_key": "ssh-rsa KEY test@pc"}
