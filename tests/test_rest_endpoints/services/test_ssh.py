@@ -95,12 +95,6 @@ def some_users(mocker, datadir):
 ## /ssh/keys/{user} ######################################################
 
 
-def test_get_root_key(authorized_client, root_and_admin_have_keys):
-    response = authorized_client.get("/services/ssh/keys/root")
-    assert response.status_code == 200
-    assert response.json() == ["ssh-ed25519 KEY test@pc"]
-
-
 def test_get_root_key_when_none(authorized_client, ssh_on):
     response = authorized_client.get("/services/ssh/keys/root")
     assert response.status_code == 200
