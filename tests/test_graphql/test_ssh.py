@@ -347,6 +347,10 @@ def test_graphql_get_root_key(authorized_client, some_users):
     assert api_rootkeys(authorized_client) == ["ssh-ed25519 KEY test@pc"]
 
 
+def test_graphql_get_root_key_when_none(authorized_client, no_rootkeys):
+    assert api_rootkeys(authorized_client) == []
+
+
 def test_graphql_add_root_ssh_key(authorized_client, no_rootkeys):
     output = api_add_ssh_key(authorized_client, "root", "ssh-rsa KEY test_key@pc")
 
