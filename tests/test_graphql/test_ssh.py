@@ -1,20 +1,23 @@
 # pylint: disable=redefined-outer-name
 # pylint: disable=unused-argument
 import pytest
+from typing import Optional
 
 from selfprivacy_api.graphql.mutations.system_mutations import SystemMutations
 from selfprivacy_api.graphql.queries.system import System
 
-# only allowed in fixtures
+# only allowed in fixtures and utils
 from selfprivacy_api.actions.ssh import remove_ssh_key, get_ssh_settings
+from selfprivacy_api.actions.users import get_users, UserDataUserOrigin
 
-from tests.common import read_json, generate_system_query
+from tests.common import read_json, generate_system_query, generate_users_query
 from tests.test_graphql.common import (
     assert_empty,
     assert_ok,
     get_data,
     assert_errorcode,
 )
+from tests.test_graphql.test_users import API_USERS_INFO
 
 
 class ProcessMock:
@@ -56,6 +59,38 @@ def no_rootkeys(generic_userdata):
     for rootkey in get_ssh_settings().rootKeys:
         remove_ssh_key("root", rootkey)
     assert get_ssh_settings().rootKeys == []
+
+
+@pytest.fixture
+def no_admin_key(generic_userdata, authorized_client):
+    admin_keys = api_get_user_keys(authorized_client, admin_name())
+
+    for admin_key in admin_keys:
+        remove_ssh_key(admin_name(), admin_key)
+
+    assert api_get_user_keys(authorized_client, admin_name()) == []
+
+
+def admin_name() -> Optional[str]:
+    users = get_users()
+    for user in users:
+        if user.origin == UserDataUserOrigin.PRIMARY:
+            return user.username
+    return None
+
+
+def api_get_user_keys(authorized_client, user: str):
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": generate_users_query([API_USERS_INFO]),
+        },
+    )
+    data = get_data(response)["users"]["allUsers"]
+    for _user in data:
+        if _user["username"] == user:
+            return _user["sshKeys"]
+    return None
 
 
 # TESTS ########################################################
@@ -370,6 +405,13 @@ def test_graphql_get_root_key_when_none(authorized_client, no_rootkeys):
     assert api_rootkeys(authorized_client) == []
 
 
+# Getting admin keys when they are present is tested in test_users.py
+
+
+def test_get_admin_key_when_none(authorized_client, no_admin_key):
+    assert api_get_user_keys(authorized_client, admin_name()) == []
+
+
 def test_graphql_add_root_ssh_key(authorized_client, no_rootkeys):
     output = api_add_ssh_key(authorized_client, "root", "ssh-rsa KEY test_key@pc")
 
@@ -411,7 +453,7 @@ def test_graphql_add_root_ssh_key_same(authorized_client, no_rootkeys):
     assert_errorcode(output, 409)
 
 
-def test_graphql_add_main_ssh_key(authorized_client, some_users, mock_subprocess_popen):
+def test_graphql_add_admin_key(authorized_client, some_users):
     response = authorized_client.post(
         "/graphql",
         json={
@@ -438,6 +480,7 @@ def test_graphql_add_main_ssh_key(authorized_client, some_users, mock_subprocess
     ]
 
 
+# TODO: multiplex for root and admin
 def test_graphql_add_bad_ssh_key(authorized_client, some_users, mock_subprocess_popen):
     response = authorized_client.post(
         "/graphql",
