@@ -144,6 +144,25 @@ def api_add_ssh_key(authorized_client, user: str, key: str):
     return result
 
 
+def api_remove_ssh_key(authorized_client, user: str, key: str):
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_REMOVE_SSH_KEY_MUTATION,
+            "variables": {
+                "sshInput": {
+                    "username": user,
+                    "sshKey": key,
+                },
+            },
+        },
+    )
+    data = get_data(response)
+    result = data["users"]["removeSshKey"]
+    assert result is not None
+    return result
+
+
 def api_rootkeys(authorized_client):
     response = api_rootkeys_raw(authorized_client)
     data = get_data(response)
@@ -579,24 +598,17 @@ def test_graphql_remove_main_ssh_key(
 def test_graphql_remove_nonexistent_ssh_key(
     authorized_client, some_users, mock_subprocess_popen
 ):
-    response = authorized_client.post(
-        "/graphql",
-        json={
-            "query": API_REMOVE_SSH_KEY_MUTATION,
-            "variables": {
-                "sshInput": {
-                    "username": "user1",
-                    "sshKey": "ssh-rsa KEY test_key@pc",
-                },
-            },
-        },
-    )
-    assert response.status_code == 200
-    assert response.json().get("data") is not None
+    output = api_remove_ssh_key(authorized_client, "user1", "ssh-rsa KEY test_key@pc")
+    assert_errorcode(output, 404)
 
-    assert response.json()["data"]["users"]["removeSshKey"]["code"] == 404
-    assert response.json()["data"]["users"]["removeSshKey"]["message"] is not None
-    assert response.json()["data"]["users"]["removeSshKey"]["success"] is False
+
+def test_graphql_remove_nonexistent_root_key(
+    authorized_client, some_users, mock_subprocess_popen
+):
+    output = api_remove_ssh_key(
+        authorized_client, "root", "ssh-rsa gone in a puff of logic"
+    )
+    assert_errorcode(output, 404)
 
 
 def test_graphql_remove_ssh_key_nonexistent_user(
