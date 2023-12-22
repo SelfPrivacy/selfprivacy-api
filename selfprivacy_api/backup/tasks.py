@@ -20,8 +20,6 @@ from selfprivacy_api.jobs import Jobs, JobStatus, Job
 
 SNAPSHOT_CACHE_TTL_HOURS = 6
 
-SNAPSHOT_CACHE_TTL_HOURS = 6
-
 
 def validate_datetime(dt: datetime) -> bool:
     """
@@ -35,9 +33,7 @@ def validate_datetime(dt: datetime) -> bool:
 
 # huey tasks need to return something
 @huey.task()
-def start_backup(
-    service_id: str, reason: BackupReason = BackupReason.EXPLICIT
-) -> bool:
+def start_backup(service_id: str, reason: BackupReason = BackupReason.EXPLICIT) -> bool:
     """
     The worker task that starts the backup process.
     """
