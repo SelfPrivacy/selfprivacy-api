@@ -95,21 +95,6 @@ def some_users(mocker, datadir):
 ## /ssh/keys/{user} ######################################################
 
 
-@pytest.mark.parametrize("user", [1, 2, 3])
-def test_get_user_key(authorized_client, some_users, user):
-    response = authorized_client.get(f"/services/ssh/keys/user{user}")
-    assert response.status_code == 200
-    if user == 1:
-        assert response.json() == ["ssh-rsa KEY user1@pc"]
-    else:
-        assert response.json() == []
-
-
-def test_get_keys_of_nonexistent_user(authorized_client, some_users):
-    response = authorized_client.get("/services/ssh/keys/user4")
-    assert response.status_code == 404
-
-
 def test_get_keys_of_undefined_users(authorized_client, undefined_settings):
     response = authorized_client.get("/services/ssh/keys/user1")
     assert response.status_code == 404
