@@ -37,19 +37,17 @@
         {
             "username": "user1",
             "hashedPassword": "HASHED_PASSWORD_1",
-            "sshKeys": [
-                "ssh-rsa KEY user1@pc"
-            ]
+            "sshKeys": ["ssh-rsa KEY user1@pc"]
         },
         {
             "username": "user2",
             "hashedPassword": "HASHED_PASSWORD_2",
-            "sshKeys": [
-            ]
+            "sshKeys": ["ssh-rsa KEY user2@pc"]
         },
         {
             "username": "user3",
-            "hashedPassword": "HASHED_PASSWORD_3"
+            "hashedPassword": "HASHED_PASSWORD_3",
+            "sshKeys": ["ssh-rsa KEY user3@pc"]
         }
     ]
 }

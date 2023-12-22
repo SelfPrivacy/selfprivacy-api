@@ -245,12 +245,12 @@ def test_read_admin_keys_from_json(generic_userdata):
     with WriteUserData() as data:
         data["sshKeys"] = new_keys
 
-    get_user_by_username(admin_name).ssh_keys == new_keys
+    assert get_user_by_username(admin_name).ssh_keys == new_keys
 
     with WriteUserData() as data:
         del data["sshKeys"]
 
-    get_user_by_username(admin_name).ssh_keys == []
+    assert get_user_by_username(admin_name).ssh_keys == []
 
 
 def test_adding_admin_key_writes_json(generic_userdata):
@@ -314,3 +314,102 @@ def test_remove_admin_key_on_undefined(generic_userdata):
         remove_ssh_key(admin_name, key1)
     admin_keys = get_user_by_username(admin_name).ssh_keys
     assert len(admin_keys) == 0
+
+
+############### USER KEYS
+
+regular_users = ["user1", "user2", "user3"]
+
+
+def find_user_index_in_json_users(users: list, username: str) -> Optional[int]:
+    for i, user in enumerate(users):
+        if user["username"] == username:
+            return i
+    return None
+
+
+@pytest.mark.parametrize("username", regular_users)
+def test_read_user_keys_from_json(generic_userdata, username):
+    old_keys = [f"ssh-rsa KEY {username}@pc"]
+    assert get_user_by_username(username).ssh_keys == old_keys
+    new_keys = ["ssh-rsa KEY test@pc", "ssh-ed25519 KEY2 test@pc"]
+
+    with WriteUserData() as data:
+        user_index = find_user_index_in_json_users(data["users"], username)
+        data["users"][user_index]["sshKeys"] = new_keys
+
+    assert get_user_by_username(username).ssh_keys == new_keys
+
+    with WriteUserData() as data:
+        user_index = find_user_index_in_json_users(data["users"], username)
+        del data["users"][user_index]["sshKeys"]
+
+    assert get_user_by_username(username).ssh_keys == []
+
+    # deeper deletions are for user getter tests, not here
+
+
+# @pytest.mark.parametrize("username", regular_users)
+# def test_adding_user_key_writes_json(generic_userdata, regular_users):
+#     admin_name = "tester"
+
+#     with WriteUserData() as data:
+#         del data["sshKeys"]
+#     key1 = "ssh-ed25519 KEY test@pc"
+#     key2 = "ssh-ed25519 KEY2 test@pc"
+#     create_ssh_key(admin_name, key1)
+
+#     with ReadUserData() as data:
+#         assert "sshKeys" in data
+#         assert data["sshKeys"] == [key1]
+
+#     create_ssh_key(admin_name, key2)
+
+#     with ReadUserData() as data:
+#         assert "sshKeys" in data
+#         # order is irrelevant
+#         assert set(data["sshKeys"]) == set([key1, key2])
+
+
+# @pytest.mark.parametrize("username", regular_users)
+# def test_removing_user_key_writes_json(generic_userdata, regular_users):
+#     # generic userdata has a a single root key
+#     admin_name = "tester"
+
+#     admin_keys = get_user_by_username(admin_name).ssh_keys
+#     assert len(admin_keys) == 1
+#     key1 = admin_keys[0]
+#     key2 = "ssh-rsa MYSUPERKEY admin@pc"
+
+#     create_ssh_key(admin_name, key2)
+#     admin_keys = get_user_by_username(admin_name).ssh_keys
+#     assert len(admin_keys) == 2
+
+#     remove_ssh_key(admin_name, key2)
+
+#     with ReadUserData() as data:
+#         assert "sshKeys" in data
+#         assert data["sshKeys"] == [key1]
+
+#     remove_ssh_key(admin_name, key1)
+#     with ReadUserData() as data:
+#         assert "sshKeys" in data
+#         assert data["sshKeys"] == []
+
+
+# @pytest.mark.parametrize("username", regular_users)
+# def test_remove_user_key_on_undefined(generic_userdata, regular_users):
+#     # generic userdata has a a single root key
+#     admin_name = "tester"
+
+#     admin_keys = get_user_by_username(admin_name).ssh_keys
+#     assert len(admin_keys) == 1
+#     key1 = admin_keys[0]
+
+#     with WriteUserData() as data:
+#         del data["sshKeys"]
+
+#     with pytest.raises(KeyNotFound):
+#         remove_ssh_key(admin_name, key1)
+#     admin_keys = get_user_by_username(admin_name).ssh_keys
+#     assert len(admin_keys) == 0
