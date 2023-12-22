@@ -19,7 +19,7 @@ from tests.test_graphql.common import (
 )
 from tests.test_graphql.test_users import API_USERS_INFO
 
-key_users = ["root", "tester", "user1"]
+key_users = ["root", "tester", "user1", "user2", "user3"]
 
 
 class ProcessMock:

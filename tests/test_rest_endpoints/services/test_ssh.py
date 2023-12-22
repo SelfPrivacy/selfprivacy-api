@@ -95,42 +95,6 @@ def some_users(mocker, datadir):
 ## /ssh/keys/{user} ######################################################
 
 
-@pytest.mark.parametrize("user", [1, 2, 3])
-def test_add_user_key(authorized_client, some_users, user):
-    response = authorized_client.post(
-        f"/services/ssh/keys/user{user}", json={"public_key": "ssh-ed25519 KEY test@pc"}
-    )
-    assert response.status_code == 201
-    if user == 1:
-        assert read_json(some_users / "some_users.json")["users"][user - 1][
-            "sshKeys"
-        ] == [
-            "ssh-rsa KEY user1@pc",
-            "ssh-ed25519 KEY test@pc",
-        ]
-    else:
-        assert read_json(some_users / "some_users.json")["users"][user - 1][
-            "sshKeys"
-        ] == ["ssh-ed25519 KEY test@pc"]
-
-
-def test_add_existing_user_key(authorized_client, some_users):
-    response = authorized_client.post(
-        "/services/ssh/keys/user1", json={"public_key": "ssh-rsa KEY user1@pc"}
-    )
-    assert response.status_code == 409
-    assert read_json(some_users / "some_users.json")["users"][0]["sshKeys"] == [
-        "ssh-rsa KEY user1@pc",
-    ]
-
-
-def test_add_invalid_user_key(authorized_client, some_users):
-    response = authorized_client.post(
-        "/services/ssh/keys/user1", json={"public_key": "INVALID KEY user1@pc"}
-    )
-    assert response.status_code == 400
-
-
 def test_delete_user_key(authorized_client, some_users):
     response = authorized_client.delete(
         "/services/ssh/keys/user1", json={"public_key": "ssh-rsa KEY user1@pc"}
