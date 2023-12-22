@@ -413,9 +413,7 @@ def test_graphql_add_ssh_key_when_none(authorized_client, no_keys, user):
 
     output = api_add_ssh_key(authorized_client, user, key1)
 
-    assert output["code"] == 201
-    assert output["message"] is not None
-    assert output["success"] is True
+    assert_ok(output, code=201)
 
     assert output["user"]["username"] == user
     assert output["user"]["sshKeys"] == [key1]
@@ -426,24 +424,26 @@ def test_graphql_add_ssh_key_when_none(authorized_client, no_keys, user):
         assert api_get_user_keys(authorized_client, user) == [key1]
 
 
-def test_graphql_add_root_ssh_key_one_more(authorized_client, no_rootkeys):
-    output = api_add_ssh_key(authorized_client, "root", "ssh-rsa KEY test_key@pc")
-    assert output["user"]["sshKeys"] == ["ssh-rsa KEY test_key@pc"]
-
-    output = api_add_ssh_key(authorized_client, "root", "ssh-rsa KEY2 test_key@pc")
-    assert output["code"] == 201
-    assert output["message"] is not None
-    assert output["success"] is True
-
-    assert output["user"]["username"] == "root"
-
-    expected_keys = [
+@pytest.mark.parametrize("user", key_users)
+def test_graphql_add_ssh_key_one_more(authorized_client, no_keys, user):
+    keys = [
         "ssh-rsa KEY test_key@pc",
         "ssh-rsa KEY2 test_key@pc",
     ]
+    output = api_add_ssh_key(authorized_client, user, keys[0])
+    assert output["user"]["sshKeys"] == [keys[0]]
 
-    assert output["user"]["sshKeys"] == expected_keys
-    assert api_rootkeys(authorized_client) == expected_keys
+    output = api_add_ssh_key(authorized_client, user, keys[1])
+
+    assert_ok(output, code=201)
+
+    assert output["user"]["username"] == user
+    assert output["user"]["sshKeys"] == keys
+
+    if user == "root":
+        assert api_rootkeys(authorized_client) == keys
+    else:
+        assert api_get_user_keys(authorized_client, user) == keys
 
 
 def test_graphql_add_root_ssh_key_same(authorized_client, no_rootkeys):
@@ -585,7 +585,7 @@ def test_graphql_remove_root_ssh_key(authorized_client, some_users):
     assert response.json()["data"]["users"]["removeSshKey"]["user"]["sshKeys"] == []
 
 
-def test_graphql_remove_main_ssh_key(
+def test_graphql_remove_admin_ssh_key(
     authorized_client, some_users, mock_subprocess_popen
 ):
     response = authorized_client.post(

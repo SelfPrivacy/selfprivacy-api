@@ -4,14 +4,14 @@ from tests.conftest import TOKENS_FILE_CONTENTS, DEVICE_WE_AUTH_TESTS_WITH
 ORIGINAL_DEVICES = TOKENS_FILE_CONTENTS["tokens"]
 
 
-def assert_ok(output: dict) -> None:
+def assert_ok(output: dict, code=200) -> None:
     if output["success"] is False:
         # convenience for debugging, this should display error
         # if message is  empty, consider adding helpful messages
         raise ValueError(output["code"], output["message"])
     assert output["success"] is True
     assert output["message"] is not None
-    assert output["code"] == 200
+    assert output["code"] == code
 
 
 def assert_errorcode(output: dict, code) -> None:
