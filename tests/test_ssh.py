@@ -373,30 +373,31 @@ def test_adding_user_key_writes_json(generic_userdata, username):
         assert set(data["users"][user_index]["sshKeys"]) == set([key1, key2])
 
 
-# @pytest.mark.parametrize("username", regular_users)
-# def test_removing_user_key_writes_json(generic_userdata, username):
-#     # generic userdata has a a single root key
-#     admin_name = "tester"
+@pytest.mark.parametrize("username", regular_users)
+def test_removing_user_key_writes_json(generic_userdata, username):
+    # generic userdata has a a single root key
 
-#     admin_keys = get_user_by_username(admin_name).ssh_keys
-#     assert len(admin_keys) == 1
-#     key1 = admin_keys[0]
-#     key2 = "ssh-rsa MYSUPERKEY admin@pc"
+    user_keys = get_user_by_username(username).ssh_keys
+    assert len(user_keys) == 1
+    key1 = user_keys[0]
+    key2 = "ssh-rsa MYSUPERKEY admin@pc"
 
-#     create_ssh_key(admin_name, key2)
-#     admin_keys = get_user_by_username(admin_name).ssh_keys
-#     assert len(admin_keys) == 2
+    create_ssh_key(username, key2)
+    user_keys = get_user_by_username(username).ssh_keys
+    assert len(user_keys) == 2
 
-#     remove_ssh_key(admin_name, key2)
+    remove_ssh_key(username, key2)
 
-#     with ReadUserData() as data:
-#         assert "sshKeys" in data
-#         assert data["sshKeys"] == [key1]
+    with ReadUserData() as data:
+        user_index = find_user_index_in_json_users(data["users"], username)
+        assert "sshKeys" in data["users"][user_index]
+        assert data["users"][user_index]["sshKeys"] == [key1]
 
-#     remove_ssh_key(admin_name, key1)
-#     with ReadUserData() as data:
-#         assert "sshKeys" in data
-#         assert data["sshKeys"] == []
+    remove_ssh_key(username, key1)
+    with ReadUserData() as data:
+        user_index = find_user_index_in_json_users(data["users"], username)
+        assert "sshKeys" in data["users"][user_index]
+        assert data["users"][user_index]["sshKeys"] == []
 
 
 # @pytest.mark.parametrize("username", regular_users)
