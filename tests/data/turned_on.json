@@ -32,5 +32,24 @@
         "accountId": "ID",
         "accountKey": "KEY",
         "bucket": "selfprivacy"
-    }
+    },
+    "users": [
+        {
+            "username": "user1",
+            "hashedPassword": "HASHED_PASSWORD_1",
+            "sshKeys": [
+                "ssh-rsa KEY user1@pc"
+            ]
+        },
+        {
+            "username": "user2",
+            "hashedPassword": "HASHED_PASSWORD_2",
+            "sshKeys": [
+            ]
+        },
+        {
+            "username": "user3",
+            "hashedPassword": "HASHED_PASSWORD_3"
+        }
+    ]
 }

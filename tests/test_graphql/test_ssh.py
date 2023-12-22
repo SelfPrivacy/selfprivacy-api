@@ -19,6 +19,8 @@ from tests.test_graphql.common import (
 )
 from tests.test_graphql.test_users import API_USERS_INFO
 
+key_users = ["root", "tester", "user1"]
+
 
 class ProcessMock:
     """Mock subprocess.Popen"""
@@ -59,6 +61,19 @@ def no_rootkeys(generic_userdata):
     for rootkey in get_ssh_settings().rootKeys:
         remove_ssh_key("root", rootkey)
     assert get_ssh_settings().rootKeys == []
+
+
+@pytest.fixture
+def no_keys(generic_userdata):
+    # this removes root and admin keys too
+
+    users = get_users()
+    for user in users:
+        for key in user.ssh_keys:
+            remove_ssh_key(user.username, key)
+    users = get_users()
+    for user in users:
+        assert user.ssh_keys == []
 
 
 @pytest.fixture
@@ -370,31 +385,7 @@ def test_graphql_add_ssh_key_unauthorized(client, some_users, mock_subprocess_po
     assert_empty(response)
 
 
-def test_graphql_add_ssh_key(authorized_client, some_users, mock_subprocess_popen):
-    response = authorized_client.post(
-        "/graphql",
-        json={
-            "query": API_CREATE_SSH_KEY_MUTATION,
-            "variables": {
-                "sshInput": {
-                    "username": "user1",
-                    "sshKey": "ssh-rsa KEY test_key@pc",
-                },
-            },
-        },
-    )
-    assert response.status_code == 200
-    assert response.json().get("data") is not None
-
-    assert response.json()["data"]["users"]["addSshKey"]["code"] == 201
-    assert response.json()["data"]["users"]["addSshKey"]["message"] is not None
-    assert response.json()["data"]["users"]["addSshKey"]["success"] is True
-
-    assert response.json()["data"]["users"]["addSshKey"]["user"]["username"] == "user1"
-    assert response.json()["data"]["users"]["addSshKey"]["user"]["sshKeys"] == [
-        "ssh-rsa KEY user1@pc",
-        "ssh-rsa KEY test_key@pc",
-    ]
+# Unauth getting of keys is tested in test_users.py because it is a part of users interface
 
 
 def test_graphql_get_root_key(authorized_client, some_users):
@@ -412,16 +403,27 @@ def test_get_admin_key_when_none(authorized_client, no_admin_key):
     assert api_get_user_keys(authorized_client, admin_name()) == []
 
 
-def test_graphql_add_root_ssh_key(authorized_client, no_rootkeys):
-    output = api_add_ssh_key(authorized_client, "root", "ssh-rsa KEY test_key@pc")
+@pytest.mark.parametrize("user", key_users)
+def test_graphql_add_ssh_key_when_none(authorized_client, no_keys, user):
+    key1 = "ssh-rsa KEY test_key@pc"
+    if user == "root":
+        assert api_rootkeys(authorized_client) == []
+    else:
+        assert api_get_user_keys(authorized_client, user) == []
+
+    output = api_add_ssh_key(authorized_client, user, key1)
 
     assert output["code"] == 201
     assert output["message"] is not None
     assert output["success"] is True
 
-    assert output["user"]["username"] == "root"
-    assert output["user"]["sshKeys"] == ["ssh-rsa KEY test_key@pc"]
-    assert api_rootkeys(authorized_client) == ["ssh-rsa KEY test_key@pc"]
+    assert output["user"]["username"] == user
+    assert output["user"]["sshKeys"] == [key1]
+
+    if user == "root":
+        assert api_rootkeys(authorized_client) == [key1]
+    else:
+        assert api_get_user_keys(authorized_client, user) == [key1]
 
 
 def test_graphql_add_root_ssh_key_one_more(authorized_client, no_rootkeys):
@@ -451,33 +453,6 @@ def test_graphql_add_root_ssh_key_same(authorized_client, no_rootkeys):
 
     output = api_add_ssh_key(authorized_client, "root", key)
     assert_errorcode(output, 409)
-
-
-def test_graphql_add_admin_key(authorized_client, some_users):
-    response = authorized_client.post(
-        "/graphql",
-        json={
-            "query": API_CREATE_SSH_KEY_MUTATION,
-            "variables": {
-                "sshInput": {
-                    "username": "tester",
-                    "sshKey": "ssh-rsa KEY test_key@pc",
-                },
-            },
-        },
-    )
-    assert response.status_code == 200
-    assert response.json().get("data") is not None
-
-    assert response.json()["data"]["users"]["addSshKey"]["code"] == 201
-    assert response.json()["data"]["users"]["addSshKey"]["message"] is not None
-    assert response.json()["data"]["users"]["addSshKey"]["success"] is True
-
-    assert response.json()["data"]["users"]["addSshKey"]["user"]["username"] == "tester"
-    assert response.json()["data"]["users"]["addSshKey"]["user"]["sshKeys"] == [
-        "ssh-rsa KEY test@pc",
-        "ssh-rsa KEY test_key@pc",
-    ]
 
 
 # TODO: multiplex for root and admin
@@ -636,9 +611,6 @@ def test_graphql_remove_main_ssh_key(
         response.json()["data"]["users"]["removeSshKey"]["user"]["username"] == "tester"
     )
     assert response.json()["data"]["users"]["removeSshKey"]["user"]["sshKeys"] == []
-
-
-key_users = ["root", "tester", "user1"]
 
 
 @pytest.mark.parametrize("user", key_users)
