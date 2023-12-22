@@ -95,35 +95,6 @@ def some_users(mocker, datadir):
 ## /ssh/keys/{user} ######################################################
 
 
-def test_add_admin_key_one_more(authorized_client, root_and_admin_have_keys):
-    response = authorized_client.post(
-        "/services/ssh/keys/tester", json={"public_key": "ssh-rsa KEY_2 test@pc"}
-    )
-    assert response.status_code == 201
-    assert read_json(root_and_admin_have_keys / "root_and_admin_have_keys.json")[
-        "sshKeys"
-    ] == ["ssh-rsa KEY test@pc", "ssh-rsa KEY_2 test@pc"]
-
-
-def test_add_existing_admin_key(authorized_client, root_and_admin_have_keys):
-    response = authorized_client.post(
-        "/services/ssh/keys/tester", json={"public_key": "ssh-rsa KEY test@pc"}
-    )
-    assert response.status_code == 409
-    assert read_json(root_and_admin_have_keys / "root_and_admin_have_keys.json")[
-        "sshKeys"
-    ] == [
-        "ssh-rsa KEY test@pc",
-    ]
-
-
-def test_add_invalid_admin_key(authorized_client, ssh_on):
-    response = authorized_client.post(
-        "/services/ssh/keys/tester", json={"public_key": "INVALID KEY test@pc"}
-    )
-    assert response.status_code == 400
-
-
 @pytest.mark.parametrize("user", [1, 2, 3])
 def test_get_user_key(authorized_client, some_users, user):
     response = authorized_client.get(f"/services/ssh/keys/user{user}")
