@@ -60,10 +60,14 @@ def set_auto_upgrade_settings(
 
 def rebuild_system() -> int:
     """Rebuild the system"""
+    print("entered system_actions.rebuild_system")
     rebuild_result = subprocess.Popen(
         ["systemctl", "start", "sp-nixos-rebuild.service"], start_new_session=True
     )
+    print("Called subprocess")
     rebuild_result.communicate()[0]
+    print("Communicated with subproccess, return code:")
+    print(rebuild_result)
     return rebuild_result.returncode
 
 

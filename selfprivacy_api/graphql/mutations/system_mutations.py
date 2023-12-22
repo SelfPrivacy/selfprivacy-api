@@ -78,7 +78,9 @@ class SystemMutations:
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def run_system_rebuild(self) -> GenericMutationReturn:
+        print("Recieved runSystemRebuild command")
         system_actions.rebuild_system()
+        print("exited system_actions.rebuild_system")
         return GenericMutationReturn(
             success=True,
             message="Starting rebuild system",
