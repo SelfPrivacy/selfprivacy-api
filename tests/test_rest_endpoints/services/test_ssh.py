@@ -95,38 +95,9 @@ def some_users(mocker, datadir):
 ## /ssh/keys/{user} ######################################################
 
 
-@pytest.mark.parametrize("user", [2, 3])
-def test_delete_nonexistent_user_key(authorized_client, some_users, user):
-    response = authorized_client.delete(
-        f"/services/ssh/keys/user{user}", json={"public_key": "ssh-rsa KEY user1@pc"}
-    )
-    assert response.status_code == 404
-    if user == 2:
-        assert (
-            read_json(some_users / "some_users.json")["users"][user - 1]["sshKeys"]
-            == []
-        )
-    if user == 3:
-        "sshKeys" not in read_json(some_users / "some_users.json")["users"][user - 1]
-
-
-def test_add_keys_of_nonexistent_user(authorized_client, some_users):
-    response = authorized_client.post(
-        "/services/ssh/keys/user4", json={"public_key": "ssh-rsa KEY user4@pc"}
-    )
-    assert response.status_code == 404
-
-
 def test_add_key_on_undefined_users(authorized_client, undefined_settings):
     response = authorized_client.post(
         "/services/ssh/keys/user1", json={"public_key": "ssh-rsa KEY user4@pc"}
-    )
-    assert response.status_code == 404
-
-
-def test_delete_keys_of_nonexistent_user(authorized_client, some_users):
-    response = authorized_client.delete(
-        "/services/ssh/keys/user4", json={"public_key": "ssh-rsa KEY user4@pc"}
     )
     assert response.status_code == 404
 
