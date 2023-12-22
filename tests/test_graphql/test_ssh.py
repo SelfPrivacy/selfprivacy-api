@@ -518,84 +518,25 @@ def test_graphql_remove_ssh_key_unauthorized(client, some_users, mock_subprocess
     assert_empty(response)
 
 
-def test_graphql_remove_ssh_key(authorized_client, some_users, mock_subprocess_popen):
-    response = authorized_client.post(
-        "/graphql",
-        json={
-            "query": API_REMOVE_SSH_KEY_MUTATION,
-            "variables": {
-                "sshInput": {
-                    "username": "user1",
-                    "sshKey": "ssh-rsa KEY user1@pc",
-                },
-            },
-        },
-    )
-    assert response.status_code == 200
-    assert response.json().get("data") is not None
+@pytest.mark.parametrize("user", key_users)
+def test_graphql_remove_ssh_key(authorized_client, no_keys, user):
+    keys = [
+        "ssh-rsa KEY test_key@pc",
+        "ssh-rsa KEY2 test_key@pc",
+    ]
+    output = api_add_ssh_key(authorized_client, user, keys[0])
+    output = api_add_ssh_key(authorized_client, user, keys[1])
+    assert output["user"]["sshKeys"] == keys
 
-    assert response.json()["data"]["users"]["removeSshKey"]["code"] == 200
-    assert response.json()["data"]["users"]["removeSshKey"]["message"] is not None
-    assert response.json()["data"]["users"]["removeSshKey"]["success"] is True
+    output = api_remove_ssh_key(authorized_client, user, keys[1])
+    assert_ok(output)
+    assert output["user"]["username"] == user
+    assert output["user"]["sshKeys"] == [keys[0]]
 
-    assert (
-        response.json()["data"]["users"]["removeSshKey"]["user"]["username"] == "user1"
-    )
-    assert response.json()["data"]["users"]["removeSshKey"]["user"]["sshKeys"] == []
-
-
-def test_graphql_remove_root_ssh_key(authorized_client, some_users):
-    response = authorized_client.post(
-        "/graphql",
-        json={
-            "query": API_REMOVE_SSH_KEY_MUTATION,
-            "variables": {
-                "sshInput": {
-                    "username": "root",
-                    "sshKey": "ssh-ed25519 KEY test@pc",
-                },
-            },
-        },
-    )
-    assert response.status_code == 200
-    assert response.json().get("data") is not None
-
-    assert response.json()["data"]["users"]["removeSshKey"]["code"] == 200
-    assert response.json()["data"]["users"]["removeSshKey"]["message"] is not None
-    assert response.json()["data"]["users"]["removeSshKey"]["success"] is True
-
-    assert (
-        response.json()["data"]["users"]["removeSshKey"]["user"]["username"] == "root"
-    )
-    assert response.json()["data"]["users"]["removeSshKey"]["user"]["sshKeys"] == []
-
-
-def test_graphql_remove_admin_ssh_key(
-    authorized_client, some_users, mock_subprocess_popen
-):
-    response = authorized_client.post(
-        "/graphql",
-        json={
-            "query": API_REMOVE_SSH_KEY_MUTATION,
-            "variables": {
-                "sshInput": {
-                    "username": "tester",
-                    "sshKey": "ssh-rsa KEY test@pc",
-                },
-            },
-        },
-    )
-    assert response.status_code == 200
-    assert response.json().get("data") is not None
-
-    assert response.json()["data"]["users"]["removeSshKey"]["code"] == 200
-    assert response.json()["data"]["users"]["removeSshKey"]["message"] is not None
-    assert response.json()["data"]["users"]["removeSshKey"]["success"] is True
-
-    assert (
-        response.json()["data"]["users"]["removeSshKey"]["user"]["username"] == "tester"
-    )
-    assert response.json()["data"]["users"]["removeSshKey"]["user"]["sshKeys"] == []
+    if user == "root":
+        assert api_rootkeys(authorized_client) == [keys[0]]
+    else:
+        assert api_get_user_keys(authorized_client, user) == [keys[0]]
 
 
 @pytest.mark.parametrize("user", key_users)

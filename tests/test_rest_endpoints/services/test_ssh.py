@@ -95,14 +95,6 @@ def some_users(mocker, datadir):
 ## /ssh/keys/{user} ######################################################
 
 
-def test_delete_user_key(authorized_client, some_users):
-    response = authorized_client.delete(
-        "/services/ssh/keys/user1", json={"public_key": "ssh-rsa KEY user1@pc"}
-    )
-    assert response.status_code == 200
-    assert read_json(some_users / "some_users.json")["users"][0]["sshKeys"] == []
-
-
 @pytest.mark.parametrize("user", [2, 3])
 def test_delete_nonexistent_user_key(authorized_client, some_users, user):
     response = authorized_client.delete(
