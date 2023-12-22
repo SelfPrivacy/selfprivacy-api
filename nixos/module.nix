@@ -95,7 +95,6 @@ in
       path = [ pkgs.coreutils pkgs.gnutar pkgs.xz.bin pkgs.gzip pkgs.gitMinimal config.nix.package.out pkgs.nixos-rebuild ];
       # TODO set proper timeout for reboot instead of service restart
       serviceConfig = {
-        Type = "oneshot";
         User = "root";
         KillMode = "none";
         SendSIGKILL = "no";
@@ -118,7 +117,6 @@ in
       } // config.networking.proxy.envVars;
       path = [ pkgs.coreutils pkgs.gnutar pkgs.xz.bin pkgs.gzip pkgs.gitMinimal config.nix.package.out pkgs.nixos-rebuild ];
       serviceConfig = {
-        Type = "oneshot";
         User = "root";
         KillMode = "none";
         SendSIGKILL = "no";
@@ -140,7 +138,6 @@ in
       } // config.networking.proxy.envVars;
       path = [ pkgs.coreutils pkgs.gnutar pkgs.xz.bin pkgs.gzip pkgs.gitMinimal config.nix.package.out pkgs.nixos-rebuild ];
       serviceConfig = {
-        Type = "oneshot";
         User = "root";
         ExecStart = "${pkgs.nixos-rebuild}/bin/nixos-rebuild switch --rollback --flake /etc/nixos#sp-nixos";
         KillMode = "none";
