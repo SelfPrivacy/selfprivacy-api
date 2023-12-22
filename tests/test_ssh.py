@@ -349,30 +349,32 @@ def test_read_user_keys_from_json(generic_userdata, username):
     # deeper deletions are for user getter tests, not here
 
 
+@pytest.mark.parametrize("username", regular_users)
+def test_adding_user_key_writes_json(generic_userdata, username):
+
+    with WriteUserData() as data:
+        user_index = find_user_index_in_json_users(data["users"], username)
+        del data["users"][user_index]["sshKeys"]
+    key1 = "ssh-ed25519 KEY test@pc"
+    key2 = "ssh-ed25519 KEY2 test@pc"
+    create_ssh_key(username, key1)
+
+    with ReadUserData() as data:
+        user_index = find_user_index_in_json_users(data["users"], username)
+        assert "sshKeys" in data["users"][user_index]
+        assert data["users"][user_index]["sshKeys"] == [key1]
+
+    create_ssh_key(username, key2)
+
+    with ReadUserData() as data:
+        user_index = find_user_index_in_json_users(data["users"], username)
+        assert "sshKeys" in data["users"][user_index]
+        # order is irrelevant
+        assert set(data["users"][user_index]["sshKeys"]) == set([key1, key2])
+
+
 # @pytest.mark.parametrize("username", regular_users)
-# def test_adding_user_key_writes_json(generic_userdata, regular_users):
-#     admin_name = "tester"
-
-#     with WriteUserData() as data:
-#         del data["sshKeys"]
-#     key1 = "ssh-ed25519 KEY test@pc"
-#     key2 = "ssh-ed25519 KEY2 test@pc"
-#     create_ssh_key(admin_name, key1)
-
-#     with ReadUserData() as data:
-#         assert "sshKeys" in data
-#         assert data["sshKeys"] == [key1]
-
-#     create_ssh_key(admin_name, key2)
-
-#     with ReadUserData() as data:
-#         assert "sshKeys" in data
-#         # order is irrelevant
-#         assert set(data["sshKeys"]) == set([key1, key2])
-
-
-# @pytest.mark.parametrize("username", regular_users)
-# def test_removing_user_key_writes_json(generic_userdata, regular_users):
+# def test_removing_user_key_writes_json(generic_userdata, username):
 #     # generic userdata has a a single root key
 #     admin_name = "tester"
 
@@ -398,7 +400,7 @@ def test_read_user_keys_from_json(generic_userdata, username):
 
 
 # @pytest.mark.parametrize("username", regular_users)
-# def test_remove_user_key_on_undefined(generic_userdata, regular_users):
+# def test_remove_user_key_on_undefined(generic_userdata, username):
 #     # generic userdata has a a single root key
 #     admin_name = "tester"
 
