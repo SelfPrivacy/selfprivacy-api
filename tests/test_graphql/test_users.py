@@ -6,7 +6,7 @@ from tests.common import (
     generate_users_query,
     read_json,
 )
-from tests.test_graphql.common import assert_empty
+from tests.test_graphql.common import assert_empty, assert_errorcode
 
 invalid_usernames = [
     "messagebus",
@@ -170,6 +170,23 @@ def test_graphql_get_no_users(authorized_client, no_users, mock_subprocess_popen
     ]
 
 
+def test_graphql_get_users_undefined(authorized_client, undefined_settings):
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": generate_users_query([API_USERS_INFO]),
+        },
+    )
+    assert response.status_code == 200
+    assert response.json().get("data") is not None
+
+    assert len(response.json()["data"]["users"]["allUsers"]) == 1
+    assert response.json()["data"]["users"]["allUsers"][0]["username"] == "tester"
+    assert response.json()["data"]["users"]["allUsers"][0]["sshKeys"] == [
+        "ssh-rsa KEY test@pc"
+    ]
+
+
 API_GET_USERS = """
 query TestUsers($username: String!) {
     users {
@@ -214,6 +231,23 @@ def test_graphql_get_one_user(authorized_client, one_user, mock_subprocess_popen
     assert response.json()["data"]["users"]["getUser"]["sshKeys"] == [
         "ssh-rsa KEY user1@pc"
     ]
+
+
+def test_graphql_get_some_user_undefined(authorized_client, undefined_settings):
+
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_GET_USERS,
+            "variables": {
+                "username": "user1",
+            },
+        },
+    )
+    assert response.status_code == 200
+    assert response.json().get("data") is not None
+
+    assert response.json()["data"]["users"]["getUser"] is None
 
 
 def test_graphql_get_some_user(authorized_client, some_users, mock_subprocess_popen):

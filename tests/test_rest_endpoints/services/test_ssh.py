@@ -95,11 +95,6 @@ def some_users(mocker, datadir):
 ## /ssh/keys/{user} ######################################################
 
 
-def test_get_keys_of_undefined_users(authorized_client, undefined_settings):
-    response = authorized_client.get("/services/ssh/keys/user1")
-    assert response.status_code == 404
-
-
 @pytest.mark.parametrize("user", [1, 2, 3])
 def test_add_user_key(authorized_client, some_users, user):
     response = authorized_client.post(
