@@ -8,7 +8,6 @@ from selfprivacy_api.services import get_service_by_id
 from selfprivacy_api.services.service import Service, ServiceStatus
 from selfprivacy_api.services.test_service import DummyService
 
-from tests.test_common import raw_dummy_service, dummy_service
 from tests.common import generate_service_query
 from tests.test_graphql.common import assert_empty, assert_ok, get_data
 

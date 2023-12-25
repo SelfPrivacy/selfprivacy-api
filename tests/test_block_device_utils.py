@@ -13,7 +13,6 @@ from selfprivacy_api.utils.block_devices import (
     resize_block_device,
 )
 from tests.common import read_json
-from tests.test_common import dummy_service, raw_dummy_service
 
 SINGLE_LSBLK_OUTPUT = b"""
 {

@@ -15,8 +15,6 @@ from selfprivacy_api.services.generic_service_mover import FolderMoveNames
 from selfprivacy_api.services.test_service import DummyService
 from selfprivacy_api.services.service import Service, ServiceStatus, StoppedService
 
-from tests.test_common import raw_dummy_service, dummy_service
-
 
 def test_unimplemented_folders_raises():
     with raises(NotImplementedError):

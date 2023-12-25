@@ -16,8 +16,6 @@ import tempfile
 
 from selfprivacy_api.utils.huey import huey
 
-from tests.test_common import dummy_service, raw_dummy_service
-
 from selfprivacy_api.services import Service, get_all_services
 from selfprivacy_api.services import get_service_by_id
 from selfprivacy_api.services.service import ServiceStatus
