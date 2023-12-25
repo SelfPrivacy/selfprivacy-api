@@ -9,42 +9,24 @@ from selfprivacy_api.services.ocserv import Ocserv
 from selfprivacy_api.services.pleroma import Pleroma
 
 
+def expected_status_call(service_name: str):
+    return ["systemctl", "show", service_name]
+
+
 def call_args_asserts(mocked_object):
     assert mocked_object.call_count == 7
-    assert mocked_object.call_args_list[0][0][0] == [
-        "systemctl",
-        "show",
-        "dovecot2.service",
-    ]
-    assert mocked_object.call_args_list[1][0][0] == [
-        "systemctl",
-        "show",
-        "postfix.service",
-    ]
-    assert mocked_object.call_args_list[2][0][0] == [
-        "systemctl",
-        "show",
-        "vaultwarden.service",
-    ]
-    assert mocked_object.call_args_list[3][0][0] == [
-        "systemctl",
-        "show",
-        "gitea.service",
-    ]
-    assert mocked_object.call_args_list[4][0][0] == [
-        "systemctl",
-        "show",
-        "phpfpm-nextcloud.service",
-    ]
-    assert mocked_object.call_args_list[5][0][0] == [
-        "systemctl",
-        "show",
-        "ocserv.service",
-    ]
-    assert mocked_object.call_args_list[6][0][0] == [
-        "systemctl",
-        "show",
-        "pleroma.service",
+    calls = [callargs[0][0] for callargs in mocked_object.call_args_list]
+    assert calls == [
+        expected_status_call(service)
+        for service in [
+            "dovecot2.service",
+            "postfix.service",
+            "vaultwarden.service",
+            "gitea.service",
+            "phpfpm-nextcloud.service",
+            "ocserv.service",
+            "pleroma.service",
+        ]
     ]
 
 
@@ -74,7 +56,7 @@ SubState=exited
 
 
 @pytest.fixture
-def mock_subproccess_popen(mocker):
+def mock_popen_systemctl_service_ok(mocker):
     mock = mocker.patch(
         "subprocess.check_output", autospec=True, return_value=SUCCESSFUL_STATUS
     )
@@ -82,7 +64,7 @@ def mock_subproccess_popen(mocker):
 
 
 @pytest.fixture
-def mock_broken_service(mocker):
+def mock_popen_systemctl_service_not_ok(mocker):
     mock = mocker.patch(
         "subprocess.check_output", autospec=True, return_value=FAILED_STATUS
     )
@@ -91,21 +73,22 @@ def mock_broken_service(mocker):
 
 ###############################################################################
 
-def test_dkim_key(authorized_client, mock_subproccess_popen):
-    assert MailServer.get_status() == ServiceStatus.ACTIVE 
+
+def test_systemctl_ok(mock_popen_systemctl_service_ok):
+    assert MailServer.get_status() == ServiceStatus.ACTIVE
     assert Bitwarden.get_status() == ServiceStatus.ACTIVE
     assert Gitea.get_status() == ServiceStatus.ACTIVE
     assert Nextcloud.get_status() == ServiceStatus.ACTIVE
     assert Ocserv.get_status() == ServiceStatus.ACTIVE
     assert Pleroma.get_status() == ServiceStatus.ACTIVE
-    call_args_asserts(mock_subproccess_popen)
+    call_args_asserts(mock_popen_systemctl_service_ok)
 
 
-def test_no_dkim_key(authorized_client, mock_broken_service):
-    assert MailServer.get_status() == ServiceStatus.FAILED 
+def test_systemctl_failed_service(mock_popen_systemctl_service_not_ok):
+    assert MailServer.get_status() == ServiceStatus.FAILED
     assert Bitwarden.get_status() == ServiceStatus.FAILED
     assert Gitea.get_status() == ServiceStatus.FAILED
     assert Nextcloud.get_status() == ServiceStatus.FAILED
     assert Ocserv.get_status() == ServiceStatus.FAILED
     assert Pleroma.get_status() == ServiceStatus.FAILED
-    call_args_asserts(mock_broken_service)
+    call_args_asserts(mock_popen_systemctl_service_not_ok)
