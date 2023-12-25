@@ -6,7 +6,7 @@ import pytest
 
 from tests.common import generate_system_query, read_json
 from tests.test_graphql.common import assert_empty
-from tests.test_dkim import mock_no_dkim_file
+from tests.test_dkim import no_dkim_file, dkim_file
 
 
 @pytest.fixture
@@ -338,7 +338,7 @@ def test_graphql_get_domain_no_dkim(
     domain_file,
     mock_get_ip4,
     mock_get_ip6,
-    mock_no_dkim_file,
+    no_dkim_file,
     turned_on,
 ):
     """Test no DKIM file situation gets properly handled"""
