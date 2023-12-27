@@ -2,6 +2,7 @@ selfprivacy-graphql-api: { config, lib, pkgs, ... }:
 
 let
   cfg = config.services.selfprivacy-api;
+  nixos-rebuild = "${config.system.build.nixos-rebuild}/bin/nixos-rebuild";
 in
 {
   options.services.selfprivacy-api = {
@@ -37,7 +38,6 @@ in
         pkgs.gzip
         pkgs.gitMinimal
         config.nix.package.out
-        pkgs.nixos-rebuild
         pkgs.restic
         pkgs.mkpasswd
         pkgs.util-linux
@@ -70,7 +70,6 @@ in
         pkgs.gzip
         pkgs.gitMinimal
         config.nix.package.out
-        pkgs.nixos-rebuild
         pkgs.restic
         pkgs.mkpasswd
         pkgs.util-linux
@@ -92,7 +91,8 @@ in
       environment = config.nix.envVars // {
         HOME = "/root";
       } // config.networking.proxy.envVars;
-      path = [ pkgs.coreutils pkgs.gnutar pkgs.xz.bin pkgs.gzip pkgs.gitMinimal config.nix.package.out pkgs.nixos-rebuild ];
+      # TODO figure out how to get dependencies list reliably
+      path = [ pkgs.coreutils pkgs.gnutar pkgs.xz.bin pkgs.gzip pkgs.gitMinimal config.nix.package.out ];
       # TODO set proper timeout for reboot instead of service restart
       serviceConfig = {
         User = "root";
@@ -100,11 +100,11 @@ in
         SendSIGKILL = "no";
       };
       script = ''
-        # sync with sp-modules sub-flake
+        # sync top-level flake with sp-modules sub-flake
         # (https://github.com/NixOS/nix/issues/9339)
-        ${config.nix.package}/bin/nix flake lock /etc/nixos --update-input sp-modules
+        nix flake lock /etc/nixos --update-input sp-modules
 
-        ${pkgs.nixos-rebuild}/bin/nixos-rebuild switch --flake /etc/nixos#sp-nixos
+        ${nixos-rebuild} switch --flake /etc/nixos#sp-nixos
       '';
     };
     # One shot systemd service to upgrade NixOS using nixos-rebuild
@@ -115,17 +115,21 @@ in
       environment = config.nix.envVars // {
         HOME = "/root";
       } // config.networking.proxy.envVars;
-      path = [ pkgs.coreutils pkgs.gnutar pkgs.xz.bin pkgs.gzip pkgs.gitMinimal config.nix.package.out pkgs.nixos-rebuild ];
+      # TODO figure out how to get dependencies list reliably
+      path = [ pkgs.coreutils pkgs.gnutar pkgs.xz.bin pkgs.gzip pkgs.gitMinimal config.nix.package.out ];
       serviceConfig = {
         User = "root";
         KillMode = "none";
         SendSIGKILL = "no";
       };
       script = ''
+        nix flake update /etc/nixos/sp-modules
+
         # FIXME get URL from systemd parameter
-        ${config.nix.package}/bin/nix flake update /etc/nixos/sp-modules/
-        ${config.nix.package}/bin/nix flake update /etc/nixos --override-input selfprivacy-nixos-config git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes
-        ${pkgs.nixos-rebuild}/bin/nixos-rebuild switch --flake /etc/nixos#sp-nixos
+        nix flake update /etc/nixos \
+        --override-input selfprivacy-nixos-config git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes
+
+        ${nixos-rebuild} switch --flake /etc/nixos#sp-nixos
       '';
     };
     # One shot systemd service to rollback NixOS using nixos-rebuild
@@ -136,10 +140,12 @@ in
       environment = config.nix.envVars // {
         HOME = "/root";
       } // config.networking.proxy.envVars;
-      path = [ pkgs.coreutils pkgs.gnutar pkgs.xz.bin pkgs.gzip pkgs.gitMinimal config.nix.package.out pkgs.nixos-rebuild ];
+      # TODO figure out how to get dependencies list reliably
+      path = [ pkgs.coreutils pkgs.gnutar pkgs.xz.bin pkgs.gzip pkgs.gitMinimal config.nix.package.out ];
       serviceConfig = {
         User = "root";
-        ExecStart = "${pkgs.nixos-rebuild}/bin/nixos-rebuild switch --rollback --flake /etc/nixos#sp-nixos";
+        ExecStart =
+          "${nixos-rebuild} switch --rollback --flake /etc/nixos#sp-nixos";
         KillMode = "none";
         SendSIGKILL = "no";
       };
