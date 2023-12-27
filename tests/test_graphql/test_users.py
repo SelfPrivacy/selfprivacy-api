@@ -133,6 +133,17 @@ allUsers {
 """
 
 
+def api_all_users(authorized_client):
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": generate_users_query([API_USERS_INFO]),
+        },
+    )
+    output = get_data(response)["users"]["allUsers"]
+    return output
+
+
 def test_graphql_get_users_unauthorized(client, some_users, mock_subprocess_popen):
     """Test wrong auth"""
     response = client.post(
@@ -542,6 +553,11 @@ def test_graphql_delete_user(authorized_client, some_users, mock_subprocess_pope
     assert response.json()["data"]["users"]["deleteUser"]["code"] == 200
     assert response.json()["data"]["users"]["deleteUser"]["message"] is not None
     assert response.json()["data"]["users"]["deleteUser"]["success"] is True
+
+    new_users = api_all_users(authorized_client)
+    assert len(new_users) == 3
+    usernames = [user["username"] for user in new_users]
+    assert set(usernames) == set(["user2", "user3", "tester"])
 
 
 @pytest.mark.parametrize("username", ["", "def"])

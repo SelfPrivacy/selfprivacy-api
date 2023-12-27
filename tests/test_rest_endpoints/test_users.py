@@ -111,16 +111,6 @@ def mock_subprocess_popen(mocker):
 
 
 ##  TESTS  ######################################################
-# gql counterpart is too weak
-def test_delete_user(authorized_client, some_users, mock_subprocess_popen):
-    response = authorized_client.delete("/users/user1")
-    assert response.status_code == 200
-    assert read_json(some_users / "some_users.json")["users"] == [
-        {"username": "user2", "hashedPassword": "HASHED_PASSWORD_2", "sshKeys": []},
-        {"username": "user3", "hashedPassword": "HASHED_PASSWORD_3"},
-    ]
-
-
 def test_delete_main_user(authorized_client, some_users, mock_subprocess_popen):
     response = authorized_client.delete("/users/tester")
     assert response.status_code == 400
