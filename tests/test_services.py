@@ -9,11 +9,14 @@ from selfprivacy_api.utils.waitloop import wait_until_true
 
 from selfprivacy_api.services.bitwarden import Bitwarden
 from selfprivacy_api.services.pleroma import Pleroma
+from selfprivacy_api.services.mailserver import MailServer
 from selfprivacy_api.services.owned_path import OwnedPath
 from selfprivacy_api.services.generic_service_mover import FolderMoveNames
 
 from selfprivacy_api.services.test_service import DummyService
 from selfprivacy_api.services.service import Service, ServiceStatus, StoppedService
+
+from tests.test_dkim import domain_file, dkim_file, no_dkim_file
 
 
 def test_unimplemented_folders_raises():
@@ -145,3 +148,13 @@ def test_enabling_disabling_writes_json(
     dummy_service.disable()
     with ReadUserData() as data:
         assert data[dummy_service.get_id()]["enable"] is False
+
+
+# more detailed testing of this is in test_graphql/test_system.py
+def test_mailserver_with_dkim_returns_some_dns(dkim_file):
+    records = MailServer().get_dns_records()
+    assert len(records) > 0
+
+
+def test_mailserver_with_no_dkim_returns_no_dns(no_dkim_file):
+    assert MailServer().get_dns_records() == []
