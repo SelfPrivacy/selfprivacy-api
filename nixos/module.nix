@@ -2,6 +2,7 @@ selfprivacy-graphql-api: { config, lib, pkgs, ... }:
 
 let
   cfg = config.services.selfprivacy-api;
+  config-id = "default";
   nixos-rebuild = "${config.system.build.nixos-rebuild}/bin/nixos-rebuild";
 in
 {
@@ -104,7 +105,7 @@ in
         # (https://github.com/NixOS/nix/issues/9339)
         nix flake lock /etc/nixos --update-input sp-modules
 
-        ${nixos-rebuild} switch --flake /etc/nixos#sp-nixos
+        ${nixos-rebuild} switch --flake /etc/nixos#${config-id}
       '';
     };
     # One shot systemd service to upgrade NixOS using nixos-rebuild
@@ -129,7 +130,7 @@ in
         nix flake update /etc/nixos \
         --override-input selfprivacy-nixos-config git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes
 
-        ${nixos-rebuild} switch --flake /etc/nixos#sp-nixos
+        ${nixos-rebuild} switch --flake /etc/nixos#${config-id}
       '';
     };
     # One shot systemd service to rollback NixOS using nixos-rebuild
@@ -145,7 +146,7 @@ in
       serviceConfig = {
         User = "root";
         ExecStart =
-          "${nixos-rebuild} switch --rollback --flake /etc/nixos#sp-nixos";
+          "${nixos-rebuild} switch --rollback --flake /etc/nixos#${config-id}";
         KillMode = "none";
         SendSIGKILL = "no";
       };
