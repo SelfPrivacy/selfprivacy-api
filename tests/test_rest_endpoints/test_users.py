@@ -112,28 +112,6 @@ def mock_subprocess_popen(mocker):
 
 ##  TESTS  ######################################################
 
-# graphql tests still provide these fields even if with empty values
-
-
-def test_post_without_username(authorized_client, one_user, mock_subprocess_popen):
-    response = authorized_client.post("/users", json={"password": "password"})
-    assert response.status_code == 422
-
-
-def test_post_without_password(authorized_client, one_user, mock_subprocess_popen):
-    response = authorized_client.post("/users", json={"username": "user4"})
-    assert response.status_code == 422
-
-
-def test_post_without_username_and_password(
-    authorized_client, one_user, mock_subprocess_popen
-):
-    response = authorized_client.post("/users", json={})
-    assert response.status_code == 422
-
-
-# end of BUT THERE ARE FIELDS! rant
-
 # the final user is not in gql checks
 # I think maybe generate a bunch?
 @pytest.mark.parametrize("username", ["", "1", "фыр", "user1@", "№:%##$^&@$&^()_"])
