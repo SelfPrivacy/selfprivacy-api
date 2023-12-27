@@ -100,9 +100,9 @@ in
         SendSIGKILL = "no";
       };
       script = ''
-        # relock sp-modules to absolute path (in terms of Nix) due to Nix bugs:
-        # https://github.com/NixOS/nix/issues/9339
-        ${config.nix.package}/bin/nix flake lock /etc/nixos --override-input sp-modules /etc/nixos/sp-modules
+        # sync with sp-modules sub-flake
+        # (https://github.com/NixOS/nix/issues/9339)
+        ${config.nix.package}/bin/nix flake lock /etc/nixos --update-input sp-modules
 
         ${pkgs.nixos-rebuild}/bin/nixos-rebuild switch --flake /etc/nixos#sp-nixos
       '';
