@@ -58,7 +58,7 @@ def get_users(
             )
             for user in user_data["users"]
         ]
-        if not exclude_primary:
+        if not exclude_primary and "username" in user_data.keys():
             users.append(
                 UserDataUser(
                     username=user_data["username"],

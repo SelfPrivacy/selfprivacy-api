@@ -112,15 +112,6 @@ def mock_subprocess_popen(mocker):
 
 ##  TESTS  ######################################################
 
-
-def test_get_undefined_users(
-    authorized_client, undefined_settings, mock_subprocess_popen
-):
-    response = authorized_client.get("/users")
-    assert response.status_code == 200
-    assert response.json() == []
-
-
 # graphql tests still provide these fields even if with empty values
 
 

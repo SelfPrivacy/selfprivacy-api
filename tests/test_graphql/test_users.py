@@ -6,6 +6,7 @@ from tests.common import (
     generate_users_query,
     read_json,
 )
+from selfprivacy_api.utils import WriteUserData
 from tests.test_graphql.common import assert_empty, assert_errorcode
 
 invalid_usernames = [
@@ -86,6 +87,15 @@ def some_users(mocker, datadir):
 def undefined_settings(mocker, datadir):
     mocker.patch("selfprivacy_api.utils.USERDATA_FILE", new=datadir / "undefined.json")
     assert "users" not in read_json(datadir / "undefined.json")
+    return datadir
+
+
+@pytest.fixture
+def no_users_no_admin_nobody(undefined_settings):
+    datadir = undefined_settings
+    with WriteUserData() as data:
+        del data["username"]
+        del data["sshKeys"]
     return datadir
 
 
@@ -170,7 +180,7 @@ def test_graphql_get_no_users(authorized_client, no_users, mock_subprocess_popen
     ]
 
 
-def test_graphql_get_users_undefined(authorized_client, undefined_settings):
+def test_graphql_get_users_undefined_but_admin(authorized_client, undefined_settings):
     response = authorized_client.post(
         "/graphql",
         json={
@@ -185,6 +195,21 @@ def test_graphql_get_users_undefined(authorized_client, undefined_settings):
     assert response.json()["data"]["users"]["allUsers"][0]["sshKeys"] == [
         "ssh-rsa KEY test@pc"
     ]
+
+
+def test_graphql_get_users_undefined_no_admin(
+    authorized_client, no_users_no_admin_nobody
+):
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": generate_users_query([API_USERS_INFO]),
+        },
+    )
+    assert response.status_code == 200
+    assert response.json().get("data") is not None
+
+    assert len(response.json()["data"]["users"]["allUsers"]) == 0
 
 
 API_GET_USERS = """
