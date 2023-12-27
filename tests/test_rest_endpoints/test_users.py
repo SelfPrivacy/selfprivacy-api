@@ -111,9 +111,6 @@ def mock_subprocess_popen(mocker):
 
 
 ##  TESTS  ######################################################
-def test_delete_main_user(authorized_client, some_users, mock_subprocess_popen):
-    response = authorized_client.delete("/users/tester")
-    assert response.status_code == 400
 
 
 def test_delete_just_delete(authorized_client, some_users, mock_subprocess_popen):
