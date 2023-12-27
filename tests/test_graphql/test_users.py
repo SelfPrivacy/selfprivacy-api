@@ -467,12 +467,21 @@ def test_graphql_add_existing_user(authorized_client, one_user):
     assert output["user"]["sshKeys"][0] == "ssh-rsa KEY user1@pc"
 
 
-def test_graphql_add_main_user(authorized_client, one_user, mock_subprocess_popen):
+def test_graphql_add_main_user(authorized_client, one_user):
     output = api_add_user(authorized_client, "tester", password="12345678")
 
     assert_errorcode(output, code=409)
     assert output["user"]["username"] == "tester"
     assert output["user"]["sshKeys"][0] == "ssh-rsa KEY test@pc"
+
+
+def test_graphql_add_user_when_no_admin_defined(
+    authorized_client, no_users_no_admin_nobody
+):
+    output = api_add_user(authorized_client, "tester", password="12345678")
+
+    assert_errorcode(output, code=400)
+    assert output["user"] is None
 
 
 def test_graphql_add_long_username(authorized_client, one_user, mock_subprocess_popen):

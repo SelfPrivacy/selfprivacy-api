@@ -107,6 +107,12 @@ class PasswordIsEmpty(Exception):
     pass
 
 
+class InvalidConfiguration(Exception):
+    """The userdata is broken"""
+
+    pass
+
+
 def create_user(username: str, password: str):
     if password == "":
         raise PasswordIsEmpty("Password is empty")
@@ -124,6 +130,10 @@ def create_user(username: str, password: str):
 
     with ReadUserData() as user_data:
         ensure_ssh_and_users_fields_exist(user_data)
+        if "username" not in user_data.keys():
+            raise InvalidConfiguration(
+                "Broken config: Admin name is not defined. Consider recovery or add it manually"
+            )
         if username == user_data["username"]:
             raise UserAlreadyExists("User already exists")
         if username in [user["username"] for user in user_data["users"]]:
