@@ -111,19 +111,6 @@ def mock_subprocess_popen(mocker):
 
 
 ##  TESTS  ######################################################
-
-# the final user is not in gql checks
-# I think maybe generate a bunch?
-@pytest.mark.parametrize("username", ["", "1", "фыр", "user1@", "№:%##$^&@$&^()_"])
-def test_post_invalid_username(
-    authorized_client, one_user, mock_subprocess_popen, username
-):
-    response = authorized_client.post(
-        "/users", json={"username": username, "password": "password"}
-    )
-    assert response.status_code == 400
-
-
 # gql counterpart is too weak
 def test_delete_user(authorized_client, some_users, mock_subprocess_popen):
     response = authorized_client.delete("/users/user1")

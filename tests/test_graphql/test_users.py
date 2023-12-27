@@ -430,7 +430,6 @@ def test_graphql_add_with_empty_fields(authorized_client, one_user, user_json):
     output = get_data(response)["users"]["createUser"]
 
     assert_errorcode(output, 400)
-
     assert output["user"] is None
 
 
@@ -445,6 +444,7 @@ users_witn_undefined_fields = [
 def test_graphql_add_with_undefined_fields(authorized_client, one_user, user_json):
     # checking that all fields are mandatory
     response = api_add_user_json(authorized_client, user_json)
+
     assert response.json()["errors"] is not None
     assert response.json()["errors"] != []
 
@@ -453,130 +453,46 @@ def test_graphql_add_with_undefined_fields(authorized_client, one_user, user_jso
 def test_graphql_add_system_username(
     authorized_client, one_user, mock_subprocess_popen, username
 ):
-    response = authorized_client.post(
-        "/graphql",
-        json={
-            "query": API_CREATE_USERS_MUTATION,
-            "variables": {
-                "user": {
-                    "username": username,
-                    "password": "12345678",
-                },
-            },
-        },
-    )
-    assert response.status_code == 200
-    assert response.json().get("data") is not None
+    output = api_add_user(authorized_client, username, password="12345678")
 
-    assert response.json()["data"]["users"]["createUser"]["message"] is not None
-    assert response.json()["data"]["users"]["createUser"]["code"] == 409
-    assert response.json()["data"]["users"]["createUser"]["success"] is False
-
-    assert response.json()["data"]["users"]["createUser"]["user"] is None
+    assert_errorcode(output, code=409)
+    assert output["user"] is None
 
 
-def test_graphql_add_existing_user(authorized_client, one_user, mock_subprocess_popen):
-    response = authorized_client.post(
-        "/graphql",
-        json={
-            "query": API_CREATE_USERS_MUTATION,
-            "variables": {
-                "user": {
-                    "username": "user1",
-                    "password": "12345678",
-                },
-            },
-        },
-    )
-    assert response.status_code == 200
-    assert response.json().get("data") is not None
+def test_graphql_add_existing_user(authorized_client, one_user):
+    output = api_add_user(authorized_client, "user1", password="12345678")
 
-    assert response.json()["data"]["users"]["createUser"]["message"] is not None
-    assert response.json()["data"]["users"]["createUser"]["code"] == 409
-    assert response.json()["data"]["users"]["createUser"]["success"] is False
-
-    assert response.json()["data"]["users"]["createUser"]["user"]["username"] == "user1"
-    assert (
-        response.json()["data"]["users"]["createUser"]["user"]["sshKeys"][0]
-        == "ssh-rsa KEY user1@pc"
-    )
+    assert_errorcode(output, code=409)
+    assert output["user"]["username"] == "user1"
+    assert output["user"]["sshKeys"][0] == "ssh-rsa KEY user1@pc"
 
 
 def test_graphql_add_main_user(authorized_client, one_user, mock_subprocess_popen):
-    response = authorized_client.post(
-        "/graphql",
-        json={
-            "query": API_CREATE_USERS_MUTATION,
-            "variables": {
-                "user": {
-                    "username": "tester",
-                    "password": "12345678",
-                },
-            },
-        },
-    )
-    assert response.status_code == 200
-    assert response.json().get("data") is not None
+    output = api_add_user(authorized_client, "tester", password="12345678")
 
-    assert response.json()["data"]["users"]["createUser"]["message"] is not None
-    assert response.json()["data"]["users"]["createUser"]["code"] == 409
-    assert response.json()["data"]["users"]["createUser"]["success"] is False
-
-    assert (
-        response.json()["data"]["users"]["createUser"]["user"]["username"] == "tester"
-    )
-    assert (
-        response.json()["data"]["users"]["createUser"]["user"]["sshKeys"][0]
-        == "ssh-rsa KEY test@pc"
-    )
+    assert_errorcode(output, code=409)
+    assert output["user"]["username"] == "tester"
+    assert output["user"]["sshKeys"][0] == "ssh-rsa KEY test@pc"
 
 
 def test_graphql_add_long_username(authorized_client, one_user, mock_subprocess_popen):
-    response = authorized_client.post(
-        "/graphql",
-        json={
-            "query": API_CREATE_USERS_MUTATION,
-            "variables": {
-                "user": {
-                    "username": "a" * 32,
-                    "password": "12345678",
-                },
-            },
-        },
-    )
-    assert response.json().get("data") is not None
+    output = api_add_user(authorized_client, "a" * 32, password="12345678")
 
-    assert response.json()["data"]["users"]["createUser"]["message"] is not None
-    assert response.json()["data"]["users"]["createUser"]["code"] == 400
-    assert response.json()["data"]["users"]["createUser"]["success"] is False
-
-    assert response.json()["data"]["users"]["createUser"]["user"] is None
+    assert_errorcode(output, code=400)
+    assert output["user"] is None
 
 
-@pytest.mark.parametrize("username", ["", "1", "фыр", "user1@", "^-^"])
+# TODO: maybe make a username generating function to make a more comprehensive invalid username test
+@pytest.mark.parametrize(
+    "username", ["", "1", "фыр", "user1@", "^-^", "№:%##$^&@$&^()_"]
+)
 def test_graphql_add_invalid_username(
     authorized_client, one_user, mock_subprocess_popen, username
 ):
-    response = authorized_client.post(
-        "/graphql",
-        json={
-            "query": API_CREATE_USERS_MUTATION,
-            "variables": {
-                "user": {
-                    "username": username,
-                    "password": "12345678",
-                },
-            },
-        },
-    )
-    assert response.status_code == 200
-    assert response.json().get("data") is not None
+    output = api_add_user(authorized_client, username, password="12345678")
 
-    assert response.json()["data"]["users"]["createUser"]["message"] is not None
-    assert response.json()["data"]["users"]["createUser"]["code"] == 400
-    assert response.json()["data"]["users"]["createUser"]["success"] is False
-
-    assert response.json()["data"]["users"]["createUser"]["user"] is None
+    assert_errorcode(output, code=400)
+    assert output["user"] is None
 
 
 API_DELETE_USER_MUTATION = """
