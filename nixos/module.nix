@@ -4,6 +4,7 @@ let
   cfg = config.services.selfprivacy-api;
   config-id = "default";
   nixos-rebuild = "${config.system.build.nixos-rebuild}/bin/nixos-rebuild";
+  nix = "${config.nix.package.out}/bin/nix";
 in
 {
   options.services.selfprivacy-api = {
@@ -98,18 +99,19 @@ in
       serviceConfig = {
         User = "root";
         WorkingDirectory = "/etc/nixos";
+        # sync top-level flake with sp-modules sub-flake
+        # (https://github.com/NixOS/nix/issues/9339)
+        ExecStartPre = ''
+          ${nix} flake lock --override-input sp-modules path:./sp-modules
+        '';
+        ExecStart = ''
+          ${nixos-rebuild} switch --flake .#${config-id}
+        '';
         KillMode = "none";
         SendSIGKILL = "no";
       };
       restartIfChanged = false;
       unitConfig.X-StopOnRemoval = false;
-      script = ''
-        # sync top-level flake with sp-modules sub-flake
-        # (https://github.com/NixOS/nix/issues/9339)
-        nix flake lock --override-input sp-modules path:./sp-modules
-
-        ${nixos-rebuild} switch --flake .#${config-id}
-      '';
     };
     # One shot systemd service to upgrade NixOS using nixos-rebuild
     systemd.services.sp-nixos-upgrade = {
@@ -124,18 +126,19 @@ in
       serviceConfig = {
         User = "root";
         WorkingDirectory = "/etc/nixos";
+        # TODO get URL from systemd template parameter?
+        ExecStartPre = ''
+          ${nix} flake update \
+          --override-input selfprivacy-nixos-config git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes
+        '';
+        ExecStart = ''
+          ${nixos-rebuild} switch --flake .#${config-id}
+        '';
         KillMode = "none";
         SendSIGKILL = "no";
       };
       restartIfChanged = false;
       unitConfig.X-StopOnRemoval = false;
-      script = ''
-        # TODO get URL from systemd parameter
-        nix flake update \
-        --override-input selfprivacy-nixos-config git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes
-
-        ${nixos-rebuild} switch --flake .#${config-id}
-      '';
     };
     # One shot systemd service to rollback NixOS using nixos-rebuild
     systemd.services.sp-nixos-rollback = {
@@ -150,8 +153,9 @@ in
       serviceConfig = {
         User = "root";
         WorkingDirectory = "/etc/nixos";
-        ExecStart =
-          "${nixos-rebuild} switch --rollback --flake .#${config-id}";
+        ExecStart = ''
+          ${nixos-rebuild} switch --rollback --flake .#${config-id}
+        '';
         KillMode = "none";
         SendSIGKILL = "no";
       };
