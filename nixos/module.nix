@@ -101,6 +101,8 @@ in
         KillMode = "none";
         SendSIGKILL = "no";
       };
+      restartIfChanged = false;
+      unitConfig.X-StopOnRemoval = false;
       script = ''
         # sync top-level flake with sp-modules sub-flake
         # (https://github.com/NixOS/nix/issues/9339)
@@ -125,8 +127,10 @@ in
         KillMode = "none";
         SendSIGKILL = "no";
       };
+      restartIfChanged = false;
+      unitConfig.X-StopOnRemoval = false;
       script = ''
-        # FIXME get URL from systemd parameter
+        # TODO get URL from systemd parameter
         nix flake update \
         --override-input selfprivacy-nixos-config git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes
 
@@ -151,6 +155,8 @@ in
         KillMode = "none";
         SendSIGKILL = "no";
       };
+      restartIfChanged = false;
+      unitConfig.X-StopOnRemoval = false;
     };
   };
 }
