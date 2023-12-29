@@ -11,7 +11,6 @@ from selfprivacy_api.graphql.schema import schema
 from selfprivacy_api.migrations import run_migrations
 
 from selfprivacy_api.rest import (
-    system,
     users,
     api_auth,
     services,
@@ -32,7 +31,6 @@ app.add_middleware(
 )
 
 
-app.include_router(system.router)
 app.include_router(users.router)
 app.include_router(api_auth.router)
 app.include_router(services.router)
