@@ -23,15 +23,6 @@ class ProcessMock:
     returncode = 0
 
 
-class BrokenServiceMock(ProcessMock):
-    """Mock subprocess.Popen for broken service"""
-
-    def communicate():  # pylint: disable=no-method-argument
-        return (b"Testing error", None)
-
-    returncode = 3
-
-
 @pytest.fixture
 def mock_subprocess_popen(mocker):
     mock = mocker.patch("subprocess.Popen", autospec=True, return_value=ProcessMock)

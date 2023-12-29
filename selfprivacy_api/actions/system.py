@@ -2,7 +2,7 @@
 import os
 import subprocess
 import pytz
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel
 
 from selfprivacy_api.utils import WriteUserData, ReadUserData
@@ -58,36 +58,56 @@ def set_auto_upgrade_settings(
             user_data["autoUpgrade"]["allowReboot"] = allowReboot
 
 
+class ShellException(Exception):
+    """Something went wrong when calling another process"""
+
+    pass
+
+
+def run_blocking(cmd: List[str], new_session: bool = False) -> str:
+    """Run a process, block until done, return output, complain if failed"""
+    process_handle = subprocess.Popen(
+        cmd,
+        shell=False,
+        start_new_session=new_session,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    stdout_raw, stderr_raw = process_handle.communicate()
+    stdout = stdout_raw.decode("utf-8")
+    if stderr_raw is not None:
+        stderr = stderr_raw.decode("utf-8")
+    else:
+        stderr = ""
+    output = stdout + "\n" + stderr
+    if process_handle.returncode != 0:
+        raise ShellException(
+            f"Shell command failed, command array: {cmd}, output: {output}"
+        )
+    return stdout
+
+
 def rebuild_system() -> int:
     """Rebuild the system"""
-    rebuild_result = subprocess.Popen(
-        ["systemctl", "start", "sp-nixos-rebuild.service"], start_new_session=True
-    )
-    rebuild_result.communicate()[0]
-    return rebuild_result.returncode
+    run_blocking(["systemctl", "start", "sp-nixos-rebuild.service"], new_session=True)
+    return 0
 
 
 def rollback_system() -> int:
     """Rollback the system"""
-    rollback_result = subprocess.Popen(
-        ["systemctl", "start", "sp-nixos-rollback.service"], start_new_session=True
-    )
-    rollback_result.communicate()[0]
-    return rollback_result.returncode
+    run_blocking(["systemctl", "start", "sp-nixos-rollback.service"], new_session=True)
+    return 0
 
 
 def upgrade_system() -> int:
     """Upgrade the system"""
-    upgrade_result = subprocess.Popen(
-        ["systemctl", "start", "sp-nixos-upgrade.service"], start_new_session=True
-    )
-    upgrade_result.communicate()[0]
-    return upgrade_result.returncode
+    run_blocking(["systemctl", "start", "sp-nixos-upgrade.service"], new_session=True)
+    return 0
 
 
 def reboot_system() -> None:
     """Reboot the system"""
-    subprocess.Popen(["reboot"], start_new_session=True)
+    run_blocking(["reboot"], new_session=True)
 
 
 def get_system_version() -> str:

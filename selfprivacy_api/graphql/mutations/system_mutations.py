@@ -115,39 +115,67 @@ class SystemMutations:
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def run_system_rebuild(self) -> GenericMutationReturn:
-        system_actions.rebuild_system()
-        return GenericMutationReturn(
-            success=True,
-            message="Starting rebuild system",
-            code=200,
-        )
+        try:
+            system_actions.rebuild_system()
+            return GenericMutationReturn(
+                success=True,
+                message="Starting rebuild system",
+                code=200,
+            )
+        except system_actions.ShellException as e:
+            return GenericMutationReturn(
+                success=False,
+                message=str(e),
+                code=500,
+            )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def run_system_rollback(self) -> GenericMutationReturn:
         system_actions.rollback_system()
-        return GenericMutationReturn(
-            success=True,
-            message="Starting rebuild system",
-            code=200,
-        )
+        try:
+            return GenericMutationReturn(
+                success=True,
+                message="Starting rebuild system",
+                code=200,
+            )
+        except system_actions.ShellException as e:
+            return GenericMutationReturn(
+                success=False,
+                message=str(e),
+                code=500,
+            )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def run_system_upgrade(self) -> GenericMutationReturn:
         system_actions.upgrade_system()
-        return GenericMutationReturn(
-            success=True,
-            message="Starting rebuild system",
-            code=200,
-        )
+        try:
+            return GenericMutationReturn(
+                success=True,
+                message="Starting rebuild system",
+                code=200,
+            )
+        except system_actions.ShellException as e:
+            return GenericMutationReturn(
+                success=False,
+                message=str(e),
+                code=500,
+            )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def reboot_system(self) -> GenericMutationReturn:
         system_actions.reboot_system()
-        return GenericMutationReturn(
-            success=True,
-            message="System reboot has started",
-            code=200,
-        )
+        try:
+            return GenericMutationReturn(
+                success=True,
+                message="System reboot has started",
+                code=200,
+            )
+        except system_actions.ShellException as e:
+            return GenericMutationReturn(
+                success=False,
+                message=str(e),
+                code=500,
+            )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def pull_repository_changes(self) -> GenericMutationReturn:
