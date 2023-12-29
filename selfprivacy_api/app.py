@@ -12,7 +12,6 @@ from selfprivacy_api.migrations import run_migrations
 
 from selfprivacy_api.rest import (
     api_auth,
-    services,
 )
 
 app = FastAPI()
@@ -31,7 +30,6 @@ app.add_middleware(
 
 
 app.include_router(api_auth.router)
-app.include_router(services.router)
 app.include_router(graphql_app, prefix="/graphql")
 
 
