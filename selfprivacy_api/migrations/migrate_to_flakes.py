@@ -1,6 +1,10 @@
 import json
 import os
 import subprocess
+import tempfile
+import tarfile
+import shutil
+import urllib.request
 from selfprivacy_api.jobs import JobStatus, Jobs
 
 from selfprivacy_api.migrations.migration import Migration
@@ -48,10 +52,10 @@ class MigrateToFlakes(Migration):
             userdata: dict = json.load(userdata_file)
             userdata_file.close()
             print("Read file. Validating contents...")
-            assert userdata["dns"]["provider"] != None
-            assert userdata["dns"]["apiKey"] != None
-            assert userdata["useBinds"] == True
-            assert userdata["username"] != None
+            assert userdata["dns"]["provider"] is not None
+            assert userdata["dns"]["apiKey"] is not None
+            assert userdata["useBinds"] is True
+            assert userdata["username"] is not None
             assert userdata["username"] != ""
             print("Userdata file is probably fine.")
 
@@ -76,26 +80,19 @@ class MigrateToFlakes(Migration):
                     "/etc/nixos",
                 ]
             )
-            archive = subprocess.Popen(
-                (
-                    "curl",
-                    "--fail",
-                    "https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-template/archive/master.tar.gz",
-                ),
-                stdout=subprocess.PIPE,
-            )
-            extract = subprocess.check_output(
-                (
-                    "tar",
-                    "-xz",
-                    "-C",
-                    "/etc/nixos",
-                    "--strip-components=1",
-                    '--exclude=".*"',
-                ),
-                stdin=archive.stdout,
-            )
-            archive.wait()
+
+            archive_url = "https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-template/archive/master.tar.gz"
+            temp_dir = tempfile.mkdtemp()
+
+            try:
+                archive_path = os.path.join(temp_dir, "archive.tar.gz")
+                urllib.request.urlretrieve(archive_url, archive_path)
+
+                with tarfile.open(archive_path, "r:gz") as tar:
+                    tar.extractall(path="/etc/nixos")
+
+            finally:
+                shutil.rmtree(temp_dir)
             print("Downloaded")
 
             print("Copying hardware-configuration.nix")
@@ -112,7 +109,12 @@ class MigrateToFlakes(Migration):
             print("Checking if /etc/nixos.pre-flakes/networking.nix exists")
             if os.path.exists("/etc/nixos.pre-flakes/networking.nix"):
                 print("Transforming networking.nix to /etc/nixos/deployment.nix")
-                raise NotImplementedError
+                deployment_contents = '{ lib, ... }: {\n  system.stateVersion = lib.mkDefault "23.11";\n  nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";\n'
+                with open("/etc/nixos.pre-flakes/networking.nix", "r") as networking_file:
+                    networking_contents = networking_file.read().splitlines(True)[1:]
+                deployment_contents += "\n" + "".join(networking_contents)
+                with open("/etc/nixos/deployment.nix", "w") as file:
+                    file.write(deployment_contents)
             else:
                 print("Generating /etc/nixos/deployment.nix")
                 deployment_contents = '{ lib, ... }: {\n  system.stateVersion = lib.mkDefault "23.11";\n  nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";\n}'
@@ -226,6 +228,7 @@ class MigrateToFlakes(Migration):
                 status=JobStatus.FINISHED,
                 status_text="New system built. Reboot your server to apply.",
                 progress=100,
+                description="Upgrade to NixOS 23.11",
             )
 
         except Exception as error:
@@ -237,4 +240,5 @@ class MigrateToFlakes(Migration):
                 type_id="migrations.migrate_to_flakes",
                 status=JobStatus.ERROR,
                 status_text=str(error),
+                description="Upgrade to NixOS 23.11",
             )
