@@ -110,7 +110,9 @@ class MigrateToFlakes(Migration):
             if os.path.exists("/etc/nixos.pre-flakes/networking.nix"):
                 print("Transforming networking.nix to /etc/nixos/deployment.nix")
                 deployment_contents = '{ lib, ... }: {\n  system.stateVersion = lib.mkDefault "23.11";\n  nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";\n'
-                with open("/etc/nixos.pre-flakes/networking.nix", "r") as networking_file:
+                with open(
+                    "/etc/nixos.pre-flakes/networking.nix", "r"
+                ) as networking_file:
                     networking_contents = networking_file.read().splitlines(True)[1:]
                 deployment_contents += "\n" + "".join(networking_contents)
                 with open("/etc/nixos/deployment.nix", "w") as file:
