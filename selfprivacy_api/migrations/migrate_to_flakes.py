@@ -84,7 +84,9 @@ class MigrateToFlakes(Migration):
 
                 with tarfile.open(archive_path, "r:gz") as tar:
                     tar.extractall(path=temp_dir)
-                    extracted_folder = os.path.join(temp_dir, "selfprivacy-nixos-template")
+                    extracted_folder = os.path.join(
+                        temp_dir, "selfprivacy-nixos-template"
+                    )
                     shutil.copytree(extracted_folder, "/etc/nixos")
 
             finally:
@@ -99,7 +101,9 @@ class MigrateToFlakes(Migration):
                 hardware_config_lines = hardware_config_file.readlines()
 
             # Check if the file contains the line with "./networking.nix" substring
-            hardware_config_lines = [line for line in hardware_config_lines if "./networking.nix" not in line]
+            hardware_config_lines = [
+                line for line in hardware_config_lines if "./networking.nix" not in line
+            ]
 
             with open(new_hardware_config_path, "w") as new_hardware_config_file:
                 new_hardware_config_file.writelines(hardware_config_lines)
@@ -226,9 +230,11 @@ class MigrateToFlakes(Migration):
                     "/etc/nixos#default",
                 ]
             )
+            print("================================")
             print(
                 "NixOS built. You may reboot now! Creating a notification for the app"
             )
+            print("================================")
 
             Jobs.add(
                 name="NixOS upgrade to 23.11",
@@ -250,3 +256,24 @@ class MigrateToFlakes(Migration):
                 status_text=str(error),
                 description="Upgrade to NixOS 23.11",
             )
+            # Recover the old configuration if the nixos.pre-flakes exists
+            if os.path.exists("/etc/nixos.pre-flakes"):
+                print("Recovering the old configuration")
+                # Move the new configuration to /etc/nixos.new
+                subprocess.check_output(
+                    [
+                        "mv",
+                        "-v",
+                        "/etc/nixos",
+                        "/etc/nixos.failed",
+                    ]
+                )
+                subprocess.check_output(
+                    [
+                        "mv",
+                        "-v",
+                        "/etc/nixos.pre-flakes",
+                        "/etc/nixos",
+                    ]
+                )
+                print("Recovered the old configuration")
