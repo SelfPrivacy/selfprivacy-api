@@ -74,12 +74,12 @@ class MigrateToFlakes(Migration):
             print("Moved")
 
             print("Downloading the template of the new NixOS configuration")
-            subprocess.check_output(
-                [
-                    "mkdir",
-                    "/etc/nixos",
-                ]
-            )
+            # subprocess.check_output(
+            #     [
+            #         "mkdir",
+            #         "/etc/nixos",
+            #     ]
+            # )
 
             archive_url = "https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-template/archive/master.tar.gz"
             temp_dir = tempfile.mkdtemp()
