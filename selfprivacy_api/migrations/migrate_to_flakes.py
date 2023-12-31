@@ -91,11 +91,7 @@ class MigrateToFlakes(Migration):
                 with tarfile.open(archive_path, "r:gz") as tar:
                     tar.extractall(path=temp_dir)
                     extracted_folder = os.path.join(temp_dir, "selfprivacy-nixos-template")
-                    for root, _, files in os.walk(extracted_folder):
-                        for file in files:
-                            src_path = os.path.join(root, file)
-                            dest_path = os.path.join("/etc/nixos", file)
-                            shutil.copy2(src_path, dest_path)
+                    shutil.copytree(extracted_folder, "/etc/nixos")
 
             finally:
                 shutil.rmtree(temp_dir)
