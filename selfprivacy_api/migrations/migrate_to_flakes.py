@@ -74,12 +74,6 @@ class MigrateToFlakes(Migration):
             print("Moved")
 
             print("Downloading the template of the new NixOS configuration")
-            # subprocess.check_output(
-            #     [
-            #         "mkdir",
-            #         "/etc/nixos",
-            #     ]
-            # )
 
             archive_url = "https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-template/archive/master.tar.gz"
             temp_dir = tempfile.mkdtemp()
@@ -98,14 +92,17 @@ class MigrateToFlakes(Migration):
             print("Downloaded")
 
             print("Copying hardware-configuration.nix")
-            subprocess.check_output(
-                [
-                    "cp",
-                    "-v",
-                    "/etc/nixos.pre-flakes/hardware-configuration.nix",
-                    "/etc/nixos/hardware-configuration.nix",
-                ]
-            )
+            hardware_config_path = "/etc/nixos.pre-flakes/hardware-configuration.nix"
+            new_hardware_config_path = "/etc/nixos/hardware-configuration.nix"
+
+            with open(hardware_config_path, "r") as hardware_config_file:
+                hardware_config_lines = hardware_config_file.readlines()
+
+            # Check if the file contains the line with "./networking.nix" substring
+            hardware_config_lines = [line for line in hardware_config_lines if "./networking.nix" not in line]
+
+            with open(new_hardware_config_path, "w") as new_hardware_config_file:
+                new_hardware_config_file.writelines(hardware_config_lines)
             print("Copied")
 
             print("Checking if /etc/nixos.pre-flakes/networking.nix exists")
