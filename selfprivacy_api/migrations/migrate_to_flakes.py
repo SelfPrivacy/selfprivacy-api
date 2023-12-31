@@ -132,7 +132,7 @@ class MigrateToFlakes(Migration):
             new_userdata = {
                 "dns": {
                     "provider": userdata.get("dns", {}).get("provider", "CLOUDFLARE"),
-                    "useStagingACME": True,
+                    "useStagingACME": False,
                 },
                 "server": {
                     "provider": userdata.get("server", {}).get("provider", "HETZNER")
