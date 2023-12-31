@@ -189,6 +189,12 @@ class MigrateToFlakes(Migration):
             print("New userdata.json generated.")
 
             print("Generating /etc/selfprivacy/secrets.json")
+            subprocess.check_output(
+                [
+                    "mkdir",
+                    "/etc/selfprivacy",
+                ]
+            )
             secrets_contents = {
                 "databasePassword": userdata.get("databasePassword"),
                 "dns": {"apiKey": userdata.get("dns", {}).get("apiKey", "INVALID")},
