@@ -58,7 +58,9 @@ class JitsiMeet(Service):
     @staticmethod
     def is_enabled() -> bool:
         with ReadUserData() as user_data:
-            return user_data.get("modules", {}).get("jitsi-meet", {}).get("enable", False)
+            return (
+                user_data.get("modules", {}).get("jitsi-meet", {}).get("enable", False)
+            )
 
     @staticmethod
     def get_status() -> ServiceStatus:

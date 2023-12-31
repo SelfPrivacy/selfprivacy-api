@@ -17,7 +17,6 @@ class UserType(Enum):
 
 @strawberry.type
 class User:
-
     user_type: UserType
     username: str
     # userHomeFolderspace: UserHomeFolderUsage
@@ -32,7 +31,6 @@ class UserMutationReturn(MutationReturnInterface):
 
 
 def get_user_by_username(username: str) -> typing.Optional[User]:
-
     user = users_actions.get_user_by_username(username)
     if user is None:
         return None

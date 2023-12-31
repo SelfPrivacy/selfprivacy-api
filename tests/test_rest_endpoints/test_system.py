@@ -14,12 +14,6 @@ def read_json(file_path):
 
 
 @pytest.fixture
-def domain_file(mocker, datadir):
-    mocker.patch("selfprivacy_api.utils.DOMAIN_FILE", datadir / "domain")
-    return datadir
-
-
-@pytest.fixture
 def turned_on(mocker, datadir):
     mocker.patch("selfprivacy_api.utils.USERDATA_FILE", new=datadir / "turned_on.json")
     assert read_json(datadir / "turned_on.json")["autoUpgrade"]["enable"] == True
@@ -108,7 +102,7 @@ def test_wrong_auth(wrong_auth_client):
     assert response.status_code == 401
 
 
-def test_get_domain(authorized_client, domain_file):
+def test_get_domain(authorized_client, turned_on):
     assert get_domain() == "test-domain.tld"
 
 

@@ -9,12 +9,6 @@ from tests.test_graphql.common import assert_empty
 
 
 @pytest.fixture
-def domain_file(mocker, datadir):
-    mocker.patch("selfprivacy_api.utils.DOMAIN_FILE", datadir / "domain")
-    return datadir
-
-
-@pytest.fixture
 def turned_on(mocker, datadir):
     mocker.patch("selfprivacy_api.utils.USERDATA_FILE", new=datadir / "turned_on.json")
     assert read_json(datadir / "turned_on.json")["autoUpgrade"]["enable"] == True
@@ -250,7 +244,7 @@ def is_dns_record_in_array(records, dns_record) -> bool:
 
 
 def test_graphql_get_domain(
-    authorized_client, domain_file, mock_get_ip4, mock_get_ip6, turned_on, mock_dkim_key
+    authorized_client, mock_get_ip4, mock_get_ip6, turned_on, mock_dkim_key
 ):
     """Test get domain"""
     response = authorized_client.post(
@@ -261,7 +255,9 @@ def test_graphql_get_domain(
     )
     assert response.status_code == 200
     assert response.json().get("data") is not None
-    assert response.json()["data"]["system"]["domainInfo"]["domain"] == "test.tld"
+    assert (
+        response.json()["data"]["system"]["domainInfo"]["domain"] == "test-domain.tld"
+    )
     assert (
         response.json()["data"]["system"]["domainInfo"]["hostname"] == "test-instance"
     )

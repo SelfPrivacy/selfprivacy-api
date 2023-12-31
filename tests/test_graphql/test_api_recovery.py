@@ -251,7 +251,6 @@ def test_graphql_generate_recovery_key_with_invalid_time_format(
 def test_graphql_generate_recovery_key_with_limited_uses(
     authorized_client, client, tokens_file
 ):
-
     mnemonic_key = graphql_make_new_recovery_key(authorized_client, uses=2)
 
     status = graphql_recovery_status(authorized_client)

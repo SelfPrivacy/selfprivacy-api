@@ -7,7 +7,7 @@
         "enable": false
     },
     "databasePassword": "PASSWORD",
-    "domain": "test.tld",
+    "domain": "test-domain.tld",
     "hashedMasterPassword": "HASHED_PASSWORD",
     "hostname": "test-instance",
     "nextcloud": {

@@ -210,9 +210,13 @@ class Service(ABC):
             return root_device
         with utils.ReadUserData() as userdata:
             if userdata.get("useBinds", False):
-                return userdata.get("modules", {}).get(cls.get_id(), {}).get(
-                    "location",
-                    root_device,
+                return (
+                    userdata.get("modules", {})
+                    .get(cls.get_id(), {})
+                    .get(
+                        "location",
+                        root_device,
+                    )
                 )
             else:
                 return root_device
