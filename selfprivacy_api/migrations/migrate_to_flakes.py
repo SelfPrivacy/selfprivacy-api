@@ -192,6 +192,7 @@ class MigrateToFlakes(Migration):
             subprocess.check_output(
                 [
                     "mkdir",
+                    "-p",
                     "/etc/selfprivacy",
                 ]
             )
