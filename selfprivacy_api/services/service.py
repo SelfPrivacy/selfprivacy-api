@@ -136,7 +136,7 @@ class Service(ABC):
         """
         name = cls.get_id()
         with ReadUserData() as user_data:
-            return user_data.get(name, {}).get("enable", False)
+            return user_data.get("modules", {}).get(name, {}).get("enable", False)
 
     @staticmethod
     @abstractmethod
@@ -144,24 +144,25 @@ class Service(ABC):
         """The status of the service, reported by systemd."""
         pass
 
-    # But they do not really enable?
+    @classmethod
+    def _set_enable(cls, enable: bool):
+        name = cls.get_id()
+        with WriteUserData() as user_data:
+            if "modules" not in user_data:
+                user_data["modules"] = {}
+            if name not in user_data["modules"]:
+                user_data["modules"][name] = {}
+            user_data["modules"][name]["enable"] = enable
+
     @classmethod
     def enable(cls):
         """Enable the service. Usually this means enabling systemd unit."""
-        name = cls.get_id()
-        with WriteUserData() as user_data:
-            if name not in user_data:
-                user_data[name] = {}
-            user_data[name]["enable"] = True
+        cls._set_enable(True)
 
     @classmethod
     def disable(cls):
         """Disable the service. Usually this means disabling systemd unit."""
-        name = cls.get_id()
-        with WriteUserData() as user_data:
-            if name not in user_data:
-                user_data[name] = {}
-            user_data[name]["enable"] = False
+        cls._set_enable(False)
 
     @staticmethod
     @abstractmethod

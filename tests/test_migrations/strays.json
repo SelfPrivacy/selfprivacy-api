@@ -1,0 +1,23 @@
+{
+    "bitwarden": {
+        "enable": true
+    },
+    "nextcloud": {
+        "adminPassword": "ADMIN",
+        "databasePassword": "ADMIN",
+        "enable": true
+    },
+    "gitea": {
+        "enable": true
+    },
+    "ocserv": {
+        "enable": true
+    },
+    "pleroma": {
+        "enable": true
+    },
+    "jitsi": {
+        "enable": true
+    },
+    "modules": {}
+}

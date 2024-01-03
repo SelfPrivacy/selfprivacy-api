@@ -7,6 +7,8 @@ from pytest import raises
 from selfprivacy_api.utils import ReadUserData, WriteUserData
 from selfprivacy_api.utils.waitloop import wait_until_true
 
+import selfprivacy_api.services as services_module
+
 from selfprivacy_api.services.bitwarden import Bitwarden
 from selfprivacy_api.services.pleroma import Pleroma
 from selfprivacy_api.services.mailserver import MailServer
@@ -15,6 +17,7 @@ from selfprivacy_api.services.generic_service_mover import FolderMoveNames
 
 from selfprivacy_api.services.test_service import DummyService
 from selfprivacy_api.services.service import Service, ServiceStatus, StoppedService
+from selfprivacy_api.services import get_enabled_services
 
 from tests.test_dkim import domain_file, dkim_file, no_dkim_file
 
@@ -95,35 +98,49 @@ def test_foldermoves_from_ownedpaths():
 
 def test_enabling_disabling_reads_json(dummy_service: DummyService):
     with WriteUserData() as data:
-        data[dummy_service.get_id()]["enable"] = False
+        data["modules"][dummy_service.get_id()]["enable"] = False
     assert dummy_service.is_enabled() is False
     with WriteUserData() as data:
-        data[dummy_service.get_id()]["enable"] = True
+        data["modules"][dummy_service.get_id()]["enable"] = True
     assert dummy_service.is_enabled() is True
 
 
-@pytest.fixture(params=["normally_enabled", "deleted_attribute", "service_not_in_json"])
+# A helper to test undefined states. Used in fixtures below
+def undefine_service_enabled_status(param, dummy_service):
+    if param == "deleted_attribute":
+        with WriteUserData() as data:
+            del data["modules"][dummy_service.get_id()]["enable"]
+    if param == "service_not_in_json":
+        with WriteUserData() as data:
+            del data["modules"][dummy_service.get_id()]
+    if param == "modules_not_in_json":
+        with WriteUserData() as data:
+            del data["modules"]
+
+
+# May be defined or not
+@pytest.fixture(
+    params=[
+        "normally_enabled",
+        "deleted_attribute",
+        "service_not_in_json",
+        "modules_not_in_json",
+    ]
+)
 def possibly_dubiously_enabled_service(
     dummy_service: DummyService, request
 ) -> DummyService:
-    if request.param == "deleted_attribute":
-        with WriteUserData() as data:
-            del data[dummy_service.get_id()]["enable"]
-    if request.param == "service_not_in_json":
-        with WriteUserData() as data:
-            del data[dummy_service.get_id()]
+    if request.param != "normally_enabled":
+        undefine_service_enabled_status(request.param, dummy_service)
     return dummy_service
 
 
-# Yeah, idk yet how to dry it.
-@pytest.fixture(params=["deleted_attribute", "service_not_in_json"])
+# Strictly UNdefined
+@pytest.fixture(
+    params=["deleted_attribute", "service_not_in_json", "modules_not_in_json"]
+)
 def undefined_enabledness_service(dummy_service: DummyService, request) -> DummyService:
-    if request.param == "deleted_attribute":
-        with WriteUserData() as data:
-            del data[dummy_service.get_id()]["enable"]
-    if request.param == "service_not_in_json":
-        with WriteUserData() as data:
-            del data[dummy_service.get_id()]
+    undefine_service_enabled_status(request.param, dummy_service)
     return dummy_service
 
 
@@ -141,13 +158,13 @@ def test_enabling_disabling_writes_json(
 
     dummy_service.disable()
     with ReadUserData() as data:
-        assert data[dummy_service.get_id()]["enable"] is False
+        assert data["modules"][dummy_service.get_id()]["enable"] is False
     dummy_service.enable()
     with ReadUserData() as data:
-        assert data[dummy_service.get_id()]["enable"] is True
+        assert data["modules"][dummy_service.get_id()]["enable"] is True
     dummy_service.disable()
     with ReadUserData() as data:
-        assert data[dummy_service.get_id()]["enable"] is False
+        assert data["modules"][dummy_service.get_id()]["enable"] is False
 
 
 # more detailed testing of this is in test_graphql/test_system.py
@@ -158,3 +175,7 @@ def test_mailserver_with_dkim_returns_some_dns(dkim_file):
 
 def test_mailserver_with_no_dkim_returns_no_dns(no_dkim_file):
     assert MailServer().get_dns_records() == []
+
+
+def test_services_enabled_by_default(generic_userdata):
+    assert set(get_enabled_services()) == set(services_module.services)

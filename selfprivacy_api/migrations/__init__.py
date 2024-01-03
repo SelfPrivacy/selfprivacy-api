@@ -19,6 +19,7 @@ from selfprivacy_api.migrations.migrate_to_selfprivacy_channel import (
 )
 from selfprivacy_api.migrations.mount_volume import MountVolume
 from selfprivacy_api.migrations.providers import CreateProviderFields
+from selfprivacy_api.migrations.modules_in_json import CreateModulesField
 from selfprivacy_api.migrations.prepare_for_nixos_2211 import (
     MigrateToSelfprivacyChannelFrom2205,
 )
@@ -37,6 +38,7 @@ migrations = [
     MigrateToSelfprivacyChannelFrom2205(),
     MigrateToSelfprivacyChannelFrom2211(),
     LoadTokensToRedis(),
+    CreateModulesField(),
 ]
 
 
