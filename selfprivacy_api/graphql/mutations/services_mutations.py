@@ -160,6 +160,8 @@ class ServicesMutations:
                 message="Service not found.",
                 code=404,
             )
+        # TODO: make serviceImmovable and BlockdeviceNotFound exceptions
+        # in the move_to_volume() function and handle them here
         if not service.is_movable():
             return ServiceJobMutationReturn(
                 success=False,
@@ -176,7 +178,15 @@ class ServicesMutations:
                 service=service_to_graphql_service(service),
             )
         job = service.move_to_volume(volume)
-        if job.status == JobStatus.FINISHED:
+        if job.status in [JobStatus.CREATED, JobStatus.RUNNING]:
+            return ServiceJobMutationReturn(
+                success=True,
+                message="Started moving the service.",
+                code=200,
+                service=service_to_graphql_service(service),
+                job=job_to_api_job(job),
+            )
+        elif job.status == JobStatus.FINISHED:
             return ServiceJobMutationReturn(
                 success=True,
                 message="Service moved.",
