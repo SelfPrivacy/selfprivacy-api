@@ -23,6 +23,20 @@ class MigrateToFlakes(Migration):
         return "Migrate to selfprivacy Nix flakes."
 
     def is_migration_needed(self):
+        # Check if there is at least 5 GiB of free space in the root partition
+        # This is needed to download the new NixOS configuration
+        statvfs = os.statvfs("/")
+        free_space = statvfs.f_frsize * statvfs.f_bavail
+        if free_space < 5 * 1024 * 1024 * 1024:
+            Jobs.add(
+                name="NixOS upgrade to 23.11",
+                type_id="migrations.migrate_to_flakes",
+                status=JobStatus.ERROR,
+                status_text="Not enough free space in the root partition.",
+                description="Migration to the modular SelfPrivacy system",
+            )
+            return False
+
         return True
 
     def migrate(self):
@@ -242,7 +256,7 @@ class MigrateToFlakes(Migration):
                 status=JobStatus.FINISHED,
                 status_text="New system built. Reboot your server to apply.",
                 progress=100,
-                description="Upgrade to NixOS 23.11",
+                description="Migration to the modular SelfPrivacy system",
             )
 
         except Exception as error:
@@ -254,7 +268,7 @@ class MigrateToFlakes(Migration):
                 type_id="migrations.migrate_to_flakes",
                 status=JobStatus.ERROR,
                 status_text=str(error),
-                description="Upgrade to NixOS 23.11",
+                description="Migration to the modular SelfPrivacy system",
             )
             # Recover the old configuration if the nixos.pre-flakes exists
             if os.path.exists("/etc/nixos.pre-flakes"):
