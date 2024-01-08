@@ -28,6 +28,9 @@ class MigrateToFlakes(Migration):
         statvfs = os.statvfs("/")
         free_space = statvfs.f_frsize * statvfs.f_bavail
         if free_space < 5 * 1024 * 1024 * 1024:
+            print("===================================")
+            print("NOT ENOUGH FREE SPACE FOR MIGRATION")
+            print("===================================")
             Jobs.add(
                 name="NixOS upgrade to 23.11",
                 type_id="migrations.migrate_to_flakes",
