@@ -9,7 +9,7 @@ from tests.test_graphql.test_api_recovery import API_RECOVERY_QUERY
 from tests.test_graphql.test_api_version import API_VERSION_QUERY
 
 
-def test_graphql_get_entire_api_data(authorized_client, tokens_file):
+def test_graphql_get_entire_api_data(authorized_client):
     response = authorized_client.post(
         "/graphql",
         json={

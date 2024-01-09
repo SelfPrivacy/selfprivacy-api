@@ -67,7 +67,7 @@ def only_root_in_userdata(mocker, datadir):
         read_json(datadir / "only_root.json")["volumes"][0]["mountPoint"]
         == "/volumes/sda1"
     )
-    assert read_json(datadir / "only_root.json")["volumes"][0]["filesystem"] == "ext4"
+    assert read_json(datadir / "only_root.json")["volumes"][0]["fsType"] == "ext4"
     return datadir
 
 

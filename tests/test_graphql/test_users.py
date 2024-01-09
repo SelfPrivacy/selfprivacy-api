@@ -254,7 +254,6 @@ def test_graphql_get_one_user_unauthorized(client, one_user, mock_subprocess_pop
 
 
 def test_graphql_get_one_user(authorized_client, one_user, mock_subprocess_popen):
-
     response = authorized_client.post(
         "/graphql",
         json={
@@ -275,7 +274,6 @@ def test_graphql_get_one_user(authorized_client, one_user, mock_subprocess_popen
 
 
 def test_graphql_get_some_user_undefined(authorized_client, undefined_settings):
-
     response = authorized_client.post(
         "/graphql",
         json={

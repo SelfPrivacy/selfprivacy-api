@@ -10,17 +10,11 @@ from tests.test_dkim import no_dkim_file, dkim_file
 
 
 @pytest.fixture
-def domain_file(mocker, datadir):
-    mocker.patch("selfprivacy_api.utils.DOMAIN_FILE", datadir / "domain")
-    return datadir
-
-
-@pytest.fixture
 def turned_on(mocker, datadir):
     mocker.patch("selfprivacy_api.utils.USERDATA_FILE", new=datadir / "turned_on.json")
     assert read_json(datadir / "turned_on.json")["autoUpgrade"]["enable"] == True
     assert read_json(datadir / "turned_on.json")["autoUpgrade"]["allowReboot"] == True
-    assert read_json(datadir / "turned_on.json")["timezone"] == "Europe/Moscow"
+    assert read_json(datadir / "turned_on.json")["timezone"] == "Etc/UTC"
     return datadir
 
 
@@ -29,7 +23,7 @@ def turned_off(mocker, datadir):
     mocker.patch("selfprivacy_api.utils.USERDATA_FILE", new=datadir / "turned_off.json")
     assert read_json(datadir / "turned_off.json")["autoUpgrade"]["enable"] == False
     assert read_json(datadir / "turned_off.json")["autoUpgrade"]["allowReboot"] == False
-    assert read_json(datadir / "turned_off.json")["timezone"] == "Europe/Moscow"
+    assert read_json(datadir / "turned_off.json")["timezone"] == "Etc/UTC"
     return datadir
 
 
@@ -251,7 +245,7 @@ def is_dns_record_in_array(records, dns_record) -> bool:
 
 
 def test_graphql_get_domain(
-    authorized_client, domain_file, mock_get_ip4, mock_get_ip6, turned_on, mock_dkim_key
+    authorized_client, mock_get_ip4, mock_get_ip6, turned_on, mock_dkim_key
 ):
     """Test get domain"""
     response = authorized_client.post(
@@ -262,7 +256,9 @@ def test_graphql_get_domain(
     )
     assert response.status_code == 200
     assert response.json().get("data") is not None
-    assert response.json()["data"]["system"]["domainInfo"]["domain"] == "test.tld"
+    assert (
+        response.json()["data"]["system"]["domainInfo"]["domain"] == "test-domain.tld"
+    )
     assert (
         response.json()["data"]["system"]["domainInfo"]["hostname"] == "test-instance"
     )
@@ -335,7 +331,6 @@ def test_graphql_get_domain(
 
 def test_graphql_get_domain_no_dkim(
     authorized_client,
-    domain_file,
     mock_get_ip4,
     mock_get_ip6,
     no_dkim_file,
@@ -384,7 +379,7 @@ def test_graphql_get_timezone(authorized_client, turned_on):
     )
     assert response.status_code == 200
     assert response.json().get("data") is not None
-    assert response.json()["data"]["system"]["settings"]["timezone"] == "Europe/Moscow"
+    assert response.json()["data"]["system"]["settings"]["timezone"] == "Etc/UTC"
 
 
 def test_graphql_get_timezone_on_undefined(authorized_client, undefined_config):
@@ -397,9 +392,7 @@ def test_graphql_get_timezone_on_undefined(authorized_client, undefined_config):
     )
     assert response.status_code == 200
     assert response.json().get("data") is not None
-    assert (
-        response.json()["data"]["system"]["settings"]["timezone"] == "Europe/Uzhgorod"
-    )
+    assert response.json()["data"]["system"]["settings"]["timezone"] == "Etc/UTC"
 
 
 API_CHANGE_TIMEZONE_MUTATION = """
@@ -423,7 +416,7 @@ def test_graphql_change_timezone_unauthorized(client, turned_on):
         json={
             "query": API_CHANGE_TIMEZONE_MUTATION,
             "variables": {
-                "timezone": "Europe/Moscow",
+                "timezone": "Etc/UTC",
             },
         },
     )
@@ -495,7 +488,7 @@ def test_graphql_change_timezone_without_timezone(authorized_client, turned_on):
     assert response.json()["data"]["system"]["changeTimezone"]["message"] is not None
     assert response.json()["data"]["system"]["changeTimezone"]["code"] == 400
     assert response.json()["data"]["system"]["changeTimezone"]["timezone"] is None
-    assert read_json(turned_on / "turned_on.json")["timezone"] == "Europe/Moscow"
+    assert read_json(turned_on / "turned_on.json")["timezone"] == "Etc/UTC"
 
 
 def test_graphql_change_timezone_with_invalid_timezone(authorized_client, turned_on):
@@ -515,7 +508,7 @@ def test_graphql_change_timezone_with_invalid_timezone(authorized_client, turned
     assert response.json()["data"]["system"]["changeTimezone"]["message"] is not None
     assert response.json()["data"]["system"]["changeTimezone"]["code"] == 400
     assert response.json()["data"]["system"]["changeTimezone"]["timezone"] is None
-    assert read_json(turned_on / "turned_on.json")["timezone"] == "Europe/Moscow"
+    assert read_json(turned_on / "turned_on.json")["timezone"] == "Etc/UTC"
 
 
 API_GET_AUTO_UPGRADE_SETTINGS_QUERY = """

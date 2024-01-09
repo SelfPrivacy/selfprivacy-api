@@ -503,7 +503,7 @@ def test_move_same_volume(authorized_client, dummy_service):
 
 
 def test_mailservice_cannot_enable_disable(authorized_client):
-    mailservice = get_service_by_id("email")
+    mailservice = get_service_by_id("simple-nixos-mailserver")
 
     mutation_response = api_enable(authorized_client, mailservice)
     data = get_data(mutation_response)["services"]["enableService"]

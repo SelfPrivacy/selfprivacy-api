@@ -21,7 +21,7 @@ class MailServer(Service):
 
     @staticmethod
     def get_id() -> str:
-        return "email"
+        return "simple-nixos-mailserver"
 
     @staticmethod
     def get_display_name() -> str:
@@ -173,7 +173,7 @@ class MailServer(Service):
             volume,
             job,
             FolderMoveNames.default_foldermoves(self),
-            "email",
+            "simple-nixos-mailserver",
         )
 
         return job

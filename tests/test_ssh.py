@@ -100,7 +100,7 @@ def test_read_json(possibly_undefined_ssh_settings):
             assert get_ssh_settings().enable == data["ssh"]["enable"]
 
         if "passwordAuthentication" not in data["ssh"].keys():
-            assert get_ssh_settings().passwordAuthentication is True
+            assert get_ssh_settings().passwordAuthentication is False
         else:
             assert (
                 get_ssh_settings().passwordAuthentication
@@ -111,7 +111,6 @@ def test_read_json(possibly_undefined_ssh_settings):
 def test_enabling_disabling_writes_json(
     possibly_undefined_ssh_settings, ssh_enable_spectrum, password_auth_spectrum
 ):
-
     original_enable = get_raw_json_ssh_setting("enable")
     original_password_auth = get_raw_json_ssh_setting("passwordAuthentication")
 
@@ -352,7 +351,6 @@ def test_read_user_keys_from_json(generic_userdata, username):
 
 @pytest.mark.parametrize("username", regular_users)
 def test_adding_user_key_writes_json(generic_userdata, username):
-
     with WriteUserData() as data:
         user_index = find_user_index_in_json_users(data["users"], username)
         del data["users"][user_index]["sshKeys"]

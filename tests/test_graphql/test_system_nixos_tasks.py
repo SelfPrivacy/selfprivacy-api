@@ -4,12 +4,6 @@
 import pytest
 
 
-@pytest.fixture
-def domain_file(mocker, datadir):
-    mocker.patch("selfprivacy_api.utils.DOMAIN_FILE", datadir / "domain")
-    return datadir
-
-
 class ProcessMock:
     """Mock subprocess.Popen"""
 

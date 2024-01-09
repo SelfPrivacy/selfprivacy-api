@@ -12,7 +12,7 @@ DKIM_FILE_CONTENT = b'selector._domainkey\tIN\tTXT\t( "v=DKIM1; k=rsa; "\n\t  "p
 
 
 @pytest.fixture
-def dkim_file(mocker, domain_file, tmpdir):
+def dkim_file(mocker, tmpdir, generic_userdata):
     domain = get_domain()
     assert domain is not None
     assert domain != ""
@@ -28,14 +28,6 @@ def dkim_file(mocker, domain_file, tmpdir):
 
 
 @pytest.fixture
-def domain_file(mocker):
-    # TODO: move to conftest. Challenge: it does not behave with "/" like pytest datadir does
-    domain_path = path.join(global_data_dir(), "domain")
-    mocker.patch("selfprivacy_api.utils.DOMAIN_FILE", domain_path)
-    return domain_path
-
-
-@pytest.fixture
 def no_dkim_file(dkim_file):
     os.remove(dkim_file)
     assert path.exists(dkim_file) is False
@@ -45,7 +37,7 @@ def no_dkim_file(dkim_file):
 ###############################################################################
 
 
-def test_get_dkim_key(domain_file, dkim_file):
+def test_get_dkim_key(dkim_file):
     """Test DKIM key"""
     dkim_key = get_dkim_key("test-domain.tld")
     assert (
@@ -54,7 +46,7 @@ def test_get_dkim_key(domain_file, dkim_file):
     )
 
 
-def test_no_dkim_key(domain_file, no_dkim_file):
+def test_no_dkim_key(no_dkim_file):
     """Test no DKIM key"""
     dkim_key = get_dkim_key("test-domain.tld")
     assert dkim_key is None
