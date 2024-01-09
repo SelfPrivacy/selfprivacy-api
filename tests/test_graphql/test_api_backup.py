@@ -1,5 +1,5 @@
 from os import path
-from tests.test_graphql.test_backup import dummy_service, backups, raw_dummy_service
+from tests.test_backup import backups
 from tests.common import generate_backup_query
 
 
@@ -279,7 +279,7 @@ def get_data(response):
     if (
         "errors" in response.keys()
     ):  # convenience for debugging, this will display error
-        assert response["errors"] == []
+        raise ValueError(response["errors"])
     assert response["data"] is not None
     data = response["data"]
     return data
@@ -301,7 +301,7 @@ def test_dummy_service_convertible_to_gql(dummy_service):
     assert gql_service is not None
 
 
-def test_snapshots_empty(authorized_client, dummy_service):
+def test_snapshots_empty(authorized_client, dummy_service, backups):
     snaps = api_snapshots(authorized_client)
     assert snaps == []
 

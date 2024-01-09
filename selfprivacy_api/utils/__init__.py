@@ -6,12 +6,14 @@ import json
 import os
 import subprocess
 import portalocker
+import typing
 
 
 USERDATA_FILE = "/etc/nixos/userdata/userdata.json"
 TOKENS_FILE = "/etc/nixos/userdata/tokens.json"
 JOBS_FILE = "/etc/nixos/userdata/jobs.json"
 DOMAIN_FILE = "/var/domain"
+DKIM_DIR = "/var/dkim/"
 
 
 class UserDataFiles(Enum):
@@ -166,26 +168,31 @@ def parse_date(date_str: str) -> datetime.datetime:
     raise ValueError("Invalid date string")
 
 
-def get_dkim_key(domain, parse=True):
+def parse_dkim(dkim: str) -> str:
+    # extract key from file
+    dkim = dkim.split("(")[1]
+    dkim = dkim.split(")")[0]
+    # replace all quotes with nothing
+    dkim = dkim.replace('"', "")
+    # trim whitespace, remove newlines and tabs
+    dkim = dkim.strip()
+    dkim = dkim.replace("\n", "")
+    dkim = dkim.replace("\t", "")
+    # remove all redundant spaces
+    dkim = " ".join(dkim.split())
+    return dkim
+
+
+def get_dkim_key(domain: str, parse: bool = True) -> typing.Optional[str]:
     """Get DKIM key from /var/dkim/<domain>.selector.txt"""
-    if os.path.exists("/var/dkim/" + domain + ".selector.txt"):
-        cat_process = subprocess.Popen(
-            ["cat", "/var/dkim/" + domain + ".selector.txt"], stdout=subprocess.PIPE
-        )
-        dkim = cat_process.communicate()[0]
-        if parse:
-            # Extract key from file
-            dkim = dkim.split(b"(")[1]
-            dkim = dkim.split(b")")[0]
-            # Replace all quotes with nothing
-            dkim = dkim.replace(b'"', b"")
-            # Trim whitespace, remove newlines and tabs
-            dkim = dkim.strip()
-            dkim = dkim.replace(b"\n", b"")
-            dkim = dkim.replace(b"\t", b"")
-            # Remove all redundant spaces
-            dkim = b" ".join(dkim.split())
-        return str(dkim, "utf-8")
+
+    dkim_path = os.path.join(DKIM_DIR, domain + ".selector.txt")
+    if os.path.exists(dkim_path):
+        with open(dkim_path, encoding="utf-8") as dkim_file:
+            dkim = dkim_file.read()
+            if parse:
+                dkim = parse_dkim(dkim)
+        return dkim
     return None
 
 

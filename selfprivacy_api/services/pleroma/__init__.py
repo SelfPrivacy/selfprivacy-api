@@ -51,27 +51,8 @@ class Pleroma(Service):
         return "Your Pleroma accounts, posts and media."
 
     @staticmethod
-    def is_enabled() -> bool:
-        with ReadUserData() as user_data:
-            return user_data.get("pleroma", {}).get("enable", False)
-
-    @staticmethod
     def get_status() -> ServiceStatus:
         return get_service_status("pleroma.service")
-
-    @staticmethod
-    def enable():
-        with WriteUserData() as user_data:
-            if "pleroma" not in user_data:
-                user_data["pleroma"] = {}
-            user_data["pleroma"]["enable"] = True
-
-    @staticmethod
-    def disable():
-        with WriteUserData() as user_data:
-            if "pleroma" not in user_data:
-                user_data["pleroma"] = {}
-            user_data["pleroma"]["enable"] = False
 
     @staticmethod
     def stop():

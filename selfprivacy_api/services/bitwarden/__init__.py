@@ -59,11 +59,6 @@ class Bitwarden(Service):
         return "Password database, encryption certificate and attachments."
 
     @staticmethod
-    def is_enabled() -> bool:
-        with ReadUserData() as user_data:
-            return user_data.get("bitwarden", {}).get("enable", False)
-
-    @staticmethod
     def get_status() -> ServiceStatus:
         """
         Return Bitwarden status from systemd.
@@ -75,22 +70,6 @@ class Bitwarden(Service):
         Return code 4 means service is off.
         """
         return get_service_status("vaultwarden.service")
-
-    @staticmethod
-    def enable():
-        """Enable Bitwarden service."""
-        with WriteUserData() as user_data:
-            if "bitwarden" not in user_data:
-                user_data["bitwarden"] = {}
-            user_data["bitwarden"]["enable"] = True
-
-    @staticmethod
-    def disable():
-        """Disable Bitwarden service."""
-        with WriteUserData() as user_data:
-            if "bitwarden" not in user_data:
-                user_data["bitwarden"] = {}
-            user_data["bitwarden"]["enable"] = False
 
     @staticmethod
     def stop():

@@ -54,11 +54,6 @@ class Nextcloud(Service):
         return "All the files and other data stored in Nextcloud."
 
     @staticmethod
-    def is_enabled() -> bool:
-        with ReadUserData() as user_data:
-            return user_data.get("nextcloud", {}).get("enable", False)
-
-    @staticmethod
     def get_status() -> ServiceStatus:
         """
         Return Nextcloud status from systemd.
@@ -70,22 +65,6 @@ class Nextcloud(Service):
         Return code 4 means service is off.
         """
         return get_service_status("phpfpm-nextcloud.service")
-
-    @staticmethod
-    def enable():
-        """Enable Nextcloud service."""
-        with WriteUserData() as user_data:
-            if "nextcloud" not in user_data:
-                user_data["nextcloud"] = {}
-            user_data["nextcloud"]["enable"] = True
-
-    @staticmethod
-    def disable():
-        """Disable Nextcloud service."""
-        with WriteUserData() as user_data:
-            if "nextcloud" not in user_data:
-                user_data["nextcloud"] = {}
-            user_data["nextcloud"]["enable"] = False
 
     @staticmethod
     def stop():

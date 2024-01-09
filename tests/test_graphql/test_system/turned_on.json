@@ -3,18 +3,10 @@
         "token": "TEST_TOKEN",
         "enableSwagger": false
     },
-    "bitwarden": {
-        "enable": true
-    },
     "databasePassword": "PASSWORD",
     "domain": "test.tld",
     "hashedMasterPassword": "HASHED_PASSWORD",
     "hostname": "test-instance",
-    "nextcloud": {
-        "adminPassword": "ADMIN",
-        "databasePassword": "ADMIN",
-        "enable": true
-    },
     "resticPassword": "PASS",
     "ssh": {
         "enable": true,
@@ -24,17 +16,27 @@
         ]
     },
     "username": "tester",
-    "gitea": {
-        "enable": true
-    },
-    "ocserv": {
-        "enable": true
-    },
-    "pleroma": {
-        "enable": true
-    },
-    "jitsi": {
-        "enable": true
+    "modules": {
+        "gitea": {
+            "enable": true
+        },
+        "ocserv": {
+            "enable": true
+        },
+        "pleroma": {
+            "enable": true
+        },
+        "jitsi": {
+            "enable": true
+        },
+        "nextcloud": {
+            "adminPassword": "ADMIN",
+            "databasePassword": "ADMIN",
+            "enable": true
+        },
+        "bitwarden": {
+            "enable": true
+        }
     },
     "autoUpgrade": {
         "enable": true,

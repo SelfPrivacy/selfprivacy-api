@@ -8,8 +8,8 @@ from tests.common import (
     generate_api_query,
 )
 from tests.conftest import DEVICE_WE_AUTH_TESTS_WITH, TOKENS_FILE_CONTENTS
-from tests.test_graphql.api_common import (
-    assert_data,
+from tests.test_graphql.common import (
+    get_data,
     assert_empty,
     assert_ok,
     assert_errorcode,
@@ -36,7 +36,7 @@ def graphql_get_new_device_key(authorized_client) -> str:
         "/graphql",
         json={"query": NEW_DEVICE_KEY_MUTATION},
     )
-    assert_ok(response, "getNewDeviceApiKey")
+    assert_ok(get_data(response)["api"]["getNewDeviceApiKey"])
 
     key = response.json()["data"]["api"]["getNewDeviceApiKey"]["key"]
     assert key.split(" ").__len__() == 12
@@ -60,9 +60,10 @@ def graphql_try_auth_new_device(client, mnemonic_key, device_name):
 
 def graphql_authorize_new_device(client, mnemonic_key, device_name) -> str:
     response = graphql_try_auth_new_device(client, mnemonic_key, "new_device")
-    assert_ok(response, "authorizeWithNewDeviceApiKey")
+    assert_ok(get_data(response)["api"]["authorizeWithNewDeviceApiKey"])
     token = response.json()["data"]["api"]["authorizeWithNewDeviceApiKey"]["token"]
     assert_token_valid(client, token)
+    return token
 
 
 def test_graphql_tokens_info(authorized_client, tokens_file):
@@ -114,7 +115,7 @@ def test_graphql_delete_token(authorized_client, tokens_file):
             },
         },
     )
-    assert_ok(response, "deleteDeviceApiToken")
+    assert_ok(get_data(response)["api"]["deleteDeviceApiToken"])
 
     devices = graphql_get_devices(authorized_client)
     assert_same(devices, test_devices)
@@ -130,7 +131,7 @@ def test_graphql_delete_self_token(authorized_client, tokens_file):
             },
         },
     )
-    assert_errorcode(response, "deleteDeviceApiToken", 400)
+    assert_errorcode(get_data(response)["api"]["deleteDeviceApiToken"], 400)
     assert_original(authorized_client)
 
 
@@ -147,7 +148,7 @@ def test_graphql_delete_nonexistent_token(
             },
         },
     )
-    assert_errorcode(response, "deleteDeviceApiToken", 404)
+    assert_errorcode(get_data(response)["api"]["deleteDeviceApiToken"], 404)
 
     assert_original(authorized_client)
 
@@ -180,7 +181,7 @@ def test_graphql_refresh_token(authorized_client, client, tokens_file):
         "/graphql",
         json={"query": REFRESH_TOKEN_MUTATION},
     )
-    assert_ok(response, "refreshDeviceApiToken")
+    assert_ok(get_data(response)["api"]["refreshDeviceApiToken"])
 
     new_token = response.json()["data"]["api"]["refreshDeviceApiToken"]["token"]
     assert_token_valid(client, new_token)
@@ -250,10 +251,10 @@ def test_graphql_get_and_delete_new_device_key(client, authorized_client, tokens
         "/graphql",
         json={"query": INVALIDATE_NEW_DEVICE_KEY_MUTATION},
     )
-    assert_ok(response, "invalidateNewDeviceApiKey")
+    assert_ok(get_data(response)["api"]["invalidateNewDeviceApiKey"])
 
     response = graphql_try_auth_new_device(client, mnemonic_key, "new_device")
-    assert_errorcode(response, "authorizeWithNewDeviceApiKey", 404)
+    assert_errorcode(get_data(response)["api"]["authorizeWithNewDeviceApiKey"], 404)
 
 
 AUTHORIZE_WITH_NEW_DEVICE_KEY_MUTATION = """
@@ -285,7 +286,7 @@ def test_graphql_authorize_new_device_with_invalid_key(
     client, authorized_client, tokens_file
 ):
     response = graphql_try_auth_new_device(client, "invalid_token", "new_device")
-    assert_errorcode(response, "authorizeWithNewDeviceApiKey", 404)
+    assert_errorcode(get_data(response)["api"]["authorizeWithNewDeviceApiKey"], 404)
 
     assert_original(authorized_client)
 
@@ -297,7 +298,7 @@ def test_graphql_get_and_authorize_used_key(client, authorized_client, tokens_fi
     devices = graphql_get_devices(authorized_client)
 
     response = graphql_try_auth_new_device(client, mnemonic_key, "new_device2")
-    assert_errorcode(response, "authorizeWithNewDeviceApiKey", 404)
+    assert_errorcode(get_data(response)["api"]["authorizeWithNewDeviceApiKey"], 404)
 
     assert graphql_get_devices(authorized_client) == devices
 
@@ -309,7 +310,7 @@ def test_graphql_get_and_authorize_key_after_12_minutes(
     mock = mocker.patch(DEVICE_KEY_VALIDATION_DATETIME, NearFuture)
 
     response = graphql_try_auth_new_device(client, mnemonic_key, "new_device")
-    assert_errorcode(response, "authorizeWithNewDeviceApiKey", 404)
+    assert_errorcode(get_data(response)["api"]["authorizeWithNewDeviceApiKey"], 404)
 
 
 def test_graphql_authorize_without_token(

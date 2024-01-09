@@ -52,27 +52,8 @@ class Ocserv(Service):
         return "Nothing to backup."
 
     @staticmethod
-    def is_enabled() -> bool:
-        with ReadUserData() as user_data:
-            return user_data.get("ocserv", {}).get("enable", False)
-
-    @staticmethod
     def get_status() -> ServiceStatus:
         return get_service_status("ocserv.service")
-
-    @staticmethod
-    def enable():
-        with WriteUserData() as user_data:
-            if "ocserv" not in user_data:
-                user_data["ocserv"] = {}
-            user_data["ocserv"]["enable"] = True
-
-    @staticmethod
-    def disable():
-        with WriteUserData() as user_data:
-            if "ocserv" not in user_data:
-                user_data["ocserv"] = {}
-            user_data["ocserv"]["enable"] = False
 
     @staticmethod
     def stop():

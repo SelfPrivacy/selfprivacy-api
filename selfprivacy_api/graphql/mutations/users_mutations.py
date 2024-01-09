@@ -69,6 +69,12 @@ class UsersMutations:
                 message=str(e),
                 code=400,
             )
+        except users_actions.InvalidConfiguration as e:
+            return UserMutationReturn(
+                success=False,
+                message=str(e),
+                code=400,
+            )
         except users_actions.UserAlreadyExists as e:
             return UserMutationReturn(
                 success=False,

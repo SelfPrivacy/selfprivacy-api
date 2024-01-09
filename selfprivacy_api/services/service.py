@@ -12,6 +12,7 @@ from selfprivacy_api.services.generic_size_counter import get_storage_usage
 from selfprivacy_api.services.owned_path import OwnedPath
 from selfprivacy_api import utils
 from selfprivacy_api.utils.waitloop import wait_until_true
+from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
 
 DEFAULT_START_STOP_TIMEOUT = 5 * 60
 
@@ -125,11 +126,17 @@ class Service(ABC):
         """
         pass
 
-    @staticmethod
-    @abstractmethod
-    def is_enabled() -> bool:
-        """`True` if the service is enabled."""
-        pass
+    @classmethod
+    def is_enabled(cls) -> bool:
+        """
+        `True` if the service is enabled.
+        `False` if it is not enabled or not defined in file
+        If there is nothing in the file, this is equivalent to False
+        because NixOS won't enable it then.
+        """
+        name = cls.get_id()
+        with ReadUserData() as user_data:
+            return user_data.get("modules", {}).get(name, {}).get("enable", False)
 
     @staticmethod
     @abstractmethod
@@ -137,17 +144,25 @@ class Service(ABC):
         """The status of the service, reported by systemd."""
         pass
 
-    @staticmethod
-    @abstractmethod
-    def enable():
-        """Enable the service. Usually this means enabling systemd unit."""
-        pass
+    @classmethod
+    def _set_enable(cls, enable: bool):
+        name = cls.get_id()
+        with WriteUserData() as user_data:
+            if "modules" not in user_data:
+                user_data["modules"] = {}
+            if name not in user_data["modules"]:
+                user_data["modules"][name] = {}
+            user_data["modules"][name]["enable"] = enable
 
-    @staticmethod
-    @abstractmethod
-    def disable():
+    @classmethod
+    def enable(cls):
+        """Enable the service. Usually this means enabling systemd unit."""
+        cls._set_enable(True)
+
+    @classmethod
+    def disable(cls):
         """Disable the service. Usually this means disabling systemd unit."""
-        pass
+        cls._set_enable(False)
 
     @staticmethod
     @abstractmethod
@@ -247,6 +262,8 @@ class Service(ABC):
 
     @abstractmethod
     def move_to_volume(self, volume: BlockDevice) -> Job:
+        """Cannot raise errors.
+        Returns errors as an errored out Job instead."""
         pass
 
     @classmethod

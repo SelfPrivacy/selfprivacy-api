@@ -9,6 +9,7 @@ from selfprivacy_api.graphql.mutations.mutation_interface import (
 )
 
 import selfprivacy_api.actions.system as system_actions
+import selfprivacy_api.actions.ssh as ssh_actions
 
 
 @strawberry.type
@@ -24,6 +25,22 @@ class AutoUpgradeSettingsMutationReturn(MutationReturnInterface):
 
     enableAutoUpgrade: bool
     allowReboot: bool
+
+
+@strawberry.type
+class SSHSettingsMutationReturn(MutationReturnInterface):
+    """A return type for after changing SSH settings"""
+
+    enable: bool
+    password_authentication: bool
+
+
+@strawberry.input
+class SSHSettingsInput:
+    """Input type for SSH settings"""
+
+    enable: bool
+    password_authentication: bool
 
 
 @strawberry.input
@@ -77,40 +94,88 @@ class SystemMutations:
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def run_system_rebuild(self) -> GenericMutationReturn:
-        system_actions.rebuild_system()
-        return GenericMutationReturn(
-            success=True,
-            message="Starting rebuild system",
-            code=200,
+    def change_ssh_settings(
+        self, settings: SSHSettingsInput
+    ) -> SSHSettingsMutationReturn:
+        """Change ssh settings of the server."""
+        ssh_actions.set_ssh_settings(
+            enable=settings.enable,
+            password_authentication=settings.password_authentication,
         )
+
+        new_settings = ssh_actions.get_ssh_settings()
+
+        return SSHSettingsMutationReturn(
+            success=True,
+            message="SSH settings changed",
+            code=200,
+            enable=new_settings.enable,
+            password_authentication=new_settings.passwordAuthentication,
+        )
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    def run_system_rebuild(self) -> GenericMutationReturn:
+        try:
+            system_actions.rebuild_system()
+            return GenericMutationReturn(
+                success=True,
+                message="Starting rebuild system",
+                code=200,
+            )
+        except system_actions.ShellException as e:
+            return GenericMutationReturn(
+                success=False,
+                message=str(e),
+                code=500,
+            )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def run_system_rollback(self) -> GenericMutationReturn:
         system_actions.rollback_system()
-        return GenericMutationReturn(
-            success=True,
-            message="Starting rebuild system",
-            code=200,
-        )
+        try:
+            return GenericMutationReturn(
+                success=True,
+                message="Starting rebuild system",
+                code=200,
+            )
+        except system_actions.ShellException as e:
+            return GenericMutationReturn(
+                success=False,
+                message=str(e),
+                code=500,
+            )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def run_system_upgrade(self) -> GenericMutationReturn:
         system_actions.upgrade_system()
-        return GenericMutationReturn(
-            success=True,
-            message="Starting rebuild system",
-            code=200,
-        )
+        try:
+            return GenericMutationReturn(
+                success=True,
+                message="Starting rebuild system",
+                code=200,
+            )
+        except system_actions.ShellException as e:
+            return GenericMutationReturn(
+                success=False,
+                message=str(e),
+                code=500,
+            )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def reboot_system(self) -> GenericMutationReturn:
         system_actions.reboot_system()
-        return GenericMutationReturn(
-            success=True,
-            message="System reboot has started",
-            code=200,
-        )
+        try:
+            return GenericMutationReturn(
+                success=True,
+                message="System reboot has started",
+                code=200,
+            )
+        except system_actions.ShellException as e:
+            return GenericMutationReturn(
+                success=False,
+                message=str(e),
+                code=500,
+            )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def pull_repository_changes(self) -> GenericMutationReturn:
