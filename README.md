@@ -54,6 +54,12 @@ tests/test_rest_endpoints/services/test_ssh.py .....................            
 ============================== 692 passed in 352.76s (0:05:52) ===============================
 ```
 
+If you don't have experimental flakes enabled, you can use the following command:
+
+```console
+nix --extra-experimental-features nix-command --extra-experimental-features flakes develop
+```
+
 ## dependencies and dependant modules
 
 Current flake inherits nixpkgs from NixOS configuration flake. So there is no need to refer to extra nixpkgs dependency if you want to be aligned with exact NixOS configuration.
