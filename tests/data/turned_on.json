@@ -1,40 +1,20 @@
 {
-    "api": {"token": "TEST_TOKEN", "enableSwagger": false},
-    "databasePassword": "PASSWORD",
-    "domain": "test.tld",
+    "dns": {
+        "provider": "CLOUDFLARE",
+        "useStagingACME": false
+    },
+    "server": {
+        "provider": "HETZNER"
+    },
+    "domain": "test-domain.tld",
     "hashedMasterPassword": "HASHED_PASSWORD",
     "hostname": "test-instance",
-    "resticPassword": "PASS",
-    "ssh": {
-        "enable": true,
-        "passwordAuthentication": true,
-        "rootKeys": ["ssh-ed25519 KEY test@pc"]
-    },
+    "timezone": "Etc/UTC",
     "username": "tester",
-    "autoUpgrade": {"enable": true, "allowReboot": true},
     "useBinds": true,
-    "timezone": "Europe/Moscow",
-    "sshKeys": ["ssh-rsa KEY test@pc"],
-    "dns": {"provider": "CLOUDFLARE", "apiKey": "TOKEN"},
-    "server": {"provider": "HETZNER"},
-    "modules": {
-        "bitwarden": {"enable": true},
-        "gitea": {"enable": true},
-        "ocserv": {"enable": true},
-        "pleroma": {"enable": true},
-        "jitsi": {"enable": true},
-        "nextcloud": {
-            "adminPassword": "ADMIN",
-            "databasePassword": "ADMIN",
-            "enable": true
-        }
-    },
-    "backup": {
-        "provider": "BACKBLAZE",
-        "accountId": "ID",
-        "accountKey": "KEY",
-        "bucket": "selfprivacy"
-    },
+    "sshKeys": [
+        "ssh-rsa KEY test@pc"
+    ],
     "users": [
         {
             "username": "user1",
@@ -51,5 +31,57 @@
             "hashedPassword": "HASHED_PASSWORD_3",
             "sshKeys": ["ssh-rsa KEY user3@pc"]
         }
-    ]
+    ],
+    "autoUpgrade": {
+        "enable": true,
+        "allowReboot": true
+    },
+    "modules": {
+        "bitwarden": {
+            "enable": true,
+            "location": "sdb"
+        },
+        "gitea": {
+            "enable": true,
+            "location": "sdb"
+        },
+        "jitsi-meet": {
+            "enable": true
+        },
+        "nextcloud": {
+            "enable": true,
+            "location": "sdb"
+        },
+        "ocserv": {
+            "enable": true
+        },
+        "pleroma": {
+            "enable": true,
+            "location": "sdb"
+        },
+        "simple-nixos-mailserver": {
+            "enable": true,
+            "location": "sdb"
+        }
+    },
+    "volumes": [
+        {
+            "device": "/dev/sdb",
+            "mountPoint": "/volumes/sdb",
+            "fsType": "ext4"
+        }
+    ],
+    "ssh": {
+        "enable": true,
+        "passwordAuthentication": true,
+        "rootKeys": [
+            "ssh-ed25519 KEY test@pc"
+        ]
+    },
+    "backup": {
+        "provider": "BACKBLAZE",
+        "accountId": "ID",
+        "accountKey": "KEY",
+        "bucket": "selfprivacy"
+    }
 }

@@ -9,10 +9,8 @@ import portalocker
 import typing
 
 
-USERDATA_FILE = "/etc/nixos/userdata/userdata.json"
-TOKENS_FILE = "/etc/nixos/userdata/tokens.json"
-JOBS_FILE = "/etc/nixos/userdata/jobs.json"
-DOMAIN_FILE = "/var/domain"
+USERDATA_FILE = "/etc/nixos/userdata.json"
+SECRETS_FILE = "/etc/selfprivacy/secrets.json"
 DKIM_DIR = "/var/dkim/"
 
 
@@ -20,15 +18,13 @@ class UserDataFiles(Enum):
     """Enum for userdata files"""
 
     USERDATA = 0
-    TOKENS = 1
-    JOBS = 2
+    SECRETS = 3
 
 
 def get_domain():
-    """Get domain from /var/domain without trailing new line"""
-    with open(DOMAIN_FILE, "r", encoding="utf-8") as domain_file:
-        domain = domain_file.readline().rstrip()
-    return domain
+    """Get domain from userdata.json"""
+    with ReadUserData() as user_data:
+        return user_data["domain"]
 
 
 class WriteUserData(object):
@@ -37,14 +33,12 @@ class WriteUserData(object):
     def __init__(self, file_type=UserDataFiles.USERDATA):
         if file_type == UserDataFiles.USERDATA:
             self.userdata_file = open(USERDATA_FILE, "r+", encoding="utf-8")
-        elif file_type == UserDataFiles.TOKENS:
-            self.userdata_file = open(TOKENS_FILE, "r+", encoding="utf-8")
-        elif file_type == UserDataFiles.JOBS:
+        elif file_type == UserDataFiles.SECRETS:
             # Make sure file exists
-            if not os.path.exists(JOBS_FILE):
-                with open(JOBS_FILE, "w", encoding="utf-8") as jobs_file:
-                    jobs_file.write("{}")
-            self.userdata_file = open(JOBS_FILE, "r+", encoding="utf-8")
+            if not os.path.exists(SECRETS_FILE):
+                with open(SECRETS_FILE, "w", encoding="utf-8") as secrets_file:
+                    secrets_file.write("{}")
+            self.userdata_file = open(SECRETS_FILE, "r+", encoding="utf-8")
         else:
             raise ValueError("Unknown file type")
         portalocker.lock(self.userdata_file, portalocker.LOCK_EX)
@@ -68,14 +62,11 @@ class ReadUserData(object):
     def __init__(self, file_type=UserDataFiles.USERDATA):
         if file_type == UserDataFiles.USERDATA:
             self.userdata_file = open(USERDATA_FILE, "r", encoding="utf-8")
-        elif file_type == UserDataFiles.TOKENS:
-            self.userdata_file = open(TOKENS_FILE, "r", encoding="utf-8")
-        elif file_type == UserDataFiles.JOBS:
-            # Make sure file exists
-            if not os.path.exists(JOBS_FILE):
-                with open(JOBS_FILE, "w", encoding="utf-8") as jobs_file:
-                    jobs_file.write("{}")
-            self.userdata_file = open(JOBS_FILE, "r", encoding="utf-8")
+        elif file_type == UserDataFiles.SECRETS:
+            if not os.path.exists(SECRETS_FILE):
+                with open(SECRETS_FILE, "w", encoding="utf-8") as secrets_file:
+                    secrets_file.write("{}")
+            self.userdata_file = open(SECRETS_FILE, "r", encoding="utf-8")
         else:
             raise ValueError("Unknown file type")
         portalocker.lock(self.userdata_file, portalocker.LOCK_SH)

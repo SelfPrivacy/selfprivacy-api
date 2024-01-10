@@ -31,7 +31,7 @@ def get_ssh_settings() -> UserdataSshSettings:
         if "enable" not in data["ssh"]:
             data["ssh"]["enable"] = True
         if "passwordAuthentication" not in data["ssh"]:
-            data["ssh"]["passwordAuthentication"] = True
+            data["ssh"]["passwordAuthentication"] = False
         if "rootKeys" not in data["ssh"]:
             data["ssh"]["rootKeys"] = []
         return UserdataSshSettings(**data["ssh"])

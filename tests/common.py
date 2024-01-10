@@ -7,28 +7,28 @@ RECOVERY_KEY_VALIDATION_DATETIME = "selfprivacy_api.models.tokens.time.datetime"
 DEVICE_KEY_VALIDATION_DATETIME = RECOVERY_KEY_VALIDATION_DATETIME
 
 
-def five_minutes_into_future_naive():
-    return datetime.now() + timedelta(minutes=5)
+def ten_minutes_into_future_naive():
+    return datetime.now() + timedelta(minutes=10)
 
 
-def five_minutes_into_future_naive_utc():
-    return datetime.utcnow() + timedelta(minutes=5)
+def ten_minutes_into_future_naive_utc():
+    return datetime.utcnow() + timedelta(minutes=10)
 
 
-def five_minutes_into_future():
-    return datetime.now(timezone.utc) + timedelta(minutes=5)
+def ten_minutes_into_future():
+    return datetime.now(timezone.utc) + timedelta(minutes=10)
 
 
-def five_minutes_into_past_naive():
-    return datetime.now() - timedelta(minutes=5)
+def ten_minutes_into_past_naive():
+    return datetime.now() - timedelta(minutes=10)
 
 
-def five_minutes_into_past_naive_utc():
-    return datetime.utcnow() - timedelta(minutes=5)
+def ten_minutes_into_past_naive_utc():
+    return datetime.utcnow() - timedelta(minutes=10)
 
 
-def five_minutes_into_past():
-    return datetime.now(timezone.utc) - timedelta(minutes=5)
+def ten_minutes_into_past():
+    return datetime.now(timezone.utc) - timedelta(minutes=10)
 
 
 class NearFuture(datetime):

@@ -20,6 +20,7 @@ from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericMutationReturn,
 )
 from selfprivacy_api.graphql.mutations.services_mutations import (
+    ServiceJobMutationReturn,
     ServiceMutationReturn,
     ServicesMutations,
 )
@@ -201,7 +202,7 @@ class DeprecatedServicesMutations:
         "services",
     )
 
-    move_service: ServiceMutationReturn = deprecated_mutation(
+    move_service: ServiceJobMutationReturn = deprecated_mutation(
         ServicesMutations.move_service,
         "services",
     )

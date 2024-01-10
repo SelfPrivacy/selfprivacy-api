@@ -7,7 +7,7 @@ from tests.common import (
     NearFuture,
     generate_api_query,
 )
-from tests.conftest import DEVICE_WE_AUTH_TESTS_WITH, TOKENS_FILE_CONTENTS
+from tests.conftest import DEVICE_WE_AUTH_TESTS_WITH
 from tests.test_graphql.common import (
     get_data,
     assert_empty,
@@ -66,11 +66,11 @@ def graphql_authorize_new_device(client, mnemonic_key, device_name) -> str:
     return token
 
 
-def test_graphql_tokens_info(authorized_client, tokens_file):
+def test_graphql_tokens_info(authorized_client):
     assert_original(authorized_client)
 
 
-def test_graphql_tokens_info_unauthorized(client, tokens_file):
+def test_graphql_tokens_info_unauthorized(client):
     response = request_devices(client)
     assert_empty(response)
 
@@ -88,7 +88,7 @@ mutation DeleteToken($device: String!) {
 """
 
 
-def test_graphql_delete_token_unauthorized(client, tokens_file):
+def test_graphql_delete_token_unauthorized(client):
     response = client.post(
         "/graphql",
         json={
@@ -101,7 +101,7 @@ def test_graphql_delete_token_unauthorized(client, tokens_file):
     assert_empty(response)
 
 
-def test_graphql_delete_token(authorized_client, tokens_file):
+def test_graphql_delete_token(authorized_client):
     test_devices = ORIGINAL_DEVICES.copy()
     device_to_delete = test_devices.pop(1)
     assert device_to_delete != DEVICE_WE_AUTH_TESTS_WITH
@@ -121,7 +121,7 @@ def test_graphql_delete_token(authorized_client, tokens_file):
     assert_same(devices, test_devices)
 
 
-def test_graphql_delete_self_token(authorized_client, tokens_file):
+def test_graphql_delete_self_token(authorized_client):
     response = authorized_client.post(
         "/graphql",
         json={
@@ -137,7 +137,6 @@ def test_graphql_delete_self_token(authorized_client, tokens_file):
 
 def test_graphql_delete_nonexistent_token(
     authorized_client,
-    tokens_file,
 ):
     response = authorized_client.post(
         "/graphql",
@@ -167,7 +166,7 @@ mutation RefreshToken {
 """
 
 
-def test_graphql_refresh_token_unauthorized(client, tokens_file):
+def test_graphql_refresh_token_unauthorized(client):
     response = client.post(
         "/graphql",
         json={"query": REFRESH_TOKEN_MUTATION},
@@ -175,7 +174,7 @@ def test_graphql_refresh_token_unauthorized(client, tokens_file):
     assert_empty(response)
 
 
-def test_graphql_refresh_token(authorized_client, client, tokens_file):
+def test_graphql_refresh_token(authorized_client, client):
     caller_name_and_date = graphql_get_caller_token_info(authorized_client)
     response = authorized_client.post(
         "/graphql",
@@ -206,7 +205,6 @@ mutation NewDeviceKey {
 
 def test_graphql_get_new_device_auth_key_unauthorized(
     client,
-    tokens_file,
 ):
     response = client.post(
         "/graphql",
@@ -230,7 +228,6 @@ mutation InvalidateNewDeviceKey {
 
 def test_graphql_invalidate_new_device_token_unauthorized(
     client,
-    tokens_file,
 ):
     response = client.post(
         "/graphql",
@@ -244,7 +241,7 @@ def test_graphql_invalidate_new_device_token_unauthorized(
     assert_empty(response)
 
 
-def test_graphql_get_and_delete_new_device_key(client, authorized_client, tokens_file):
+def test_graphql_get_and_delete_new_device_key(client, authorized_client):
     mnemonic_key = graphql_get_new_device_key(authorized_client)
 
     response = authorized_client.post(
@@ -271,7 +268,7 @@ mutation AuthorizeWithNewDeviceKey($input: UseNewDeviceKeyInput!) {
 """
 
 
-def test_graphql_get_and_authorize_new_device(client, authorized_client, tokens_file):
+def test_graphql_get_and_authorize_new_device(client, authorized_client):
     mnemonic_key = graphql_get_new_device_key(authorized_client)
     old_devices = graphql_get_devices(authorized_client)
 
@@ -282,16 +279,14 @@ def test_graphql_get_and_authorize_new_device(client, authorized_client, tokens_
     assert "new_device" in [device["name"] for device in new_devices]
 
 
-def test_graphql_authorize_new_device_with_invalid_key(
-    client, authorized_client, tokens_file
-):
+def test_graphql_authorize_new_device_with_invalid_key(client, authorized_client):
     response = graphql_try_auth_new_device(client, "invalid_token", "new_device")
     assert_errorcode(get_data(response)["api"]["authorizeWithNewDeviceApiKey"], 404)
 
     assert_original(authorized_client)
 
 
-def test_graphql_get_and_authorize_used_key(client, authorized_client, tokens_file):
+def test_graphql_get_and_authorize_used_key(client, authorized_client):
     mnemonic_key = graphql_get_new_device_key(authorized_client)
 
     graphql_authorize_new_device(client, mnemonic_key, "new_device")
@@ -304,7 +299,7 @@ def test_graphql_get_and_authorize_used_key(client, authorized_client, tokens_fi
 
 
 def test_graphql_get_and_authorize_key_after_12_minutes(
-    client, authorized_client, tokens_file, mocker
+    client, authorized_client, mocker
 ):
     mnemonic_key = graphql_get_new_device_key(authorized_client)
     mock = mocker.patch(DEVICE_KEY_VALIDATION_DATETIME, NearFuture)
@@ -315,7 +310,6 @@ def test_graphql_get_and_authorize_key_after_12_minutes(
 
 def test_graphql_authorize_without_token(
     client,
-    tokens_file,
 ):
     response = client.post(
         "/graphql",

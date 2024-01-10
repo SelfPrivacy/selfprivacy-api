@@ -14,9 +14,9 @@ from tests.common import (
 )
 
 # Graphql API's output should be timezone-naive
-from tests.common import five_minutes_into_future_naive_utc as five_minutes_into_future
-from tests.common import five_minutes_into_future as five_minutes_into_future_tz
-from tests.common import five_minutes_into_past_naive_utc as five_minutes_into_past
+from tests.common import ten_minutes_into_future_naive_utc as ten_minutes_into_future
+from tests.common import ten_minutes_into_future as ten_minutes_into_future_tz
+from tests.common import ten_minutes_into_past_naive_utc as ten_minutes_into_past
 
 from tests.test_graphql.common import (
     assert_empty,
@@ -111,12 +111,12 @@ def graphql_use_recovery_key(client, key, device_name):
     return token
 
 
-def test_graphql_recovery_key_status_unauthorized(client, tokens_file):
+def test_graphql_recovery_key_status_unauthorized(client):
     response = request_recovery_status(client)
     assert_empty(response)
 
 
-def test_graphql_recovery_key_status_when_none_exists(authorized_client, tokens_file):
+def test_graphql_recovery_key_status_when_none_exists(authorized_client):
     status = graphql_recovery_status(authorized_client)
     assert status["exists"] is False
     assert status["valid"] is False
@@ -152,7 +152,7 @@ mutation TestUseRecoveryKey($input: UseRecoveryKeyInput!) {
 """
 
 
-def test_graphql_generate_recovery_key(client, authorized_client, tokens_file):
+def test_graphql_generate_recovery_key(client, authorized_client):
     key = graphql_make_new_recovery_key(authorized_client)
 
     status = graphql_recovery_status(authorized_client)
@@ -168,10 +168,10 @@ def test_graphql_generate_recovery_key(client, authorized_client, tokens_file):
 
 
 @pytest.mark.parametrize(
-    "expiration_date", [five_minutes_into_future(), five_minutes_into_future_tz()]
+    "expiration_date", [ten_minutes_into_future(), ten_minutes_into_future_tz()]
 )
 def test_graphql_generate_recovery_key_with_expiration_date(
-    client, authorized_client, tokens_file, expiration_date: datetime
+    client, authorized_client, expiration_date: datetime
 ):
     key = graphql_make_new_recovery_key(authorized_client, expires_at=expiration_date)
 
@@ -192,10 +192,8 @@ def test_graphql_generate_recovery_key_with_expiration_date(
     graphql_use_recovery_key(client, key, "new_test_token2")
 
 
-def test_graphql_use_recovery_key_after_expiration(
-    client, authorized_client, tokens_file, mocker
-):
-    expiration_date = five_minutes_into_future()
+def test_graphql_use_recovery_key_after_expiration(client, authorized_client, mocker):
+    expiration_date = ten_minutes_into_future()
     key = graphql_make_new_recovery_key(authorized_client, expires_at=expiration_date)
 
     # Timewarp to after it expires
@@ -220,10 +218,8 @@ def test_graphql_use_recovery_key_after_expiration(
     assert status["usesLeft"] is None
 
 
-def test_graphql_generate_recovery_key_with_expiration_in_the_past(
-    authorized_client, tokens_file
-):
-    expiration_date = five_minutes_into_past()
+def test_graphql_generate_recovery_key_with_expiration_in_the_past(authorized_client):
+    expiration_date = ten_minutes_into_past()
     response = request_make_new_recovery_key(
         authorized_client, expires_at=expiration_date
     )
@@ -235,9 +231,7 @@ def test_graphql_generate_recovery_key_with_expiration_in_the_past(
     assert graphql_recovery_status(authorized_client)["exists"] is False
 
 
-def test_graphql_generate_recovery_key_with_invalid_time_format(
-    authorized_client, tokens_file
-):
+def test_graphql_generate_recovery_key_with_invalid_time_format(authorized_client):
     expiration_date = "invalid_time_format"
     expiration_date_str = expiration_date
 
@@ -256,10 +250,7 @@ def test_graphql_generate_recovery_key_with_invalid_time_format(
     assert graphql_recovery_status(authorized_client)["exists"] is False
 
 
-def test_graphql_generate_recovery_key_with_limited_uses(
-    authorized_client, client, tokens_file
-):
-
+def test_graphql_generate_recovery_key_with_limited_uses(authorized_client, client):
     mnemonic_key = graphql_make_new_recovery_key(authorized_client, uses=2)
 
     status = graphql_recovery_status(authorized_client)
@@ -292,9 +283,7 @@ def test_graphql_generate_recovery_key_with_limited_uses(
     assert_errorcode(output, 404)
 
 
-def test_graphql_generate_recovery_key_with_negative_uses(
-    authorized_client, tokens_file
-):
+def test_graphql_generate_recovery_key_with_negative_uses(authorized_client):
     response = request_make_new_recovery_key(authorized_client, uses=-1)
 
     output = get_data(response)["api"]["getNewRecoveryApiKey"]
@@ -303,7 +292,7 @@ def test_graphql_generate_recovery_key_with_negative_uses(
     assert graphql_recovery_status(authorized_client)["exists"] is False
 
 
-def test_graphql_generate_recovery_key_with_zero_uses(authorized_client, tokens_file):
+def test_graphql_generate_recovery_key_with_zero_uses(authorized_client):
     response = request_make_new_recovery_key(authorized_client, uses=0)
 
     output = get_data(response)["api"]["getNewRecoveryApiKey"]

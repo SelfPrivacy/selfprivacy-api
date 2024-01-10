@@ -372,7 +372,6 @@ class ResticBackupper(AbstractBackupper):
             stderr=subprocess.STDOUT,
             shell=False,
         ) as handle:
-
             # for some reason restore does not support
             # nice reporting of progress via json
             output = handle.communicate()[0].decode("utf-8")

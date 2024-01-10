@@ -17,9 +17,6 @@ from selfprivacy_api.repositories.tokens.exceptions import (
     NewDeviceKeyNotFound,
 )
 
-from selfprivacy_api.repositories.tokens.json_tokens_repository import (
-    JsonTokensRepository,
-)
 from selfprivacy_api.repositories.tokens.redis_tokens_repository import (
     RedisTokensRepository,
 )
@@ -27,7 +24,7 @@ from selfprivacy_api.repositories.tokens.abstract_tokens_repository import (
     AbstractTokensRepository,
 )
 
-from tests.common import five_minutes_into_past, five_minutes_into_future
+from tests.common import ten_minutes_into_past, ten_minutes_into_future
 
 
 ORIGINAL_DEVICE_NAMES = [
@@ -133,10 +130,8 @@ def mock_recovery_key_generate(mocker):
     return mock
 
 
-@pytest.fixture(params=["json", "redis"])
-def empty_repo(request, empty_json_repo, empty_redis_repo):
-    if request.param == "json":
-        return empty_json_repo
+@pytest.fixture(params=["redis"])
+def empty_repo(request, empty_redis_repo):
     if request.param == "redis":
         return empty_redis_repo
         # return empty_json_repo
@@ -363,7 +358,7 @@ def test_use_mnemonic_expired_recovery_key(
     some_tokens_repo,
 ):
     repo = some_tokens_repo
-    expiration = five_minutes_into_past()
+    expiration = ten_minutes_into_past()
     assert repo.create_recovery_key(uses_left=2, expiration=expiration) is not None
     recovery_key = repo.get_recovery_key()
     # TODO: do not ignore timezone once json backend is deleted
@@ -543,7 +538,7 @@ def test_use_mnemonic_expired_new_device_key(
     some_tokens_repo,
 ):
     repo = some_tokens_repo
-    expiration = five_minutes_into_past()
+    expiration = ten_minutes_into_past()
 
     key = repo.get_new_device_key()
     assert key is not None
@@ -582,24 +577,3 @@ def assert_identical(
         assert token in tokens_b
     assert repo_a.get_recovery_key() == repo_b.get_recovery_key()
     assert repo_a._get_stored_new_device_key() == repo_b._get_stored_new_device_key()
-
-
-def clone_to_redis(repo: JsonTokensRepository):
-    other_repo = RedisTokensRepository()
-    other_repo.clone(repo)
-    assert_identical(repo, other_repo)
-
-
-# we cannot easily parametrize this unfortunately, since some_tokens and empty_repo cannot coexist
-def test_clone_json_to_redis_empty(empty_repo):
-    repo = empty_repo
-    if isinstance(repo, JsonTokensRepository):
-        clone_to_redis(repo)
-
-
-def test_clone_json_to_redis_full(some_tokens_repo):
-    repo = some_tokens_repo
-    if isinstance(repo, JsonTokensRepository):
-        repo.get_new_device_key()
-        repo.create_recovery_key(five_minutes_into_future(), 2)
-        clone_to_redis(repo)

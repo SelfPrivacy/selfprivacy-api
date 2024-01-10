@@ -148,3 +148,5 @@ cython_debug/
 
 *.db
 *.rdb
+
+/result

@@ -308,7 +308,6 @@ original_settings = [
 def test_graphql_readwrite_ssh_settings(
     authorized_client, some_users, settings, original_settings
 ):
-
     # Userdata-related tests like undefined fields are in actions-level tests.
     output = api_set_ssh_settings_dict(authorized_client, original_settings)
     assert_includes(api_ssh_settings(authorized_client), output)
@@ -334,7 +333,6 @@ forbidden_settings = [
 def test_graphql_readwrite_ssh_settings_partial(
     authorized_client, some_users, settings, original_settings
 ):
-
     output = api_set_ssh_settings_dict(authorized_client, original_settings)
     with pytest.raises(Exception):
         output = api_set_ssh_settings_dict(authorized_client, settings)
