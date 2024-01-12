@@ -731,9 +731,12 @@ class Backups:
     def is_time_to_backup_service(service: Service, time: datetime):
         """Returns True if it is time to back up a service"""
         period = Backups.autobackup_period_minutes()
-        if not service.can_be_backed_up():
-            return False
         if period is None:
+            return False
+
+        if not service.is_enabled():
+            return False
+        if not service.can_be_backed_up():
             return False
 
         last_error = Backups.get_last_backup_error_time(service)
@@ -743,8 +746,9 @@ class Backups:
                 return False
 
         last_backup = Backups.get_last_backed_up(service)
+
+        # Queue a backup immediately if there are no previous backups
         if last_backup is None:
-            # queue a backup immediately if there are no previous backups
             return True
 
         if time > last_backup + timedelta(minutes=period):

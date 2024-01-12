@@ -889,7 +889,7 @@ def backuppable_services() -> list[Service]:
     return [service for service in get_all_services() if service.can_be_backed_up()]
 
 
-def test_services_to_back_up(backups, dummy_service):
+def test_services_to_autobackup(backups, dummy_service):
     backup_period = 13  # minutes
     now = datetime.now(timezone.utc)
 
@@ -909,6 +909,15 @@ def test_services_to_back_up(backups, dummy_service):
     assert dummy_service.get_id() in [
         service.get_id() for service in backuppable_services()
     ]
+
+
+def test_do_not_autobackup_disabled_services(backups, dummy_service):
+    now = datetime.now(timezone.utc)
+    Backups.set_autobackup_period_minutes(3)
+    assert Backups.is_time_to_backup_service(dummy_service, now) is True
+
+    dummy_service.disable()
+    assert Backups.is_time_to_backup_service(dummy_service, now) is False
 
 
 def test_autobackup_timer_periods(backups, dummy_service):
