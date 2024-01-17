@@ -15,7 +15,7 @@ RESULT_WAS_NOT_FOUND_ERROR = "We are sorry, garbage collection result was not fo
 CLEAR_COMPLETED = "Garbage collection completed."
 
 
-def run_nix_store_print_dead() -> str:
+def delete_old_gens_and_print_dead() -> str:
     subprocess.run(
         ["nix-env", "-p", "/nix/var/nix/profiles/system", "--delete-generations old"],
         check=False,
@@ -94,7 +94,7 @@ def get_dead_packages(output) -> Tuple[int, float]:
 
 
 @huey.task()
-def calculate_and_clear_dead_packages(job: Job):
+def calculate_and_clear_dead_paths(job: Job):
     Jobs.update(
         job=job,
         status=JobStatus.RUNNING,
@@ -103,7 +103,7 @@ def calculate_and_clear_dead_packages(job: Job):
     )
 
     dead_packages, package_equal_to_percent = get_dead_packages(
-        run_nix_store_print_dead()
+        delete_old_gens_and_print_dead()
     )
 
     if dead_packages == 0:
@@ -132,5 +132,5 @@ def start_nix_collect_garbage() -> Job:
         name="Collect garbage",
         description="Cleaning up unused packages",
     )
-    calculate_and_clear_dead_packages(job=job)
+    calculate_and_clear_dead_paths(job=job)
     return job

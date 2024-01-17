@@ -49,11 +49,6 @@ note: currently hard linking saves 0.00 MiB
 0 store paths deleted, 0.00 MiB freed
 """
 
-OUTPUT_RUN_NIX_STORE_PRINT_DEAD_ZERO_TRASH = """
-finding garbage collector roots...
-determining live/dead paths...
-"""
-
 log_event = []
 
 
