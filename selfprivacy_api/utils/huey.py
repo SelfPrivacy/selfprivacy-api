@@ -1,16 +1,23 @@
 """MiniHuey singleton."""
 import os
-from huey import SqliteHuey
+from os import environ
+from huey import RedisHuey
 
-HUEY_DATABASE = "/etc/selfprivacy/tasks.db"
+from selfprivacy_api.utils.redis_pool import RedisPool
+
+HUEY_DATABASE_NUMBER = 10
+
+def immediate() -> bool:
+    if environ.get("HUEY_QUEUES_FOR_TESTS"):
+        return False
+    if environ.get("TEST_MODE"):
+        return True
+    return False
 
 # Singleton instance containing the huey database.
-
-test_mode = os.environ.get("TEST_MODE")
-
-huey = SqliteHuey(
+huey = RedisHuey(
     "selfprivacy-api",
-    filename=HUEY_DATABASE if not test_mode else None,
-    immediate=test_mode == "true",
+    url=RedisPool.connection_url(dbnumber=HUEY_DATABASE_NUMBER),
+    immediate=immediate(),
     utc=True,
 )
