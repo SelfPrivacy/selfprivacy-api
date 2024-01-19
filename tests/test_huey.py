@@ -37,7 +37,7 @@ def huey_queues(not_immediate):
 
     yield huey
 
-    consumer_handle.terminate()
+    consumer_handle.kill()
 
 
 def test_huey(huey_queues):
