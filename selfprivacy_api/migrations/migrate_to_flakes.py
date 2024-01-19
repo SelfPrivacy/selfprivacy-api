@@ -4,8 +4,10 @@ import subprocess
 import tempfile
 import tarfile
 import shutil
+import time
 import urllib.request
 from selfprivacy_api.jobs import JobStatus, Jobs
+import selfprivacy_api.actions.system as system_actions
 
 from selfprivacy_api.migrations.migration import Migration
 
@@ -249,7 +251,7 @@ class MigrateToFlakes(Migration):
             )
             print("================================")
             print(
-                "NixOS built. You may reboot now! Creating a notification for the app"
+                "NixOS built. Rebooting soon!"
             )
             print("================================")
 
@@ -257,10 +259,14 @@ class MigrateToFlakes(Migration):
                 name="NixOS upgrade to 23.11",
                 type_id="migrations.migrate_to_flakes",
                 status=JobStatus.FINISHED,
-                status_text="New system built. Reboot your server to apply.",
+                status_text="New system built. Check your server API version: if it is 3.0.0 or higher, you've successfully migrated",
                 progress=100,
                 description="Migration to the modular SelfPrivacy system",
             )
+
+            time.sleep(5)
+
+            system_actions.reboot_system()
 
         except Exception as error:
             os.chdir(current_working_directory)
