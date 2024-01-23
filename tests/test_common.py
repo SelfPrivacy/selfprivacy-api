@@ -1,6 +1,5 @@
 # pylint: disable=redefined-outer-name
 # pylint: disable=unused-argument
-import json
 import os
 import pytest
 

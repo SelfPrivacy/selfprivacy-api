@@ -6,6 +6,10 @@ from datetime import datetime
 
 from selfprivacy_api.models.backup.snapshot import Snapshot
 from selfprivacy_api.models.backup.provider import BackupProviderModel
+from selfprivacy_api.graphql.common_types.backup import (
+    AutobackupQuotas,
+    _AutobackupQuotas,
+)
 
 from selfprivacy_api.utils.redis_pool import RedisPool
 from selfprivacy_api.utils.redis_model_storage import (
@@ -23,6 +27,8 @@ REDIS_INITTED_CACHE = "backups:repo_initted"
 REDIS_PROVIDER_KEY = "backups:provider"
 REDIS_AUTOBACKUP_PERIOD_KEY = "backups:autobackup_period"
 
+REDIS_AUTOBACKUP_QUOTAS_KEY = "backups:autobackup_quotas_key"
+
 redis = RedisPool().get_connection()
 
 
@@ -35,6 +41,7 @@ class Storage:
         redis.delete(REDIS_PROVIDER_KEY)
         redis.delete(REDIS_AUTOBACKUP_PERIOD_KEY)
         redis.delete(REDIS_INITTED_CACHE)
+        redis.delete(REDIS_AUTOBACKUP_QUOTAS_KEY)
 
         prefixes_to_clean = [
             REDIS_SNAPSHOTS_PREFIX,
@@ -170,3 +177,23 @@ class Storage:
     def mark_as_uninitted():
         """Marks the repository as initialized"""
         redis.delete(REDIS_INITTED_CACHE)
+
+    @staticmethod
+    def set_autobackup_quotas(quotas: AutobackupQuotas) -> None:
+        store_model_as_hash(redis, REDIS_AUTOBACKUP_QUOTAS_KEY, quotas.to_pydantic())
+
+    @staticmethod
+    def autobackup_quotas() -> AutobackupQuotas:
+        quotas_model = hash_as_model(
+            redis, REDIS_AUTOBACKUP_QUOTAS_KEY, _AutobackupQuotas
+        )
+        if quotas_model is None:
+            unlimited_quotas = AutobackupQuotas(
+                last=-1,
+                daily=-1,
+                weekly=-1,
+                monthly=-1,
+                yearly=-1,
+            )
+            return unlimited_quotas
+        return AutobackupQuotas.from_pydantic(quotas_model)  # pylint: disable=no-member

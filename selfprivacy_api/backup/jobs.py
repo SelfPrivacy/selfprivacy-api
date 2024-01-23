@@ -80,8 +80,18 @@ def get_job_by_type(type_id: str) -> Optional[Job]:
             return job
 
 
+def get_failed_job_by_type(type_id: str) -> Optional[Job]:
+    for job in Jobs.get_jobs():
+        if job.type_id == type_id and job.status == JobStatus.ERROR:
+            return job
+
+
 def get_backup_job(service: Service) -> Optional[Job]:
     return get_job_by_type(backup_job_type(service))
+
+
+def get_backup_fail(service: Service) -> Optional[Job]:
+    return get_failed_job_by_type(backup_job_type(service))
 
 
 def get_restore_job(service: Service) -> Optional[Job]:

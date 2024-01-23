@@ -8,8 +8,8 @@ A job is a dictionary with the following keys:
     - name: name of the job
     - description: description of the job
     - status: status of the job
-    - created_at: date of creation of the job
-    - updated_at: date of last update of the job
+    - created_at: date of creation of the job, naive localtime
+    - updated_at: date of last update of the job, naive localtime
     - finished_at: date of finish of the job
     - error: error message if the job failed
     - result: result of the job
@@ -222,6 +222,14 @@ class Jobs:
             if status in (JobStatus.FINISHED, JobStatus.ERROR):
                 redis.expire(key, JOB_EXPIRATION_SECONDS)
 
+        return job
+
+    @staticmethod
+    def set_expiration(job: Job, expiration_seconds: int) -> Job:
+        redis = RedisPool().get_connection()
+        key = _redis_key_from_uuid(job.uid)
+        if redis.exists(key):
+            redis.expire(key, expiration_seconds)
         return job
 
     @staticmethod

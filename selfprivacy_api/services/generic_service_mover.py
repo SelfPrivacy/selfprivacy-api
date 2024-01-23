@@ -244,9 +244,11 @@ def move_service(
         progress=95,
     )
     with WriteUserData() as user_data:
-        if userdata_location not in user_data:
-            user_data[userdata_location] = {}
-        user_data[userdata_location]["location"] = volume.name
+        if "modules" not in user_data:
+            user_data["modules"] = {}
+        if userdata_location not in user_data["modules"]:
+            user_data["modules"][userdata_location] = {}
+        user_data["modules"][userdata_location]["location"] = volume.name
     # Start service
     service.start()
     Jobs.update(

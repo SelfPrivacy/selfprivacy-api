@@ -1,10 +1,12 @@
 """
 New device key used to obtain access token.
 """
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import secrets
 from pydantic import BaseModel
 from mnemonic import Mnemonic
+
+from selfprivacy_api.models.tokens.time import is_past
 
 
 class NewDeviceKey(BaseModel):
@@ -20,15 +22,15 @@ class NewDeviceKey(BaseModel):
 
     def is_valid(self) -> bool:
         """
-        Check if the recovery key is valid.
+        Check if key is valid.
         """
-        if self.expires_at < datetime.now():
+        if is_past(self.expires_at):
             return False
         return True
 
     def as_mnemonic(self) -> str:
         """
-        Get the recovery key as a mnemonic.
+        Get the key as a mnemonic.
         """
         return Mnemonic(language="english").to_mnemonic(bytes.fromhex(self.key))
 
@@ -37,10 +39,10 @@ class NewDeviceKey(BaseModel):
         """
         Factory to generate a random token.
         """
-        creation_date = datetime.now()
+        creation_date = datetime.now(timezone.utc)
         key = secrets.token_bytes(16).hex()
         return NewDeviceKey(
             key=key,
             created_at=creation_date,
-            expires_at=datetime.now() + timedelta(minutes=10),
+            expires_at=creation_date + timedelta(minutes=10),
         )

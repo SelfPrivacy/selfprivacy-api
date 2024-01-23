@@ -38,7 +38,7 @@ class ApiRecoveryKeyStatus:
 
 
 def get_recovery_key_status() -> ApiRecoveryKeyStatus:
-    """Get recovery key status"""
+    """Get recovery key status, times are timezone-aware"""
     status = get_api_recovery_token_status()
     if status is None or not status.exists:
         return ApiRecoveryKeyStatus(

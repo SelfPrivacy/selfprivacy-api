@@ -11,3 +11,4 @@ class DnsRecord:
     content: str
     ttl: int
     priority: typing.Optional[int]
+    display_name: str

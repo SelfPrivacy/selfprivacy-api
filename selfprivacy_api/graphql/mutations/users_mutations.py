@@ -69,6 +69,12 @@ class UsersMutations:
                 message=str(e),
                 code=400,
             )
+        except users_actions.InvalidConfiguration as e:
+            return UserMutationReturn(
+                success=False,
+                message=str(e),
+                code=400,
+            )
         except users_actions.UserAlreadyExists as e:
             return UserMutationReturn(
                 success=False,
@@ -147,7 +153,7 @@ class UsersMutations:
         except InvalidPublicKey:
             return UserMutationReturn(
                 success=False,
-                message="Invalid key type. Only ssh-ed25519 and ssh-rsa are supported",
+                message="Invalid key type. Only ssh-ed25519, ssh-rsa and ecdsa are supported",
                 code=400,
             )
         except UserNotFound:

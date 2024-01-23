@@ -6,27 +6,25 @@ import json
 import os
 import subprocess
 import portalocker
+import typing
 
 
-USERDATA_FILE = "/etc/nixos/userdata/userdata.json"
-TOKENS_FILE = "/etc/nixos/userdata/tokens.json"
-JOBS_FILE = "/etc/nixos/userdata/jobs.json"
-DOMAIN_FILE = "/var/domain"
+USERDATA_FILE = "/etc/nixos/userdata.json"
+SECRETS_FILE = "/etc/selfprivacy/secrets.json"
+DKIM_DIR = "/var/dkim/"
 
 
 class UserDataFiles(Enum):
     """Enum for userdata files"""
 
     USERDATA = 0
-    TOKENS = 1
-    JOBS = 2
+    SECRETS = 3
 
 
 def get_domain():
-    """Get domain from /var/domain without trailing new line"""
-    with open(DOMAIN_FILE, "r", encoding="utf-8") as domain_file:
-        domain = domain_file.readline().rstrip()
-    return domain
+    """Get domain from userdata.json"""
+    with ReadUserData() as user_data:
+        return user_data["domain"]
 
 
 class WriteUserData(object):
@@ -35,14 +33,12 @@ class WriteUserData(object):
     def __init__(self, file_type=UserDataFiles.USERDATA):
         if file_type == UserDataFiles.USERDATA:
             self.userdata_file = open(USERDATA_FILE, "r+", encoding="utf-8")
-        elif file_type == UserDataFiles.TOKENS:
-            self.userdata_file = open(TOKENS_FILE, "r+", encoding="utf-8")
-        elif file_type == UserDataFiles.JOBS:
+        elif file_type == UserDataFiles.SECRETS:
             # Make sure file exists
-            if not os.path.exists(JOBS_FILE):
-                with open(JOBS_FILE, "w", encoding="utf-8") as jobs_file:
-                    jobs_file.write("{}")
-            self.userdata_file = open(JOBS_FILE, "r+", encoding="utf-8")
+            if not os.path.exists(SECRETS_FILE):
+                with open(SECRETS_FILE, "w", encoding="utf-8") as secrets_file:
+                    secrets_file.write("{}")
+            self.userdata_file = open(SECRETS_FILE, "r+", encoding="utf-8")
         else:
             raise ValueError("Unknown file type")
         portalocker.lock(self.userdata_file, portalocker.LOCK_EX)
@@ -66,14 +62,11 @@ class ReadUserData(object):
     def __init__(self, file_type=UserDataFiles.USERDATA):
         if file_type == UserDataFiles.USERDATA:
             self.userdata_file = open(USERDATA_FILE, "r", encoding="utf-8")
-        elif file_type == UserDataFiles.TOKENS:
-            self.userdata_file = open(TOKENS_FILE, "r", encoding="utf-8")
-        elif file_type == UserDataFiles.JOBS:
-            # Make sure file exists
-            if not os.path.exists(JOBS_FILE):
-                with open(JOBS_FILE, "w", encoding="utf-8") as jobs_file:
-                    jobs_file.write("{}")
-            self.userdata_file = open(JOBS_FILE, "r", encoding="utf-8")
+        elif file_type == UserDataFiles.SECRETS:
+            if not os.path.exists(SECRETS_FILE):
+                with open(SECRETS_FILE, "w", encoding="utf-8") as secrets_file:
+                    secrets_file.write("{}")
+            self.userdata_file = open(SECRETS_FILE, "r", encoding="utf-8")
         else:
             raise ValueError("Unknown file type")
         portalocker.lock(self.userdata_file, portalocker.LOCK_SH)
@@ -88,10 +81,12 @@ class ReadUserData(object):
 
 
 def validate_ssh_public_key(key):
-    """Validate SSH public key. It may be ssh-ed25519 or ssh-rsa."""
+    """Validate SSH public key.
+    It may be ssh-ed25519, ssh-rsa or ecdsa-sha2-nistp256."""
     if not key.startswith("ssh-ed25519"):
         if not key.startswith("ssh-rsa"):
-            return False
+            if not key.startswith("ecdsa-sha2-nistp256"):
+                return False
     return True
 
 
@@ -164,26 +159,31 @@ def parse_date(date_str: str) -> datetime.datetime:
     raise ValueError("Invalid date string")
 
 
-def get_dkim_key(domain, parse=True):
+def parse_dkim(dkim: str) -> str:
+    # extract key from file
+    dkim = dkim.split("(")[1]
+    dkim = dkim.split(")")[0]
+    # replace all quotes with nothing
+    dkim = dkim.replace('"', "")
+    # trim whitespace, remove newlines and tabs
+    dkim = dkim.strip()
+    dkim = dkim.replace("\n", "")
+    dkim = dkim.replace("\t", "")
+    # remove all redundant spaces
+    dkim = " ".join(dkim.split())
+    return dkim
+
+
+def get_dkim_key(domain: str, parse: bool = True) -> typing.Optional[str]:
     """Get DKIM key from /var/dkim/<domain>.selector.txt"""
-    if os.path.exists("/var/dkim/" + domain + ".selector.txt"):
-        cat_process = subprocess.Popen(
-            ["cat", "/var/dkim/" + domain + ".selector.txt"], stdout=subprocess.PIPE
-        )
-        dkim = cat_process.communicate()[0]
-        if parse:
-            # Extract key from file
-            dkim = dkim.split(b"(")[1]
-            dkim = dkim.split(b")")[0]
-            # Replace all quotes with nothing
-            dkim = dkim.replace(b'"', b"")
-            # Trim whitespace, remove newlines and tabs
-            dkim = dkim.strip()
-            dkim = dkim.replace(b"\n", b"")
-            dkim = dkim.replace(b"\t", b"")
-            # Remove all redundant spaces
-            dkim = b" ".join(dkim.split())
-        return str(dkim, "utf-8")
+
+    dkim_path = os.path.join(DKIM_DIR, domain + ".selector.txt")
+    if os.path.exists(dkim_path):
+        with open(dkim_path, encoding="utf-8") as dkim_file:
+            dkim = dkim_file.read()
+            if parse:
+                dkim = parse_dkim(dkim)
+        return dkim
     return None
 
 

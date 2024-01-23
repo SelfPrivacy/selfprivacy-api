@@ -1,11 +1,15 @@
-"""App tokens actions"""
-from datetime import datetime
+"""
+App tokens actions. 
+The only actions on tokens that are accessible from APIs
+"""
+from datetime import datetime, timezone
 from typing import Optional
 from pydantic import BaseModel
 from mnemonic import Mnemonic
 
-from selfprivacy_api.repositories.tokens.json_tokens_repository import (
-    JsonTokensRepository,
+from selfprivacy_api.utils.timeutils import ensure_tz_aware, ensure_tz_aware_strict
+from selfprivacy_api.repositories.tokens.redis_tokens_repository import (
+    RedisTokensRepository,
 )
 from selfprivacy_api.repositories.tokens.exceptions import (
     TokenNotFound,
@@ -14,7 +18,7 @@ from selfprivacy_api.repositories.tokens.exceptions import (
     NewDeviceKeyNotFound,
 )
 
-TOKEN_REPO = JsonTokensRepository()
+TOKEN_REPO = RedisTokensRepository()
 
 
 class TokenInfoWithIsCaller(BaseModel):
@@ -23,6 +27,14 @@ class TokenInfoWithIsCaller(BaseModel):
     name: str
     date: datetime
     is_caller: bool
+
+
+def _naive(date_time: datetime) -> datetime:
+    if date_time is None:
+        return None
+    if date_time.tzinfo is not None:
+        date_time.astimezone(timezone.utc)
+    return date_time.replace(tzinfo=None)
 
 
 def get_api_tokens_with_caller_flag(caller_token: str) -> list[TokenInfoWithIsCaller]:
@@ -83,16 +95,22 @@ class RecoveryTokenStatus(BaseModel):
 
 
 def get_api_recovery_token_status() -> RecoveryTokenStatus:
-    """Get the recovery token status"""
+    """Get the recovery token status, timezone-aware"""
     token = TOKEN_REPO.get_recovery_key()
     if token is None:
         return RecoveryTokenStatus(exists=False, valid=False)
     is_valid = TOKEN_REPO.is_recovery_key_valid()
+
+    # New tokens are tz-aware, but older ones might not be
+    expiry_date = token.expires_at
+    if expiry_date is not None:
+        expiry_date = ensure_tz_aware_strict(expiry_date)
+
     return RecoveryTokenStatus(
         exists=True,
         valid=is_valid,
-        date=token.created_at,
-        expiration=token.expires_at,
+        date=ensure_tz_aware_strict(token.created_at),
+        expiration=expiry_date,
         uses_left=token.uses_left,
     )
 
@@ -110,8 +128,9 @@ def get_new_api_recovery_key(
 ) -> str:
     """Get new recovery key"""
     if expiration_date is not None:
-        current_time = datetime.now().timestamp()
-        if expiration_date.timestamp() < current_time:
+        expiration_date = ensure_tz_aware(expiration_date)
+        current_time = datetime.now(timezone.utc)
+        if expiration_date < current_time:
             raise InvalidExpirationDate("Expiration date is in the past")
     if uses_left is not None:
         if uses_left <= 0:

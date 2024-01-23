@@ -1,6 +1,8 @@
 import typing
 import strawberry
 
+from selfprivacy_api.jobs import Jobs
+
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericMutationReturn,
@@ -11,11 +13,18 @@ from selfprivacy_api.graphql.queries.backup import BackupConfiguration
 from selfprivacy_api.graphql.queries.backup import Backup
 from selfprivacy_api.graphql.queries.providers import BackupProvider
 from selfprivacy_api.graphql.common_types.jobs import job_to_api_job
-from selfprivacy_api.graphql.common_types.backup import RestoreStrategy
+from selfprivacy_api.graphql.common_types.backup import (
+    AutobackupQuotasInput,
+    RestoreStrategy,
+)
 
 from selfprivacy_api.backup import Backups
 from selfprivacy_api.services import get_service_by_id
-from selfprivacy_api.backup.tasks import start_backup, restore_snapshot
+from selfprivacy_api.backup.tasks import (
+    start_backup,
+    restore_snapshot,
+    prune_autobackup_snapshots,
+)
 from selfprivacy_api.backup.jobs import add_backup_job, add_restore_job
 
 
@@ -91,6 +100,41 @@ class BackupMutations:
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
+    def set_autobackup_quotas(
+        self, quotas: AutobackupQuotasInput
+    ) -> GenericBackupConfigReturn:
+        """
+        Set autobackup quotas.
+        Values <=0 for any timeframe mean no limits for that timeframe.
+        To disable autobackup use autobackup period setting, not this mutation.
+        """
+
+        job = Jobs.add(
+            name="Trimming autobackup snapshots",
+            type_id="backups.autobackup_trimming",
+            description="Pruning the excessive snapshots after the new autobackup quotas are set",
+        )
+
+        try:
+            Backups.set_autobackup_quotas(quotas)
+            # this task is async and can fail with only a job to report the error
+            prune_autobackup_snapshots(job)
+            return GenericBackupConfigReturn(
+                success=True,
+                message="",
+                code=200,
+                configuration=Backup().configuration(),
+            )
+
+        except Exception as e:
+            return GenericBackupConfigReturn(
+                success=False,
+                message=type(e).__name__ + ":" + str(e),
+                code=400,
+                configuration=Backup().configuration(),
+            )
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def start_backup(self, service_id: str) -> GenericJobMutationReturn:
         """Start backup"""
 
@@ -104,7 +148,7 @@ class BackupMutations:
             )
 
         job = add_backup_job(service)
-        start_backup(service)
+        start_backup(service_id)
 
         return GenericJobMutationReturn(
             success=True,

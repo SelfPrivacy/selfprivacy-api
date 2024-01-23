@@ -4,6 +4,7 @@ import typing
 import strawberry
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.common_types.jobs import job_to_api_job
+from selfprivacy_api.jobs import JobStatus
 
 from selfprivacy_api.graphql.common_types.service import (
     Service,
@@ -47,14 +48,22 @@ class ServicesMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def enable_service(self, service_id: str) -> ServiceMutationReturn:
         """Enable service."""
-        service = get_service_by_id(service_id)
-        if service is None:
+        try:
+            service = get_service_by_id(service_id)
+            if service is None:
+                return ServiceMutationReturn(
+                    success=False,
+                    message="Service not found.",
+                    code=404,
+                )
+            service.enable()
+        except Exception as e:
             return ServiceMutationReturn(
                 success=False,
-                message="Service not found.",
-                code=404,
+                message=format_error(e),
+                code=400,
             )
-        service.enable()
+
         return ServiceMutationReturn(
             success=True,
             message="Service enabled.",
@@ -65,14 +74,21 @@ class ServicesMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def disable_service(self, service_id: str) -> ServiceMutationReturn:
         """Disable service."""
-        service = get_service_by_id(service_id)
-        if service is None:
+        try:
+            service = get_service_by_id(service_id)
+            if service is None:
+                return ServiceMutationReturn(
+                    success=False,
+                    message="Service not found.",
+                    code=404,
+                )
+            service.disable()
+        except Exception as e:
             return ServiceMutationReturn(
                 success=False,
-                message="Service not found.",
-                code=404,
+                message=format_error(e),
+                code=400,
             )
-        service.disable()
         return ServiceMutationReturn(
             success=True,
             message="Service disabled.",
@@ -144,6 +160,8 @@ class ServicesMutations:
                 message="Service not found.",
                 code=404,
             )
+        # TODO: make serviceImmovable and BlockdeviceNotFound exceptions
+        # in the move_to_volume() function and handle them here
         if not service.is_movable():
             return ServiceJobMutationReturn(
                 success=False,
@@ -160,10 +178,31 @@ class ServicesMutations:
                 service=service_to_graphql_service(service),
             )
         job = service.move_to_volume(volume)
-        return ServiceJobMutationReturn(
-            success=True,
-            message="Service moved.",
-            code=200,
-            service=service_to_graphql_service(service),
-            job=job_to_api_job(job),
-        )
+        if job.status in [JobStatus.CREATED, JobStatus.RUNNING]:
+            return ServiceJobMutationReturn(
+                success=True,
+                message="Started moving the service.",
+                code=200,
+                service=service_to_graphql_service(service),
+                job=job_to_api_job(job),
+            )
+        elif job.status == JobStatus.FINISHED:
+            return ServiceJobMutationReturn(
+                success=True,
+                message="Service moved.",
+                code=200,
+                service=service_to_graphql_service(service),
+                job=job_to_api_job(job),
+            )
+        else:
+            return ServiceJobMutationReturn(
+                success=False,
+                message=f"Service move failure: {job.status_text}",
+                code=400,
+                service=service_to_graphql_service(service),
+                job=job_to_api_job(job),
+            )
+
+
+def format_error(e: Exception) -> str:
+    return type(e).__name__ + ": " + str(e)

@@ -1,0 +1,22 @@
+@startuml
+
+left to right direction
+
+title repositories and flake inputs relations diagram
+
+cloud nixpkgs as nixpkgs_transit
+control "<font:monospaced><size:15>nixos-rebuild" as nixos_rebuild
+component "SelfPrivacy\nAPI app" as selfprivacy_app
+component "SelfPrivacy\nNixOS configuration" as nixos_configuration
+
+note top of nixos_configuration : SelfPrivacy\nAPI service module
+
+nixos_configuration ).. nixpkgs_transit
+nixpkgs_transit ..> selfprivacy_app
+selfprivacy_app --> nixos_configuration
+[nixpkgs] --> nixos_configuration
+nixos_configuration -> nixos_rebuild
+
+footer %date("yyyy-MM-dd'T'HH:mmZ")
+
+@enduml

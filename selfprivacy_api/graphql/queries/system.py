@@ -33,6 +33,7 @@ class SystemDomainInfo:
                 content=record.content,
                 ttl=record.ttl,
                 priority=record.priority,
+                display_name=record.display_name,
             )
             for record in get_all_required_dns_records()
         ]

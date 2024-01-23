@@ -1,10 +1,11 @@
 """
 This module contains the controller class for backups.
 """
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+import time
 import os
 from os import statvfs
-from typing import List, Optional
+from typing import Callable, List, Optional
 
 from selfprivacy_api.utils import ReadUserData, WriteUserData
 
@@ -23,7 +24,12 @@ from selfprivacy_api.jobs import Jobs, JobStatus, Job
 from selfprivacy_api.graphql.queries.providers import (
     BackupProvider as BackupProviderEnum,
 )
-from selfprivacy_api.graphql.common_types.backup import RestoreStrategy
+from selfprivacy_api.graphql.common_types.backup import (
+    RestoreStrategy,
+    BackupReason,
+    AutobackupQuotas,
+)
+
 
 from selfprivacy_api.models.backup.snapshot import Snapshot
 
@@ -32,6 +38,7 @@ from selfprivacy_api.backup.providers import get_provider
 from selfprivacy_api.backup.storage import Storage
 from selfprivacy_api.backup.jobs import (
     get_backup_job,
+    get_backup_fail,
     add_backup_job,
     get_restore_job,
     add_restore_job,
@@ -51,6 +58,8 @@ BACKUP_PROVIDER_ENVS = {
     "location": "BACKUP_LOCATION",
 }
 
+AUTOBACKUP_JOB_EXPIRATION_SECONDS = 60 * 60  # one hour
+
 
 class NotDeadError(AssertionError):
     """
@@ -68,6 +77,24 @@ class NotDeadError(AssertionError):
         Normally, this error is unreachable because we do try ensure this.
         Apparently, not this time.
         """
+
+
+class RotationBucket:
+    """
+    Bucket object used for rotation.
+    Has the following mutable fields:
+    - the counter, int
+    - the lambda function which takes datetime and the int and returns the int
+    - the last, int
+    """
+
+    def __init__(self, counter: int, last: int, rotation_lambda):
+        self.counter: int = counter
+        self.last: int = last
+        self.rotation_lambda: Callable[[datetime, int], int] = rotation_lambda
+
+    def __str__(self) -> str:
+        return f"Bucket(counter={self.counter}, last={self.last})"
 
 
 class Backups:
@@ -264,10 +291,12 @@ class Backups:
     # Backup
 
     @staticmethod
-    def back_up(service: Service) -> Snapshot:
-        """The top-level function to back up a service"""
-        folders = service.get_folders()
-        tag = service.get_id()
+    def back_up(
+        service: Service, reason: BackupReason = BackupReason.EXPLICIT
+    ) -> Snapshot:
+        """The top-level function to back up a service
+        If it fails for any reason at all, it should both mark job as
+        errored and re-raise an error"""
 
         job = get_backup_job(service)
         if job is None:
@@ -275,19 +304,131 @@ class Backups:
         Jobs.update(job, status=JobStatus.RUNNING)
 
         try:
+            if service.can_be_backed_up() is False:
+                raise ValueError("cannot backup a non-backuppable service")
+            folders = service.get_folders()
+            service_name = service.get_id()
             service.pre_backup()
             snapshot = Backups.provider().backupper.start_backup(
                 folders,
-                tag,
+                service_name,
+                reason=reason,
             )
-            Backups._store_last_snapshot(tag, snapshot)
+
+            Backups._store_last_snapshot(service_name, snapshot)
+            if reason == BackupReason.AUTO:
+                Backups._prune_auto_snaps(service)
             service.post_restore()
         except Exception as error:
             Jobs.update(job, status=JobStatus.ERROR, status_text=str(error))
             raise error
 
         Jobs.update(job, status=JobStatus.FINISHED)
+        if reason in [BackupReason.AUTO, BackupReason.PRE_RESTORE]:
+            Jobs.set_expiration(job, AUTOBACKUP_JOB_EXPIRATION_SECONDS)
         return snapshot
+
+    @staticmethod
+    def _auto_snaps(service):
+        return [
+            snap
+            for snap in Backups.get_snapshots(service)
+            if snap.reason == BackupReason.AUTO
+        ]
+
+    @staticmethod
+    def _prune_snaps_with_quotas(snapshots: List[Snapshot]) -> List[Snapshot]:
+        # Function broken out for testability
+        # Sorting newest first
+        sorted_snaps = sorted(snapshots, key=lambda s: s.created_at, reverse=True)
+        quotas: AutobackupQuotas = Backups.autobackup_quotas()
+
+        buckets: list[RotationBucket] = [
+            RotationBucket(
+                quotas.last,  # type: ignore
+                -1,
+                lambda _, index: index,
+            ),
+            RotationBucket(
+                quotas.daily,  # type: ignore
+                -1,
+                lambda date, _: date.year * 10000 + date.month * 100 + date.day,
+            ),
+            RotationBucket(
+                quotas.weekly,  # type: ignore
+                -1,
+                lambda date, _: date.year * 100 + date.isocalendar()[1],
+            ),
+            RotationBucket(
+                quotas.monthly,  # type: ignore
+                -1,
+                lambda date, _: date.year * 100 + date.month,
+            ),
+            RotationBucket(
+                quotas.yearly,  # type: ignore
+                -1,
+                lambda date, _: date.year,
+            ),
+        ]
+
+        new_snaplist: List[Snapshot] = []
+        for i, snap in enumerate(sorted_snaps):
+            keep_snap = False
+            for bucket in buckets:
+                if (bucket.counter > 0) or (bucket.counter == -1):
+                    val = bucket.rotation_lambda(snap.created_at, i)
+                    if (val != bucket.last) or (i == len(sorted_snaps) - 1):
+                        bucket.last = val
+                        if bucket.counter > 0:
+                            bucket.counter -= 1
+                        if not keep_snap:
+                            new_snaplist.append(snap)
+                        keep_snap = True
+
+        return new_snaplist
+
+    @staticmethod
+    def _prune_auto_snaps(service) -> None:
+        # Not very testable by itself, so most testing is going on Backups._prune_snaps_with_quotas
+        # We can still test total limits and, say, daily limits
+
+        auto_snaps = Backups._auto_snaps(service)
+        new_snaplist = Backups._prune_snaps_with_quotas(auto_snaps)
+
+        deletable_snaps = [snap for snap in auto_snaps if snap not in new_snaplist]
+        Backups.forget_snapshots(deletable_snaps)
+
+    @staticmethod
+    def _standardize_quotas(i: int) -> int:
+        if i <= -1:
+            i = -1
+        return i
+
+    @staticmethod
+    def autobackup_quotas() -> AutobackupQuotas:
+        """0 means do not keep, -1 means unlimited"""
+
+        return Storage.autobackup_quotas()
+
+    @staticmethod
+    def set_autobackup_quotas(quotas: AutobackupQuotas) -> None:
+        """0 means do not keep, -1 means unlimited"""
+
+        Storage.set_autobackup_quotas(
+            AutobackupQuotas(
+                last=Backups._standardize_quotas(quotas.last),  # type: ignore
+                daily=Backups._standardize_quotas(quotas.daily),  # type: ignore
+                weekly=Backups._standardize_quotas(quotas.weekly),  # type: ignore
+                monthly=Backups._standardize_quotas(quotas.monthly),  # type: ignore
+                yearly=Backups._standardize_quotas(quotas.yearly),  # type: ignore
+            )
+        )
+        # do not prune all autosnaps right away, this will be done by an async task
+
+    @staticmethod
+    def prune_all_autosnaps() -> None:
+        for service in get_all_services():
+            Backups._prune_auto_snaps(service)
 
     # Restoring
 
@@ -307,9 +448,9 @@ class Backups:
         job: Job,
     ) -> None:
         Jobs.update(
-            job, status=JobStatus.CREATED, status_text=f"Waiting for pre-restore backup"
+            job, status=JobStatus.CREATED, status_text="Waiting for pre-restore backup"
         )
-        failsafe_snapshot = Backups.back_up(service)
+        failsafe_snapshot = Backups.back_up(service, BackupReason.PRE_RESTORE)
 
         Jobs.update(
             job, status=JobStatus.RUNNING, status_text=f"Restoring from {snapshot.id}"
@@ -466,6 +607,19 @@ class Backups:
         return snap
 
     @staticmethod
+    def forget_snapshots(snapshots: List[Snapshot]) -> None:
+        """
+        Deletes a batch of snapshots from the repo and from cache
+        Optimized
+        """
+        ids = [snapshot.id for snapshot in snapshots]
+        Backups.provider().backupper.forget_snapshots(ids)
+
+        # less critical
+        for snapshot in snapshots:
+            Storage.delete_cached_snapshot(snapshot)
+
+    @staticmethod
     def forget_snapshot(snapshot: Snapshot) -> None:
         """Deletes a snapshot from the repo and from cache"""
         Backups.provider().backupper.forget_snapshot(snapshot.id)
@@ -473,11 +627,11 @@ class Backups:
 
     @staticmethod
     def forget_all_snapshots():
-        """deliberately erase all snapshots we made"""
-        # there is no dedicated optimized command for this,
-        # but maybe we can have a multi-erase
-        for snapshot in Backups.get_all_snapshots():
-            Backups.forget_snapshot(snapshot)
+        """
+        Mark all snapshots we have made for deletion and make them inaccessible
+        (this is done by cloud, we only issue a command)
+        """
+        Backups.forget_snapshots(Backups.get_all_snapshots())
 
     @staticmethod
     def force_snapshot_cache_reload() -> None:
@@ -558,22 +712,48 @@ class Backups:
         return Storage.get_last_backup_time(service.get_id())
 
     @staticmethod
+    def get_last_backup_error_time(service: Service) -> Optional[datetime]:
+        """Get a timezone-aware time of the last backup of a service"""
+        job = get_backup_fail(service)
+        if job is not None:
+            datetime_created = job.created_at
+            if datetime_created.tzinfo is None:
+                # assume it is in localtime
+                offset = timedelta(seconds=time.localtime().tm_gmtoff)
+                datetime_created = datetime_created - offset
+                return datetime.combine(
+                    datetime_created.date(), datetime_created.time(), timezone.utc
+                )
+            return datetime_created
+        return None
+
+    @staticmethod
     def is_time_to_backup_service(service: Service, time: datetime):
         """Returns True if it is time to back up a service"""
         period = Backups.autobackup_period_minutes()
-        service_id = service.get_id()
-        if not service.can_be_backed_up():
-            return False
         if period is None:
             return False
 
-        last_backup = Storage.get_last_backup_time(service_id)
+        if not service.is_enabled():
+            return False
+        if not service.can_be_backed_up():
+            return False
+
+        last_error = Backups.get_last_backup_error_time(service)
+
+        if last_error is not None:
+            if time < last_error + timedelta(seconds=AUTOBACKUP_JOB_EXPIRATION_SECONDS):
+                return False
+
+        last_backup = Backups.get_last_backed_up(service)
+
+        # Queue a backup immediately if there are no previous backups
         if last_backup is None:
-            # queue a backup immediately if there are no previous backups
             return True
 
         if time > last_backup + timedelta(minutes=period):
             return True
+
         return False
 
     # Helpers

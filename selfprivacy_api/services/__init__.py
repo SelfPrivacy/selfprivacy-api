@@ -3,7 +3,7 @@
 import typing
 from selfprivacy_api.services.bitwarden import Bitwarden
 from selfprivacy_api.services.gitea import Gitea
-from selfprivacy_api.services.jitsi import Jitsi
+from selfprivacy_api.services.jitsimeet import JitsiMeet
 from selfprivacy_api.services.mailserver import MailServer
 from selfprivacy_api.services.nextcloud import Nextcloud
 from selfprivacy_api.services.pleroma import Pleroma
@@ -18,7 +18,7 @@ services: list[Service] = [
     Nextcloud(),
     Pleroma(),
     Ocserv(),
-    Jitsi(),
+    JitsiMeet(),
 ]
 
 
@@ -54,12 +54,14 @@ def get_all_required_dns_records() -> list[ServiceDnsRecord]:
             name="api",
             content=ip4,
             ttl=3600,
+            display_name="SelfPrivacy API",
         ),
         ServiceDnsRecord(
             type="AAAA",
             name="api",
             content=ip6,
             ttl=3600,
+            display_name="SelfPrivacy API (IPv6)",
         ),
     ]
     for service in get_enabled_services():

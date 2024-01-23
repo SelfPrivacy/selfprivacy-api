@@ -15,7 +15,6 @@ from selfprivacy_api.jobs import Jobs
 class Job:
     @strawberry.field
     def get_jobs(self) -> typing.List[ApiJob]:
-
         Jobs.get_jobs()
 
         return [job_to_api_job(job) for job in Jobs.get_jobs()]

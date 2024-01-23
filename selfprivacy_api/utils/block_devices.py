@@ -1,4 +1,5 @@
-"""Wrapper for block device functions."""
+"""A block device API wrapping lsblk"""
+from __future__ import annotations
 import subprocess
 import json
 import typing
@@ -11,6 +12,7 @@ def get_block_device(device_name):
     """
     Return a block device by name.
     """
+    # TODO: remove the function and related tests: dublicated by singleton
     lsblk_output = subprocess.check_output(
         [
             "lsblk",
@@ -43,21 +45,36 @@ class BlockDevice:
     A block device.
     """
 
-    def __init__(self, block_device):
-        self.name = block_device["name"]
-        self.path = block_device["path"]
-        self.fsavail = str(block_device["fsavail"])
-        self.fssize = str(block_device["fssize"])
-        self.fstype = block_device["fstype"]
-        self.fsused = str(block_device["fsused"])
-        self.mountpoints = block_device["mountpoints"]
-        self.label = block_device["label"]
-        self.uuid = block_device["uuid"]
-        self.size = str(block_device["size"])
-        self.model = block_device["model"]
-        self.serial = block_device["serial"]
-        self.type = block_device["type"]
+    def __init__(self, device_dict: dict):
+        self.update_from_dict(device_dict)
+
+    def update_from_dict(self, device_dict: dict):
+        self.name = device_dict["name"]
+        self.path = device_dict["path"]
+        self.fsavail = str(device_dict["fsavail"])
+        self.fssize = str(device_dict["fssize"])
+        self.fstype = device_dict["fstype"]
+        self.fsused = str(device_dict["fsused"])
+        self.mountpoints = device_dict["mountpoints"]
+        self.label = device_dict["label"]
+        self.uuid = device_dict["uuid"]
+        self.size = str(device_dict["size"])
+        self.model = device_dict["model"]
+        self.serial = device_dict["serial"]
+        self.type = device_dict["type"]
         self.locked = False
+
+        self.children: typing.List[BlockDevice] = []
+        if "children" in device_dict.keys():
+            for child in device_dict["children"]:
+                self.children.append(BlockDevice(child))
+
+    def all_children(self) -> typing.List[BlockDevice]:
+        result = []
+        for child in self.children:
+            result.extend(child.all_children())
+            result.append(child)
+        return result
 
     def __str__(self):
         return self.name
@@ -82,17 +99,7 @@ class BlockDevice:
         Update current data and return a dictionary of stats.
         """
         device = get_block_device(self.name)
-        self.fsavail = str(device["fsavail"])
-        self.fssize = str(device["fssize"])
-        self.fstype = device["fstype"]
-        self.fsused = str(device["fsused"])
-        self.mountpoints = device["mountpoints"]
-        self.label = device["label"]
-        self.uuid = device["uuid"]
-        self.size = str(device["size"])
-        self.model = device["model"]
-        self.serial = device["serial"]
-        self.type = device["type"]
+        self.update_from_dict(device)
 
         return {
             "name": self.name,
@@ -109,6 +116,14 @@ class BlockDevice:
             "serial": self.serial,
             "type": self.type,
         }
+
+    def is_usable_partition(self):
+        # Ignore devices with type "rom"
+        if self.type == "rom":
+            return False
+        if self.fstype == "ext4":
+            return True
+        return False
 
     def resize(self):
         """
@@ -165,41 +180,16 @@ class BlockDevices(metaclass=SingletonMetaclass):
         """
         Update the list of block devices.
         """
-        devices = []
-        lsblk_output = subprocess.check_output(
-            [
-                "lsblk",
-                "-J",
-                "-b",
-                "-o",
-                "NAME,PATH,FSAVAIL,FSSIZE,FSTYPE,FSUSED,MOUNTPOINTS,LABEL,UUID,SIZE,MODEL,SERIAL,TYPE",
-            ]
-        )
-        lsblk_output = lsblk_output.decode("utf-8")
-        lsblk_output = json.loads(lsblk_output)
-        for device in lsblk_output["blockdevices"]:
-            # Ignore devices with type "rom"
-            if device["type"] == "rom":
-                continue
-            # Ignore iso9660 devices
-            if device["fstype"] == "iso9660":
-                continue
-            if device["fstype"] is None:
-                if "children" in device:
-                    for child in device["children"]:
-                        if child["fstype"] == "ext4":
-                            device = child
-                            break
-            devices.append(device)
-        # Add new devices and delete non-existent devices
+        devices = BlockDevices.lsblk_devices()
+
+        children = []
         for device in devices:
-            if device["name"] not in [
-                block_device.name for block_device in self.block_devices
-            ]:
-                self.block_devices.append(BlockDevice(device))
-        for block_device in self.block_devices:
-            if block_device.name not in [device["name"] for device in devices]:
-                self.block_devices.remove(block_device)
+            children.extend(device.all_children())
+        devices.extend(children)
+
+        valid_devices = [device for device in devices if device.is_usable_partition()]
+
+        self.block_devices = valid_devices
 
     def get_block_device(self, name: str) -> typing.Optional[BlockDevice]:
         """
@@ -236,3 +226,25 @@ class BlockDevices(metaclass=SingletonMetaclass):
             if "/" in block_device.mountpoints:
                 return block_device
         raise RuntimeError("No root block device found")
+
+    @staticmethod
+    def lsblk_device_dicts() -> typing.List[dict]:
+        lsblk_output_bytes = subprocess.check_output(
+            [
+                "lsblk",
+                "-J",
+                "-b",
+                "-o",
+                "NAME,PATH,FSAVAIL,FSSIZE,FSTYPE,FSUSED,MOUNTPOINTS,LABEL,UUID,SIZE,MODEL,SERIAL,TYPE",
+            ]
+        )
+        lsblk_output = lsblk_output_bytes.decode("utf-8")
+        return json.loads(lsblk_output)["blockdevices"]
+
+    @staticmethod
+    def lsblk_devices() -> typing.List[BlockDevice]:
+        devices = []
+        for device in BlockDevices.lsblk_device_dicts():
+            devices.append(device)
+
+        return [BlockDevice(device) for device in devices]

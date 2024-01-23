@@ -31,7 +31,7 @@ def get_ssh_settings() -> UserdataSshSettings:
         if "enable" not in data["ssh"]:
             data["ssh"]["enable"] = True
         if "passwordAuthentication" not in data["ssh"]:
-            data["ssh"]["passwordAuthentication"] = True
+            data["ssh"]["passwordAuthentication"] = False
         if "rootKeys" not in data["ssh"]:
             data["ssh"]["rootKeys"] = []
         return UserdataSshSettings(**data["ssh"])
@@ -47,19 +47,6 @@ def set_ssh_settings(
             data["ssh"]["enable"] = enable
         if password_authentication is not None:
             data["ssh"]["passwordAuthentication"] = password_authentication
-
-
-def add_root_ssh_key(public_key: str):
-    with WriteUserData() as data:
-        if "ssh" not in data:
-            data["ssh"] = {}
-        if "rootKeys" not in data["ssh"]:
-            data["ssh"]["rootKeys"] = []
-        # Return 409 if key already in array
-        for key in data["ssh"]["rootKeys"]:
-            if key == public_key:
-                raise KeyAlreadyExists()
-        data["ssh"]["rootKeys"].append(public_key)
 
 
 class KeyAlreadyExists(Exception):

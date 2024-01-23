@@ -55,11 +55,6 @@ class Gitea(Service):
         return "Git repositories, database and user data."
 
     @staticmethod
-    def is_enabled() -> bool:
-        with ReadUserData() as user_data:
-            return user_data.get("gitea", {}).get("enable", False)
-
-    @staticmethod
     def get_status() -> ServiceStatus:
         """
         Return Gitea status from systemd.
@@ -70,22 +65,6 @@ class Gitea(Service):
         Return code 4 means service is off.
         """
         return get_service_status("gitea.service")
-
-    @staticmethod
-    def enable():
-        """Enable Gitea service."""
-        with WriteUserData() as user_data:
-            if "gitea" not in user_data:
-                user_data["gitea"] = {}
-            user_data["gitea"]["enable"] = True
-
-    @staticmethod
-    def disable():
-        """Disable Gitea service."""
-        with WriteUserData() as user_data:
-            if "gitea" not in user_data:
-                user_data["gitea"] = {}
-            user_data["gitea"]["enable"] = False
 
     @staticmethod
     def stop():
@@ -123,12 +102,14 @@ class Gitea(Service):
                 name="git",
                 content=network_utils.get_ip4(),
                 ttl=3600,
+                display_name="Gitea",
             ),
             ServiceDnsRecord(
                 type="AAAA",
                 name="git",
                 content=network_utils.get_ip6(),
                 ttl=3600,
+                display_name="Gitea (IPv6)",
             ),
         ]
 
