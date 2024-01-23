@@ -4,7 +4,6 @@ pythonPackages.buildPythonPackage rec {
   pname = "selfprivacy-graphql-api";
   version = rev;
   src = builtins.filterSource (p: t: p != ".git" && t != "symlink") ./.;
-  nativeCheckInputs = [ pythonPackages.pytestCheckHook ];
   propagatedBuildInputs = with pythonPackages; [
     fastapi
     gevent
@@ -13,9 +12,6 @@ pythonPackages.buildPythonPackage rec {
     portalocker
     psutil
     pydantic
-    pytest
-    pytest-datadir
-    pytest-mock
     pytz
     redis
     setuptools
