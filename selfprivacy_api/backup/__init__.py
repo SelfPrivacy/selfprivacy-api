@@ -44,12 +44,6 @@ from selfprivacy_api.backup.jobs import (
     add_restore_job,
 )
 
-DEFAULT_JSON_PROVIDER = {
-    "provider": "BACKBLAZE",
-    "accountId": "",
-    "accountKey": "",
-    "bucket": "",
-}
 
 BACKUP_PROVIDER_ENVS = {
     "kind": "BACKUP_KIND",
@@ -134,32 +128,17 @@ class Backups:
         Storage.store_provider(provider)
 
     @staticmethod
-    def reset(reset_json=True) -> None:
+    def reset() -> None:
         """
         Deletes all the data about the backup storage provider.
         """
         Storage.reset()
-        if reset_json:
-            try:
-                Backups._reset_provider_json()
-            except FileNotFoundError:
-                # if there is no userdata file, we do not need to reset it
-                pass
 
     @staticmethod
     def _lookup_provider() -> AbstractBackupProvider:
         redis_provider = Backups._load_provider_redis()
         if redis_provider is not None:
             return redis_provider
-
-        try:
-            json_provider = Backups._load_provider_json()
-        except FileNotFoundError:
-            json_provider = None
-
-        if json_provider is not None:
-            Storage.store_provider(json_provider)
-            return json_provider
 
         none_provider = Backups._construct_provider(
             BackupProviderEnum.NONE, login="", key="", location=""
@@ -214,44 +193,6 @@ class Backups:
             provider_model.location,
             provider_model.repo_id,
         )
-
-    @staticmethod
-    def _load_provider_json() -> Optional[AbstractBackupProvider]:
-        with ReadUserData() as user_data:
-            provider_dict = {
-                "provider": "",
-                "accountId": "",
-                "accountKey": "",
-                "bucket": "",
-            }
-
-            if "backup" not in user_data.keys():
-                if "backblaze" in user_data.keys():
-                    provider_dict.update(user_data["backblaze"])
-                    provider_dict["provider"] = "BACKBLAZE"
-                return None
-            else:
-                provider_dict.update(user_data["backup"])
-
-            if provider_dict == DEFAULT_JSON_PROVIDER:
-                return None
-            try:
-                return Backups._construct_provider(
-                    kind=BackupProviderEnum[provider_dict["provider"]],
-                    login=provider_dict["accountId"],
-                    key=provider_dict["accountKey"],
-                    location=provider_dict["bucket"],
-                )
-            except KeyError:
-                return None
-
-    @staticmethod
-    def _reset_provider_json() -> None:
-        with WriteUserData() as user_data:
-            if "backblaze" in user_data.keys():
-                del user_data["backblaze"]
-
-            user_data["backup"] = DEFAULT_JSON_PROVIDER
 
     # Init
 

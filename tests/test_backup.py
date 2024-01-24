@@ -29,6 +29,7 @@ import selfprivacy_api.backup.providers as providers
 from selfprivacy_api.backup.providers import AbstractBackupProvider
 from selfprivacy_api.backup.providers.backblaze import Backblaze
 from selfprivacy_api.backup.providers.none import NoBackups
+from selfprivacy_api.backup.providers import get_kind
 from selfprivacy_api.backup.util import sync
 
 from selfprivacy_api.backup.tasks import (
@@ -83,11 +84,6 @@ def backups(tmpdir):
 
 
 @pytest.fixture()
-def backups_backblaze(generic_userdata):
-    Backups.reset(reset_json=False)
-
-
-@pytest.fixture()
 def memory_backup() -> AbstractBackupProvider:
     ProviderClass = providers.get_provider(BackupProvider.MEMORY)
     assert ProviderClass is not None
@@ -104,20 +100,6 @@ def file_backup(tmpdir) -> AbstractBackupProvider:
     provider = ProviderClass(location=test_repo_path)
     assert provider is not None
     return provider
-
-
-def test_config_load(generic_userdata):
-    Backups.reset(reset_json=False)
-    provider = Backups.provider()
-
-    assert provider is not None
-    assert isinstance(provider, Backblaze)
-    assert provider.login == "ID"
-    assert provider.key == "KEY"
-    assert provider.location == "selfprivacy"
-
-    assert provider.backupper.account == "ID"
-    assert provider.backupper.key == "KEY"
 
 
 def test_reset_sets_to_none1():
@@ -165,25 +147,6 @@ def test_setting_from_envs(tmpdir):
     else:
         for key in BACKUP_PROVIDER_ENVS.values():
             del os.environ[key]
-
-
-def test_json_reset(generic_userdata):
-    Backups.reset(reset_json=False)
-    provider = Backups.provider()
-    assert provider is not None
-    assert isinstance(provider, Backblaze)
-    assert provider.login == "ID"
-    assert provider.key == "KEY"
-    assert provider.location == "selfprivacy"
-
-    Backups.reset()
-    provider = Backups.provider()
-    assert provider is not None
-    assert isinstance(provider, AbstractBackupProvider)
-    assert provider.login == ""
-    assert provider.key == ""
-    assert provider.location == ""
-    assert provider.repo_id == ""
 
 
 def test_select_backend():
@@ -570,20 +533,45 @@ def test_init_tracking_caching2(backups, tmpdir):
 
 
 # Storage
-def test_provider_storage(backups_backblaze):
-    provider = Backups.provider()
+def test_provider_storage(backups):
+    test_login = "ID"
+    test_key = "KEY"
+    test_location = "selprivacy_bin"
 
-    assert provider is not None
+    old_provider = Backups.provider()
+    assert old_provider is not None
 
-    assert isinstance(provider, Backblaze)
-    assert provider.login == "ID"
-    assert provider.key == "KEY"
+    assert not isinstance(old_provider, Backblaze)
+    assert old_provider.login != test_login
+    assert old_provider.key != test_key
+    assert old_provider.location != test_location
 
-    Storage.store_provider(provider)
+    test_provider = Backups._construct_provider(
+        kind=BackupProvider.BACKBLAZE, login="ID", key=test_key, location=test_location
+    )
+
+    assert isinstance(test_provider, Backblaze)
+    assert get_kind(test_provider) == "BACKBLAZE"
+    assert test_provider.login == test_login
+    assert test_provider.key == test_key
+    assert test_provider.location == test_location
+
+    Storage.store_provider(test_provider)
+
+    restored_provider_model = Storage.load_provider()
+    assert restored_provider_model.kind == "BACKBLAZE"
+    assert restored_provider_model.login == test_login
+    assert restored_provider_model.key == test_key
+    assert restored_provider_model.location == test_location
+
     restored_provider = Backups._load_provider_redis()
     assert isinstance(restored_provider, Backblaze)
-    assert restored_provider.login == "ID"
-    assert restored_provider.key == "KEY"
+    assert restored_provider.login == test_login
+    assert restored_provider.key == test_key
+    assert restored_provider.location == test_location
+
+    # Revert our mess so we can teardown ok
+    Storage.store_provider(old_provider)
 
 
 def test_sync(dummy_service):
