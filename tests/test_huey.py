@@ -5,9 +5,10 @@ from os import environ, path
 import redis
 
 from selfprivacy_api.utils.huey import huey, immediate, HUEY_DATABASE_NUMBER
-from selfprivacy_api.backup.util import output_yielder
 from selfprivacy_api.utils.redis_pool import RedisPool
 from selfprivacy_api.utils.waitloop import wait_until_true
+
+from selfprivacy_api.backup.util import output_yielder
 
 
 @huey.task()
@@ -25,6 +26,25 @@ def flush_huey_redis_forcefully():
     pool = redis.ConnectionPool.from_url(url, decode_responses=True)
     connection = redis.Redis(connection_pool=pool)
     connection.flushdb()
+
+
+def start_redis_socket(socket_path):
+    # Socket file will be created by redis
+    command = [
+        "redis-server",
+        "--unixsocket",
+        socket_path,
+        "--unixsocketperm",
+        "700",
+        "--port",
+        "0",
+    ]
+    redis_handle = Popen(command)
+
+    wait_until_true(lambda: path.exists(socket_path), timeout_sec=2)
+    flush_huey_redis_forcefully()
+
+    return redis_handle
 
 
 @pytest.fixture()
@@ -48,20 +68,7 @@ def redis_socket(tmpdir):
     huey.storage_kwargs["url"] = RedisPool.connection_url(HUEY_DATABASE_NUMBER)
     reset_huey_storage()
 
-    # Socket file will be created by redis
-    command = [
-        "redis-server",
-        "--unixsocket",
-        socket_path,
-        "--unixsocketperm",
-        "700",
-        "--port",
-        "0",
-    ]
-    redis_handle = Popen(command)
-
-    wait_until_true(lambda: path.exists(socket_path), timeout_sec=2)
-    flush_huey_redis_forcefully()
+    redis_handle = start_redis_socket(socket_path)
 
     yield socket_path
 
@@ -71,11 +78,11 @@ def redis_socket(tmpdir):
     if old_port:
         environ["USE_REDIS_PORT"] = old_port
     del environ["REDIS_SOCKET"]
+
     if old_huey_url:
         huey.storage_kwargs["url"] = old_huey_url
     else:
         del huey.storage_kwargs["url"]
-
     reset_huey_storage()
 
 
@@ -150,13 +157,15 @@ def test_huey_over_redis_socket(huey_queues_socket):
             "our test-side huey does not connect over socket: ", huey.storage_kwargs
         )
 
-    # for some reason this fails. We do not schedule tasks anywhere, but concerning.
-    # result = sum.schedule((2, 5), delay=10)
-    # try:
-    #     assert len(huey.scheduled()) == 1
-    # except AssertionError:
-    #     raise ValueError("have wrong amount of scheduled tasks", huey.scheduled())
-    # result.revoke()
-
     result = sum(2, 5)
     assert result(blocking=True, timeout=2) == 7
+
+
+@pytest.mark.xfail(reason="cannot yet schedule with sockets for some reason")
+def test_huey_schedule(huey_queues_socket):
+    # we do not schedule tasks anywhere, but concerning.
+    result = sum.schedule((2, 5), delay=10)
+    try:
+        assert len(huey.scheduled()) == 1
+    except assertionerror:
+        raise valueerror("have wrong amount of scheduled tasks", huey.scheduled())
