@@ -7,8 +7,6 @@ import os
 from os import statvfs
 from typing import Callable, List, Optional
 
-from selfprivacy_api.utils import ReadUserData, WriteUserData
-
 from selfprivacy_api.services import (
     get_service_by_id,
     get_all_services,
