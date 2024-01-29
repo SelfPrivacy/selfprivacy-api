@@ -10,6 +10,9 @@ from selfprivacy_api.services.test_service import DummyService
 
 from tests.common import generate_service_query
 from tests.test_graphql.common import assert_empty, assert_ok, get_data
+from tests.test_block_device_utils import lsblk_singular_mock
+
+from subprocess import CompletedProcess
 
 
 @pytest.fixture()
@@ -21,6 +24,33 @@ def only_dummy_service(dummy_service) -> Generator[DummyService, None, None]:
     yield dummy_service
     service_module.services.clear()
     service_module.services.extend(back_copy)
+
+
+MOVER_MOCK_PROCESS = CompletedProcess(["ls"], returncode=0)
+
+
+@pytest.fixture()
+def mock_check_service_mover_folders(mocker):
+    mock = mocker.patch(
+        "selfprivacy_api.services.generic_service_mover.check_folders",
+        autospec=True,
+        return_value=None,
+    )
+    return mock
+
+
+@pytest.fixture()
+def mock_subprocess_run(mocker):
+    mock = mocker.patch(
+        "subprocess.run", autospec=True, return_value=MOVER_MOCK_PROCESS
+    )
+    return mock
+
+
+@pytest.fixture()
+def mock_shutil_move(mocker):
+    mock = mocker.patch("shutil.move", autospec=True, return_value=None)
+    return mock
 
 
 API_START_MUTATION = """
@@ -474,6 +504,15 @@ def test_move_immovable(authorized_client, only_dummy_service):
     assert data["job"] is None
 
 
+def test_move_no_such_service(authorized_client, only_dummy_service):
+    mutation_response = api_move_by_name(authorized_client, "bogus_service", "sda1")
+    data = get_data(mutation_response)["services"]["moveService"]
+    assert_errorcode(data, 404)
+
+    assert data["service"] is None
+    assert data["job"] is None
+
+
 def test_move_no_such_volume(authorized_client, only_dummy_service):
     dummy_service = only_dummy_service
     mutation_response = api_move(authorized_client, dummy_service, "bogus_volume")
@@ -500,6 +539,48 @@ def test_move_same_volume(authorized_client, dummy_service):
     # is there a meaning in returning the service in this?
     assert data["service"] is not None
     assert data["job"] is not None
+
+
+def test_graphql_move_service_without_folders_on_old_volume(
+    authorized_client,
+    generic_userdata,
+    lsblk_singular_mock,
+    dummy_service: DummyService,
+):
+    target = "sda1"
+    BlockDevices().update()
+    assert BlockDevices().get_block_device(target) is not None
+
+    dummy_service.set_simulated_moves(False)
+    dummy_service.set_drive("sda2")
+    mutation_response = api_move(authorized_client, dummy_service, target)
+
+    data = get_data(mutation_response)["services"]["moveService"]
+    assert_errorcode(data, 400)
+
+
+def test_graphql_move_service(
+    authorized_client,
+    generic_userdata,
+    mock_check_service_mover_folders,
+    lsblk_singular_mock,
+    dummy_service: DummyService,
+    mock_subprocess_run,
+    mock_shutil_move,
+):
+    # Does not check real moving,
+    # but tests the finished job propagation through API
+
+    target = "sda1"
+    BlockDevices().update()
+    assert BlockDevices().get_block_device(target) is not None
+
+    dummy_service.set_simulated_moves(False)
+    dummy_service.set_drive("sda2")
+    mutation_response = api_move(authorized_client, dummy_service, target)
+
+    data = get_data(mutation_response)["services"]["moveService"]
+    assert_ok(data)
 
 
 def test_mailservice_cannot_enable_disable(authorized_client):
