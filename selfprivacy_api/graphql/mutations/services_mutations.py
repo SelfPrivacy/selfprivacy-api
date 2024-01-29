@@ -157,7 +157,7 @@ class ServicesMutations:
         if service is None:
             return ServiceJobMutationReturn(
                 success=False,
-                message="Service not found.",
+                message=f"Service not found: {input.service_id}",
                 code=404,
             )
         # TODO: make serviceImmovable and BlockdeviceNotFound exceptions
@@ -165,7 +165,7 @@ class ServicesMutations:
         if not service.is_movable():
             return ServiceJobMutationReturn(
                 success=False,
-                message="Service is not movable.",
+                message=f"Service is not movable: {service.get_display_name()}",
                 code=400,
                 service=service_to_graphql_service(service),
             )
@@ -173,7 +173,7 @@ class ServicesMutations:
         if volume is None:
             return ServiceJobMutationReturn(
                 success=False,
-                message="Volume not found.",
+                message=f"Volume not found: {input.location}",
                 code=404,
                 service=service_to_graphql_service(service),
             )
@@ -197,7 +197,7 @@ class ServicesMutations:
         else:
             return ServiceJobMutationReturn(
                 success=False,
-                message=f"Service move failure: {job.status_text}",
+                message=f"Service move failure: {job.status_text}: {job.error}",
                 code=400,
                 service=service_to_graphql_service(service),
                 job=job_to_api_job(job),
