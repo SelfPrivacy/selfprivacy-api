@@ -52,6 +52,11 @@ note: currently hard linking saves 0.00 MiB
 log_event = []
 
 
+@pytest.fixture
+def mock_delete_old_gens_and_print_dead(mocker):
+    mock = mocker.patch("selfprivacy_api.jobs.nix_collect_garbage.delete_old_gens_and_print_dead", autospec=True, return_value=None)
+    return mock
+
 # ---
 
 
@@ -119,7 +124,7 @@ mutation CollectGarbage {
 """
 
 
-def test_graphql_nix_collect_garbage(authorized_client):
+def test_graphql_nix_collect_garbage(authorized_client, mock_delete_old_gens_and_print_dead):
     response = authorized_client.post(
         "/graphql",
         json={
