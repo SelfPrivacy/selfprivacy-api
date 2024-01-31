@@ -197,7 +197,7 @@ class ServicesMutations:
         else:
             return ServiceJobMutationReturn(
                 success=False,
-                message=f"Service move failure: {job.status_text}: {job.error}",
+                message=f"While moving service and performing the step '{job.status_text}', error occured: {job.error}",
                 code=400,
                 service=service_to_graphql_service(service),
                 job=job_to_api_job(job),
