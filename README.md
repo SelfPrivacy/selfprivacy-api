@@ -6,52 +6,16 @@
 $ nix build
 ```
 
-As a result, you should get the `./result` symlink to a folder (in `/nix/store`) with build contents.
+In case of successful build, you should get the `./result` symlink to a folder (in `/nix/store`) with build contents.
 
-## develop & test
+## develop
 
 ```console
 $ nix develop
-$ [SP devshell] pytest .
-=================================== test session starts =====================================
-platform linux -- Python 3.10.11, pytest-7.1.3, pluggy-1.0.0
-rootdir: /data/selfprivacy/selfprivacy-rest-api
-plugins: anyio-3.5.0, datadir-1.4.1, mock-3.8.2
-collected 692 items
-
-tests/test_block_device_utils.py .................                                    [  2%]
-tests/test_common.py .....                                                            [  3%]
-tests/test_jobs.py ........                                                           [  4%]
-tests/test_model_storage.py ..                                                        [  4%]
-tests/test_models.py ..                                                               [  4%]
-tests/test_network_utils.py ......                                                    [  5%]
-tests/test_services.py ......                                                         [  6%]
-tests/test_graphql/test_api.py .                                                      [  6%]
-tests/test_graphql/test_api_backup.py ...............                                 [  8%]
-tests/test_graphql/test_api_devices.py .................                              [ 11%]
-tests/test_graphql/test_api_recovery.py .........                                     [ 12%]
-tests/test_graphql/test_api_version.py ..                                             [ 13%]
-tests/test_graphql/test_backup.py ...............................                     [ 21%]
-tests/test_graphql/test_localsecret.py ...                                            [ 22%]
-tests/test_graphql/test_ssh.py ............                                           [ 23%]
-tests/test_graphql/test_system.py .............................                       [ 28%]
-tests/test_graphql/test_system_nixos_tasks.py ........                                [ 29%]
-tests/test_graphql/test_users.py ..................................                   [ 42%]
-tests/test_graphql/test_repository/test_json_tokens_repository.py                     [ 44%]
-tests/test_graphql/test_repository/test_tokens_repository.py ....                     [ 53%]
-tests/test_rest_endpoints/test_auth.py ..........................                     [ 58%]
-tests/test_rest_endpoints/test_system.py ........................                     [ 63%]
-tests/test_rest_endpoints/test_users.py ................................              [ 76%]
-tests/test_rest_endpoints/services/test_bitwarden.py ............                     [ 78%]
-tests/test_rest_endpoints/services/test_gitea.py ..............                       [ 80%]
-tests/test_rest_endpoints/services/test_mailserver.py .....                           [ 81%]
-tests/test_rest_endpoints/services/test_nextcloud.py ............                     [ 83%]
-tests/test_rest_endpoints/services/test_ocserv.py ..............                      [ 85%]
-tests/test_rest_endpoints/services/test_pleroma.py ..............                     [ 87%]
-tests/test_rest_endpoints/services/test_services.py ....                              [ 88%]
-tests/test_rest_endpoints/services/test_ssh.py .....................                  [100%]
-
-============================== 692 passed in 352.76s (0:05:52) ===============================
+[SP devshell:/dir/selfprivacy-rest-api]$ python
+Python 3.10.13 (main, Aug 24 2023, 12:59:26) [GCC 12.3.0] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+(ins)>>>
 ```
 
 If you don't have experimental flakes enabled, you can use the following command:
@@ -60,14 +24,67 @@ If you don't have experimental flakes enabled, you can use the following command
 nix --extra-experimental-features nix-command --extra-experimental-features flakes develop
 ```
 
+## testing
+
+Run the test suite by running coverage with pytest inside an ephemeral NixOS VM with redis service enabled:
+```console
+$ nix flake check -L
+```
+
+Run the same test suite, but additionally create `./result/coverage.xml` in the current directory:
+```console
+$ nix build .#checks.x86_64-linux.default -L
+```
+
+Alternatively, just print the path to `/nix/store/...coverage.xml` without creating any files in the current directory:
+```console
+$ nix build .#checks.x86_64-linux.default -L --print-out-paths --no-link
+```
+
+Run the same test suite with arbitrary pytest options:
+```console
+$ pytest-vm.sh # specify pytest options here, e.g. `--last-failed`
+```
+When running using the script, pytest cache is preserved between runs in `.pytest_cache` folder.
+NixOS VM state temporary resides in `${TMPDIR:=/tmp}/nixos-vm-tmp-dir/vm-state-machine` during the test.
+Git workdir directory is shared read-write with VM via `.nixos-vm-tmp-dir/shared-xchg` symlink. VM accesses workdir contents via `/tmp/shared` mount point and `/root/source` symlink.
+
+Launch VM and execute commands manually either in Linux console (user `root`) or using python NixOS tests driver API (refer to [NixOS documentation](https://nixos.org/manual/nixos/stable/#ssec-machine-objects)):
+```console
+$ nix run .#checks.x86_64-linux.default.driverInteractive
+```
+
+You can add `--keep-vm-state` in order to keep VM state between runs:
+```console
+$ TMPDIR=".nixos-vm-tmp-dir" nix run .#checks.x86_64-linux.default.driverInteractive --keep-vm-state
+```
+
+Option `-L`/`--print-build-logs` is optional for all nix commands. It tells nix to print each log line one after another instead of overwriting a single one.
+
 ## dependencies and dependant modules
 
-Current flake inherits nixpkgs from NixOS configuration flake. So there is no need to refer to extra nixpkgs dependency if you want to be aligned with exact NixOS configuration.
+This flake depends on a single Nix flake input - nixpkgs repository. nixpkgs repository is used for all software packages used to build, run API service, tests, etc.
 
-![diagram](http://www.plantuml.com/plantuml/proxy?src=https://git.selfprivacy.org/SelfPrivacy/selfprivacy-rest-api/raw/branch/master/nix-dependencies-diagram.puml)
+In order to synchronize nixpkgs input with the same from selfprivacy-nixos-config repository, use this command:
+
+```console
+$ nix flake lock --override-input nixpkgs nixpkgs --inputs-from git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=BRANCH
+```
+
+Replace BRANCH with the branch name of selfprivacy-nixos-config repository you want to sync with. During development nixpkgs input update might be required in both selfprivacy-rest-api and selfprivacy-nixos-config repositories simultaneously. So, a new feature branch might be temporarily used until selfprivacy-nixos-config gets the feature branch merged.
+
+Show current flake inputs (e.g. nixpkgs):
+```console
+$ nix flake metadata
+```
+
+Show selfprivacy-nixos-config Nix flake inputs (including nixpkgs):
+```console
+$ nix flake metadata git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=BRANCH
+```
 
 Nix code for NixOS service module for API is located in NixOS configuration repository.
 
-## current issues
+## troubleshooting
 
-- It's not clear how to store in this repository information about several compatible NixOS configuration commits, where API application tests pass. Currently, here is only a single `flake.lock`.
+Sometimes commands inside `nix develop` refuse to work properly if the calling shell lacks `LANG` environment variable. Try to set it before entering `nix develop`.
