@@ -18,7 +18,7 @@ from selfprivacy_api.backup.backuppers import AbstractBackupper
 from selfprivacy_api.models.backup.snapshot import Snapshot
 from selfprivacy_api.backup.jobs import get_backup_job
 from selfprivacy_api.services import get_service_by_id
-from selfprivacy_api.jobs import Jobs, JobStatus
+from selfprivacy_api.jobs import Jobs, JobStatus, Job
 
 from selfprivacy_api.backup.local_secret import LocalBackupSecret
 
@@ -146,6 +146,40 @@ class ResticBackupper(AbstractBackupper):
             result.append(item)
         return result
 
+    @staticmethod
+    def _run_backup_command(
+        backup_command: List[str], job: Optional[Job]
+    ) -> List[dict]:
+        """And handle backup output"""
+        messages = []
+        output = []
+        restic_reported_error = False
+
+        for raw_message in output_yielder(backup_command):
+            if "ERROR:" in raw_message:
+                restic_reported_error = True
+            output.append(raw_message)
+
+            if not restic_reported_error:
+                message = ResticBackupper.parse_message(raw_message, job)
+                messages.append(message)
+
+        if restic_reported_error:
+            raise ValueError(
+                "Restic returned error(s): ",
+                output,
+            )
+
+        return messages
+
+    @staticmethod
+    def _get_backup_job(service_name: str) -> Optional[Job]:
+        service = get_service_by_id(service_name)
+        if service is None:
+            raise ValueError("No service with id ", service_name)
+
+        return get_backup_job(service)
+
     @unlocked_repo
     def start_backup(
         self,
@@ -156,13 +190,11 @@ class ResticBackupper(AbstractBackupper):
         """
         Start backup with restic
         """
+        assert len(folders) != 0
 
-        # but maybe it is ok to accept a union
-        # of a string and an array of strings
-        assert not isinstance(folders, str)
+        job = ResticBackupper._get_backup_job(service_name)
 
         tags = [service_name, reason.value]
-
         backup_command = self.restic_command(
             "backup",
             "--json",
@@ -170,18 +202,9 @@ class ResticBackupper(AbstractBackupper):
             tags=tags,
         )
 
-        service = get_service_by_id(service_name)
-        if service is None:
-            raise ValueError("No service with id ", service_name)
-        job = get_backup_job(service)
-
-        messages = []
-        output = []
         try:
-            for raw_message in output_yielder(backup_command):
-                output.append(raw_message)
-                message = self.parse_message(raw_message, job)
-                messages.append(message)
+            messages = ResticBackupper._run_backup_command(backup_command, job)
+
             id = ResticBackupper._snapshot_id_from_backup_messages(messages)
             return Snapshot(
                 created_at=datetime.datetime.now(datetime.timezone.utc),
@@ -194,9 +217,6 @@ class ResticBackupper(AbstractBackupper):
             raise ValueError(
                 "Could not create a snapshot: ",
                 str(error),
-                output,
-                "parsed messages:",
-                messages,
                 "command: ",
                 backup_command,
             ) from error
@@ -211,7 +231,8 @@ class ResticBackupper(AbstractBackupper):
 
         raise ValueError("no summary message in restic json output")
 
-    def parse_message(self, raw_message_line: str, job=None) -> dict:
+    @staticmethod
+    def parse_message(raw_message_line: str, job: Optional[Job] = None) -> dict:
         message = ResticBackupper.parse_json_output(raw_message_line)
         if not isinstance(message, dict):
             raise ValueError("we have too many messages on one line?")

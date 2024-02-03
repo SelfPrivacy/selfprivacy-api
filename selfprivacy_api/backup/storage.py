@@ -138,18 +138,17 @@ class Storage:
 
     @staticmethod
     def store_provider(provider: AbstractBackupProvider) -> None:
-        """Stores backup stroage provider auth data in redis"""
-        store_model_as_hash(
-            redis,
-            REDIS_PROVIDER_KEY,
-            BackupProviderModel(
-                kind=get_kind(provider),
-                login=provider.login,
-                key=provider.key,
-                location=provider.location,
-                repo_id=provider.repo_id,
-            ),
+        """Stores backup provider auth data in redis"""
+        model = BackupProviderModel(
+            kind=get_kind(provider),
+            login=provider.login,
+            key=provider.key,
+            location=provider.location,
+            repo_id=provider.repo_id,
         )
+        store_model_as_hash(redis, REDIS_PROVIDER_KEY, model)
+        if Storage.load_provider() != model:
+            raise IOError("could not store the provider model: ", model.dict)
 
     @staticmethod
     def load_provider() -> Optional[BackupProviderModel]:

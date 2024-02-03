@@ -77,11 +77,5 @@
         "rootKeys": [
             "ssh-ed25519 KEY test@pc"
         ]
-    },
-    "backup": {
-        "provider": "BACKBLAZE",
-        "accountId": "ID",
-        "accountKey": "KEY",
-        "bucket": "selfprivacy"
     }
 }
