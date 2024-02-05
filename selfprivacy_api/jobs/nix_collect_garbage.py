@@ -7,8 +7,7 @@ from selfprivacy_api.utils.huey import huey
 from selfprivacy_api.jobs import JobStatus, Jobs, Job
 
 class ShellException(Exception):
-    """Custom exception for shell-related errors."""
-    pass
+    """Shell-related errors"""
 
 COMPLETED_WITH_ERROR = (
     "Error occurred, please report this to the support chat."
