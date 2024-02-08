@@ -3,9 +3,10 @@
 # pylint: disable=missing-function-docstring
 
 import pytest
+from selfprivacy_api.utils.huey import huey
 
 from selfprivacy_api.jobs import JobStatus, Jobs, Job
-from tests.test_graphql.common import get_data, assert_errorcode, assert_ok
+from tests.test_graphql.common import get_data, assert_errorcode, assert_ok, assert_empty
 
 from selfprivacy_api.jobs.nix_collect_garbage import (
     get_dead_packages,
@@ -57,12 +58,6 @@ log_event = []
 @pytest.fixture
 def mock_delete_old_gens_and_return_dead_report(mocker):
     mock = mocker.patch("selfprivacy_api.jobs.nix_collect_garbage.delete_old_gens_and_return_dead_report", autospec=True, return_value=OUTPUT_PRINT_DEAD)
-    return mock
-
-
-@pytest.fixture
-def mock_run_nix_collect_garbage_returns_gibberish(mocker):
-    mock = mocker.patch("selfprivacy_api.jobs.nix_collect_garbage.run_nix_collect_garbage", autospec=True, return_value=b" oiuojkhjkhjkhjkhkjh")
     return mock
 
 
@@ -133,6 +128,7 @@ mutation CollectGarbage {
 
 
 def test_graphql_nix_collect_garbage(authorized_client, mock_delete_old_gens_and_return_dead_report):
+    assert huey.immediate is True
     response = authorized_client.post(
         "/graphql",
         json={
@@ -143,17 +139,17 @@ def test_graphql_nix_collect_garbage(authorized_client, mock_delete_old_gens_and
     output = get_data(response)["system"]["nixCollectGarbage"]
     assert_ok(output)
     assert output["job"] is not None
+    assert output["job"]["status"] == "FINISHED"
+    assert output["job"]["error"] is None
 
 
-def test_graphql_nix_collect_garbage_with_problems(authorized_client, mock_run_nix_collect_garbage_returns_gibberish):
-    response = authorized_client.post(
+def test_graphql_nix_collect_garbage_not_authorized_client(client, mock_delete_old_gens_and_return_dead_report):
+    assert huey.immediate is True
+    response = client.post(
         "/graphql",
         json={
             "query": RUN_NIX_COLLECT_GARBAGE_MUTATION,
         },
     )
 
-    output = get_data(response)["system"]["nixCollectGarbage"]
-    assert_ok(output)
-    assert output["job"] is not None
-    assert output["job"]["status"] == "ERROR"
+    assert_empty(response)

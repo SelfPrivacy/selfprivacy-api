@@ -6,8 +6,10 @@ from selfprivacy_api.utils.huey import huey
 
 from selfprivacy_api.jobs import JobStatus, Jobs, Job
 
+
 class ShellException(Exception):
     """Shell-related errors"""
+
 
 COMPLETED_WITH_ERROR = (
     "Error occurred, please report this to the support chat."
@@ -72,6 +74,7 @@ def process_stream(job: Job, stream: Iterable[bytes], total_dead_packages: int) 
             percent = int((completed_packages / total_dead_packages) * 100)
 
             if percent - prev_progress >= 5:
+
                 Jobs.update(
                     job=job,
                     status=JobStatus.RUNNING,
@@ -140,7 +143,7 @@ def start_nix_collect_garbage() -> Job:
         name="Collect garbage",
         description="Cleaning up unused packages",
     )
-    task_handle = calculate_and_clear_dead_paths(job=job)
-    result = task_handle(blocking=True)
-    assert result
+
+    calculate_and_clear_dead_paths(job=job)
+
     return job
