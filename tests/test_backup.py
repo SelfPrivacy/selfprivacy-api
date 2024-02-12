@@ -165,7 +165,7 @@ def test_reinit_after_purge(backups):
     Backups.erase_repo()
     assert Backups.is_initted() is False
     with pytest.raises(ValueError):
-        Backups.get_all_snapshots()
+        Backups.force_snapshot_cache_reload()
 
     Backups.init_repo()
     assert Backups.is_initted() is True
@@ -209,7 +209,11 @@ def test_backup_returns_snapshot(backups, dummy_service):
     snapshot = provider.backupper.start_backup(service_folders, name)
 
     assert snapshot.id is not None
-    assert len(snapshot.id) == len(Backups.get_all_snapshots()[0].id)
+
+    snapshots = provider.backupper.get_snapshots()
+    assert snapshots != []
+
+    assert len(snapshot.id) == len(snapshots[0].id)
     assert Backups.get_snapshot_by_id(snapshot.id) is not None
     assert snapshot.service_name == name
     assert snapshot.created_at is not None
@@ -472,10 +476,12 @@ def test_snapshots_caching(backups, dummy_service):
     cached_snapshots = Storage.get_cached_snapshots()
     assert len(cached_snapshots) == 0
 
+    # We do not assume that no snapshots means we need to reload the cache
     snapshots = Backups.get_snapshots(dummy_service)
-    assert len(snapshots) == 1
+    assert len(snapshots) == 0
+    # No cache reload happened
     cached_snapshots = Storage.get_cached_snapshots()
-    assert len(cached_snapshots) == 1
+    assert len(cached_snapshots) == 0
 
 
 def lowlevel_forget(snapshot_id):

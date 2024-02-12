@@ -82,6 +82,6 @@ def automatic_backup():
         start_backup(service, BackupReason.AUTO)
 
 
-@huey.periodic_task(crontab(hour=SNAPSHOT_CACHE_TTL_HOURS))
+@huey.periodic_task(crontab(hour="*/" + str(SNAPSHOT_CACHE_TTL_HOURS)))
 def reload_snapshot_cache():
     Backups.force_snapshot_cache_reload()
