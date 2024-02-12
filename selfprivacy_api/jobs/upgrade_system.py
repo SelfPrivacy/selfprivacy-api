@@ -74,6 +74,7 @@ def rebuild_system_task(job: Job, upgrade: bool = False):
                         result="System rebuilt.",
                         progress=100,
                     )
+                    break
                 elif status.stdout.strip() == "failed":
                     Jobs.update(
                         job=job,
@@ -87,7 +88,7 @@ def rebuild_system_task(job: Job, upgrade: bool = False):
                         [
                             "journalctl",
                             "-u",
-                            "selfprivacy-upgrade",
+                            unit_name,
                             "-n",
                             "1",
                             "-o",
