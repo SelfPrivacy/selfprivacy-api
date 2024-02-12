@@ -66,8 +66,9 @@ def rebuild_system_task(job: Job, upgrade: bool = False):
                     capture_output=True,
                     text=True,
                 )
-                print(status.stdout.strip())
+                print(f"Unit status: {status.stdout.strip()}")
                 if status.stdout.strip() == "inactive":
+                    print("System rebuilt.")
                     Jobs.update(
                         job=job,
                         status=JobStatus.FINISHED,
@@ -76,6 +77,7 @@ def rebuild_system_task(job: Job, upgrade: bool = False):
                     )
                     break
                 elif status.stdout.strip() == "failed":
+                    print("System rebuild failed.")
                     Jobs.update(
                         job=job,
                         status=JobStatus.ERROR,
@@ -106,6 +108,7 @@ def rebuild_system_task(job: Job, upgrade: bool = False):
                     )
                 # Timeout of 60 minutes
                 if time.time() - start_time > 3600:
+                    print("System rebuild timed out.")
                     Jobs.update(
                         job=job,
                         status=JobStatus.ERROR,
@@ -114,6 +117,7 @@ def rebuild_system_task(job: Job, upgrade: bool = False):
                     break
                 time.sleep(5)
             except subprocess.CalledProcessError:
+                print("subprocess.CalledProcessError")
                 pass
 
     except subprocess.CalledProcessError as e:
