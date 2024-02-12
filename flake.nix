@@ -7,9 +7,8 @@
     let
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
-      pythonPackages = pkgs.python310Packages;
       selfprivacy-graphql-api = pkgs.callPackage ./default.nix {
-        inherit pythonPackages;
+        pythonPackages = pkgs.python310Packages;
         rev = self.shortRev or self.dirtyShortRev or "dirty";
       };
       python = self.packages.${system}.default.pythonModule;
@@ -20,7 +19,14 @@
             pytest
             pytest-datadir
             pytest-mock
-          ]));
+            black
+            mypy
+            pylsp-mypy
+            python-lsp-black
+            python-lsp-server
+            typer # for strawberry
+          ] ++ strawberry-graphql.optional-dependencies.cli));
+
       vmtest-src-dir = "/root/source";
       shellMOTD = ''
         Welcome to SP API development shell!
@@ -72,26 +78,17 @@
         import ./nixos/module.nix self.packages.${system}.default;
       devShells.${system}.default = pkgs.mkShell {
         name = "SP API dev shell";
-        packages = with pythonPackages;
-          [
-            black
-            mypy
-            pylsp-mypy
-            python-lsp-black
-            python-lsp-server
-          ] ++
-          (with pkgs;
-          [
-            nixpkgs-fmt
-            rclone
-            redis
-            restic
-            self.packages.${system}.pytest-vm
-            # FIXME consider loading this explicitly only after ArchLinux issue is solved
-            self.checks.x86_64-linux.default.driverInteractive
-            # the target API application python environment
-            python-env
-          ]);
+        packages = with pkgs; [
+          nixpkgs-fmt
+          rclone
+          redis
+          restic
+          self.packages.${system}.pytest-vm
+          # FIXME consider loading this explicitly only after ArchLinux issue is solved
+          self.checks.x86_64-linux.default.driverInteractive
+          # the target API application python environment
+          python-env
+        ];
         shellHook = ''
           # envs set with export and as attributes are treated differently.
           # for example. printenv <Name> will not fetch the value of an attribute.
