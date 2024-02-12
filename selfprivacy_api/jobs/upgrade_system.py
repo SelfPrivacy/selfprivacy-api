@@ -104,7 +104,7 @@ def rebuild_system_task(job: Job, upgrade: bool = False):
                     Jobs.update(
                         job=job,
                         status=JobStatus.RUNNING,
-                        status_text=f"Rebuilding the system... Latest log line: {log_line}",
+                        status_text=f"{log_line}",
                     )
                 # Timeout of 60 minutes
                 if time.time() - start_time > 3600:
