@@ -62,7 +62,7 @@ def rebuild_system_task(job: Job, upgrade: bool = False):
             try:
                 status = subprocess.run(
                     ["systemctl", "is-active", unit_name],
-                    check=True,
+                    check=False,
                     capture_output=True,
                     text=True,
                 )
@@ -96,7 +96,7 @@ def rebuild_system_task(job: Job, upgrade: bool = False):
                             "-o",
                             "cat",
                         ],
-                        check=True,
+                        check=False,
                         capture_output=True,
                         text=True,
                     ).stdout.strip()
