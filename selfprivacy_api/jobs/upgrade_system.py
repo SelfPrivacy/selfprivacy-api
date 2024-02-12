@@ -12,11 +12,9 @@ import time
 @huey.task()
 def rebuild_system_task(job: Job, upgrade: bool = False):
     """Rebuild the system"""
+    unit_name = "sp-nixos-upgrade.service" if upgrade else "sp-nixos-rebuild.service"
     try:
-        if upgrade:
-            command = ["systemctl", "start", "sp-nixos-upgrade.service"]
-        else:
-            command = ["systemctl", "start", "sp-nixos-rebuild.service"]
+        command = ["systemctl", "start", unit_name]
         subprocess.run(
             command,
             check=True,
@@ -34,7 +32,7 @@ def rebuild_system_task(job: Job, upgrade: bool = False):
         while True:
             try:
                 status = subprocess.run(
-                    ["systemctl", "is-active", "selfprivacy-upgrade"],
+                    ["systemctl", "is-active", unit_name],
                     check=True,
                     capture_output=True,
                     text=True,
@@ -63,7 +61,7 @@ def rebuild_system_task(job: Job, upgrade: bool = False):
         while True:
             try:
                 status = subprocess.run(
-                    ["systemctl", "is-active", "selfprivacy-upgrade"],
+                    ["systemctl", "is-active", unit_name],
                     check=True,
                     capture_output=True,
                     text=True,
