@@ -10,7 +10,15 @@ from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
 
 from selfprivacy_api.services.generic_size_counter import get_storage_usage
 from selfprivacy_api.services.owned_path import OwnedPath
-from selfprivacy_api.services.moving import check_folders, check_volume, unbind_folders, bind_folders, ensure_folder_ownership, MoveError, move_folders_to_volume
+from selfprivacy_api.services.moving import (
+    check_folders,
+    check_volume,
+    unbind_folders,
+    bind_folders,
+    ensure_folder_ownership,
+    MoveError,
+    move_folders_to_volume,
+)
 
 from selfprivacy_api import utils
 from selfprivacy_api.utils.waitloop import wait_until_true
@@ -300,7 +308,7 @@ class Service(ABC):
     @classmethod
     def set_location(cls, volume: BlockDevice):
         """
-            Only changes userdata
+        Only changes userdata
         """
 
         with WriteUserData() as user_data:
@@ -313,15 +321,18 @@ class Service(ABC):
 
     def assert_can_move(self, new_volume):
         """
-            Checks if the service can be moved to new volume
-            Raises errors if it cannot
+        Checks if the service can be moved to new volume
+        Raises errors if it cannot
         """
+        service_name = self.get_display_name()
+        if not self.is_movable():
+            raise MoveError(f"{service_name} is not movable")
+
         with ReadUserData() as user_data:
             if not user_data.get("useBinds", False):
                 raise MoveError("Server is not using binds.")
 
         current_volume_name = self.get_drive()
-        service_name = self.get_display_name()
         if current_volume_name == new_volume.name:
             raise MoveError(f"{service_name} is already on volume {new_volume}")
 
@@ -333,7 +344,6 @@ class Service(ABC):
 
         check_folders(current_volume_name, owned_folders)
 
-
     def do_move_to_volume(
         self,
         new_volume: BlockDevice,
@@ -341,59 +351,57 @@ class Service(ABC):
     ):
         """
         Move a service to another volume.
-        Is not allowed to raise errors because it is a task.
         """
         service_name = self.get_display_name()
         old_volume_name = self.get_drive()
         owned_folders = self.get_owned_folders()
 
-        report_progress(0, job, "Performing pre-move checks...")
+        report_progress(10, job, "Unmounting folders from old volume...")
+        unbind_folders(owned_folders)
 
-        # TODO: move trying to the task
+        report_progress(20, job, "Moving data to new volume...")
+        move_folders_to_volume(owned_folders, old_volume_name, new_volume, job)
+
+        report_progress(70, job, f"Making sure {service_name} owns its files...")
         try:
-            report_progress(5, job, f"Stopping {service_name}...")
-
-            with StoppedService(self):
-                report_progress(10, job, "Unmounting folders from old volume...")
-                unbind_folders(owned_folders)
-
-                report_progress(20, job, "Moving data to new volume...")
-                move_folders_to_volume(owned_folders, old_volume_name, new_volume, job)
-
-                report_progress(70, job, f"Making sure {service_name} owns its files...")
-                try:
-                    ensure_folder_ownership(owned_folders, new_volume, job, self)
-                except Exception as error:
-                    # We have logged it via print and we additionally log it here in the error field
-                    # We are continuing anyway but Job has no warning field
-                    Jobs.update(job, JobStatus.RUNNING, error=f"Service {service_name} will not be able to write files: " + str(error))
-
-                report_progress(90, job, f"Mounting {service_name} data...")
-                bind_folders(owned_folders, new_volume)
-
-                report_progress(95, job, f"Finishing moving {service_name}...")
-                self.set_location(self, new_volume)
-
-                Jobs.update(
-                    job=job,
-                    status=JobStatus.FINISHED,
-                    result=f"{service_name} moved successfully.",
-                    status_text=f"Starting {service_name}...",
-                    progress=100,
-                )
-        except Exception as e:
+            ensure_folder_ownership(owned_folders, new_volume, job, self)
+        except Exception as error:
+            # We have logged it via print and we additionally log it here in the error field
+            # We are continuing anyway but Job has no warning field
             Jobs.update(
-                job=job,
-                status=JobStatus.ERROR,
-                error=type(e).__name__ + " " + str(e),
+                job,
+                JobStatus.RUNNING,
+                error=f"Service {service_name} will not be able to write files: "
+                + str(error),
             )
 
+        report_progress(90, job, f"Mounting {service_name} data...")
+        bind_folders(owned_folders, new_volume)
 
-    @abstractmethod
-    def move_to_volume(self, volume: BlockDevice) -> Job:
-        """Cannot raise errors.
-        Returns errors as an errored out Job instead."""
-        pass
+        report_progress(95, job, f"Finishing moving {service_name}...")
+        self.set_location(new_volume)
+
+        Jobs.update(
+            job=job,
+            status=JobStatus.FINISHED,
+            result=f"{service_name} moved successfully.",
+            status_text=f"Starting {service_name}...",
+            progress=100,
+        )
+
+    def move_to_volume(self, volume: BlockDevice, job: Job) -> Job:
+        service_name = self.get_display_name()
+
+        report_progress(0, job, "Performing pre-move checks...")
+        self.assert_can_move(volume)
+
+        report_progress(5, job, f"Stopping {service_name}...")
+        assert self is not None
+        with StoppedService(self):
+            report_progress(9, job, f"Stopped server, starting the move...")
+            self.do_move_to_volume(volume, job)
+
+        return job
 
     @classmethod
     def owned_path(cls, path: str):

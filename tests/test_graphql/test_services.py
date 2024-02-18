@@ -8,6 +8,8 @@ from selfprivacy_api.services import get_service_by_id
 from selfprivacy_api.services.service import Service, ServiceStatus
 from selfprivacy_api.services.test_service import DummyService
 
+# from selfprivacy_api.services.moving import check_folders
+
 from tests.common import generate_service_query
 from tests.test_graphql.common import assert_empty, assert_ok, get_data
 from tests.test_block_device_utils import lsblk_singular_mock
@@ -32,7 +34,7 @@ MOVER_MOCK_PROCESS = CompletedProcess(["ls"], returncode=0)
 @pytest.fixture()
 def mock_check_service_mover_folders(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.services.generic_service_mover.check_folders",
+        "selfprivacy_api.services.service.check_folders",
         autospec=True,
         return_value=None,
     )
@@ -495,9 +497,14 @@ def test_disable_enable(authorized_client, only_dummy_service):
 def test_move_immovable(authorized_client, only_dummy_service):
     dummy_service = only_dummy_service
     dummy_service.set_movable(False)
-    mutation_response = api_move(authorized_client, dummy_service, "sda1")
+    root = BlockDevices().get_root_block_device()
+    mutation_response = api_move(authorized_client, dummy_service, root.name)
     data = get_data(mutation_response)["services"]["moveService"]
     assert_errorcode(data, 400)
+    try:
+        assert "not movable" in data["message"]
+    except AssertionError:
+        raise ValueError("wrong type of error?: ", data["message"])
 
     # is there a meaning in returning the service in this?
     assert data["service"] is not None
@@ -519,8 +526,7 @@ def test_move_no_such_volume(authorized_client, only_dummy_service):
     data = get_data(mutation_response)["services"]["moveService"]
     assert_notfound(data)
 
-    # is there a meaning in returning the service in this?
-    assert data["service"] is not None
+    assert data["service"] is None
     assert data["job"] is None
 
 
@@ -538,7 +544,8 @@ def test_move_same_volume(authorized_client, dummy_service):
 
     # is there a meaning in returning the service in this?
     assert data["service"] is not None
-    assert data["job"] is not None
+    # We do not create a job if task is not created
+    assert data["job"] is None
 
 
 def test_graphql_move_service_without_folders_on_old_volume(

@@ -5,18 +5,25 @@ import strawberry
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.common_types.jobs import job_to_api_job
 from selfprivacy_api.jobs import JobStatus
+from selfprivacy_api.utils.block_devices import BlockDevices
 
-from selfprivacy_api.graphql.common_types.service import (
-    Service,
-    service_to_graphql_service,
-)
 from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericJobMutationReturn,
     GenericMutationReturn,
 )
+from selfprivacy_api.graphql.common_types.service import (
+    Service,
+    service_to_graphql_service,
+)
+
+from selfprivacy_api.actions.services import (
+    move_service,
+    ServiceNotFoundError,
+    VolumeNotFoundError,
+)
+from selfprivacy_api.services.moving import MoveError
 
 from selfprivacy_api.services import get_service_by_id
-from selfprivacy_api.utils.block_devices import BlockDevices
 
 
 @strawberry.type
@@ -60,7 +67,7 @@ class ServicesMutations:
         except Exception as e:
             return ServiceMutationReturn(
                 success=False,
-                message=format_error(e),
+                message=pretty_error(e),
                 code=400,
             )
 
@@ -86,7 +93,7 @@ class ServicesMutations:
         except Exception as e:
             return ServiceMutationReturn(
                 success=False,
-                message=format_error(e),
+                message=pretty_error(e),
                 code=400,
             )
         return ServiceMutationReturn(
@@ -153,31 +160,31 @@ class ServicesMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def move_service(self, input: MoveServiceInput) -> ServiceJobMutationReturn:
         """Move service."""
+        # We need a service instance for a reply later
         service = get_service_by_id(input.service_id)
         if service is None:
             return ServiceJobMutationReturn(
                 success=False,
-                message=f"Service not found: {input.service_id}",
+                message=f"Service does not exist: {input.service_id}",
                 code=404,
             )
-        # TODO: make serviceImmovable and BlockdeviceNotFound exceptions
-        # in the move_to_volume() function and handle them here
-        if not service.is_movable():
+
+        try:
+            job = move_service(input.service_id, input.location)
+        except (ServiceNotFoundError, VolumeNotFoundError) as e:
             return ServiceJobMutationReturn(
                 success=False,
-                message=f"Service is not movable: {service.get_display_name()}",
+                message=pretty_error(e),
+                code=404,
+            )
+        except Exception as e:
+            return ServiceJobMutationReturn(
+                success=False,
+                message=pretty_error(e),
                 code=400,
                 service=service_to_graphql_service(service),
             )
-        volume = BlockDevices().get_block_device(input.location)
-        if volume is None:
-            return ServiceJobMutationReturn(
-                success=False,
-                message=f"Volume not found: {input.location}",
-                code=404,
-                service=service_to_graphql_service(service),
-            )
-        job = service.move_to_volume(volume)
+
         if job.status in [JobStatus.CREATED, JobStatus.RUNNING]:
             return ServiceJobMutationReturn(
                 success=True,
@@ -204,5 +211,5 @@ class ServicesMutations:
             )
 
 
-def format_error(e: Exception) -> str:
+def pretty_error(e: Exception) -> str:
     return type(e).__name__ + ": " + str(e)
