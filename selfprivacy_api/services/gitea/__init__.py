@@ -3,12 +3,10 @@ import base64
 import subprocess
 from typing import Optional, List
 
-from selfprivacy_api.jobs import Job, Jobs
-from selfprivacy_api.services.generic_service_mover import FolderMoveNames, move_service
+from selfprivacy_api.utils import get_domain
+
 from selfprivacy_api.services.generic_status_getter import get_service_status
 from selfprivacy_api.services.service import Service, ServiceStatus
-from selfprivacy_api.utils import get_domain
-from selfprivacy_api.utils.block_devices import BlockDevice
 from selfprivacy_api.services.gitea.icon import GITEA_ICON
 
 
@@ -96,20 +94,3 @@ class Gitea(Service):
     @staticmethod
     def get_folders() -> List[str]:
         return ["/var/lib/gitea"]
-
-    def move_to_volume(self, volume: BlockDevice) -> Job:
-        job = Jobs.add(
-            type_id="services.gitea.move",
-            name="Move Gitea",
-            description=f"Moving Gitea data to {volume.name}",
-        )
-
-        move_service(
-            self,
-            volume,
-            job,
-            FolderMoveNames.default_foldermoves(self),
-            "gitea",
-        )
-
-        return job

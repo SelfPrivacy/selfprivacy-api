@@ -14,10 +14,9 @@ from selfprivacy_api.services.owned_path import OwnedPath
 class MoveError(Exception):
     """Move failed"""
 
-def get_foldername(path: str) -> str:
-    return path.split("/")[-1]
 
-
+def get_foldername(p: OwnedPath) -> str:
+    return p.path.split("/")[-1]
 
 
 def check_volume(volume: BlockDevice, space_needed: int) -> bool:
@@ -26,10 +25,7 @@ def check_volume(volume: BlockDevice, space_needed: int) -> bool:
         raise MoveError("Not enough space on the new volume.")
 
     # Make sure the volume is mounted
-    if (
-        not volume.is_root()
-        and f"/volumes/{volume.name}" not in volume.mountpoints
-    ):
+    if not volume.is_root() and f"/volumes/{volume.name}" not in volume.mountpoints:
         raise MoveError("Volume is not mounted.")
 
 
@@ -39,11 +35,11 @@ def check_folders(current_volume: BlockDevice, folders: List[OwnedPath]) -> None
         path = pathlib.Path(f"/volumes/{current_volume}/{get_foldername(folder)}")
 
         if not path.exists():
-            raise MoveError(f"{path} is not found.")
+            raise MoveError(f"directory {path} is not found.")
         if not path.is_dir():
             raise MoveError(f"{path} is not a directory.")
         if path.owner() != folder.owner:
-            raise MoveError(f"{path} owner is not {folder.owner}.")
+            raise MoveError(f"{path} is not owned by {folder.owner}.")
 
 
 def unbind_folders(owned_folders: List[OwnedPath]) -> None:
@@ -66,7 +62,7 @@ def move_folders_to_volume(
     current_progress = job.progress
     folder_percentage = 50 // len(folders)
     for folder in folders:
-        folder_name = get_foldername(folder.path)
+        folder_name = get_foldername(folder)
         shutil.move(
             f"/volumes/{old_volume}/{folder_name}",
             f"/volumes/{new_volume.name}/{folder_name}",
@@ -75,11 +71,9 @@ def move_folders_to_volume(
         report_progress(progress, job, "Moving data to new volume...")
 
 
-def ensure_folder_ownership(
-    folders: List[OwnedPath], volume: BlockDevice
-) -> None:
+def ensure_folder_ownership(folders: List[OwnedPath], volume: BlockDevice) -> None:
     for folder in folders:
-        true_location = f"/volumes/{volume.name}/{get_foldername(folder.path)}"
+        true_location = f"/volumes/{volume.name}/{get_foldername(folder)}"
         try:
             subprocess.run(
                 [
@@ -87,12 +81,14 @@ def ensure_folder_ownership(
                     "-R",
                     f"{folder.owner}:{folder.group}",
                     # Could we just chown the binded location instead?
-                    true_location
+                    true_location,
                 ],
                 check=True,
             )
         except subprocess.CalledProcessError as error:
-            error_message = f"Unable to set ownership of {true_location} :{error.output}"
+            error_message = (
+                f"Unable to set ownership of {true_location} :{error.output}"
+            )
             print(error.output)
             raise MoveError(error_message)
 
@@ -104,7 +100,7 @@ def bind_folders(folders: List[OwnedPath], volume: BlockDevice) -> None:
                 [
                     "mount",
                     "--bind",
-                    f"/volumes/{volume.name}/{get_foldername(folder.path)}",
+                    f"/volumes/{volume.name}/{get_foldername(folder)}",
                     folder.path,
                 ],
                 check=True,

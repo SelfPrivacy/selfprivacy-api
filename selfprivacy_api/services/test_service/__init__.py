@@ -11,7 +11,6 @@ from os import path
 from selfprivacy_api.jobs import Job, Jobs, JobStatus
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
 from selfprivacy_api.utils.block_devices import BlockDevice
-from selfprivacy_api.services.generic_service_mover import move_service, FolderMoveNames
 import selfprivacy_api.utils.network as network_utils
 
 from selfprivacy_api.services.test_service.icon import BITWARDEN_ICON
@@ -189,23 +188,10 @@ class DummyService(Service):
     def get_folders(cls) -> List[str]:
         return cls.folders
 
-    def move_to_volume(self, volume: BlockDevice) -> Job:
-        job = Jobs.add(
-            type_id=f"services.{self.get_id()}.move",
-            name=f"Move {self.get_display_name()}",
-            description=f"Moving {self.get_display_name()} data to {volume.name}",
-        )
+    def do_move_to_volume(self, volume: BlockDevice, job: Job) -> Job:
         if self.simulate_moving is False:
-            # completely generic code, TODO: make it the default impl.
-            move_service(
-                self,
-                volume,
-                job,
-                FolderMoveNames.default_foldermoves(self),
-                self.get_id(),
-            )
+            return super(DummyService, self).do_move_to_volume(volume, job)
         else:
             Jobs.update(job, status=JobStatus.FINISHED)
-
-        self.set_drive(volume.name)
-        return job
+            self.set_drive(volume.name)
+            return job

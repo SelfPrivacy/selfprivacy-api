@@ -4,14 +4,11 @@ import base64
 import subprocess
 from typing import Optional, List
 
-from selfprivacy_api.jobs import Job, Jobs
-from selfprivacy_api.services.generic_service_mover import FolderMoveNames, move_service
 from selfprivacy_api.services.generic_status_getter import (
     get_service_status_from_several_units,
 )
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
 from selfprivacy_api import utils
-from selfprivacy_api.utils.block_devices import BlockDevice
 from selfprivacy_api.services.mailserver.icon import MAILSERVER_ICON
 
 
@@ -166,20 +163,3 @@ class MailServer(Service):
                 ),
             )
         return dns_records
-
-    def move_to_volume(self, volume: BlockDevice) -> Job:
-        job = Jobs.add(
-            type_id="services.email.move",
-            name="Move Mail Server",
-            description=f"Moving mailserver data to {volume.name}",
-        )
-
-        move_service(
-            self,
-            volume,
-            job,
-            FolderMoveNames.default_foldermoves(self),
-            "simple-nixos-mailserver",
-        )
-
-        return job
