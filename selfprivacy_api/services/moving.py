@@ -60,6 +60,9 @@ def move_folders_to_volume(
     job: Job,
 ) -> None:
     current_progress = job.progress
+    if current_progress is None:
+        current_progress = 0
+
     folder_percentage = 50 // len(folders)
     for folder in folders:
         folder_name = get_foldername(folder)

@@ -311,8 +311,8 @@ class Service(ABC):
         Only changes userdata
         """
 
+        service_id = cls.get_id()
         with WriteUserData() as user_data:
-            service_id = cls.get_id()
             if "modules" not in user_data:
                 user_data["modules"] = {}
             if service_id not in user_data["modules"]:
