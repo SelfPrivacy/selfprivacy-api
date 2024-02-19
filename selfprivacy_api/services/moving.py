@@ -19,7 +19,7 @@ def get_foldername(p: OwnedPath) -> str:
     return p.path.split("/")[-1]
 
 
-def check_volume(volume: BlockDevice, space_needed: int) -> bool:
+def check_volume(volume: BlockDevice, space_needed: int) -> None:
     # Check if there is enough space on the new volume
     if int(volume.fsavail) < space_needed:
         raise MoveError("Not enough space on the new volume.")
@@ -55,7 +55,7 @@ def unbind_folders(owned_folders: List[OwnedPath]) -> None:
 
 def move_folders_to_volume(
     folders: List[OwnedPath],
-    old_volume: BlockDevice,
+    old_volume_name: str, # TODO: pass an actual validated block device
     new_volume: BlockDevice,
     job: Job,
 ) -> None:
@@ -67,7 +67,7 @@ def move_folders_to_volume(
     for folder in folders:
         folder_name = get_foldername(folder)
         shutil.move(
-            f"/volumes/{old_volume}/{folder_name}",
+            f"/volumes/{old_volume_name}/{folder_name}",
             f"/volumes/{new_volume.name}/{folder_name}",
         )
         progress = current_progress + folder_percentage

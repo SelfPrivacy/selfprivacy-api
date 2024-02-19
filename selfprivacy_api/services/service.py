@@ -353,6 +353,7 @@ class Service(ABC):
         Move a service to another volume.
         """
         service_name = self.get_display_name()
+        # TODO: validate that this volume exists
         old_volume_name = self.get_drive()
         owned_folders = self.get_owned_folders()
 
