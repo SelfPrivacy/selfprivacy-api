@@ -353,7 +353,7 @@ class Service(ABC):
         Move a service to another volume.
         """
         service_name = self.get_display_name()
-        # TODO: validate that this volume exists
+        # TODO : Make sure device exists
         old_volume_name = self.get_drive()
         owned_folders = self.get_owned_folders()
 
@@ -365,7 +365,7 @@ class Service(ABC):
 
         report_progress(70, job, f"Making sure {service_name} owns its files...")
         try:
-            ensure_folder_ownership(owned_folders, new_volume, job, self)
+            ensure_folder_ownership(owned_folders, new_volume)
         except Exception as error:
             # We have logged it via print and we additionally log it here in the error field
             # We are continuing anyway but Job has no warning field
@@ -399,7 +399,7 @@ class Service(ABC):
         report_progress(5, job, f"Stopping {service_name}...")
         assert self is not None
         with StoppedService(self):
-            report_progress(9, job, f"Stopped server, starting the move...")
+            report_progress(9, job, "Stopped service, starting the move...")
             self.do_move_to_volume(volume, job)
 
         return job
