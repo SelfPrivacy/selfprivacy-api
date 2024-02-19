@@ -19,6 +19,10 @@ def get_foldername(p: OwnedPath) -> str:
     return p.path.split("/")[-1]
 
 
+def location_at_volume(binding_path: OwnedPath, volume_name: str):
+    return f"/volumes/{volume_name}/{get_foldername(binding_path)}"
+
+
 def check_volume(volume: BlockDevice, space_needed: int) -> None:
     # Check if there is enough space on the new volume
     if int(volume.fsavail) < space_needed:
@@ -29,10 +33,10 @@ def check_volume(volume: BlockDevice, space_needed: int) -> None:
         raise MoveError("Volume is not mounted.")
 
 
-def check_folders(current_volume: BlockDevice, folders: List[OwnedPath]) -> None:
+def check_folders(volume_name: str, folders: List[OwnedPath]) -> None:
     # Make sure current actual directory exists and if its user and group are correct
     for folder in folders:
-        path = pathlib.Path(f"/volumes/{current_volume}/{get_foldername(folder)}")
+        path = pathlib.Path(location_at_volume(folder, volume_name))
 
         if not path.exists():
             raise MoveError(f"directory {path} is not found.")
@@ -55,7 +59,7 @@ def unbind_folders(owned_folders: List[OwnedPath]) -> None:
 
 def move_folders_to_volume(
     folders: List[OwnedPath],
-    old_volume_name: str, # TODO: pass an actual validated block device
+    old_volume_name: str,  # TODO: pass an actual validated block device
     new_volume: BlockDevice,
     job: Job,
 ) -> None:
@@ -63,20 +67,19 @@ def move_folders_to_volume(
     if current_progress is None:
         current_progress = 0
 
-    folder_percentage = 50 // len(folders)
+    progress_per_folder = 50 // len(folders)
     for folder in folders:
-        folder_name = get_foldername(folder)
         shutil.move(
-            f"/volumes/{old_volume_name}/{folder_name}",
-            f"/volumes/{new_volume.name}/{folder_name}",
+            location_at_volume(folder, old_volume_name),
+            location_at_volume(folder, new_volume.name),
         )
-        progress = current_progress + folder_percentage
+        progress = current_progress + progress_per_folder
         report_progress(progress, job, "Moving data to new volume...")
 
 
 def ensure_folder_ownership(folders: List[OwnedPath], volume: BlockDevice) -> None:
     for folder in folders:
-        true_location = f"/volumes/{volume.name}/{get_foldername(folder)}"
+        true_location = location_at_volume(folder, volume.name)
         try:
             subprocess.run(
                 [
@@ -89,10 +92,10 @@ def ensure_folder_ownership(folders: List[OwnedPath], volume: BlockDevice) -> No
                 check=True,
             )
         except subprocess.CalledProcessError as error:
+            print(error.output)
             error_message = (
                 f"Unable to set ownership of {true_location} :{error.output}"
             )
-            print(error.output)
             raise MoveError(error_message)
 
 
@@ -103,7 +106,7 @@ def bind_folders(folders: List[OwnedPath], volume: BlockDevice) -> None:
                 [
                     "mount",
                     "--bind",
-                    f"/volumes/{volume.name}/{get_foldername(folder)}",
+                    location_at_volume(folder, volume.name),
                     folder.path,
                 ],
                 check=True,
