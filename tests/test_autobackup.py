@@ -14,9 +14,12 @@ from selfprivacy_api.graphql.common_types.backup import (
 from selfprivacy_api.backup import Backups, Snapshot
 from selfprivacy_api.backup.tasks import (
     prune_autobackup_snapshots,
+    automatic_backup,
+    do_autobackup,
 )
 
 from tests.test_backup import backups
+from tests.test_graphql.test_services import only_dummy_service
 
 
 def backuppable_services() -> list[Service]:
@@ -61,6 +64,29 @@ def test_set_autobackup_period(backups):
 
     Backups.set_autobackup_period_minutes(-1)
     assert Backups.autobackup_period_minutes() is None
+
+
+def test_autobackup_taskbody(backups, only_dummy_service):
+    # We cannot test the timed task itself, but we reduced it
+    # to one line, and we test this line here
+    dummy_service = only_dummy_service
+    now = datetime.now(timezone.utc)
+    backup_period = 13  # minutes
+
+    assert Backups.get_all_snapshots() == []
+
+    Backups.set_autobackup_period_minutes(backup_period)
+    assert Backups.is_time_to_backup_service(dummy_service, now)
+    assert Backups.is_time_to_backup(now)
+    assert dummy_service in Backups.services_to_back_up(now)
+    assert len(Backups.services_to_back_up(now)) == 1
+
+    do_autobackup()
+
+    snapshots = Backups.get_all_snapshots()
+    assert len(snapshots) == 1
+    assert snapshots[0].service_name == dummy_service.get_id()
+    assert snapshots[0].reason == BackupReason.AUTO
 
 
 def test_autobackup_timer_periods(backups, dummy_service):
