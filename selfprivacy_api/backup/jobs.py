@@ -3,7 +3,7 @@ from typing import Optional, List
 from selfprivacy_api.models.backup.snapshot import Snapshot
 from selfprivacy_api.jobs import Jobs, Job, JobStatus
 from selfprivacy_api.services.service import Service
-from selfprivacy_api.services import get_service_by_id
+from selfprivacy_api.services import get_service_by_id, get_all_services
 
 
 def job_type_prefix(service: Service) -> str:
@@ -12,6 +12,10 @@ def job_type_prefix(service: Service) -> str:
 
 def backup_job_type(service: Service) -> str:
     return f"{job_type_prefix(service)}.backup"
+
+
+def autobackup_job_type() -> str:
+    return f"backups.autobackup"
 
 
 def restore_job_type(service: Service) -> str:
@@ -34,6 +38,17 @@ def is_something_running_for(service: Service) -> bool:
         job for job in get_jobs_by_service(service) if job.status == JobStatus.RUNNING
     ]
     return len(running_jobs) != 0
+
+
+def add_autobackup_job(services: List[Service]) -> Job:
+    service_names = [s.get_display_name() for s in services]
+    pretty_service_list: str = ", ".join(service_names)
+    job = Jobs.add(
+        type_id=autobackup_job_type(),
+        name=f"Automatic backup",
+        description=f"Scheduled backup for services : {pretty_service_list}",
+    )
+    return job
 
 
 def add_backup_job(service: Service) -> Job:
