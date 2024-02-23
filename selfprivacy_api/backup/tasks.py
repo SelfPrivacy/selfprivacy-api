@@ -80,9 +80,7 @@ def do_autobackup():
     """
     time = datetime.utcnow().replace(tzinfo=timezone.utc)
     for service in Backups.services_to_back_up(time):
-        handle = start_backup(service.get_id(), BackupReason.AUTO)
-        # To be on safe side, we do not do it in parallel
-        handle(blocking=True)
+        start_backup(service.get_id(), BackupReason.AUTO)
 
 
 @huey.periodic_task(validate_datetime=validate_datetime)
