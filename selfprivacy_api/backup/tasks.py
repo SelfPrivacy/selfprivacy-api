@@ -100,6 +100,8 @@ def do_autobackup() -> None:
         progress = progress + progress_per_service
         Jobs.update(job, JobStatus.RUNNING, progress=progress)
 
+    Jobs.update(job, JobStatus.FINISHED)
+
 
 @huey.periodic_task(validate_datetime=validate_datetime)
 def automatic_backup() -> None:
