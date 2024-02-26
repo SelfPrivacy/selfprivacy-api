@@ -4,9 +4,15 @@ After starting, track the status of the systemd unit and update the Job
 status accordingly.
 """
 import subprocess
+import time
 from selfprivacy_api.utils.huey import huey
 from selfprivacy_api.jobs import JobStatus, Jobs, Job
-import time
+from datetime import datetime
+
+START_TIMEOUT = 60 * 5
+START_INTERVAL = 1
+RUN_TIMEOUT = 60 * 60
+RUN_INTERVAL = 5
 
 
 @huey.task()
@@ -27,7 +33,7 @@ def rebuild_system_task(job: Job, upgrade: bool = False):
             status_text="Starting the system rebuild...",
         )
         # Get current time to handle timeout
-        start_time = time.time()
+        start_time = datetime.now()
         # Wait for the systemd unit to start
         while True:
             try:
@@ -37,18 +43,16 @@ def rebuild_system_task(job: Job, upgrade: bool = False):
                     capture_output=True,
                     text=True,
                 )
-                print(status.stdout.strip())
                 if status.stdout.strip() == "active":
                     break
-                # Timeount after 5 minutes
-                if time.time() - start_time > 300:
+                if (datetime.now() - start_time).total_seconds() > START_TIMEOUT:
                     Jobs.update(
                         job=job,
                         status=JobStatus.ERROR,
                         error="System rebuild timed out.",
                     )
                     return
-                time.sleep(1)
+                time.sleep(START_INTERVAL)
             except subprocess.CalledProcessError:
                 pass
         Jobs.update(
@@ -56,7 +60,6 @@ def rebuild_system_task(job: Job, upgrade: bool = False):
             status=JobStatus.RUNNING,
             status_text="Rebuilding the system...",
         )
-        print("Rebuilding the system...")
         # Wait for the systemd unit to finish
         while True:
             try:
@@ -66,9 +69,7 @@ def rebuild_system_task(job: Job, upgrade: bool = False):
                     capture_output=True,
                     text=True,
                 )
-                print(f"Unit status: {status.stdout.strip()}")
                 if status.stdout.strip() == "inactive":
-                    print("System rebuilt.")
                     Jobs.update(
                         job=job,
                         status=JobStatus.FINISHED,
@@ -77,7 +78,6 @@ def rebuild_system_task(job: Job, upgrade: bool = False):
                     )
                     break
                 elif status.stdout.strip() == "failed":
-                    print("System rebuild failed.")
                     Jobs.update(
                         job=job,
                         status=JobStatus.ERROR,
@@ -85,7 +85,6 @@ def rebuild_system_task(job: Job, upgrade: bool = False):
                     )
                     break
                 elif status.stdout.strip() == "active":
-                    print("Geting a log line")
                     log_line = subprocess.run(
                         [
                             "journalctl",
@@ -100,25 +99,21 @@ def rebuild_system_task(job: Job, upgrade: bool = False):
                         capture_output=True,
                         text=True,
                     ).stdout.strip()
-                    print(log_line)
                     Jobs.update(
                         job=job,
                         status=JobStatus.RUNNING,
                         status_text=f"{log_line}",
                     )
-                # Timeout of 60 minutes
-                if time.time() - start_time > 3600:
-                    print("System rebuild timed out.")
-                    Jobs.update(
-                        job=job,
-                        status=JobStatus.ERROR,
-                        error="System rebuild timed out.",
-                    )
-                    break
-                time.sleep(5)
             except subprocess.CalledProcessError:
-                print("subprocess.CalledProcessError")
                 pass
+            if (datetime.now() - start_time).total_seconds() > RUN_TIMEOUT:
+                Jobs.update(
+                    job=job,
+                    status=JobStatus.ERROR,
+                    error="System rebuild timed out.",
+                )
+                break
+            time.sleep(RUN_INTERVAL)
 
     except subprocess.CalledProcessError as e:
         Jobs.update(

@@ -3,6 +3,8 @@
 # pylint: disable=missing-function-docstring
 import pytest
 
+from selfprivacy_api.jobs import JobStatus, Jobs
+
 
 class ProcessMock:
     """Mock subprocess.Popen"""
@@ -37,6 +39,13 @@ def mock_subprocess_check_output(mocker):
     return mock
 
 
+@pytest.fixture
+def mock_sleep_intervals(mocker):
+    mock_start = mocker.patch("selfprivacy_api.jobs.upgrade_system.START_INTERVAL", 0)
+    mock_run = mocker.patch("selfprivacy_api.jobs.upgrade_system.RUN_INTERVAL", 0)
+    return (mock_start, mock_run)
+
+
 API_REBUILD_SYSTEM_MUTATION = """
 mutation rebuildSystem {
     system {
@@ -44,45 +53,13 @@ mutation rebuildSystem {
             success
             message
             code
+            job {
+                uid
+            }
         }
     }
 }
 """
-
-
-def test_graphql_system_rebuild_unauthorized(client, mock_subprocess_popen):
-    """Test system rebuild without authorization"""
-    response = client.post(
-        "/graphql",
-        json={
-            "query": API_REBUILD_SYSTEM_MUTATION,
-        },
-    )
-    assert response.status_code == 200
-    assert response.json().get("data") is None
-    assert mock_subprocess_popen.call_count == 0
-
-
-def test_graphql_system_rebuild(authorized_client, mock_subprocess_popen):
-    """Test system rebuild"""
-    response = authorized_client.post(
-        "/graphql",
-        json={
-            "query": API_REBUILD_SYSTEM_MUTATION,
-        },
-    )
-    assert response.status_code == 200
-    assert response.json().get("data") is not None
-    assert response.json()["data"]["system"]["runSystemRebuild"]["success"] is True
-    assert response.json()["data"]["system"]["runSystemRebuild"]["message"] is not None
-    assert response.json()["data"]["system"]["runSystemRebuild"]["code"] == 200
-    assert mock_subprocess_popen.call_count == 1
-    assert mock_subprocess_popen.call_args[0][0] == [
-        "systemctl",
-        "start",
-        "sp-nixos-rebuild.service",
-    ]
-
 
 API_UPGRADE_SYSTEM_MUTATION = """
 mutation upgradeSystem {
@@ -91,44 +68,161 @@ mutation upgradeSystem {
             success
             message
             code
+            job {
+                uid
+            }
         }
     }
 }
 """
 
 
-def test_graphql_system_upgrade_unauthorized(client, mock_subprocess_popen):
-    """Test system upgrade without authorization"""
+@pytest.mark.parametrize("action", ["rebuild", "upgrade"])
+def test_graphql_system_rebuild_unauthorized(client, fp, action):
+    """Test system rebuild without authorization"""
+    query = (
+        API_REBUILD_SYSTEM_MUTATION
+        if action == "rebuild"
+        else API_UPGRADE_SYSTEM_MUTATION
+    )
+
     response = client.post(
         "/graphql",
         json={
-            "query": API_UPGRADE_SYSTEM_MUTATION,
+            "query": query,
         },
     )
     assert response.status_code == 200
     assert response.json().get("data") is None
-    assert mock_subprocess_popen.call_count == 0
+    assert fp.call_count([fp.any()]) == 0
 
 
-def test_graphql_system_upgrade(authorized_client, mock_subprocess_popen):
-    """Test system upgrade"""
+@pytest.mark.parametrize("action", ["rebuild", "upgrade"])
+def test_graphql_system_rebuild(authorized_client, fp, action, mock_sleep_intervals):
+    """Test system rebuild"""
+    unit_name = f"sp-nixos-{action}.service"
+    query = (
+        API_REBUILD_SYSTEM_MUTATION
+        if action == "rebuild"
+        else API_UPGRADE_SYSTEM_MUTATION
+    )
+
+    # Start the unit
+    fp.register(["systemctl", "start", unit_name])
+
+    # Wait for it to start
+    fp.register(["systemctl", "is-active", unit_name], stdout="inactive")
+    fp.register(["systemctl", "is-active", unit_name], stdout="inactive")
+    fp.register(["systemctl", "is-active", unit_name], stdout="active")
+
+    # Check its exectution
+    fp.register(["systemctl", "is-active", unit_name], stdout="active")
+    fp.register(
+        ["journalctl", "-u", unit_name, "-n", "1", "-o", "cat"],
+        stdout="Starting rebuild...",
+    )
+
+    fp.register(["systemctl", "is-active", unit_name], stdout="active")
+    fp.register(
+        ["journalctl", "-u", unit_name, "-n", "1", "-o", "cat"], stdout="Rebuilding..."
+    )
+
+    fp.register(["systemctl", "is-active", unit_name], stdout="inactive")
+
     response = authorized_client.post(
         "/graphql",
         json={
-            "query": API_UPGRADE_SYSTEM_MUTATION,
+            "query": query,
         },
     )
     assert response.status_code == 200
     assert response.json().get("data") is not None
-    assert response.json()["data"]["system"]["runSystemUpgrade"]["success"] is True
-    assert response.json()["data"]["system"]["runSystemUpgrade"]["message"] is not None
-    assert response.json()["data"]["system"]["runSystemUpgrade"]["code"] == 200
-    assert mock_subprocess_popen.call_count == 1
-    assert mock_subprocess_popen.call_args[0][0] == [
-        "systemctl",
-        "start",
-        "sp-nixos-upgrade.service",
-    ]
+    assert (
+        response.json()["data"]["system"][f"runSystem{action.capitalize()}"]["success"]
+        is True
+    )
+    assert (
+        response.json()["data"]["system"][f"runSystem{action.capitalize()}"]["message"]
+        is not None
+    )
+    assert (
+        response.json()["data"]["system"][f"runSystem{action.capitalize()}"]["code"]
+        == 200
+    )
+
+    assert fp.call_count(["systemctl", "start", unit_name]) == 1
+    assert fp.call_count(["systemctl", "is-active", unit_name]) == 6
+
+    job_id = response.json()["data"]["system"][f"runSystem{action.capitalize()}"][
+        "job"
+    ]["uid"]
+    assert Jobs.get_job(job_id).status == JobStatus.FINISHED
+    assert Jobs.get_job(job_id).type_id == f"system.nixos.{action}"
+
+
+@pytest.mark.parametrize("action", ["rebuild", "upgrade"])
+def test_graphql_system_rebuild_failed(
+    authorized_client, fp, action, mock_sleep_intervals
+):
+    """Test system rebuild"""
+    unit_name = f"sp-nixos-{action}.service"
+    query = (
+        API_REBUILD_SYSTEM_MUTATION
+        if action == "rebuild"
+        else API_UPGRADE_SYSTEM_MUTATION
+    )
+
+    # Start the unit
+    fp.register(["systemctl", "start", unit_name])
+
+    # Wait for it to start
+    fp.register(["systemctl", "is-active", unit_name], stdout="inactive")
+    fp.register(["systemctl", "is-active", unit_name], stdout="inactive")
+    fp.register(["systemctl", "is-active", unit_name], stdout="active")
+
+    # Check its exectution
+    fp.register(["systemctl", "is-active", unit_name], stdout="active")
+    fp.register(
+        ["journalctl", "-u", unit_name, "-n", "1", "-o", "cat"],
+        stdout="Starting rebuild...",
+    )
+
+    fp.register(["systemctl", "is-active", unit_name], stdout="active")
+    fp.register(
+        ["journalctl", "-u", unit_name, "-n", "1", "-o", "cat"], stdout="Rebuilding..."
+    )
+
+    fp.register(["systemctl", "is-active", unit_name], stdout="failed")
+
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": query,
+        },
+    )
+    assert response.status_code == 200
+    assert response.json().get("data") is not None
+    assert (
+        response.json()["data"]["system"][f"runSystem{action.capitalize()}"]["success"]
+        is True
+    )
+    assert (
+        response.json()["data"]["system"][f"runSystem{action.capitalize()}"]["message"]
+        is not None
+    )
+    assert (
+        response.json()["data"]["system"][f"runSystem{action.capitalize()}"]["code"]
+        == 200
+    )
+
+    assert fp.call_count(["systemctl", "start", unit_name]) == 1
+    assert fp.call_count(["systemctl", "is-active", unit_name]) == 6
+
+    job_id = response.json()["data"]["system"][f"runSystem{action.capitalize()}"][
+        "job"
+    ]["uid"]
+    assert Jobs.get_job(job_id).status == JobStatus.ERROR
+    assert Jobs.get_job(job_id).type_id == f"system.nixos.{action}"
 
 
 API_ROLLBACK_SYSTEM_MUTATION = """
