@@ -9,15 +9,15 @@ from selfprivacy_api.jobs import Job, Jobs, JobStatus, report_progress
 from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
 
 from selfprivacy_api.services.generic_size_counter import get_storage_usage
-from selfprivacy_api.services.owned_path import OwnedPath
+from selfprivacy_api.services.owned_path import OwnedPath, Bind
 from selfprivacy_api.services.moving import (
-    check_folders,
+    check_binds,
     check_volume,
     unbind_folders,
     bind_folders,
     ensure_folder_ownership,
     MoveError,
-    move_folders_to_volume,
+    move_data_to_volume,
 )
 
 from selfprivacy_api import utils
@@ -319,6 +319,13 @@ class Service(ABC):
                 user_data["modules"][service_id] = {}
             user_data["modules"][service_id]["location"] = volume.name
 
+    def binds(self) -> typing.List[Bind]:
+        owned_folders = self.get_owned_folders()
+
+        return [
+            Bind.from_owned_path(folder, self.get_drive()) for folder in owned_folders
+        ]
+
     def assert_can_move(self, new_volume):
         """
         Checks if the service can be moved to new volume
@@ -338,11 +345,10 @@ class Service(ABC):
 
         check_volume(new_volume, space_needed=self.get_storage_usage())
 
-        owned_folders = self.get_owned_folders()
-        if owned_folders == []:
+        binds = self.binds()
+        if binds == []:
             raise MoveError("nothing to move")
-
-        check_folders(current_volume_name, owned_folders)
+        check_binds(current_volume_name, binds)
 
     def do_move_to_volume(
         self,
@@ -351,21 +357,20 @@ class Service(ABC):
     ):
         """
         Move a service to another volume.
+        Note: It may be much simpler to write it per bind, but a bit less safe?
         """
         service_name = self.get_display_name()
-        # TODO : Make sure device exists
-        old_volume_name = self.get_drive()
-        owned_folders = self.get_owned_folders()
+        binds = self.binds()
 
         report_progress(10, job, "Unmounting folders from old volume...")
-        unbind_folders(owned_folders)
+        unbind_folders(binds)
 
         report_progress(20, job, "Moving data to new volume...")
-        move_folders_to_volume(owned_folders, old_volume_name, new_volume, job)
+        binds = move_data_to_volume(binds, new_volume, job)
 
         report_progress(70, job, f"Making sure {service_name} owns its files...")
         try:
-            ensure_folder_ownership(owned_folders, new_volume)
+            ensure_folder_ownership(binds)
         except Exception as error:
             # We have logged it via print and we additionally log it here in the error field
             # We are continuing anyway but Job has no warning field
@@ -377,7 +382,7 @@ class Service(ABC):
             )
 
         report_progress(90, job, f"Mounting {service_name} data...")
-        bind_folders(owned_folders, new_volume)
+        bind_folders(binds)
 
         report_progress(95, job, f"Finishing moving {service_name}...")
         self.set_location(new_volume)

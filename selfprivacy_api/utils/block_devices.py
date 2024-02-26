@@ -4,6 +4,8 @@ import subprocess
 import json
 import typing
 
+from pydantic import BaseModel
+
 from selfprivacy_api.utils import WriteUserData
 from selfprivacy_api.utils.singleton_metaclass import SingletonMetaclass
 
