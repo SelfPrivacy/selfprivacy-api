@@ -7,6 +7,8 @@ from selfprivacy_api.graphql.common_types.jobs import job_to_api_job
 from selfprivacy_api.jobs import JobStatus
 from selfprivacy_api.utils.block_devices import BlockDevices
 
+from traceback import format_tb as format_traceback
+
 from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericJobMutationReturn,
     GenericMutationReturn,
@@ -171,6 +173,7 @@ class ServicesMutations:
 
         try:
             job = move_service(input.service_id, input.location)
+
         except (ServiceNotFoundError, VolumeNotFoundError) as e:
             return ServiceJobMutationReturn(
                 success=False,
@@ -212,4 +215,5 @@ class ServicesMutations:
 
 
 def pretty_error(e: Exception) -> str:
-    return type(e).__name__ + ": " + str(e)
+    traceback = "/r".join(format_traceback(e.__traceback__))
+    return type(e).__name__ + ": " + str(e) + ": " + traceback

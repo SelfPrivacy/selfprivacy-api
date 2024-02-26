@@ -1,26 +1,16 @@
 """Generic handler for moving services"""
 
 from __future__ import annotations
-import subprocess
-import pathlib
 import shutil
 from typing import List
 
 from selfprivacy_api.jobs import Job, report_progress
 from selfprivacy_api.utils.block_devices import BlockDevice
-from selfprivacy_api.services.owned_path import OwnedPath
+from selfprivacy_api.services.owned_path import Bind
 
 
 class MoveError(Exception):
-    """Move failed"""
-
-
-def get_foldername(p: OwnedPath) -> str:
-    return p.path.split("/")[-1]
-
-
-def location_at_volume(binding_path: OwnedPath, volume_name: str):
-    return f"/volumes/{volume_name}/{get_foldername(binding_path)}"
+    """Move of the data has failed"""
 
 
 def check_volume(volume: BlockDevice, space_needed: int) -> None:
@@ -33,84 +23,50 @@ def check_volume(volume: BlockDevice, space_needed: int) -> None:
         raise MoveError("Volume is not mounted.")
 
 
-def check_folders(volume_name: str, folders: List[OwnedPath]) -> None:
+def check_binds(volume_name: str, binds: List[Bind]) -> None:
     # Make sure current actual directory exists and if its user and group are correct
-    for folder in folders:
-        path = pathlib.Path(location_at_volume(folder, volume_name))
-
-        if not path.exists():
-            raise MoveError(f"directory {path} is not found.")
-        if not path.is_dir():
-            raise MoveError(f"{path} is not a directory.")
-        if path.owner() != folder.owner:
-            raise MoveError(f"{path} is not owned by {folder.owner}.")
+    for bind in binds:
+        bind.validate()
 
 
-def unbind_folders(owned_folders: List[OwnedPath]) -> None:
+def unbind_folders(owned_folders: List[Bind]) -> None:
     for folder in owned_folders:
-        try:
-            subprocess.run(
-                ["umount", folder.path],
-                check=True,
-            )
-        except subprocess.CalledProcessError:
-            raise MoveError(f"Unable to unmount folder {folder.path}.")
+        folder.unbind()
 
 
-def move_folders_to_volume(
-    folders: List[OwnedPath],
-    old_volume_name: str,  # TODO: pass an actual validated block device
+# May be moved into Bind
+def move_data_to_volume(
+    binds: List[Bind],
     new_volume: BlockDevice,
     job: Job,
-) -> None:
+) -> List[Bind]:
     current_progress = job.progress
     if current_progress is None:
         current_progress = 0
 
-    progress_per_folder = 50 // len(folders)
-    for folder in folders:
-        shutil.move(
-            location_at_volume(folder, old_volume_name),
-            location_at_volume(folder, new_volume.name),
-        )
+    progress_per_folder = 50 // len(binds)
+    for bind in binds:
+        old_location = bind.location_at_volume()
+        bind.drive = new_volume
+        new_location = bind.location_at_volume()
+
+        try:
+            shutil.move(old_location, new_location)
+        except Exception as error:
+            raise MoveError(
+                f"could not move {old_location} to {new_location} : {str(error)}"
+            ) from error
+
         progress = current_progress + progress_per_folder
         report_progress(progress, job, "Moving data to new volume...")
+    return binds
 
 
-def ensure_folder_ownership(folders: List[OwnedPath], volume: BlockDevice) -> None:
+def ensure_folder_ownership(folders: List[Bind]) -> None:
     for folder in folders:
-        true_location = location_at_volume(folder, volume.name)
-        try:
-            subprocess.run(
-                [
-                    "chown",
-                    "-R",
-                    f"{folder.owner}:{folder.group}",
-                    # Could we just chown the binded location instead?
-                    true_location,
-                ],
-                check=True,
-            )
-        except subprocess.CalledProcessError as error:
-            print(error.output)
-            error_message = (
-                f"Unable to set ownership of {true_location} :{error.output}"
-            )
-            raise MoveError(error_message)
+        folder.ensure_ownership()
 
 
-def bind_folders(folders: List[OwnedPath], volume: BlockDevice) -> None:
+def bind_folders(folders: List[Bind], volume: BlockDevice):
     for folder in folders:
-        try:
-            subprocess.run(
-                [
-                    "mount",
-                    "--bind",
-                    location_at_volume(folder, volume.name),
-                    folder.path,
-                ],
-                check=True,
-            )
-        except subprocess.CalledProcessError as error:
-            print(error.output)
-            raise MoveError(f"Unable to mount new volume:{error.output}")
+        folder.bind()

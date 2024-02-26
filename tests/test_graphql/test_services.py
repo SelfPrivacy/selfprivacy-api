@@ -32,9 +32,9 @@ MOVER_MOCK_PROCESS = CompletedProcess(["ls"], returncode=0)
 
 
 @pytest.fixture()
-def mock_check_service_mover_folders(mocker):
+def mock_check_service_mover_binds(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.services.service.check_folders",
+        "selfprivacy_api.services.service.check_binds",
         autospec=True,
         return_value=None,
     )
@@ -569,7 +569,7 @@ def test_graphql_move_service_without_folders_on_old_volume(
 def test_graphql_move_service(
     authorized_client,
     generic_userdata,
-    mock_check_service_mover_folders,
+    mock_check_service_mover_binds,
     lsblk_singular_mock,
     dummy_service: DummyService,
     mock_subprocess_run,
