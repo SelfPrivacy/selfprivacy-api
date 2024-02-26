@@ -19,7 +19,14 @@
             pytest
             pytest-datadir
             pytest-mock
-          ]));
+            black
+            mypy
+            pylsp-mypy
+            python-lsp-black
+            python-lsp-server
+            typer # for strawberry
+          ] ++ strawberry-graphql.optional-dependencies.cli));
+
       vmtest-src-dir = "/root/source";
       shellMOTD = ''
         Welcome to SP API development shell!
@@ -72,13 +79,15 @@
       devShells.${system}.default = pkgs.mkShell {
         name = "SP API dev shell";
         packages = with pkgs; [
-          python-env
+          nixpkgs-fmt
           rclone
           redis
           restic
           self.packages.${system}.pytest-vm
           # FIXME consider loading this explicitly only after ArchLinux issue is solved
           self.checks.x86_64-linux.default.driverInteractive
+          # the target API application python environment
+          python-env
         ];
         shellHook = ''
           # envs set with export and as attributes are treated differently.

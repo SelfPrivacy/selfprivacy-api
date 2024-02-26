@@ -165,7 +165,7 @@ def test_reinit_after_purge(backups):
     Backups.erase_repo()
     assert Backups.is_initted() is False
     with pytest.raises(ValueError):
-        Backups.get_all_snapshots()
+        Backups.force_snapshot_cache_reload()
 
     Backups.init_repo()
     assert Backups.is_initted() is True
@@ -209,7 +209,11 @@ def test_backup_returns_snapshot(backups, dummy_service):
     snapshot = provider.backupper.start_backup(service_folders, name)
 
     assert snapshot.id is not None
-    assert len(snapshot.id) == len(Backups.get_all_snapshots()[0].id)
+
+    snapshots = provider.backupper.get_snapshots()
+    assert snapshots != []
+
+    assert len(snapshot.id) == len(snapshots[0].id)
     assert Backups.get_snapshot_by_id(snapshot.id) is not None
     assert snapshot.service_name == name
     assert snapshot.created_at is not None
@@ -468,14 +472,46 @@ def test_snapshots_caching(backups, dummy_service):
     cached_snapshots = Storage.get_cached_snapshots()
     assert len(cached_snapshots) == 1
 
-    Storage.delete_cached_snapshot(cached_snapshots[0])
+    snap_to_uncache = cached_snapshots[0]
+    Storage.delete_cached_snapshot(snap_to_uncache)
     cached_snapshots = Storage.get_cached_snapshots()
     assert len(cached_snapshots) == 0
 
+    # We do not assume that no snapshots means we need to reload the cache
     snapshots = Backups.get_snapshots(dummy_service)
-    assert len(snapshots) == 1
+    assert len(snapshots) == 0
+    # No cache reload happened
+    cached_snapshots = Storage.get_cached_snapshots()
+    assert len(cached_snapshots) == 0
+
+
+# Storage
+def test_snapshot_cache_autoreloads(backups, dummy_service):
+    Backups.back_up(dummy_service)
+
     cached_snapshots = Storage.get_cached_snapshots()
     assert len(cached_snapshots) == 1
+    snap_to_uncache = cached_snapshots[0]
+
+    Storage.delete_cached_snapshot(snap_to_uncache)
+    cached_snapshots = Storage.get_cached_snapshots()
+    assert len(cached_snapshots) == 0
+
+    # When we create a snapshot we do reload cache
+    Backups.back_up(dummy_service)
+    cached_snapshots = Storage.get_cached_snapshots()
+    assert len(cached_snapshots) == 2
+    assert snap_to_uncache in cached_snapshots
+
+    Storage.delete_cached_snapshot(snap_to_uncache)
+    cached_snapshots = Storage.get_cached_snapshots()
+    assert len(cached_snapshots) == 1
+
+    # When we try to delete a snapshot we cannot find in cache, it is ok and we do reload cache
+    Backups.forget_snapshot(snap_to_uncache)
+    cached_snapshots = Storage.get_cached_snapshots()
+    assert len(cached_snapshots) == 1
+    assert snap_to_uncache not in cached_snapshots
 
 
 def lowlevel_forget(snapshot_id):

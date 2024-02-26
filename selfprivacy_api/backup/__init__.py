@@ -254,7 +254,7 @@ class Backups:
                 reason=reason,
             )
 
-            Backups._store_last_snapshot(service_name, snapshot)
+            Backups._on_new_snapshot_created(service_name, snapshot)
             if reason == BackupReason.AUTO:
                 Backups._prune_auto_snaps(service)
             service.post_restore()
@@ -265,7 +265,16 @@ class Backups:
         Jobs.update(job, status=JobStatus.FINISHED)
         if reason in [BackupReason.AUTO, BackupReason.PRE_RESTORE]:
             Jobs.set_expiration(job, AUTOBACKUP_JOB_EXPIRATION_SECONDS)
-        return snapshot
+        return Backups.sync_date_from_cache(snapshot)
+
+    @staticmethod
+    def sync_date_from_cache(snapshot: Snapshot) -> Snapshot:
+        """
+        Our snapshot creation dates are different from those on server by a tiny amount.
+        This is a convenience, maybe it is better to write a special comparison
+        function for snapshots
+        """
+        return Storage.get_cached_snapshot_by_id(snapshot.id)
 
     @staticmethod
     def _auto_snaps(service):
@@ -523,13 +532,12 @@ class Backups:
     @staticmethod
     def get_all_snapshots() -> List[Snapshot]:
         """Returns all snapshots"""
-        cached_snapshots = Storage.get_cached_snapshots()
-        if cached_snapshots:
-            return cached_snapshots
-        # TODO: the oldest snapshots will get expired faster than the new ones.
-        # How to detect that the end is missing?
+        # When we refresh our cache:
+        # 1. Manually
+        # 2. On timer
+        # 3. On new snapshot
+        # 4. On snapshot deletion
 
-        Backups.force_snapshot_cache_reload()
         return Storage.get_cached_snapshots()
 
     @staticmethod
@@ -548,21 +556,18 @@ class Backups:
     @staticmethod
     def forget_snapshots(snapshots: List[Snapshot]) -> None:
         """
-        Deletes a batch of snapshots from the repo and from cache
+        Deletes a batch of snapshots from the repo and syncs cache
         Optimized
         """
         ids = [snapshot.id for snapshot in snapshots]
         Backups.provider().backupper.forget_snapshots(ids)
 
-        # less critical
-        for snapshot in snapshots:
-            Storage.delete_cached_snapshot(snapshot)
+        Backups.force_snapshot_cache_reload()
 
     @staticmethod
     def forget_snapshot(snapshot: Snapshot) -> None:
         """Deletes a snapshot from the repo and from cache"""
-        Backups.provider().backupper.forget_snapshot(snapshot.id)
-        Storage.delete_cached_snapshot(snapshot)
+        Backups.forget_snapshots([snapshot])
 
     @staticmethod
     def forget_all_snapshots():
@@ -593,12 +598,11 @@ class Backups:
         )
 
     @staticmethod
-    def _store_last_snapshot(service_id: str, snapshot: Snapshot) -> None:
+    def _on_new_snapshot_created(service_id: str, snapshot: Snapshot) -> None:
         """What do we do with a snapshot that is just made?"""
         # non-expiring timestamp of the last
         Storage.store_last_timestamp(service_id, snapshot)
-        # expiring cache entry
-        Storage.cache_snapshot(snapshot)
+        Backups.force_snapshot_cache_reload()
 
     # Autobackup
 
