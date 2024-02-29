@@ -171,6 +171,9 @@ class BlockDevice:
         return False
 
 
+# TODO: SingletonMetaclass messes with tests and is able to persist state
+# between them. If you have very weird test crosstalk that's probably why
+# I am not sure it NEEDS to be SingletonMetaclass
 class BlockDevices(metaclass=SingletonMetaclass):
     """Singleton holding all Block devices"""
 
