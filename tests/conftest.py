@@ -4,6 +4,7 @@
 import os
 import pytest
 import datetime
+import subprocess
 
 from os import path
 from os import makedirs
@@ -136,6 +137,18 @@ def wrong_auth_client(huey_database, redis_repo_with_tokens):
 
 
 @pytest.fixture()
+def volume_folders(tmpdir, mocker):
+    volumes_dir = path.join(tmpdir, "volumes")
+
+    makedirs(volumes_dir)
+    volumenames = ["sda1", "sda2"]
+    for d in volumenames:
+        service_dir = path.join(volumes_dir, d)
+        makedirs(service_dir)
+    mock = mocker.patch("selfprivacy_api.services.owned_path.VOLUMES_PATH", volumes_dir)
+
+
+@pytest.fixture()
 def raw_dummy_service(tmpdir):
     dirnames = ["test_service", "also_test_service"]
     service_dirs = []
@@ -161,11 +174,38 @@ def raw_dummy_service(tmpdir):
     return service
 
 
+def ensure_user_exists(user: str):
+    try:
+        output = subprocess.check_output(
+            ["useradd", "-U", user], stderr=subprocess.PIPE, shell=False
+        )
+    except subprocess.CalledProcessError as error:
+        if b"already exists" not in error.stderr:
+            raise error
+
+    try:
+        output = subprocess.check_output(
+            ["useradd", user], stderr=subprocess.PIPE, shell=False
+        )
+    except subprocess.CalledProcessError as error:
+        assert b"already exists" in error.stderr
+        return
+
+    raise ValueError("could not create user", user)
+
+
 @pytest.fixture()
 def dummy_service(
     tmpdir, raw_dummy_service, generic_userdata
 ) -> Generator[Service, None, None]:
     service = raw_dummy_service
+    user = service.get_user()
+
+    # TODO: use create_user from users actions. But it will need NIXOS to be there
+    # and react to our changes to files.
+    # from selfprivacy_api.actions.users import create_user
+    # create_user(user, "yay, it is me")
+    ensure_user_exists(user)
 
     # register our service
     services.services.append(service)

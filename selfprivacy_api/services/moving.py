@@ -67,6 +67,6 @@ def ensure_folder_ownership(folders: List[Bind]) -> None:
         folder.ensure_ownership()
 
 
-def bind_folders(folders: List[Bind], volume: BlockDevice):
+def bind_folders(folders: List[Bind]):
     for folder in folders:
         folder.bind()

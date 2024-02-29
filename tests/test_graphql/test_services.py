@@ -1,5 +1,8 @@
 import pytest
+import shutil
+
 from typing import Generator
+from os import mkdir
 
 from selfprivacy_api.utils.block_devices import BlockDevices
 
@@ -8,13 +11,77 @@ from selfprivacy_api.services import get_service_by_id
 from selfprivacy_api.services.service import Service, ServiceStatus
 from selfprivacy_api.services.test_service import DummyService
 
-# from selfprivacy_api.services.moving import check_folders
-
 from tests.common import generate_service_query
 from tests.test_graphql.common import assert_empty, assert_ok, get_data
 from tests.test_block_device_utils import lsblk_singular_mock
 
-from subprocess import CompletedProcess
+
+LSBLK_BLOCKDEVICES_DICTS = [
+    {
+        "name": "sda1",
+        "path": "/dev/sda1",
+        "fsavail": "4614107136",
+        "fssize": "19814920192",
+        "fstype": "ext4",
+        "fsused": "14345314304",
+        "mountpoints": ["/nix/store", "/"],
+        "label": None,
+        "uuid": "ec80c004-baec-4a2c-851d-0e1807135511",
+        "size": 20210236928,
+        "model": None,
+        "serial": None,
+        "type": "part",
+    },
+    {
+        "name": "sda2",
+        "path": "/dev/sda2",
+        "fsavail": "4614107136",
+        "fssize": "19814920192",
+        "fstype": "ext4",
+        "fsused": "14345314304",
+        "mountpoints": ["/home"],
+        "label": None,
+        "uuid": "deadbeef-baec-4a2c-851d-0e1807135511",
+        "size": 20210236928,
+        "model": None,
+        "serial": None,
+        "type": "part",
+    },
+]
+
+
+@pytest.fixture()
+def mock_lsblk_devices(mocker):
+    mock = mocker.patch(
+        "selfprivacy_api.utils.block_devices.BlockDevices.lsblk_device_dicts",
+        autospec=True,
+        return_value=LSBLK_BLOCKDEVICES_DICTS,
+    )
+    BlockDevices().update()
+    assert BlockDevices().lsblk_device_dicts() == LSBLK_BLOCKDEVICES_DICTS
+    devices = BlockDevices().get_block_devices()
+
+    assert len(devices) == 2
+
+    names = [device.name for device in devices]
+    assert "sda1" in names
+    assert "sda2" in names
+    return mock
+
+
+@pytest.fixture()
+def dummy_service_with_binds(dummy_service, mock_lsblk_devices, volume_folders):
+    binds = dummy_service.binds()
+    for bind in binds:
+        path = bind.binding_path
+        shutil.move(bind.binding_path, bind.location_at_volume())
+        mkdir(bind.binding_path)
+
+        bind.ensure_ownership()
+        bind.validate()
+
+        bind.bind()
+    return dummy_service
 
 
 @pytest.fixture()
@@ -28,9 +95,17 @@ def only_dummy_service(dummy_service) -> Generator[DummyService, None, None]:
     service_module.services.extend(back_copy)
 
 
-MOVER_MOCK_PROCESS = CompletedProcess(["ls"], returncode=0)
+@pytest.fixture()
+def mock_check_volume(mocker):
+    mock = mocker.patch(
+        "selfprivacy_api.services.service.check_volume",
+        autospec=True,
+        return_value=None,
+    )
+    return mock
 
 
+# TODO: remove
 @pytest.fixture()
 def mock_check_service_mover_binds(mocker):
     mock = mocker.patch(
@@ -38,20 +113,6 @@ def mock_check_service_mover_binds(mocker):
         autospec=True,
         return_value=None,
     )
-    return mock
-
-
-@pytest.fixture()
-def mock_subprocess_run(mocker):
-    mock = mocker.patch(
-        "subprocess.run", autospec=True, return_value=MOVER_MOCK_PROCESS
-    )
-    return mock
-
-
-@pytest.fixture()
-def mock_shutil_move(mocker):
-    mock = mocker.patch("shutil.move", autospec=True, return_value=None)
     return mock
 
 
@@ -551,7 +612,7 @@ def test_move_same_volume(authorized_client, dummy_service):
 def test_graphql_move_service_without_folders_on_old_volume(
     authorized_client,
     generic_userdata,
-    lsblk_singular_mock,
+    mock_lsblk_devices,
     dummy_service: DummyService,
 ):
     target = "sda1"
@@ -564,26 +625,27 @@ def test_graphql_move_service_without_folders_on_old_volume(
 
     data = get_data(mutation_response)["services"]["moveService"]
     assert_errorcode(data, 400)
+    assert "sda2/test_service is not found" in data["message"]
 
 
 def test_graphql_move_service(
     authorized_client,
     generic_userdata,
+    # TODO: substitute with a weaker mock or delete altogether
     mock_check_service_mover_binds,
-    lsblk_singular_mock,
-    dummy_service: DummyService,
-    mock_subprocess_run,
-    mock_shutil_move,
+    mock_check_volume,
+    dummy_service_with_binds,
 ):
-    # Does not check real moving,
-    # but tests the finished job propagation through API
+    dummy_service = dummy_service_with_binds
 
-    target = "sda1"
-    BlockDevices().update()
+    origin = "sda1"
+    target = "sda2"
     assert BlockDevices().get_block_device(target) is not None
+    assert BlockDevices().get_block_device(origin) is not None
 
+    dummy_service.set_drive(origin)
     dummy_service.set_simulated_moves(False)
-    dummy_service.set_drive("sda2")
+
     mutation_response = api_move(authorized_client, dummy_service, target)
 
     data = get_data(mutation_response)["services"]["moveService"]
