@@ -14,7 +14,6 @@ from selfprivacy_api.graphql.common_types.backup import (
 from selfprivacy_api.backup import Backups, Snapshot
 from selfprivacy_api.backup.tasks import (
     prune_autobackup_snapshots,
-    automatic_backup,
     do_autobackup,
 )
 from selfprivacy_api.backup.jobs import autobackup_job_type
