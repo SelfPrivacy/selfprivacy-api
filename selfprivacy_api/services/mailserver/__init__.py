@@ -44,7 +44,7 @@ class MailServer(Service):
         return None
 
     @staticmethod
-    def get_subdomain() -> str | None:
+    def get_subdomain() -> Optional[str]:
         return None
 
     @staticmethod
