@@ -56,14 +56,18 @@ def get_all_required_dns_records() -> list[ServiceDnsRecord]:
             ttl=3600,
             display_name="SelfPrivacy API",
         ),
-        ServiceDnsRecord(
-            type="AAAA",
-            name="api",
-            content=ip6,
-            ttl=3600,
-            display_name="SelfPrivacy API (IPv6)",
-        ),
     ]
+
+    if ip6 is not None:
+        dns_records.append(
+            ServiceDnsRecord(
+                type="AAAA",
+                name="api",
+                content=ip6,
+                ttl=3600,
+                display_name="SelfPrivacy API (IPv6)",
+            )
+        )
     for service in get_enabled_services():
-        dns_records += service.get_dns_records()
+        dns_records += service.get_dns_records(ip4, ip6)
     return dns_records

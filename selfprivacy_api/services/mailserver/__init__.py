@@ -2,7 +2,7 @@
 
 import base64
 import subprocess
-import typing
+from typing import Optional, List
 
 from selfprivacy_api.jobs import Job, Jobs
 from selfprivacy_api.services.generic_service_mover import FolderMoveNames, move_service
@@ -12,7 +12,6 @@ from selfprivacy_api.services.generic_status_getter import (
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
 from selfprivacy_api import utils
 from selfprivacy_api.utils.block_devices import BlockDevice
-import selfprivacy_api.utils.network as network_utils
 from selfprivacy_api.services.mailserver.icon import MAILSERVER_ICON
 
 
@@ -40,8 +39,12 @@ class MailServer(Service):
         return "virtualMail"
 
     @staticmethod
-    def get_url() -> typing.Optional[str]:
+    def get_url() -> Optional[str]:
         """Return service url."""
+        return None
+
+    @staticmethod
+    def get_subdomain() -> Optional[str]:
         return None
 
     @staticmethod
@@ -102,33 +105,24 @@ class MailServer(Service):
         return ""
 
     @staticmethod
-    def get_folders() -> typing.List[str]:
+    def get_folders() -> List[str]:
         return ["/var/vmail", "/var/sieve"]
 
-    @staticmethod
-    def get_dns_records() -> typing.List[ServiceDnsRecord]:
+    @classmethod
+    def get_dns_records(cls, ip4: str, ip6: Optional[str]) -> List[ServiceDnsRecord]:
         domain = utils.get_domain()
         dkim_record = utils.get_dkim_key(domain)
-        ip4 = network_utils.get_ip4()
-        ip6 = network_utils.get_ip6()
 
         if dkim_record is None:
             return []
 
-        return [
+        dns_records = [
             ServiceDnsRecord(
                 type="A",
                 name=domain,
                 content=ip4,
                 ttl=3600,
                 display_name="Root Domain",
-            ),
-            ServiceDnsRecord(
-                type="AAAA",
-                name=domain,
-                content=ip6,
-                ttl=3600,
-                display_name="Root Domain (IPv6)",
             ),
             ServiceDnsRecord(
                 type="MX",
@@ -160,6 +154,18 @@ class MailServer(Service):
                 display_name="DKIM key",
             ),
         ]
+
+        if ip6 is not None:
+            dns_records.append(
+                ServiceDnsRecord(
+                    type="AAAA",
+                    name=domain,
+                    content=ip6,
+                    ttl=3600,
+                    display_name="Root Domain (IPv6)",
+                ),
+            )
+        return dns_records
 
     def move_to_volume(self, volume: BlockDevice) -> Job:
         job = Jobs.add(

@@ -4,11 +4,9 @@ import subprocess
 import typing
 from selfprivacy_api.jobs import Job
 from selfprivacy_api.services.generic_status_getter import get_service_status
-from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
-from selfprivacy_api.utils import ReadUserData, WriteUserData
+from selfprivacy_api.services.service import Service, ServiceStatus
 from selfprivacy_api.utils.block_devices import BlockDevice
 from selfprivacy_api.services.ocserv.icon import OCSERV_ICON
-import selfprivacy_api.utils.network as network_utils
 
 
 class Ocserv(Service):
@@ -34,6 +32,10 @@ class Ocserv(Service):
     def get_url() -> typing.Optional[str]:
         """Return service url."""
         return None
+
+    @staticmethod
+    def get_subdomain() -> typing.Optional[str]:
+        return "vpn"
 
     @staticmethod
     def is_movable() -> bool:
@@ -78,25 +80,6 @@ class Ocserv(Service):
     @staticmethod
     def get_logs():
         return ""
-
-    @staticmethod
-    def get_dns_records() -> typing.List[ServiceDnsRecord]:
-        return [
-            ServiceDnsRecord(
-                type="A",
-                name="vpn",
-                content=network_utils.get_ip4(),
-                ttl=3600,
-                display_name="OpenConnect VPN",
-            ),
-            ServiceDnsRecord(
-                type="AAAA",
-                name="vpn",
-                content=network_utils.get_ip6(),
-                ttl=3600,
-                display_name="OpenConnect VPN (IPv6)",
-            ),
-        ]
 
     @staticmethod
     def get_folders() -> typing.List[str]:

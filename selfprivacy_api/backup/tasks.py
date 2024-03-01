@@ -72,14 +72,26 @@ def restore_snapshot(
     return True
 
 
-@huey.periodic_task(validate_datetime=validate_datetime)
-def automatic_backup():
+def do_autobackup():
     """
-    The worker periodic task that starts the automatic backup process.
+    Body of autobackup task, broken out to test it
+    For some reason, we cannot launch periodic huey tasks
+    inside tests
     """
     time = datetime.utcnow().replace(tzinfo=timezone.utc)
     for service in Backups.services_to_back_up(time):
-        start_backup(service, BackupReason.AUTO)
+        handle = start_backup(service.get_id(), BackupReason.AUTO)
+        # To be on safe side, we do not do it in parallel
+        handle(blocking=True)
+
+
+@huey.periodic_task(validate_datetime=validate_datetime)
+def automatic_backup() -> bool:
+    """
+    The worker periodic task that starts the automatic backup process.
+    """
+    do_autobackup()
+    return True
 
 
 @huey.periodic_task(crontab(hour="*/" + str(SNAPSHOT_CACHE_TTL_HOURS)))
