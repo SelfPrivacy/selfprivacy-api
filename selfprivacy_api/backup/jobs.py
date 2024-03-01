@@ -15,7 +15,7 @@ def backup_job_type(service: Service) -> str:
 
 
 def autobackup_job_type() -> str:
-    return f"backups.autobackup"
+    return "backups.autobackup"
 
 
 def restore_job_type(service: Service) -> str:
@@ -45,7 +45,7 @@ def add_autobackup_job(services: List[Service]) -> Job:
     pretty_service_list: str = ", ".join(service_names)
     job = Jobs.add(
         type_id=autobackup_job_type(),
-        name=f"Automatic backup",
+        name="Automatic backup",
         description=f"Scheduled backup for services : {pretty_service_list}",
     )
     return job
