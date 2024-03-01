@@ -5,7 +5,6 @@ import strawberry
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.common_types.jobs import job_to_api_job
 from selfprivacy_api.jobs import JobStatus
-from selfprivacy_api.utils.block_devices import BlockDevices
 
 from traceback import format_tb as format_traceback
 
@@ -23,7 +22,6 @@ from selfprivacy_api.actions.services import (
     ServiceNotFoundError,
     VolumeNotFoundError,
 )
-from selfprivacy_api.services.moving import MoveError
 
 from selfprivacy_api.services import get_service_by_id
 

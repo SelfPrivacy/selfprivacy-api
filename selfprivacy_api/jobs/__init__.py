@@ -268,10 +268,12 @@ class Jobs:
         return False
 
 
-# A terse way to call a common operation, for readability
-# job.report_progress() would be even better
-# but it would go against how this file is written
 def report_progress(progress: int, job: Job, status_text: str) -> None:
+    """
+    A terse way to call a common operation, for readability
+    job.report_progress() would be even better
+    but it would go against how this file is written
+    """
     Jobs.update(
         job=job,
         status=JobStatus.RUNNING,
