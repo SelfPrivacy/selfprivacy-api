@@ -168,13 +168,14 @@ def test_enabling_disabling_writes_json(
 
 
 # more detailed testing of this is in test_graphql/test_system.py
+# Using the same random global IPs as the test_network_utils
 def test_mailserver_with_dkim_returns_some_dns(dkim_file):
-    records = MailServer().get_dns_records()
+    records = MailServer().get_dns_records("157.90.247.192", "2a01:4f8:c17:7e3d::2")
     assert len(records) > 0
 
 
 def test_mailserver_with_no_dkim_returns_no_dns(no_dkim_file):
-    assert MailServer().get_dns_records() == []
+    assert MailServer().get_dns_records("157.90.247.192", "2a01:4f8:c17:7e3d::2") == []
 
 
 def test_services_enabled_by_default(generic_userdata):
