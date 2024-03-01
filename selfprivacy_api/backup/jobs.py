@@ -3,7 +3,7 @@ from typing import Optional, List
 from selfprivacy_api.models.backup.snapshot import Snapshot
 from selfprivacy_api.jobs import Jobs, Job, JobStatus
 from selfprivacy_api.services.service import Service
-from selfprivacy_api.services import get_service_by_id, get_all_services
+from selfprivacy_api.services import get_service_by_id
 
 
 def job_type_prefix(service: Service) -> str:
@@ -93,12 +93,14 @@ def get_job_by_type(type_id: str) -> Optional[Job]:
             JobStatus.RUNNING,
         ]:
             return job
+    return None
 
 
 def get_failed_job_by_type(type_id: str) -> Optional[Job]:
     for job in Jobs.get_jobs():
         if job.type_id == type_id and job.status == JobStatus.ERROR:
             return job
+    return None
 
 
 def get_backup_job(service: Service) -> Optional[Job]:
