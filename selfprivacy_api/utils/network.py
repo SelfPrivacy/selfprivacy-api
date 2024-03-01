@@ -17,13 +17,15 @@ def get_ip4() -> str:
     return ip4.group(1) if ip4 else ""
 
 
-def get_ip6() -> str:
+def get_ip6() -> Optional[str]:
     """Get IPv6 address"""
     try:
         ip6 = subprocess.check_output(["ip", "addr", "show", "dev", "eth0"]).decode(
             "utf-8"
         )
-        ip6 = re.search(r"inet6 (\S+)\/\d+", ip6)
+        # We ignore link-local addresses
+        ip6 = re.search(r"inet6 (?!fe80:\S+)(\S+)\/\d+", ip6)
+
     except subprocess.CalledProcessError:
         ip6 = None
-    return ip6.group(1) if ip6 else ""
+    return ip6.group(1) if ip6 else None
