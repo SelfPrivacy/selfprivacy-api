@@ -567,8 +567,7 @@ class Backups:
     @staticmethod
     def forget_snapshot(snapshot: Snapshot) -> None:
         """Deletes a snapshot from the repo and from cache"""
-        Backups.provider().backupper.forget_snapshot(snapshot.id)
-        Storage.delete_cached_snapshot(snapshot)
+        Backups.forget_snapshots([snapshot])
 
     @staticmethod
     def forget_all_snapshots():

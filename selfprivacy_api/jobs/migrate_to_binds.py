@@ -67,8 +67,8 @@ def move_folder(
 
     try:
         data_path.mkdir(mode=0o750, parents=True, exist_ok=True)
-    except Exception as e:
-        print(f"Error creating data path: {e}")
+    except Exception as error:
+        print(f"Error creating data path: {error}")
         return
 
     try:
