@@ -30,7 +30,5 @@ def move_service(service_id: str, volume_name: str) -> Job:
         description=f"Moving {service.get_display_name()} data to {volume.name}",
     )
 
-    handle = move_service_task(service, volume, job)
-    # Nonblocking
-    handle()
+    move_service_task(service, volume, job)
     return job
