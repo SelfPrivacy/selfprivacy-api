@@ -1,15 +1,14 @@
 """Class representing Nextcloud service."""
 import base64
 import subprocess
-import typing
+from typing import Optional, List
 from selfprivacy_api.jobs import Job, Jobs
 from selfprivacy_api.services.generic_service_mover import FolderMoveNames, move_service
 from selfprivacy_api.services.generic_status_getter import get_service_status
-from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
+from selfprivacy_api.services.service import Service, ServiceStatus
 from selfprivacy_api.services.owned_path import OwnedPath
-from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
+from selfprivacy_api.utils import get_domain
 from selfprivacy_api.utils.block_devices import BlockDevice
-import selfprivacy_api.utils.network as network_utils
 from selfprivacy_api.services.pleroma.icon import PLEROMA_ICON
 
 
@@ -33,10 +32,14 @@ class Pleroma(Service):
         return base64.b64encode(PLEROMA_ICON.encode("utf-8")).decode("utf-8")
 
     @staticmethod
-    def get_url() -> typing.Optional[str]:
+    def get_url() -> Optional[str]:
         """Return service url."""
         domain = get_domain()
         return f"https://social.{domain}"
+
+    @staticmethod
+    def get_subdomain() -> Optional[str]:
+        return "social"
 
     @staticmethod
     def is_movable() -> bool:
@@ -82,7 +85,7 @@ class Pleroma(Service):
         return ""
 
     @staticmethod
-    def get_owned_folders() -> typing.List[OwnedPath]:
+    def get_owned_folders() -> List[OwnedPath]:
         """
         Get a list of occupied directories with ownership info
         pleroma has folders that are owned by different users
@@ -97,25 +100,6 @@ class Pleroma(Service):
                 path="/var/lib/postgresql",
                 owner="postgres",
                 group="postgres",
-            ),
-        ]
-
-    @staticmethod
-    def get_dns_records() -> typing.List[ServiceDnsRecord]:
-        return [
-            ServiceDnsRecord(
-                type="A",
-                name="social",
-                content=network_utils.get_ip4(),
-                ttl=3600,
-                display_name="Pleroma",
-            ),
-            ServiceDnsRecord(
-                type="AAAA",
-                name="social",
-                content=network_utils.get_ip6(),
-                ttl=3600,
-                display_name="Pleroma (IPv6)",
             ),
         ]
 

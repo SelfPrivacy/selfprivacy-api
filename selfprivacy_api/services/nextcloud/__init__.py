@@ -1,14 +1,13 @@
 """Class representing Nextcloud service."""
 import base64
 import subprocess
-import typing
+from typing import Optional, List
 from selfprivacy_api.jobs import Job, Jobs
 from selfprivacy_api.services.generic_service_mover import FolderMoveNames, move_service
 from selfprivacy_api.services.generic_status_getter import get_service_status
-from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
-from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
+from selfprivacy_api.services.service import Service, ServiceStatus
+from selfprivacy_api.utils import get_domain
 from selfprivacy_api.utils.block_devices import BlockDevice
-import selfprivacy_api.utils.network as network_utils
 from selfprivacy_api.services.nextcloud.icon import NEXTCLOUD_ICON
 
 
@@ -36,10 +35,14 @@ class Nextcloud(Service):
         return base64.b64encode(NEXTCLOUD_ICON.encode("utf-8")).decode("utf-8")
 
     @staticmethod
-    def get_url() -> typing.Optional[str]:
+    def get_url() -> Optional[str]:
         """Return service url."""
         domain = get_domain()
         return f"https://cloud.{domain}"
+
+    @staticmethod
+    def get_subdomain() -> Optional[str]:
+        return "cloud"
 
     @staticmethod
     def is_movable() -> bool:
@@ -96,27 +99,8 @@ class Nextcloud(Service):
         return ""
 
     @staticmethod
-    def get_folders() -> typing.List[str]:
+    def get_folders() -> List[str]:
         return ["/var/lib/nextcloud"]
-
-    @staticmethod
-    def get_dns_records() -> typing.List[ServiceDnsRecord]:
-        return [
-            ServiceDnsRecord(
-                type="A",
-                name="cloud",
-                content=network_utils.get_ip4(),
-                ttl=3600,
-                display_name="Nextcloud",
-            ),
-            ServiceDnsRecord(
-                type="AAAA",
-                name="cloud",
-                content=network_utils.get_ip6(),
-                ttl=3600,
-                display_name="Nextcloud (IPv6)",
-            ),
-        ]
 
     def move_to_volume(self, volume: BlockDevice) -> Job:
         job = Jobs.add(

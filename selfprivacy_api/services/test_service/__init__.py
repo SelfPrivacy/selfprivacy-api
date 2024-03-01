@@ -65,6 +65,10 @@ class DummyService(Service):
         domain = "test.com"
         return f"https://password.{domain}"
 
+    @staticmethod
+    def get_subdomain() -> typing.Optional[str]:
+        return "password"
+
     @classmethod
     def is_movable(cls) -> bool:
         return cls.movable
@@ -184,26 +188,6 @@ class DummyService(Service):
     @classmethod
     def get_folders(cls) -> List[str]:
         return cls.folders
-
-    @staticmethod
-    def get_dns_records() -> typing.List[ServiceDnsRecord]:
-        """Return list of DNS records for Bitwarden service."""
-        return [
-            ServiceDnsRecord(
-                type="A",
-                name="password",
-                content=network_utils.get_ip4(),
-                ttl=3600,
-                display_name="Test Service",
-            ),
-            ServiceDnsRecord(
-                type="AAAA",
-                name="password",
-                content=network_utils.get_ip6(),
-                ttl=3600,
-                display_name="Test Service (IPv6)",
-            ),
-        ]
 
     def move_to_volume(self, volume: BlockDevice) -> Job:
         job = Jobs.add(

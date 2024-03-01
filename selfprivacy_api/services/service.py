@@ -1,7 +1,7 @@
 """Abstract class for a service running on a server"""
 from abc import ABC, abstractmethod
 from enum import Enum
-import typing
+from typing import List, Optional
 
 from pydantic import BaseModel
 from selfprivacy_api.jobs import Job
@@ -12,7 +12,7 @@ from selfprivacy_api.services.generic_size_counter import get_storage_usage
 from selfprivacy_api.services.owned_path import OwnedPath
 from selfprivacy_api import utils
 from selfprivacy_api.utils.waitloop import wait_until_true
-from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
+from selfprivacy_api.utils import ReadUserData, WriteUserData
 
 DEFAULT_START_STOP_TIMEOUT = 5 * 60
 
@@ -35,7 +35,7 @@ class ServiceDnsRecord(BaseModel):
     content: str
     ttl: int
     display_name: str
-    priority: typing.Optional[int] = None
+    priority: Optional[int] = None
 
 
 class Service(ABC):
@@ -78,14 +78,22 @@ class Service(ABC):
 
     @staticmethod
     @abstractmethod
-    def get_url() -> typing.Optional[str]:
+    def get_url() -> Optional[str]:
         """
         The url of the service if it is accessible from the internet browser.
         """
         pass
 
+    @staticmethod
+    @abstractmethod
+    def get_subdomain() -> Optional[str]:
+        """
+        The assigned primary subdomain for this service.
+        """
+        pass
+
     @classmethod
-    def get_user(cls) -> typing.Optional[str]:
+    def get_user(cls) -> Optional[str]:
         """
         The user that owns the service's files.
         Defaults to the service's id.
@@ -93,7 +101,7 @@ class Service(ABC):
         return cls.get_id()
 
     @classmethod
-    def get_group(cls) -> typing.Optional[str]:
+    def get_group(cls) -> Optional[str]:
         """
         The group that owns the service's files.
         Defaults to the service's user.
@@ -209,10 +217,32 @@ class Service(ABC):
             storage_used += get_storage_usage(folder)
         return storage_used
 
-    @staticmethod
-    @abstractmethod
-    def get_dns_records() -> typing.List[ServiceDnsRecord]:
-        pass
+    @classmethod
+    def get_dns_records(cls, ip4: str, ip6: Optional[str]) -> List[ServiceDnsRecord]:
+        subdomain = cls.get_subdomain()
+        display_name = cls.get_display_name()
+        if subdomain is None:
+            return []
+        dns_records = [
+            ServiceDnsRecord(
+                type="A",
+                name=subdomain,
+                content=ip4,
+                ttl=3600,
+                display_name=display_name,
+            )
+        ]
+        if ip6 is not None:
+            dns_records.append(
+                ServiceDnsRecord(
+                    type="AAAA",
+                    name=subdomain,
+                    content=ip6,
+                    ttl=3600,
+                    display_name=f"{display_name} (IPv6)",
+                )
+            )
+        return dns_records
 
     @classmethod
     def get_drive(cls) -> str:
@@ -237,7 +267,7 @@ class Service(ABC):
                 return root_device
 
     @classmethod
-    def get_folders(cls) -> typing.List[str]:
+    def get_folders(cls) -> List[str]:
         """
         get a plain list of occupied directories
         Default extracts info from overriden get_owned_folders()
@@ -249,7 +279,7 @@ class Service(ABC):
         return [owned_folder.path for owned_folder in cls.get_owned_folders()]
 
     @classmethod
-    def get_owned_folders(cls) -> typing.List[OwnedPath]:
+    def get_owned_folders(cls) -> List[OwnedPath]:
         """
         Get a list of occupied directories with ownership info
         Default extracts info from overriden get_folders()
