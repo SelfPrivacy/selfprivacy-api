@@ -2,6 +2,7 @@
 """Network utils"""
 import subprocess
 import re
+import ipaddress
 from typing import Optional
 
 
@@ -23,9 +24,9 @@ def get_ip6() -> Optional[str]:
         ip6 = subprocess.check_output(["ip", "addr", "show", "dev", "eth0"]).decode(
             "utf-8"
         )
-        # We ignore link-local addresses
-        ip6 = re.search(r"inet6 (?!fe80:\S+)(\S+)\/\d+", ip6)
-
+        ip6 = re.findall(r"inet6 (\S+)\/\d+", ip6)
+        for address in ip6:
+            if ipaddress.IPv6Address(address).is_global:
+                return address
     except subprocess.CalledProcessError:
-        ip6 = None
-    return ip6.group(1) if ip6 else None
+        return None
