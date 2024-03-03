@@ -46,7 +46,7 @@ def add_autobackup_job(services: List[Service]) -> Job:
     job = Jobs.add(
         type_id=autobackup_job_type(),
         name="Automatic backup",
-        description=f"Scheduled backup for services : {pretty_service_list}",
+        description=f"Scheduled backup for services: {pretty_service_list}",
     )
     return job
 
