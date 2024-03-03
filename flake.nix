@@ -24,6 +24,7 @@
             pylsp-mypy
             python-lsp-black
             python-lsp-server
+            pyflakes
             typer # for strawberry
           ] ++ strawberry-graphql.optional-dependencies.cli));
 

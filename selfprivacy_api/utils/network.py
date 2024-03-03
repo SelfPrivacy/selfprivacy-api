@@ -21,9 +21,9 @@ def get_ip4() -> str:
 def get_ip6() -> Optional[str]:
     """Get IPv6 address"""
     try:
-        ip6_addresses = subprocess.check_output(["ip", "addr", "show", "dev", "eth0"]).decode(
-            "utf-8"
-        )
+        ip6_addresses = subprocess.check_output(
+            ["ip", "addr", "show", "dev", "eth0"]
+        ).decode("utf-8")
         ip6_addresses = re.findall(r"inet6 (\S+)\/\d+", ip6_addresses)
         for address in ip6_addresses:
             if ipaddress.IPv6Address(address).is_global:
