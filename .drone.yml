@@ -5,13 +5,7 @@ name: default
 steps:
 - name: Run Tests and Generate Coverage Report
   commands:
-  - kill $(ps aux | grep 'redis-server 127.0.0.1:6389' | awk '{print $2}') || true
-  - redis-server --bind 127.0.0.1 --port 6389 >/dev/null &
-  # We do not care about persistance on CI
-  - sleep 10
-  - redis-cli -h 127.0.0.1 -p 6389 config set stop-writes-on-bgsave-error no
-  - coverage run -m pytest -q
-  - coverage xml
+  - nix flake check -L
   - sonar-scanner -Dsonar.projectKey=SelfPrivacy-REST-API -Dsonar.sources=. -Dsonar.host.url=http://analyzer.lan:9000 -Dsonar.login="$SONARQUBE_TOKEN"
   environment:
     SONARQUBE_TOKEN:
