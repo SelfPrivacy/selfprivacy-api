@@ -12,9 +12,9 @@ from selfprivacy_api.models.backup.snapshot import Snapshot
 from selfprivacy_api.utils.huey import huey
 from huey import crontab
 
-from selfprivacy_api.services.service import Service
 from selfprivacy_api.services import get_service_by_id
 from selfprivacy_api.backup import Backups
+from selfprivacy_api.backup.jobs import add_autobackup_job
 from selfprivacy_api.jobs import Jobs, JobStatus, Job
 
 
@@ -72,14 +72,42 @@ def restore_snapshot(
     return True
 
 
+def do_autobackup() -> None:
+    """
+    Body of autobackup task, broken out to test it
+    For some reason, we cannot launch periodic huey tasks
+    inside tests
+    """
+    time = datetime.utcnow().replace(tzinfo=timezone.utc)
+    services_to_back_up = Backups.services_to_back_up(time)
+    job = add_autobackup_job(services_to_back_up)
+
+    progress_per_service = 100 // len(services_to_back_up)
+    progress = 0
+    Jobs.update(job, JobStatus.RUNNING, progress=progress)
+
+    for service in services_to_back_up:
+        try:
+            Backups.back_up(service, BackupReason.AUTO)
+        except Exception as error:
+            Jobs.update(
+                job,
+                status=JobStatus.ERROR,
+                error=type(error).__name__ + ": " + str(error),
+            )
+            return
+        progress = progress + progress_per_service
+        Jobs.update(job, JobStatus.RUNNING, progress=progress)
+
+    Jobs.update(job, JobStatus.FINISHED)
+
+
 @huey.periodic_task(validate_datetime=validate_datetime)
-def automatic_backup():
+def automatic_backup() -> None:
     """
     The worker periodic task that starts the automatic backup process.
     """
-    time = datetime.utcnow().replace(tzinfo=timezone.utc)
-    for service in Backups.services_to_back_up(time):
-        start_backup(service, BackupReason.AUTO)
+    do_autobackup()
 
 
 @huey.periodic_task(crontab(hour="*/" + str(SNAPSHOT_CACHE_TTL_HOURS)))
