@@ -319,7 +319,7 @@ class Service(ABC):
                 user_data["modules"][service_id] = {}
             user_data["modules"][service_id]["location"] = volume.name
 
-    def binds(self) -> typing.List[Bind]:
+    def binds(self) -> List[Bind]:
         owned_folders = self.get_owned_folders()
 
         return [
