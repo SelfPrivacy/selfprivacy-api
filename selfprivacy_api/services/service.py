@@ -411,11 +411,27 @@ class Service(ABC):
 
     @classmethod
     def owned_path(cls, path: str):
-        """A default guess on folder ownership"""
+        """Default folder ownership"""
+        service_name = cls.get_display_name()
+
+        try:
+            owner = cls.get_user()
+            if owner is None:
+                # TODO: assume root?
+                # (if we do not want to do assumptions, maybe not declare user optional?)
+                raise LookupError(f"no user for service: {service_name}")
+            group = cls.get_group()
+            if group is None:
+                raise LookupError(f"no group for service: {service_name}")
+        except Exception as error:
+            raise LookupError(
+                f"when deciding a bind for folder {path} of service {service_name}, error: {str(error)}"
+            )
+
         return OwnedPath(
             path=path,
-            owner=cls.get_user(),
-            group=cls.get_group(),
+            owner=owner,
+            group=group,
         )
 
     def pre_backup(self):
