@@ -149,7 +149,7 @@ def volume_folders(tmpdir, mocker):
 
 
 @pytest.fixture()
-def raw_dummy_service(tmpdir):
+def raw_dummy_service(tmpdir) -> DummyService:
     dirnames = ["test_service", "also_test_service"]
     service_dirs = []
     for d in dirnames:

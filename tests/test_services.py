@@ -80,21 +80,6 @@ def test_paths_from_owned_paths():
     ]
 
 
-# def test_foldermoves_from_ownedpaths():
-#     owned = OwnedPath(
-#         path="var/lib/bitwarden",
-#         group="vaultwarden",
-#         owner="vaultwarden",
-#     )
-
-#     assert FolderMoveNames.from_owned_path(owned) == FolderMoveNames(
-#         name="bitwarden",
-#         bind_location="var/lib/bitwarden",
-#         group="vaultwarden",
-#         owner="vaultwarden",
-#     )
-
-
 def test_enabling_disabling_reads_json(dummy_service: DummyService):
     with WriteUserData() as data:
         data["modules"][dummy_service.get_id()]["enable"] = False
