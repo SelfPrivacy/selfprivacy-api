@@ -1,15 +1,14 @@
 """Class representing Bitwarden service"""
 import base64
 import subprocess
-import typing
+from typing import Optional, List
 
 from selfprivacy_api.jobs import Job, Jobs
 from selfprivacy_api.services.generic_service_mover import FolderMoveNames, move_service
 from selfprivacy_api.utils.systemd import get_service_status
-from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
+from selfprivacy_api.services.service import Service, ServiceStatus
 from selfprivacy_api.utils import get_domain
 from selfprivacy_api.utils.block_devices import BlockDevice
-import selfprivacy_api.utils.network as network_utils
 from selfprivacy_api.services.bitwarden.icon import BITWARDEN_ICON
 
 
@@ -41,10 +40,14 @@ class Bitwarden(Service):
         return "vaultwarden"
 
     @staticmethod
-    def get_url() -> typing.Optional[str]:
+    def get_url() -> Optional[str]:
         """Return service url."""
         domain = get_domain()
         return f"https://password.{domain}"
+
+    @staticmethod
+    def get_subdomain() -> Optional[str]:
+        return "password"
 
     @staticmethod
     def is_movable() -> bool:
@@ -96,28 +99,8 @@ class Bitwarden(Service):
         return ""
 
     @staticmethod
-    def get_folders() -> typing.List[str]:
+    def get_folders() -> List[str]:
         return ["/var/lib/bitwarden", "/var/lib/bitwarden_rs"]
-
-    @staticmethod
-    def get_dns_records() -> typing.List[ServiceDnsRecord]:
-        """Return list of DNS records for Bitwarden service."""
-        return [
-            ServiceDnsRecord(
-                type="A",
-                name="password",
-                content=network_utils.get_ip4(),
-                ttl=3600,
-                display_name="Bitwarden",
-            ),
-            ServiceDnsRecord(
-                type="AAAA",
-                name="password",
-                content=network_utils.get_ip6(),
-                ttl=3600,
-                display_name="Bitwarden (IPv6)",
-            ),
-        ]
 
     def move_to_volume(self, volume: BlockDevice) -> Job:
         job = Jobs.add(

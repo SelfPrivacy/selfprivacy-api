@@ -8,6 +8,7 @@ from selfprivacy_api.graphql.common_types.dns import DnsRecord
 from selfprivacy_api.services import get_service_by_id, get_services_by_location
 from selfprivacy_api.services import Service as ServiceInterface
 from selfprivacy_api.utils.block_devices import BlockDevices
+import selfprivacy_api.utils.network as network_utils
 
 
 def get_usages(root: "StorageVolume") -> list["StorageUsageInterface"]:
@@ -141,7 +142,9 @@ def service_to_graphql_service(service: ServiceInterface) -> Service:
                 priority=record.priority,
                 display_name=record.display_name,
             )
-            for record in service.get_dns_records()
+            for record in service.get_dns_records(
+                network_utils.get_ip4(), network_utils.get_ip6()
+            )
         ],
     )
 

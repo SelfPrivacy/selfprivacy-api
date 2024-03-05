@@ -1,16 +1,15 @@
 """Class representing Jitsi Meet service"""
 import base64
 import subprocess
-import typing
+from typing import Optional, List
 
 from selfprivacy_api.jobs import Job
 from selfprivacy_api.utils.systemd import (
     get_service_status_from_several_units,
 )
-from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
+from selfprivacy_api.services.service import Service, ServiceStatus
 from selfprivacy_api.utils import get_domain
 from selfprivacy_api.utils.block_devices import BlockDevice
-import selfprivacy_api.utils.network as network_utils
 from selfprivacy_api.services.jitsimeet.icon import JITSI_ICON
 
 
@@ -38,10 +37,14 @@ class JitsiMeet(Service):
         return base64.b64encode(JITSI_ICON.encode("utf-8")).decode("utf-8")
 
     @staticmethod
-    def get_url() -> typing.Optional[str]:
+    def get_url() -> Optional[str]:
         """Return service url."""
         domain = get_domain()
         return f"https://meet.{domain}"
+
+    @staticmethod
+    def get_subdomain() -> Optional[str]:
+        return "meet"
 
     @staticmethod
     def is_movable() -> bool:
@@ -98,29 +101,8 @@ class JitsiMeet(Service):
         return ""
 
     @staticmethod
-    def get_folders() -> typing.List[str]:
+    def get_folders() -> List[str]:
         return ["/var/lib/jitsi-meet"]
-
-    @staticmethod
-    def get_dns_records() -> typing.List[ServiceDnsRecord]:
-        ip4 = network_utils.get_ip4()
-        ip6 = network_utils.get_ip6()
-        return [
-            ServiceDnsRecord(
-                type="A",
-                name="meet",
-                content=ip4,
-                ttl=3600,
-                display_name="Jitsi",
-            ),
-            ServiceDnsRecord(
-                type="AAAA",
-                name="meet",
-                content=ip6,
-                ttl=3600,
-                display_name="Jitsi (IPv6)",
-            ),
-        ]
 
     def move_to_volume(self, volume: BlockDevice) -> Job:
         raise NotImplementedError("jitsi-meet service is not movable")
