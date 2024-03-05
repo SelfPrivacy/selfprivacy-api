@@ -4,6 +4,7 @@
 import pytest
 
 from selfprivacy_api.jobs import JobStatus, Jobs
+from tests.test_graphql.common import assert_empty, assert_ok, get_data
 
 
 class ProcessMock:
@@ -92,8 +93,7 @@ def test_graphql_system_rebuild_unauthorized(client, fp, action):
             "query": query,
         },
     )
-    assert response.status_code == 200
-    assert response.json().get("data") is None
+    assert_empty(response)
     assert fp.call_count([fp.any()]) == 0
 
 
@@ -111,23 +111,23 @@ def test_graphql_system_rebuild(authorized_client, fp, action, mock_sleep_interv
     fp.register(["systemctl", "start", unit_name])
 
     # Wait for it to start
-    fp.register(["systemctl", "is-active", unit_name], stdout="inactive")
-    fp.register(["systemctl", "is-active", unit_name], stdout="inactive")
-    fp.register(["systemctl", "is-active", unit_name], stdout="active")
+    fp.register(["systemctl", "show", unit_name], stdout="ActiveState=inactive")
+    fp.register(["systemctl", "show", unit_name], stdout="ActiveState=inactive")
+    fp.register(["systemctl", "show", unit_name], stdout="ActiveState=active")
 
     # Check its exectution
-    fp.register(["systemctl", "is-active", unit_name], stdout="active")
+    fp.register(["systemctl", "show", unit_name], stdout="ActiveState=active")
     fp.register(
         ["journalctl", "-u", unit_name, "-n", "1", "-o", "cat"],
         stdout="Starting rebuild...",
     )
 
-    fp.register(["systemctl", "is-active", unit_name], stdout="active")
+    fp.register(["systemctl", "show", unit_name], stdout="ActiveState=active")
     fp.register(
         ["journalctl", "-u", unit_name, "-n", "1", "-o", "cat"], stdout="Rebuilding..."
     )
 
-    fp.register(["systemctl", "is-active", unit_name], stdout="inactive")
+    fp.register(["systemctl", "show", unit_name], stdout="ActiveState=inactive")
 
     response = authorized_client.post(
         "/graphql",
@@ -135,23 +135,11 @@ def test_graphql_system_rebuild(authorized_client, fp, action, mock_sleep_interv
             "query": query,
         },
     )
-    assert response.status_code == 200
-    assert response.json().get("data") is not None
-    assert (
-        response.json()["data"]["system"][f"runSystem{action.capitalize()}"]["success"]
-        is True
-    )
-    assert (
-        response.json()["data"]["system"][f"runSystem{action.capitalize()}"]["message"]
-        is not None
-    )
-    assert (
-        response.json()["data"]["system"][f"runSystem{action.capitalize()}"]["code"]
-        == 200
-    )
+    data = get_data(response)["system"][f"runSystem{action.capitalize()}"]
+    assert_ok(data)
 
     assert fp.call_count(["systemctl", "start", unit_name]) == 1
-    assert fp.call_count(["systemctl", "is-active", unit_name]) == 6
+    assert fp.call_count(["systemctl", "show", unit_name]) == 6
 
     job_id = response.json()["data"]["system"][f"runSystem{action.capitalize()}"][
         "job"
@@ -176,23 +164,23 @@ def test_graphql_system_rebuild_failed(
     fp.register(["systemctl", "start", unit_name])
 
     # Wait for it to start
-    fp.register(["systemctl", "is-active", unit_name], stdout="inactive")
-    fp.register(["systemctl", "is-active", unit_name], stdout="inactive")
-    fp.register(["systemctl", "is-active", unit_name], stdout="active")
+    fp.register(["systemctl", "show", unit_name], stdout="ActiveState=inactive")
+    fp.register(["systemctl", "show", unit_name], stdout="ActiveState=inactive")
+    fp.register(["systemctl", "show", unit_name], stdout="ActiveState=active")
 
     # Check its exectution
-    fp.register(["systemctl", "is-active", unit_name], stdout="active")
+    fp.register(["systemctl", "show", unit_name], stdout="ActiveState=active")
     fp.register(
         ["journalctl", "-u", unit_name, "-n", "1", "-o", "cat"],
         stdout="Starting rebuild...",
     )
 
-    fp.register(["systemctl", "is-active", unit_name], stdout="active")
+    fp.register(["systemctl", "show", unit_name], stdout="ActiveState=active")
     fp.register(
         ["journalctl", "-u", unit_name, "-n", "1", "-o", "cat"], stdout="Rebuilding..."
     )
 
-    fp.register(["systemctl", "is-active", unit_name], stdout="failed")
+    fp.register(["systemctl", "show", unit_name], stdout="ActiveState=failed")
 
     response = authorized_client.post(
         "/graphql",
@@ -200,23 +188,11 @@ def test_graphql_system_rebuild_failed(
             "query": query,
         },
     )
-    assert response.status_code == 200
-    assert response.json().get("data") is not None
-    assert (
-        response.json()["data"]["system"][f"runSystem{action.capitalize()}"]["success"]
-        is True
-    )
-    assert (
-        response.json()["data"]["system"][f"runSystem{action.capitalize()}"]["message"]
-        is not None
-    )
-    assert (
-        response.json()["data"]["system"][f"runSystem{action.capitalize()}"]["code"]
-        == 200
-    )
+    data = get_data(response)["system"][f"runSystem{action.capitalize()}"]
+    assert_ok(data)
 
     assert fp.call_count(["systemctl", "start", unit_name]) == 1
-    assert fp.call_count(["systemctl", "is-active", unit_name]) == 6
+    assert fp.call_count(["systemctl", "show", unit_name]) == 6
 
     job_id = response.json()["data"]["system"][f"runSystem{action.capitalize()}"][
         "job"
