@@ -4,12 +4,22 @@ from enum import Enum
 from typing import List, Optional
 
 from pydantic import BaseModel
-from selfprivacy_api.jobs import Job
+from selfprivacy_api.jobs import Job, Jobs, JobStatus, report_progress
 
 from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
 
 from selfprivacy_api.services.generic_size_counter import get_storage_usage
-from selfprivacy_api.services.owned_path import OwnedPath
+from selfprivacy_api.services.owned_path import OwnedPath, Bind
+from selfprivacy_api.services.moving import (
+    check_binds,
+    check_volume,
+    unbind_folders,
+    bind_folders,
+    ensure_folder_ownership,
+    MoveError,
+    move_data_to_volume,
+)
+
 from selfprivacy_api import utils
 from selfprivacy_api.utils.waitloop import wait_until_true
 from selfprivacy_api.utils import ReadUserData, WriteUserData
@@ -294,19 +304,134 @@ class Service(ABC):
     def get_foldername(path: str) -> str:
         return path.split("/")[-1]
 
-    @abstractmethod
-    def move_to_volume(self, volume: BlockDevice) -> Job:
-        """Cannot raise errors.
-        Returns errors as an errored out Job instead."""
-        pass
+    # TODO: with better json utils, it can be one line, and not a separate function
+    @classmethod
+    def set_location(cls, volume: BlockDevice):
+        """
+        Only changes userdata
+        """
+
+        service_id = cls.get_id()
+        with WriteUserData() as user_data:
+            if "modules" not in user_data:
+                user_data["modules"] = {}
+            if service_id not in user_data["modules"]:
+                user_data["modules"][service_id] = {}
+            user_data["modules"][service_id]["location"] = volume.name
+
+    def binds(self) -> List[Bind]:
+        owned_folders = self.get_owned_folders()
+
+        return [
+            Bind.from_owned_path(folder, self.get_drive()) for folder in owned_folders
+        ]
+
+    def assert_can_move(self, new_volume):
+        """
+        Checks if the service can be moved to new volume
+        Raises errors if it cannot
+        """
+        service_name = self.get_display_name()
+        if not self.is_movable():
+            raise MoveError(f"{service_name} is not movable")
+
+        with ReadUserData() as user_data:
+            if not user_data.get("useBinds", False):
+                raise MoveError("Server is not using binds.")
+
+        current_volume_name = self.get_drive()
+        if current_volume_name == new_volume.name:
+            raise MoveError(f"{service_name} is already on volume {new_volume}")
+
+        check_volume(new_volume, space_needed=self.get_storage_usage())
+
+        binds = self.binds()
+        if binds == []:
+            raise MoveError("nothing to move")
+        check_binds(current_volume_name, binds)
+
+    def do_move_to_volume(
+        self,
+        new_volume: BlockDevice,
+        job: Job,
+    ):
+        """
+        Move a service to another volume.
+        Note: It may be much simpler to write it per bind, but a bit less safe?
+        """
+        service_name = self.get_display_name()
+        binds = self.binds()
+
+        report_progress(10, job, "Unmounting folders from old volume...")
+        unbind_folders(binds)
+
+        report_progress(20, job, "Moving data to new volume...")
+        binds = move_data_to_volume(binds, new_volume, job)
+
+        report_progress(70, job, f"Making sure {service_name} owns its files...")
+        try:
+            ensure_folder_ownership(binds)
+        except Exception as error:
+            # We have logged it via print and we additionally log it here in the error field
+            # We are continuing anyway but Job has no warning field
+            Jobs.update(
+                job,
+                JobStatus.RUNNING,
+                error=f"Service {service_name} will not be able to write files: "
+                + str(error),
+            )
+
+        report_progress(90, job, f"Mounting {service_name} data...")
+        bind_folders(binds)
+
+        report_progress(95, job, f"Finishing moving {service_name}...")
+        self.set_location(new_volume)
+
+        Jobs.update(
+            job=job,
+            status=JobStatus.FINISHED,
+            result=f"{service_name} moved successfully.",
+            status_text=f"Starting {service_name}...",
+            progress=100,
+        )
+
+    def move_to_volume(self, volume: BlockDevice, job: Job) -> Job:
+        service_name = self.get_display_name()
+
+        report_progress(0, job, "Performing pre-move checks...")
+        self.assert_can_move(volume)
+
+        report_progress(5, job, f"Stopping {service_name}...")
+        assert self is not None
+        with StoppedService(self):
+            report_progress(9, job, "Stopped service, starting the move...")
+            self.do_move_to_volume(volume, job)
+
+        return job
 
     @classmethod
     def owned_path(cls, path: str):
-        """A default guess on folder ownership"""
+        """Default folder ownership"""
+        service_name = cls.get_display_name()
+
+        try:
+            owner = cls.get_user()
+            if owner is None:
+                # TODO: assume root?
+                # (if we do not want to do assumptions, maybe not declare user optional?)
+                raise LookupError(f"no user for service: {service_name}")
+            group = cls.get_group()
+            if group is None:
+                raise LookupError(f"no group for service: {service_name}")
+        except Exception as error:
+            raise LookupError(
+                f"when deciding a bind for folder {path} of service {service_name}, error: {str(error)}"
+            )
+
         return OwnedPath(
             path=path,
-            owner=cls.get_user(),
-            group=cls.get_group(),
+            owner=owner,
+            group=group,
         )
 
     def pre_backup(self):

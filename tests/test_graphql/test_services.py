@@ -1,5 +1,8 @@
 import pytest
+import shutil
+
 from typing import Generator
+from os import mkdir
 
 from selfprivacy_api.utils.block_devices import BlockDevices
 
@@ -10,6 +13,75 @@ from selfprivacy_api.services.test_service import DummyService
 
 from tests.common import generate_service_query
 from tests.test_graphql.common import assert_empty, assert_ok, get_data
+from tests.test_block_device_utils import lsblk_singular_mock
+
+
+LSBLK_BLOCKDEVICES_DICTS = [
+    {
+        "name": "sda1",
+        "path": "/dev/sda1",
+        "fsavail": "4614107136",
+        "fssize": "19814920192",
+        "fstype": "ext4",
+        "fsused": "14345314304",
+        "mountpoints": ["/nix/store", "/"],
+        "label": None,
+        "uuid": "ec80c004-baec-4a2c-851d-0e1807135511",
+        "size": 20210236928,
+        "model": None,
+        "serial": None,
+        "type": "part",
+    },
+    {
+        "name": "sda2",
+        "path": "/dev/sda2",
+        "fsavail": "4614107136",
+        "fssize": "19814920192",
+        "fstype": "ext4",
+        "fsused": "14345314304",
+        "mountpoints": ["/home"],
+        "label": None,
+        "uuid": "deadbeef-baec-4a2c-851d-0e1807135511",
+        "size": 20210236928,
+        "model": None,
+        "serial": None,
+        "type": "part",
+    },
+]
+
+
+@pytest.fixture()
+def mock_lsblk_devices(mocker):
+    mock = mocker.patch(
+        "selfprivacy_api.utils.block_devices.BlockDevices.lsblk_device_dicts",
+        autospec=True,
+        return_value=LSBLK_BLOCKDEVICES_DICTS,
+    )
+    BlockDevices().update()
+    assert BlockDevices().lsblk_device_dicts() == LSBLK_BLOCKDEVICES_DICTS
+    devices = BlockDevices().get_block_devices()
+
+    assert len(devices) == 2
+
+    names = [device.name for device in devices]
+    assert "sda1" in names
+    assert "sda2" in names
+    return mock
+
+
+@pytest.fixture()
+def dummy_service_with_binds(dummy_service, mock_lsblk_devices, volume_folders):
+    binds = dummy_service.binds()
+    for bind in binds:
+        path = bind.binding_path
+        shutil.move(bind.binding_path, bind.location_at_volume())
+        mkdir(bind.binding_path)
+
+        bind.ensure_ownership()
+        bind.validate()
+
+        bind.bind()
+    return dummy_service
 
 
 @pytest.fixture()
@@ -21,6 +93,16 @@ def only_dummy_service(dummy_service) -> Generator[DummyService, None, None]:
     yield dummy_service
     service_module.services.clear()
     service_module.services.extend(back_copy)
+
+
+@pytest.fixture()
+def mock_check_volume(mocker):
+    mock = mocker.patch(
+        "selfprivacy_api.services.service.check_volume",
+        autospec=True,
+        return_value=None,
+    )
+    return mock
 
 
 API_START_MUTATION = """
@@ -465,12 +547,26 @@ def test_disable_enable(authorized_client, only_dummy_service):
 def test_move_immovable(authorized_client, only_dummy_service):
     dummy_service = only_dummy_service
     dummy_service.set_movable(False)
-    mutation_response = api_move(authorized_client, dummy_service, "sda1")
+    root = BlockDevices().get_root_block_device()
+    mutation_response = api_move(authorized_client, dummy_service, root.name)
     data = get_data(mutation_response)["services"]["moveService"]
     assert_errorcode(data, 400)
+    try:
+        assert "not movable" in data["message"]
+    except AssertionError:
+        raise ValueError("wrong type of error?: ", data["message"])
 
     # is there a meaning in returning the service in this?
     assert data["service"] is not None
+    assert data["job"] is None
+
+
+def test_move_no_such_service(authorized_client, only_dummy_service):
+    mutation_response = api_move_by_name(authorized_client, "bogus_service", "sda1")
+    data = get_data(mutation_response)["services"]["moveService"]
+    assert_errorcode(data, 404)
+
+    assert data["service"] is None
     assert data["job"] is None
 
 
@@ -480,8 +576,7 @@ def test_move_no_such_volume(authorized_client, only_dummy_service):
     data = get_data(mutation_response)["services"]["moveService"]
     assert_notfound(data)
 
-    # is there a meaning in returning the service in this?
-    assert data["service"] is not None
+    assert data["service"] is None
     assert data["job"] is None
 
 
@@ -499,7 +594,49 @@ def test_move_same_volume(authorized_client, dummy_service):
 
     # is there a meaning in returning the service in this?
     assert data["service"] is not None
-    assert data["job"] is not None
+    # We do not create a job if task is not created
+    assert data["job"] is None
+
+
+def test_graphql_move_service_without_folders_on_old_volume(
+    authorized_client,
+    generic_userdata,
+    mock_lsblk_devices,
+    dummy_service: DummyService,
+):
+    target = "sda1"
+    BlockDevices().update()
+    assert BlockDevices().get_block_device(target) is not None
+
+    dummy_service.set_simulated_moves(False)
+    dummy_service.set_drive("sda2")
+    mutation_response = api_move(authorized_client, dummy_service, target)
+
+    data = get_data(mutation_response)["services"]["moveService"]
+    assert_errorcode(data, 400)
+    assert "sda2/test_service is not found" in data["message"]
+
+
+def test_graphql_move_service(
+    authorized_client,
+    generic_userdata,
+    mock_check_volume,
+    dummy_service_with_binds,
+):
+    dummy_service = dummy_service_with_binds
+
+    origin = "sda1"
+    target = "sda2"
+    assert BlockDevices().get_block_device(target) is not None
+    assert BlockDevices().get_block_device(origin) is not None
+
+    dummy_service.set_drive(origin)
+    dummy_service.set_simulated_moves(False)
+
+    mutation_response = api_move(authorized_client, dummy_service, target)
+
+    data = get_data(mutation_response)["services"]["moveService"]
+    assert_ok(data)
 
 
 def test_mailservice_cannot_enable_disable(authorized_client):
