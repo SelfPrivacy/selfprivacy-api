@@ -1,9 +1,11 @@
 """
 Redis pool module for selfprivacy_api
 """
-from os import environ
 import redis
+
 from selfprivacy_api.utils.singleton_metaclass import SingletonMetaclass
+
+REDIS_SOCKET = "/run/redis-sp-api/redis.sock"
 
 
 class RedisPool(metaclass=SingletonMetaclass):
@@ -24,19 +26,7 @@ class RedisPool(metaclass=SingletonMetaclass):
         redis://[[username]:[password]]@localhost:6379/0
         unix://[username@]/path/to/socket.sock?db=0[&password=password]
         """
-
-        if "USE_REDIS_PORT" in environ:
-            port = int(environ["USE_REDIS_PORT"])
-            return f"redis://@127.0.0.1:{port}/{dbnumber}"
-        else:
-            return f"unix://{RedisPool.redis_socket()}?db={dbnumber}"
-
-    @staticmethod
-    def redis_socket() -> str:
-        if "REDIS_SOCKET" in environ:
-            return environ["REDIS_SOCKET"]
-        else:
-            return "/run/redis-sp-api/redis.sock"
+        return f"unix://{REDIS_SOCKET}?db={dbnumber}"
 
     def get_connection(self):
         """

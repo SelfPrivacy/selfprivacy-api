@@ -27,6 +27,7 @@
             python-lsp-server
             pyflakes
             typer # for strawberry
+            types-redis # for mypy
           ] ++ strawberry-graphql.optional-dependencies.cli));
 
       vmtest-src-dir = "/root/source";
