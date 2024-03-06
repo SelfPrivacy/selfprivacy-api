@@ -43,10 +43,11 @@ def check_running_status(job: Job, unit_name: str):
             )
             return True
         if status == ServiceStatus.FAILED:
+            log_lines = get_last_log_lines(unit_name, 10)
             Jobs.update(
                 job=job,
                 status=JobStatus.ERROR,
-                error="System rebuild failed.",
+                error="System rebuild failed. Last log lines:\n" + "\n".join(log_lines),
             )
             return True
         if status == ServiceStatus.ACTIVE:
@@ -87,10 +88,12 @@ def rebuild_system_task(job: Job, upgrade: bool = False):
                 interval=START_INTERVAL,
             )
         except TimeoutError:
+            log_lines = get_last_log_lines(unit_name, 10)
             Jobs.update(
                 job=job,
                 status=JobStatus.ERROR,
-                error="System rebuild timed out.",
+                error="System rebuild timed out. Last log lines:\n"
+                + "\n".join(log_lines),
             )
             return
         Jobs.update(
@@ -106,10 +109,12 @@ def rebuild_system_task(job: Job, upgrade: bool = False):
                 interval=RUN_INTERVAL,
             )
         except TimeoutError:
+            log_lines = get_last_log_lines(unit_name, 10)
             Jobs.update(
                 job=job,
                 status=JobStatus.ERROR,
-                error="System rebuild timed out.",
+                error="System rebuild timed out. Last log lines:\n"
+                + "\n".join(log_lines),
             )
             return
 

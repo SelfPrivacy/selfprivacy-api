@@ -182,6 +182,10 @@ def test_graphql_system_rebuild_failed(
 
     fp.register(["systemctl", "show", unit_name], stdout="ActiveState=failed")
 
+    fp.register(
+        ["journalctl", "-u", unit_name, "-n", "10", "-o", "cat"], stdout="Some error"
+    )
+
     response = authorized_client.post(
         "/graphql",
         json={
