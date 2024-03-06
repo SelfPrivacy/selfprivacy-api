@@ -19,6 +19,7 @@
             pytest
             pytest-datadir
             pytest-mock
+            pytest-subprocess
             black
             mypy
             pylsp-mypy

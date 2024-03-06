@@ -3,7 +3,9 @@
 import typing
 import strawberry
 from selfprivacy_api.graphql import IsAuthenticated
+from selfprivacy_api.graphql.common_types.jobs import job_to_api_job
 from selfprivacy_api.graphql.mutations.mutation_interface import (
+    GenericJobMutationReturn,
     GenericMutationReturn,
     MutationReturnInterface,
 )
@@ -114,16 +116,17 @@ class SystemMutations:
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def run_system_rebuild(self) -> GenericMutationReturn:
+    def run_system_rebuild(self) -> GenericJobMutationReturn:
         try:
-            system_actions.rebuild_system()
-            return GenericMutationReturn(
+            job = system_actions.rebuild_system()
+            return GenericJobMutationReturn(
                 success=True,
-                message="Starting rebuild system",
+                message="Starting system rebuild",
                 code=200,
+                job=job_to_api_job(job),
             )
         except system_actions.ShellException as e:
-            return GenericMutationReturn(
+            return GenericJobMutationReturn(
                 success=False,
                 message=str(e),
                 code=500,
@@ -135,7 +138,7 @@ class SystemMutations:
         try:
             return GenericMutationReturn(
                 success=True,
-                message="Starting rebuild system",
+                message="Starting system rollback",
                 code=200,
             )
         except system_actions.ShellException as e:
@@ -146,16 +149,17 @@ class SystemMutations:
             )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def run_system_upgrade(self) -> GenericMutationReturn:
-        system_actions.upgrade_system()
+    def run_system_upgrade(self) -> GenericJobMutationReturn:
         try:
-            return GenericMutationReturn(
+            job = system_actions.upgrade_system()
+            return GenericJobMutationReturn(
                 success=True,
-                message="Starting rebuild system",
+                message="Starting system upgrade",
                 code=200,
+                job=job_to_api_job(job),
             )
         except system_actions.ShellException as e:
-            return GenericMutationReturn(
+            return GenericJobMutationReturn(
                 success=False,
                 message=str(e),
                 code=500,

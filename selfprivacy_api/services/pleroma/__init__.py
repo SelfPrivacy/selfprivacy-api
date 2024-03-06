@@ -6,7 +6,7 @@ from typing import Optional, List
 from selfprivacy_api.utils import get_domain
 
 from selfprivacy_api.services.owned_path import OwnedPath
-from selfprivacy_api.services.generic_status_getter import get_service_status
+from selfprivacy_api.utils.systemd import get_service_status
 from selfprivacy_api.services.service import Service, ServiceStatus
 
 from selfprivacy_api.services.pleroma.icon import PLEROMA_ICON

@@ -4,7 +4,7 @@ import base64
 import subprocess
 from typing import Optional, List
 
-from selfprivacy_api.services.generic_status_getter import (
+from selfprivacy_api.utils.systemd import (
     get_service_status_from_several_units,
 )
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus

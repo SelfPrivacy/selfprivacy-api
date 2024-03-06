@@ -1,5 +1,6 @@
 """Generic service status fetcher using systemctl"""
 import subprocess
+from typing import List
 
 from selfprivacy_api.services.service import ServiceStatus
 
@@ -58,3 +59,24 @@ def get_service_status_from_several_units(services: list[str]) -> ServiceStatus:
     if ServiceStatus.ACTIVE in service_statuses:
         return ServiceStatus.ACTIVE
     return ServiceStatus.OFF
+
+
+def get_last_log_lines(service: str, lines_count: int) -> List[str]:
+    if lines_count < 1:
+        raise ValueError("lines_count must be greater than 0")
+    try:
+        logs = subprocess.check_output(
+            [
+                "journalctl",
+                "-u",
+                service,
+                "-n",
+                str(lines_count),
+                "-o",
+                "cat",
+            ],
+            shell=False,
+        ).decode("utf-8")
+        return logs.splitlines()
+    except subprocess.CalledProcessError:
+        return []
