@@ -80,6 +80,8 @@ def do_autobackup() -> None:
     """
     time = datetime.utcnow().replace(tzinfo=timezone.utc)
     services_to_back_up = Backups.services_to_back_up(time)
+    if not services_to_back_up:
+        return
     job = add_autobackup_job(services_to_back_up)
 
     progress_per_service = 100 // len(services_to_back_up)
