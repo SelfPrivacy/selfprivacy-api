@@ -40,7 +40,7 @@
 
         [testing in NixOS VM]
 
-          nixos-test-driver - run an interactive NixOS VM with with all dependencies
+          nixos-test-driver - run an interactive NixOS VM with all dependencies
           pytest-vm         - run pytest in an ephemeral NixOS VM with Redis, accepting pytest arguments
       '';
     in
@@ -78,7 +78,7 @@
       };
       nixosModules.default =
         import ./nixos/module.nix self.packages.${system}.default;
-      devShells.${system}.default = pkgs.mkShell {
+      devShells.${system}.default = pkgs.mkShellNoCC {
         name = "SP API dev shell";
         packages = with pkgs; [
           nixpkgs-fmt
