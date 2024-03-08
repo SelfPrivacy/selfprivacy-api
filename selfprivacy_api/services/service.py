@@ -1,13 +1,15 @@
 """Abstract class for a service running on a server"""
 from abc import ABC, abstractmethod
-from enum import Enum
 from typing import List, Optional
 
-from pydantic import BaseModel
-from selfprivacy_api.jobs import Job, Jobs, JobStatus, report_progress
-
+from selfprivacy_api import utils
+from selfprivacy_api.utils import ReadUserData, WriteUserData
+from selfprivacy_api.utils.waitloop import wait_until_true
 from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
 
+from selfprivacy_api.jobs import Job, Jobs, JobStatus, report_progress
+
+from selfprivacy_api.models.services import ServiceStatus, ServiceDnsRecord
 from selfprivacy_api.services.generic_size_counter import get_storage_usage
 from selfprivacy_api.services.owned_path import OwnedPath, Bind
 from selfprivacy_api.services.moving import (
@@ -20,32 +22,8 @@ from selfprivacy_api.services.moving import (
     move_data_to_volume,
 )
 
-from selfprivacy_api import utils
-from selfprivacy_api.utils.waitloop import wait_until_true
-from selfprivacy_api.utils import ReadUserData, WriteUserData
 
 DEFAULT_START_STOP_TIMEOUT = 5 * 60
-
-
-class ServiceStatus(Enum):
-    """Enum for service status"""
-
-    ACTIVE = "ACTIVE"
-    RELOADING = "RELOADING"
-    INACTIVE = "INACTIVE"
-    FAILED = "FAILED"
-    ACTIVATING = "ACTIVATING"
-    DEACTIVATING = "DEACTIVATING"
-    OFF = "OFF"
-
-
-class ServiceDnsRecord(BaseModel):
-    type: str
-    name: str
-    content: str
-    ttl: int
-    display_name: str
-    priority: Optional[int] = None
 
 
 class Service(ABC):
