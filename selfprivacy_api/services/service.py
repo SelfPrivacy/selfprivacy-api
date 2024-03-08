@@ -8,6 +8,7 @@ from selfprivacy_api.utils.waitloop import wait_until_true
 from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
 
 from selfprivacy_api.jobs import Job, Jobs, JobStatus, report_progress
+from selfprivacy_api.jobs.upgrade_system import rebuild_system
 
 from selfprivacy_api.models.services import ServiceStatus, ServiceDnsRecord
 from selfprivacy_api.services.generic_size_counter import get_storage_usage
@@ -376,6 +377,8 @@ class Service(ABC):
         with StoppedService(self):
             report_progress(9, job, "Stopped service, starting the move...")
             self.do_move_to_volume(volume, job)
+            report_progress(98, job, "Move complete, rebuilding...")
+            rebuild_system(job, upgrade=False)
             Jobs.update(
                 job=job,
                 status=JobStatus.FINISHED,
