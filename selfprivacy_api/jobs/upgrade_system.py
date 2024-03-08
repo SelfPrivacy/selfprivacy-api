@@ -63,9 +63,13 @@ def check_running_status(job: Job, unit_name: str):
         return False
 
 
-@huey.task()
-def rebuild_system_task(job: Job, upgrade: bool = False):
-    """Rebuild the system"""
+def rebuild_system(job: Job, upgrade: bool = False):
+    """
+    Broken out to allow calling it synchronously.
+    We cannot just block until task is done because it will require a second worker
+    Which we do not have
+    """
+
     unit_name = "sp-nixos-upgrade.service" if upgrade else "sp-nixos-rebuild.service"
     try:
         command = ["systemctl", "start", unit_name]
@@ -124,3 +128,9 @@ def rebuild_system_task(job: Job, upgrade: bool = False):
             status=JobStatus.ERROR,
             status_text=str(e),
         )
+
+
+@huey.task()
+def rebuild_system_task(job: Job, upgrade: bool = False):
+    """Rebuild the system"""
+    rebuild_system(job, upgrade)
