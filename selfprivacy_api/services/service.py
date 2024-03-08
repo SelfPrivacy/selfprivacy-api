@@ -365,14 +365,6 @@ class Service(ABC):
         report_progress(95, job, f"Finishing moving {service_name}...")
         self.set_location(new_volume)
 
-        Jobs.update(
-            job=job,
-            status=JobStatus.FINISHED,
-            result=f"{service_name} moved successfully.",
-            status_text=f"Starting {service_name}...",
-            progress=100,
-        )
-
     def move_to_volume(self, volume: BlockDevice, job: Job) -> Job:
         service_name = self.get_display_name()
 
@@ -384,6 +376,13 @@ class Service(ABC):
         with StoppedService(self):
             report_progress(9, job, "Stopped service, starting the move...")
             self.do_move_to_volume(volume, job)
+            Jobs.update(
+                job=job,
+                status=JobStatus.FINISHED,
+                result=f"{service_name} moved successfully.",
+                status_text=f"Starting {service_name}...",
+                progress=100,
+            )
 
         return job
 

@@ -192,6 +192,5 @@ class DummyService(Service):
         if self.simulate_moving is False:
             return super(DummyService, self).do_move_to_volume(volume, job)
         else:
-            Jobs.update(job, status=JobStatus.FINISHED)
             self.set_drive(volume.name)
             return job
