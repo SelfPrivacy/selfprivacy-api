@@ -13,8 +13,7 @@ from selfprivacy_api.services.test_service import DummyService
 
 from tests.common import generate_service_query
 from tests.test_graphql.common import assert_empty, assert_ok, get_data
-from tests.test_block_device_utils import lsblk_singular_mock
-
+from tests.test_graphql.test_system_nixos_tasks import prepare_nixos_rebuild_calls
 
 LSBLK_BLOCKDEVICES_DICTS = [
     {
@@ -618,10 +617,7 @@ def test_graphql_move_service_without_folders_on_old_volume(
 
 
 def test_graphql_move_service(
-    authorized_client,
-    generic_userdata,
-    mock_check_volume,
-    dummy_service_with_binds,
+    authorized_client, generic_userdata, mock_check_volume, dummy_service_with_binds, fp
 ):
     dummy_service = dummy_service_with_binds
 
@@ -633,10 +629,30 @@ def test_graphql_move_service(
     dummy_service.set_drive(origin)
     dummy_service.set_simulated_moves(False)
 
+    unit_name = "sp-nixos-rebuild.service"
+    rebuild_command = ["systemctl", "start", unit_name]
+    prepare_nixos_rebuild_calls(fp, unit_name)
+
+    # We will be mounting and remounting folders
+    mount_command = ["mount", fp.any()]
+    unmount_command = ["umount", fp.any()]
+    fp.pass_command(mount_command, 2)
+    fp.pass_command(unmount_command, 2)
+
+    # We will be changing ownership
+    chown_command = ["chown", fp.any()]
+    fp.pass_command(chown_command, 2)
+
     mutation_response = api_move(authorized_client, dummy_service, target)
 
     data = get_data(mutation_response)["services"]["moveService"]
     assert_ok(data)
+    assert data["service"] is not None
+
+    assert fp.call_count(rebuild_command) == 1
+    assert fp.call_count(mount_command) == 2
+    assert fp.call_count(unmount_command) == 2
+    assert fp.call_count(chown_command) == 2
 
 
 def test_mailservice_cannot_enable_disable(authorized_client):

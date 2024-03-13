@@ -97,16 +97,7 @@ def test_graphql_system_rebuild_unauthorized(client, fp, action):
     assert fp.call_count([fp.any()]) == 0
 
 
-@pytest.mark.parametrize("action", ["rebuild", "upgrade"])
-def test_graphql_system_rebuild(authorized_client, fp, action, mock_sleep_intervals):
-    """Test system rebuild"""
-    unit_name = f"sp-nixos-{action}.service"
-    query = (
-        API_REBUILD_SYSTEM_MUTATION
-        if action == "rebuild"
-        else API_UPGRADE_SYSTEM_MUTATION
-    )
-
+def prepare_nixos_rebuild_calls(fp, unit_name):
     # Start the unit
     fp.register(["systemctl", "start", unit_name])
 
@@ -128,6 +119,19 @@ def test_graphql_system_rebuild(authorized_client, fp, action, mock_sleep_interv
     )
 
     fp.register(["systemctl", "show", unit_name], stdout="ActiveState=inactive")
+
+
+@pytest.mark.parametrize("action", ["rebuild", "upgrade"])
+def test_graphql_system_rebuild(authorized_client, fp, action, mock_sleep_intervals):
+    """Test system rebuild"""
+    unit_name = f"sp-nixos-{action}.service"
+    query = (
+        API_REBUILD_SYSTEM_MUTATION
+        if action == "rebuild"
+        else API_UPGRADE_SYSTEM_MUTATION
+    )
+
+    prepare_nixos_rebuild_calls(fp, unit_name)
 
     response = authorized_client.post(
         "/graphql",
