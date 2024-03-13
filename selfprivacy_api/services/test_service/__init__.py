@@ -8,10 +8,9 @@ from os import path
 
 # from enum import Enum
 
-from selfprivacy_api.jobs import Job, Jobs, JobStatus
-from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
+from selfprivacy_api.jobs import Job
+from selfprivacy_api.services.service import Service, ServiceStatus
 from selfprivacy_api.utils.block_devices import BlockDevice
-import selfprivacy_api.utils.network as network_utils
 
 from selfprivacy_api.services.test_service.icon import BITWARDEN_ICON
 
@@ -89,7 +88,7 @@ class DummyService(Service):
     @classmethod
     def set_status(cls, status: ServiceStatus):
         with open(cls.status_file(), "w") as file:
-            status_string = file.write(status.value)
+            file.write(status.value)
 
     @classmethod
     def get_status(cls) -> ServiceStatus:
@@ -102,16 +101,17 @@ class DummyService(Service):
         cls, new_status: ServiceStatus, delay_sec: float
     ):
         """simulating a delay on systemd side"""
-        status_file = cls.status_file()
+        if delay_sec == 0:
+            cls.set_status(new_status)
+            return
 
+        status_file = cls.status_file()
         command = [
             "bash",
             "-c",
             f" sleep {delay_sec} && echo {new_status.value} > {status_file}",
         ]
-        handle = subprocess.Popen(command)
-        if delay_sec == 0:
-            handle.communicate()
+        subprocess.Popen(command)
 
     @classmethod
     def set_backuppable(cls, new_value: bool) -> None:
