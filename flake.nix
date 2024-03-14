@@ -40,7 +40,7 @@
 
         [testing in NixOS VM]
 
-          nixos-test-driver - run an interactive NixOS VM with all dependencies
+          nixos-test-driver - run an interactive NixOS VM with all dependencies included and 2 disk volumes
           pytest-vm         - run pytest in an ephemeral NixOS VM with Redis, accepting pytest arguments
       '';
     in
@@ -115,11 +115,17 @@
           pkgs.testers.runNixOSTest {
             name = "default";
             nodes.machine = { lib, pkgs, ... }: {
-              # additional disk of size 1024 MiB with empty ext4 FS
-              virtualisation.emptyDiskImages = [ 1024 ];
+              # 2 additional disks (1024 MiB and 200 MiB) with empty ext4 FS
+              virtualisation.emptyDiskImages = [ 1024 200 ];
               virtualisation.fileSystems."/volumes/vdb" = {
                 autoFormat = true;
                 device = "/dev/vdb"; # this name is chosen by QEMU, not here
+                fsType = "ext4";
+                noCheck = true;
+              };
+              virtualisation.fileSystems."/volumes/vdc" = {
+                autoFormat = true;
+                device = "/dev/vdc"; # this name is chosen by QEMU, not here
                 fsType = "ext4";
                 noCheck = true;
               };
