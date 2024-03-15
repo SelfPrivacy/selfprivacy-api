@@ -10,7 +10,6 @@ steps:
   environment:
     SONARQUBE_TOKEN:
       from_secret: SONARQUBE_TOKEN
-    USE_REDIS_PORT: 6389
 
 
 - name: Run Bandit Checks
