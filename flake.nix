@@ -40,7 +40,7 @@
 
         [testing in NixOS VM]
 
-          nixos-test-driver - run an interactive NixOS VM with with all dependencies
+          nixos-test-driver - run an interactive NixOS VM with all dependencies included and 2 disk volumes
           pytest-vm         - run pytest in an ephemeral NixOS VM with Redis, accepting pytest arguments
       '';
     in
@@ -78,7 +78,7 @@
       };
       nixosModules.default =
         import ./nixos/module.nix self.packages.${system}.default;
-      devShells.${system}.default = pkgs.mkShell {
+      devShells.${system}.default = pkgs.mkShellNoCC {
         name = "SP API dev shell";
         packages = with pkgs; [
           nixpkgs-fmt
@@ -113,38 +113,48 @@
           "black --check ${self.outPath} > $out";
         default =
           pkgs.testers.runNixOSTest {
-            imports = [{
-              name = "default";
-              nodes.machine = { lib, pkgs, ... }: {
-                imports = [{
-                  boot.consoleLogLevel = lib.mkForce 3;
-                  documentation.enable = false;
-                  services.journald.extraConfig = lib.mkForce "";
-                  services.redis.servers.sp-api = {
-                    enable = true;
-                    save = [ ];
-                    port = 6379; # FIXME
-                    settings.notify-keyspace-events = "KEA";
-                  };
-                  environment.systemPackages = with pkgs; [
-                    python-env
-                    # TODO: these can be passed via wrapper script around app
-                    rclone
-                    restic
-                  ];
-                  environment.variables.TEST_MODE = "true";
-                  systemd.tmpfiles.settings.src.${vmtest-src-dir}.L.argument =
-                    self.outPath;
-                }];
+            name = "default";
+            nodes.machine = { lib, pkgs, ... }: {
+              # 2 additional disks (1024 MiB and 200 MiB) with empty ext4 FS
+              virtualisation.emptyDiskImages = [ 1024 200 ];
+              virtualisation.fileSystems."/volumes/vdb" = {
+                autoFormat = true;
+                device = "/dev/vdb"; # this name is chosen by QEMU, not here
+                fsType = "ext4";
+                noCheck = true;
               };
-              testScript = ''
-                start_all()
-                machine.succeed("cd ${vmtest-src-dir} && coverage run --data-file=/tmp/.coverage -m pytest -p no:cacheprovider -v >&2")
-                machine.succeed("coverage xml --rcfile=${vmtest-src-dir}/.coveragerc --data-file=/tmp/.coverage >&2")
-                machine.copy_from_vm("coverage.xml", ".")
-                machine.succeed("coverage report >&2")
-              '';
-            }];
+              virtualisation.fileSystems."/volumes/vdc" = {
+                autoFormat = true;
+                device = "/dev/vdc"; # this name is chosen by QEMU, not here
+                fsType = "ext4";
+                noCheck = true;
+              };
+              boot.consoleLogLevel = lib.mkForce 3;
+              documentation.enable = false;
+              services.journald.extraConfig = lib.mkForce "";
+              services.redis.servers.sp-api = {
+                enable = true;
+                save = [ ];
+                port = 6379; # FIXME
+                settings.notify-keyspace-events = "KEA";
+              };
+              environment.systemPackages = with pkgs; [
+                python-env
+                # TODO: these can be passed via wrapper script around app
+                rclone
+                restic
+              ];
+              environment.variables.TEST_MODE = "true";
+              systemd.tmpfiles.settings.src.${vmtest-src-dir}.L.argument =
+                self.outPath;
+            };
+            testScript = ''
+              start_all()
+              machine.succeed("cd ${vmtest-src-dir} && coverage run --data-file=/tmp/.coverage -m pytest -p no:cacheprovider -v >&2")
+              machine.succeed("coverage xml --rcfile=${vmtest-src-dir}/.coveragerc --data-file=/tmp/.coverage >&2")
+              machine.copy_from_vm("coverage.xml", ".")
+              machine.succeed("coverage report >&2")
+            '';
           };
       };
     };
