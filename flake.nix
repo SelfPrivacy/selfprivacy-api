@@ -135,7 +135,6 @@
               services.redis.servers.sp-api = {
                 enable = true;
                 save = [ ];
-                port = 6379; # FIXME
                 settings.notify-keyspace-events = "KEA";
               };
               environment.systemPackages = with pkgs; [
