@@ -1,6 +1,8 @@
 # SelfPrivacy GraphQL API which allows app to control your server
 
-## build
+![CI status](https://ci.selfprivacy.org/api/badges/SelfPrivacy/selfprivacy-rest-api/status.svg)
+
+## Build
 
 ```console
 $ nix build
@@ -8,7 +10,7 @@ $ nix build
 
 In case of successful build, you should get the `./result` symlink to a folder (in `/nix/store`) with build contents.
 
-## develop
+## Develop
 
 ```console
 $ nix develop
@@ -21,10 +23,10 @@ Type "help", "copyright", "credits" or "license" for more information.
 If you don't have experimental flakes enabled, you can use the following command:
 
 ```console
-nix --extra-experimental-features nix-command --extra-experimental-features flakes develop
+$ nix --extra-experimental-features nix-command --extra-experimental-features flakes develop
 ```
 
-## testing
+## Testing
 
 Run the test suite by running coverage with pytest inside an ephemeral NixOS VM with redis service enabled:
 ```console
@@ -61,7 +63,7 @@ $ TMPDIR=".nixos-vm-tmp-dir" nix run .#checks.x86_64-linux.default.driverInterac
 
 Option `-L`/`--print-build-logs` is optional for all nix commands. It tells nix to print each log line one after another instead of overwriting a single one.
 
-## dependencies and dependant modules
+## Dependencies and Dependant Modules
 
 This flake depends on a single Nix flake input - nixpkgs repository. nixpkgs repository is used for all software packages used to build, run API service, tests, etc.
 
@@ -85,6 +87,6 @@ $ nix flake metadata git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nix
 
 Nix code for NixOS service module for API is located in NixOS configuration repository.
 
-## troubleshooting
+## Troubleshooting
 
 Sometimes commands inside `nix develop` refuse to work properly if the calling shell lacks `LANG` environment variable. Try to set it before entering `nix develop`.
