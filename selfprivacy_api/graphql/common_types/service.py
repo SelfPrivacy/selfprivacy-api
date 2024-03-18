@@ -89,9 +89,10 @@ def get_storage_usage(root: "Service") -> ServiceStorageUsage:
     )
 
 
-def service_dns_to_graphql(record: ServiceDnsRecord):
-    # Do we really need 2 types for this?
-    # ServiceDNSRecord and DnsRecord are almost identical
+# TODO: This won't be needed when deriving DnsRecord via strawberry pydantic integration
+# https://strawberry.rocks/docs/integrations/pydantic
+# Remove when the link above says it got stable.
+def service_dns_to_graphql(record: ServiceDnsRecord) -> DnsRecord:
     return DnsRecord(
         record_type=record.type,
         name=record.name,
