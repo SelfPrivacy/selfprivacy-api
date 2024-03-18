@@ -42,6 +42,8 @@ from selfprivacy_api.backup.storage import Storage
 from selfprivacy_api.backup.local_secret import LocalBackupSecret
 from selfprivacy_api.backup.jobs import get_backup_fail
 
+from tests.common import assert_job_errored
+
 
 REPO_NAME = "test_backup"
 
@@ -203,15 +205,6 @@ def all_job_text(job: Job) -> str:
         result += job.error
 
     return result
-
-
-def assert_job_errored(job: Job):
-    assert job is not None
-    assert job.status == JobStatus.ERROR
-
-    # consider adding a useful error message to an errored-out job
-    assert job.error is not None
-    assert job.error != ""
 
 
 def test_error_censoring_encryptionkey(dummy_service, backups):
