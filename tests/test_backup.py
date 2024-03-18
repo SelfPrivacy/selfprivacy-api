@@ -244,7 +244,7 @@ def test_error_censoring_loginkey(dummy_service, backups, fp):
     secret = "aSecretNYA"
 
     Backups.set_provider(
-        BackupProvider.BACKBLAZE, login="meow", key=secret, location="moon"
+        ProviderEnum.BACKBLAZE, login="meow", key=secret, location="moon"
     )
     assert Backups.provider().key == secret
 
