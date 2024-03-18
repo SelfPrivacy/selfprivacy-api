@@ -1,13 +1,16 @@
 """Abstract class for a service running on a server"""
 from abc import ABC, abstractmethod
-from enum import Enum
 from typing import List, Optional
 
-from pydantic import BaseModel
-from selfprivacy_api.jobs import Job, Jobs, JobStatus, report_progress
-
+from selfprivacy_api import utils
+from selfprivacy_api.utils import ReadUserData, WriteUserData
+from selfprivacy_api.utils.waitloop import wait_until_true
 from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
 
+from selfprivacy_api.jobs import Job, Jobs, JobStatus, report_progress
+from selfprivacy_api.jobs.upgrade_system import rebuild_system
+
+from selfprivacy_api.models.services import ServiceStatus, ServiceDnsRecord
 from selfprivacy_api.services.generic_size_counter import get_storage_usage
 from selfprivacy_api.services.owned_path import OwnedPath, Bind
 from selfprivacy_api.services.moving import (
@@ -20,32 +23,8 @@ from selfprivacy_api.services.moving import (
     move_data_to_volume,
 )
 
-from selfprivacy_api import utils
-from selfprivacy_api.utils.waitloop import wait_until_true
-from selfprivacy_api.utils import ReadUserData, WriteUserData
 
 DEFAULT_START_STOP_TIMEOUT = 5 * 60
-
-
-class ServiceStatus(Enum):
-    """Enum for service status"""
-
-    ACTIVE = "ACTIVE"
-    RELOADING = "RELOADING"
-    INACTIVE = "INACTIVE"
-    FAILED = "FAILED"
-    ACTIVATING = "ACTIVATING"
-    DEACTIVATING = "DEACTIVATING"
-    OFF = "OFF"
-
-
-class ServiceDnsRecord(BaseModel):
-    type: str
-    name: str
-    content: str
-    ttl: int
-    display_name: str
-    priority: Optional[int] = None
 
 
 class Service(ABC):
@@ -387,14 +366,6 @@ class Service(ABC):
         report_progress(95, job, f"Finishing moving {service_name}...")
         self.set_location(new_volume)
 
-        Jobs.update(
-            job=job,
-            status=JobStatus.FINISHED,
-            result=f"{service_name} moved successfully.",
-            status_text=f"Starting {service_name}...",
-            progress=100,
-        )
-
     def move_to_volume(self, volume: BlockDevice, job: Job) -> Job:
         service_name = self.get_display_name()
 
@@ -406,6 +377,17 @@ class Service(ABC):
         with StoppedService(self):
             report_progress(9, job, "Stopped service, starting the move...")
             self.do_move_to_volume(volume, job)
+
+            report_progress(98, job, "Move complete, rebuilding...")
+            rebuild_system(job, upgrade=False)
+
+            Jobs.update(
+                job=job,
+                status=JobStatus.FINISHED,
+                result=f"{service_name} moved successfully.",
+                status_text=f"Starting {service_name}...",
+                progress=100,
+            )
 
         return job
 

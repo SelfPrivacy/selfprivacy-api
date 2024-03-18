@@ -2,16 +2,16 @@
 import subprocess
 from typing import List
 
-from selfprivacy_api.services.service import ServiceStatus
+from selfprivacy_api.models.services import ServiceStatus
 
 
-def get_service_status(service: str) -> ServiceStatus:
+def get_service_status(unit: str) -> ServiceStatus:
     """
     Return service status from systemd.
     Use systemctl show to get the status of a service.
     Get ActiveState from the output.
     """
-    service_status = subprocess.check_output(["systemctl", "show", service])
+    service_status = subprocess.check_output(["systemctl", "show", unit])
     if b"LoadState=not-found" in service_status:
         return ServiceStatus.OFF
     if b"ActiveState=active" in service_status:
