@@ -23,7 +23,7 @@ Type "help", "copyright", "credits" or "license" for more information.
 If you don't have experimental flakes enabled, you can use the following command:
 
 ```console
-nix --extra-experimental-features nix-command --extra-experimental-features flakes develop
+$ nix --extra-experimental-features nix-command --extra-experimental-features flakes develop
 ```
 
 ## Testing
