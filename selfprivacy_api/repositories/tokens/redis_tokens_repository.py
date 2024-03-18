@@ -30,7 +30,7 @@ class RedisTokensRepository(AbstractTokensRepository):
 
     @staticmethod
     def token_key_for_device(device_name: str):
-        md5_hash = md5()
+        md5_hash = md5(usedforsecurity=False)
         md5_hash.update(bytes(device_name, "utf-8"))
         digest = md5_hash.hexdigest()
         return TOKENS_PREFIX + digest

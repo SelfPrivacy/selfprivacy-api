@@ -24,7 +24,7 @@ from selfprivacy_api.repositories.tokens.abstract_tokens_repository import (
     AbstractTokensRepository,
 )
 
-from tests.common import ten_minutes_into_past, ten_minutes_into_future
+from tests.common import ten_minutes_into_past, ten_hours_into_future
 
 
 ORIGINAL_DEVICE_NAMES = [
