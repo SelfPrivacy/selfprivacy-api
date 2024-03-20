@@ -99,23 +99,14 @@ def generic_userdata(mocker, tmpdir):
 
 
 @pytest.fixture
-def huey_database(mocker, shared_datadir):
-    """Mock huey database."""
-    mock = mocker.patch(
-        "selfprivacy_api.utils.huey.HUEY_DATABASE", shared_datadir / "huey.db"
-    )
-    return mock
-
-
-@pytest.fixture
-def client(huey_database, redis_repo_with_tokens):
+def client(redis_repo_with_tokens):
     from selfprivacy_api.app import app
 
     return TestClient(app)
 
 
 @pytest.fixture
-def authorized_client(huey_database, redis_repo_with_tokens):
+def authorized_client(redis_repo_with_tokens):
     """Authorized test client fixture."""
     from selfprivacy_api.app import app
 
@@ -127,7 +118,7 @@ def authorized_client(huey_database, redis_repo_with_tokens):
 
 
 @pytest.fixture
-def wrong_auth_client(huey_database, redis_repo_with_tokens):
+def wrong_auth_client(redis_repo_with_tokens):
     """Wrong token test client fixture."""
     from selfprivacy_api.app import app
 
