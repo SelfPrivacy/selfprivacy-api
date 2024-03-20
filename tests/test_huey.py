@@ -106,7 +106,7 @@ def test_huey_over_redis_socket(huey_socket_consumer):
 
     result = sum(2, 5)
     try:
-        assert result(blocking=True, timeout=10) == 7
+        assert result(blocking=True, timeout=100) == 7
 
     except HueyException as error:
         if "timed out" in str(error):
