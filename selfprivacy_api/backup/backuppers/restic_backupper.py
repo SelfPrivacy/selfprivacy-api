@@ -173,6 +173,21 @@ class ResticBackupper(AbstractBackupper):
         return messages
 
     @staticmethod
+    def _replace_in_array(array: List[str], target, replacement) -> None:
+        if target == "":
+            return
+
+        for i, value in enumerate(array):
+            if target in value:
+                array[i] = array[i].replace(target, replacement)
+
+    def _censor_command(self, command: List[str]) -> List[str]:
+        result = command.copy()
+        ResticBackupper._replace_in_array(result, self.key, "CENSORED")
+        ResticBackupper._replace_in_array(result, LocalBackupSecret.get(), "CENSORED")
+        return result
+
+    @staticmethod
     def _get_backup_job(service_name: str) -> Optional[Job]:
         service = get_service_by_id(service_name)
         if service is None:
@@ -218,7 +233,7 @@ class ResticBackupper(AbstractBackupper):
                 "Could not create a snapshot: ",
                 str(error),
                 "command: ",
-                backup_command,
+                self._censor_command(backup_command),
             ) from error
 
     @staticmethod

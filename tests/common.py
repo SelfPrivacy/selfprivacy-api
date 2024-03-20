@@ -2,6 +2,8 @@ import json
 from datetime import datetime, timezone, timedelta
 from mnemonic import Mnemonic
 
+from selfprivacy_api.jobs import Job, JobStatus
+
 # for expiration tests. If headache, consider freezegun
 RECOVERY_KEY_VALIDATION_DATETIME = "selfprivacy_api.models.tokens.time.datetime"
 DEVICE_KEY_VALIDATION_DATETIME = RECOVERY_KEY_VALIDATION_DATETIME
@@ -79,3 +81,12 @@ def assert_recovery_recent(time_generated: str):
     assert datetime.fromisoformat(time_generated) - timedelta(seconds=5) < datetime.now(
         timezone.utc
     )
+
+
+def assert_job_errored(job: Job):
+    assert job is not None
+    assert job.status == JobStatus.ERROR
+
+    # consider adding a useful error message to an errored-out job
+    assert job.error is not None
+    assert job.error != ""

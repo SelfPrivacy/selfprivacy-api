@@ -21,6 +21,8 @@ PROVIDER_MAPPING: dict[BackupProviderEnum, Type[AbstractBackupProvider]] = {
 def get_provider(
     provider_type: BackupProviderEnum,
 ) -> Type[AbstractBackupProvider]:
+    if provider_type not in PROVIDER_MAPPING.keys():
+        raise LookupError("could not look up provider", provider_type)
     return PROVIDER_MAPPING[provider_type]
 
 

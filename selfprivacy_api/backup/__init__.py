@@ -259,7 +259,7 @@ class Backups:
                 Backups._prune_auto_snaps(service)
             service.post_restore()
         except Exception as error:
-            Jobs.update(job, status=JobStatus.ERROR, status_text=str(error))
+            Jobs.update(job, status=JobStatus.ERROR, error=str(error))
             raise error
 
         Jobs.update(job, status=JobStatus.FINISHED)
