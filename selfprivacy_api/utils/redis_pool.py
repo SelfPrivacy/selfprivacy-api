@@ -2,6 +2,7 @@
 Redis pool module for selfprivacy_api
 """
 import redis
+import redis.asyncio as redis_async
 
 from selfprivacy_api.utils.singleton_metaclass import SingletonMetaclass
 
@@ -14,11 +15,18 @@ class RedisPool(metaclass=SingletonMetaclass):
     """
 
     def __init__(self):
+        url = RedisPool.connection_url(dbnumber=0)
+        # We need a normal sync pool because otherwise
+        # our whole API will need to be async
         self._pool = redis.ConnectionPool.from_url(
-            RedisPool.connection_url(dbnumber=0),
+            url,
             decode_responses=True,
         )
-        self._pubsub_connection = self.get_connection()
+        # We need an async pool for pubsub
+        self._async_pool = redis_async.ConnectionPool.from_url(
+            url,
+            decode_responses=True,
+        )
 
     @staticmethod
     def connection_url(dbnumber: int) -> str:
@@ -34,8 +42,9 @@ class RedisPool(metaclass=SingletonMetaclass):
         """
         return redis.Redis(connection_pool=self._pool)
 
-    def get_pubsub(self):
+    def get_connection_async(self) -> redis_async.Redis:
         """
-        Get a pubsub connection from the pool.
+        Get an async connection from the pool.
+        Async connections allow pubsub.
         """
-        return self._pubsub_connection.pubsub()
+        return redis_async.Redis(connection_pool=self._async_pool)
