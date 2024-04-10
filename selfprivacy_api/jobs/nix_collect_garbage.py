@@ -11,11 +11,11 @@ class ShellException(Exception):
     """Shell-related errors"""
 
 
-COMPLETED_WITH_ERROR = (
-    "Error occurred, please report this to the support chat."
-)
-RESULT_WAS_NOT_FOUND_ERROR = "We are sorry, garbage collection result was not found. " \
+COMPLETED_WITH_ERROR = "Error occurred, please report this to the support chat."
+RESULT_WAS_NOT_FOUND_ERROR = (
+    "We are sorry, garbage collection result was not found. "
     "Something went wrong, please report this to the support chat."
+)
 CLEAR_COMPLETED = "Garbage collection completed."
 
 
@@ -74,7 +74,6 @@ def process_stream(job: Job, stream: Iterable[bytes], total_dead_packages: int) 
             percent = int((completed_packages / total_dead_packages) * 100)
 
             if percent - prev_progress >= 5:
-
                 Jobs.update(
                     job=job,
                     status=JobStatus.RUNNING,
@@ -109,7 +108,6 @@ def calculate_and_clear_dead_paths(job: Job):
     )
 
     if dead_packages == 0:
-
         Jobs.update(
             job=job,
             status=JobStatus.FINISHED,

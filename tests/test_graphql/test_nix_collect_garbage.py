@@ -6,7 +6,12 @@ import pytest
 from selfprivacy_api.utils.huey import huey
 
 from selfprivacy_api.jobs import JobStatus, Jobs, Job
-from tests.test_graphql.common import get_data, assert_errorcode, assert_ok, assert_empty
+from tests.test_graphql.common import (
+    get_data,
+    assert_errorcode,
+    assert_ok,
+    assert_empty,
+)
 
 from selfprivacy_api.jobs.nix_collect_garbage import (
     get_dead_packages,
@@ -57,7 +62,11 @@ log_event = []
 
 @pytest.fixture
 def mock_delete_old_gens_and_return_dead_report(mocker):
-    mock = mocker.patch("selfprivacy_api.jobs.nix_collect_garbage.delete_old_gens_and_return_dead_report", autospec=True, return_value=OUTPUT_PRINT_DEAD)
+    mock = mocker.patch(
+        "selfprivacy_api.jobs.nix_collect_garbage.delete_old_gens_and_return_dead_report",
+        autospec=True,
+        return_value=OUTPUT_PRINT_DEAD,
+    )
     return mock
 
 
@@ -74,7 +83,7 @@ def test_parse_line():
     )
 
     output = parse_line(job, txt)
-    assert output.result == '425.51 MiB have been cleared'
+    assert output.result == "425.51 MiB have been cleared"
     assert output.status == JobStatus.FINISHED
     assert output.error is None
 
@@ -89,7 +98,6 @@ def test_parse_line_with_blank_line():
 
     with pytest.raises(ShellException):
         output = parse_line(job, txt)
-    
 
 
 def test_get_dead_packages():
@@ -127,7 +135,9 @@ mutation CollectGarbage {
 """
 
 
-def test_graphql_nix_collect_garbage(authorized_client, mock_delete_old_gens_and_return_dead_report):
+def test_graphql_nix_collect_garbage(
+    authorized_client, mock_delete_old_gens_and_return_dead_report
+):
     assert huey.immediate is True
     response = authorized_client.post(
         "/graphql",
@@ -143,7 +153,9 @@ def test_graphql_nix_collect_garbage(authorized_client, mock_delete_old_gens_and
     assert output["job"]["error"] is None
 
 
-def test_graphql_nix_collect_garbage_not_authorized_client(client, mock_delete_old_gens_and_return_dead_report):
+def test_graphql_nix_collect_garbage_not_authorized_client(
+    client, mock_delete_old_gens_and_return_dead_report
+):
     assert huey.immediate is True
     response = client.post(
         "/graphql",
