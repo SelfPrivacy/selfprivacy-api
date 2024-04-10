@@ -4,6 +4,8 @@ import subprocess
 import pytz
 from typing import Optional, List
 from pydantic import BaseModel
+from selfprivacy_api.jobs import Job, JobStatus, Jobs
+from selfprivacy_api.jobs.upgrade_system import rebuild_system_task
 
 from selfprivacy_api.utils import WriteUserData, ReadUserData
 
@@ -87,10 +89,16 @@ def run_blocking(cmd: List[str], new_session: bool = False) -> str:
     return stdout
 
 
-def rebuild_system() -> int:
+def rebuild_system() -> Job:
     """Rebuild the system"""
-    run_blocking(["systemctl", "start", "sp-nixos-rebuild.service"], new_session=True)
-    return 0
+    job = Jobs.add(
+        type_id="system.nixos.rebuild",
+        name="Rebuild system",
+        description="Applying the new system configuration by building the new NixOS generation.",
+        status=JobStatus.CREATED,
+    )
+    rebuild_system_task(job)
+    return job
 
 
 def rollback_system() -> int:
@@ -99,10 +107,16 @@ def rollback_system() -> int:
     return 0
 
 
-def upgrade_system() -> int:
+def upgrade_system() -> Job:
     """Upgrade the system"""
-    run_blocking(["systemctl", "start", "sp-nixos-upgrade.service"], new_session=True)
-    return 0
+    job = Jobs.add(
+        type_id="system.nixos.upgrade",
+        name="Upgrade system",
+        description="Upgrading the system to the latest version.",
+        status=JobStatus.CREATED,
+    )
+    rebuild_system_task(job, upgrade=True)
+    return job
 
 
 def reboot_system() -> None:

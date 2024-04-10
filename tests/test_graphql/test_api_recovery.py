@@ -14,9 +14,9 @@ from tests.common import (
 )
 
 # Graphql API's output should be timezone-naive
-from tests.common import ten_minutes_into_future_naive_utc as ten_minutes_into_future
-from tests.common import ten_minutes_into_future as ten_minutes_into_future_tz
-from tests.common import ten_minutes_into_past_naive_utc as ten_minutes_into_past
+from tests.common import ten_hours_into_future_naive_utc as ten_hours_into_future
+from tests.common import ten_hours_into_future as ten_hours_into_future_tz
+from tests.common import ten_minutes_into_past_naive_utc as ten_hours_into_past
 
 from tests.test_graphql.common import (
     assert_empty,
@@ -168,7 +168,7 @@ def test_graphql_generate_recovery_key(client, authorized_client):
 
 
 @pytest.mark.parametrize(
-    "expiration_date", [ten_minutes_into_future(), ten_minutes_into_future_tz()]
+    "expiration_date", [ten_hours_into_future(), ten_hours_into_future_tz()]
 )
 def test_graphql_generate_recovery_key_with_expiration_date(
     client, authorized_client, expiration_date: datetime
@@ -193,7 +193,7 @@ def test_graphql_generate_recovery_key_with_expiration_date(
 
 
 def test_graphql_use_recovery_key_after_expiration(client, authorized_client, mocker):
-    expiration_date = ten_minutes_into_future()
+    expiration_date = ten_hours_into_future()
     key = graphql_make_new_recovery_key(authorized_client, expires_at=expiration_date)
 
     # Timewarp to after it expires
@@ -219,7 +219,7 @@ def test_graphql_use_recovery_key_after_expiration(client, authorized_client, mo
 
 
 def test_graphql_generate_recovery_key_with_expiration_in_the_past(authorized_client):
-    expiration_date = ten_minutes_into_past()
+    expiration_date = ten_hours_into_past()
     response = request_make_new_recovery_key(
         authorized_client, expires_at=expiration_date
     )

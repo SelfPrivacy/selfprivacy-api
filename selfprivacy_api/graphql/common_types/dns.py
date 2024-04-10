@@ -2,6 +2,7 @@ import typing
 import strawberry
 
 
+# TODO: use https://strawberry.rocks/docs/integrations/pydantic when it is stable
 @strawberry.type
 class DnsRecord:
     """DNS record"""

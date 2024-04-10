@@ -410,6 +410,7 @@ def lsblk_full_mock(mocker):
     mock = mocker.patch(
         "subprocess.check_output", autospec=True, return_value=FULL_LSBLK_OUTPUT
     )
+    BlockDevices().update()
     return mock
 
 

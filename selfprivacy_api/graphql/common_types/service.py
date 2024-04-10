@@ -1,14 +1,17 @@
 from enum import Enum
-import typing
-import strawberry
+from typing import Optional, List
 import datetime
+import strawberry
+
 from selfprivacy_api.graphql.common_types.backup import BackupReason
 from selfprivacy_api.graphql.common_types.dns import DnsRecord
 
 from selfprivacy_api.services import get_service_by_id, get_services_by_location
 from selfprivacy_api.services import Service as ServiceInterface
+from selfprivacy_api.services import ServiceDnsRecord
+
 from selfprivacy_api.utils.block_devices import BlockDevices
-import selfprivacy_api.utils.network as network_utils
+from selfprivacy_api.utils.network import get_ip4, get_ip6
 
 
 def get_usages(root: "StorageVolume") -> list["StorageUsageInterface"]:
@@ -33,8 +36,8 @@ class StorageVolume:
     used_space: str
     root: bool
     name: str
-    model: typing.Optional[str]
-    serial: typing.Optional[str]
+    model: Optional[str]
+    serial: Optional[str]
     type: str
 
     @strawberry.field
@@ -46,7 +49,7 @@ class StorageVolume:
 @strawberry.interface
 class StorageUsageInterface:
     used_space: str
-    volume: typing.Optional[StorageVolume]
+    volume: Optional[StorageVolume]
     title: str
 
 
@@ -54,7 +57,7 @@ class StorageUsageInterface:
 class ServiceStorageUsage(StorageUsageInterface):
     """Storage usage for a service"""
 
-    service: typing.Optional["Service"]
+    service: Optional["Service"]
 
 
 @strawberry.enum
@@ -86,6 +89,20 @@ def get_storage_usage(root: "Service") -> ServiceStorageUsage:
     )
 
 
+# TODO: This won't be needed when deriving DnsRecord via strawberry pydantic integration
+# https://strawberry.rocks/docs/integrations/pydantic
+# Remove when the link above says it got stable.
+def service_dns_to_graphql(record: ServiceDnsRecord) -> DnsRecord:
+    return DnsRecord(
+        record_type=record.type,
+        name=record.name,
+        content=record.content,
+        ttl=record.ttl,
+        priority=record.priority,
+        display_name=record.display_name,
+    )
+
+
 @strawberry.type
 class Service:
     id: str
@@ -98,16 +115,26 @@ class Service:
     can_be_backed_up: bool
     backup_description: str
     status: ServiceStatusEnum
-    url: typing.Optional[str]
-    dns_records: typing.Optional[typing.List[DnsRecord]]
+    url: Optional[str]
+
+    @strawberry.field
+    def dns_records(self) -> Optional[List[DnsRecord]]:
+        service = get_service_by_id(self.id)
+        if service is None:
+            raise LookupError(f"no service {self.id}. Should be unreachable")
+
+        raw_records = service.get_dns_records(get_ip4(), get_ip6())
+        dns_records = [service_dns_to_graphql(record) for record in raw_records]
+        return dns_records
 
     @strawberry.field
     def storage_usage(self) -> ServiceStorageUsage:
         """Get storage usage for a service"""
         return get_storage_usage(self)
 
+    # TODO: fill this
     @strawberry.field
-    def backup_snapshots(self) -> typing.Optional[typing.List["SnapshotInfo"]]:
+    def backup_snapshots(self) -> Optional[List["SnapshotInfo"]]:
         return None
 
 
@@ -133,23 +160,10 @@ def service_to_graphql_service(service: ServiceInterface) -> Service:
         backup_description=service.get_backup_description(),
         status=ServiceStatusEnum(service.get_status().value),
         url=service.get_url(),
-        dns_records=[
-            DnsRecord(
-                record_type=record.type,
-                name=record.name,
-                content=record.content,
-                ttl=record.ttl,
-                priority=record.priority,
-                display_name=record.display_name,
-            )
-            for record in service.get_dns_records(
-                network_utils.get_ip4(), network_utils.get_ip6()
-            )
-        ],
     )
 
 
-def get_volume_by_id(volume_id: str) -> typing.Optional[StorageVolume]:
+def get_volume_by_id(volume_id: str) -> Optional[StorageVolume]:
     """Get volume by id"""
     volume = BlockDevices().get_block_device(volume_id)
     if volume is None:

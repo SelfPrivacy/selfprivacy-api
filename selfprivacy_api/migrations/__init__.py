@@ -11,9 +11,13 @@ Adding DISABLE_ALL to that array disables the migrations module entirely.
 
 from selfprivacy_api.utils import ReadUserData, UserDataFiles
 from selfprivacy_api.migrations.write_token_to_redis import WriteTokenToRedis
+from selfprivacy_api.migrations.check_for_system_rebuild_jobs import (
+    CheckForSystemRebuildJobs,
+)
 
 migrations = [
     WriteTokenToRedis(),
+    CheckForSystemRebuildJobs(),
 ]
 
 

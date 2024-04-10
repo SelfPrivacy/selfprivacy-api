@@ -14,6 +14,10 @@ def backup_job_type(service: Service) -> str:
     return f"{job_type_prefix(service)}.backup"
 
 
+def autobackup_job_type() -> str:
+    return "backups.autobackup"
+
+
 def restore_job_type(service: Service) -> str:
     return f"{job_type_prefix(service)}.restore"
 
@@ -34,6 +38,17 @@ def is_something_running_for(service: Service) -> bool:
         job for job in get_jobs_by_service(service) if job.status == JobStatus.RUNNING
     ]
     return len(running_jobs) != 0
+
+
+def add_autobackup_job(services: List[Service]) -> Job:
+    service_names = [s.get_display_name() for s in services]
+    pretty_service_list: str = ", ".join(service_names)
+    job = Jobs.add(
+        type_id=autobackup_job_type(),
+        name="Automatic backup",
+        description=f"Scheduled backup for services: {pretty_service_list}",
+    )
+    return job
 
 
 def add_backup_job(service: Service) -> Job:
@@ -78,12 +93,14 @@ def get_job_by_type(type_id: str) -> Optional[Job]:
             JobStatus.RUNNING,
         ]:
             return job
+    return None
 
 
 def get_failed_job_by_type(type_id: str) -> Optional[Job]:
     for job in Jobs.get_jobs():
         if job.type_id == type_id and job.status == JobStatus.ERROR:
             return job
+    return None
 
 
 def get_backup_job(service: Service) -> Optional[Job]:

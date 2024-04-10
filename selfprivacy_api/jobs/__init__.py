@@ -268,6 +268,20 @@ class Jobs:
         return False
 
 
+def report_progress(progress: int, job: Job, status_text: str) -> None:
+    """
+    A terse way to call a common operation, for readability
+    job.report_progress() would be even better
+    but it would go against how this file is written
+    """
+    Jobs.update(
+        job=job,
+        status=JobStatus.RUNNING,
+        status_text=status_text,
+        progress=progress,
+    )
+
+
 def _redis_key_from_uuid(uuid_string) -> str:
     return "jobs:" + str(uuid_string)
 
