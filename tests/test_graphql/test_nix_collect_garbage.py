@@ -5,10 +5,9 @@
 import pytest
 from selfprivacy_api.utils.huey import huey
 
-from selfprivacy_api.jobs import JobStatus, Jobs, Job
+from selfprivacy_api.jobs import JobStatus, Jobs
 from tests.test_graphql.common import (
     get_data,
-    assert_errorcode,
     assert_ok,
     assert_empty,
 )
@@ -16,9 +15,6 @@ from tests.test_graphql.common import (
 from selfprivacy_api.jobs.nix_collect_garbage import (
     get_dead_packages,
     parse_line,
-    CLEAR_COMPLETED,
-    COMPLETED_WITH_ERROR,
-    RESULT_WAS_NOT_FOUND_ERROR,
     ShellException,
 )
 
@@ -56,18 +52,6 @@ deleting unused links...
 note: currently hard linking saves 0.00 MiB
 0 store paths deleted, 0.00 MiB freed
 """
-
-log_event = []
-
-
-@pytest.fixture
-def mock_delete_old_gens_and_return_dead_report(mocker):
-    mock = mocker.patch(
-        "selfprivacy_api.jobs.nix_collect_garbage.delete_old_gens_and_return_dead_report",
-        autospec=True,
-        return_value=OUTPUT_PRINT_DEAD,
-    )
-    return mock
 
 
 # ---
@@ -135,10 +119,16 @@ mutation CollectGarbage {
 """
 
 
-def test_graphql_nix_collect_garbage(
-    authorized_client, mock_delete_old_gens_and_return_dead_report
-):
+def test_graphql_nix_collect_garbage(authorized_client, fp):
     assert huey.immediate is True
+
+    fp.register(
+        ["nix-env", "-p", "/nix/var/nix/profiles/system", "--delete-generations old"],
+        stdout="",
+    )
+    fp.register(["nix-store", "--gc", "--print-dead"], stdout=OUTPUT_PRINT_DEAD)
+    fp.register(["nix-store", "--gc"], stdout=OUTPUT_COLLECT_GARBAGE)
+
     response = authorized_client.post(
         "/graphql",
         json={
@@ -152,11 +142,69 @@ def test_graphql_nix_collect_garbage(
     assert output["job"]["status"] == "FINISHED"
     assert output["job"]["error"] is None
 
+    assert (
+        fp.call_count(
+            [
+                "nix-env",
+                "-p",
+                "/nix/var/nix/profiles/system",
+                "--delete-generations old",
+            ]
+        )
+        == 1
+    )
+    assert fp.call_count(["nix-store", "--gc", "--print-dead"]) == 1
+    assert fp.call_count(["nix-store", "--gc"]) == 1
 
-def test_graphql_nix_collect_garbage_not_authorized_client(
-    client, mock_delete_old_gens_and_return_dead_report
-):
+
+def test_graphql_nix_collect_garbage_return_zero_trash(authorized_client, fp):
     assert huey.immediate is True
+
+    fp.register(
+        ["nix-env", "-p", "/nix/var/nix/profiles/system", "--delete-generations old"],
+        stdout="",
+    )
+    fp.register(["nix-store", "--gc", "--print-dead"], stdout=OUTPUT_PRINT_DEAD)
+    fp.register(["nix-store", "--gc"], stdout=OUTPUT_COLLECT_GARBAGE_ZERO_TRASH)
+
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": RUN_NIX_COLLECT_GARBAGE_MUTATION,
+        },
+    )
+
+    output = get_data(response)["system"]["nixCollectGarbage"]
+    assert_ok(output)
+    assert output["job"] is not None
+    assert output["job"]["status"] == "FINISHED"
+    assert output["job"]["error"] is None
+
+    assert (
+        fp.call_count(
+            [
+                "nix-env",
+                "-p",
+                "/nix/var/nix/profiles/system",
+                "--delete-generations old",
+            ]
+        )
+        == 1
+    )
+    assert fp.call_count(["nix-store", "--gc", "--print-dead"]) == 1
+    assert fp.call_count(["nix-store", "--gc"]) == 1
+
+
+def test_graphql_nix_collect_garbage_not_authorized_client(client, fp):
+    assert huey.immediate is True
+
+    fp.register(
+        ["nix-env", "-p", "/nix/var/nix/profiles/system", "--delete-generations old"],
+        stdout="",
+    )
+    fp.register(["nix-store", "--gc", "--print-dead"], stdout=OUTPUT_PRINT_DEAD)
+    fp.register(["nix-store", "--gc"], stdout=OUTPUT_COLLECT_GARBAGE)
+
     response = client.post(
         "/graphql",
         json={
@@ -165,3 +213,17 @@ def test_graphql_nix_collect_garbage_not_authorized_client(
     )
 
     assert_empty(response)
+
+    assert (
+        fp.call_count(
+            [
+                "nix-env",
+                "-p",
+                "/nix/var/nix/profiles/system",
+                "--delete-generations old",
+            ]
+        )
+        == 0
+    )
+    assert fp.call_count(["nix-store", "--gc", "--print-dead"]) == 0
+    assert fp.call_count(["nix-store", "--gc"]) == 0

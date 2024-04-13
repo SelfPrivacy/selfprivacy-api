@@ -144,4 +144,11 @@ def start_nix_collect_garbage() -> Job:
 
     calculate_and_clear_dead_paths(job=job)
 
+    Jobs.update(
+        job=job,
+        status=JobStatus.FINISHED,
+        status_text="Collect garbage finished",
+        progress=100,
+    )
+
     return job
