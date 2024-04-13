@@ -150,7 +150,7 @@
             };
             testScript = ''
               start_all()
-              machine.succeed("cd ${vmtest-src-dir} && coverage run --data-file=/tmp/.coverage -m pytest -p no:cacheprovider tests/test_binds.py -v >&2")
+              machine.succeed("cd ${vmtest-src-dir} && coverage run --data-file=/tmp/.coverage -m pytest -p no:cacheprovider -v >&2")
               machine.succeed("cd ${vmtest-src-dir} && coverage xml --data-file=/tmp/.coverage -o /tmp/coverage.xml >&2")
               machine.succeed("sed -E 's|<source>${pkgs.lib.strings.escapeRegex self.outPath}</source>|<source>.</source>|g' /tmp/coverage.xml")
               machine.copy_from_vm("/tmp/coverage.xml", ".")
