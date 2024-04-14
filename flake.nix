@@ -152,7 +152,8 @@
               start_all()
               machine.succeed("cd ${vmtest-src-dir} && coverage run --data-file=/tmp/.coverage -m pytest -p no:cacheprovider -v >&2")
               machine.succeed("cd ${vmtest-src-dir} && coverage xml --data-file=/tmp/.coverage -o /tmp/coverage.xml >&2")
-              machine.succeed("sed -E 's|<source>${pkgs.lib.strings.escapeRegex self.outPath}</source>|<source>.</source>|g' /tmp/coverage.xml")
+              machine.succeed("head /tmp/coverage.xml >&2")
+              machine.succeed("sed -i -E 's|<source>${pkgs.lib.strings.escapeRegex self.outPath}</source>|<source>.</source>|g' /tmp/coverage.xml")
               machine.copy_from_vm("/tmp/coverage.xml", ".")
               machine.succeed("coverage report --rcfile=.coveragerc --data-file=/tmp/.coverage >&2")
             '';
