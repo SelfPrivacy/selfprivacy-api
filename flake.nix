@@ -85,6 +85,7 @@
           rclone
           redis
           restic
+          sonar-scanner-cli
           self.packages.${system}.pytest-vm
           # FIXME consider loading this explicitly only after ArchLinux issue is solved
           self.checks.x86_64-linux.default.driverInteractive
