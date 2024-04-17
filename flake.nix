@@ -66,7 +66,7 @@
           SCRIPT=$(cat <<EOF
           start_all()
           machine.succeed("ln -sf $NIXOS_VM_SHARED_DIR_GUEST -T ${vmtest-src-dir} >&2")
-          machine.succeed("cd ${vmtest-src-dir} && coverage run -m pytest -v $@ >&2")
+          machine.succeed("cd ${vmtest-src-dir} && coverage run -m pytest $@ >&2")
           machine.succeed("cd ${vmtest-src-dir} && coverage report >&2")
           EOF
           )
