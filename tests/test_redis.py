@@ -15,7 +15,6 @@ STOPWORD = "STOP"
 def empty_redis(event_loop):
     r = RedisPool().get_connection()
     r.flushdb()
-    r.config_set("notify-keyspace-events", "KEA")
     assert r.config_get("notify-keyspace-events")["notify-keyspace-events"] == "AKE"
     yield r
     r.flushdb()
