@@ -15,6 +15,8 @@ STOPWORD = "STOP"
 def empty_redis(event_loop):
     r = RedisPool().get_connection()
     r.flushdb()
+    r.config_set("notify-keyspace-events", "KEA")
+    assert r.config_get("notify-keyspace-events")["notify-keyspace-events"] == "AKE"
     yield r
     r.flushdb()
 
@@ -49,6 +51,15 @@ async def channel_reader(channel: redis.client.PubSub) -> List[dict]:
             if message["data"] == STOPWORD:
                 break
     return result
+
+
+async def channel_reader_onemessage(channel: redis.client.PubSub) -> dict:
+    while True:
+        # Mypy cannot correctly detect that it is a coroutine
+        # But it is
+        message: dict = await channel.get_message(ignore_subscribe_messages=True, timeout=None)  # type: ignore
+        if message is not None:
+            return message
 
 
 @pytest.mark.asyncio
@@ -93,3 +104,40 @@ async def test_pubsub(empty_redis, event_loop):
         assert message["data"] == STOPWORD
 
     await r.close()
+
+
+@pytest.mark.asyncio
+async def test_keyspace_notifications_simple(empty_redis, event_loop):
+    r = RedisPool().get_connection_async()
+    await r.set(TEST_KEY, "I am not empty")
+    async with r.pubsub() as pubsub:
+        await pubsub.subscribe("__keyspace@0__:" + TEST_KEY)
+
+        future_message = asyncio.create_task(channel_reader_onemessage(pubsub))
+        empty_redis.set(TEST_KEY, "I am set!")
+        message = await future_message
+        assert message is not None
+        assert message["data"] is not None
+        assert message == {
+            "channel": f"__keyspace@0__:{TEST_KEY}",
+            "data": "set",
+            "pattern": None,
+            "type": "message",
+        }
+
+
+@pytest.mark.asyncio
+async def test_keyspace_notifications(empty_redis, event_loop):
+    pubsub = await RedisPool().subscribe_to_keys(TEST_KEY)
+    async with pubsub:
+        future_message = asyncio.create_task(channel_reader_onemessage(pubsub))
+        empty_redis.set(TEST_KEY, "I am set!")
+        message = await future_message
+        assert message is not None
+        assert message["data"] is not None
+        assert message == {
+            "channel": f"__keyspace@0__:{TEST_KEY}",
+            "data": "set",
+            "pattern": f"__keyspace@0__:{TEST_KEY}",
+            "type": "pmessage",
+        }
