@@ -15,6 +15,7 @@ A job is a dictionary with the following keys:
     - result: result of the job
 """
 import typing
+import asyncio
 import datetime
 from uuid import UUID
 import uuid
@@ -23,6 +24,7 @@ from enum import Enum
 from pydantic import BaseModel
 
 from selfprivacy_api.utils.redis_pool import RedisPool
+from selfprivacy_api.utils.redis_model_storage import store_model_as_hash
 
 JOB_EXPIRATION_SECONDS = 10 * 24 * 60 * 60  # ten days
 
@@ -102,7 +104,7 @@ class Jobs:
             result=None,
         )
         redis = RedisPool().get_connection()
-        _store_job_as_hash(redis, _redis_key_from_uuid(job.uid), job)
+        store_model_as_hash(redis, _redis_key_from_uuid(job.uid), job)
         return job
 
     @staticmethod
@@ -218,7 +220,7 @@ class Jobs:
         redis = RedisPool().get_connection()
         key = _redis_key_from_uuid(job.uid)
         if redis.exists(key):
-            _store_job_as_hash(redis, key, job)
+            store_model_as_hash(redis, key, job)
             if status in (JobStatus.FINISHED, JobStatus.ERROR):
                 redis.expire(key, JOB_EXPIRATION_SECONDS)
 
@@ -294,17 +296,6 @@ def _progress_log_key_from_uuid(uuid_string) -> str:
     return PROGRESS_LOGS_PREFIX + str(uuid_string)
 
 
-def _store_job_as_hash(redis, redis_key, model) -> None:
-    for key, value in model.dict().items():
-        if isinstance(value, uuid.UUID):
-            value = str(value)
-        if isinstance(value, datetime.datetime):
-            value = value.isoformat()
-        if isinstance(value, JobStatus):
-            value = value.value
-        redis.hset(redis_key, key, str(value))
-
-
 def _job_from_hash(redis, redis_key) -> typing.Optional[Job]:
     if redis.exists(redis_key):
         job_dict = redis.hgetall(redis_key)
@@ -321,3 +312,15 @@ def _job_from_hash(redis, redis_key) -> typing.Optional[Job]:
 
         return Job(**job_dict)
     return None
+
+
+async def job_notifications() -> typing.AsyncGenerator[dict, None]:
+    channel = await RedisPool().subscribe_to_keys("jobs:*")
+    while True:
+        try:
+            # we cannot timeout here because we do not know when the next message is supposed to arrive
+            message: dict = await channel.get_message(ignore_subscribe_messages=True, timeout=None)  # type: ignore
+            if message is not None:
+                yield message
+        except GeneratorExit:
+            break
