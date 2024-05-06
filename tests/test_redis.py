@@ -7,6 +7,8 @@ from typing import List
 
 from selfprivacy_api.utils.redis_pool import RedisPool
 
+from selfprivacy_api.jobs import Jobs, job_notifications
+
 TEST_KEY = "test:test"
 STOPWORD = "STOP"
 
@@ -140,3 +142,77 @@ async def test_keyspace_notifications(empty_redis, event_loop):
             "pattern": f"__keyspace@0__:{TEST_KEY}",
             "type": "pmessage",
         }
+
+
+@pytest.mark.asyncio
+async def test_keyspace_notifications_patterns(empty_redis, event_loop):
+    pattern = "test*"
+    pubsub = await RedisPool().subscribe_to_keys(pattern)
+    async with pubsub:
+        future_message = asyncio.create_task(channel_reader_onemessage(pubsub))
+        empty_redis.set(TEST_KEY, "I am set!")
+        message = await future_message
+        assert message is not None
+        assert message["data"] is not None
+        assert message == {
+            "channel": f"__keyspace@0__:{TEST_KEY}",
+            "data": "set",
+            "pattern": f"__keyspace@0__:{pattern}",
+            "type": "pmessage",
+        }
+
+
+@pytest.mark.asyncio
+async def test_keyspace_notifications_jobs(empty_redis, event_loop):
+    pattern = "jobs:*"
+    pubsub = await RedisPool().subscribe_to_keys(pattern)
+    async with pubsub:
+        future_message = asyncio.create_task(channel_reader_onemessage(pubsub))
+        Jobs.add("testjob1", "test.test", "Testing aaaalll day")
+        message = await future_message
+        assert message is not None
+        assert message["data"] is not None
+        assert message["data"] == "hset"
+
+
+async def reader_of_jobs() -> List[dict]:
+    """
+    Reads 3 job updates and exits
+    """
+    result: List[dict] = []
+    async for message in job_notifications():
+        result.append(message)
+        if len(result) >= 3:
+            break
+    return result
+
+
+@pytest.mark.asyncio
+async def test_jobs_generator(empty_redis, event_loop):
+    # Will read exactly 3 job messages
+    future_messages = asyncio.create_task(reader_of_jobs())
+    await asyncio.sleep(1)
+
+    Jobs.add("testjob1", "test.test", "Testing aaaalll day")
+    Jobs.add("testjob2", "test.test", "Testing aaaalll day")
+    Jobs.add("testjob3", "test.test", "Testing aaaalll day")
+    Jobs.add("testjob4", "test.test", "Testing aaaalll day")
+
+    assert len(Jobs.get_jobs()) == 4
+    r = RedisPool().get_connection()
+    assert len(r.keys("jobs:*")) == 4
+
+    messages = await future_messages
+    assert len(messages) == 3
+    channels = [message["channel"] for message in messages]
+    operations = [message["data"] for message in messages]
+    assert set(operations) == set(["hset"])  # all of them are hsets
+
+    # Asserting that all of jobs emitted exactly one message
+    jobs = Jobs.get_jobs()
+    names = ["testjob1", "testjob2", "testjob3"]
+    ids = [str(job.uid) for job in jobs if job.name in names]
+    for id in ids:
+        assert id in " ".join(channels)
+    # Asserting that they came in order
+    assert "testjob4" not in " ".join(channels)
