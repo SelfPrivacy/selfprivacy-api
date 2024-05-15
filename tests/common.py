@@ -73,6 +73,10 @@ def generate_jobs_query(query_array):
     return "query TestJobs {\n jobs {" + "\n".join(query_array) + "}\n}"
 
 
+def generate_jobs_subscription(query_array):
+    return "subscription TestSubscription {\n jobs {" + "\n".join(query_array) + "}\n}"
+
+
 def generate_service_query(query_array):
     return "query TestService {\n services {" + "\n".join(query_array) + "}\n}"
 
