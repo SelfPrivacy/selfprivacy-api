@@ -69,6 +69,10 @@ def generate_backup_query(query_array):
     return "query TestBackup {\n backup {" + "\n".join(query_array) + "}\n}"
 
 
+def generate_jobs_query(query_array):
+    return "query TestJobs {\n jobs {" + "\n".join(query_array) + "}\n}"
+
+
 def generate_service_query(query_array):
     return "query TestService {\n services {" + "\n".join(query_array) + "}\n}"
 
