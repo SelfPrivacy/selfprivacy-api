@@ -28,6 +28,8 @@ from selfprivacy_api.graphql.queries.services import Services
 from selfprivacy_api.graphql.queries.storage import Storage
 from selfprivacy_api.graphql.queries.system import System
 
+from selfprivacy_api.graphql.subscriptions.jobs import JobSubscriptions
+
 from selfprivacy_api.graphql.mutations.users_mutations import UsersMutations
 from selfprivacy_api.graphql.queries.users import Users
 from selfprivacy_api.jobs.test import test_job
@@ -129,16 +131,19 @@ class Mutation(
             code=200,
         )
 
-    pass
-
 
 @strawberry.type
 class Subscription:
     """Root schema for subscriptions"""
 
-    @strawberry.subscription(permission_classes=[IsAuthenticated])
-    async def count(self, target: int = 100) -> AsyncGenerator[int, None]:
-        for i in range(target):
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    def jobs(self) -> JobSubscriptions:
+        """Jobs subscriptions"""
+        return JobSubscriptions()
+
+    @strawberry.subscription
+    async def count(self) -> AsyncGenerator[int, None]:
+        for i in range(10):
             yield i
             await asyncio.sleep(0.5)
 
