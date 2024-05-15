@@ -29,7 +29,7 @@ def test_websocket_connection_bare(authorized_client):
         assert websocket.scope is not None
 
 
-def test_websocket_graphql_init(authorized_client):
+def test_websocket_graphql_ping(authorized_client):
     client = authorized_client
     with client.websocket_connect(
         "/graphql", subprotocols=["graphql-transport-ws"]
@@ -37,6 +37,11 @@ def test_websocket_graphql_init(authorized_client):
         websocket.send_json({"type": "connection_init", "payload": {}})
         ack = websocket.receive_json()
         assert ack == {"type": "connection_ack"}
+
+        # https://github.com/enisdenjo/graphql-ws/blob/master/PROTOCOL.md#ping
+        websocket.send_json({"type": "ping", "payload": {}})
+        pong = websocket.receive_json()
+        assert pong == {"type": "pong"}
 
 
 # def test_websocket_subscription(authorized_client):
