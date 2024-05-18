@@ -1,10 +1,11 @@
 import re
+from typing import Dict, Tuple, Optional
 
 FLAKE_CONFIG_PATH = "/etc/nixos/sp-modules/flake.nix"
 
 
 class FlakeServiceManager:
-    def __enter__(self):
+    def __enter__(self) -> "FlakeServiceManager":
         self.services = {}
 
         with open(FLAKE_CONFIG_PATH, "r") as file:
@@ -15,7 +16,9 @@ class FlakeServiceManager:
 
         return self
 
-    def _extract_services(self, input_string: str):
+    def _extract_services(
+        self, input_string: str
+    ) -> Tuple[Optional[str], Optional[str]]:
         pattern = r"inputs\.(\w+)\.url\s*=\s*(\S+);"
         match = re.search(pattern, input_string)
 
@@ -26,7 +29,7 @@ class FlakeServiceManager:
         else:
             return None, None
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
         with open(FLAKE_CONFIG_PATH, "w") as file:
             file.write(
                 """
