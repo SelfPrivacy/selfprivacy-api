@@ -2,7 +2,7 @@
 # pylint: disable=too-few-public-methods
 
 import asyncio
-from typing import AsyncGenerator
+from typing import AsyncGenerator, List
 import strawberry
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.mutations.deprecated_mutations import (
@@ -28,7 +28,9 @@ from selfprivacy_api.graphql.queries.services import Services
 from selfprivacy_api.graphql.queries.storage import Storage
 from selfprivacy_api.graphql.queries.system import System
 
-from selfprivacy_api.graphql.subscriptions.jobs import JobSubscriptions
+from selfprivacy_api.graphql.subscriptions.jobs import ApiJob
+from selfprivacy_api.jobs import job_notifications
+from selfprivacy_api.graphql.queries.jobs import get_all_jobs
 
 from selfprivacy_api.graphql.mutations.users_mutations import UsersMutations
 from selfprivacy_api.graphql.queries.users import Users
@@ -136,10 +138,15 @@ class Mutation(
 class Subscription:
     """Root schema for subscriptions"""
 
-    @strawberry.field(permission_classes=[IsAuthenticated])
-    def jobs(self) -> JobSubscriptions:
-        """Jobs subscriptions"""
-        return JobSubscriptions()
+    @strawberry.subscription
+    async def job_updates(self) -> AsyncGenerator[List[ApiJob], None]:
+        # Send the complete list of jobs every time anything gets updated
+        async for notification in job_notifications():
+            yield get_all_jobs()
+
+    # @strawberry.subscription
+    # async def job_updates(self) -> AsyncGenerator[List[ApiJob], None]:
+    #     return job_updates()
 
     @strawberry.subscription
     async def count(self) -> AsyncGenerator[int, None]:
