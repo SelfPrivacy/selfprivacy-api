@@ -12,9 +12,10 @@ from selfprivacy_api.graphql.common_types.jobs import (
 
 
 def get_all_jobs() -> List[ApiJob]:
-    Jobs.get_jobs()
-
-    return [job_to_api_job(job) for job in Jobs.get_jobs()]
+    jobs = Jobs.get_jobs()
+    api_jobs = [job_to_api_job(job) for job in jobs]
+    assert api_jobs is not None
+    return api_jobs
 
 
 @strawberry.type
