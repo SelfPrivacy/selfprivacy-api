@@ -3,6 +3,8 @@ from tests.test_backup import backups
 from tests.common import generate_backup_query
 
 
+import selfprivacy_api.services as all_services
+from selfprivacy_api.services import get_service_by_id
 from selfprivacy_api.graphql.common_types.service import service_to_graphql_service
 from selfprivacy_api.graphql.common_types.backup import (
     _AutobackupQuotas,
@@ -143,6 +145,7 @@ allSnapshots {
     id
     service {
         id
+        displayName
     }
     createdAt
     reason
@@ -304,6 +307,20 @@ def test_dummy_service_convertible_to_gql(dummy_service):
 def test_snapshots_empty(authorized_client, dummy_service, backups):
     snaps = api_snapshots(authorized_client)
     assert snaps == []
+
+
+def test_snapshots_orphaned_service(authorized_client, dummy_service, backups):
+    api_backup(authorized_client, dummy_service)
+    snaps = api_snapshots(authorized_client)
+    assert len(snaps) == 1
+
+    all_services.services.remove(dummy_service)
+    assert get_service_by_id(dummy_service.get_id()) is None
+
+    snaps = api_snapshots(authorized_client)
+    assert len(snaps) == 1
+    assert "Orphaned" in snaps[0]["service"]["displayName"]
+    assert dummy_service.get_id() in snaps[0]["service"]["displayName"]
 
 
 def test_start_backup(authorized_client, dummy_service, backups):

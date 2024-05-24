@@ -34,6 +34,24 @@ class BackupConfiguration:
     location_id: typing.Optional[str]
 
 
+# TODO: Ideally this should not be done in API but making an internal Service requires more work
+# than to make an API record about a service
+def tombstone_service(service_id: str) -> Service:
+    return Service(
+        id=service_id,
+        display_name=f"{service_id} (Orphaned)",
+        description="",
+        svg_icon="",
+        is_movable=False,
+        is_required=False,
+        is_enabled=False,
+        status=ServiceStatusEnum.OFF,
+        url=None,
+        can_be_backed_up=False,
+        backup_description="",
+    )
+
+
 @strawberry.type
 class Backup:
     @strawberry.field
@@ -55,27 +73,21 @@ class Backup:
         result = []
         snapshots = Backups.get_all_snapshots()
         for snap in snapshots:
+            api_service = None
             service = get_service_by_id(snap.service_name)
+
             if service is None:
-                service = Service(
-                    id=snap.service_name,
-                    display_name=f"{snap.service_name} (Orphaned)",
-                    description="",
-                    svg_icon="",
-                    is_movable=False,
-                    is_required=False,
-                    is_enabled=False,
-                    status=ServiceStatusEnum.OFF,
-                    url=None,
-                    dns_records=None,
-                    can_be_backed_up=False,
-                    backup_description="",
-                )
+                api_service = tombstone_service(snap.service_name)
             else:
-                service = service_to_graphql_service(service)
+                api_service = service_to_graphql_service(service)
+            if api_service is None:
+                raise NotImplementedError(
+                    f"Could not construct API Service record for:{snap.service_name}. This should be unreachable and is a bug if you see it."
+                )
+
             graphql_snap = SnapshotInfo(
                 id=snap.id,
-                service=service,
+                service=api_service,
                 created_at=snap.created_at,
                 reason=snap.reason,
             )

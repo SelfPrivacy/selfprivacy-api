@@ -208,5 +208,7 @@ def dummy_service(
     service.enable()
     yield service
 
-    # cleanup because apparently it matters wrt tasks
-    services.services.remove(service)
+    # Cleanup because apparently it matters wrt tasks
+    # Some tests may remove it from the list intentionally, this is fine
+    if service in services.services:
+        services.services.remove(service)
