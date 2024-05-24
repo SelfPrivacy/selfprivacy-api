@@ -19,7 +19,7 @@ class FlakeServiceManager:
     def _extract_services(
         self, input_string: str
     ) -> Tuple[Optional[str], Optional[str]]:
-        pattern = r"inputs\.(\w+)\.url\s*=\s*(\S+);"
+        pattern = r"inputs\.([\w-]+)\.url\s*=\s*([\S]+);"
         match = re.search(pattern, input_string)
 
         if match:
