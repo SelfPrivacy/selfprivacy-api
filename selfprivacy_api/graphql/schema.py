@@ -30,8 +30,9 @@ from selfprivacy_api.graphql.queries.storage import Storage
 from selfprivacy_api.graphql.queries.system import System
 
 from selfprivacy_api.graphql.subscriptions.jobs import ApiJob
-from selfprivacy_api.jobs import job_notifications
-from selfprivacy_api.graphql.queries.jobs import get_all_jobs
+from selfprivacy_api.graphql.subscriptions.jobs import (
+    job_updates as job_update_generator,
+)
 
 from selfprivacy_api.graphql.mutations.users_mutations import UsersMutations
 from selfprivacy_api.graphql.queries.users import Users
@@ -157,12 +158,10 @@ class Subscription:
         self, info: strawberry.types.Info
     ) -> AsyncGenerator[List[ApiJob], None]:
         reject_if_unauthenticated(info)
-
-        # Send the complete list of jobs every time anything gets updated
-        async for notification in job_notifications():
-            yield get_all_jobs()
+        return job_update_generator()
 
     @strawberry.subscription
+    # Used for testing, consider deletion to shrink attack surface
     async def count(self, info: strawberry.types.Info) -> AsyncGenerator[int, None]:
         reject_if_unauthenticated(info)
         for i in range(10):
