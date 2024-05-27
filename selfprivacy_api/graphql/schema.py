@@ -25,6 +25,7 @@ from selfprivacy_api.graphql.mutations.backup_mutations import BackupMutations
 from selfprivacy_api.graphql.queries.api_queries import Api
 from selfprivacy_api.graphql.queries.backup import Backup
 from selfprivacy_api.graphql.queries.jobs import Job
+from selfprivacy_api.graphql.queries.logs import Logs
 from selfprivacy_api.graphql.queries.services import Services
 from selfprivacy_api.graphql.queries.storage import Storage
 from selfprivacy_api.graphql.queries.system import System
@@ -52,6 +53,11 @@ class Query:
     def system(self) -> System:
         """System queries"""
         return System()
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    def logs(self) -> Logs:
+        """Log queries"""
+        return Logs()
 
     @strawberry.field(permission_classes=[IsAuthenticated])
     def users(self) -> Users:
