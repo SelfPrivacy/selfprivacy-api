@@ -543,8 +543,8 @@ def test_disable_enable(authorized_client, only_dummy_service):
     assert api_dummy_service["status"] == ServiceStatus.ACTIVE.value
 
 
-def test_move_immovable(authorized_client, only_dummy_service):
-    dummy_service = only_dummy_service
+def test_move_immovable(authorized_client, dummy_service_with_binds):
+    dummy_service = dummy_service_with_binds
     dummy_service.set_movable(False)
     root = BlockDevices().get_root_block_device()
     mutation_response = api_move(authorized_client, dummy_service, root.name)
