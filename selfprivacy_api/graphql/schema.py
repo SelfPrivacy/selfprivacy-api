@@ -136,8 +136,13 @@ class Mutation(
 
 
 # A cruft for Websockets
-def authenticated(info) -> bool:
+def authenticated(info: strawberry.types.Info) -> bool:
     return IsAuthenticated().has_permission(source=None, info=info)
+
+
+def reject_if_unauthenticated(info: strawberry.types.Info):
+    if not authenticated(info):
+        raise Exception(IsAuthenticated().message)
 
 
 @strawberry.type
@@ -151,19 +156,15 @@ class Subscription:
     async def job_updates(
         self, info: strawberry.types.Info
     ) -> AsyncGenerator[List[ApiJob], None]:
-        if not authenticated(info):
-            raise Exception(IsAuthenticated().message)
+        reject_if_unauthenticated(info)
 
         # Send the complete list of jobs every time anything gets updated
         async for notification in job_notifications():
             yield get_all_jobs()
 
-    # @strawberry.subscription
-    # async def job_updates(self) -> AsyncGenerator[List[ApiJob], None]:
-    #     return job_updates()
-
     @strawberry.subscription
-    async def count(self) -> AsyncGenerator[int, None]:
+    async def count(self, info: strawberry.types.Info) -> AsyncGenerator[int, None]:
+        reject_if_unauthenticated(info)
         for i in range(10):
             yield i
             await asyncio.sleep(0.5)
