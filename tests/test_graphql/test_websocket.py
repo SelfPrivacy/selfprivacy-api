@@ -162,9 +162,9 @@ def test_websocket_subscription_minimal_unauthorized(unauthenticated_websocket):
 
 
 async def read_one_job(websocket):
-    # bug? We only get them starting from the second job update
-    # that's why we receive two jobs in the list them
-    # the first update gets lost somewhere
+    # Bug? We only get them starting from the second job update
+    # That's why we receive two jobs in the list them
+    # The first update gets lost somewhere
     response = websocket.receive_json()
     return response
 
@@ -215,8 +215,16 @@ def test_websocket_subscription_unauthorized(unauthenticated_websocket):
     api_subscribe(websocket, id, JOBS_SUBSCRIPTION)
 
     response = websocket.receive_json()
+    # I do not really know why strawberry gives more info on this
+    # One versus the counter
+    payload = response["payload"][0]
+    assert isinstance(payload, dict)
+    assert "locations" in payload.keys()
+    # It looks like this 'locations': [{'column': 32, 'line': 1}]
+    # We cannot test locations feasibly
+    del payload["locations"]
     assert response == {
         "id": id,
-        "payload": [{"message": IsAuthenticated.message}],
+        "payload": [{"message": IsAuthenticated.message, "path": ["jobUpdates"]}],
         "type": "error",
     }
