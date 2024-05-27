@@ -34,6 +34,18 @@ jobUpdates {
 """
 
 
+def api_subscribe(websocket, id, subscription):
+    websocket.send_json(
+        {
+            "id": id,
+            "type": "subscribe",
+            "payload": {
+                "query": "subscription TestSubscription {" + subscription + "}",
+            },
+        }
+    )
+
+
 def connect_ws_authenticated(authorized_client) -> WebSocketTestSession:
     token = "Bearer " + str(DEVICE_WE_AUTH_TESTS_WITH["token"])
     return authorized_client.websocket_connect(
@@ -61,7 +73,7 @@ def init_graphql(websocket):
 def authenticated_websocket(
     authorized_client,
 ) -> Generator[WebSocketTestSession, None, None]:
-    # We use authorized_client only tohave token in the repo, this client by itself is not enough to authorize websocket
+    # We use authorized_client only to have token in the repo, this client by itself is not enough to authorize websocket
 
     ValueError(TOKEN_REPO.get_tokens())
     with connect_ws_authenticated(authorized_client) as websocket:
@@ -104,45 +116,30 @@ def test_websocket_graphql_ping(authorized_client):
         assert pong == {"type": "pong"}
 
 
-def api_subscribe(websocket, id, subscription):
-    websocket.send_json(
-        {
-            "id": id,
-            "type": "subscribe",
-            "payload": {
-                "query": "subscription TestSubscription {" + subscription + "}",
-            },
-        }
-    )
-
-
-def test_websocket_subscription_minimal(authorized_client):
+def test_websocket_subscription_minimal(authorized_client, authenticated_websocket):
     # Test a small endpoint that exists specifically for tests
-    client = authorized_client
-    with client.websocket_connect(
-        "/graphql", subprotocols=["graphql-transport-ws"]
-    ) as websocket:
-        init_graphql(websocket)
-        arbitrary_id = "3aaa2445"
-        api_subscribe(websocket, arbitrary_id, "count")
-        response = websocket.receive_json()
-        assert response == {
-            "id": arbitrary_id,
-            "payload": {"data": {"count": 0}},
-            "type": "next",
-        }
-        response = websocket.receive_json()
-        assert response == {
-            "id": arbitrary_id,
-            "payload": {"data": {"count": 1}},
-            "type": "next",
-        }
-        response = websocket.receive_json()
-        assert response == {
-            "id": arbitrary_id,
-            "payload": {"data": {"count": 2}},
-            "type": "next",
-        }
+    websocket = authenticated_websocket
+    init_graphql(websocket)
+    arbitrary_id = "3aaa2445"
+    api_subscribe(websocket, arbitrary_id, "count")
+    response = websocket.receive_json()
+    assert response == {
+        "id": arbitrary_id,
+        "payload": {"data": {"count": 0}},
+        "type": "next",
+    }
+    response = websocket.receive_json()
+    assert response == {
+        "id": arbitrary_id,
+        "payload": {"data": {"count": 1}},
+        "type": "next",
+    }
+    response = websocket.receive_json()
+    assert response == {
+        "id": arbitrary_id,
+        "payload": {"data": {"count": 2}},
+        "type": "next",
+    }
 
 
 def test_websocket_subscription_minimal_unauthorized(unauthenticated_websocket):
