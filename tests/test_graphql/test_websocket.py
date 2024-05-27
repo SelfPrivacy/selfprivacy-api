@@ -66,14 +66,12 @@ def authenticated_websocket(
     ValueError(TOKEN_REPO.get_tokens())
     with connect_ws_authenticated(authorized_client) as websocket:
         yield websocket
-        sleep(1)
 
 
 @pytest.fixture
 def unauthenticated_websocket(client) -> Generator[WebSocketTestSession, None, None]:
     with connect_ws_not_authenticated(client) as websocket:
         yield websocket
-        sleep(1)
 
 
 def test_websocket_connection_bare(authorized_client):
