@@ -106,39 +106,59 @@ def test_websocket_graphql_ping(authorized_client):
         assert pong == {"type": "pong"}
 
 
+def api_subscribe(websocket, id, subscription):
+    websocket.send_json(
+        {
+            "id": id,
+            "type": "subscribe",
+            "payload": {
+                "query": "subscription TestSubscription {" + subscription + "}",
+            },
+        }
+    )
+
+
 def test_websocket_subscription_minimal(authorized_client):
+    # Test a small endpoint that exists specifically for tests
     client = authorized_client
     with client.websocket_connect(
         "/graphql", subprotocols=["graphql-transport-ws"]
     ) as websocket:
         init_graphql(websocket)
-        websocket.send_json(
-            {
-                "id": "3aaa2445",
-                "type": "subscribe",
-                "payload": {
-                    "query": "subscription TestSubscription {count}",
-                },
-            }
-        )
+        arbitrary_id = "3aaa2445"
+        api_subscribe(websocket, arbitrary_id, "count")
         response = websocket.receive_json()
         assert response == {
-            "id": "3aaa2445",
+            "id": arbitrary_id,
             "payload": {"data": {"count": 0}},
             "type": "next",
         }
         response = websocket.receive_json()
         assert response == {
-            "id": "3aaa2445",
+            "id": arbitrary_id,
             "payload": {"data": {"count": 1}},
             "type": "next",
         }
         response = websocket.receive_json()
         assert response == {
-            "id": "3aaa2445",
+            "id": arbitrary_id,
             "payload": {"data": {"count": 2}},
             "type": "next",
         }
+
+
+def test_websocket_subscription_minimal_unauthorized(unauthenticated_websocket):
+    websocket = unauthenticated_websocket
+    init_graphql(websocket)
+    arbitrary_id = "3aaa2445"
+    api_subscribe(websocket, arbitrary_id, "count")
+
+    response = websocket.receive_json()
+    assert response == {
+        "id": arbitrary_id,
+        "payload": [{"message": IsAuthenticated.message}],
+        "type": "error",
+    }
 
 
 async def read_one_job(websocket):
@@ -153,15 +173,9 @@ async def read_one_job(websocket):
 async def test_websocket_subscription(authenticated_websocket, event_loop, empty_jobs):
     websocket = authenticated_websocket
     init_graphql(websocket)
-    websocket.send_json(
-        {
-            "id": "3aaa2445",
-            "type": "subscribe",
-            "payload": {
-                "query": "subscription TestSubscription {" + JOBS_SUBSCRIPTION + "}",
-            },
-        }
-    )
+    arbitrary_id = "3aaa2445"
+    api_subscribe(websocket, arbitrary_id, JOBS_SUBSCRIPTION)
+
     future = asyncio.create_task(read_one_job(websocket))
     jobs = []
     jobs.append(Jobs.add("bogus", "bogus.bogus", "yyyaaaaayy it works"))
@@ -197,19 +211,12 @@ async def test_websocket_subscription(authenticated_websocket, event_loop, empty
 def test_websocket_subscription_unauthorized(unauthenticated_websocket):
     websocket = unauthenticated_websocket
     init_graphql(websocket)
-    websocket.send_json(
-        {
-            "id": "3aaa2445",
-            "type": "subscribe",
-            "payload": {
-                "query": "subscription TestSubscription {" + JOBS_SUBSCRIPTION + "}",
-            },
-        }
-    )
+    id = "3aaa2445"
+    api_subscribe(websocket, id, JOBS_SUBSCRIPTION)
 
     response = websocket.receive_json()
     assert response == {
-        "id": "3aaa2445",
+        "id": id,
         "payload": [{"message": IsAuthenticated.message}],
         "type": "error",
     }
