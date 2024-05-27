@@ -4,6 +4,7 @@
 import asyncio
 from typing import AsyncGenerator, List
 import strawberry
+
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.mutations.deprecated_mutations import (
     DeprecatedApiMutations,
@@ -134,12 +135,25 @@ class Mutation(
         )
 
 
+# A cruft for Websockets
+def authenticated(info) -> bool:
+    return IsAuthenticated().has_permission(source=None, info=info)
+
+
 @strawberry.type
 class Subscription:
-    """Root schema for subscriptions"""
+    """Root schema for subscriptions.
+    Every field here should be an AsyncIterator or AsyncGenerator
+    It is not a part of the spec but graphql-core (dep of strawberryql)
+    demands it while the spec is vague in this area."""
 
     @strawberry.subscription
-    async def job_updates(self) -> AsyncGenerator[List[ApiJob], None]:
+    async def job_updates(
+        self, info: strawberry.types.Info
+    ) -> AsyncGenerator[List[ApiJob], None]:
+        if not authenticated(info):
+            raise Exception(IsAuthenticated().message)
+
         # Send the complete list of jobs every time anything gets updated
         async for notification in job_notifications():
             yield get_all_jobs()
