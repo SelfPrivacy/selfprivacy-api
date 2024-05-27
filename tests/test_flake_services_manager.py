@@ -1,9 +1,6 @@
 import pytest
 
-from selfprivacy_api.services.flake_service_manager import (
-    FlakeServiceManager,
-    FLAKE_CONFIG_PATH,
-)
+from selfprivacy_api.services.flake_service_manager import FlakeServiceManager
 
 all_services_file = """
 {
