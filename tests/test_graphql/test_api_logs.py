@@ -1,6 +1,8 @@
 from datetime import datetime
 from systemd import journal
 
+from tests.test_graphql.test_websocket import init_graphql
+
 
 def assert_log_entry_equals_to_journal_entry(api_entry, journal_entry):
     assert api_entry["message"] == journal_entry["MESSAGE"]
@@ -8,7 +10,7 @@ def assert_log_entry_equals_to_journal_entry(api_entry, journal_entry):
         datetime.fromisoformat(api_entry["timestamp"])
         == journal_entry["__REALTIME_TIMESTAMP"]
     )
-    assert api_entry["priority"] == journal_entry["PRIORITY"]
+    assert api_entry.get("priority") == journal_entry.get("PRIORITY")
     assert api_entry.get("systemdUnit") == journal_entry.get("_SYSTEMD_UNIT")
     assert api_entry.get("systemdSlice") == journal_entry.get("_SYSTEMD_SLICE")
 
@@ -131,3 +133,35 @@ def test_graphql_get_logs_with_down_border(authorized_client):
 
     for api_entry, journal_entry in zip(returned_entries, expected_entries):
         assert_log_entry_equals_to_journal_entry(api_entry, journal_entry)
+
+
+def test_websocket_subscription_for_logs(authorized_client):
+    with authorized_client.websocket_connect(
+        "/graphql", subprotocols=["graphql-transport-ws"]
+    ) as websocket:
+        init_graphql(websocket)
+        websocket.send_json(
+            {
+                "id": "3aaa2445",
+                "type": "subscribe",
+                "payload": {
+                    "query": "subscription TestSubscription { logEntries { message } }",
+                },
+            }
+        )
+
+        def read_until(message, limit=5):
+            i = 0
+            while i < limit:
+                msg = websocket.receive_json()["payload"]["data"]["logEntries"][
+                    "message"
+                ]
+                if msg == message:
+                    return
+                else:
+                    continue
+            raise Exception("Failed to read websocket data, timeout")
+
+        for i in range(0, 10):
+            journal.send(f"Lorem ipsum number {i}")
+            read_until(f"Lorem ipsum number {i}")

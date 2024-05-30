@@ -25,7 +25,7 @@ from selfprivacy_api.graphql.mutations.backup_mutations import BackupMutations
 from selfprivacy_api.graphql.queries.api_queries import Api
 from selfprivacy_api.graphql.queries.backup import Backup
 from selfprivacy_api.graphql.queries.jobs import Job
-from selfprivacy_api.graphql.queries.logs import Logs
+from selfprivacy_api.graphql.queries.logs import LogEntry, Logs
 from selfprivacy_api.graphql.queries.services import Services
 from selfprivacy_api.graphql.queries.storage import Storage
 from selfprivacy_api.graphql.queries.system import System
@@ -34,6 +34,7 @@ from selfprivacy_api.graphql.subscriptions.jobs import ApiJob
 from selfprivacy_api.graphql.subscriptions.jobs import (
     job_updates as job_update_generator,
 )
+from selfprivacy_api.graphql.subscriptions.logs import log_stream
 
 from selfprivacy_api.graphql.mutations.users_mutations import UsersMutations
 from selfprivacy_api.graphql.queries.users import Users
@@ -173,6 +174,11 @@ class Subscription:
         for i in range(10):
             yield i
             await asyncio.sleep(0.5)
+
+    @strawberry.subscription
+    async def log_entries(self, info: strawberry.types.Info) -> AsyncGenerator[LogEntry, None]:
+        reject_if_unauthenticated(info)
+        return log_stream()
 
 
 schema = strawberry.Schema(

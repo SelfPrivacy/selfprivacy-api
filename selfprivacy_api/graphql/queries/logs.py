@@ -26,7 +26,7 @@ def get_events_from_journal(
 class LogEntry:
     message: str = strawberry.field()
     timestamp: datetime = strawberry.field()
-    priority: int = strawberry.field()
+    priority: typing.Optional[int] = strawberry.field()
     systemd_unit: typing.Optional[str] = strawberry.field()
     systemd_slice: typing.Optional[str] = strawberry.field()
 
@@ -34,7 +34,7 @@ class LogEntry:
         self.entry = journal_entry
         self.message = journal_entry["MESSAGE"]
         self.timestamp = journal_entry["__REALTIME_TIMESTAMP"]
-        self.priority = journal_entry["PRIORITY"]
+        self.priority = journal_entry.get("PRIORITY")
         self.systemd_unit = journal_entry.get("_SYSTEMD_UNIT")
         self.systemd_slice = journal_entry.get("_SYSTEMD_SLICE")
 
