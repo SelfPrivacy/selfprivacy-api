@@ -82,8 +82,18 @@ class DummyService(Service):
 
     @classmethod
     def get_status(cls) -> ServiceStatus:
+        filepath = cls.status_file()
+        if filepath in [None, ""]:
+            raise ValueError(f"We do not have a path for our test dummy status file!")
+        if not path.exists(filepath):
+            raise FileNotFoundError(filepath)
+
         with open(cls.status_file(), "r") as file:
             status_string = file.read().strip()
+        if status_string in [None, ""]:
+            raise NotImplementedError(
+                f"It appears our test service no longer has any status in the statusfile. Filename = {cls.status_file}, status string inside is '{status_string}' (quoted) "
+            )
         return ServiceStatus[status_string]
 
     @classmethod
@@ -91,6 +101,10 @@ class DummyService(Service):
         cls, new_status: ServiceStatus, delay_sec: float
     ):
         """simulating a delay on systemd side"""
+        if not isinstance(new_status, ServiceStatus):
+            raise ValueError(
+                f"received an invalid new status for test service. new status: {str(new_status)}"
+            )
         if delay_sec == 0:
             cls.set_status(new_status)
             return
