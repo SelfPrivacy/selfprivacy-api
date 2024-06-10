@@ -1,4 +1,5 @@
 """Storage queries."""
+
 # pylint: disable=too-few-public-methods
 import typing
 import strawberry
@@ -18,9 +19,11 @@ class Storage:
         """Get list of volumes"""
         return [
             StorageVolume(
-                total_space=str(volume.fssize)
-                if volume.fssize is not None
-                else str(volume.size),
+                total_space=(
+                    str(volume.fssize)
+                    if volume.fssize is not None
+                    else str(volume.size)
+                ),
                 free_space=str(volume.fsavail),
                 used_space=str(volume.fsused),
                 root=volume.is_root(),
