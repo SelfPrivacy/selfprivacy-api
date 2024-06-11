@@ -44,7 +44,7 @@ class LogEntry:
 
 
 @strawberry.type
-class PageMeta:
+class LogsPageMeta:
     up_cursor: typing.Optional[str] = strawberry.field()
     down_cursor: typing.Optional[str] = strawberry.field()
 
@@ -57,22 +57,22 @@ class PageMeta:
 
 @strawberry.type
 class PaginatedEntries:
-    page_meta: PageMeta = strawberry.field(description="Metadata to aid in pagination.")
+    page_meta: LogsPageMeta = strawberry.field(description="Metadata to aid in pagination.")
     entries: typing.List[LogEntry] = strawberry.field(
         description="The list of log entries."
     )
 
-    def __init__(self, meta: PageMeta, entries: typing.List[LogEntry]):
+    def __init__(self, meta: LogsPageMeta, entries: typing.List[LogEntry]):
         self.page_meta = meta
         self.entries = entries
 
     @staticmethod
     def from_entries(entries: typing.List[LogEntry]):
         if entries == []:
-            return PaginatedEntries(PageMeta(None, None), [])
+            return PaginatedEntries(LogsPageMeta(None, None), [])
 
         return PaginatedEntries(
-            PageMeta(
+            LogsPageMeta(
                 entries[0].cursor(),
                 entries[-1].cursor(),
             ),
