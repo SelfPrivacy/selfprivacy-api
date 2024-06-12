@@ -1,16 +1,7 @@
 ROUNDCUBE_ICON = """
-<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="9.14 141.8 573.65 573.65">
-<style type="text/css">
-.st0{fill-rule:evenodd;clip-rule:evenodd;fill:#404F54;}
-.st1{fill-rule:evenodd;clip-rule:evenodd;fill:#E5E5E5;}
-.st2{fill-rule:evenodd;clip-rule:evenodd;fill:#CCCCCC;}
-.st3{fill-rule:evenodd;clip-rule:evenodd;fill:#37BEFF;}
-</style>
-<polygon class="st3" points="582.79,549.77 295.96,384.1 295.96,207.27 582.79,372.95 "/>
-<polygon class="st0" points="9.14,549.77 295.96,384.1 295.96,207.27 9.14,372.95 "/>
-<path class="st2" d="M295.96,141.8c109.56,0,198.41,88.85,198.41,198.41c0,109.56-88.85,198.41-198.41,198.41 c-109.56,0-198.41-88.85-198.41-198.41C97.55,230.65,186.4,141.8,295.96,141.8"/>
-<path class="st1" d="M295.96,141.8c109.6,0,198.48,88.85,198.48,198.41c0,109.56-88.88,198.41-198.48,198.41 c-62.91-42.34-88.94-127.64-88.94-198.3S233.05,184.22,295.96,141.8"/>
-<polygon class="st3" points="582.79,372.95 295.96,538.62 295.96,715.45 582.79,549.77 "/>
-<polygon class="st0" points="9.14,372.95 295.96,538.62 295.96,715.45 9.14,549.77 "/>
+<svg fill="none" version="1.1" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <g transform="translate(29.07 -.3244)">
+        <path d="m-17.02 2.705c-4.01 2e-7 -7.283 3.273-7.283 7.283 0 0.00524-1.1e-5 0.01038 0 0.01562l-1.85 1.068v5.613l9.105 5.26 9.104-5.26v-5.613l-1.797-1.037c1.008e-4 -0.01573 0.00195-0.03112 0.00195-0.04688-1e-7 -4.01-3.271-7.283-7.281-7.283zm0 2.012c2.923 1e-7 5.27 2.349 5.27 5.271 0 2.923-2.347 5.27-5.27 5.27-2.923-1e-6 -5.271-2.347-5.271-5.27 0-2.923 2.349-5.271 5.271-5.271z" fill="#000" fill-rule="evenodd" stroke-linejoin="bevel"/>
+    </g>
 </svg>
 """

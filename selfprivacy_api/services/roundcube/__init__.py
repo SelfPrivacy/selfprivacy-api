@@ -25,12 +25,12 @@ class Roundcube(Service):
     @staticmethod
     def get_display_name() -> str:
         """Return service display name."""
-        return "roundcube"
+        return "Roundcube"
 
     @staticmethod
     def get_description() -> str:
         """Return service description."""
-        return "Roundcube is a open source webmail software."
+        return "Roundcube is an open source webmail software."
 
     @staticmethod
     def get_svg_icon() -> str:
@@ -41,10 +41,15 @@ class Roundcube(Service):
     def get_url() -> Optional[str]:
         """Return service url."""
         domain = get_domain()
-        return f"https://roundcube.{domain}"
+        subdomain = get_subdomain()
+        return f"https://{subdomain}.{domain}"
 
     @staticmethod
     def get_subdomain() -> Optional[str]:
+        with ReadUserData() as data:
+            if "roundcube" in data["modules"]:
+                return data["modules"]["roundcube"]["subdomain"]
+
         return "roundcube"
 
     @staticmethod
