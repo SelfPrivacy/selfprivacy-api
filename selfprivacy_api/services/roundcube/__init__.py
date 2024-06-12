@@ -103,7 +103,7 @@ class Roundcube(Service):
 
     @staticmethod
     def get_folders() -> List[str]:
-        return ["/var/lib/postgresql"]
+        return []
 
     def move_to_volume(self, volume: BlockDevice) -> Job:
         raise NotImplementedError("roundcube service is not movable")
