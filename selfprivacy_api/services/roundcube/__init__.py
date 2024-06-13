@@ -50,7 +50,7 @@ class Roundcube(Service):
             if "roundcube" in data["modules"]:
                 return data["modules"]["roundcube"]["subdomain"]
 
-        return "roundcube"
+        return "webmail"
 
     @staticmethod
     def is_movable() -> bool:
