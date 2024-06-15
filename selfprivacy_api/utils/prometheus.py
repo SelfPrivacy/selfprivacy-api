@@ -19,7 +19,7 @@ class PrometheusInfo:
 
 class PrometheusQueries:
     @staticmethod
-    def _send_request(endpoint="/api/v1/query_range", params=None) -> PrometheusInfo:
+    def _send_request(endpoint="/api/v1/query", params=None) -> PrometheusInfo:
         try:
             response = requests.get(f"{PROMETHEUS_URL}{endpoint}", params=params)
             return PrometheusInfo(
