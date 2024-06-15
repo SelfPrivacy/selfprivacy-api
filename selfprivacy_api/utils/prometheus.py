@@ -41,9 +41,7 @@ class PrometheusQueries:
 
         params = {"query": query, "start": start, "end": end, "step": 60}
 
-        return PrometheusClient._send_request(
-            endpoint="/api/v1/query_range", params=params
-        )
+        return self._send_request(params=params)
 
     @staticmethod
     def disks_usage(): ...
