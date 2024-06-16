@@ -44,4 +44,11 @@ class PrometheusQueries:
         return self._send_request(params=params)
 
     @staticmethod
-    def disks_usage(): ...
+    def disk_usage() -> PrometheusInfo:
+        """Get disk usage information"""
+        start = int((datetime.now() - timedelta(minutes=20)).timestamp())
+        end = int(datetime.now().timestamp())
+        query = 'rate(node_filesystem_size_bytes{mountpoint="/"}[5m])'
+
+        params = {"query": query, "start": start, "end": end, "step": 60}
+        return self._send_request(params=params)
