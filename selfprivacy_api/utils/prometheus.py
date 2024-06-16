@@ -48,7 +48,7 @@ class PrometheusQueries:
         """Get disk usage information"""
         start = int((datetime.now() - timedelta(minutes=20)).timestamp())
         end = int(datetime.now().timestamp())
-        query = 'rate(node_filesystem_size_bytes{mountpoint="/"}[5m])'
+        query = '100 - (100 * ((node_filesystem_avail_bytes{mountpoint="/",fstype!="rootfs"} )  / (node_filesystem_size_bytes{mountpoint="/",fstype!="rootfs"}) ))'
 
         params = {"query": query, "start": start, "end": end, "step": 60}
         return self._send_request(params=params)
