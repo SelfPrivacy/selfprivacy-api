@@ -25,10 +25,13 @@ class UpdateServicesFlakeList(Migration):
         return "Check if all required services are in the flake list"
 
     def is_migration_needed(self):
-        with FlakeServiceManager:
-            if not manager.services == CORRECT_SERVICES_LIST:
+        # this do not delete custom links for testing
+        for key, value in manager.services.items():
+            if key not in CORRECT_SERVICES_LIST:
                 return True
 
     def migrate(self):
         with FlakeServiceManager:
-            manager.services = CORRECT_SERVICES_LIST
+            for key, value in CORRECT_SERVICES_LIST.items():
+                if key not in manager.services:
+                    manager.services[key] = value
