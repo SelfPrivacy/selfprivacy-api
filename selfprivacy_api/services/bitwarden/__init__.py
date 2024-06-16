@@ -1,4 +1,5 @@
 """Class representing Bitwarden service"""
+
 import base64
 import subprocess
 from typing import Optional, List
@@ -42,10 +43,6 @@ class Bitwarden(Service):
         """Return service url."""
         domain = get_domain()
         return f"https://password.{domain}"
-
-    @staticmethod
-    def get_subdomain() -> Optional[str]:
-        return "password"
 
     @staticmethod
     def is_movable() -> bool:

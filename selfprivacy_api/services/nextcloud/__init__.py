@@ -1,4 +1,5 @@
 """Class representing Nextcloud service."""
+
 import base64
 import subprocess
 from typing import Optional, List
@@ -40,10 +41,6 @@ class Nextcloud(Service):
         """Return service url."""
         domain = get_domain()
         return f"https://cloud.{domain}"
-
-    @staticmethod
-    def get_subdomain() -> Optional[str]:
-        return "cloud"
 
     @staticmethod
     def is_movable() -> bool:
