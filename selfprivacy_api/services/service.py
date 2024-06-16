@@ -1,4 +1,5 @@
 """Abstract class for a service running on a server"""
+
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
@@ -73,13 +74,14 @@ class Service(ABC):
         """
         pass
 
-    @staticmethod
-    @abstractmethod
     def get_subdomain() -> Optional[str]:
         """
         The assigned primary subdomain for this service.
         """
-        pass
+        with ReadUserData() as data:
+            if self.get_display_name() in data["modules"]:
+                if "subdomain" in data["modules"][self.get_display_name()]:
+                    return data["modules"][self.get_display_name()]["subdomain"]
 
     @classmethod
     def get_user(cls) -> Optional[str]:
