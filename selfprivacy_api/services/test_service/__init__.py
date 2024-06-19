@@ -5,6 +5,7 @@ import subprocess
 
 from typing import List
 from os import path
+from pathlib import Path
 
 # from enum import Enum
 
@@ -73,8 +74,11 @@ class DummyService(Service):
     @classmethod
     def status_file(cls) -> str:
         dir = cls.folders[0]
-        # we do not REALLY want to store our state in our declared folders
-        return path.join(dir, "..", "service_status")
+        # We do not want to store our state in our declared folders
+        # Because they are moved and tossed in tests wildly
+        parent = Path(dir).parent
+
+        return path.join(parent, "service_status")
 
     @classmethod
     def set_status(cls, status: ServiceStatus):

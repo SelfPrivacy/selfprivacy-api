@@ -2,7 +2,7 @@ import pytest
 import shutil
 
 from typing import Generator
-from os import mkdir
+from os import mkdir, rmdir
 
 from selfprivacy_api.utils.block_devices import BlockDevices
 
@@ -605,6 +605,11 @@ def test_graphql_move_service_without_folders_on_old_volume(
     mock_lsblk_devices,
     dummy_service: DummyService,
 ):
+    """
+    Situation when you have folders in the filetree but they are not mounted
+    but just folders
+    """
+
     target = "sda1"
     BlockDevices().update()
     assert BlockDevices().get_block_device(target) is not None
@@ -616,6 +621,59 @@ def test_graphql_move_service_without_folders_on_old_volume(
     data = get_data(mutation_response)["services"]["moveService"]
     assert_errorcode(data, 400)
     assert "sda2/test_service is not found" in data["message"]
+
+
+def test_move_empty(
+    authorized_client, generic_userdata, mock_check_volume, dummy_service, fp
+):
+    """
+    A reregister of uninitialized service with no data.
+    No binds in place yet, and no rebuilds should happen.
+    """
+
+    origin = "sda1"
+    target = "sda2"
+    assert BlockDevices().get_block_device(target) is not None
+    assert BlockDevices().get_block_device(origin) is not None
+
+    dummy_service.set_drive(origin)
+    dummy_service.set_simulated_moves(False)
+    dummy_service.disable()
+
+    unit_name = "sp-nixos-rebuild.service"
+    rebuild_command = ["systemctl", "start", unit_name]
+    prepare_nixos_rebuild_calls(fp, unit_name)
+
+    # We will NOT be mounting and remounting folders
+    mount_command = ["mount", fp.any()]
+    unmount_command = ["umount", fp.any()]
+    fp.pass_command(mount_command, 2)
+    fp.pass_command(unmount_command, 2)
+
+    # We will NOT be changing ownership
+    chown_command = ["chown", fp.any()]
+    fp.pass_command(chown_command, 2)
+
+    # We have virtual binds encapsulating our understanding where this should go.
+    assert len(dummy_service.binds()) == 2
+
+    # Remove all folders
+    for folder in dummy_service.get_folders():
+        shutil.rmtree(folder)
+
+    # They are virtual and unaffected by folder removal
+    assert len(dummy_service.binds()) == 2
+
+    mutation_response = api_move(authorized_client, dummy_service, target)
+
+    data = get_data(mutation_response)["services"]["moveService"]
+    assert_ok(data)
+    assert data["service"] is not None
+
+    assert fp.call_count(rebuild_command) == 0
+    assert fp.call_count(mount_command) == 0
+    assert fp.call_count(unmount_command) == 0
+    assert fp.call_count(chown_command) == 0
 
 
 def test_graphql_move_service(
