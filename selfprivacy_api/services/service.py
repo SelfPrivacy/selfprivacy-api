@@ -2,6 +2,7 @@
 
 from abc import ABC, abstractmethod
 from typing import List, Optional
+from os.path import exists
 
 from selfprivacy_api import utils
 from selfprivacy_api.services.config_item import ServiceConfigItem
@@ -238,6 +239,16 @@ class Service(ABC):
         return storage_used
 
     @classmethod
+    def has_folders(cls) -> int:
+        """
+        If there are no folders on disk, moving is noop
+        """
+        for folder in cls.get_folders():
+            if exists(folder):
+                return True
+        return False
+
+    @classmethod
     def get_dns_records(cls, ip4: str, ip6: Optional[str]) -> List[ServiceDnsRecord]:
         subdomain = cls.get_subdomain()
         display_name = cls.get_display_name()
@@ -358,7 +369,10 @@ class Service(ABC):
         binds = self.binds()
         if binds == []:
             raise MoveError("nothing to move")
-        check_binds(current_volume_name, binds)
+
+        # It is ok if service is uninitialized, we will just reregister it
+        if self.has_folders():
+            check_binds(current_volume_name, binds)
 
     def do_move_to_volume(
         self,
@@ -401,7 +415,18 @@ class Service(ABC):
         service_name = self.get_display_name()
 
         report_progress(0, job, "Performing pre-move checks...")
+
         self.assert_can_move(volume)
+        if not self.has_folders():
+            self.set_location(volume)
+            Jobs.update(
+                job=job,
+                status=JobStatus.FINISHED,
+                result=f"{service_name} moved successfully(no folders).",
+                status_text=f"NOT starting {service_name}",
+                progress=100,
+            )
+            return job
 
         report_progress(5, job, f"Stopping {service_name}...")
         assert self is not None
