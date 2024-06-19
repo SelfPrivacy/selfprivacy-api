@@ -45,8 +45,12 @@ class Roundcube(Service):
         return False
 
     @staticmethod
+    def can_be_backed_up() -> bool:
+        return False
+
+    @staticmethod
     def get_backup_description() -> str:
-        return "Secrets that are used to encrypt the communication."
+        return "Nothing to backup."
 
     @staticmethod
     def get_status() -> ServiceStatus:
