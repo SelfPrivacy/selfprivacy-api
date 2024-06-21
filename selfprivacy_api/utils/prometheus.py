@@ -6,7 +6,7 @@ import time
 import typing
 from typing import Optional
 
-PROMETHEUS_URL = "http://localhost:9090"
+PROMETHEUS_URL = "http://localhost:9001"
 
 
 class PrometheusInfo:
