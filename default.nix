@@ -18,6 +18,7 @@ pythonPackages.buildPythonPackage rec {
     strawberry-graphql
     typing-extensions
     uvicorn
+    requests
   ];
   pythonImportsCheck = [ "selfprivacy_api" ];
   doCheck = false;
