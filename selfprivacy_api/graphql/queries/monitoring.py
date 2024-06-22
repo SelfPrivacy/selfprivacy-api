@@ -1,6 +1,3 @@
-import requests
-
-
 from selfprivacy_api.utils.prometheus import PrometheusQueries
 
 

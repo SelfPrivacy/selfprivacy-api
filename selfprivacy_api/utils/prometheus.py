@@ -2,8 +2,8 @@
 
 # pylint: disable=too-few-public-methods
 import time
+import requests
 
-import typing
 from typing import Optional
 
 PROMETHEUS_URL = "http://localhost:9001"
