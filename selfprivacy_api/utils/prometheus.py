@@ -3,8 +3,8 @@
 # pylint: disable=too-few-public-methods
 import time
 import requests
-
-from typing import Optional
+from typing import Optional, Dict
+from datetime import datetime, timedelta
 
 PROMETHEUS_URL = "http://localhost:9001"
 
@@ -13,7 +13,7 @@ class PrometheusInfo:
     """ """
 
     http_response: int
-    output: Optional[typing.Dict] = None
+    output: Optional[Dict] = None
     error: Optional[str] = None
 
 
