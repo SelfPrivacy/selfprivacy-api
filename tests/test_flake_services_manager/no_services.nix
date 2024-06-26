@@ -1,4 +1,4 @@
 {
-    description = "SelfPrivacy NixOS PoC modules/extensions/bundles/packages/etc";
-    outputs = _: { };
+  description = "SelfPrivacy NixOS PoC modules/extensions/bundles/packages/etc";
+  outputs = _: { };
 }

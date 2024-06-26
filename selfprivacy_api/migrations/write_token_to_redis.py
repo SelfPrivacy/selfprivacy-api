@@ -15,10 +15,10 @@ from selfprivacy_api.utils import ReadUserData, UserDataFiles
 class WriteTokenToRedis(Migration):
     """Load Json tokens into Redis"""
 
-    def get_migration_name(self):
+    def get_migration_name(self) -> str:
         return "write_token_to_redis"
 
-    def get_migration_description(self):
+    def get_migration_description(self) -> str:
         return "Loads the initial token into redis token storage"
 
     def is_repo_empty(self, repo: AbstractTokensRepository) -> bool:
@@ -38,7 +38,7 @@ class WriteTokenToRedis(Migration):
             print(e)
             return None
 
-    def is_migration_needed(self):
+    def is_migration_needed(self) -> bool:
         try:
             if self.get_token_from_json() is not None and self.is_repo_empty(
                 RedisTokensRepository()
@@ -47,8 +47,9 @@ class WriteTokenToRedis(Migration):
         except Exception as e:
             print(e)
             return False
+        return False
 
-    def migrate(self):
+    def migrate(self) -> None:
         # Write info about providers to userdata.json
         try:
             token = self.get_token_from_json()

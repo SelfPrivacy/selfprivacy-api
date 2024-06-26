@@ -2,14 +2,14 @@
 
 import base64
 import subprocess
-from typing import Optional, List
+from typing import List, Optional
 
 from selfprivacy_api.jobs import Job
 from selfprivacy_api.utils.systemd import (
     get_service_status_from_several_units,
 )
 from selfprivacy_api.services.service import Service, ServiceStatus
-from selfprivacy_api.utils import get_domain
+from selfprivacy_api.utils import ReadUserData, get_domain
 from selfprivacy_api.utils.block_devices import BlockDevice
 from selfprivacy_api.services.roundcube.icon import ROUNDCUBE_ICON
 
@@ -37,20 +37,20 @@ class Roundcube(Service):
         """Read SVG icon from file and return it as base64 encoded string."""
         return base64.b64encode(ROUNDCUBE_ICON.encode("utf-8")).decode("utf-8")
 
-    @staticmethod
-    def get_url() -> Optional[str]:
+    @classmethod
+    def get_url(cls) -> Optional[str]:
         """Return service url."""
         domain = get_domain()
-        subdomain = get_subdomain()
+        subdomain = cls.get_subdomain()
         return f"https://{subdomain}.{domain}"
 
-    @staticmethod
-    def get_subdomain() -> Optional[str]:
+    @classmethod
+    def get_subdomain(cls) -> Optional[str]:
         with ReadUserData() as data:
             if "roundcube" in data["modules"]:
                 return data["modules"]["roundcube"]["subdomain"]
 
-        return "webmail"
+        return "roundcube"
 
     @staticmethod
     def is_movable() -> bool:

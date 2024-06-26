@@ -36,14 +36,14 @@ class JitsiMeet(Service):
         """Read SVG icon from file and return it as base64 encoded string."""
         return base64.b64encode(JITSI_ICON.encode("utf-8")).decode("utf-8")
 
-    @staticmethod
-    def get_url() -> Optional[str]:
+    @classmethod
+    def get_url(cls) -> Optional[str]:
         """Return service url."""
         domain = get_domain()
         return f"https://meet.{domain}"
 
-    @staticmethod
-    def get_subdomain() -> Optional[str]:
+    @classmethod
+    def get_subdomain(cls) -> Optional[str]:
         return "meet"
 
     @staticmethod

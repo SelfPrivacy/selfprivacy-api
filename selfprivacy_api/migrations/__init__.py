@@ -14,14 +14,12 @@ from selfprivacy_api.migrations.write_token_to_redis import WriteTokenToRedis
 from selfprivacy_api.migrations.check_for_system_rebuild_jobs import (
     CheckForSystemRebuildJobs,
 )
-from selfprivacy_api.migrations.update_services_flake_list import UpdateServicesFlakeList
-from selfprivacy_api.migrations.add_roundcube_to_userdata import AddRoundcubeToUserdata
+from selfprivacy_api.migrations.add_roundcube import AddRoundcube
 
 migrations = [
     WriteTokenToRedis(),
     CheckForSystemRebuildJobs(),
-    UpdateServicesFlakeList(),
-    AddRoundcubeToUserdata(),
+    AddRoundcube(),
 ]
 
 
