@@ -4,6 +4,8 @@ import base64
 import subprocess
 from typing import Optional, List
 
+from selfprivacy_api.utils import get_domain
+
 from selfprivacy_api.utils.systemd import get_service_status
 from selfprivacy_api.services.service import Service, ServiceStatus
 from selfprivacy_api.services.gitea.icon import GITEA_ICON
@@ -31,6 +33,12 @@ class Gitea(Service):
     def get_svg_icon() -> str:
         """Read SVG icon from file and return it as base64 encoded string."""
         return base64.b64encode(GITEA_ICON.encode("utf-8")).decode("utf-8")
+
+    @staticmethod
+    def get_url() -> Optional[str]:
+        """Return service url."""
+        domain = get_domain()
+        return f"https://git.{domain}"
 
     @staticmethod
     def is_movable() -> bool:

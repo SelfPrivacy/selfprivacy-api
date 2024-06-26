@@ -4,7 +4,6 @@ from abc import ABC, abstractmethod
 from typing import List, Optional
 
 from selfprivacy_api import utils
-from selfprivacy_api.utils import get_domain
 from selfprivacy_api.utils import ReadUserData, WriteUserData
 from selfprivacy_api.utils.waitloop import wait_until_true
 from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
@@ -67,13 +66,13 @@ class Service(ABC):
         """
         pass
 
+    @staticmethod
+    @abstractmethod
     def get_url() -> Optional[str]:
         """
         The url of the service if it is accessible from the internet browser.
         """
-        domain = get_domain()
-        subdomain = self.get_subdomain()
-        return f"https://{subdomain}.{domain}"
+        pass
 
     def get_subdomain() -> Optional[str]:
         """

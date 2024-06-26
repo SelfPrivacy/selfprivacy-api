@@ -4,6 +4,8 @@ import base64
 import subprocess
 from typing import Optional, List
 
+from selfprivacy_api.utils import get_domain
+
 from selfprivacy_api.services.owned_path import OwnedPath
 from selfprivacy_api.utils.systemd import get_service_status
 from selfprivacy_api.services.service import Service, ServiceStatus
@@ -29,6 +31,12 @@ class Pleroma(Service):
     @staticmethod
     def get_svg_icon() -> str:
         return base64.b64encode(PLEROMA_ICON.encode("utf-8")).decode("utf-8")
+
+    @staticmethod
+    def get_url() -> Optional[str]:
+        """Return service url."""
+        domain = get_domain()
+        return f"https://social.{domain}"
 
     @staticmethod
     def is_movable() -> bool:

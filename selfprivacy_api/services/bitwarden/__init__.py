@@ -4,6 +4,8 @@ import base64
 import subprocess
 from typing import Optional, List
 
+from selfprivacy_api.utils import get_domain
+
 from selfprivacy_api.utils.systemd import get_service_status
 from selfprivacy_api.services.service import Service, ServiceStatus
 from selfprivacy_api.services.bitwarden.icon import BITWARDEN_ICON
@@ -35,6 +37,12 @@ class Bitwarden(Service):
     @staticmethod
     def get_user() -> str:
         return "vaultwarden"
+
+    @staticmethod
+    def get_url() -> Optional[str]:
+        """Return service url."""
+        domain = get_domain()
+        return f"https://password.{domain}"
 
     @staticmethod
     def is_movable() -> bool:
