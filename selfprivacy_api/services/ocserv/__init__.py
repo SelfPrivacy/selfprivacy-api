@@ -1,5 +1,4 @@
 """Class representing ocserv service."""
-
 import base64
 import subprocess
 import typing
@@ -33,6 +32,10 @@ class Ocserv(Service):
     def get_url() -> typing.Optional[str]:
         """Return service url."""
         return None
+
+    @staticmethod
+    def get_subdomain() -> typing.Optional[str]:
+        return "vpn"
 
     @staticmethod
     def is_movable() -> bool:

@@ -1,5 +1,4 @@
 """Class representing Nextcloud service."""
-
 import base64
 import subprocess
 from typing import Optional, List
@@ -37,6 +36,10 @@ class Pleroma(Service):
         """Return service url."""
         domain = get_domain()
         return f"https://social.{domain}"
+
+    @staticmethod
+    def get_subdomain() -> Optional[str]:
+        return "social"
 
     @staticmethod
     def is_movable() -> bool:

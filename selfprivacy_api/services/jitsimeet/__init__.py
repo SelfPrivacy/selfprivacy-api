@@ -1,5 +1,4 @@
 """Class representing Jitsi Meet service"""
-
 import base64
 import subprocess
 from typing import Optional, List
@@ -42,6 +41,10 @@ class JitsiMeet(Service):
         """Return service url."""
         domain = get_domain()
         return f"https://meet.{domain}"
+
+    @staticmethod
+    def get_subdomain() -> Optional[str]:
+        return "meet"
 
     @staticmethod
     def is_movable() -> bool:
