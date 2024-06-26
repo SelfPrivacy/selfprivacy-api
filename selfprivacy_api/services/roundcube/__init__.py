@@ -45,6 +45,14 @@ class Roundcube(Service):
         return f"https://{subdomain}.{domain}"
 
     @staticmethod
+    def get_subdomain() -> Optional[str]:
+        with ReadUserData() as data:
+            if "roundcube" in data["modules"]:
+                return data["modules"]["roundcube"]["subdomain"]
+
+        return "webmail"
+
+    @staticmethod
     def is_movable() -> bool:
         return False
 
