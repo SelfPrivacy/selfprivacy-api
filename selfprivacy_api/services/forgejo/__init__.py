@@ -7,31 +7,34 @@ from selfprivacy_api.utils import get_domain
 
 from selfprivacy_api.utils.systemd import get_service_status
 from selfprivacy_api.services.service import Service, ServiceStatus
-from selfprivacy_api.services.gitea.icon import GITEA_ICON
+from selfprivacy_api.services.forgejo.icon import FORGEJO_ICON
 
 
-class Gitea(Service):
-    """Class representing Gitea service"""
+class Forgejo(Service):
+    """Class representing Forgejo service.
+
+    Previously was Gitea, so some IDs are still called gitea for compatibility.
+    """
 
     @staticmethod
     def get_id() -> str:
-        """Return service id."""
+        """Return service id. For compatibility keep in gitea."""
         return "gitea"
 
     @staticmethod
     def get_display_name() -> str:
         """Return service display name."""
-        return "Gitea"
+        return "Forgejo"
 
     @staticmethod
     def get_description() -> str:
         """Return service description."""
-        return "Gitea is a Git forge."
+        return "Forgejo is a Git forge."
 
     @staticmethod
     def get_svg_icon() -> str:
         """Read SVG icon from file and return it as base64 encoded string."""
-        return base64.b64encode(GITEA_ICON.encode("utf-8")).decode("utf-8")
+        return base64.b64encode(FORGEJO_ICON.encode("utf-8")).decode("utf-8")
 
     @staticmethod
     def get_url() -> Optional[str]:
@@ -65,19 +68,19 @@ class Gitea(Service):
         Return code 3 means service is stopped.
         Return code 4 means service is off.
         """
-        return get_service_status("gitea.service")
+        return get_service_status("forgejo.service")
 
     @staticmethod
     def stop():
-        subprocess.run(["systemctl", "stop", "gitea.service"])
+        subprocess.run(["systemctl", "stop", "forgejo.service"])
 
     @staticmethod
     def start():
-        subprocess.run(["systemctl", "start", "gitea.service"])
+        subprocess.run(["systemctl", "start", "forgejo.service"])
 
     @staticmethod
     def restart():
-        subprocess.run(["systemctl", "restart", "gitea.service"])
+        subprocess.run(["systemctl", "restart", "forgejo.service"])
 
     @staticmethod
     def get_configuration():
@@ -93,4 +96,5 @@ class Gitea(Service):
 
     @staticmethod
     def get_folders() -> List[str]:
+        """The data folder is still called gitea for compatibility."""
         return ["/var/lib/gitea"]
