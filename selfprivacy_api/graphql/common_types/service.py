@@ -164,20 +164,20 @@ class Service:
         # By the "type" field convert every dict into a ConfigItem. In the future there will be more types.
         return [
             StringConfigItem(
-                id=item["id"],
-                description=item["description"],
-                widget=item["widget"],
-                type=item["type"],
-                value=item["value"],
-                regex=item.get("regex"),
+                id=config_items[item]["id"],
+                description=config_items[item]["description"],
+                widget=config_items[item]["widget"],
+                type=config_items[item]["type"],
+                value=config_items[item]["value"],
+                regex=config_items[item].get("regex"),
             )
-            if item["type"] == "string"
+            if config_items[item]["type"] == "string"
             else BoolConfigItem(
-                id=item["id"],
-                description=item["description"],
-                widget=item["widget"],
-                type=item["type"],
-                value=item["value"],
+                id=config_items[item]["id"],
+                description=config_items[item]["description"],
+                widget=config_items[item]["widget"],
+                type=config_items[item]["type"],
+                value=config_items[item]["value"],
             )
             for item in config_items
         ]
