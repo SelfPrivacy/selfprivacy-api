@@ -1,6 +1,6 @@
 """Abstract class for a service running on a server"""
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from selfprivacy_api import utils
 from selfprivacy_api.utils import ReadUserData, WriteUserData
@@ -179,14 +179,14 @@ class Service(ABC):
         """Restart the service. Usually this means restarting systemd unit."""
         pass
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def get_configuration():
+    def get_configuration(cls) -> dict:
         pass
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def set_configuration(config_items):
+    def set_configuration(cls, config_items):
         pass
 
     @staticmethod

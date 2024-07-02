@@ -34,6 +34,16 @@ class ServiceMutationReturn(GenericMutationReturn):
 
 
 @strawberry.input
+class SetServiceConfigurationInput:
+    """Set service configuration input type.
+    The values might be of different types: str or bool.
+    """
+
+    service_id: str
+    configuration: strawberry.scalars.JSON
+
+
+@strawberry.input
 class MoveServiceInput:
     """Move service input type."""
 
@@ -156,6 +166,34 @@ class ServicesMutations:
             code=200,
             service=service_to_graphql_service(service),
         )
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    def set_service_configuration(
+        self, input: SetServiceConfigurationInput
+    ) -> ServiceMutationReturn:
+        """Set the new configuration values"""
+        service = get_service_by_id(input.service_id)
+        if service is None:
+            return ServiceMutationReturn(
+                success=False,
+                message=f"Service does not exist: {input.service_id}",
+                code=404,
+            )
+        try:
+            service.set_configuration(input.configuration)
+            return ServiceMutationReturn(
+                success=True,
+                message="Service configuration updated.",
+                code=200,
+                service=service_to_graphql_service(service),
+            )
+        except Exception as e:
+            return ServiceMutationReturn(
+                success=False,
+                message=pretty_error(e),
+                code=400,
+                service=service_to_graphql_service(service),
+            )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def move_service(self, input: MoveServiceInput) -> ServiceJobMutationReturn:

@@ -163,12 +163,12 @@ class DummyService(Service):
         cls.set_status(ServiceStatus.RELOADING)  # is a correct one?
         cls.change_status_with_async_delay(ServiceStatus.ACTIVE, cls.startstop_delay)
 
-    @staticmethod
-    def get_configuration():
+    @classmethod
+    def get_configuration(cls):
         return {}
 
-    @staticmethod
-    def set_configuration(config_items):
+    @classmethod
+    def set_configuration(cls, config_items):
         return super().set_configuration(config_items)
 
     @staticmethod

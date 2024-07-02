@@ -88,12 +88,12 @@ class JitsiMeet(Service):
         )
         subprocess.run(["systemctl", "restart", "jicofo.service"], check=False)
 
-    @staticmethod
-    def get_configuration():
+    @classmethod
+    def get_configuration(cls):
         return {}
 
-    @staticmethod
-    def set_configuration(config_items):
+    @classmethod
+    def set_configuration(cls, config_items):
         return super().set_configuration(config_items)
 
     @staticmethod

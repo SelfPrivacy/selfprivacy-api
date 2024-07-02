@@ -103,6 +103,25 @@ def service_dns_to_graphql(record: ServiceDnsRecord) -> DnsRecord:
     )
 
 
+@strawberry.interface
+class ConfigItem:
+    id: str
+    description: str
+    widget: str
+    type: str
+
+
+@strawberry.type
+class StringConfigItem(ConfigItem):
+    value: str
+    regex: Optional[str]
+
+
+@strawberry.type
+class BoolConfigItem(ConfigItem):
+    value: bool
+
+
 @strawberry.type
 class Service:
     id: str
@@ -131,6 +150,37 @@ class Service:
     def storage_usage(self) -> ServiceStorageUsage:
         """Get storage usage for a service"""
         return get_storage_usage(self)
+
+    @strawberry.field
+    def configuration(self) -> Optional[List[ConfigItem]]:
+        """Get service configuration"""
+        service = get_service_by_id(self.id)
+        if service is None:
+            return None
+        config_items = service.get_configuration()
+        # If it is an empty dict, return none
+        if not config_items:
+            return None
+        # By the "type" field convert every dict into a ConfigItem. In the future there will be more types.
+        return [
+            StringConfigItem(
+                id=item["id"],
+                description=item["description"],
+                widget=item["widget"],
+                type=item["type"],
+                value=item["value"],
+                regex=item.get("regex"),
+            )
+            if item["type"] == "string"
+            else BoolConfigItem(
+                id=item["id"],
+                description=item["description"],
+                widget=item["widget"],
+                type=item["type"],
+                value=item["value"],
+            )
+            for item in config_items
+        ]
 
     # TODO: fill this
     @strawberry.field

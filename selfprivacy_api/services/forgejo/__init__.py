@@ -3,11 +3,16 @@ import base64
 import subprocess
 from typing import Optional, List
 
-from selfprivacy_api.utils import get_domain
+from selfprivacy_api.utils import get_domain, ReadUserData, WriteUserData
 
 from selfprivacy_api.utils.systemd import get_service_status
 from selfprivacy_api.services.service import Service, ServiceStatus
 from selfprivacy_api.services.forgejo.icon import FORGEJO_ICON
+from selfprivacy_api.services.config_item import (
+    StringConfigItem,
+    BoolConfigItem,
+    ConfigItem,
+)
 
 
 class Forgejo(Service):
@@ -15,6 +20,41 @@ class Forgejo(Service):
 
     Previously was Gitea, so some IDs are still called gitea for compatibility.
     """
+
+    config_items: dict[str, ConfigItem] = {
+        "subdomain": StringConfigItem(
+            id="subdomain",
+            default_value="git",
+            description="Subdomain",
+            regex=r"[A-Za-z0-9][A-Za-z0-9\-]{0,61}[A-Za-z0-9]",
+            widget="subdomain",
+        ),
+        "appName": StringConfigItem(
+            id="appName",
+            default_value="SelfPrivacy git Service",
+            description="The name displayed in the web interface",
+        ),
+        "enableLfs": BoolConfigItem(
+            id="enableLfs",
+            default_value=True,
+            description="Enable Git LFS",
+        ),
+        "forcePrivate": BoolConfigItem(
+            id="forcePrivate",
+            default_value=False,
+            description="Force all new repositories to be private",
+        ),
+        "disableRegistration": BoolConfigItem(
+            id="disableRegistration",
+            default_value=False,
+            description="Disable registration of new users",
+        ),
+        "requireSigninView": BoolConfigItem(
+            id="requireSigninView",
+            default_value=False,
+            description="Require signin to view any page",
+        ),
+    }
 
     @staticmethod
     def get_id() -> str:
@@ -82,13 +122,28 @@ class Forgejo(Service):
     def restart():
         subprocess.run(["systemctl", "restart", "forgejo.service"])
 
-    @staticmethod
-    def get_configuration():
-        return {}
+    @classmethod
+    def get_configuration(cls):
+        with ReadUserData() as user_data:
+            return {
+                key: cls.config_items[key].as_dict(
+                    user_data.get("modules", {}).get(cls.get_id(), {})
+                )
+                for key in cls.config_items
+            }
 
-    @staticmethod
-    def set_configuration(config_items):
-        return super().set_configuration(config_items)
+    @classmethod
+    def set_configuration(cls, config_items):
+        with WriteUserData() as user_data:
+            if "modules" not in user_data:
+                user_data["modules"] = {}
+            if cls.get_id() not in user_data["modules"]:
+                user_data["modules"][cls.get_id()] = {}
+            for key, value in config_items.items():
+                cls.config_items[key].set_value(
+                    value,
+                    user_data["modules"][cls.get_id()],
+                )
 
     @staticmethod
     def get_logs():

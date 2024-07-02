@@ -72,12 +72,12 @@ class Pleroma(Service):
         subprocess.run(["systemctl", "restart", "pleroma.service"])
         subprocess.run(["systemctl", "restart", "postgresql.service"])
 
-    @staticmethod
-    def get_configuration(config_items):
+    @classmethod
+    def get_configuration(cls):
         return {}
 
-    @staticmethod
-    def set_configuration(config_items):
+    @classmethod
+    def set_configuration(cls, config_items):
         return super().set_configuration(config_items)
 
     @staticmethod
