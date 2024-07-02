@@ -28,6 +28,8 @@ from selfprivacy_api.graphql.queries.services import Services
 from selfprivacy_api.graphql.queries.storage import Storage
 from selfprivacy_api.graphql.queries.system import System
 
+from selfprivacy_api.graphql.common_types.service import StringConfigItem, BoolConfigItem
+
 from selfprivacy_api.graphql.mutations.users_mutations import UsersMutations
 from selfprivacy_api.graphql.queries.users import Users
 from selfprivacy_api.jobs.test import test_job
@@ -147,4 +149,5 @@ schema = strawberry.Schema(
     query=Query,
     mutation=Mutation,
     subscription=Subscription,
+    types=[StringConfigItem, BoolConfigItem]
 )
