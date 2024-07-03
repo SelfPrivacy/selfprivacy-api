@@ -71,3 +71,28 @@ class BoolConfigItem(ConfigItem):
 
     def set_value(self, value, service_options):
         service_options[self.id] = value
+
+
+class EnumConfigItem(ConfigItem):
+    def __init__(
+        self,
+        id: str,
+        default_value: str,
+        description: str,
+        options: list[str],
+        widget: Optional[str] = None,
+    ):
+        self.id = id
+        self.type = "enum"
+        self.default_value = default_value
+        self.description = description
+        self.options = options
+        self.widget = widget if widget else "select"
+
+    def get_value(self, service_options):
+        return service_options.get(self.id, self.default_value)
+
+    def set_value(self, value, service_options):
+        if value not in self.options:
+            raise ValueError(f"Value {value} not in options {self.options}")
+        service_options[self.id] = value

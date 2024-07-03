@@ -11,6 +11,7 @@ from selfprivacy_api.services.forgejo.icon import FORGEJO_ICON
 from selfprivacy_api.services.config_item import (
     StringConfigItem,
     BoolConfigItem,
+    EnumConfigItem,
     ConfigItem,
 )
 
@@ -53,6 +54,19 @@ class Forgejo(Service):
             id="requireSigninView",
             default_value=False,
             description="Require signin to view any page",
+        ),
+        "defaultTheme": EnumConfigItem(
+            id="defaultTheme",
+            default_value="forgejo-auto",
+            description="Default theme",
+            options=[
+                "forgejo-auto",
+                "forgejo-light",
+                "forgejo-dark",
+                "auto",
+                "gitea",
+                "arc-green",
+            ],
         ),
     }
 
