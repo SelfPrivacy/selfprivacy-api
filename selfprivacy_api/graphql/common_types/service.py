@@ -134,34 +134,36 @@ class EnumConfigItem(ConfigItem):
     options: list[str]
 
 
-def config_item_to_graphql(item: ServiceConfigItem) -> ConfigItem:
-    if isinstance(item, StringServiceConfigItem):
+def config_item_to_graphql(item: dict) -> ConfigItem:
+    item_type = item.get("type")
+    if item_type == "string":
         return StringConfigItem(
-            id=item.id,
-            description=item.description,
-            widget=item.widget,
-            type=item.type,
-            value=item.default_value,
-            regex=item.regex.pattern if item.regex else None,
+            id=item["id"],
+            description=item["description"],
+            widget=item["widget"],
+            type=item_type,
+            value=item["default_value"],
+            regex=item.get("regex")
         )
-    if isinstance(item, BoolServiceConfigItem):
+    elif item_type == "bool":
         return BoolConfigItem(
-            id=item.id,
-            description=item.description,
-            widget=item.widget,
-            type=item.type,
-            value=item.default_value,
+            id=item["id"],
+            description=item["description"],
+            widget=item["widget"],
+            type=item_type,
+            value=item["default_value"],
         )
-    if isinstance(item, EnumServiceConfigItem):
+    elif item_type == "enum":
         return EnumConfigItem(
-            id=item.id,
-            description=item.description,
-            widget=item.widget,
-            type=item.type,
-            value=item.default_value,
-            options=item.options,
+            id=item["id"],
+            description=item["description"],
+            widget=item["widget"],
+            type=item_type,
+            value=item["default_value"],
+            options=item["options"],
         )
-    raise ValueError(f"Unknown config item type {item}")
+    else:
+        raise ValueError(f"Unknown config item type {item_type}")
 
 
 @strawberry.type
