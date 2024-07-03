@@ -10,6 +10,12 @@ from selfprivacy_api.services import get_service_by_id, get_services_by_location
 from selfprivacy_api.services import Service as ServiceInterface
 from selfprivacy_api.services import ServiceDnsRecord
 
+from selfprivacy_api.services.config_item import (
+    ServiceConfigItem,
+    StringServiceConfigItem,
+    BoolServiceConfigItem,
+    EnumServiceConfigItem,
+)
 from selfprivacy_api.utils.block_devices import BlockDevices
 from selfprivacy_api.utils.network import get_ip4, get_ip6
 
@@ -123,6 +129,42 @@ class BoolConfigItem(ConfigItem):
 
 
 @strawberry.type
+class EnumConfigItem(ConfigItem):
+    value: str
+    options: list[str]
+
+
+def config_item_to_graphql(item: ServiceConfigItem) -> ConfigItem:
+    if isinstance(item, StringServiceConfigItem):
+        return StringConfigItem(
+            id=item.id,
+            description=item.description,
+            widget=item.widget,
+            type=item.type,
+            value=item.default_value,
+            regex=item.regex.pattern if item.regex else None,
+        )
+    if isinstance(item, BoolServiceConfigItem):
+        return BoolConfigItem(
+            id=item.id,
+            description=item.description,
+            widget=item.widget,
+            type=item.type,
+            value=item.default_value,
+        )
+    if isinstance(item, EnumServiceConfigItem):
+        return EnumConfigItem(
+            id=item.id,
+            description=item.description,
+            widget=item.widget,
+            type=item.type,
+            value=item.default_value,
+            options=item.options,
+        )
+    raise ValueError(f"Unknown config item type {item}")
+
+
+@strawberry.type
 class Service:
     id: str
     display_name: str
@@ -162,25 +204,7 @@ class Service:
         if not config_items:
             return None
         # By the "type" field convert every dict into a ConfigItem. In the future there will be more types.
-        return [
-            StringConfigItem(
-                id=config_items[item]["id"],
-                description=config_items[item]["description"],
-                widget=config_items[item]["widget"],
-                type=config_items[item]["type"],
-                value=config_items[item]["value"],
-                regex=config_items[item].get("regex"),
-            )
-            if config_items[item]["type"] == "string"
-            else BoolConfigItem(
-                id=config_items[item]["id"],
-                description=config_items[item]["description"],
-                widget=config_items[item]["widget"],
-                type=config_items[item]["type"],
-                value=config_items[item]["value"],
-            )
-            for item in config_items
-        ]
+        return [config_item_to_graphql(item) for item in config_items]
 
     # TODO: fill this
     @strawberry.field

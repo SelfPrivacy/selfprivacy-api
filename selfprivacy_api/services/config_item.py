@@ -3,7 +3,7 @@ import re
 from typing import Optional
 
 
-class ConfigItem(ABC):
+class ServiceConfigItem(ABC):
     id: str
     description: str
     widget: str
@@ -27,7 +27,7 @@ class ConfigItem(ABC):
         }
 
 
-class StringConfigItem(ConfigItem):
+class StringServiceConfigItem(ServiceConfigItem):
     def __init__(
         self,
         id: str,
@@ -52,7 +52,7 @@ class StringConfigItem(ConfigItem):
         service_options[self.id] = value
 
 
-class BoolConfigItem(ConfigItem):
+class BoolServiceConfigItem(ServiceConfigItem):
     def __init__(
         self,
         id: str,
@@ -73,7 +73,7 @@ class BoolConfigItem(ConfigItem):
         service_options[self.id] = value
 
 
-class EnumConfigItem(ConfigItem):
+class EnumServiceConfigItem(ServiceConfigItem):
     def __init__(
         self,
         id: str,

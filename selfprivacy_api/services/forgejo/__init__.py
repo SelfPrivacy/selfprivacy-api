@@ -9,10 +9,10 @@ from selfprivacy_api.utils.systemd import get_service_status
 from selfprivacy_api.services.service import Service, ServiceStatus
 from selfprivacy_api.services.forgejo.icon import FORGEJO_ICON
 from selfprivacy_api.services.config_item import (
-    StringConfigItem,
-    BoolConfigItem,
-    EnumConfigItem,
-    ConfigItem,
+    StringServiceConfigItem,
+    BoolServiceConfigItem,
+    EnumServiceConfigItem,
+    ServiceConfigItem,
 )
 
 
@@ -22,40 +22,40 @@ class Forgejo(Service):
     Previously was Gitea, so some IDs are still called gitea for compatibility.
     """
 
-    config_items: dict[str, ConfigItem] = {
-        "subdomain": StringConfigItem(
+    config_items: dict[str, ServiceConfigItem] = {
+        "subdomain": StringServiceConfigItem(
             id="subdomain",
             default_value="git",
             description="Subdomain",
             regex=r"[A-Za-z0-9][A-Za-z0-9\-]{0,61}[A-Za-z0-9]",
             widget="subdomain",
         ),
-        "appName": StringConfigItem(
+        "appName": StringServiceConfigItem(
             id="appName",
             default_value="SelfPrivacy git Service",
             description="The name displayed in the web interface",
         ),
-        "enableLfs": BoolConfigItem(
+        "enableLfs": BoolServiceConfigItem(
             id="enableLfs",
             default_value=True,
             description="Enable Git LFS",
         ),
-        "forcePrivate": BoolConfigItem(
+        "forcePrivate": BoolServiceConfigItem(
             id="forcePrivate",
             default_value=False,
             description="Force all new repositories to be private",
         ),
-        "disableRegistration": BoolConfigItem(
+        "disableRegistration": BoolServiceConfigItem(
             id="disableRegistration",
             default_value=False,
             description="Disable registration of new users",
         ),
-        "requireSigninView": BoolConfigItem(
+        "requireSigninView": BoolServiceConfigItem(
             id="requireSigninView",
             default_value=False,
             description="Require signin to view any page",
         ),
-        "defaultTheme": EnumConfigItem(
+        "defaultTheme": EnumServiceConfigItem(
             id="defaultTheme",
             default_value="forgejo-auto",
             description="Default theme",

@@ -31,6 +31,7 @@ from selfprivacy_api.graphql.queries.system import System
 from selfprivacy_api.graphql.common_types.service import (
     StringConfigItem,
     BoolConfigItem,
+    EnumConfigItem,
 )
 
 from selfprivacy_api.graphql.mutations.users_mutations import UsersMutations
@@ -152,5 +153,9 @@ schema = strawberry.Schema(
     query=Query,
     mutation=Mutation,
     subscription=Subscription,
-    types=[StringConfigItem, BoolConfigItem],
+    types=[
+        StringConfigItem,
+        BoolConfigItem,
+        EnumConfigItem,
+    ],
 )
