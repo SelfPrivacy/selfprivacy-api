@@ -24,6 +24,6 @@ class IsAuthenticated(BasePermission):
             print("Printing connection params from the ws connect!")
             print(connection_params)
             token = connection_params.get("Authorization")
-        if token in None:
+        if token is None:
             return False
         return is_token_valid(token.replace("Bearer ", ""))
