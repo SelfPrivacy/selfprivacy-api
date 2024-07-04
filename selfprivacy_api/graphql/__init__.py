@@ -17,5 +17,10 @@ class IsAuthenticated(BasePermission):
         if token is None:
             token = info.context["request"].query_params.get("token")
         if token is None:
+            connection_params = info.context.get("connection_params")
+            print("Printing connection params from the ws connect!")
+            print(connection_params)
+            token = connection_params.get("Authorization")
+        if token in None:
             return False
         return is_token_valid(token.replace("Bearer ", ""))
