@@ -142,6 +142,9 @@ def authenticated(info: strawberry.types.Info) -> bool:
 
 
 def reject_if_unauthenticated(info: strawberry.types.Info):
+    connection_params = info.context.get("connection_params")
+    print("Printing connection params from the ws connect!")
+    print(connection_params)
     if not authenticated(info):
         raise Exception(IsAuthenticated().message)
 

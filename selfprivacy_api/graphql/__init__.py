@@ -13,9 +13,6 @@ class IsAuthenticated(BasePermission):
     message = "You must be authenticated to access this resource."
 
     def has_permission(self, source: typing.Any, info: Info, **kwargs) -> bool:
-        connection_params = info.context.get("connection_params")
-        print("Printing connection params from the ws connect!")
-        print(connection_params)
         token = info.context["request"].headers.get("Authorization")
         if token is None:
             token = info.context["request"].query_params.get("token")
