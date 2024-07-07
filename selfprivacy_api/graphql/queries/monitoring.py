@@ -1,3 +1,5 @@
+import strawberry
+
 from selfprivacy_api.utils.prometheus import PrometheusQueries
 
 
@@ -8,5 +10,5 @@ class Monitoring:
         return PrometheusQueries.disks_usage()
 
     @strawberry.field
-    def disks_usage():
-        return PrometheusQueries.disks_usage()
+    def cpu_usage():
+        return PrometheusQueries.cpu_usage()

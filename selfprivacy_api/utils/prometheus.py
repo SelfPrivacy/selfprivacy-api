@@ -1,7 +1,6 @@
 """Prometheus monitoring queries."""
 
 # pylint: disable=too-few-public-methods
-import time
 import requests
 from typing import Optional, Dict
 from datetime import datetime, timedelta
@@ -34,26 +33,57 @@ class PrometheusQueries:
 
     @staticmethod
     def cpu_usage(
-        start: int = int((datetime.now() - timedelta(minutes=20)).timestamp()),
-        end: int = int(datetime.now().timestamp()),
-        step: int = 60,
+        start: Optional[int] = None,
+        end: Optional[int] = None,
+        step: int = 60,  # seconds
     ) -> PrometheusInfo:
-        """Get CPU information"""
+        """Get CPU information,.
+
+        Args:
+            start (int, optional): Unix timestamp indicating the start time.
+                Defaults to 20 minutes ago if not provided.
+            end (int, optional): Unix timestamp indicating the end time.
+                Defaults to current time if not provided.
+            step (int): Interval in seconds for querying disk usage data.
+        """
+
+        if not start:
+            start = int((datetime.now() - timedelta(minutes=20)).timestamp())
+
+        if not end:
+            end = int(datetime.now().timestamp())
 
         query = '100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)'
 
         params = {"query": query, "start": start, "end": end, "step": step}
 
-        return self._send_request(params=params)
+        return PrometheusQueries._send_request(params=params)
 
     @staticmethod
     def disk_usage(
-        start: int = int((datetime.now() - timedelta(minutes=20)).timestamp()),
-        end: int = int(datetime.now().timestamp()),
-        step: int = 60,
+        start: Optional[int] = None,
+        end: Optional[int] = None,
+        step: int = 60,  # seconds
     ) -> PrometheusInfo:
-        """Get disk usage information"""
+        """
+        Get disk usage information.
+
+        Args:
+            start (int, optional): Unix timestamp indicating the start time.
+                Defaults to 20 minutes ago if not provided.
+            end (int, optional): Unix timestamp indicating the end time.
+                Defaults to current time if not provided.
+            step (int): Interval in seconds for querying disk usage data.
+        """
+
+        if not start:
+            start = int((datetime.now() - timedelta(minutes=20)).timestamp())
+
+        if not end:
+            end = int(datetime.now().timestamp())
+
         query = '100 - (100 * ((node_filesystem_avail_bytes{mountpoint="/",fstype!="rootfs"} )  / (node_filesystem_size_bytes{mountpoint="/",fstype!="rootfs"}) ))'
 
         params = {"query": query, "start": start, "end": end, "step": step}
-        return self._send_request(params=params)
+
+        return PrometheusQueries._send_request(params=params)
