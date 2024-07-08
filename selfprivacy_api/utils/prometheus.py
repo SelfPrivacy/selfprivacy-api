@@ -68,6 +68,33 @@ class PrometheusQueries:
         return PrometheusQueries._send_query(query, start, end, step)
 
     @staticmethod
+    def memory_usage(
+        start: Optional[int] = None,
+        end: Optional[int] = None,
+        step: int = 60,  # seconds
+    ) -> PrometheusQueryResult:
+        """
+        Get memory usage.
+
+        Args:
+            start (int, optional): Unix timestamp indicating the start time.
+                Defaults to 20 minutes ago if not provided.
+            end (int, optional): Unix timestamp indicating the end time.
+                Defaults to current time if not provided.
+            step (int): Interval in seconds for querying memory usage data.
+        """
+
+        if not start:
+            start = int((datetime.now() - timedelta(minutes=20)).timestamp())
+
+        if not end:
+            end = int(datetime.now().timestamp())
+
+        query = "100 - (100 * (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))"
+
+        return PrometheusQueries._send_query(query, start, end, step)
+
+    @staticmethod
     def disk_usage(
         start: Optional[int] = None,
         end: Optional[int] = None,
