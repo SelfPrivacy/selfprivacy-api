@@ -3,14 +3,10 @@
 # pylint: disable=missing-function-docstring
 
 import pytest
-from datetime import datetime, timezone
-
 from tests.test_graphql.common import (
     assert_empty,
     get_data,
     assert_ok,
-    assert_errorcode,
-    assert_original,
 )
 
 
@@ -51,14 +47,6 @@ MOCK_CPU_USAGE_RESPONSE = {
         }
     }
 }
-
-
-@pytest.fixture
-def mock_post():
-    with patch(
-        "path.to.authorized_client.post", return_value=mock_response
-    ) as mock_method:
-        yield mock_method
 
 
 MOCK_DISKS_USAGE_RESPONSE = {
@@ -148,37 +136,54 @@ MOCK_MEMORY_USAGE_RESPONSE = {
 
 
 DISKS_USAGE = """
-query DefShouldSleepEnough {
+query TestDisksUsage {
     monitoring { 
-        disks_usage { 
-        <ты не сделал как я просил вывод данных из Prometheus, по этому тут будет ошибка>
-        } 
+        disks_usage
     }
 }
 """
 
 DISKS_USAGE_WITH_OPTIONS = """
-query DefShouldSleepEnough($start: int, $end: int, $step: int) {
+query TestDisksUsageWithOptions($start: int, $end: int, $step: int) {
     monitoring { 
-        disks_usage(start: $start, end: $end, step: $step) { 
-        <ты не сделал как я просил вывод данных из Prometheus, по этому тут будет ошибка>
-        } 
+        disks_usage(start: $start, end: $end, step: $step)
     }
 }
 """
 
 
-def test_graphql_get_disks_usage(client, authorized_client):
+@pytest.fixture
+def mock_cpu_usage(mocker):
+    mock = mocker.patch(
+        "selfprivacy_api.utils.PrometheusQueries._sent_query",
+        return_value=MOCK_CPU_USAGE_RESPONSE["data"]["monitoring"]["cpu_usage"],
+    )
+    return mock
+
+
+@pytest.fixture
+def mock_disk_usage(mocker):
+    mock = mocker.patch(
+        "selfprivacy_api.utils.PrometheusQueries._sent_query",
+        return_value=MOCK_DISKS_USAGE_RESPONSE["data"]["monitoring"]["disk_usage"],
+    )
+    return mock
+
+
+def test_graphql_get_disks_usage(client, authorized_client, mock_disk_usage):
     response = authorized_client.post(
         "/graphql",
         json={"query": DISKS_USAGE},
     )
 
-    data = get_data(response)["monitoring"]["disks_usage"]
+    data = get_data(response)
     assert_ok(data)
+    assert data["data"] == MOCK_DISKS_USAGE_RESPONSE["data"]
 
 
-def test_graphql_get_disks_usage_with_options(client, authorized_client):
+def test_graphql_get_disks_usage_with_options(
+    client, authorized_client, mock_disk_usage
+):
     response = authorized_client.post(
         "/graphql",
         json={
@@ -191,8 +196,9 @@ def test_graphql_get_disks_usage_with_options(client, authorized_client):
         },
     )
 
-    data = get_data(response)["monitoring"]["disks_usage"]
+    data = get_data(response)
     assert_ok(data)
+    assert data["data"] == MOCK_DISKS_USAGE_RESPONSE["data"]
 
 
 def test_graphql_get_disks_usage_unauthorized(client):
