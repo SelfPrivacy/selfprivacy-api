@@ -78,7 +78,7 @@ def generate_mock_query_with_options(name):
 @pytest.fixture
 def mock_cpu_usage(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.utils.PrometheusQueries._sent_query",
+        "selfprivacy_api.utils.prometheus.PrometheusQueries._sent_query",
         return_value=MOCK_CPU_USAGE_RESPONSE["data"]["monitoring"]["cpu_usage"],
     )
     return mock
@@ -87,7 +87,7 @@ def mock_cpu_usage(mocker):
 @pytest.fixture
 def mock_memory_usage(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.utils.PrometheusQueries._sent_query",
+        "selfprivacy_api.utils.prometheus.PrometheusQueries._sent_query",
         return_value=MOCK_MEMORY_USAGE_RESPONSE["data"]["monitoring"]["memory_usage"],
     )
     return mock
@@ -96,7 +96,7 @@ def mock_memory_usage(mocker):
 @pytest.fixture
 def mock_disk_usage(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.utils.PrometheusQueries._sent_query",
+        "selfprivacy_api.utils.prometheus.PrometheusQueries._sent_query",
         return_value=MOCK_DISK_USAGE_RESPONSE["data"]["monitoring"]["disk_usage"],
     )
     return mock
