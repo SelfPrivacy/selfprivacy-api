@@ -2,10 +2,12 @@
 
 # pylint: disable=too-few-public-methods
 import requests
+
 import strawberry
+from strawberry.scalars import JSON
+
 from dataclasses import dataclass
 from typing import Optional
-from strawberry.scalars import JSON
 from datetime import datetime, timedelta
 
 PROMETHEUS_URL = "http://localhost:9001"

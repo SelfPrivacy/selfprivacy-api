@@ -3,6 +3,7 @@
 # pylint: disable=missing-function-docstring
 
 import pytest
+
 from selfprivacy_api.utils.prometheus import PrometheusQueryResult
 from tests.test_graphql.common import (
     assert_empty,
@@ -83,7 +84,9 @@ def prometheus_result_from_dict(dict):
 def mock_cpu_usage(mocker):
     mock = mocker.patch(
         "selfprivacy_api.utils.prometheus.PrometheusQueries._send_query",
-        return_value=prometheus_result_from_dict(MOCK_CPU_USAGE_RESPONSE["data"]["monitoring"]["cpuUsage"]),
+        return_value=prometheus_result_from_dict(
+            MOCK_CPU_USAGE_RESPONSE["data"]["monitoring"]["cpuUsage"]
+        ),
     )
     return mock
 
@@ -92,7 +95,9 @@ def mock_cpu_usage(mocker):
 def mock_memory_usage(mocker):
     mock = mocker.patch(
         "selfprivacy_api.utils.prometheus.PrometheusQueries._send_query",
-        return_value=prometheus_result_from_dict(MOCK_MEMORY_USAGE_RESPONSE["data"]["monitoring"]["memoryUsage"]),
+        return_value=prometheus_result_from_dict(
+            MOCK_MEMORY_USAGE_RESPONSE["data"]["monitoring"]["memoryUsage"]
+        ),
     )
     return mock
 
@@ -101,7 +106,9 @@ def mock_memory_usage(mocker):
 def mock_disk_usage(mocker):
     mock = mocker.patch(
         "selfprivacy_api.utils.prometheus.PrometheusQueries._send_query",
-        return_value=prometheus_result_from_dict(MOCK_DISK_USAGE_RESPONSE["data"]["monitoring"]["diskUsage"]),
+        return_value=prometheus_result_from_dict(
+            MOCK_DISK_USAGE_RESPONSE["data"]["monitoring"]["diskUsage"]
+        ),
     )
     return mock
 
