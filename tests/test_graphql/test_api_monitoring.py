@@ -15,7 +15,7 @@ def generate_mock_metrics(name: str):
         "data": {
             "monitoring": {
                 f"{name}": {
-                    "resultType": "matrix",
+                    "result_type": "matrix",
                     "result": [
                         {
                             "metric": {"instance": "127.0.0.1:9002"},
@@ -50,16 +50,16 @@ def generate_mock_metrics(name: str):
     }
 
 
-MOCK_CPU_USAGE_RESPONSE = generate_mock_metrics("cpu_usage")
-MOCK_DISK_USAGE_RESPONSE = generate_mock_metrics("disk_usage")
-MOCK_MEMORY_USAGE_RESPONSE = generate_mock_metrics("memory_usage")
+MOCK_CPU_USAGE_RESPONSE = generate_mock_metrics("cpuUsage")
+MOCK_DISK_USAGE_RESPONSE = generate_mock_metrics("diskUsage")
+MOCK_MEMORY_USAGE_RESPONSE = generate_mock_metrics("memoryUsage")
 
 
 def generate_mock_query(name):
     return f"""
     query Query {{
         monitoring {{
-            {name}
+            {name} {{ resultType, result }}
         }}
     }}
     """
@@ -67,9 +67,9 @@ def generate_mock_query(name):
 
 def generate_mock_query_with_options(name):
     return f"""
-    query Query($start: int, $end: int, $step: int) {{
+    query Query($start: Int, $end: Int, $step: Int) {{
         monitoring {{
-            {name}(start: $start, end: $end, step: $step)
+            {name}(start: $start, end: $end, step: $step) {{ resultType, result }}
         }}
     }}
     """
@@ -78,8 +78,8 @@ def generate_mock_query_with_options(name):
 @pytest.fixture
 def mock_cpu_usage(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.utils.prometheus.PrometheusQueries._sent_query",
-        return_value=MOCK_CPU_USAGE_RESPONSE["data"]["monitoring"]["cpu_usage"],
+        "selfprivacy_api.utils.prometheus.PrometheusQueries._send_query",
+        return_value=MOCK_CPU_USAGE_RESPONSE["data"]["monitoring"]["cpuUsage"],
     )
     return mock
 
@@ -87,8 +87,8 @@ def mock_cpu_usage(mocker):
 @pytest.fixture
 def mock_memory_usage(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.utils.prometheus.PrometheusQueries._sent_query",
-        return_value=MOCK_MEMORY_USAGE_RESPONSE["data"]["monitoring"]["memory_usage"],
+        "selfprivacy_api.utils.prometheus.PrometheusQueries._send_query",
+        return_value=MOCK_MEMORY_USAGE_RESPONSE["data"]["monitoring"]["memoryUsage"],
     )
     return mock
 
@@ -96,8 +96,8 @@ def mock_memory_usage(mocker):
 @pytest.fixture
 def mock_disk_usage(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.utils.prometheus.PrometheusQueries._sent_query",
-        return_value=MOCK_DISK_USAGE_RESPONSE["data"]["monitoring"]["disk_usage"],
+        "selfprivacy_api.utils.prometheus.PrometheusQueries._send_query",
+        return_value=MOCK_DISK_USAGE_RESPONSE["data"]["monitoring"]["diskUsage"],
     )
     return mock
 
@@ -105,7 +105,7 @@ def mock_disk_usage(mocker):
 def test_graphql_get_disk_usage(client, authorized_client, mock_disk_usage):
     response = authorized_client.post(
         "/graphql",
-        json={"query": generate_mock_query("disk_usage")},
+        json={"query": generate_mock_query("diskUsage")},
     )
 
     data = get_data(response)
@@ -119,7 +119,7 @@ def test_graphql_get_disk_usage_with_options(
     response = authorized_client.post(
         "/graphql",
         json={
-            "query": generate_mock_query_with_options("disk_usage"),
+            "query": generate_mock_query_with_options("diskUsage"),
             "variables": {
                 "start": 1720136108,
                 "end": 1720137319,
@@ -136,7 +136,7 @@ def test_graphql_get_disk_usage_with_options(
 def test_graphql_get_disk_usage_unauthorized(client):
     response = client.post(
         "/graphql",
-        json={"query": generate_mock_query("disk_usage")},
+        json={"query": generate_mock_query("diskUsage")},
     )
     assert_empty(response)
 
@@ -144,7 +144,7 @@ def test_graphql_get_disk_usage_unauthorized(client):
 def test_graphql_get_memory_usage(client, authorized_client, mock_memory_usage):
     response = authorized_client.post(
         "/graphql",
-        json={"query": generate_mock_query("memory_usage")},
+        json={"query": generate_mock_query("memoryUsage")},
     )
 
     data = get_data(response)
@@ -158,7 +158,7 @@ def test_graphql_get_memory_usage_with_options(
     response = authorized_client.post(
         "/graphql",
         json={
-            "query": generate_mock_query_with_options("memory_usage"),
+            "query": generate_mock_query_with_options("memoryUsage"),
             "variables": {
                 "start": 1720136108,
                 "end": 1720137319,
@@ -175,7 +175,7 @@ def test_graphql_get_memory_usage_with_options(
 def test_graphql_get_memory_usage_unauthorized(client):
     response = client.post(
         "/graphql",
-        json={"query": generate_mock_query("memory_usage")},
+        json={"query": generate_mock_query("memoryUsage")},
     )
     assert_empty(response)
 
@@ -183,7 +183,7 @@ def test_graphql_get_memory_usage_unauthorized(client):
 def test_graphql_get_cpu_usage(client, authorized_client, mock_cpu_usage):
     response = authorized_client.post(
         "/graphql",
-        json={"query": generate_mock_query("cpu_usage")},
+        json={"query": generate_mock_query("cpuUsage")},
     )
 
     data = get_data(response)
@@ -195,7 +195,7 @@ def test_graphql_get_cpu_usage_with_options(client, authorized_client, mock_cpu_
     response = authorized_client.post(
         "/graphql",
         json={
-            "query": generate_mock_query_with_options("cpu_usage"),
+            "query": generate_mock_query_with_options("cpuUsage"),
             "variables": {
                 "start": 1720136108,
                 "end": 1720137319,
@@ -212,6 +212,6 @@ def test_graphql_get_cpu_usage_with_options(client, authorized_client, mock_cpu_
 def test_graphql_get_cpu_usage_unauthorized(client):
     response = client.post(
         "/graphql",
-        json={"query": generate_mock_query("cpu_usage")},
+        json={"query": generate_mock_query("cpuUsage")},
     )
     assert_empty(response)
