@@ -1,3 +1,5 @@
+import asyncio
+import pytest
 from datetime import datetime
 from systemd import journal
 
@@ -135,7 +137,8 @@ def test_graphql_get_logs_with_down_border(authorized_client):
         assert_log_entry_equals_to_journal_entry(api_entry, journal_entry)
 
 
-def test_websocket_subscription_for_logs(authorized_client):
+@pytest.mark.asyncio
+async def test_websocket_subscription_for_logs(authorized_client):
     with authorized_client.websocket_connect(
         "/graphql", subprotocols=["graphql-transport-ws"]
     ) as websocket:
@@ -149,6 +152,7 @@ def test_websocket_subscription_for_logs(authorized_client):
                 },
             }
         )
+        await asyncio.sleep(1)
 
         def read_until(message, limit=5):
             i = 0
@@ -159,6 +163,7 @@ def test_websocket_subscription_for_logs(authorized_client):
                 if msg == message:
                     return
                 else:
+                    i += 1
                     continue
             raise Exception("Failed to read websocket data, timeout")
 
