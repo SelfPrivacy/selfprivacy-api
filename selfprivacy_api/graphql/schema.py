@@ -176,7 +176,10 @@ class Subscription:
             await asyncio.sleep(0.5)
 
     @strawberry.subscription
-    async def log_entries(self, info: strawberry.types.Info) -> AsyncGenerator[LogEntry, None]:
+    async def log_entries(
+        self,
+        info: strawberry.types.Info,
+    ) -> AsyncGenerator[LogEntry, None]:
         reject_if_unauthenticated(info)
         return log_stream()
 

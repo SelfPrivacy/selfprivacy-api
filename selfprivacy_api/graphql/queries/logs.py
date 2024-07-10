@@ -57,7 +57,9 @@ class LogsPageMeta:
 
 @strawberry.type
 class PaginatedEntries:
-    page_meta: LogsPageMeta = strawberry.field(description="Metadata to aid in pagination.")
+    page_meta: LogsPageMeta = strawberry.field(
+        description="Metadata to aid in pagination."
+    )
     entries: typing.List[LogEntry] = strawberry.field(
         description="The list of log entries."
     )
