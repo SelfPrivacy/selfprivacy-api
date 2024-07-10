@@ -27,4 +27,4 @@ async def get_token_header(
 
 def get_api_version() -> str:
     """Get API version"""
-    return "3.2.2"
+    return "3.3.0"
