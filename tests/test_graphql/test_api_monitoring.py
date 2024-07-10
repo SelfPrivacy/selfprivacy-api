@@ -3,10 +3,10 @@
 # pylint: disable=missing-function-docstring
 
 import pytest
+from selfprivacy_api.utils.prometheus import PrometheusQueryResult
 from tests.test_graphql.common import (
     assert_empty,
     get_data,
-    assert_ok,
 )
 
 
@@ -15,7 +15,7 @@ def generate_mock_metrics(name: str):
         "data": {
             "monitoring": {
                 f"{name}": {
-                    "result_type": "matrix",
+                    "resultType": "matrix",
                     "result": [
                         {
                             "metric": {"instance": "127.0.0.1:9002"},
@@ -75,11 +75,15 @@ def generate_mock_query_with_options(name):
     """
 
 
+def prometheus_result_from_dict(dict):
+    return PrometheusQueryResult(result_type=dict["resultType"], result=dict["result"])
+
+
 @pytest.fixture
 def mock_cpu_usage(mocker):
     mock = mocker.patch(
         "selfprivacy_api.utils.prometheus.PrometheusQueries._send_query",
-        return_value=MOCK_CPU_USAGE_RESPONSE["data"]["monitoring"]["cpuUsage"],
+        return_value=prometheus_result_from_dict(MOCK_CPU_USAGE_RESPONSE["data"]["monitoring"]["cpuUsage"]),
     )
     return mock
 
@@ -88,7 +92,7 @@ def mock_cpu_usage(mocker):
 def mock_memory_usage(mocker):
     mock = mocker.patch(
         "selfprivacy_api.utils.prometheus.PrometheusQueries._send_query",
-        return_value=MOCK_MEMORY_USAGE_RESPONSE["data"]["monitoring"]["memoryUsage"],
+        return_value=prometheus_result_from_dict(MOCK_MEMORY_USAGE_RESPONSE["data"]["monitoring"]["memoryUsage"]),
     )
     return mock
 
@@ -97,7 +101,7 @@ def mock_memory_usage(mocker):
 def mock_disk_usage(mocker):
     mock = mocker.patch(
         "selfprivacy_api.utils.prometheus.PrometheusQueries._send_query",
-        return_value=MOCK_DISK_USAGE_RESPONSE["data"]["monitoring"]["diskUsage"],
+        return_value=prometheus_result_from_dict(MOCK_DISK_USAGE_RESPONSE["data"]["monitoring"]["diskUsage"]),
     )
     return mock
 
@@ -109,8 +113,7 @@ def test_graphql_get_disk_usage(client, authorized_client, mock_disk_usage):
     )
 
     data = get_data(response)
-    assert_ok(data)
-    assert data["data"] == MOCK_DISK_USAGE_RESPONSE["data"]
+    assert data == MOCK_DISK_USAGE_RESPONSE["data"]
 
 
 def test_graphql_get_disk_usage_with_options(
@@ -129,8 +132,7 @@ def test_graphql_get_disk_usage_with_options(
     )
 
     data = get_data(response)
-    assert_ok(data)
-    assert data["data"] == MOCK_DISK_USAGE_RESPONSE["data"]
+    assert data == MOCK_DISK_USAGE_RESPONSE["data"]
 
 
 def test_graphql_get_disk_usage_unauthorized(client):
@@ -148,8 +150,7 @@ def test_graphql_get_memory_usage(client, authorized_client, mock_memory_usage):
     )
 
     data = get_data(response)
-    assert_ok(data)
-    assert data["data"] == MOCK_MEMORY_USAGE_RESPONSE["data"]
+    assert data == MOCK_MEMORY_USAGE_RESPONSE["data"]
 
 
 def test_graphql_get_memory_usage_with_options(
@@ -168,8 +169,7 @@ def test_graphql_get_memory_usage_with_options(
     )
 
     data = get_data(response)
-    assert_ok(data)
-    assert data["data"] == MOCK_MEMORY_USAGE_RESPONSE["data"]
+    assert data == MOCK_MEMORY_USAGE_RESPONSE["data"]
 
 
 def test_graphql_get_memory_usage_unauthorized(client):
@@ -187,8 +187,7 @@ def test_graphql_get_cpu_usage(client, authorized_client, mock_cpu_usage):
     )
 
     data = get_data(response)
-    assert_ok(data)
-    assert data["data"] == MOCK_CPU_USAGE_RESPONSE["data"]
+    assert data == MOCK_CPU_USAGE_RESPONSE["data"]
 
 
 def test_graphql_get_cpu_usage_with_options(client, authorized_client, mock_cpu_usage):
@@ -205,8 +204,7 @@ def test_graphql_get_cpu_usage_with_options(client, authorized_client, mock_cpu_
     )
 
     data = get_data(response)
-    assert_ok(data)
-    assert data["data"] == MOCK_CPU_USAGE_RESPONSE["data"]
+    assert data == MOCK_CPU_USAGE_RESPONSE["data"]
 
 
 def test_graphql_get_cpu_usage_unauthorized(client):
