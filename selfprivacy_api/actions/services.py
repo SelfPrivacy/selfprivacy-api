@@ -27,7 +27,7 @@ def move_service(service_id: str, volume_name: str) -> Job:
     job = Jobs.add(
         type_id=f"services.{service.get_id()}.move",
         name=f"Move {service.get_display_name()}",
-        description=f"Moving {service.get_display_name()} data to {volume.name}",
+        description=f"Moving {service.get_display_name()} data to {volume.get_display_name().lower()}",
     )
 
     move_service_task(service, volume, job)

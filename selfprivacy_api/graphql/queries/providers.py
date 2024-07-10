@@ -14,6 +14,7 @@ class DnsProvider(Enum):
 class ServerProvider(Enum):
     HETZNER = "HETZNER"
     DIGITALOCEAN = "DIGITALOCEAN"
+    OTHER = "OTHER"
 
 
 @strawberry.enum

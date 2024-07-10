@@ -29,8 +29,6 @@ class RedisPool:
             url,
             decode_responses=True,
         )
-        # TODO: inefficient, this is probably done each time we connect
-        self.get_connection().config_set("notify-keyspace-events", "KEA")
 
     @staticmethod
     def connection_url(dbnumber: int) -> str:
