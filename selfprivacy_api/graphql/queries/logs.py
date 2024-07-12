@@ -1,25 +1,8 @@
 """System logs"""
 from datetime import datetime
-import os
 import typing
 import strawberry
-from systemd import journal
-
-
-def get_events_from_journal(
-    j: journal.Reader, limit: int, next: typing.Callable[[journal.Reader], typing.Dict]
-):
-    events = []
-    i = 0
-    while i < limit:
-        entry = next(j)
-        if entry == None or entry == dict():
-            break
-        if entry["MESSAGE"] != "":
-            events.append(LogEntry(entry))
-            i += 1
-
-    return events
+from selfprivacy_api.utils.systemd_journal import get_paginated_logs
 
 
 @strawberry.type
@@ -95,31 +78,11 @@ class Logs:
     ) -> PaginatedEntries:
         if limit > 50:
             raise Exception("You can't fetch more than 50 entries via single request.")
-        j = journal.Reader()
-
-        if up_cursor == None and down_cursor == None:
-            j.seek_tail()
-
-            events = get_events_from_journal(j, limit, lambda j: j.get_previous())
-            events.reverse()
-
-            return PaginatedEntries.from_entries(events)
-        elif up_cursor == None and down_cursor != None:
-            j.seek_cursor(down_cursor)
-            j.get_previous()  # pagination is exclusive
-
-            events = get_events_from_journal(j, limit, lambda j: j.get_previous())
-            events.reverse()
-
-            return PaginatedEntries.from_entries(events)
-        elif up_cursor != None and down_cursor == None:
-            j.seek_cursor(up_cursor)
-            j.get_next()  # pagination is exclusive
-
-            events = get_events_from_journal(j, limit, lambda j: j.get_next())
-
-            return PaginatedEntries.from_entries(events)
-        else:
-            raise NotImplemented(
-                "Pagination by both up_cursor and down_cursor is not implemented"
+        return PaginatedEntries.from_entries(
+            list(
+                map(
+                    lambda x: LogEntry(x),
+                    get_paginated_logs(limit, up_cursor, down_cursor),
+                )
             )
+        )

@@ -177,8 +177,7 @@ class Subscription:
 
     @strawberry.subscription
     async def log_entries(
-        self,
-        info: strawberry.types.Info,
+        self, info: strawberry.types.Info
     ) -> AsyncGenerator[LogEntry, None]:
         reject_if_unauthenticated(info)
         return log_stream()
