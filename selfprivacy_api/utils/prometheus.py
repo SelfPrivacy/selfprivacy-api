@@ -40,7 +40,7 @@ class PrometheusQueries:
                 raise Exception("Prometheus returned unexpected status")
             result = json['data']
             return PrometheusQueryResult(
-                result_type=result['result_type'], result=result['result']
+                result_type=result['resultType'], result=result['result']
             )
         except Exception as error:
             raise Exception("Prometheus request failed! " + str(error))
