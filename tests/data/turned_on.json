@@ -62,6 +62,9 @@
         "simple-nixos-mailserver": {
             "enable": true,
             "location": "sdb"
+        },
+        "roundcube": {
+            "enable": true
         }
     },
     "volumes": [

@@ -1,4 +1,5 @@
 """Enums representing different service providers."""
+
 from enum import Enum
 import strawberry
 

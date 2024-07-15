@@ -1,4 +1,5 @@
 """Jobs status"""
+
 # pylint: disable=too-few-public-methods
 import strawberry
 from typing import List, Optional
