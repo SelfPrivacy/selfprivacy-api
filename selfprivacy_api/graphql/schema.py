@@ -4,6 +4,7 @@
 import asyncio
 from typing import AsyncGenerator, List
 import strawberry
+from strawberry.types import Info
 
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.mutations.deprecated_mutations import (
@@ -144,11 +145,11 @@ class Mutation(
 
 
 # A cruft for Websockets
-def authenticated(info: strawberry.types.Info) -> bool:
+def authenticated(info: Info) -> bool:
     return IsAuthenticated().has_permission(source=None, info=info)
 
 
-def reject_if_unauthenticated(info: strawberry.types.Info):
+def reject_if_unauthenticated(info: Info):
     if not authenticated(info):
         raise Exception(IsAuthenticated().message)
 
@@ -161,24 +162,20 @@ class Subscription:
     demands it while the spec is vague in this area."""
 
     @strawberry.subscription
-    async def job_updates(
-        self, info: strawberry.types.Info
-    ) -> AsyncGenerator[List[ApiJob], None]:
+    async def job_updates(self, info: Info) -> AsyncGenerator[List[ApiJob], None]:
         reject_if_unauthenticated(info)
         return job_update_generator()
 
     @strawberry.subscription
     # Used for testing, consider deletion to shrink attack surface
-    async def count(self, info: strawberry.types.Info) -> AsyncGenerator[int, None]:
+    async def count(self, info: Info) -> AsyncGenerator[int, None]:
         reject_if_unauthenticated(info)
         for i in range(10):
             yield i
             await asyncio.sleep(0.5)
 
     @strawberry.subscription
-    async def log_entries(
-        self, info: strawberry.types.Info
-    ) -> AsyncGenerator[LogEntry, None]:
+    async def log_entries(self, info: Info) -> AsyncGenerator[LogEntry, None]:
         reject_if_unauthenticated(info)
         return log_stream()
 
