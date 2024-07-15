@@ -71,10 +71,10 @@ class Logs:
     def paginated(
         self,
         limit: int = 20,
-        up_cursor: str
-        | None = None,  # All entries returned will be lesser than this cursor. Sets upper bound on results.
-        down_cursor: str
-        | None = None,  # All entries returned will be greater than this cursor. Sets lower bound on results.
+        # All entries returned will be lesser than this cursor. Sets upper bound on results.
+        up_cursor: str | None = None,
+        # All entries returned will be greater than this cursor. Sets lower bound on results.
+        down_cursor: str | None = None,
     ) -> PaginatedEntries:
         if limit > 50:
             raise Exception("You can't fetch more than 50 entries via single request.")

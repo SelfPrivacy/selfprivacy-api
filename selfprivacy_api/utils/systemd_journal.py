@@ -20,10 +20,10 @@ def get_events_from_journal(
 
 def get_paginated_logs(
     limit: int = 20,
-    up_cursor: str
-    | None = None,  # All entries returned will be lesser than this cursor. Sets upper bound on results.
-    down_cursor: str
-    | None = None,  # All entries returned will be greater than this cursor. Sets lower bound on results.
+    # All entries returned will be lesser than this cursor. Sets upper bound on results.
+    up_cursor: str | None = None,
+    # All entries returned will be greater than this cursor. Sets lower bound on results.
+    down_cursor: str | None = None,
 ):
     j = journal.Reader()
 
