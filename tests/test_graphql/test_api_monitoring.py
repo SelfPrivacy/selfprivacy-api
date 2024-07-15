@@ -2,6 +2,7 @@
 # pylint: disable=unused-argument
 # pylint: disable=missing-function-docstring
 
+from datetime import datetime
 import pytest
 
 from selfprivacy_api.utils.prometheus import PrometheusQueryResult
@@ -68,7 +69,7 @@ def generate_mock_query(name):
 
 def generate_mock_query_with_options(name):
     return f"""
-    query Query($start: Int, $end: Int, $step: Int) {{
+    query Query($start: DateTime, $end: DateTime, $step: Int) {{
         monitoring {{
             {name}(start: $start, end: $end, step: $step) {{ resultType, result }}
         }}
@@ -131,8 +132,8 @@ def test_graphql_get_disk_usage_with_options(
         json={
             "query": generate_mock_query_with_options("diskUsage"),
             "variables": {
-                "start": 1720136108,
-                "end": 1720137319,
+                "start": datetime.fromtimestamp(1720136108).isoformat(),
+                "end": datetime.fromtimestamp(1720137319).isoformat(),
                 "step": 90,
             },
         },
@@ -168,8 +169,8 @@ def test_graphql_get_memory_usage_with_options(
         json={
             "query": generate_mock_query_with_options("memoryUsage"),
             "variables": {
-                "start": 1720136108,
-                "end": 1720137319,
+                "start": datetime.fromtimestamp(1720136108).isoformat(),
+                "end": datetime.fromtimestamp(1720137319).isoformat(),
                 "step": 90,
             },
         },
@@ -203,8 +204,8 @@ def test_graphql_get_cpu_usage_with_options(client, authorized_client, mock_cpu_
         json={
             "query": generate_mock_query_with_options("cpuUsage"),
             "variables": {
-                "start": 1720136108,
-                "end": 1720137319,
+                "start": datetime.fromtimestamp(1720136108).isoformat(),
+                "end": datetime.fromtimestamp(1720137319).isoformat(),
                 "step": 90,
             },
         },
