@@ -13,9 +13,9 @@ the [repository](https://git.selfprivacy.org/SelfPrivacy/selfprivacy-rest-api), 
 
     For detailed installation information, please review and follow: [link](https://nixos.org/manual/nix/stable/installation/installing-binary.html#installing-a-binary-distribution).
 
-3. **Change directory to the cloned repository and start a nix shell:**
+3. **Change directory to the cloned repository and start a nix development shell:**
 
-    ```cd selfprivacy-rest-api && nix-shell```
+    ```cd selfprivacy-rest-api && nix develop```
 
     Nix will install all of the necessary packages for development work, all further actions will take place only within nix-shell.
 
@@ -31,7 +31,7 @@ the [repository](https://git.selfprivacy.org/SelfPrivacy/selfprivacy-rest-api), 
 
     Copy the path that starts with ```/nix/store/``` and ends with ```env/bin/python```
 
-    ```/nix/store/???-python3-3.9.??-env/bin/python```
+    ```/nix/store/???-python3-3.10.??-env/bin/python```
 
     Click on the python version selection in the lower right corner, and replace the path to the interpreter in the project with the one you copied from the terminal.
 
@@ -43,12 +43,13 @@ the [repository](https://git.selfprivacy.org/SelfPrivacy/selfprivacy-rest-api), 
 
 ## What to do after making changes to the repository?
 
-**Run unit tests** using ```pytest .```
-Make sure that all tests pass successfully and the API works correctly. For convenience, you can use the built-in VScode interface.
+**Run unit tests** using ```pytest-vm``` inside of the development shell. This will run all the test inside a virtual machine, which is necessary for the tests to pass successfully.
+Make sure that all tests pass successfully and the API works correctly.
 
-How to review the percentage of code coverage? Execute the command:
+The ```pytest-vm``` command will also print out the coverage of the tests. To export the report to an XML file, use the following command:
 
-```coverage run -m pytest && coverage xml && coverage report```
+```coverage xml```
+
 
 Next, use the recommended extension ```ryanluker.vscode-coverage-gutters```, navigate to one of the test files, and click the "watch" button on the bottom panel of VScode.
 

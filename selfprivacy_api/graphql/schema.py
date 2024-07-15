@@ -2,8 +2,10 @@
 # pylint: disable=too-few-public-methods
 
 import asyncio
-from typing import AsyncGenerator
+from typing import AsyncGenerator, List
 import strawberry
+from strawberry.types import Info
+
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.mutations.deprecated_mutations import (
     DeprecatedApiMutations,
@@ -24,9 +26,16 @@ from selfprivacy_api.graphql.mutations.backup_mutations import BackupMutations
 from selfprivacy_api.graphql.queries.api_queries import Api
 from selfprivacy_api.graphql.queries.backup import Backup
 from selfprivacy_api.graphql.queries.jobs import Job
+from selfprivacy_api.graphql.queries.logs import LogEntry, Logs
 from selfprivacy_api.graphql.queries.services import Services
 from selfprivacy_api.graphql.queries.storage import Storage
 from selfprivacy_api.graphql.queries.system import System
+
+from selfprivacy_api.graphql.subscriptions.jobs import ApiJob
+from selfprivacy_api.graphql.subscriptions.jobs import (
+    job_updates as job_update_generator,
+)
+from selfprivacy_api.graphql.subscriptions.logs import log_stream
 
 from selfprivacy_api.graphql.mutations.users_mutations import UsersMutations
 from selfprivacy_api.graphql.queries.users import Users
@@ -46,6 +55,11 @@ class Query:
     def system(self) -> System:
         """System queries"""
         return System()
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    def logs(self) -> Logs:
+        """Log queries"""
+        return Logs()
 
     @strawberry.field(permission_classes=[IsAuthenticated])
     def users(self) -> Users:
@@ -129,18 +143,41 @@ class Mutation(
             code=200,
         )
 
-    pass
+
+# A cruft for Websockets
+def authenticated(info: Info) -> bool:
+    return IsAuthenticated().has_permission(source=None, info=info)
+
+
+def reject_if_unauthenticated(info: Info):
+    if not authenticated(info):
+        raise Exception(IsAuthenticated().message)
 
 
 @strawberry.type
 class Subscription:
-    """Root schema for subscriptions"""
+    """Root schema for subscriptions.
+    Every field here should be an AsyncIterator or AsyncGenerator
+    It is not a part of the spec but graphql-core (dep of strawberryql)
+    demands it while the spec is vague in this area."""
 
-    @strawberry.subscription(permission_classes=[IsAuthenticated])
-    async def count(self, target: int = 100) -> AsyncGenerator[int, None]:
-        for i in range(target):
+    @strawberry.subscription
+    async def job_updates(self, info: Info) -> AsyncGenerator[List[ApiJob], None]:
+        reject_if_unauthenticated(info)
+        return job_update_generator()
+
+    @strawberry.subscription
+    # Used for testing, consider deletion to shrink attack surface
+    async def count(self, info: Info) -> AsyncGenerator[int, None]:
+        reject_if_unauthenticated(info)
+        for i in range(10):
             yield i
             await asyncio.sleep(0.5)
+
+    @strawberry.subscription
+    async def log_entries(self, info: Info) -> AsyncGenerator[LogEntry, None]:
+        reject_if_unauthenticated(info)
+        return log_stream()
 
 
 schema = strawberry.Schema(

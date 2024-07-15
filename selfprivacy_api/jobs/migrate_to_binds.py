@@ -6,7 +6,7 @@ import shutil
 from pydantic import BaseModel
 from selfprivacy_api.jobs import Job, JobStatus, Jobs
 from selfprivacy_api.services.bitwarden import Bitwarden
-from selfprivacy_api.services.gitea import Gitea
+from selfprivacy_api.services.forgejo import Forgejo
 from selfprivacy_api.services.mailserver import MailServer
 from selfprivacy_api.services.nextcloud import Nextcloud
 from selfprivacy_api.services.pleroma import Pleroma
@@ -230,7 +230,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         status_text="Migrating Gitea.",
     )
 
-    Gitea().stop()
+    Forgejo().stop()
 
     if not pathlib.Path("/volumes/sda1/gitea").exists():
         if not pathlib.Path("/volumes/sdb/gitea").exists():
@@ -241,7 +241,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
                 group="gitea",
             )
 
-    Gitea().start()
+    Forgejo().start()
 
     # Perform migration of Mail server
 

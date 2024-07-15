@@ -1,15 +1,23 @@
+import uuid
+
 from datetime import datetime
 from typing import Optional
 from enum import Enum
 
 
 def store_model_as_hash(redis, redis_key, model):
-    for key, value in model.dict().items():
+    model_dict = model.dict()
+    for key, value in model_dict.items():
+        if isinstance(value, uuid.UUID):
+            value = str(value)
         if isinstance(value, datetime):
             value = value.isoformat()
         if isinstance(value, Enum):
             value = value.value
-        redis.hset(redis_key, key, str(value))
+        value = str(value)
+        model_dict[key] = value
+
+    redis.hset(redis_key, mapping=model_dict)
 
 
 def hash_as_model(redis, redis_key: str, model_class):

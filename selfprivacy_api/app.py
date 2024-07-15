@@ -3,6 +3,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from strawberry.fastapi import GraphQLRouter
+from strawberry.subscriptions import GRAPHQL_TRANSPORT_WS_PROTOCOL, GRAPHQL_WS_PROTOCOL
 
 import uvicorn
 
@@ -13,8 +14,12 @@ from selfprivacy_api.migrations import run_migrations
 
 app = FastAPI()
 
-graphql_app = GraphQLRouter(
+graphql_app: GraphQLRouter = GraphQLRouter(
     schema,
+    subscription_protocols=[
+        GRAPHQL_TRANSPORT_WS_PROTOCOL,
+        GRAPHQL_WS_PROTOCOL,
+    ],
 )
 
 app.add_middleware(
