@@ -120,17 +120,20 @@ class ConfigItem:
 @strawberry.type
 class StringConfigItem(ConfigItem):
     value: str
+    default_value: str
     regex: Optional[str]
 
 
 @strawberry.type
 class BoolConfigItem(ConfigItem):
     value: bool
+    default_value: bool
 
 
 @strawberry.type
 class EnumConfigItem(ConfigItem):
     value: str
+    default_value: str
     options: list[str]
 
 
@@ -142,7 +145,8 @@ def config_item_to_graphql(item: dict) -> ConfigItem:
             description=item["description"],
             widget=item["widget"],
             type=item_type,
-            value=item["default_value"],
+            value=item["value"],
+            default_value=item["default_value"],
             regex=item.get("regex")
         )
     elif item_type == "bool":
@@ -151,7 +155,8 @@ def config_item_to_graphql(item: dict) -> ConfigItem:
             description=item["description"],
             widget=item["widget"],
             type=item_type,
-            value=item["default_value"],
+            value=item["value"],
+            default_value=item["default_value"],
         )
     elif item_type == "enum":
         return EnumConfigItem(
@@ -159,7 +164,8 @@ def config_item_to_graphql(item: dict) -> ConfigItem:
             description=item["description"],
             widget=item["widget"],
             type=item_type,
-            value=item["default_value"],
+            value=item["value"],
+            default_value=item["default_value"],
             options=item["options"],
         )
     else:

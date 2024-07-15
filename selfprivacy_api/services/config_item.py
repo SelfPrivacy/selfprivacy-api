@@ -128,3 +128,45 @@ class EnumServiceConfigItem(ServiceConfigItem):
             "default_value": self.default_value,
             "options": self.options,
         }
+
+
+# TODO: unused for now
+class IntServiceConfigItem(ServiceConfigItem):
+    def __init__(
+        self,
+        id: str,
+        default_value: int,
+        description: str,
+        widget: Optional[str] = None,
+        min_value: Optional[int] = None,
+        max_value: Optional[int] = None,
+    ) -> None:
+        self.id = id
+        self.type = "int"
+        self.default_value = default_value
+        self.description = description
+        self.widget = widget if widget else "number"
+        self.min_value = min_value
+        self.max_value = max_value
+
+    def get_value(self, service_options):
+        return service_options.get(self.id, self.default_value)
+
+    def set_value(self, value, service_options):
+        if self.min_value is not None and value < self.min_value:
+            raise ValueError(f"Value {value} is less than min_value {self.min_value}")
+        if self.max_value is not None and value > self.max_value:
+            raise ValueError(f"Value {value} is greater than max_value {self.max_value}")
+        service_options[self.id] = value
+
+    def as_dict(self, service_options):
+        return {
+            "id": self.id,
+            "type": self.type,
+            "description": self.description,
+            "widget": self.widget,
+            "value": self.get_value(service_options),
+            "default_value": self.default_value,
+            "min_value": self.min_value,
+            "max_value": self.max_value,
+        }
