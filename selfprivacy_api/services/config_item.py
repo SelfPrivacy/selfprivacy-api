@@ -51,6 +51,17 @@ class StringServiceConfigItem(ServiceConfigItem):
             raise ValueError(f"Value {value} does not match regex {self.regex}")
         service_options[self.id] = value
 
+    def as_dict(self, service_options):
+        return {
+            "id": self.id,
+            "type": self.type,
+            "description": self.description,
+            "widget": self.widget,
+            "value": self.get_value(service_options),
+            "default_value": self.default_value,
+            "regex": self.regex.pattern if self.regex else None,
+        }
+
 
 class BoolServiceConfigItem(ServiceConfigItem):
     def __init__(
@@ -71,6 +82,16 @@ class BoolServiceConfigItem(ServiceConfigItem):
 
     def set_value(self, value, service_options):
         service_options[self.id] = value
+
+    def as_dict(self, service_options):
+        return {
+            "id": self.id,
+            "type": self.type,
+            "description": self.description,
+            "widget": self.widget,
+            "value": self.get_value(service_options),
+            "default_value": self.default_value,
+        }
 
 
 class EnumServiceConfigItem(ServiceConfigItem):
@@ -96,3 +117,14 @@ class EnumServiceConfigItem(ServiceConfigItem):
         if value not in self.options:
             raise ValueError(f"Value {value} not in options {self.options}")
         service_options[self.id] = value
+
+    def as_dict(self, service_options):
+        return {
+            "id": self.id,
+            "type": self.type,
+            "description": self.description,
+            "widget": self.widget,
+            "value": self.get_value(service_options),
+            "default_value": self.default_value,
+            "options": self.options,
+        }
