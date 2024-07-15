@@ -14,6 +14,7 @@ pythonPackages.buildPythonPackage rec {
     pydantic
     pytz
     redis
+    systemd
     setuptools
     strawberry-graphql
     typing-extensions
