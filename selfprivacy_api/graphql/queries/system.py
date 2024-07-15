@@ -1,8 +1,10 @@
 """Common system information and settings"""
+
 # pylint: disable=too-few-public-methods
 import os
 import typing
 import strawberry
+
 from selfprivacy_api.graphql.common_types.dns import DnsRecord
 
 from selfprivacy_api.graphql.queries.common import Alert, Severity

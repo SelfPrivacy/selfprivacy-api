@@ -34,20 +34,20 @@ class FlakeServiceManager:
             file.write(
                 """
 {
-    description = "SelfPrivacy NixOS PoC modules/extensions/bundles/packages/etc";\n
+  description = "SelfPrivacy NixOS PoC modules/extensions/bundles/packages/etc";\n
 """
             )
 
             for key, value in self.services.items():
                 file.write(
                     f"""
-    inputs.{key}.url = {value};
+  inputs.{key}.url = {value};
 """
                 )
 
             file.write(
                 """
-    outputs = _: { };
+  outputs = _: { };
 }
 """
             )

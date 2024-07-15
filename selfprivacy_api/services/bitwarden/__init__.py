@@ -37,14 +37,14 @@ class Bitwarden(Service):
     def get_user() -> str:
         return "vaultwarden"
 
-    @staticmethod
-    def get_url() -> Optional[str]:
+    @classmethod
+    def get_url(cls) -> Optional[str]:
         """Return service url."""
         domain = get_domain()
         return f"https://password.{domain}"
 
-    @staticmethod
-    def get_subdomain() -> Optional[str]:
+    @classmethod
+    def get_subdomain(cls) -> Optional[str]:
         return "password"
 
     @staticmethod

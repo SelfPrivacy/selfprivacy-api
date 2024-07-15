@@ -1,8 +1,10 @@
 """API access status"""
+
 # pylint: disable=too-few-public-methods
 import datetime
 import typing
 import strawberry
+
 from strawberry.types import Info
 from selfprivacy_api.actions.api_tokens import (
     get_api_tokens_with_caller_flag,

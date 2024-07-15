@@ -57,14 +57,14 @@ class DummyService(Service):
         # return ""
         return base64.b64encode(BITWARDEN_ICON.encode("utf-8")).decode("utf-8")
 
-    @staticmethod
-    def get_url() -> typing.Optional[str]:
+    @classmethod
+    def get_url(cls) -> typing.Optional[str]:
         """Return service url."""
         domain = "test.com"
         return f"https://password.{domain}"
 
-    @staticmethod
-    def get_subdomain() -> typing.Optional[str]:
+    @classmethod
+    def get_subdomain(cls) -> typing.Optional[str]:
         return "password"
 
     @classmethod

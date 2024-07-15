@@ -14,10 +14,12 @@ pythonPackages.buildPythonPackage rec {
     pydantic
     pytz
     redis
+    systemd
     setuptools
     strawberry-graphql
     typing-extensions
     uvicorn
+    websockets
   ];
   pythonImportsCheck = [ "selfprivacy_api" ];
   doCheck = false;

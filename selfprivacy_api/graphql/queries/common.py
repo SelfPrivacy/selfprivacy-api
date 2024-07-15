@@ -1,4 +1,5 @@
 """Common types and enums used by different types of queries."""
+
 from enum import Enum
 import datetime
 import typing

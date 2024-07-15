@@ -12,17 +12,17 @@ class Migration(ABC):
     """
 
     @abstractmethod
-    def get_migration_name(self):
+    def get_migration_name(self) -> str:
         pass
 
     @abstractmethod
-    def get_migration_description(self):
+    def get_migration_description(self) -> str:
         pass
 
     @abstractmethod
-    def is_migration_needed(self):
+    def is_migration_needed(self) -> bool:
         pass
 
     @abstractmethod
-    def migrate(self):
+    def migrate(self) -> None:
         pass

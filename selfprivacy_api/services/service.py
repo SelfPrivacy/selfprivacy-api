@@ -65,17 +65,17 @@ class Service(ABC):
         """
         pass
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def get_url() -> Optional[str]:
+    def get_url(cls) -> Optional[str]:
         """
         The url of the service if it is accessible from the internet browser.
         """
         pass
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def get_subdomain() -> Optional[str]:
+    def get_subdomain(cls) -> Optional[str]:
         """
         The assigned primary subdomain for this service.
         """
