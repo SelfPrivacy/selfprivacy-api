@@ -1,4 +1,4 @@
-from typing import AsyncGenerator, List
+from typing import AsyncGenerator
 from systemd import journal
 import asyncio
 
@@ -25,7 +25,7 @@ async def log_stream() -> AsyncGenerator[LogEntry, None]:
         entry = await queue.get()
         try:
             yield LogEntry(entry)
-        except:
+        except Exception:
             asyncio.get_event_loop().remove_reader(j)
             return
         queue.task_done()
