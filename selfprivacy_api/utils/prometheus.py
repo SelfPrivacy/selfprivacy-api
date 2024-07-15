@@ -55,9 +55,9 @@ class PrometheusQueries:
         Get CPU information.
 
         Args:
-            start (int, optional): Unix timestamp (in seconds) indicating the start time.
+            start (datetime, optional): timestamp indicating the start time of metrics to fetch
                 Defaults to 20 minutes ago if not provided.
-            end (int, optional): Unix timestamp (in seconds) indicating the end time.
+            end (datetime, optional): timestamp indicating the end time of metrics to fetch
                 Defaults to current time if not provided.
             step (int): Interval in seconds for querying disk usage data.
         """
@@ -82,9 +82,9 @@ class PrometheusQueries:
         Get memory usage.
 
         Args:
-            start (int, optional): Unix timestamp indicating the start time.
+            start (datetime, optional): timestamp indicating the start time of metrics to fetch
                 Defaults to 20 minutes ago if not provided.
-            end (int, optional): Unix timestamp indicating the end time.
+            end (datetime, optional): timestamp indicating the end time of metrics to fetch
                 Defaults to current time if not provided.
             step (int): Interval in seconds for querying memory usage data.
         """
@@ -109,9 +109,9 @@ class PrometheusQueries:
         Get disk usage information.
 
         Args:
-            start (int, optional): Unix timestamp indicating the start time.
+            start (datetime, optional): timestamp indicating the start time of metrics to fetch
                 Defaults to 20 minutes ago if not provided.
-            end (int, optional): Unix timestamp indicating the end time.
+            end (datetime, optional): timestamp indicating the end time of metrics to fetch
                 Defaults to current time if not provided.
             step (int): Interval in seconds for querying disk usage data.
         """
