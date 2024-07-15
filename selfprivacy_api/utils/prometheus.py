@@ -36,11 +36,11 @@ class PrometheusQueries:
             if response.status_code != 200:
                 raise Exception("Prometheus returned unexpected HTTP status code")
             json = response.json()
-            if json['status'] != 'success':
+            if json["status"] != "success":
                 raise Exception("Prometheus returned unexpected status")
-            result = json['data']
+            result = json["data"]
             return PrometheusQueryResult(
-                result_type=result['resultType'], result=result['result']
+                result_type=result["resultType"], result=result["result"]
             )
         except Exception as error:
             raise Exception("Prometheus request failed! " + str(error))
