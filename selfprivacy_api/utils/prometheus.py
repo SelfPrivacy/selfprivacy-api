@@ -22,51 +22,48 @@ class PrometheusQueryResult:
 
 class PrometheusQueries:
     @staticmethod
-    def _send_query(query: str, start: datetime, end: datetime, step: int):
+    def _send_query(query: str, start: int, end: int, step: int):
         try:
             response = requests.get(
-                f"{PROMETHEUS_URL}/api/v1/query_range",
+                f"{PROMETHEUS_URL}/api/v1/query",
                 params={
                     "query": query,
-                    "start": int(start.timestamp()),
-                    "end": int(start.timestamp()),
+                    "start": start,
+                    "end": end,
                     "step": step,
                 },
             )
             if response.status_code != 200:
                 raise Exception("Prometheus returned unexpected HTTP status code")
             json = response.json()
-            if json["status"] != "success":
-                raise Exception("Prometheus returned unexpected status")
-            result = json["data"]
             return PrometheusQueryResult(
-                result_type=result["resultType"], result=result["result"]
+                result_type=json["result_type"], result=json["result"]
             )
         except Exception as error:
             raise Exception("Prometheus request failed! " + str(error))
 
     @staticmethod
     def cpu_usage(
-        start: Optional[datetime] = None,
-        end: Optional[datetime] = None,
+        start: Optional[int] = None,
+        end: Optional[int] = None,
         step: int = 60,  # seconds
     ) -> PrometheusQueryResult:
         """
         Get CPU information.
 
         Args:
-            start (datetime, optional): timestamp indicating the start time of metrics to fetch
+            start (int, optional): Unix timestamp indicating the start time.
                 Defaults to 20 minutes ago if not provided.
-            end (datetime, optional): timestamp indicating the end time of metrics to fetch
+            end (int, optional): Unix timestamp indicating the end time.
                 Defaults to current time if not provided.
             step (int): Interval in seconds for querying disk usage data.
         """
 
         if not start:
-            start = datetime.now() - timedelta(minutes=20)
+            start = int((datetime.now() - timedelta(minutes=20)).timestamp())
 
         if not end:
-            end = datetime.now()
+            end = int(datetime.now().timestamp())
 
         query = '100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)'
 
@@ -74,26 +71,26 @@ class PrometheusQueries:
 
     @staticmethod
     def memory_usage(
-        start: Optional[datetime] = None,
-        end: Optional[datetime] = None,
+        start: Optional[int] = None,
+        end: Optional[int] = None,
         step: int = 60,  # seconds
     ) -> PrometheusQueryResult:
         """
         Get memory usage.
 
         Args:
-            start (datetime, optional): timestamp indicating the start time of metrics to fetch
+            start (int, optional): Unix timestamp indicating the start time.
                 Defaults to 20 minutes ago if not provided.
-            end (datetime, optional): timestamp indicating the end time of metrics to fetch
+            end (int, optional): Unix timestamp indicating the end time.
                 Defaults to current time if not provided.
             step (int): Interval in seconds for querying memory usage data.
         """
 
         if not start:
-            start = datetime.now() - timedelta(minutes=20)
+            start = int((datetime.now() - timedelta(minutes=20)).timestamp())
 
         if not end:
-            end = datetime.now()
+            end = int(datetime.now().timestamp())
 
         query = "100 - (100 * (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))"
 
@@ -101,27 +98,27 @@ class PrometheusQueries:
 
     @staticmethod
     def disk_usage(
-        start: Optional[datetime] = None,
-        end: Optional[datetime] = None,
+        start: Optional[int] = None,
+        end: Optional[int] = None,
         step: int = 60,  # seconds
     ) -> PrometheusQueryResult:
         """
         Get disk usage information.
 
         Args:
-            start (datetime, optional): timestamp indicating the start time of metrics to fetch
+            start (int, optional): Unix timestamp indicating the start time.
                 Defaults to 20 minutes ago if not provided.
-            end (datetime, optional): timestamp indicating the end time of metrics to fetch
+            end (int, optional): Unix timestamp indicating the end time.
                 Defaults to current time if not provided.
             step (int): Interval in seconds for querying disk usage data.
         """
 
         if not start:
-            start = datetime.now() - timedelta(minutes=20)
+            start = int((datetime.now() - timedelta(minutes=20)).timestamp())
 
         if not end:
-            end = datetime.now()
+            end = int(datetime.now().timestamp())
 
-        query = '100 - (100 * ((node_filesystem_avail_bytes{mountpoint="/",fstype!="rootfs"} )  / (node_filesystem_size_bytes{mountpoint="/",fstype!="rootfs"}) ))'
+        query = """100 - (100 * sum by (device) (node_filesystem_avail_bytes{fstype!="rootfs"}) / sum by (device) (node_filesystem_size_bytes{fstype!="rootfs"}))"""
 
         return PrometheusQueries._send_query(query, start, end, step)
