@@ -53,7 +53,7 @@ class Forgejo(Service):
         "requireSigninView": BoolServiceConfigItem(
             id="requireSigninView",
             default_value=False,
-            description="Require signin to view any page",
+            description="Force users to log in to view any page",
         ),
         "defaultTheme": EnumServiceConfigItem(
             id="defaultTheme",
