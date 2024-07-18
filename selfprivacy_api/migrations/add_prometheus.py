@@ -25,9 +25,9 @@ class AddPrometheus(Migration):
     def migrate(self) -> None:
         with FlakeServiceManager() as manager:
             if "prometheus" not in manager.services:
-                manager.services["prometheus"] = (
-                    "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/prometheus"
-                )
+                manager.services[
+                    "prometheus"
+                ] = "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/prometheus"
         with WriteUserData() as data:
             if "prometheus" not in data["modules"]:
                 data["modules"]["prometheus"] = {
