@@ -27,7 +27,7 @@ class Forgejo(Service):
             id="subdomain",
             default_value="git",
             description="Subdomain",
-            regex=r"[A-Za-z0-9][A-Za-z0-9\-]{0,61}[A-Za-z0-9]",
+            regex=r"^[A-Za-z0-9][A-Za-z0-9\-]{0,61}[A-Za-z0-9]$",
             widget="subdomain",
         ),
         "appName": StringServiceConfigItem(
