@@ -94,10 +94,15 @@ class Forgejo(Service):
     def get_url(cls) -> Optional[str]:
         """Return service url."""
         domain = get_domain()
-        return f"https://git.{domain}"
+        subdomain = cls.get_subdomain()
+        return f"https://{subdomain}.{domain}"
 
     @classmethod
     def get_subdomain(cls) -> Optional[str]:
+        with ReadUserData() as data:
+            if "gitea" in data["modules"]:
+                return data["modules"]["gitea"]["subdomain"]
+
         return "git"
 
     @staticmethod
