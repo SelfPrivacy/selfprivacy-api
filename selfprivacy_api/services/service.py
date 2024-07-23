@@ -146,6 +146,16 @@ class Service(ABC):
         with ReadUserData() as user_data:
             return user_data.get("modules", {}).get(name, {}).get("enable", False)
 
+    @classmethod
+    def is_installed(cls) -> bool:
+        """
+        `True` if the service is installed.
+        `False` if there is no module data in user data
+        """
+        name = cls.get_id()
+        with ReadUserData() as user_data:
+            return user_data.get("modules", {}).get(name, {}) != {}
+
     @staticmethod
     @abstractmethod
     def get_status() -> ServiceStatus:
