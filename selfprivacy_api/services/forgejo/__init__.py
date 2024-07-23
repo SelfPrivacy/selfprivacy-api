@@ -139,6 +139,10 @@ class Forgejo(Service):
 
     @classmethod
     def set_configuration(cls, config_items):
+        # First, validate the configuration
+        for key, value in config_items.items():
+            if cls.config_items[key].validate_value(value) is False:
+                raise ValueError(f"Value {value} is not valid for {key}")
         with WriteUserData() as user_data:
             if "modules" not in user_data:
                 user_data["modules"] = {}
