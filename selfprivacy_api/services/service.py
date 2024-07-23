@@ -5,7 +5,7 @@ from typing import List, Optional
 from selfprivacy_api import utils
 from selfprivacy_api.services.config_item import ServiceConfigItem
 from selfprivacy_api.utils.default_subdomains import DEFAULT_SUBDOMAINS
-from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain, write_to_log
+from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
 from selfprivacy_api.utils.waitloop import wait_until_true
 from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
 
@@ -192,44 +192,22 @@ class Service(ABC):
 
     @classmethod
     def get_configuration(cls):
-        with ReadUserData() as user_data:
-            return {
-                key: cls.config_items[key].as_dict(
-                    user_data.get("modules", {}).get(cls.get_id(), {})
-                )
-                for key in cls.config_items
-            }
+        return {
+            key: cls.config_items[key].as_dict(cls.get_id()) for key in cls.config_items
+        }
 
     @classmethod
     def set_configuration(cls, config_items):
-        write_to_log('set_configuration')
-        write_to_log(f'{config_items=}')
-        write_to_log('Starting pre-check for config items')
         for key, value in config_items.items():
-            write_to_log(f'{key=}')
-            write_to_log(f'{value=}')
             if key not in cls.config_items:
                 raise ValueError(f"Key {key} is not valid for {cls.get_id()}")
-            write_to_log('key in cls.config_items')
             if cls.config_items[key].validate_value(value) is False:
                 raise ValueError(f"Value {value} is not valid for {key}")
-            write_to_log('value is valid')
-        with WriteUserData() as user_data:
-            write_to_log('Writing to user_data')
-            if "modules" not in user_data:
-                write_to_log('modules not in user_data')
-                user_data["modules"] = {}
-            if cls.get_id() not in user_data["modules"]:
-                write_to_log('cls.get_id() not in user_data["modules"]')
-                user_data["modules"][cls.get_id()] = {}
-            for key, value in config_items.items():
-                write_to_log('Starting writing')
-                write_to_log(f'{key=}')
-                write_to_log(f'{value=}')
-                cls.config_items[key].set_value(
-                    value,
-                    user_data["modules"][cls.get_id()],
-                )
+        for key, value in config_items.items():
+            cls.config_items[key].set_value(
+                value,
+                cls.get_id(),
+            )
 
     @staticmethod
     @abstractmethod

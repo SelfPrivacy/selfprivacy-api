@@ -24,7 +24,6 @@ from selfprivacy_api.actions.services import (
 )
 
 from selfprivacy_api.services import get_service_by_id
-from selfprivacy_api.utils import write_to_log
 
 
 @strawberry.type
@@ -173,8 +172,6 @@ class ServicesMutations:
         self, input: SetServiceConfigurationInput
     ) -> ServiceMutationReturn:
         """Set the new configuration values"""
-        write_to_log('set_service_configuration')
-        write_to_log(f"{input=}")
         service = get_service_by_id(input.service_id)
         if service is None:
             return ServiceMutationReturn(
@@ -183,9 +180,7 @@ class ServicesMutations:
                 code=404,
             )
         try:
-            write_to_log('Got service by id.')
             service.set_configuration(input.configuration)
-            write_to_log('Configuration set.')
             return ServiceMutationReturn(
                 success=True,
                 message="Service configuration updated.",

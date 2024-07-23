@@ -2,7 +2,11 @@ from abc import ABC, abstractmethod
 import re
 from typing import Optional
 
-from selfprivacy_api.utils import check_if_subdomain_is_taken, write_to_log
+from selfprivacy_api.utils import (
+    ReadUserData,
+    WriteUserData,
+    check_if_subdomain_is_taken,
+)
 
 
 class ServiceConfigItem(ABC):
@@ -12,11 +16,11 @@ class ServiceConfigItem(ABC):
     type: str
 
     @abstractmethod
-    def get_value(self, service_options):
+    def get_value(self, service_id):
         pass
 
     @abstractmethod
-    def set_value(self, value, service_options):
+    def set_value(self, value, service_id):
         pass
 
     @abstractmethod
@@ -53,17 +57,21 @@ class StringServiceConfigItem(ServiceConfigItem):
         self.widget = widget if widget else "text"
         self.allow_empty = allow_empty
 
-    def get_value(self, service_options):
-        return service_options.get(self.id, self.default_value)
+    def get_value(self, service_id):
+        with ReadUserData() as user_data:
+            if "modules" in user_data and service_id in user_data["modules"]:
+                return user_data["modules"][service_id].get(self.id, self.default_value)
+            return self.default_value
 
-    def set_value(self, value, service_options):
-        write_to_log('set_value called')
+    def set_value(self, value, service_id):
         if not self.validate_value(value):
             raise ValueError(f"Value {value} is not valid")
-        if self.regex and not self.regex.match(value):
-            raise ValueError(f"Value {value} does not match regex {self.regex}")
-        write_to_log('seting actual value')
-        service_options[self.id] = value
+        with WriteUserData() as user_data:
+            if "modules" not in user_data:
+                user_data["modules"] = {}
+            if service_id not in user_data["modules"]:
+                user_data["modules"][service_id] = {}
+            user_data["modules"][service_id][self.id] = value
 
     def as_dict(self, service_options):
         return {
@@ -77,18 +85,13 @@ class StringServiceConfigItem(ServiceConfigItem):
         }
 
     def validate_value(self, value):
-        write_to_log('validate_value called')
         if not isinstance(value, str):
             return False
-        write_to_log('value is string')
         if not self.allow_empty and not value:
             return False
-        write_to_log('value is not empty')
         if self.regex and not self.regex.match(value):
             return False
-        write_to_log('regex match')
         if self.widget == "subdomain":
-            write_to_log('subdomain widget')
             if check_if_subdomain_is_taken(value):
                 return False
         return True
@@ -108,13 +111,21 @@ class BoolServiceConfigItem(ServiceConfigItem):
         self.description = description
         self.widget = widget if widget else "switch"
 
-    def get_value(self, service_options):
-        return service_options.get(self.id, self.default_value)
+    def get_value(self, service_id):
+        with ReadUserData() as user_data:
+            if "modules" in user_data and service_id in user_data["modules"]:
+                return user_data["modules"][service_id].get(self.id, self.default_value)
+            return self.default_value
 
-    def set_value(self, value, service_options):
-        if not isinstance(value, bool):
+    def set_value(self, value, service_id):
+        if not self.validate_value(value):
             raise ValueError(f"Value {value} is not a boolean")
-        service_options[self.id] = value
+        with WriteUserData() as user_data:
+            if "modules" not in user_data:
+                user_data["modules"] = {}
+            if service_id not in user_data["modules"]:
+                user_data["modules"][service_id] = {}
+            user_data["modules"][service_id][self.id] = value
 
     def as_dict(self, service_options):
         return {
@@ -146,15 +157,21 @@ class EnumServiceConfigItem(ServiceConfigItem):
         self.options = options
         self.widget = widget if widget else "select"
 
-    def get_value(self, service_options):
-        return service_options.get(self.id, self.default_value)
+    def get_value(self, service_id):
+        with ReadUserData() as user_data:
+            if "modules" in user_data and service_id in user_data["modules"]:
+                return user_data["modules"][service_id].get(self.id, self.default_value)
+            return self.default_value
 
-    def set_value(self, value, service_options):
+    def set_value(self, value, service_id):
         if not self.validate_value(value):
-            raise ValueError(f"Value {value} is not valid")
-        if value not in self.options:
-            raise ValueError(f"Value {value} not in options {self.options}")
-        service_options[self.id] = value
+            raise ValueError(f"Value {value} is not in options")
+        with WriteUserData() as user_data:
+            if "modules" not in user_data:
+                user_data["modules"] = {}
+            if service_id not in user_data["modules"]:
+                user_data["modules"][service_id] = {}
+            user_data["modules"][service_id][self.id] = value
 
     def as_dict(self, service_options):
         return {
@@ -192,17 +209,21 @@ class IntServiceConfigItem(ServiceConfigItem):
         self.min_value = min_value
         self.max_value = max_value
 
-    def get_value(self, service_options):
-        return service_options.get(self.id, self.default_value)
+    def get_value(self, service_id):
+        with ReadUserData() as user_data:
+            if "modules" in user_data and service_id in user_data["modules"]:
+                return user_data["modules"][service_id].get(self.id, self.default_value)
+            return self.default_value
 
-    def set_value(self, value, service_options):
-        if self.min_value is not None and value < self.min_value:
-            raise ValueError(f"Value {value} is less than min_value {self.min_value}")
-        if self.max_value is not None and value > self.max_value:
-            raise ValueError(
-                f"Value {value} is greater than max_value {self.max_value}"
-            )
-        service_options[self.id] = value
+    def set_value(self, value, service_id):
+        if not self.validate_value(value):
+            raise ValueError(f"Value {value} is not valid")
+        with WriteUserData() as user_data:
+            if "modules" not in user_data:
+                user_data["modules"] = {}
+            if service_id not in user_data["modules"]:
+                user_data["modules"][service_id] = {}
+            user_data["modules"][service_id][self.id] = value
 
     def as_dict(self, service_options):
         return {
