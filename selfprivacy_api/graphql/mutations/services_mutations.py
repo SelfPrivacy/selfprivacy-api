@@ -172,6 +172,8 @@ class ServicesMutations:
         self, input: SetServiceConfigurationInput
     ) -> ServiceMutationReturn:
         """Set the new configuration values"""
+        print('set_service_configuration')
+        print(f"{input=}")
         service = get_service_by_id(input.service_id)
         if service is None:
             return ServiceMutationReturn(
@@ -180,7 +182,9 @@ class ServicesMutations:
                 code=404,
             )
         try:
+            print('Got service by id.')
             service.set_configuration(input.configuration)
+            print('Configuration set.')
             return ServiceMutationReturn(
                 success=True,
                 message="Service configuration updated.",

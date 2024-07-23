@@ -202,17 +202,30 @@ class Service(ABC):
 
     @classmethod
     def set_configuration(cls, config_items):
+        print('set_configuration')
+        print(f'{config_items=}')
+        print('Starting pre-check for config items')
         for key, value in config_items.items():
+            print(f'{key=}')
+            print(f'{value=}')
             if key not in cls.config_items:
                 raise ValueError(f"Key {key} is not valid for {cls.get_id()}")
+            print('key in cls.config_items')
             if cls.config_items[key].validate_value(value) is False:
                 raise ValueError(f"Value {value} is not valid for {key}")
+            print('value is valid')
         with WriteUserData() as user_data:
+            print('Writing to user_data')
             if "modules" not in user_data:
+                print('modules not in user_data')
                 user_data["modules"] = {}
             if cls.get_id() not in user_data["modules"]:
+                print('cls.get_id() not in user_data["modules"]')
                 user_data["modules"][cls.get_id()] = {}
             for key, value in config_items.items():
+                print('Starting writing')
+                print(f'{key=}')
+                print(f'{value=}')
                 cls.config_items[key].set_value(
                     value,
                     user_data["modules"][cls.get_id()],

@@ -57,10 +57,12 @@ class StringServiceConfigItem(ServiceConfigItem):
         return service_options.get(self.id, self.default_value)
 
     def set_value(self, value, service_options):
+        print('set_value called')
         if not self.validate_value(value):
             raise ValueError(f"Value {value} is not valid")
         if self.regex and not self.regex.match(value):
             raise ValueError(f"Value {value} does not match regex {self.regex}")
+        print('seting actual value')
         service_options[self.id] = value
 
     def as_dict(self, service_options):
