@@ -105,7 +105,7 @@ def service_dns_to_graphql(record: ServiceDnsRecord) -> DnsRecord:
 
 @strawberry.interface
 class ConfigItem:
-    id: str
+    field_id: str
     description: str
     widget: str
     type: str
@@ -135,7 +135,7 @@ def config_item_to_graphql(item: dict) -> ConfigItem:
     item_type = item.get("type")
     if item_type == "string":
         return StringConfigItem(
-            id=item["id"],
+            field_id=item["id"],
             description=item["description"],
             widget=item["widget"],
             type=item_type,
@@ -145,7 +145,7 @@ def config_item_to_graphql(item: dict) -> ConfigItem:
         )
     elif item_type == "bool":
         return BoolConfigItem(
-            id=item["id"],
+            field_id=item["id"],
             description=item["description"],
             widget=item["widget"],
             type=item_type,
@@ -154,7 +154,7 @@ def config_item_to_graphql(item: dict) -> ConfigItem:
         )
     elif item_type == "enum":
         return EnumConfigItem(
-            id=item["id"],
+            field_id=item["id"],
             description=item["description"],
             widget=item["widget"],
             type=item_type,
