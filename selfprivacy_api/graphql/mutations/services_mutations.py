@@ -187,6 +187,13 @@ class ServicesMutations:
                 code=200,
                 service=service_to_graphql_service(service),
             )
+        except ValueError as e:
+            return ServiceMutationReturn(
+                success=False,
+                message=e.args[0],
+                code=400,
+                service=service_to_graphql_service(service),
+            )
         except Exception as e:
             return ServiceMutationReturn(
                 success=False,
