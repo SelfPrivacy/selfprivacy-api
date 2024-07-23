@@ -24,7 +24,7 @@ class Roundcube(Service):
     config_items: dict[str, ServiceConfigItem] = {
         "subdomain": StringServiceConfigItem(
             id="subdomain",
-            default_value="cloud",
+            default_value="roundcube",
             description="Subdomain",
             regex=SUBDOMAIN_REGEX,
             widget="subdomain",
