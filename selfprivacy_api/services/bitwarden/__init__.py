@@ -1,9 +1,7 @@
 """Class representing Bitwarden service"""
 import base64
 import subprocess
-from typing import Optional, List
-
-from selfprivacy_api.utils import get_domain
+from typing import List
 
 from selfprivacy_api.utils.systemd import get_service_status
 from selfprivacy_api.services.service import Service, ServiceStatus
@@ -36,16 +34,6 @@ class Bitwarden(Service):
     @staticmethod
     def get_user() -> str:
         return "vaultwarden"
-
-    @classmethod
-    def get_url(cls) -> Optional[str]:
-        """Return service url."""
-        domain = get_domain()
-        return f"https://password.{domain}"
-
-    @classmethod
-    def get_subdomain(cls) -> Optional[str]:
-        return "password"
 
     @staticmethod
     def is_movable() -> bool:

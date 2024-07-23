@@ -33,10 +33,6 @@ class Ocserv(Service):
         """Return service url."""
         return None
 
-    @classmethod
-    def get_subdomain(cls) -> typing.Optional[str]:
-        return "vpn"
-
     @staticmethod
     def is_movable() -> bool:
         return False

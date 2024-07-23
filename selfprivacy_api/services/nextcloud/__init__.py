@@ -1,9 +1,7 @@
 """Class representing Nextcloud service."""
 import base64
 import subprocess
-from typing import Optional, List
-
-from selfprivacy_api.utils import get_domain
+from typing import List
 
 from selfprivacy_api.utils.systemd import get_service_status
 from selfprivacy_api.services.service import Service, ServiceStatus
@@ -33,16 +31,6 @@ class Nextcloud(Service):
     def get_svg_icon() -> str:
         """Read SVG icon from file and return it as base64 encoded string."""
         return base64.b64encode(NEXTCLOUD_ICON.encode("utf-8")).decode("utf-8")
-
-    @classmethod
-    def get_url(cls) -> Optional[str]:
-        """Return service url."""
-        domain = get_domain()
-        return f"https://cloud.{domain}"
-
-    @classmethod
-    def get_subdomain(cls) -> Optional[str]:
-        return "cloud"
 
     @staticmethod
     def is_movable() -> bool:

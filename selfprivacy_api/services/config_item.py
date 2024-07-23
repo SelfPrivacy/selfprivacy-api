@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 import re
 from typing import Optional
 
+from selfprivacy_api.utils import check_if_subdomain_is_taken
+
 
 class ServiceConfigItem(ABC):
     id: str
@@ -16,6 +18,10 @@ class ServiceConfigItem(ABC):
     @abstractmethod
     def set_value(self, value, service_options):
         pass
+
+    @abstractmethod
+    def validate_value(self, value):
+        return True
 
     def as_dict(self, service_options):
         return {
@@ -35,18 +41,24 @@ class StringServiceConfigItem(ServiceConfigItem):
         description: str,
         regex: Optional[str] = None,
         widget: Optional[str] = None,
+        allow_empty: bool = False,
     ):
+        if widget == "subdomain" and not regex:
+            raise ValueError("Subdomain widget requires regex")
         self.id = id
         self.type = "string"
         self.default_value = default_value
         self.description = description
         self.regex = re.compile(regex) if regex else None
         self.widget = widget if widget else "text"
+        self.allow_empty = allow_empty
 
     def get_value(self, service_options):
         return service_options.get(self.id, self.default_value)
 
     def set_value(self, value, service_options):
+        if not self.validate_value(value):
+            raise ValueError(f"Value {value} is not valid")
         if self.regex and not self.regex.match(value):
             raise ValueError(f"Value {value} does not match regex {self.regex}")
         service_options[self.id] = value
@@ -61,6 +73,18 @@ class StringServiceConfigItem(ServiceConfigItem):
             "default_value": self.default_value,
             "regex": self.regex.pattern if self.regex else None,
         }
+
+    def validate_value(self, value):
+        if not isinstance(value, str):
+            return False
+        if not self.allow_empty and not value:
+            return False
+        if self.regex and not self.regex.match(value):
+            return False
+        if self.widget == "subdomain":
+            if check_if_subdomain_is_taken(value):
+                return False
+        return True
 
 
 class BoolServiceConfigItem(ServiceConfigItem):
@@ -81,6 +105,8 @@ class BoolServiceConfigItem(ServiceConfigItem):
         return service_options.get(self.id, self.default_value)
 
     def set_value(self, value, service_options):
+        if not isinstance(value, bool):
+            raise ValueError(f"Value {value} is not a boolean")
         service_options[self.id] = value
 
     def as_dict(self, service_options):
@@ -92,6 +118,9 @@ class BoolServiceConfigItem(ServiceConfigItem):
             "value": self.get_value(service_options),
             "default_value": self.default_value,
         }
+
+    def validate_value(self, value):
+        return isinstance(value, bool)
 
 
 class EnumServiceConfigItem(ServiceConfigItem):
@@ -114,6 +143,8 @@ class EnumServiceConfigItem(ServiceConfigItem):
         return service_options.get(self.id, self.default_value)
 
     def set_value(self, value, service_options):
+        if not self.validate_value(value):
+            raise ValueError(f"Value {value} is not valid")
         if value not in self.options:
             raise ValueError(f"Value {value} not in options {self.options}")
         service_options[self.id] = value
@@ -128,6 +159,11 @@ class EnumServiceConfigItem(ServiceConfigItem):
             "default_value": self.default_value,
             "options": self.options,
         }
+
+    def validate_value(self, value):
+        if not isinstance(value, str):
+            return False
+        return value in self.options
 
 
 # TODO: unused for now
@@ -156,7 +192,9 @@ class IntServiceConfigItem(ServiceConfigItem):
         if self.min_value is not None and value < self.min_value:
             raise ValueError(f"Value {value} is less than min_value {self.min_value}")
         if self.max_value is not None and value > self.max_value:
-            raise ValueError(f"Value {value} is greater than max_value {self.max_value}")
+            raise ValueError(
+                f"Value {value} is greater than max_value {self.max_value}"
+            )
         service_options[self.id] = value
 
     def as_dict(self, service_options):
@@ -170,3 +208,10 @@ class IntServiceConfigItem(ServiceConfigItem):
             "min_value": self.min_value,
             "max_value": self.max_value,
         }
+
+    def validate_value(self, value):
+        if not isinstance(value, int):
+            return False
+        return (self.min_value is None or value >= self.min_value) and (
+            self.max_value is None or value <= self.max_value
+        )

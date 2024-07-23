@@ -1,9 +1,10 @@
 """Abstract class for a service running on a server"""
 from abc import ABC, abstractmethod
-from typing import Any, List, Optional
+from typing import List, Optional
 
 from selfprivacy_api import utils
-from selfprivacy_api.utils import ReadUserData, WriteUserData
+from selfprivacy_api.utils.default_subdomains import DEFAULT_SUBDOMAINS
+from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
 from selfprivacy_api.utils.waitloop import wait_until_true
 from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
 
@@ -66,20 +67,27 @@ class Service(ABC):
         pass
 
     @classmethod
-    @abstractmethod
     def get_url(cls) -> Optional[str]:
         """
         The url of the service if it is accessible from the internet browser.
         """
-        pass
+        domain = get_domain()
+        subdomain = cls.get_subdomain()
+        return f"https://{subdomain}.{domain}"
 
     @classmethod
-    @abstractmethod
     def get_subdomain(cls) -> Optional[str]:
         """
         The assigned primary subdomain for this service.
         """
-        pass
+        name = cls.get_id()
+        with ReadUserData() as user_data:
+            if "modules" in user_data:
+                if name in user_data["modules"]:
+                    if "subdomain" in user_data["modules"][name]:
+                        return user_data["modules"][name]["subdomain"]
+
+        return DEFAULT_SUBDOMAINS.get(name)
 
     @classmethod
     def get_user(cls) -> Optional[str]:

@@ -10,12 +10,6 @@ from selfprivacy_api.services import get_service_by_id, get_services_by_location
 from selfprivacy_api.services import Service as ServiceInterface
 from selfprivacy_api.services import ServiceDnsRecord
 
-from selfprivacy_api.services.config_item import (
-    ServiceConfigItem,
-    StringServiceConfigItem,
-    BoolServiceConfigItem,
-    EnumServiceConfigItem,
-)
 from selfprivacy_api.utils.block_devices import BlockDevices
 from selfprivacy_api.utils.network import get_ip4, get_ip6
 
@@ -147,7 +141,7 @@ def config_item_to_graphql(item: dict) -> ConfigItem:
             type=item_type,
             value=item["value"],
             default_value=item["default_value"],
-            regex=item.get("regex")
+            regex=item.get("regex"),
         )
     elif item_type == "bool":
         return BoolConfigItem(

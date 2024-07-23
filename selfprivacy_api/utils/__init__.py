@@ -8,6 +8,11 @@ import subprocess
 import portalocker
 import typing
 
+from selfprivacy_api.utils.default_subdomains import (
+    DEFAULT_SUBDOMAINS,
+    RESERVED_SUBDOMAINS,
+)
+
 
 USERDATA_FILE = "/etc/nixos/userdata.json"
 SECRETS_FILE = "/etc/selfprivacy/secrets.json"
@@ -130,6 +135,20 @@ def is_username_forbidden(username):
         if username == forbidden_username:
             return True
 
+    return False
+
+
+def check_if_subdomain_is_taken(subdomain: str) -> bool:
+    """Check if subdomain is already taken or reserved"""
+    if subdomain in RESERVED_SUBDOMAINS:
+        return True
+    with ReadUserData() as data:
+        for module in data["modules"]:
+            if (
+                data["modules"][module].get("subdomain", DEFAULT_SUBDOMAINS[module])
+                == subdomain
+            ):
+                return True
     return False
 
 

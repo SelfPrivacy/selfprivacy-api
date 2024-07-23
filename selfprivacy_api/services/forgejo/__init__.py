@@ -1,9 +1,9 @@
 """Class representing Bitwarden service"""
 import base64
 import subprocess
-from typing import Optional, List
+from typing import List
 
-from selfprivacy_api.utils import get_domain, ReadUserData, WriteUserData
+from selfprivacy_api.utils import ReadUserData, WriteUserData
 
 from selfprivacy_api.utils.systemd import get_service_status
 from selfprivacy_api.services.service import Service, ServiceStatus
@@ -14,6 +14,7 @@ from selfprivacy_api.services.config_item import (
     EnumServiceConfigItem,
     ServiceConfigItem,
 )
+from selfprivacy_api.utils.regex_strings import SUBDOMAIN_REGEX
 
 
 class Forgejo(Service):
@@ -27,7 +28,7 @@ class Forgejo(Service):
             id="subdomain",
             default_value="git",
             description="Subdomain",
-            regex=r"^[A-Za-z0-9][A-Za-z0-9\-]{0,61}[A-Za-z0-9]$",
+            regex=SUBDOMAIN_REGEX,
             widget="subdomain",
         ),
         "appName": StringServiceConfigItem(
@@ -89,21 +90,6 @@ class Forgejo(Service):
     def get_svg_icon() -> str:
         """Read SVG icon from file and return it as base64 encoded string."""
         return base64.b64encode(FORGEJO_ICON.encode("utf-8")).decode("utf-8")
-
-    @classmethod
-    def get_url(cls) -> Optional[str]:
-        """Return service url."""
-        domain = get_domain()
-        subdomain = cls.get_subdomain()
-        return f"https://{subdomain}.{domain}"
-
-    @classmethod
-    def get_subdomain(cls) -> Optional[str]:
-        with ReadUserData() as data:
-            if "gitea" in data["modules"]:
-                return data["modules"]["gitea"]["subdomain"]
-
-        return "git"
 
     @staticmethod
     def is_movable() -> bool:
