@@ -5,7 +5,7 @@ from typing import List, Optional
 from selfprivacy_api import utils
 from selfprivacy_api.services.config_item import ServiceConfigItem
 from selfprivacy_api.utils.default_subdomains import DEFAULT_SUBDOMAINS
-from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
+from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain, write_to_log
 from selfprivacy_api.utils.waitloop import wait_until_true
 from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
 
@@ -202,30 +202,30 @@ class Service(ABC):
 
     @classmethod
     def set_configuration(cls, config_items):
-        print('set_configuration')
-        print(f'{config_items=}')
-        print('Starting pre-check for config items')
+        write_to_log('set_configuration')
+        write_to_log(f'{config_items=}')
+        write_to_log('Starting pre-check for config items')
         for key, value in config_items.items():
-            print(f'{key=}')
-            print(f'{value=}')
+            write_to_log(f'{key=}')
+            write_to_log(f'{value=}')
             if key not in cls.config_items:
                 raise ValueError(f"Key {key} is not valid for {cls.get_id()}")
-            print('key in cls.config_items')
+            write_to_log('key in cls.config_items')
             if cls.config_items[key].validate_value(value) is False:
                 raise ValueError(f"Value {value} is not valid for {key}")
-            print('value is valid')
+            write_to_log('value is valid')
         with WriteUserData() as user_data:
-            print('Writing to user_data')
+            write_to_log('Writing to user_data')
             if "modules" not in user_data:
-                print('modules not in user_data')
+                write_to_log('modules not in user_data')
                 user_data["modules"] = {}
             if cls.get_id() not in user_data["modules"]:
-                print('cls.get_id() not in user_data["modules"]')
+                write_to_log('cls.get_id() not in user_data["modules"]')
                 user_data["modules"][cls.get_id()] = {}
             for key, value in config_items.items():
-                print('Starting writing')
-                print(f'{key=}')
-                print(f'{value=}')
+                write_to_log('Starting writing')
+                write_to_log(f'{key=}')
+                write_to_log(f'{value=}')
                 cls.config_items[key].set_value(
                     value,
                     user_data["modules"][cls.get_id()],
@@ -393,7 +393,7 @@ class Service(ABC):
         try:
             ensure_folder_ownership(binds)
         except Exception as error:
-            # We have logged it via print and we additionally log it here in the error field
+            # We have logged it via write_to_log and we additionally log it here in the error field
             # We are continuing anyway but Job has no warning field
             Jobs.update(
                 job,

@@ -140,9 +140,12 @@ def is_username_forbidden(username):
 
 def check_if_subdomain_is_taken(subdomain: str) -> bool:
     """Check if subdomain is already taken or reserved"""
+    write_to_log(f"Checking if subdomain {subdomain} is taken")
     if subdomain in RESERVED_SUBDOMAINS:
         return True
+    write_to_log(f"Subdomain {subdomain} is not reserved")
     with ReadUserData() as data:
+        write_to_log("entered with ReadUserData")
         for module in data["modules"]:
             if (
                 data["modules"][module].get("subdomain", DEFAULT_SUBDOMAINS[module])
@@ -218,3 +221,10 @@ def hash_password(password):
     hashed_password = hashed_password.decode("ascii")
     hashed_password = hashed_password.rstrip()
     return hashed_password
+
+
+def write_to_log(message):
+    with open("/etc/selfprivacy/log", "a") as log:
+        log.write(f"{datetime.datetime.now()} {message}\n")
+        log.flush()
+        os.fsync(log.fileno())

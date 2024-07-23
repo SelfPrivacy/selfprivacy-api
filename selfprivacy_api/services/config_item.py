@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import re
 from typing import Optional
 
-from selfprivacy_api.utils import check_if_subdomain_is_taken
+from selfprivacy_api.utils import check_if_subdomain_is_taken, write_to_log
 
 
 class ServiceConfigItem(ABC):
@@ -57,12 +57,12 @@ class StringServiceConfigItem(ServiceConfigItem):
         return service_options.get(self.id, self.default_value)
 
     def set_value(self, value, service_options):
-        print('set_value called')
+        write_to_log('set_value called')
         if not self.validate_value(value):
             raise ValueError(f"Value {value} is not valid")
         if self.regex and not self.regex.match(value):
             raise ValueError(f"Value {value} does not match regex {self.regex}")
-        print('seting actual value')
+        write_to_log('seting actual value')
         service_options[self.id] = value
 
     def as_dict(self, service_options):
@@ -77,13 +77,18 @@ class StringServiceConfigItem(ServiceConfigItem):
         }
 
     def validate_value(self, value):
+        write_to_log('validate_value called')
         if not isinstance(value, str):
             return False
+        write_to_log('value is string')
         if not self.allow_empty and not value:
             return False
+        write_to_log('value is not empty')
         if self.regex and not self.regex.match(value):
             return False
+        write_to_log('regex match')
         if self.widget == "subdomain":
+            write_to_log('subdomain widget')
             if check_if_subdomain_is_taken(value):
                 return False
         return True
