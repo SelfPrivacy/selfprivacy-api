@@ -14,7 +14,7 @@ from selfprivacy_api.migrations.write_token_to_redis import WriteTokenToRedis
 from selfprivacy_api.migrations.check_for_system_rebuild_jobs import (
     CheckForSystemRebuildJobs,
 )
-from selfprivacy_api.add_prometheus import AddPrometheus
+from selfprivacy_api.migrations.add_prometheus import AddPrometheus
 
 migrations = [
     WriteTokenToRedis(),
