@@ -127,33 +127,6 @@ class Forgejo(Service):
     def restart():
         subprocess.run(["systemctl", "restart", "forgejo.service"])
 
-    @classmethod
-    def get_configuration(cls):
-        with ReadUserData() as user_data:
-            return {
-                key: cls.config_items[key].as_dict(
-                    user_data.get("modules", {}).get(cls.get_id(), {})
-                )
-                for key in cls.config_items
-            }
-
-    @classmethod
-    def set_configuration(cls, config_items):
-        # First, validate the configuration
-        for key, value in config_items.items():
-            if cls.config_items[key].validate_value(value) is False:
-                raise ValueError(f"Value {value} is not valid for {key}")
-        with WriteUserData() as user_data:
-            if "modules" not in user_data:
-                user_data["modules"] = {}
-            if cls.get_id() not in user_data["modules"]:
-                user_data["modules"][cls.get_id()] = {}
-            for key, value in config_items.items():
-                cls.config_items[key].set_value(
-                    value,
-                    user_data["modules"][cls.get_id()],
-                )
-
     @staticmethod
     def get_logs():
         return ""

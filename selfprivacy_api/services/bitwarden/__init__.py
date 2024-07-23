@@ -6,10 +6,41 @@ from typing import List
 from selfprivacy_api.utils.systemd import get_service_status
 from selfprivacy_api.services.service import Service, ServiceStatus
 from selfprivacy_api.services.bitwarden.icon import BITWARDEN_ICON
+from selfprivacy_api.services.config_item import (
+    StringServiceConfigItem,
+    BoolServiceConfigItem,
+    ServiceConfigItem,
+)
+from selfprivacy_api.utils.regex_strings import SUBDOMAIN_REGEX
 
 
 class Bitwarden(Service):
     """Class representing Bitwarden service."""
+
+    config_items: dict[str, ServiceConfigItem] = {
+        "subdomain": StringServiceConfigItem(
+            id="subdomain",
+            default_value="password",
+            description="Subdomain",
+            regex=SUBDOMAIN_REGEX,
+            widget="subdomain",
+        ),
+        "signupsAllowed": BoolServiceConfigItem(
+            id="signupsAllowed",
+            default_value=True,
+            description="Allow new user signups",
+        ),
+        "sendsAllowed": BoolServiceConfigItem(
+            id="sendsAllowed",
+            default_value=True,
+            description="Allow users to use Bitwarden Send",
+        ),
+        "emergencyAccessAllowed": BoolServiceConfigItem(
+            id="emergencyAccessAllowed",
+            default_value=True,
+            description="Allow users to enable Emergency Access",
+        ),
+    }
 
     @staticmethod
     def get_id() -> str:

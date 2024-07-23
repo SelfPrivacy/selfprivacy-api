@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from typing import List, Optional
 
 from selfprivacy_api import utils
+from selfprivacy_api.services.config_item import ServiceConfigItem
 from selfprivacy_api.utils.default_subdomains import DEFAULT_SUBDOMAINS
 from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
 from selfprivacy_api.utils.waitloop import wait_until_true
@@ -33,6 +34,8 @@ class Service(ABC):
     Service here is some software that is hosted on the server and
     can be installed, configured and used by a user.
     """
+
+    config_items: dict[str, "ServiceConfigItem"] = {}
 
     @staticmethod
     @abstractmethod
@@ -188,14 +191,32 @@ class Service(ABC):
         pass
 
     @classmethod
-    @abstractmethod
-    def get_configuration(cls) -> dict:
-        pass
+    def get_configuration(cls):
+        with ReadUserData() as user_data:
+            return {
+                key: cls.config_items[key].as_dict(
+                    user_data.get("modules", {}).get(cls.get_id(), {})
+                )
+                for key in cls.config_items
+            }
 
     @classmethod
-    @abstractmethod
     def set_configuration(cls, config_items):
-        pass
+        for key, value in config_items.items():
+            if key not in cls.config_items:
+                raise ValueError(f"Key {key} is not valid for {cls.get_id()}")
+            if cls.config_items[key].validate_value(value) is False:
+                raise ValueError(f"Value {value} is not valid for {key}")
+        with WriteUserData() as user_data:
+            if "modules" not in user_data:
+                user_data["modules"] = {}
+            if cls.get_id() not in user_data["modules"]:
+                user_data["modules"][cls.get_id()] = {}
+            for key, value in config_items.items():
+                cls.config_items[key].set_value(
+                    value,
+                    user_data["modules"][cls.get_id()],
+                )
 
     @staticmethod
     @abstractmethod

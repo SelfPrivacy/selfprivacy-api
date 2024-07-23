@@ -10,10 +10,30 @@ from selfprivacy_api.utils.systemd import (
 from selfprivacy_api.services.service import Service, ServiceStatus
 from selfprivacy_api.utils.block_devices import BlockDevice
 from selfprivacy_api.services.jitsimeet.icon import JITSI_ICON
+from selfprivacy_api.services.config_item import (
+    StringServiceConfigItem,
+    ServiceConfigItem,
+)
+from selfprivacy_api.utils.regex_strings import SUBDOMAIN_REGEX
 
 
 class JitsiMeet(Service):
     """Class representing Jitsi service"""
+
+    config_items: dict[str, ServiceConfigItem] = {
+        "subdomain": StringServiceConfigItem(
+            id="subdomain",
+            default_value="meet",
+            description="Subdomain",
+            regex=SUBDOMAIN_REGEX,
+            widget="subdomain",
+        ),
+        "appName": StringServiceConfigItem(
+            id="appName",
+            default_value="Jitsi Meet",
+            description="The name displayed in the web interface",
+        ),
+    }
 
     @staticmethod
     def get_id() -> str:
