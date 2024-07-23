@@ -87,15 +87,6 @@ class Nextcloud(Service):
         """Restart Nextcloud service."""
         subprocess.Popen(["systemctl", "restart", "phpfpm-nextcloud.service"])
 
-    @classmethod
-    def get_configuration(cls) -> dict:
-        """Return Nextcloud configuration."""
-        return {}
-
-    @classmethod
-    def set_configuration(cls, config_items):
-        return super().set_configuration(config_items)
-
     @staticmethod
     def get_logs():
         """Return Nextcloud logs."""

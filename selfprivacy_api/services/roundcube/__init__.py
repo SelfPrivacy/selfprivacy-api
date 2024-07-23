@@ -93,14 +93,6 @@ class Roundcube(Service):
         )
 
     @staticmethod
-    def get_configuration():
-        return {}
-
-    @staticmethod
-    def set_configuration(config_items):
-        return super().set_configuration(config_items)
-
-    @staticmethod
     def get_logs():
         return ""
 

@@ -89,14 +89,6 @@ class MailServer(Service):
         subprocess.run(["systemctl", "restart", "dovecot2.service"], check=False)
         subprocess.run(["systemctl", "restart", "postfix.service"], check=False)
 
-    @classmethod
-    def get_configuration(cls):
-        return {}
-
-    @classmethod
-    def set_configuration(cls, config_items):
-        return super().set_configuration(config_items)
-
     @staticmethod
     def get_logs():
         return ""
