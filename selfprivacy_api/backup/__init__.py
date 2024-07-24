@@ -8,10 +8,8 @@ import os
 from os import statvfs
 from typing import Callable, List, Optional
 
-from selfprivacy_api.services import (
-    get_service_by_id,
-    get_all_services,
-)
+from selfprivacy_api.services import ServiceManager
+
 from selfprivacy_api.services.service import (
     Service,
     ServiceStatus,
@@ -376,7 +374,7 @@ class Backups:
 
     @staticmethod
     def prune_all_autosnaps() -> None:
-        for service in get_all_services():
+        for service in ServiceManager.get_all_services():
             Backups._prune_auto_snaps(service)
 
     # Restoring
@@ -431,7 +429,7 @@ class Backups:
         snapshot: Snapshot, strategy=RestoreStrategy.DOWNLOAD_VERIFY_OVERWRITE
     ) -> None:
         """Restores a snapshot to its original service using the given strategy"""
-        service = get_service_by_id(snapshot.service_name)
+        service = ServiceManager.get_service_by_id(snapshot.service_name)
         if service is None:
             raise ValueError(
                 f"snapshot has a nonexistent service: {snapshot.service_name}"
@@ -475,7 +473,7 @@ class Backups:
     def _assert_restorable(
         snapshot: Snapshot, strategy=RestoreStrategy.DOWNLOAD_VERIFY_OVERWRITE
     ) -> None:
-        service = get_service_by_id(snapshot.service_name)
+        service = ServiceManager.get_service_by_id(snapshot.service_name)
         if service is None:
             raise ValueError(
                 f"snapshot has a nonexistent service: {snapshot.service_name}"
@@ -646,7 +644,7 @@ class Backups:
         """Returns a list of services that should be backed up at a given time"""
         return [
             service
-            for service in get_all_services()
+            for service in ServiceManager.get_all_services()
             if Backups.is_time_to_backup_service(service, time)
         ]
 
