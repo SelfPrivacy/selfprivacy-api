@@ -31,6 +31,5 @@ class AddMonitoring(Migration):
         with WriteUserData() as data:
             if "monitoring" not in data["modules"]:
                 data["modules"]["monitoring"] = {
-                    "enable": False,
-                    "subdomain": "monitoring",
+                    "enable": True
                 }
