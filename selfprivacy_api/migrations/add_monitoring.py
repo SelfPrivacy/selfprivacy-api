@@ -2,6 +2,7 @@ from selfprivacy_api.migrations.migration import Migration
 
 from selfprivacy_api.services.flake_service_manager import FlakeServiceManager
 from selfprivacy_api.utils import ReadUserData, WriteUserData
+from selfprivacy_api.utils.block_devices import BlockDevices
 
 
 class AddMonitoring(Migration):
@@ -31,5 +32,6 @@ class AddMonitoring(Migration):
         with WriteUserData() as data:
             if "monitoring" not in data["modules"]:
                 data["modules"]["monitoring"] = {
-                    "enable": True
+                    "enable": True,
+                    "location": BlockDevices().get_root_block_device().name
                 }
