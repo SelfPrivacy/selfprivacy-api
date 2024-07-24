@@ -39,7 +39,7 @@ class PrometheusQueries:
             json = response.json()
             print(json)
             return PrometheusQueryResult(
-                result_type=json["result_type"], result=json["result"]
+                result_type=json["resultType"], result=json["result"]
             )
         except Exception as error:
             raise Exception("Prometheus request failed! " + str(error))
