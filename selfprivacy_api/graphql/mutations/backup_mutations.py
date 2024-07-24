@@ -26,6 +26,7 @@ from selfprivacy_api.backup.tasks import (
     prune_autobackup_snapshots,
 )
 from selfprivacy_api.backup.jobs import add_backup_job, add_restore_job
+from selfprivacy_api.backup.local_secret import LocalBackupSecret
 
 
 @strawberry.input
@@ -40,6 +41,8 @@ class InitializeRepositoryInput:
     # Key ID and key for Backblaze
     login: str
     password: str
+    # For migration. If set, no new secret is generated
+    local_secret: typing.Optional[str]
 
 
 @strawberry.type
@@ -63,6 +66,11 @@ class BackupMutations:
             location=repository.location_name,
             repo_id=repository.location_id,
         )
+
+        secret = repository.local_secret
+        if secret is not None:
+            LocalBackupSecret.set(secret)
+
         Backups.init_repo()
         return GenericBackupConfigReturn(
             success=True,
@@ -156,6 +164,14 @@ class BackupMutations:
             message="Backup job queued",
             job=job_to_api_job(job),
         )
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    def restore_all(self):
+        """
+        Restore all restorable and enabled services according to last autobackup snapshots
+        This happens in sync with partial merging of old configuration for compatibility
+        """
+        pass
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def restore_backup(
