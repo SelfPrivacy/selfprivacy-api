@@ -5,7 +5,7 @@ import base64
 import typing
 
 from typing import List
-from os import path,mkdir
+from os import path, mkdir
 from pathlib import Path
 
 # from enum import Enum
@@ -27,15 +27,13 @@ from selfprivacy_api.services.pleroma import Pleroma
 from selfprivacy_api.services.ocserv import Ocserv
 
 
-
-DEFAULT_DELAY = 0
-CONFIG_STASH_DIR =  "/tmp/selfprivacy_config_dump"
-
+CONFIG_STASH_DIR = "/tmp/selfprivacy_config_dump"
 
 
 # it is too intimately tied to Services
 # that's why it is so awkward.
 # service list is below
+
 
 class ConfigService(Service):
     """A fake service to store our configs"""
@@ -110,7 +108,7 @@ class ConfigService(Service):
     @staticmethod
     def merge_settings(restored_settings_folder: str):
         # For now we will just copy settings EXCEPT the locations of services
-        # Stash locations as they are set by user right now 
+        # Stash locations as they are set by user right now
         locations = {}
         for service in services:
             locations[service.get_id()] = service.get_drive()
@@ -130,8 +128,6 @@ class ConfigService(Service):
             if device is not None:
                 service.set_location(device.name)
 
-
-        
     @classmethod
     def stop(cls):
         # simulate a failing service unable to stop
@@ -164,9 +160,8 @@ class ConfigService(Service):
     @classmethod
     def pre_backup(cls):
         tempdir = cls.folders[0]
-        rmtree(tempdir,ignore_errors=True)
+        rmtree(tempdir, ignore_errors=True)
         mkdir(tempdir)
-
 
         copyfile(USERDATA_FILE, tempdir)
         copyfile(SECRETS_FILE, tempdir)
@@ -176,8 +171,9 @@ class ConfigService(Service):
     def post_restore(cls):
         tempdir = cls.folders[0]
         cls.merge_settings(tempdir)
-        rmtree(tempdir,ignore_errors=True)
-    
+        rmtree(tempdir, ignore_errors=True)
+
+
 # It is here because our thing needs to include itself
 services: list[Service] = [
     Bitwarden(),

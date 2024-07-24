@@ -4,7 +4,7 @@ from tests.common import generate_backup_query
 
 
 import selfprivacy_api.services as all_services
-from selfprivacy_api.services import get_service_by_id
+from selfprivacy_api.services import ServiceManager
 from selfprivacy_api.graphql.common_types.service import service_to_graphql_service
 from selfprivacy_api.graphql.common_types.backup import (
     _AutobackupQuotas,
@@ -315,7 +315,7 @@ def test_snapshots_orphaned_service(authorized_client, dummy_service, backups):
     assert len(snaps) == 1
 
     all_services.services.remove(dummy_service)
-    assert get_service_by_id(dummy_service.get_id()) is None
+    assert ServiceManager.get_service_by_id(dummy_service.get_id()) is None
 
     snaps = api_snapshots(authorized_client)
     assert len(snaps) == 1

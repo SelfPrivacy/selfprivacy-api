@@ -1,7 +1,7 @@
 from selfprivacy_api.utils.block_devices import BlockDevices
 from selfprivacy_api.jobs import Jobs, Job
 
-from selfprivacy_api.services import get_service_by_id
+from selfprivacy_api.services import ServiceManager
 from selfprivacy_api.services.tasks import move_service as move_service_task
 
 
@@ -14,7 +14,7 @@ class VolumeNotFoundError(Exception):
 
 
 def move_service(service_id: str, volume_name: str) -> Job:
-    service = get_service_by_id(service_id)
+    service = ServiceManager.get_service_by_id(service_id)
     if service is None:
         raise ServiceNotFoundError(f"No such service:{service_id}")
 

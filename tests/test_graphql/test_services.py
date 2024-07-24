@@ -2,12 +2,12 @@ import pytest
 import shutil
 
 from typing import Generator
-from os import mkdir, rmdir
+from os import mkdir
 
 from selfprivacy_api.utils.block_devices import BlockDevices
 
 import selfprivacy_api.services as service_module
-from selfprivacy_api.services import get_service_by_id
+from selfprivacy_api.services import ServiceManager
 from selfprivacy_api.services.service import Service, ServiceStatus
 from selfprivacy_api.services.test_service import DummyService
 
@@ -716,7 +716,7 @@ def test_graphql_move_service(
 
 
 def test_mailservice_cannot_enable_disable(authorized_client):
-    mailservice = get_service_by_id("simple-nixos-mailserver")
+    mailservice = ServiceManager.get_service_by_id("simple-nixos-mailserver")
 
     mutation_response = api_enable(authorized_client, mailservice)
     data = get_data(mutation_response)["services"]["enableService"]

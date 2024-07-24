@@ -6,7 +6,7 @@ import strawberry
 from selfprivacy_api.graphql.common_types.backup import BackupReason
 from selfprivacy_api.graphql.common_types.dns import DnsRecord
 
-from selfprivacy_api.services import get_service_by_id, get_services_by_location
+from selfprivacy_api.services import ServiceManager
 from selfprivacy_api.services import Service as ServiceInterface
 from selfprivacy_api.services import ServiceDnsRecord
 
@@ -23,7 +23,7 @@ def get_usages(root: "StorageVolume") -> list["StorageUsageInterface"]:
             used_space=str(service.get_storage_usage()),
             volume=get_volume_by_id(service.get_drive()),
         )
-        for service in get_services_by_location(root.name)
+        for service in ServiceManager.get_services_by_location(root.name)
     ]
 
 
@@ -73,7 +73,7 @@ class ServiceStatusEnum(Enum):
 
 def get_storage_usage(root: "Service") -> ServiceStorageUsage:
     """Get storage usage for a service"""
-    service = get_service_by_id(root.id)
+    service = ServiceManager.get_service_by_id(root.id)
     if service is None:
         return ServiceStorageUsage(
             service=service,
@@ -183,7 +183,7 @@ class Service:
 
     @strawberry.field
     def dns_records(self) -> Optional[List[DnsRecord]]:
-        service = get_service_by_id(self.id)
+        service = ServiceManager.get_service_by_id(self.id)
         if service is None:
             raise LookupError(f"no service {self.id}. Should be unreachable")
 

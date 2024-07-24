@@ -15,7 +15,7 @@ from selfprivacy_api.graphql.common_types.service import (
     service_to_graphql_service,
 )
 from selfprivacy_api.graphql.common_types.backup import AutobackupQuotas
-from selfprivacy_api.services import get_service_by_id
+from selfprivacy_api.services import ServiceManager
 
 
 @strawberry.type
@@ -76,7 +76,7 @@ class Backup:
         snapshots = Backups.get_all_snapshots()
         for snap in snapshots:
             api_service = None
-            service = get_service_by_id(snap.service_name)
+            service = ServiceManager.get_service_by_id(snap.service_name)
 
             if service is None:
                 api_service = tombstone_service(snap.service_name)
