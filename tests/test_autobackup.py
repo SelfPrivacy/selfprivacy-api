@@ -4,7 +4,7 @@ from copy import copy
 from datetime import datetime, timezone, timedelta
 
 from selfprivacy_api.jobs import Jobs
-from selfprivacy_api.services import Service, get_all_services
+from selfprivacy_api.services import Service, ServiceManager
 
 from selfprivacy_api.graphql.common_types.backup import (
     BackupReason,
@@ -23,7 +23,11 @@ from tests.test_graphql.test_services import only_dummy_service
 
 
 def backuppable_services() -> list[Service]:
-    return [service for service in get_all_services() if service.can_be_backed_up()]
+    return [
+        service
+        for service in ServiceManager.get_all_services()
+        if service.can_be_backed_up()
+    ]
 
 
 def dummy_snapshot(date: datetime):
