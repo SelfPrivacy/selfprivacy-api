@@ -11,7 +11,7 @@ from selfprivacy_api.graphql.queries.common import Alert, Severity
 from selfprivacy_api.graphql.queries.providers import DnsProvider, ServerProvider
 from selfprivacy_api.jobs import Jobs
 from selfprivacy_api.jobs.migrate_to_binds import is_bind_migrated
-from selfprivacy_api.services import get_all_required_dns_records
+from selfprivacy_api.services import ServiceManager
 from selfprivacy_api.utils import ReadUserData
 import selfprivacy_api.actions.system as system_actions
 import selfprivacy_api.actions.ssh as ssh_actions
@@ -37,7 +37,7 @@ class SystemDomainInfo:
                 priority=record.priority,
                 display_name=record.display_name,
             )
-            for record in get_all_required_dns_records()
+            for record in ServiceManager.get_all_required_dns_records()
         ]
 
 

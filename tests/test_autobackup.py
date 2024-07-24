@@ -173,7 +173,7 @@ def test_services_to_autobackup(backups, dummy_service):
     Backups.set_autobackup_period_minutes(backup_period)
 
     services = Backups.services_to_back_up(now)
-    assert len(services) == len(backuppable_services())
+    assert set(services) == set(backuppable_services())
     assert dummy_service.get_id() in [
         service.get_id() for service in backuppable_services()
     ]
@@ -205,6 +205,10 @@ def test_failed_autoback_prevents_more_autobackup(backups, dummy_service):
     assert Backups.get_last_backup_error_time(dummy_service) is not None
 
     assert Backups.is_time_to_backup_service(dummy_service, now) is False
+
+
+def test_induced_autobackup(backups, dummy_service):
+    pass
 
 
 # --------------------- Quotas and Pruning -------------------------

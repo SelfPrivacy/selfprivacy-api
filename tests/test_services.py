@@ -17,7 +17,7 @@ from selfprivacy_api.services.owned_path import OwnedPath
 
 from selfprivacy_api.services.test_service import DummyService
 from selfprivacy_api.services.service import Service, ServiceStatus, StoppedService
-from selfprivacy_api.services import get_enabled_services
+from selfprivacy_api.services import ServiceManager
 
 from tests.test_dkim import dkim_file, no_dkim_file
 
@@ -164,4 +164,4 @@ def test_mailserver_with_no_dkim_returns_no_dns(no_dkim_file):
 
 
 def test_services_enabled_by_default(generic_userdata):
-    assert set(get_enabled_services()) == set(services_module.services)
+    assert set(ServiceManager.get_enabled_services()) == set(services_module.services)

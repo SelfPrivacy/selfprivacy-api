@@ -26,7 +26,7 @@ from selfprivacy_api.actions.services import (
     VolumeNotFoundError,
 )
 
-from selfprivacy_api.services import get_service_by_id
+from selfprivacy_api.services import ServiceManager
 
 
 @strawberry.type
@@ -104,7 +104,7 @@ class ServicesMutations:
     def enable_service(self, service_id: str) -> ServiceMutationReturn:
         """Enable service."""
         try:
-            service = get_service_by_id(service_id)
+            service = ServiceManager.get_service_by_id(service_id)
             if service is None:
                 return ServiceMutationReturn(
                     success=False,
@@ -130,7 +130,7 @@ class ServicesMutations:
     def disable_service(self, service_id: str) -> ServiceMutationReturn:
         """Disable service."""
         try:
-            service = get_service_by_id(service_id)
+            service = ServiceManager.get_service_by_id(service_id)
             if service is None:
                 return ServiceMutationReturn(
                     success=False,
@@ -154,7 +154,7 @@ class ServicesMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def stop_service(self, service_id: str) -> ServiceMutationReturn:
         """Stop service."""
-        service = get_service_by_id(service_id)
+        service = ServiceManager.get_service_by_id(service_id)
         if service is None:
             return ServiceMutationReturn(
                 success=False,
@@ -172,7 +172,7 @@ class ServicesMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def start_service(self, service_id: str) -> ServiceMutationReturn:
         """Start service."""
-        service = get_service_by_id(service_id)
+        service = ServiceManager.get_service_by_id(service_id)
         if service is None:
             return ServiceMutationReturn(
                 success=False,
@@ -190,7 +190,7 @@ class ServicesMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def restart_service(self, service_id: str) -> ServiceMutationReturn:
         """Restart service."""
-        service = get_service_by_id(service_id)
+        service = ServiceManager.get_service_by_id(service_id)
         if service is None:
             return ServiceMutationReturn(
                 success=False,
@@ -244,7 +244,7 @@ class ServicesMutations:
     def move_service(self, input: MoveServiceInput) -> ServiceJobMutationReturn:
         """Move service."""
         # We need a service instance for a reply later
-        service = get_service_by_id(input.service_id)
+        service = ServiceManager.get_service_by_id(input.service_id)
         if service is None:
             return ServiceJobMutationReturn(
                 success=False,

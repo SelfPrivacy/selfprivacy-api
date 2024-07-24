@@ -19,13 +19,17 @@ from selfprivacy_api.graphql.common_types.backup import (
 )
 
 from selfprivacy_api.backup import Backups
-from selfprivacy_api.services import get_service_by_id
+from selfprivacy_api.services import ServiceManager
 from selfprivacy_api.backup.tasks import (
     start_backup,
     restore_snapshot,
     prune_autobackup_snapshots,
 )
-from selfprivacy_api.backup.jobs import add_backup_job, add_restore_job
+from selfprivacy_api.backup.jobs import (
+    add_backup_job,
+    add_restore_job,
+    add_total_restore_job,
+)
 from selfprivacy_api.backup.local_secret import LocalBackupSecret
 
 
@@ -42,7 +46,7 @@ class InitializeRepositoryInput:
     login: str
     password: str
     # For migration. If set, no new secret is generated
-    local_secret: typing.Optional[str]
+    local_secret: typing.Optional[str] = None
 
 
 @strawberry.type
@@ -146,7 +150,7 @@ class BackupMutations:
     def start_backup(self, service_id: str) -> GenericJobMutationReturn:
         """Start backup"""
 
-        service = get_service_by_id(service_id)
+        service = ServiceManager.get_service_by_id(service_id)
         if service is None:
             return GenericJobMutationReturn(
                 success=False,
@@ -166,12 +170,20 @@ class BackupMutations:
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def restore_all(self):
+    def restore_all(self) -> GenericJobMutationReturn:
         """
         Restore all restorable and enabled services according to last autobackup snapshots
         This happens in sync with partial merging of old configuration for compatibility
         """
-        pass
+
+        job = add_total_restore_job()
+
+        return GenericJobMutationReturn(
+            success=True,
+            code=200,
+            message="restore job created",
+            job=job_to_api_job(job),
+        )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def restore_backup(
@@ -189,7 +201,7 @@ class BackupMutations:
                 job=None,
             )
 
-        service = get_service_by_id(snap.service_name)
+        service = ServiceManager.get_service_by_id(snap.service_name)
         if service is None:
             return GenericJobMutationReturn(
                 success=False,

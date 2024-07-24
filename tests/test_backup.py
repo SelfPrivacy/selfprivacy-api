@@ -13,6 +13,7 @@ from selfprivacy_api.utils.huey import huey
 
 
 from selfprivacy_api.services.service import ServiceStatus
+from selfprivacy_api.services import ServiceManager
 
 from selfprivacy_api.graphql.queries.providers import BackupProvider as ProviderEnum
 from selfprivacy_api.graphql.common_types.backup import (
@@ -792,3 +793,12 @@ def test_cache_invalidaton_task(backups, dummy_service):
 
     reload_snapshot_cache()
     assert len(Storage.get_cached_snapshots()) == 1
+
+
+# def test_service_manager_backs_up_without_crashing(backups):
+#     """
+#     Service manager is special and needs testing.
+#     """
+
+#     snapshot = Backups.back_up(ServiceManager.get_service_by_id("api"))
+#     Backups.restore_snapshot(snapshot)

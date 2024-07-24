@@ -13,7 +13,7 @@ from selfprivacy_api.models.backup.snapshot import Snapshot
 from selfprivacy_api.utils.huey import huey
 from huey import crontab
 
-from selfprivacy_api.services import get_service_by_id
+from selfprivacy_api.services import ServiceManager
 from selfprivacy_api.backup import Backups
 from selfprivacy_api.backup.jobs import add_autobackup_job
 from selfprivacy_api.jobs import Jobs, JobStatus, Job
@@ -38,7 +38,7 @@ def start_backup(service_id: str, reason: BackupReason = BackupReason.EXPLICIT) 
     """
     The worker task that starts the backup process.
     """
-    service = get_service_by_id(service_id)
+    service = ServiceManager.get_service_by_id(service_id)
     if service is None:
         raise ValueError(f"No such service: {service_id}")
     Backups.back_up(service, reason)

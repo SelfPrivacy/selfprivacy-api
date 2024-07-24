@@ -16,7 +16,7 @@ from selfprivacy_api.models.tokens.token import Token
 from selfprivacy_api.utils.huey import huey
 
 import selfprivacy_api.services as services
-from selfprivacy_api.services import get_service_by_id, Service
+from selfprivacy_api.services import Service, ServiceManager
 from selfprivacy_api.services.test_service import DummyService
 
 from selfprivacy_api.repositories.tokens.redis_tokens_repository import (
@@ -213,7 +213,7 @@ def dummy_service(
     huey.immediate = True
     assert huey.immediate is True
 
-    assert get_service_by_id(service.get_id()) is not None
+    assert ServiceManager.get_service_by_id(service.get_id()) is not None
     service.enable()
     yield service
 

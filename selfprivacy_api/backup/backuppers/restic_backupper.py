@@ -18,7 +18,7 @@ from selfprivacy_api.backup.util import output_yielder, sync
 from selfprivacy_api.backup.backuppers import AbstractBackupper
 from selfprivacy_api.models.backup.snapshot import Snapshot
 from selfprivacy_api.backup.jobs import get_backup_job
-from selfprivacy_api.services import get_service_by_id
+from selfprivacy_api.services import ServiceManager
 from selfprivacy_api.jobs import Jobs, JobStatus, Job
 
 from selfprivacy_api.backup.local_secret import LocalBackupSecret
@@ -191,7 +191,7 @@ class ResticBackupper(AbstractBackupper):
 
     @staticmethod
     def _get_backup_job(service_name: str) -> Optional[Job]:
-        service = get_service_by_id(service_name)
+        service = ServiceManager.get_service_by_id(service_name)
         if service is None:
             raise ValueError("No service with id ", service_name)
 

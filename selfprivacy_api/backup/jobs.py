@@ -3,7 +3,7 @@ from typing import Optional, List
 from selfprivacy_api.models.backup.snapshot import Snapshot
 from selfprivacy_api.jobs import Jobs, Job, JobStatus
 from selfprivacy_api.services.service import Service
-from selfprivacy_api.services import get_service_by_id
+from selfprivacy_api.services import ServiceManager
 
 
 def job_type_prefix(service: Service) -> str:
@@ -67,16 +67,37 @@ def add_backup_job(service: Service) -> Job:
     return job
 
 
+def complain_about_service_operation_running(service: Service) -> str:
+    message = (
+        f"Cannot start a restore of {service.get_id()}, another operation is running: "
+        + get_jobs_by_service(service)[0].type_id
+    )
+    raise ValueError(message)
+
+
+def add_total_restore_job() -> Job:
+    for service in ServiceManager.get_all_services():
+        if (
+            not isinstance(service, ServiceManager)
+            and is_something_running_for(service) is True
+        ):
+            complain_about_service_operation_running(service)
+
+    display_name = service.get_display_name()
+    job = Jobs.add(
+        type_id="backups.total_restore",
+        name=f"Restore {display_name}",
+        description="restoring all the services",
+    )
+    return job
+
+
 def add_restore_job(snapshot: Snapshot) -> Job:
-    service = get_service_by_id(snapshot.service_name)
+    service = ServiceManager.get_service_by_id(snapshot.service_name)
     if service is None:
         raise ValueError(f"no such service: {snapshot.service_name}")
     if is_something_running_for(service):
-        message = (
-            f"Cannot start a restore of {service.get_id()}, another operation is running: "
-            + get_jobs_by_service(service)[0].type_id
-        )
-        raise ValueError(message)
+        complain_about_service_operation_running(service)
     display_name = service.get_display_name()
     job = Jobs.add(
         type_id=restore_job_type(service),
