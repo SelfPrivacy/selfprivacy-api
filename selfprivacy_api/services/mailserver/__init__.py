@@ -35,13 +35,13 @@ class MailServer(Service):
     def get_user() -> str:
         return "virtualMail"
 
-    @staticmethod
-    def get_url() -> Optional[str]:
+    @classmethod
+    def get_url(cls) -> Optional[str]:
         """Return service url."""
         return None
 
-    @staticmethod
-    def get_subdomain() -> Optional[str]:
+    @classmethod
+    def get_subdomain(cls) -> Optional[str]:
         return None
 
     @staticmethod

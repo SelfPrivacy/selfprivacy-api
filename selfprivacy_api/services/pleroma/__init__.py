@@ -31,14 +31,14 @@ class Pleroma(Service):
     def get_svg_icon() -> str:
         return base64.b64encode(PLEROMA_ICON.encode("utf-8")).decode("utf-8")
 
-    @staticmethod
-    def get_url() -> Optional[str]:
+    @classmethod
+    def get_url(cls) -> Optional[str]:
         """Return service url."""
         domain = get_domain()
         return f"https://social.{domain}"
 
-    @staticmethod
-    def get_subdomain() -> Optional[str]:
+    @classmethod
+    def get_subdomain(cls) -> Optional[str]:
         return "social"
 
     @staticmethod

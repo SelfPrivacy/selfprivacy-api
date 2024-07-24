@@ -1,50 +1,56 @@
-"""Class representing Jitsi Meet service"""
+"""Class representing Roundcube service"""
+
 import base64
 import subprocess
-from typing import Optional, List
+from typing import List, Optional
 
 from selfprivacy_api.jobs import Job
 from selfprivacy_api.utils.systemd import (
     get_service_status_from_several_units,
 )
 from selfprivacy_api.services.service import Service, ServiceStatus
-from selfprivacy_api.utils import get_domain
+from selfprivacy_api.utils import ReadUserData, get_domain
 from selfprivacy_api.utils.block_devices import BlockDevice
-from selfprivacy_api.services.jitsimeet.icon import JITSI_ICON
+from selfprivacy_api.services.roundcube.icon import ROUNDCUBE_ICON
 
 
-class JitsiMeet(Service):
-    """Class representing Jitsi service"""
+class Roundcube(Service):
+    """Class representing roundcube service"""
 
     @staticmethod
     def get_id() -> str:
         """Return service id."""
-        return "jitsi-meet"
+        return "roundcube"
 
     @staticmethod
     def get_display_name() -> str:
         """Return service display name."""
-        return "JitsiMeet"
+        return "Roundcube"
 
     @staticmethod
     def get_description() -> str:
         """Return service description."""
-        return "Jitsi Meet is a free and open-source video conferencing solution."
+        return "Roundcube is an open source webmail software."
 
     @staticmethod
     def get_svg_icon() -> str:
         """Read SVG icon from file and return it as base64 encoded string."""
-        return base64.b64encode(JITSI_ICON.encode("utf-8")).decode("utf-8")
+        return base64.b64encode(ROUNDCUBE_ICON.encode("utf-8")).decode("utf-8")
 
     @classmethod
     def get_url(cls) -> Optional[str]:
         """Return service url."""
         domain = get_domain()
-        return f"https://meet.{domain}"
+        subdomain = cls.get_subdomain()
+        return f"https://{subdomain}.{domain}"
 
     @classmethod
     def get_subdomain(cls) -> Optional[str]:
-        return "meet"
+        with ReadUserData() as data:
+            if "roundcube" in data["modules"]:
+                return data["modules"]["roundcube"]["subdomain"]
+
+        return "roundcube"
 
     @staticmethod
     def is_movable() -> bool:
@@ -55,38 +61,37 @@ class JitsiMeet(Service):
         return False
 
     @staticmethod
+    def can_be_backed_up() -> bool:
+        return False
+
+    @staticmethod
     def get_backup_description() -> str:
-        return "Secrets that are used to encrypt the communication."
+        return "Nothing to backup."
 
     @staticmethod
     def get_status() -> ServiceStatus:
-        return get_service_status_from_several_units(
-            ["jitsi-videobridge.service", "jicofo.service"]
-        )
+        return get_service_status_from_several_units(["phpfpm-roundcube.service"])
 
     @staticmethod
     def stop():
         subprocess.run(
-            ["systemctl", "stop", "jitsi-videobridge.service"],
+            ["systemctl", "stop", "phpfpm-roundcube.service"],
             check=False,
         )
-        subprocess.run(["systemctl", "stop", "jicofo.service"], check=False)
 
     @staticmethod
     def start():
         subprocess.run(
-            ["systemctl", "start", "jitsi-videobridge.service"],
+            ["systemctl", "start", "phpfpm-roundcube.service"],
             check=False,
         )
-        subprocess.run(["systemctl", "start", "jicofo.service"], check=False)
 
     @staticmethod
     def restart():
         subprocess.run(
-            ["systemctl", "restart", "jitsi-videobridge.service"],
+            ["systemctl", "restart", "phpfpm-roundcube.service"],
             check=False,
         )
-        subprocess.run(["systemctl", "restart", "jicofo.service"], check=False)
 
     @staticmethod
     def get_configuration():
@@ -102,7 +107,7 @@ class JitsiMeet(Service):
 
     @staticmethod
     def get_folders() -> List[str]:
-        return ["/var/lib/jitsi-meet"]
+        return []
 
     def move_to_volume(self, volume: BlockDevice) -> Job:
-        raise NotImplementedError("jitsi-meet service is not movable")
+        raise NotImplementedError("roundcube service is not movable")

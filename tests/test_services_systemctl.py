@@ -2,7 +2,7 @@ import pytest
 
 from selfprivacy_api.services.service import ServiceStatus
 from selfprivacy_api.services.bitwarden import Bitwarden
-from selfprivacy_api.services.gitea import Gitea
+from selfprivacy_api.services.forgejo import Forgejo
 from selfprivacy_api.services.mailserver import MailServer
 from selfprivacy_api.services.nextcloud import Nextcloud
 from selfprivacy_api.services.ocserv import Ocserv
@@ -22,7 +22,7 @@ def call_args_asserts(mocked_object):
             "dovecot2.service",
             "postfix.service",
             "vaultwarden.service",
-            "gitea.service",
+            "forgejo.service",
             "phpfpm-nextcloud.service",
             "ocserv.service",
             "pleroma.service",
@@ -77,7 +77,7 @@ def mock_popen_systemctl_service_not_ok(mocker):
 def test_systemctl_ok(mock_popen_systemctl_service_ok):
     assert MailServer.get_status() == ServiceStatus.ACTIVE
     assert Bitwarden.get_status() == ServiceStatus.ACTIVE
-    assert Gitea.get_status() == ServiceStatus.ACTIVE
+    assert Forgejo.get_status() == ServiceStatus.ACTIVE
     assert Nextcloud.get_status() == ServiceStatus.ACTIVE
     assert Ocserv.get_status() == ServiceStatus.ACTIVE
     assert Pleroma.get_status() == ServiceStatus.ACTIVE
@@ -87,7 +87,7 @@ def test_systemctl_ok(mock_popen_systemctl_service_ok):
 def test_systemctl_failed_service(mock_popen_systemctl_service_not_ok):
     assert MailServer.get_status() == ServiceStatus.FAILED
     assert Bitwarden.get_status() == ServiceStatus.FAILED
-    assert Gitea.get_status() == ServiceStatus.FAILED
+    assert Forgejo.get_status() == ServiceStatus.FAILED
     assert Nextcloud.get_status() == ServiceStatus.FAILED
     assert Ocserv.get_status() == ServiceStatus.FAILED
     assert Pleroma.get_status() == ServiceStatus.FAILED

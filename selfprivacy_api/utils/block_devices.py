@@ -90,6 +90,14 @@ class BlockDevice:
     def __hash__(self):
         return hash(self.name)
 
+    def get_display_name(self) -> str:
+        if self.is_root():
+            return "System disk"
+        elif self.model == "Volume":
+            return "Expandable volume"
+        else:
+            return self.name
+
     def is_root(self) -> bool:
         """
         Return True if the block device is the root device.

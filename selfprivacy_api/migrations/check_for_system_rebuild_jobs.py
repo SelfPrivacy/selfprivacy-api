@@ -5,13 +5,13 @@ from selfprivacy_api.jobs import JobStatus, Jobs
 class CheckForSystemRebuildJobs(Migration):
     """Check if there are unfinished system rebuild jobs and finish them"""
 
-    def get_migration_name(self):
+    def get_migration_name(self) -> str:
         return "check_for_system_rebuild_jobs"
 
-    def get_migration_description(self):
+    def get_migration_description(self) -> str:
         return "Check if there are unfinished system rebuild jobs and finish them"
 
-    def is_migration_needed(self):
+    def is_migration_needed(self) -> bool:
         # Check if there are any unfinished system rebuild jobs
         for job in Jobs.get_jobs():
             if (
@@ -25,8 +25,9 @@ class CheckForSystemRebuildJobs(Migration):
                 JobStatus.RUNNING,
             ]:
                 return True
+        return False
 
-    def migrate(self):
+    def migrate(self) -> None:
         # As the API is restarted, we assume that the jobs are finished
         for job in Jobs.get_jobs():
             if (

@@ -2,8 +2,9 @@
 
 import typing
 from selfprivacy_api.services.bitwarden import Bitwarden
-from selfprivacy_api.services.gitea import Gitea
+from selfprivacy_api.services.forgejo import Forgejo
 from selfprivacy_api.services.jitsimeet import JitsiMeet
+from selfprivacy_api.services.roundcube import Roundcube
 from selfprivacy_api.services.mailserver import MailServer
 from selfprivacy_api.services.nextcloud import Nextcloud
 from selfprivacy_api.services.pleroma import Pleroma
@@ -13,12 +14,13 @@ import selfprivacy_api.utils.network as network_utils
 
 services: list[Service] = [
     Bitwarden(),
-    Gitea(),
+    Forgejo(),
     MailServer(),
     Nextcloud(),
     Pleroma(),
     Ocserv(),
     JitsiMeet(),
+    Roundcube(),
 ]
 
 
