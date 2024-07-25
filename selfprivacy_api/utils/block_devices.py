@@ -54,6 +54,7 @@ class BlockDevice:
     def update_from_dict(self, device_dict: dict):
         self.name = device_dict["name"]
         self.path = device_dict["path"]
+        # why is it string?
         self.fsavail = str(device_dict["fsavail"])
         self.fssize = str(device_dict["fssize"])
         self.fstype = device_dict["fstype"]
