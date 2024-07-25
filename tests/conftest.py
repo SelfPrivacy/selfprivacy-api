@@ -11,6 +11,8 @@ from os import path
 from os import makedirs
 from typing import Generator
 from fastapi.testclient import TestClient
+from shutil import copyfile
+
 from selfprivacy_api.models.tokens.token import Token
 
 from selfprivacy_api.utils.huey import huey
@@ -85,24 +87,23 @@ def redis_repo_with_tokens():
     )
 
 
+def clone_global_file(filename, tmpdir) -> str:
+    source_path = path.join(global_data_dir(), filename)
+    clone_path = path.join(tmpdir, filename)
+
+    copyfile(source_path, clone_path)
+    return clone_path
+
+
 @pytest.fixture
 def generic_userdata(mocker, tmpdir):
-    filename = "turned_on.json"
-    secrets_filename = "secrets.json"
-
-    source_path = path.join(global_data_dir(), filename)
-    userdata_path = path.join(tmpdir, filename)
-    secrets_path = path.join(tmpdir, secrets_filename)
-
-    with open(secrets_path, "w") as file:
-        file.write("{}")
-
-    with open(userdata_path, "w") as file:
-        with open(source_path, "r") as source:
-            file.write(source.read())
-
+    userdata_path = clone_global_file("turned_on.json", tmpdir)
     mock = mocker.patch("selfprivacy_api.utils.USERDATA_FILE", new=userdata_path)
-    mocker.patch("selfprivacy_api.utils.SECRETS_FILE", new=secrets_path)
+    mock = mocker.patch("selfprivacy_api.services.USERDATA_FILE", new=userdata_path)
+
+    secrets_path = clone_global_file("secrets.json", tmpdir)
+    mock = mocker.patch("selfprivacy_api.utils.SECRETS_FILE", new=secrets_path)
+    mock = mocker.patch("selfprivacy_api.services.SECRETS_FILE", new=secrets_path)
 
     return mock
 
