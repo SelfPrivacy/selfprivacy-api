@@ -24,8 +24,17 @@ def get_paginated_logs(
     up_cursor: str | None = None,
     # All entries returned will be greater than this cursor. Sets lower bound on results.
     down_cursor: str | None = None,
+    # All entries will be from a specific systemd slice
+    filterBySlice: str | None = None,
+    # All entries will be from a specific systemd unit
+    filterByUnit: str | None = None,
 ):
     j = journal.Reader()
+
+    if filterBySlice:
+        j.add_match("_SYSTEMD_SLICE=" + filterBySlice)
+    if filterByUnit:
+        j.add_match("_SYSTEMD_UNIT=" + filterByUnit)
 
     if up_cursor is None and down_cursor is None:
         j.seek_tail()
