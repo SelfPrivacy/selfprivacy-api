@@ -111,6 +111,11 @@ class Service(ABC):
         return cls.get_user()
 
     @staticmethod
+    def is_always_active() -> bool:
+        """`True` if the service cannot be stopped, which is true for api itself"""
+        return False
+
+    @staticmethod
     @abstractmethod
     def is_movable() -> bool:
         """`True` if the service can be moved to the non-system volume."""
@@ -498,7 +503,10 @@ class StoppedService:
 
     def __enter__(self) -> Service:
         self.original_status = self.service.get_status()
-        if self.original_status not in [ServiceStatus.INACTIVE, ServiceStatus.FAILED]:
+        if (
+            self.original_status not in [ServiceStatus.INACTIVE, ServiceStatus.FAILED]
+            and not self.service.is_always_active()
+        ):
             try:
                 self.service.stop()
                 wait_until_true(
@@ -513,7 +521,10 @@ class StoppedService:
         return self.service
 
     def __exit__(self, type, value, traceback):
-        if self.original_status in [ServiceStatus.ACTIVATING, ServiceStatus.ACTIVE]:
+        if (
+            self.original_status in [ServiceStatus.ACTIVATING, ServiceStatus.ACTIVE]
+            and not self.service.is_always_active()
+        ):
             try:
                 self.service.start()
                 wait_until_true(
