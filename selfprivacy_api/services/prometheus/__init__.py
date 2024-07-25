@@ -12,7 +12,7 @@ from selfprivacy_api.services.prometheus.icon import PROMETHEUS_ICON
 
 
 class Prometheus(Service):
-    """Class representing Pleroma service."""
+    """Class representing Prometheus service."""
 
     @staticmethod
     def get_id() -> str:
@@ -24,7 +24,7 @@ class Prometheus(Service):
 
     @staticmethod
     def get_description() -> str:
-        return "Prometheus is a free software application used for event monitoring and alerting."
+        return "Prometheus is used for resource monitoring and alerts."
 
     @staticmethod
     def get_svg_icon() -> str:
@@ -49,7 +49,7 @@ class Prometheus(Service):
 
     @staticmethod
     def get_backup_description() -> str:
-        return "For Prometheus backups are not available."
+        return "Backups are not available for Prometheus."
 
     @staticmethod
     def get_status() -> ServiceStatus:
