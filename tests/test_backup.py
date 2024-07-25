@@ -44,6 +44,7 @@ from selfprivacy_api.backup.local_secret import LocalBackupSecret
 from selfprivacy_api.backup.jobs import get_backup_fail
 
 from tests.common import assert_job_errored
+from tests.test_dkim import dkim_file
 
 
 REPO_NAME = "test_backup"
@@ -795,10 +796,26 @@ def test_cache_invalidaton_task(backups, dummy_service):
     assert len(Storage.get_cached_snapshots()) == 1
 
 
-# def test_service_manager_backs_up_without_crashing(backups):
-#     """
-#     Service manager is special and needs testing.
-#     """
+def test_service_manager_backup_snapshot_persists(backups, generic_userdata, dkim_file):
+    # There was a bug with snapshot disappearance due to post_restore hooks, checking for that
+    manager = ServiceManager.get_service_by_id("api")
+    assert manager is not None
 
-#     snapshot = Backups.back_up(ServiceManager.get_service_by_id("api"))
-#     Backups.restore_snapshot(snapshot)
+    snapshot = Backups.back_up(manager)
+
+    Backups.force_snapshot_cache_reload()
+    ids = [snap.id for snap in Backups.get_all_snapshots()]
+    assert snapshot.id in ids
+
+
+def test_service_manager_backs_up_without_crashing(
+    backups, generic_userdata, dkim_file, dummy_service
+):
+    """
+    Service manager is special and needs testing.
+    """
+    manager = ServiceManager.get_service_by_id("api")
+    assert manager is not None
+
+    snapshot = Backups.back_up(manager)
+    Backups.restore_snapshot(snapshot)

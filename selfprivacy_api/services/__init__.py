@@ -4,6 +4,7 @@ import base64
 import typing
 from typing import List
 from os import path, mkdir
+from os.path import join
 from pathlib import Path
 
 from selfprivacy_api.services.bitwarden import Bitwarden
@@ -114,8 +115,12 @@ class ServiceManager(Service):
     def get_subdomain() -> typing.Optional[str]:
         return None
 
-    @classmethod
-    def is_movable(cls) -> bool:
+    @staticmethod
+    def is_always_active() -> bool:
+        return True
+
+    @staticmethod
+    def is_movable() -> bool:
         return False
 
     @staticmethod
@@ -152,8 +157,8 @@ class ServiceManager(Service):
         """`True` if the service can be backed up."""
         return True
 
-    @staticmethod
-    def merge_settings(restored_settings_folder: str):
+    @classmethod
+    def merge_settings(cls, restored_settings_folder: str):
         # For now we will just copy settings EXCEPT the locations of services
         # Stash locations as they are set by user right now
         locations = {}
@@ -161,19 +166,14 @@ class ServiceManager(Service):
             locations[service.get_id()] = service.get_drive()
 
         # Copy files
-        userdata_name = path.basename(USERDATA_FILE)
-        secretfile_name = path.basename(SECRETS_FILE)
-        dkim_dirname = path.basename(DKIM_DIR)
-
-        copyfile(path.join(restored_settings_folder, userdata_name), USERDATA_FILE)
-        copyfile(path.join(restored_settings_folder, secretfile_name), SECRETS_FILE)
-        copytree(path.join(restored_settings_folder, dkim_dirname), DKIM_DIR)
+        for p in [USERDATA_FILE, SECRETS_FILE, DKIM_DIR]:
+            cls.retrieve_stashed_path(p)
 
         # Pop locations
         for service in services:
             device = BlockDevices().get_block_device(locations[service.get_id()])
             if device is not None:
-                service.set_location(device.name)
+                service.set_location(device)
 
     @classmethod
     def stop(cls):
@@ -205,14 +205,39 @@ class ServiceManager(Service):
         return cls.folders
 
     @classmethod
+    def stash_for(cls, p: str) -> str:
+        basename = path.basename(p)
+        tempdir = cls.folders[0]
+        stashed_file_location = join(tempdir, basename)
+        return stashed_file_location
+
+    @classmethod
+    def stash_a_path(cls, p: str):
+        if path.isdir(p):
+            rmtree(cls.stash_for(p), ignore_errors=True)
+            copytree(p, cls.stash_for(p))
+        else:
+            copyfile(p, cls.stash_for(p))
+
+    @classmethod
+    def retrieve_stashed_path(cls, p: str):
+        """
+        Takes an original path, hopefully it is stashed somewhere
+        """
+        if path.isdir(p):
+            rmtree(p, ignore_errors=True)
+            copytree(cls.stash_for(p), p)
+        else:
+            copyfile(cls.stash_for(p), p)
+
+    @classmethod
     def pre_backup(cls):
         tempdir = cls.folders[0]
         rmtree(tempdir, ignore_errors=True)
         mkdir(tempdir)
 
-        copyfile(USERDATA_FILE, tempdir)
-        copyfile(SECRETS_FILE, tempdir)
-        copytree(DKIM_DIR, tempdir)
+        for p in [USERDATA_FILE, SECRETS_FILE, DKIM_DIR]:
+            cls.stash_a_path(p)
 
     @classmethod
     def post_restore(cls):
