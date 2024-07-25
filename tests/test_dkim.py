@@ -16,14 +16,18 @@ def dkim_file(mocker, tmpdir, generic_userdata):
     domain = get_domain()
     assert domain is not None
     assert domain != ""
+    # In a separate folder to not interfere with dkim backups
+    dkim_dir = path.join(tmpdir, "dkim")
+    os.mkdir(dkim_dir)
 
     filename = domain + ".selector.txt"
-    dkim_path = path.join(tmpdir, filename)
+    dkim_path = path.join(dkim_dir, filename)
 
     with open(dkim_path, "wb") as file:
         file.write(DKIM_FILE_CONTENT)
 
-    mocker.patch("selfprivacy_api.utils.DKIM_DIR", tmpdir)
+    mocker.patch("selfprivacy_api.utils.DKIM_DIR", dkim_dir)
+    mocker.patch("selfprivacy_api.services.DKIM_DIR", dkim_dir)
     return dkim_path
 
 
