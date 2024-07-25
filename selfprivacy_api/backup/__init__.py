@@ -7,6 +7,7 @@ import time
 import os
 from os import statvfs
 from typing import Callable, List, Optional
+from os.path import exists
 
 from selfprivacy_api.services import ServiceManager
 
@@ -29,6 +30,7 @@ from selfprivacy_api.graphql.common_types.backup import (
 
 
 from selfprivacy_api.models.backup.snapshot import Snapshot
+from selfprivacy_api.utils.block_devices import BlockDevices
 
 from selfprivacy_api.backup.providers.provider import AbstractBackupProvider
 from selfprivacy_api.backup.providers import get_provider
@@ -442,7 +444,8 @@ class Backups:
                 job, status=JobStatus.RUNNING, status_text="Stopping the service"
             )
             with StoppedService(service):
-                Backups.assert_dead(service)
+                if not service.is_always_active():
+                    Backups.assert_dead(service)
                 if strategy == RestoreStrategy.INPLACE:
                     Backups._inplace_restore(service, snapshot, job)
                 else:  # verify_before_download is our default
@@ -711,8 +714,18 @@ class Backups:
             raise ValueError("unallocated service", service.get_id())
 
         # We assume all folders of one service live at the same volume
-        fs_info = statvfs(folders[0])
-        usable_bytes = fs_info.f_frsize * fs_info.f_bavail
+        example_folder = folders[0]
+        if exists(example_folder):
+            fs_info = statvfs(example_folder)
+            usable_bytes = fs_info.f_frsize * fs_info.f_bavail
+        else:
+            # Look at the block device as it is written in settings
+            label = service.get_drive()
+            device = BlockDevices().get_block_device(label)
+            if device is None:
+                raise ValueError("nonexistent drive ", label, " for ", service.get_id())
+            usable_bytes = int(device.fsavail)
+
         return usable_bytes
 
     @staticmethod
