@@ -1,7 +1,7 @@
 import strawberry
 from typing import Optional
 from datetime import datetime
-from selfprivacy_api.utils.prometheus import PrometheusQueries, PrometheusQueryResult
+from selfprivacy_api.utils.prometheus import PrometheusQueries, Response
 
 
 @strawberry.type
@@ -12,7 +12,7 @@ class Monitoring:
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
         step: int = 60,
-    ) -> PrometheusQueryResult:
+    ) -> Response:
         return PrometheusQueries.disk_usage(start, end, step)
 
     @strawberry.field
@@ -21,7 +21,7 @@ class Monitoring:
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
         step: int = 60,
-    ) -> PrometheusQueryResult:
+    ) -> Response:
         return PrometheusQueries.memory_usage(start, end, step)
 
     @strawberry.field
@@ -30,5 +30,14 @@ class Monitoring:
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
         step: int = 60,
-    ) -> PrometheusQueryResult:
+    ) -> Response:
+        return PrometheusQueries.cpu_usage(start, end, step)
+
+    @strawberry.field
+    def network_usage(
+        self,
+        start: Optional[datetime] = None,
+        end: Optional[datetime] = None,
+        step: int = 60,
+    ) -> Response:
         return PrometheusQueries.cpu_usage(start, end, step)

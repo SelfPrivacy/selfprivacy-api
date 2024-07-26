@@ -7,7 +7,7 @@ import strawberry
 from strawberry.scalars import JSON
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Annotated, Union
 from datetime import datetime, timedelta
 
 PROMETHEUS_URL = "http://localhost:9001"
@@ -20,9 +20,20 @@ class PrometheusQueryResult:
     result: JSON
 
 
+@strawberry.type
+class PrometheusQueryError:
+    error: str
+
+
+Response = Annotated[
+    Union[PrometheusQueryResult, PrometheusQueryError],
+    strawberry.union("PrometheusQueryResponse"),
+]
+
+
 class PrometheusQueries:
     @staticmethod
-    def _send_query(query: str, start: int, end: int, step: int):
+    def _send_query(query: str, start: int, end: int, step: int) -> Response:
         try:
             response = requests.get(
                 f"{PROMETHEUS_URL}/api/v1/query",
@@ -34,20 +45,24 @@ class PrometheusQueries:
                 },
             )
             if response.status_code != 200:
-                raise Exception("Prometheus returned unexpected HTTP status code")
+                return PrometheusQueryError(
+                    error="Prometheus returned unexpected HTTP status code"
+                )
             json = response.json()
             return PrometheusQueryResult(
                 result_type=json["data"]["resultType"], result=json["data"]["result"]
             )
         except Exception as error:
-            raise Exception("Prometheus request failed! " + str(error))
+            return PrometheusQueryError(
+                error=f"Prometheus request failed! Error: {str(error)}"
+            )
 
     @staticmethod
     def cpu_usage(
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
         step: int = 60,  # seconds
-    ) -> PrometheusQueryResult:
+    ) -> Response:
         """
         Get CPU information.
 
@@ -82,7 +97,7 @@ class PrometheusQueries:
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
         step: int = 60,  # seconds
-    ) -> PrometheusQueryResult:
+    ) -> Response:
         """
         Get memory usage.
 
@@ -117,7 +132,7 @@ class PrometheusQueries:
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
         step: int = 60,  # seconds
-    ) -> PrometheusQueryResult:
+    ) -> Response:
         """
         Get disk usage information.
 
@@ -152,7 +167,7 @@ class PrometheusQueries:
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
         step: int = 60,  # seconds
-    ) -> PrometheusQueryResult:
+    ) -> Response:
         """
         Get network usage information for both download and upload.
 
