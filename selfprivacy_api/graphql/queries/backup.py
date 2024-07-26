@@ -7,6 +7,7 @@ import strawberry
 
 from selfprivacy_api.backup import Backups
 from selfprivacy_api.backup.local_secret import LocalBackupSecret
+from selfprivacy_api.backup.tasks import which_snapshots_to_full_restore
 from selfprivacy_api.graphql.queries.providers import BackupProvider
 from selfprivacy_api.graphql.common_types.service import (
     Service,
@@ -16,6 +17,7 @@ from selfprivacy_api.graphql.common_types.service import (
 )
 from selfprivacy_api.graphql.common_types.backup import AutobackupQuotas
 from selfprivacy_api.services import ServiceManager
+from selfprivacy_api.models.backup.snapshot import Snapshot
 
 
 @strawberry.type
@@ -54,6 +56,26 @@ def tombstone_service(service_id: str) -> Service:
     )
 
 
+def snapshot_to_api(snap: Snapshot):
+    api_service = None
+    service = ServiceManager.get_service_by_id(snap.service_name)
+
+    if service is None:
+        api_service = tombstone_service(snap.service_name)
+    else:
+        api_service = service_to_graphql_service(service)
+    if api_service is None:
+        raise NotImplementedError(
+            f"Could not construct API Service record for:{snap.service_name}. This should be unreachable and is a bug if you see it."
+        )
+    return SnapshotInfo(
+        id=snap.id,
+        service=api_service,
+        created_at=snap.created_at,
+        reason=snap.reason,
+    )
+
+
 @strawberry.type
 class Backup:
     @strawberry.field
@@ -72,26 +94,12 @@ class Backup:
     def all_snapshots(self) -> typing.List[SnapshotInfo]:
         if not Backups.is_initted():
             return []
-        result = []
         snapshots = Backups.get_all_snapshots()
-        for snap in snapshots:
-            api_service = None
-            service = ServiceManager.get_service_by_id(snap.service_name)
+        return [snapshot_to_api(snap) for snap in snapshots]
 
-            if service is None:
-                api_service = tombstone_service(snap.service_name)
-            else:
-                api_service = service_to_graphql_service(service)
-            if api_service is None:
-                raise NotImplementedError(
-                    f"Could not construct API Service record for:{snap.service_name}. This should be unreachable and is a bug if you see it."
-                )
-
-            graphql_snap = SnapshotInfo(
-                id=snap.id,
-                service=api_service,
-                created_at=snap.created_at,
-                reason=snap.reason,
-            )
-            result.append(graphql_snap)
-        return result
+    # A query for seeing which snapshots will be restored when migrating
+    @strawberry.field
+    def last_slice(self) -> typing.List[SnapshotInfo]:
+        if not Backups.is_initted():
+            return []
+        result = [snapshot_to_api(snap) for snap in which_snapshots_to_full_restore()]

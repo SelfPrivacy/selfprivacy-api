@@ -116,20 +116,8 @@ def eligible_for_full_restoration(snap: Snapshot):
     return True
 
 
-def do_full_restore(job: Job) -> None:
-    """
-    Body full restore task, a part of server migration.
-    Broken out to test it independently from task infra
-    """
-
-    Jobs.update(
-        job,
-        JobStatus.RUNNING,
-        status_text=f"Finding the last autobackup session",
-        progress=0,
-    )
+def which_snapshots_to_full_restore() -> list[Snapshot]:
     autoslice = Backups.last_autobackup_slice()
-
     api_snapshot = None
     for snap in autoslice:
         if snap.service_name == "api":
@@ -143,13 +131,28 @@ def do_full_restore(job: Job) -> None:
     snapshots_to_restore = [
         snap for snap in autoslice if eligible_for_full_restoration(snap)
     ]
+    # API should be restored in the very end of the list because it requires rebuild right afterwards
+    snapshots_to_restore.append(api_snapshot)
+    return snapshots_to_restore
+
+
+def do_full_restore(job: Job) -> None:
+    """
+    Body full restore task, a part of server migration.
+    Broken out to test it independently from task infra
+    """
+
+    Jobs.update(
+        job,
+        JobStatus.RUNNING,
+        status_text=f"Finding the last autobackup session",
+        progress=0,
+    )
+    snapshots_to_restore = which_snapshots_to_full_restore()
 
     progress_per_service = 99 // len(snapshots_to_restore)
     progress = 0
     Jobs.update(job, JobStatus.RUNNING, progress=progress)
-
-    # API should be restored in the very end of the list because it requires rebuild right afterwards
-    snapshots_to_restore.append(api_snapshot)
 
     for snap in snapshots_to_restore:
         try:
