@@ -78,7 +78,7 @@ def do_autobackup() -> None:
     For some reason, we cannot launch periodic huey tasks
     inside tests
     """
-    time = datetime.utcnow().replace(tzinfo=timezone.utc)
+    time = datetime.now(timezone.utc)
     services_to_back_up = Backups.services_to_back_up(time)
     if not services_to_back_up:
         return

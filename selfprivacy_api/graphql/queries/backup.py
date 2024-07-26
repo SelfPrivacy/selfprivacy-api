@@ -50,6 +50,7 @@ def tombstone_service(service_id: str) -> Service:
         url=None,
         can_be_backed_up=False,
         backup_description="",
+        is_installed=False,
     )
 
 

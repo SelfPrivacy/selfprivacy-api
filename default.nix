@@ -20,6 +20,7 @@ pythonPackages.buildPythonPackage rec {
     typing-extensions
     uvicorn
     websockets
+    httpx
   ];
   pythonImportsCheck = [ "selfprivacy_api" ];
   doCheck = false;
