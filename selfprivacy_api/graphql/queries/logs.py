@@ -75,6 +75,10 @@ class Logs:
         up_cursor: str | None = None,
         # All entries returned will be greater than this cursor. Sets lower bound on results.
         down_cursor: str | None = None,
+        # All entries will be from a specific systemd slice
+        filterBySlice: str | None = None,
+        # All entries will be from a specific systemd unit
+        filterByUnit: str | None = None,
     ) -> PaginatedEntries:
         if limit > 50:
             raise Exception("You can't fetch more than 50 entries via single request.")
@@ -82,7 +86,7 @@ class Logs:
             list(
                 map(
                     lambda x: LogEntry(x),
-                    get_paginated_logs(limit, up_cursor, down_cursor),
+                    get_paginated_logs(limit, up_cursor, down_cursor, filterBySlice, filterByUnit),
                 )
             )
         )
