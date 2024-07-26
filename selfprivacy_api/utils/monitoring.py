@@ -36,7 +36,7 @@ class MonitoringQueries:
     def _send_query(query: str, start: int, end: int, step: int) -> MonitoringResponse:
         try:
             response = requests.get(
-                f"{PROMETHEUS_URL}/api/v1/query",
+                f"{PROMETHEUS_URL}/api/v1/query_range",
                 params={
                     "query": query,
                     "start": start,
