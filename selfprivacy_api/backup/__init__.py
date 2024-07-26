@@ -278,7 +278,7 @@ class Backups:
         return Storage.get_cached_snapshot_by_id(snapshot.id)
 
     @staticmethod
-    def _auto_snaps(service):
+    def _auto_snaps(service) -> List[Snapshot]:
         return [
             snap
             for snap in Backups.get_snapshots(service)
@@ -751,3 +751,39 @@ class Backups:
             ServiceStatus.FAILED,
         ]:
             raise NotDeadError(service)
+
+    @staticmethod
+    def last_autobackup_slice() -> List[Snapshot]:
+        """
+        Guarantees that the slice is valid, ie, it has an api snapshot too
+        """
+        slice: List[Snapshot] = []
+
+        # We need ones that were made in the same autobackup session.
+        # For this we step through api snapshots
+        api_autosnaps = Backups._auto_snaps(ServiceManager())
+        api_autosnaps.sort(key=lambda x: x.created_at, reverse=True)
+
+        api_snap = api_autosnaps[0]
+        period_minutes = Backups.autobackup_period_minutes()
+        if period_minutes is None:
+            # this is potentially problematic. Maybe add more metainfo for autobackup snapshots, like a slice id or something?
+            period_minutes = (
+                24 * 60
+            )  # we ASSUME that picking latest snap of the same day is safe enough
+
+        for service in ServiceManager.get_all_services():
+            if isinstance(service, ServiceManager):
+                continue
+            snaps = Backups._auto_snaps(service)
+            snaps.sort(key=lambda x: x.created_at, reverse=True)
+            for snap in snaps:
+                if snap.created_at < api_snap.created_at + timedelta(
+                    minutes=period_minutes
+                ) and snap.created_at > api_snap.created_at - timedelta(
+                    minutes=period_minutes
+                ):
+                    slice.append(snap)
+                break
+
+        return slice
