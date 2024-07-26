@@ -1,4 +1,5 @@
 """Class representing Bitwarden service"""
+
 import base64
 import subprocess
 from typing import List

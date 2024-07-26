@@ -3,6 +3,7 @@ Recovery key used to obtain access token.
 
 Recovery key has a token string, date of creation, optional date of expiration and optional count of uses left.
 """
+
 from datetime import datetime, timezone
 import secrets
 from typing import Optional

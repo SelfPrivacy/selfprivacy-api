@@ -1,4 +1,5 @@
 """Function to perform migration of app data to binds."""
+
 import subprocess
 import pathlib
 import shutil

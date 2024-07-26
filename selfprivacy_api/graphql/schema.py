@@ -1,4 +1,5 @@
 """GraphQL API for SelfPrivacy."""
+
 # pylint: disable=too-few-public-methods
 
 import asyncio

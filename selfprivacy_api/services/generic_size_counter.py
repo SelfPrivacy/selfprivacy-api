@@ -1,4 +1,5 @@
 """Generic size counter using pathlib"""
+
 import pathlib
 
 

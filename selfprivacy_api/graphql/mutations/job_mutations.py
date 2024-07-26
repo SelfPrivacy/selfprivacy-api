@@ -1,4 +1,5 @@
 """Manipulate jobs"""
+
 # pylint: disable=too-few-public-methods
 import strawberry
 

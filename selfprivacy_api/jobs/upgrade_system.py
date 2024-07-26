@@ -3,6 +3,7 @@ A task to start the system upgrade or rebuild by starting a systemd unit.
 After starting, track the status of the systemd unit and update the Job
 status accordingly.
 """
+
 import subprocess
 from selfprivacy_api.utils.huey import huey
 from selfprivacy_api.jobs import JobStatus, Jobs, Job
