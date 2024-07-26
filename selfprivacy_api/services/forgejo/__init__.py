@@ -65,9 +65,9 @@ class Forgejo(Service):
                 "forgejo-auto",
                 "forgejo-light",
                 "forgejo-dark",
-                "auto",
-                "gitea",
-                "arc-green",
+                "gitea-auto",
+                "gitea-light",
+                "gitea-dark",
             ],
         ),
     }
