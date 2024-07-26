@@ -48,6 +48,10 @@ class Prometheus(Service):
         return True
 
     @staticmethod
+    def can_be_backed_up() -> bool:
+        return False
+
+    @staticmethod
     def get_backup_description() -> str:
         return "Backups are not available for Prometheus."
 
