@@ -68,14 +68,6 @@ class Prometheus(Service):
         subprocess.run(["systemctl", "restart", "prometheus.service"])
 
     @staticmethod
-    def get_configuration(config_items):
-        return {}
-
-    @staticmethod
-    def set_configuration(config_items):
-        return super().set_configuration(config_items)
-
-    @staticmethod
     def get_logs():
         return ""
 
