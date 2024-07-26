@@ -100,7 +100,7 @@ def do_autobackup() -> None:
                 status=JobStatus.ERROR,
                 error=type(error).__name__ + ": " + str(error),
             )
-            return
+            raise error
         progress = progress + progress_per_service
         Jobs.update(job, JobStatus.RUNNING, progress=progress)
 

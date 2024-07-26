@@ -753,24 +753,42 @@ class Backups:
             raise NotDeadError(service)
 
     @staticmethod
+    def is_same_slice(snap1: Snapshot, snap2: Snapshot) -> bool:
+        # Protologic for slicing. Determines if the snaps were made during the same
+        # autobackup operation
+        # TODO: Replace with slice id tag comparison
+
+        period_minutes = Backups.autobackup_period_minutes()
+        # Autobackups are not guaranteed to be enabled during restore.
+        # If they are not, period will be none
+        # We ASSUME that picking latest snap of the same day is safe enough
+        # But it is potentlially problematic and is better done with metadata I think.
+        if period_minutes is None:
+            period_minutes = 24 * 60
+
+        if snap1.created_at > snap2.created_at + timedelta(minutes=period_minutes):
+            return False
+        if snap1.created_at < snap2.created_at - timedelta(minutes=period_minutes):
+            return False
+        return True
+
+    @staticmethod
     def last_autobackup_slice() -> List[Snapshot]:
         """
         Guarantees that the slice is valid, ie, it has an api snapshot too
+        Or empty
         """
         slice: List[Snapshot] = []
 
-        # We need ones that were made in the same autobackup session.
-        # For this we step through api snapshots
+        # We need snapshots that were made in the same autobackup session.
+        # And we need to be sure that api snap is in there
+        # That's why we form the slice around api snap
         api_autosnaps = Backups._auto_snaps(ServiceManager())
-        api_autosnaps.sort(key=lambda x: x.created_at, reverse=True)
+        if api_autosnaps == []:
+            return []
 
-        api_snap = api_autosnaps[0]
-        period_minutes = Backups.autobackup_period_minutes()
-        if period_minutes is None:
-            # this is potentially problematic. Maybe add more metainfo for autobackup snapshots, like a slice id or something?
-            period_minutes = (
-                24 * 60
-            )  # we ASSUME that picking latest snap of the same day is safe enough
+        api_autosnaps.sort(key=lambda x: x.created_at, reverse=True)
+        api_snap = api_autosnaps[0]  # pick the latest one
 
         for service in ServiceManager.get_all_services():
             if isinstance(service, ServiceManager):
@@ -778,12 +796,9 @@ class Backups:
             snaps = Backups._auto_snaps(service)
             snaps.sort(key=lambda x: x.created_at, reverse=True)
             for snap in snaps:
-                if snap.created_at < api_snap.created_at + timedelta(
-                    minutes=period_minutes
-                ) and snap.created_at > api_snap.created_at - timedelta(
-                    minutes=period_minutes
-                ):
+                if Backups.is_same_slice(snap, api_snap):
                     slice.append(snap)
                 break
+        slice.append(api_snap)
 
         return slice

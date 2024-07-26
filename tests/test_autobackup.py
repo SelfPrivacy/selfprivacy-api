@@ -19,7 +19,11 @@ from selfprivacy_api.backup.tasks import (
 from selfprivacy_api.backup.jobs import autobackup_job_type
 
 from tests.test_backup import backups, assert_job_finished
-from tests.test_graphql.test_services import only_dummy_service
+from tests.test_graphql.test_services import (
+    only_dummy_service,
+    only_dummy_service_and_api,
+    dkim_file,
+)
 
 
 def backuppable_services() -> list[Service]:
@@ -207,8 +211,26 @@ def test_failed_autoback_prevents_more_autobackup(backups, dummy_service):
     assert Backups.is_time_to_backup_service(dummy_service, now) is False
 
 
-def test_induced_autobackup(backups, dummy_service):
-    pass
+def test_slices_minimal(backups, only_dummy_service_and_api):
+    dummy_service = only_dummy_service_and_api
+    backup_period = 13  # minutes
+    now = datetime.now(timezone.utc)
+
+    Backups.set_autobackup_period_minutes(backup_period)
+    assert Backups.is_time_to_backup_service(dummy_service, now)
+    assert Backups.is_time_to_backup_service(ServiceManager(), now)
+
+    assert len(ServiceManager.get_all_services()) == 2
+    assert len(Backups.services_to_back_up(now)) == 2
+
+    do_autobackup()
+
+    snaps = Backups.get_all_snapshots()
+    assert len(snaps) == 2
+
+    slice = Backups.last_autobackup_slice()
+    assert len(slice) == 2
+    assert set([snap.id for snap in slice]) == set([snap.id for snap in snaps])
 
 
 # --------------------- Quotas and Pruning -------------------------
