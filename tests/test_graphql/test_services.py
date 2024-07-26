@@ -188,6 +188,7 @@ allServices {
     id
     status
     isEnabled
+    url
 }
 """
 
@@ -347,6 +348,7 @@ def test_get_services(authorized_client, only_dummy_service):
     assert api_dummy_service["id"] == "testservice"
     assert api_dummy_service["status"] == ServiceStatus.ACTIVE.value
     assert api_dummy_service["isEnabled"] is True
+    assert api_dummy_service["url"] == "https://test.test-domain.tld"
 
 
 def test_enable_return_value(authorized_client, only_dummy_service):

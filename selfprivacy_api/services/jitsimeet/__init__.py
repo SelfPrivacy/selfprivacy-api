@@ -1,20 +1,39 @@
 """Class representing Jitsi Meet service"""
 import base64
 import subprocess
-from typing import Optional, List
+from typing import List
 
 from selfprivacy_api.jobs import Job
 from selfprivacy_api.utils.systemd import (
     get_service_status_from_several_units,
 )
 from selfprivacy_api.services.service import Service, ServiceStatus
-from selfprivacy_api.utils import get_domain
 from selfprivacy_api.utils.block_devices import BlockDevice
 from selfprivacy_api.services.jitsimeet.icon import JITSI_ICON
+from selfprivacy_api.services.config_item import (
+    StringServiceConfigItem,
+    ServiceConfigItem,
+)
+from selfprivacy_api.utils.regex_strings import SUBDOMAIN_REGEX
 
 
 class JitsiMeet(Service):
     """Class representing Jitsi service"""
+
+    config_items: dict[str, ServiceConfigItem] = {
+        "subdomain": StringServiceConfigItem(
+            id="subdomain",
+            default_value="meet",
+            description="Subdomain",
+            regex=SUBDOMAIN_REGEX,
+            widget="subdomain",
+        ),
+        "appName": StringServiceConfigItem(
+            id="appName",
+            default_value="Jitsi Meet",
+            description="The name displayed in the web interface",
+        ),
+    }
 
     @staticmethod
     def get_id() -> str:
@@ -35,16 +54,6 @@ class JitsiMeet(Service):
     def get_svg_icon() -> str:
         """Read SVG icon from file and return it as base64 encoded string."""
         return base64.b64encode(JITSI_ICON.encode("utf-8")).decode("utf-8")
-
-    @classmethod
-    def get_url(cls) -> Optional[str]:
-        """Return service url."""
-        domain = get_domain()
-        return f"https://meet.{domain}"
-
-    @classmethod
-    def get_subdomain(cls) -> Optional[str]:
-        return "meet"
 
     @staticmethod
     def is_movable() -> bool:
@@ -87,14 +96,6 @@ class JitsiMeet(Service):
             check=False,
         )
         subprocess.run(["systemctl", "restart", "jicofo.service"], check=False)
-
-    @staticmethod
-    def get_configuration():
-        return {}
-
-    @staticmethod
-    def set_configuration(config_items):
-        return super().set_configuration(config_items)
 
     @staticmethod
     def get_logs():

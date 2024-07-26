@@ -1,6 +1,5 @@
 """Class representing Bitwarden service"""
 import base64
-import typing
 import subprocess
 
 from typing import List
@@ -56,16 +55,6 @@ class DummyService(Service):
         """Read SVG icon from file and return it as base64 encoded string."""
         # return ""
         return base64.b64encode(BITWARDEN_ICON.encode("utf-8")).decode("utf-8")
-
-    @classmethod
-    def get_url(cls) -> typing.Optional[str]:
-        """Return service url."""
-        domain = "test.com"
-        return f"https://password.{domain}"
-
-    @classmethod
-    def get_subdomain(cls) -> typing.Optional[str]:
-        return "password"
 
     @classmethod
     def is_movable(cls) -> bool:
@@ -163,12 +152,12 @@ class DummyService(Service):
         cls.set_status(ServiceStatus.RELOADING)  # is a correct one?
         cls.change_status_with_async_delay(ServiceStatus.ACTIVE, cls.startstop_delay)
 
-    @staticmethod
-    def get_configuration():
+    @classmethod
+    def get_configuration(cls):
         return {}
 
-    @staticmethod
-    def set_configuration(config_items):
+    @classmethod
+    def set_configuration(cls, config_items):
         return super().set_configuration(config_items)
 
     @staticmethod
