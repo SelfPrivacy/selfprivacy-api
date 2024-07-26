@@ -24,6 +24,7 @@ from selfprivacy_api.backup.tasks import (
     start_backup,
     restore_snapshot,
     prune_autobackup_snapshots,
+    full_restore,
 )
 from selfprivacy_api.backup.jobs import (
     add_backup_job,
@@ -176,7 +177,16 @@ class BackupMutations:
         This happens in sync with partial merging of old configuration for compatibility
         """
 
-        job = add_total_restore_job()
+        try:
+            job = add_total_restore_job()
+            full_restore(job)
+        except Exception as error:
+            return GenericJobMutationReturn(
+                success=False,
+                code=400,
+                message=str(error),
+                job=None,
+            )
 
         return GenericJobMutationReturn(
             success=True,
