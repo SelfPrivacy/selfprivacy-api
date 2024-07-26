@@ -15,25 +15,25 @@ PROMETHEUS_URL = "http://localhost:9001"
 
 @strawberry.type
 @dataclass
-class PrometheusQueryResult:
+class MonitoringQueryResult:
     result_type: str
     result: JSON
 
 
 @strawberry.type
-class PrometheusQueryError:
+class MonitoringQueryError:
     error: str
 
 
-Response = Annotated[
-    Union[PrometheusQueryResult, PrometheusQueryError],
-    strawberry.union("PrometheusQueryResponse"),
+MonitoringResponse = Annotated[
+    Union[MonitoringQueryResult, MonitoringQueryError],
+    strawberry.union("MonitoringQueryResponse"),
 ]
 
 
-class PrometheusQueries:
+class MonitoringQueries:
     @staticmethod
-    def _send_query(query: str, start: int, end: int, step: int) -> Response:
+    def _send_query(query: str, start: int, end: int, step: int) -> MonitoringResponse:
         try:
             response = requests.get(
                 f"{PROMETHEUS_URL}/api/v1/query",
@@ -45,15 +45,15 @@ class PrometheusQueries:
                 },
             )
             if response.status_code != 200:
-                return PrometheusQueryError(
+                return MonitoringQueryError(
                     error="Prometheus returned unexpected HTTP status code"
                 )
             json = response.json()
-            return PrometheusQueryResult(
+            return MonitoringQueryResult(
                 result_type=json["data"]["resultType"], result=json["data"]["result"]
             )
         except Exception as error:
-            return PrometheusQueryError(
+            return MonitoringQueryError(
                 error=f"Prometheus request failed! Error: {str(error)}"
             )
 
@@ -62,7 +62,7 @@ class PrometheusQueries:
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
         step: int = 60,  # seconds
-    ) -> Response:
+    ) -> MonitoringResponse:
         """
         Get CPU information.
 
@@ -85,7 +85,7 @@ class PrometheusQueries:
 
         query = '100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)'
 
-        return PrometheusQueries._send_query(
+        return MonitoringQueries._send_query(
             query,
             start_timestamp,
             end_timestamp,
@@ -97,7 +97,7 @@ class PrometheusQueries:
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
         step: int = 60,  # seconds
-    ) -> Response:
+    ) -> MonitoringResponse:
         """
         Get memory usage.
 
@@ -120,7 +120,7 @@ class PrometheusQueries:
 
         query = "100 - (100 * (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))"
 
-        return PrometheusQueries._send_query(
+        return MonitoringQueries._send_query(
             query,
             start_timestamp,
             end_timestamp,
@@ -132,7 +132,7 @@ class PrometheusQueries:
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
         step: int = 60,  # seconds
-    ) -> Response:
+    ) -> MonitoringResponse:
         """
         Get disk usage information.
 
@@ -155,7 +155,7 @@ class PrometheusQueries:
 
         query = """100 - (100 * sum by (device) (node_filesystem_avail_bytes{fstype!="rootfs"}) / sum by (device) (node_filesystem_size_bytes{fstype!="rootfs"}))"""
 
-        return PrometheusQueries._send_query(
+        return MonitoringQueries._send_query(
             query,
             start_timestamp,
             end_timestamp,
@@ -167,7 +167,7 @@ class PrometheusQueries:
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
         step: int = 60,  # seconds
-    ) -> Response:
+    ) -> MonitoringResponse:
         """
         Get network usage information for both download and upload.
 
@@ -195,7 +195,7 @@ class PrometheusQueries:
         )
         """
 
-        return PrometheusQueries._send_query(
+        return MonitoringQueries._send_query(
             query,
             start_timestamp,
             end_timestamp,

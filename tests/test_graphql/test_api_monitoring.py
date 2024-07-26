@@ -5,7 +5,7 @@
 from datetime import datetime
 import pytest
 
-from selfprivacy_api.utils.prometheus import PrometheusQueryResult
+from selfprivacy_api.utils.prometheus import MonitoringQueryResult
 from tests.test_graphql.common import (
     assert_empty,
     get_data,
@@ -78,7 +78,7 @@ def generate_mock_query_with_options(name):
 
 
 def prometheus_result_from_dict(dict):
-    return PrometheusQueryResult(result_type=dict["resultType"], result=dict["result"])
+    return MonitoringQueryResult(result_type=dict["resultType"], result=dict["result"])
 
 
 @pytest.fixture
