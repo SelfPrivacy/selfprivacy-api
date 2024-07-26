@@ -90,14 +90,6 @@ class MailServer(Service):
         subprocess.run(["systemctl", "restart", "postfix.service"], check=False)
 
     @staticmethod
-    def get_configuration():
-        return {}
-
-    @staticmethod
-    def set_configuration(config_items):
-        return super().set_configuration(config_items)
-
-    @staticmethod
     def get_logs():
         return ""
 

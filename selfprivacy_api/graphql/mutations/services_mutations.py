@@ -34,6 +34,51 @@ class ServiceMutationReturn(GenericMutationReturn):
 
 
 @strawberry.input
+class SetServiceConfigurationInput:
+    """Set service configuration input type.
+    The values might be of different types: str or bool.
+    """
+
+    service_id: str
+    configuration: strawberry.scalars.JSON
+    """Yes, it is a JSON scalar, which is supposed to be a Map<str, Union[str, int, bool]>.
+    I can't define it as a proper type because GraphQL doesn't support unions in input types.
+    There is a @oneOf directive, but it doesn't fit this usecase.
+
+    Other option would have been doing something like this:
+    ```python
+    @strawberry.type
+    class StringConfigurationInputField:
+        fieldId: str
+        value: str
+
+    @strawberry.type
+    class BoolConfigurationInputField:
+        fieldId: str
+        value: bool
+
+    // ...
+
+    @strawberry.input
+    class SetServiceConfigurationInput:
+        service_id: str
+        stringFields: List[StringConfigurationInputField]
+        boolFields: List[BoolConfigurationInputField]
+        enumFields: List[EnumConfigurationInputField]
+        intFields: List[IntConfigurationInputField]
+    ```
+
+    But it would be very painful to maintain and will break compatibility with
+    every change.
+
+    Be careful when parsing it. Probably it will be wise to add a parser/validator
+    later when we get a new Pydantic integration in Strawberry.
+
+    -- Inex, 26.07.2024
+    """
+
+
+@strawberry.input
 class MoveServiceInput:
     """Move service input type."""
 
@@ -156,6 +201,41 @@ class ServicesMutations:
             code=200,
             service=service_to_graphql_service(service),
         )
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    def set_service_configuration(
+        self, input: SetServiceConfigurationInput
+    ) -> ServiceMutationReturn:
+        """Set the new configuration values"""
+        service = get_service_by_id(input.service_id)
+        if service is None:
+            return ServiceMutationReturn(
+                success=False,
+                message=f"Service does not exist: {input.service_id}",
+                code=404,
+            )
+        try:
+            service.set_configuration(input.configuration)
+            return ServiceMutationReturn(
+                success=True,
+                message="Service configuration updated.",
+                code=200,
+                service=service_to_graphql_service(service),
+            )
+        except ValueError as e:
+            return ServiceMutationReturn(
+                success=False,
+                message=e.args[0],
+                code=400,
+                service=service_to_graphql_service(service),
+            )
+        except Exception as e:
+            return ServiceMutationReturn(
+                success=False,
+                message=pretty_error(e),
+                code=400,
+                service=service_to_graphql_service(service),
+            )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def move_service(self, input: MoveServiceInput) -> ServiceJobMutationReturn:

@@ -1,9 +1,7 @@
 """Class representing Nextcloud service."""
 import base64
 import subprocess
-from typing import Optional, List
-
-from selfprivacy_api.utils import get_domain
+from typing import List
 
 from selfprivacy_api.services.owned_path import OwnedPath
 from selfprivacy_api.utils.systemd import get_service_status
@@ -30,16 +28,6 @@ class Pleroma(Service):
     @staticmethod
     def get_svg_icon() -> str:
         return base64.b64encode(PLEROMA_ICON.encode("utf-8")).decode("utf-8")
-
-    @classmethod
-    def get_url(cls) -> Optional[str]:
-        """Return service url."""
-        domain = get_domain()
-        return f"https://social.{domain}"
-
-    @classmethod
-    def get_subdomain(cls) -> Optional[str]:
-        return "social"
 
     @staticmethod
     def is_movable() -> bool:
@@ -72,12 +60,12 @@ class Pleroma(Service):
         subprocess.run(["systemctl", "restart", "pleroma.service"])
         subprocess.run(["systemctl", "restart", "postgresql.service"])
 
-    @staticmethod
-    def get_configuration(config_items):
+    @classmethod
+    def get_configuration(cls):
         return {}
 
-    @staticmethod
-    def set_configuration(config_items):
+    @classmethod
+    def set_configuration(cls, config_items):
         return super().set_configuration(config_items)
 
     @staticmethod

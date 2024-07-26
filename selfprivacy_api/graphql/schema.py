@@ -38,6 +38,12 @@ from selfprivacy_api.graphql.subscriptions.jobs import (
 )
 from selfprivacy_api.graphql.subscriptions.logs import log_stream
 
+from selfprivacy_api.graphql.common_types.service import (
+    StringConfigItem,
+    BoolConfigItem,
+    EnumConfigItem,
+)
+
 from selfprivacy_api.graphql.mutations.users_mutations import UsersMutations
 from selfprivacy_api.graphql.queries.users import Users
 from selfprivacy_api.jobs.test import test_job
@@ -190,4 +196,9 @@ schema = strawberry.Schema(
     query=Query,
     mutation=Mutation,
     subscription=Subscription,
+    types=[
+        StringConfigItem,
+        BoolConfigItem,
+        EnumConfigItem,
+    ],
 )

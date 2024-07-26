@@ -8,6 +8,11 @@ import subprocess
 import portalocker
 import typing
 
+from selfprivacy_api.utils.default_subdomains import (
+    DEFAULT_SUBDOMAINS,
+    RESERVED_SUBDOMAINS,
+)
+
 
 USERDATA_FILE = "/etc/nixos/userdata.json"
 SECRETS_FILE = "/etc/selfprivacy/secrets.json"
@@ -133,6 +138,20 @@ def is_username_forbidden(username):
     return False
 
 
+def check_if_subdomain_is_taken(subdomain: str) -> bool:
+    """Check if subdomain is already taken or reserved"""
+    if subdomain in RESERVED_SUBDOMAINS:
+        return True
+    with ReadUserData() as data:
+        for module in data["modules"]:
+            if (
+                data["modules"][module].get("subdomain", DEFAULT_SUBDOMAINS[module])
+                == subdomain
+            ):
+                return True
+    return False
+
+
 def parse_date(date_str: str) -> datetime.datetime:
     """Parse date string which can be in one of these formats:
     - %Y-%m-%dT%H:%M:%S.%fZ
@@ -199,3 +218,10 @@ def hash_password(password):
     hashed_password = hashed_password.decode("ascii")
     hashed_password = hashed_password.rstrip()
     return hashed_password
+
+
+def write_to_log(message):
+    with open("/etc/selfprivacy/log", "a") as log:
+        log.write(f"{datetime.datetime.now()} {message}\n")
+        log.flush()
+        os.fsync(log.fileno())

@@ -3,7 +3,9 @@ from abc import ABC, abstractmethod
 from typing import List, Optional
 
 from selfprivacy_api import utils
-from selfprivacy_api.utils import ReadUserData, WriteUserData
+from selfprivacy_api.services.config_item import ServiceConfigItem
+from selfprivacy_api.utils.default_subdomains import DEFAULT_SUBDOMAINS
+from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
 from selfprivacy_api.utils.waitloop import wait_until_true
 from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
 
@@ -32,6 +34,8 @@ class Service(ABC):
     Service here is some software that is hosted on the server and
     can be installed, configured and used by a user.
     """
+
+    config_items: dict[str, "ServiceConfigItem"] = {}
 
     @staticmethod
     @abstractmethod
@@ -66,20 +70,27 @@ class Service(ABC):
         pass
 
     @classmethod
-    @abstractmethod
     def get_url(cls) -> Optional[str]:
         """
         The url of the service if it is accessible from the internet browser.
         """
-        pass
+        domain = get_domain()
+        subdomain = cls.get_subdomain()
+        return f"https://{subdomain}.{domain}"
 
     @classmethod
-    @abstractmethod
     def get_subdomain(cls) -> Optional[str]:
         """
         The assigned primary subdomain for this service.
         """
-        pass
+        name = cls.get_id()
+        with ReadUserData() as user_data:
+            if "modules" in user_data:
+                if name in user_data["modules"]:
+                    if "subdomain" in user_data["modules"][name]:
+                        return user_data["modules"][name]["subdomain"]
+
+        return DEFAULT_SUBDOMAINS.get(name)
 
     @classmethod
     def get_user(cls) -> Optional[str]:
@@ -135,6 +146,16 @@ class Service(ABC):
         with ReadUserData() as user_data:
             return user_data.get("modules", {}).get(name, {}).get("enable", False)
 
+    @classmethod
+    def is_installed(cls) -> bool:
+        """
+        `True` if the service is installed.
+        `False` if there is no module data in user data
+        """
+        name = cls.get_id()
+        with ReadUserData() as user_data:
+            return user_data.get("modules", {}).get(name, {}) != {}
+
     @staticmethod
     @abstractmethod
     def get_status() -> ServiceStatus:
@@ -179,15 +200,24 @@ class Service(ABC):
         """Restart the service. Usually this means restarting systemd unit."""
         pass
 
-    @staticmethod
-    @abstractmethod
-    def get_configuration():
-        pass
+    @classmethod
+    def get_configuration(cls):
+        return {
+            key: cls.config_items[key].as_dict(cls.get_id()) for key in cls.config_items
+        }
 
-    @staticmethod
-    @abstractmethod
-    def set_configuration(config_items):
-        pass
+    @classmethod
+    def set_configuration(cls, config_items):
+        for key, value in config_items.items():
+            if key not in cls.config_items:
+                raise ValueError(f"Key {key} is not valid for {cls.get_id()}")
+            if cls.config_items[key].validate_value(value) is False:
+                raise ValueError(f"Value {value} is not valid for {key}")
+        for key, value in config_items.items():
+            cls.config_items[key].set_value(
+                value,
+                cls.get_id(),
+            )
 
     @staticmethod
     @abstractmethod

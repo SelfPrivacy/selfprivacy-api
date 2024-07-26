@@ -103,6 +103,69 @@ def service_dns_to_graphql(record: ServiceDnsRecord) -> DnsRecord:
     )
 
 
+@strawberry.interface
+class ConfigItem:
+    field_id: str
+    description: str
+    widget: str
+    type: str
+
+
+@strawberry.type
+class StringConfigItem(ConfigItem):
+    value: str
+    default_value: str
+    regex: Optional[str]
+
+
+@strawberry.type
+class BoolConfigItem(ConfigItem):
+    value: bool
+    default_value: bool
+
+
+@strawberry.type
+class EnumConfigItem(ConfigItem):
+    value: str
+    default_value: str
+    options: list[str]
+
+
+def config_item_to_graphql(item: dict) -> ConfigItem:
+    item_type = item.get("type")
+    if item_type == "string":
+        return StringConfigItem(
+            field_id=item["id"],
+            description=item["description"],
+            widget=item["widget"],
+            type=item_type,
+            value=item["value"],
+            default_value=item["default_value"],
+            regex=item.get("regex"),
+        )
+    elif item_type == "bool":
+        return BoolConfigItem(
+            field_id=item["id"],
+            description=item["description"],
+            widget=item["widget"],
+            type=item_type,
+            value=item["value"],
+            default_value=item["default_value"],
+        )
+    elif item_type == "enum":
+        return EnumConfigItem(
+            field_id=item["id"],
+            description=item["description"],
+            widget=item["widget"],
+            type=item_type,
+            value=item["value"],
+            default_value=item["default_value"],
+            options=item["options"],
+        )
+    else:
+        raise ValueError(f"Unknown config item type {item_type}")
+
+
 @strawberry.type
 class Service:
     id: str
@@ -112,6 +175,7 @@ class Service:
     is_movable: bool
     is_required: bool
     is_enabled: bool
+    is_installed: bool
     can_be_backed_up: bool
     backup_description: str
     status: ServiceStatusEnum
@@ -131,6 +195,19 @@ class Service:
     def storage_usage(self) -> ServiceStorageUsage:
         """Get storage usage for a service"""
         return get_storage_usage(self)
+
+    @strawberry.field
+    def configuration(self) -> Optional[List[ConfigItem]]:
+        """Get service configuration"""
+        service = get_service_by_id(self.id)
+        if service is None:
+            return None
+        config_items = service.get_configuration()
+        # If it is an empty dict, return none
+        if not config_items:
+            return None
+        # By the "type" field convert every dict into a ConfigItem. In the future there will be more types.
+        return [config_item_to_graphql(config_items[item]) for item in config_items]
 
     # TODO: fill this
     @strawberry.field
@@ -156,6 +233,7 @@ def service_to_graphql_service(service: ServiceInterface) -> Service:
         is_movable=service.is_movable(),
         is_required=service.is_required(),
         is_enabled=service.is_enabled(),
+        is_installed=service.is_installed(),
         can_be_backed_up=service.can_be_backed_up(),
         backup_description=service.get_backup_description(),
         status=ServiceStatusEnum(service.get_status().value),
