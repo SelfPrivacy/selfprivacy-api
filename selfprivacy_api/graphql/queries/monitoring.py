@@ -1,7 +1,7 @@
 import strawberry
 from typing import Optional
 from datetime import datetime
-from selfprivacy_api.utils.prometheus import MonitoringQueries, MonitoringResponse
+from selfprivacy_api.utils.monitoring import MonitoringQueries, MonitoringResponse
 
 
 @strawberry.type
