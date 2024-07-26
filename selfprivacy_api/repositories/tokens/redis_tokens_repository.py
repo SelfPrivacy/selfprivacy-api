@@ -1,6 +1,7 @@
 """
 Token repository using Redis as backend.
 """
+
 from typing import Any, Optional
 from datetime import datetime
 from hashlib import md5

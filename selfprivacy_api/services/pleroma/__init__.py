@@ -1,4 +1,5 @@
 """Class representing Nextcloud service."""
+
 import base64
 import subprocess
 from typing import List

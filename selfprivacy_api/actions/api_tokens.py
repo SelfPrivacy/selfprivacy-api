@@ -1,7 +1,8 @@
 """
-App tokens actions. 
+App tokens actions.
 The only actions on tokens that are accessible from APIs
 """
+
 from datetime import datetime, timezone
 from typing import Optional
 from pydantic import BaseModel

@@ -22,6 +22,6 @@ class AddRoundcube(Migration):
     def migrate(self) -> None:
         with FlakeServiceManager() as manager:
             if "roundcube" not in manager.services:
-                manager.services[
-                    "roundcube"
-                ] = "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/roundcube"
+                manager.services["roundcube"] = (
+                    "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/roundcube"
+                )

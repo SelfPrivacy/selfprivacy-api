@@ -1,4 +1,5 @@
 """API access mutations"""
+
 # pylint: disable=too-few-public-methods
 import datetime
 import typing

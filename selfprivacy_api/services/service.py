@@ -1,4 +1,5 @@
 """Abstract class for a service running on a server"""
+
 from abc import ABC, abstractmethod
 from typing import List, Optional
 

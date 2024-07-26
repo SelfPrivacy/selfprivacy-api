@@ -3,6 +3,7 @@ Model of the access token.
 
 Access token has a token string, device name and date of creation.
 """
+
 from datetime import datetime
 import secrets
 from pydantic import BaseModel

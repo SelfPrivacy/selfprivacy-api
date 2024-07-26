@@ -1,4 +1,5 @@
 """Backup"""
+
 # pylint: disable=too-few-public-methods
 from enum import Enum
 import strawberry

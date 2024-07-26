@@ -1,6 +1,7 @@
 """
 New device key used to obtain access token.
 """
+
 from datetime import datetime, timedelta, timezone
 import secrets
 from pydantic import BaseModel

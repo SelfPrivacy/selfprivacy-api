@@ -1,4 +1,5 @@
 """Storage devices mutations"""
+
 import strawberry
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.common_types.jobs import job_to_api_job

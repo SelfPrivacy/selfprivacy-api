@@ -1,6 +1,7 @@
 """
     Tests for generic service methods
 """
+
 import pytest
 from pytest import raises
 

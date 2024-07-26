@@ -1,4 +1,5 @@
 """Generic service status fetcher using systemctl"""
+
 import subprocess
 from typing import List
 

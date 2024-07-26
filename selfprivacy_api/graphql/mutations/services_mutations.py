@@ -1,4 +1,5 @@
 """Services mutations"""
+
 # pylint: disable=too-few-public-methods
 import typing
 import strawberry

@@ -1,4 +1,5 @@
 """System logs"""
+
 from datetime import datetime
 import typing
 import strawberry

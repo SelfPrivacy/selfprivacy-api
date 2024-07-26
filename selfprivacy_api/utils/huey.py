@@ -1,4 +1,5 @@
 """MiniHuey singleton."""
+
 from os import environ
 from huey import RedisHuey
 

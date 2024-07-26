@@ -1,4 +1,5 @@
 """Class representing ocserv service."""
+
 import base64
 import subprocess
 import typing
