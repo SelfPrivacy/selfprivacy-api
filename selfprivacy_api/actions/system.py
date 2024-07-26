@@ -106,14 +106,18 @@ def run_blocking(cmd: List[str], new_session: bool = False) -> str:
     return stdout
 
 
-def rebuild_system() -> Job:
-    """Rebuild the system"""
-    job = Jobs.add(
+def add_rebuild_job() -> Job:
+    return Jobs.add(
         type_id="system.nixos.rebuild",
         name="Rebuild system",
         description="Applying the new system configuration by building the new NixOS generation.",
         status=JobStatus.CREATED,
     )
+
+
+def rebuild_system() -> Job:
+    """Rebuild the system"""
+    job = add_rebuild_job()
     rebuild_system_task(job)
     return job
 
