@@ -381,7 +381,7 @@ class Service(ABC):
         try:
             ensure_folder_ownership(binds)
         except Exception as error:
-            # We have logged it via write_to_log and we additionally log it here in the error field
+            # We have logged it via print and we additionally log it here in the error field
             # We are continuing anyway but Job has no warning field
             Jobs.update(
                 job,
