@@ -15,6 +15,8 @@ from tests.common import generate_service_query
 from tests.test_graphql.common import assert_empty, assert_ok, get_data
 from tests.test_graphql.test_system_nixos_tasks import prepare_nixos_rebuild_calls
 
+from tests.test_dkim import dkim_file
+
 LSBLK_BLOCKDEVICES_DICTS = [
     {
         "name": "sda1",
@@ -92,6 +94,14 @@ def only_dummy_service(dummy_service) -> Generator[DummyService, None, None]:
     yield dummy_service
     service_module.services.clear()
     service_module.services.extend(back_copy)
+
+
+@pytest.fixture
+def only_dummy_service_and_api(
+    only_dummy_service, generic_userdata, dkim_file
+) -> Generator[DummyService, None, None]:
+    service_module.services.append(ServiceManager())
+    return only_dummy_service
 
 
 @pytest.fixture()
