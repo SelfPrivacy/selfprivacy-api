@@ -8,7 +8,7 @@
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
       selfprivacy-graphql-api = pkgs.callPackage ./default.nix {
-        pythonPackages = pkgs.python310Packages;
+        pythonPackages = pkgs.python312Packages;
         rev = self.shortRev or self.dirtyShortRev or "dirty";
       };
       python = self.packages.${system}.default.pythonModule;
@@ -85,7 +85,7 @@
         packages = with pkgs; [
           nixpkgs-fmt
           rclone
-          redis
+          valkey
           restic
           self.packages.${system}.pytest-vm
           # FIXME consider loading this explicitly only after ArchLinux issue is solved
@@ -134,6 +134,7 @@
               boot.consoleLogLevel = lib.mkForce 3;
               documentation.enable = false;
               services.journald.extraConfig = lib.mkForce "";
+              services.redis.package = pkgs.valkey;
               services.redis.servers.sp-api = {
                 enable = true;
                 save = [ ];

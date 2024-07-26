@@ -21,6 +21,7 @@ pythonPackages.buildPythonPackage rec {
     uvicorn
     requests
     websockets
+    httpx
   ];
   pythonImportsCheck = [ "selfprivacy_api" ];
   doCheck = false;

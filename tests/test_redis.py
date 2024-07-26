@@ -70,7 +70,6 @@ async def test_pubsub(empty_redis, event_loop):
     # Sanity checking because of previous event loop bugs
     assert event_loop == asyncio.get_event_loop()
     assert event_loop == asyncio.events.get_event_loop()
-    assert event_loop == asyncio.events._get_event_loop()
     assert event_loop == asyncio.events.get_running_loop()
 
     reader = streams.StreamReader(34)

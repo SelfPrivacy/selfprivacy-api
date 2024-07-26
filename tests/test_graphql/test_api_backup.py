@@ -218,7 +218,7 @@ def api_set_quotas(authorized_client, quotas: _AutobackupQuotas):
         "/graphql",
         json={
             "query": API_SET_AUTOBACKUP_QUOTAS_MUTATION,
-            "variables": {"input": quotas.dict()},
+            "variables": {"input": quotas.model_dump()},
         },
     )
     return response
@@ -401,7 +401,7 @@ def test_autobackup_quotas_nonzero(authorized_client, backups):
     assert_ok(data)
 
     configuration = data["configuration"]
-    assert configuration["autobackupQuotas"] == quotas
+    assert configuration["autobackupQuotas"] == quotas.model_dump()
 
 
 def test_autobackup_period_nonzero(authorized_client, backups):

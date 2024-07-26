@@ -1,15 +1,15 @@
 """
 Redis pool module for selfprivacy_api
 """
+
 import redis
 import redis.asyncio as redis_async
+from redis.asyncio.client import PubSub
 
-from selfprivacy_api.utils.singleton_metaclass import SingletonMetaclass
 
 REDIS_SOCKET = "/run/redis-sp-api/redis.sock"
 
 
-# class RedisPool(metaclass=SingletonMetaclass):
 class RedisPool:
     """
     Redis connection pool singleton.
@@ -51,7 +51,7 @@ class RedisPool:
         """
         return redis_async.Redis(connection_pool=self._async_pool)
 
-    async def subscribe_to_keys(self, pattern: str) -> redis_async.client.PubSub:
+    async def subscribe_to_keys(self, pattern: str) -> PubSub:
         async_redis = self.get_connection_async()
         pubsub = async_redis.pubsub()
         await pubsub.psubscribe(f"__keyspace@{self._dbnumber}__:" + pattern)

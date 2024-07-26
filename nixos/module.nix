@@ -61,7 +61,7 @@ in
         HOME = "/root";
         PYTHONUNBUFFERED = "1";
         PYTHONPATH =
-          pkgs.python310Packages.makePythonPath [ selfprivacy-graphql-api ];
+          pkgs.python312Packages.makePythonPath [ selfprivacy-graphql-api ];
       } // config.networking.proxy.envVars;
       path = [
         "/var/"
@@ -82,7 +82,7 @@ in
       wantedBy = [ "network-online.target" ];
       serviceConfig = {
         User = "root";
-        ExecStart = "${pkgs.python310Packages.huey}/bin/huey_consumer.py selfprivacy_api.task_registry.huey";
+        ExecStart = "${pkgs.python312Packages.huey}/bin/huey_consumer.py selfprivacy_api.task_registry.huey";
         Restart = "always";
         RestartSec = "5";
       };
