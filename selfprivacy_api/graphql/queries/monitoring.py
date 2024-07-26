@@ -3,7 +3,11 @@ from typing import Optional
 from datetime import datetime
 from selfprivacy_api.models.services import ServiceStatus
 from selfprivacy_api.services.prometheus import Prometheus
-from selfprivacy_api.utils.monitoring import MonitoringQueries, MonitoringQueryError, MonitoringResponse
+from selfprivacy_api.utils.monitoring import (
+    MonitoringQueries,
+    MonitoringQueryError,
+    MonitoringResponse,
+)
 
 
 @strawberry.type

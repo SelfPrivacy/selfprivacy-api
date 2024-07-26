@@ -86,7 +86,13 @@ class Logs:
             list(
                 map(
                     lambda x: LogEntry(x),
-                    get_paginated_logs(limit, up_cursor, down_cursor, filterBySlice, filterByUnit),
+                    get_paginated_logs(
+                        limit,
+                        up_cursor,
+                        down_cursor,
+                        filterBySlice,
+                        filterByUnit,
+                    ),
                 )
             )
         )
