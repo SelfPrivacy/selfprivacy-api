@@ -5,7 +5,7 @@
 from datetime import datetime
 import pytest
 
-from selfprivacy_api.utils.prometheus import MonitoringQueryResult
+from selfprivacy_api.utils.monitoring import MonitoringQueryResult
 from tests.test_graphql.common import (
     assert_empty,
     get_data,
