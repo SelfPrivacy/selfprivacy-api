@@ -4,10 +4,9 @@
 import requests
 
 import strawberry
-from strawberry.scalars import JSON
 
 from dataclasses import dataclass
-from typing import Optional, Annotated, Union
+from typing import Optional, Annotated, Union, List, Tuple
 from datetime import datetime, timedelta
 
 PROMETHEUS_URL = "http://localhost:9001"
@@ -15,9 +14,16 @@ PROMETHEUS_URL = "http://localhost:9001"
 
 @strawberry.type
 @dataclass
-class MonitoringQueryResult:
-    result_type: str
-    result: JSON
+class MonitoringValue:
+    timestamp: datetime
+    value: str
+
+
+@strawberry.type
+@dataclass
+class MonitoringMetric:
+    id: str
+    values: List[MonitoringValue]
 
 
 @strawberry.type
@@ -25,15 +31,23 @@ class MonitoringQueryError:
     error: str
 
 
-MonitoringResponse = Annotated[
-    Union[MonitoringQueryResult, MonitoringQueryError],
-    strawberry.union("MonitoringQueryResponse"),
+MonitoringValuesResult = Annotated[
+    Union[List[MonitoringValue], MonitoringQueryError],
+    strawberry.union("MonitoringValuesResult"),
+]
+
+
+MonitoringMetricsResult = Annotated[
+    Union[List[MonitoringMetric], MonitoringQueryError],
+    strawberry.union("MonitoringMetricsResult"),
 ]
 
 
 class MonitoringQueries:
     @staticmethod
-    def _send_query(query: str, start: int, end: int, step: int) -> MonitoringResponse:
+    def _send_query(
+        query: str, start: int, end: int, step: int, result_type: Optional[str] = None
+    ) -> Union[dict, MonitoringQueryError]:
         try:
             response = requests.get(
                 f"{PROMETHEUS_URL}/api/v1/query_range",
@@ -49,20 +63,45 @@ class MonitoringQueries:
                     error="Prometheus returned unexpected HTTP status code"
                 )
             json = response.json()
-            return MonitoringQueryResult(
-                result_type=json["data"]["resultType"], result=json["data"]["result"]
-            )
+            if result_type and json["data"]["resultType"] != result_type:
+                return MonitoringQueryError(
+                    error="Unexpected resultType returned from Prometheus, request failed"
+                )
+            return json["data"]
         except Exception as error:
             return MonitoringQueryError(
                 error=f"Prometheus request failed! Error: {str(error)}"
             )
 
     @staticmethod
+    def _prometheus_value_to_monitoring_value(x: Tuple[int, str]):
+        return MonitoringValue(timestamp=datetime.fromtimestamp(x[0]), value=x[1])
+
+    @staticmethod
+    def _prometheus_respone_to_monitoring_metrics(
+        responese: dict, id_key: str
+    ) -> List[MonitoringMetric]:
+        return list(
+            map(
+                lambda x: MonitoringMetric(
+                    id=x["metric"][id_key],
+                    values=list(
+                        map(
+                            MonitoringQueries._prometheus_value_to_monitoring_value,
+                            x["values"],
+                        )
+                    ),
+                ),
+                responese["result"],
+            )
+        )
+
+    @staticmethod
     def cpu_usage(
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
         step: int = 60,  # seconds
-    ) -> MonitoringResponse:
+    ) -> MonitoringValuesResult:
         """
         Get CPU information.
 
@@ -85,11 +124,18 @@ class MonitoringQueries:
 
         query = '100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)'
 
-        return MonitoringQueries._send_query(
-            query,
-            start_timestamp,
-            end_timestamp,
-            step,
+        data = MonitoringQueries._send_query(
+            query, start_timestamp, end_timestamp, step, result_type="matrix"
+        )
+
+        if isinstance(data, MonitoringQueryError):
+            return data
+
+        return list(
+            map(
+                MonitoringQueries._prometheus_value_to_monitoring_value,
+                data["result"][0]["values"],
+            )
         )
 
     @staticmethod
@@ -97,7 +143,7 @@ class MonitoringQueries:
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
         step: int = 60,  # seconds
-    ) -> MonitoringResponse:
+    ) -> MonitoringValuesResult:
         """
         Get memory usage.
 
@@ -120,11 +166,18 @@ class MonitoringQueries:
 
         query = "100 - (100 * (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))"
 
-        return MonitoringQueries._send_query(
-            query,
-            start_timestamp,
-            end_timestamp,
-            step,
+        data = MonitoringQueries._send_query(
+            query, start_timestamp, end_timestamp, step, result_type="matrix"
+        )
+
+        if isinstance(data, MonitoringQueryError):
+            return data
+
+        return list(
+            map(
+                MonitoringQueries._prometheus_value_to_monitoring_value,
+                data["result"][0]["values"],
+            )
         )
 
     @staticmethod
@@ -132,7 +185,7 @@ class MonitoringQueries:
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
         step: int = 60,  # seconds
-    ) -> MonitoringResponse:
+    ) -> MonitoringMetricsResult:
         """
         Get disk usage information.
 
@@ -155,11 +208,15 @@ class MonitoringQueries:
 
         query = """100 - (100 * sum by (device) (node_filesystem_avail_bytes{fstype!="rootfs"}) / sum by (device) (node_filesystem_size_bytes{fstype!="rootfs"}))"""
 
-        return MonitoringQueries._send_query(
-            query,
-            start_timestamp,
-            end_timestamp,
-            step,
+        data = MonitoringQueries._send_query(
+            query, start_timestamp, end_timestamp, step, result_type="matrix"
+        )
+
+        if isinstance(data, MonitoringQueryError):
+            return data
+
+        return MonitoringQueries._prometheus_respone_to_monitoring_metrics(
+            data, "device"
         )
 
     @staticmethod
@@ -167,7 +224,7 @@ class MonitoringQueries:
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
         step: int = 60,  # seconds
-    ) -> MonitoringResponse:
+    ) -> MonitoringMetricsResult:
         """
         Get network usage information for both download and upload.
 
@@ -195,9 +252,13 @@ class MonitoringQueries:
         )
         """
 
-        return MonitoringQueries._send_query(
-            query,
-            start_timestamp,
-            end_timestamp,
-            step,
+        data = MonitoringQueries._send_query(
+            query, start_timestamp, end_timestamp, step, result_type="matrix"
+        )
+
+        if isinstance(data, MonitoringQueryError):
+            return data
+
+        return MonitoringQueries._prometheus_respone_to_monitoring_metrics(
+            data, "device"
         )

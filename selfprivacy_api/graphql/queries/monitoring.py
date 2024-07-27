@@ -6,23 +6,24 @@ from selfprivacy_api.services.prometheus import Prometheus
 from selfprivacy_api.utils.monitoring import (
     MonitoringQueries,
     MonitoringQueryError,
-    MonitoringResponse,
+    MonitoringValuesResult,
+    MonitoringMetricsResult,
 )
 
 
 @strawberry.type
 class Monitoring:
     @strawberry.field
-    def disk_usage(
+    def cpu_usage(
         self,
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
         step: int = 60,
-    ) -> MonitoringResponse:
+    ) -> MonitoringValuesResult:
         if Prometheus().get_status() != ServiceStatus.ACTIVE:
             return MonitoringQueryError(error="Prometheus is not running")
 
-        return MonitoringQueries.disk_usage(start, end, step)
+        return MonitoringQueries.cpu_usage(start, end, step)
 
     @strawberry.field
     def memory_usage(
@@ -30,23 +31,23 @@ class Monitoring:
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
         step: int = 60,
-    ) -> MonitoringResponse:
+    ) -> MonitoringValuesResult:
         if Prometheus().get_status() != ServiceStatus.ACTIVE:
             return MonitoringQueryError(error="Prometheus is not running")
 
         return MonitoringQueries.memory_usage(start, end, step)
 
     @strawberry.field
-    def cpu_usage(
+    def disk_usage(
         self,
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
         step: int = 60,
-    ) -> MonitoringResponse:
+    ) -> MonitoringMetricsResult:
         if Prometheus().get_status() != ServiceStatus.ACTIVE:
             return MonitoringQueryError(error="Prometheus is not running")
 
-        return MonitoringQueries.cpu_usage(start, end, step)
+        return MonitoringQueries.disk_usage(start, end, step)
 
     @strawberry.field
     def network_usage(
@@ -54,8 +55,8 @@ class Monitoring:
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
         step: int = 60,
-    ) -> MonitoringResponse:
+    ) -> MonitoringMetricsResult:
         if Prometheus().get_status() != ServiceStatus.ACTIVE:
             return MonitoringQueryError(error="Prometheus is not running")
 
-        return MonitoringQueries.cpu_usage(start, end, step)
+        return MonitoringQueries.network_usage(start, end, step)

@@ -26,9 +26,9 @@ class AddMonitoring(Migration):
     def migrate(self) -> None:
         with FlakeServiceManager() as manager:
             if "monitoring" not in manager.services:
-                manager.services[
-                    "monitoring"
-                ] = "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/monitoring"
+                manager.services["monitoring"] = (
+                    "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/monitoring"
+                )
         with WriteUserData() as data:
             if "monitoring" not in data["modules"]:
                 data["modules"]["monitoring"] = {
