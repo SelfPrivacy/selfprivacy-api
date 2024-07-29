@@ -82,6 +82,12 @@ def do_autobackup() -> None:
     inside tests
     """
     time = datetime.now(timezone.utc)
+    backups_were_disabled = Backups.autobackup_period_minutes() is None
+
+    if backups_were_disabled:
+        # Temporarily enable autobackup
+        Backups.set_autobackup_period_minutes(24 * 60)  # 1 day
+
     services_to_back_up = Backups.services_to_back_up(time)
     if not services_to_back_up:
         return
@@ -104,7 +110,11 @@ def do_autobackup() -> None:
         progress = progress + progress_per_service
         Jobs.update(job, JobStatus.RUNNING, progress=progress)
 
+    if backups_were_disabled:
+        Backups.set_autobackup_period_minutes(0)
     Jobs.update(job, JobStatus.FINISHED)
+    # there is no point of returning the job
+    # this code is called with a delay
 
 
 def eligible_for_full_restoration(snap: Snapshot):
@@ -194,7 +204,12 @@ def automatic_backup() -> None:
     """
     The worker periodic task that starts the automatic backup process.
     """
+
+
+@huey.task()
+def trigger_autobackup() -> bool:
     do_autobackup()
+    return True
 
 
 @huey.periodic_task(crontab(hour="*/" + str(SNAPSHOT_CACHE_TTL_HOURS)))
