@@ -65,6 +65,10 @@
         },
         "roundcube": {
             "enable": true
+        },
+        "prometheus": {
+            "enable": true,
+            "location": "sdb"
         }
     },
     "volumes": [

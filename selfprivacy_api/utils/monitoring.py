@@ -70,7 +70,7 @@ class MonitoringQueries:
             )
             if response.status_code != 200:
                 return MonitoringQueryError(
-                    error="Prometheus returned unexpected HTTP status code"
+                    error=f"Prometheus returned unexpected HTTP status code. Error: {response.text}"
                 )
             json = response.json()
             if result_type and json["data"]["resultType"] != result_type:
@@ -96,7 +96,7 @@ class MonitoringQueries:
             )
             if response.status_code != 200:
                 return MonitoringQueryError(
-                    error="Prometheus returned unexpected HTTP status code"
+                    error=f"Prometheus returned unexpected HTTP status code. Error: {response.text}"
                 )
             json = response.json()
             if result_type and json["data"]["resultType"] != result_type:
