@@ -78,8 +78,8 @@ class MonitoringQueries:
         return MonitoringValue(timestamp=datetime.fromtimestamp(x[0]), value=x[1])
 
     @staticmethod
-    def _prometheus_respone_to_monitoring_metrics(
-        responese: dict, id_key: str
+    def _prometheus_response_to_monitoring_metrics(
+        response: dict, id_key: str
     ) -> List[MonitoringMetric]:
         return list(
             map(
@@ -92,7 +92,7 @@ class MonitoringQueries:
                         )
                     ),
                 ),
-                responese["result"],
+                response["result"],
             )
         )
 
@@ -215,7 +215,7 @@ class MonitoringQueries:
         if isinstance(data, MonitoringQueryError):
             return data
 
-        return MonitoringQueries._prometheus_respone_to_monitoring_metrics(
+        return MonitoringQueries._prometheus_response_to_monitoring_metrics(
             data, "device"
         )
 
@@ -259,6 +259,6 @@ class MonitoringQueries:
         if isinstance(data, MonitoringQueryError):
             return data
 
-        return MonitoringQueries._prometheus_respone_to_monitoring_metrics(
+        return MonitoringQueries._prometheus_response_to_monitoring_metrics(
             data, "device"
         )
