@@ -25,6 +25,7 @@ from selfprivacy_api.backup.tasks import (
     restore_snapshot,
     prune_autobackup_snapshots,
     full_restore,
+    trigger_autobackup,
 )
 from selfprivacy_api.backup.jobs import (
     add_backup_job,
@@ -169,6 +170,22 @@ class BackupMutations:
             code=200,
             message="Backup job queued",
             job=job_to_api_job(job),
+        )
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    def manual_autobackup(self) -> GenericMutationReturn:
+        """Induce autobackup to back up all the services at once
+        Useful when migrating but a bit of a hack
+        """
+
+        # This cannot give us a job, unfortunately
+        # TODO: We need to pass it
+        trigger_autobackup()
+
+        return GenericMutationReturn(
+            success=True,
+            code=200,
+            message="Backup task queued",
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])

@@ -14,10 +14,29 @@ from selfprivacy_api.jobs import Jobs, JobStatus
 from selfprivacy_api.backup.storage import Storage
 from selfprivacy_api.backup.local_secret import LocalBackupSecret
 
+from tests.test_graphql.test_services import (
+    only_dummy_service_and_api,
+    only_dummy_service,
+    dkim_file,
+)
+
+
 API_RELOAD_SNAPSHOTS = """
 mutation TestSnapshotsReload {
     backup {
         forceSnapshotsReload {
+            success
+            message
+            code
+        }
+    }
+}
+"""
+
+API_MANUAL_AUTOBACKUP = """
+mutation TestForcedAutobackup {
+    backup {
+         manualAutobackup{
             success
             message
             code
@@ -259,6 +278,17 @@ def api_reload_snapshots(authorized_client):
     return response
 
 
+def api_manual_autobackup(authorized_client):
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_MANUAL_AUTOBACKUP,
+            "variables": {},
+        },
+    )
+    return response
+
+
 def api_init(
     authorized_client,
     kind,
@@ -403,7 +433,7 @@ def test_reinit(authorized_client, dummy_service, tmpdir, backups):
     assert Jobs.get_job(job["uid"]).status == JobStatus.FINISHED
 
 
-def test_migrate(authorized_client, dummy_service, tmpdir, backups):
+def test_migrate_backup_repo(authorized_client, dummy_service, tmpdir, backups):
     """
     Simulate the workflow of migrating to a new server
     """
@@ -552,6 +582,18 @@ def test_reload_snapshots_bare_bare_bare(authorized_client, dummy_service, backu
 
     snaps = api_snapshots(authorized_client)
     assert snaps == []
+
+
+def test_induce_autobackup(authorized_client, only_dummy_service_and_api, backups):
+    dummy_service = only_dummy_service_and_api
+
+    response = api_manual_autobackup(authorized_client)
+    # raise ValueError(get_data(response))
+    data = get_data(response)["backup"]["manualAutobackup"]
+    assert_ok(data)
+
+    snaps = api_snapshots(authorized_client)
+    assert len(snaps) == 2
 
 
 def test_reload_snapshots(authorized_client, dummy_service, backups):
