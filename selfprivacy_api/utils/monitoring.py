@@ -131,7 +131,11 @@ class MonitoringQueries:
                         id=MonitoringQueries._clean_slice_id(
                             x["metric"][id_key], clean_id=clean_id
                         ),
-                        values=[MonitoringQueries._prometheus_value_to_monitoring_value(x["value"])],
+                        values=[
+                            MonitoringQueries._prometheus_value_to_monitoring_value(
+                                x["value"]
+                            )
+                        ],
                     ),
                     response["result"],
                 )
@@ -357,7 +361,7 @@ class MonitoringQueries:
         start_timestamp = int(start.timestamp())
         end_timestamp = int(end.timestamp())
 
-        query = """100 - (100 * sum by (device) (node_filesystem_avail_bytes{fstype!="rootfs"}) / sum by (device) (node_filesystem_size_bytes{fstype!="rootfs"}))"""
+        query = """100 - (100 * sum by (device) (node_filesystem_avail_bytes{fstype!="rootfs",fstype!="ramfs",fstype!="tmpfs",mountpoint!="/efi"}) / sum by (device) (node_filesystem_size_bytes{fstype!="rootfs",fstype!="ramfs",fstype!="tmpfs",mountpoint!="/efi"}))"""
 
         data = MonitoringQueries._send_range_query(
             query, start_timestamp, end_timestamp, step, result_type="matrix"
