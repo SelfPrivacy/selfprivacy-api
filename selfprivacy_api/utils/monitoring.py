@@ -124,22 +124,35 @@ class MonitoringQueries:
     def _prometheus_response_to_monitoring_metrics(
         response: dict, id_key: str, clean_id: bool = False
     ) -> List[MonitoringMetric]:
-        return list(
-            map(
-                lambda x: MonitoringMetric(
-                    id=MonitoringQueries._clean_slice_id(
-                        x["metric"][id_key], clean_id=clean_id
+        if response["resultType"] == "vector":
+            return list(
+                map(
+                    lambda x: MonitoringMetric(
+                        id=MonitoringQueries._clean_slice_id(
+                            x["metric"][id_key], clean_id=clean_id
+                        ),
+                        values=[MonitoringQueries._prometheus_value_to_monitoring_value(x["value"])],
                     ),
-                    values=list(
-                        map(
-                            MonitoringQueries._prometheus_value_to_monitoring_value,
-                            x["values"],
-                        )
-                    ),
-                ),
-                response["result"],
+                    response["result"],
+                )
             )
-        )
+        else:
+            return list(
+                map(
+                    lambda x: MonitoringMetric(
+                        id=MonitoringQueries._clean_slice_id(
+                            x["metric"][id_key], clean_id=clean_id
+                        ),
+                        values=list(
+                            map(
+                                MonitoringQueries._prometheus_value_to_monitoring_value,
+                                x["values"],
+                            )
+                        ),
+                    ),
+                    response["result"],
+                )
+            )
 
     @staticmethod
     def _calculate_offset_and_duration(
@@ -400,6 +413,6 @@ class MonitoringQueries:
 
         return MonitoringMetrics(
             metrics=MonitoringQueries._prometheus_response_to_monitoring_metrics(
-                data, "directon"
+                data, "direction"
             )
         )
