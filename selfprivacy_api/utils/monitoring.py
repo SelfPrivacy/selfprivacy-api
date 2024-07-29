@@ -31,14 +31,24 @@ class MonitoringQueryError:
     error: str
 
 
+@strawberry.type
+class MonitoringValues:
+    values: List[MonitoringValue]
+
+
+@strawberry.type
+class MonitoringMetrics:
+    metrics: List[MonitoringMetric]
+
+
 MonitoringValuesResult = Annotated[
-    Union[List[MonitoringValue], MonitoringQueryError],
+    Union[MonitoringValues, MonitoringQueryError],
     strawberry.union("MonitoringValuesResult"),
 ]
 
 
 MonitoringMetricsResult = Annotated[
-    Union[List[MonitoringMetric], MonitoringQueryError],
+    Union[MonitoringMetrics, MonitoringQueryError],
     strawberry.union("MonitoringMetricsResult"),
 ]
 
@@ -131,10 +141,12 @@ class MonitoringQueries:
         if isinstance(data, MonitoringQueryError):
             return data
 
-        return list(
-            map(
-                MonitoringQueries._prometheus_value_to_monitoring_value,
-                data["result"][0]["values"],
+        return MonitoringValues(
+            values=list(
+                map(
+                    MonitoringQueries._prometheus_value_to_monitoring_value,
+                    data["result"][0]["values"],
+                )
             )
         )
 
@@ -173,10 +185,12 @@ class MonitoringQueries:
         if isinstance(data, MonitoringQueryError):
             return data
 
-        return list(
-            map(
-                MonitoringQueries._prometheus_value_to_monitoring_value,
-                data["result"][0]["values"],
+        return MonitoringValues(
+            values=list(
+                map(
+                    MonitoringQueries._prometheus_value_to_monitoring_value,
+                    data["result"][0]["values"],
+                )
             )
         )
 
@@ -215,8 +229,10 @@ class MonitoringQueries:
         if isinstance(data, MonitoringQueryError):
             return data
 
-        return MonitoringQueries._prometheus_response_to_monitoring_metrics(
-            data, "device"
+        return MonitoringMetrics(
+            metrics=MonitoringQueries._prometheus_response_to_monitoring_metrics(
+                data, "device"
+            )
         )
 
     @staticmethod
@@ -259,6 +275,8 @@ class MonitoringQueries:
         if isinstance(data, MonitoringQueryError):
             return data
 
-        return MonitoringQueries._prometheus_response_to_monitoring_metrics(
-            data, "device"
+        return MonitoringMetrics(
+            metrics=MonitoringQueries._prometheus_response_to_monitoring_metrics(
+                data, "device"
+            )
         )

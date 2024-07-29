@@ -12,6 +12,62 @@ from selfprivacy_api.utils.monitoring import (
 
 
 @strawberry.type
+class CpuMonitoring:
+    start: Optional[datetime]
+    end: Optional[datetime]
+    step: int
+
+    @strawberry.field
+    def overall_usage(self) -> MonitoringValuesResult:
+        if Prometheus().get_status() != ServiceStatus.ACTIVE:
+            return MonitoringQueryError(error="Prometheus is not running")
+
+        return MonitoringQueries.cpu_usage(self.start, self.end, self.step)
+
+
+@strawberry.type
+class MemoryMonitoring:
+    start: Optional[datetime]
+    end: Optional[datetime]
+    step: int
+
+    @strawberry.field
+    def overall_usage(self) -> MonitoringValuesResult:
+        if Prometheus().get_status() != ServiceStatus.ACTIVE:
+            return MonitoringQueryError(error="Prometheus is not running")
+
+        return MonitoringQueries.memory_usage(self.start, self.end, self.step)
+
+
+@strawberry.type
+class DiskMonitoring:
+    start: Optional[datetime]
+    end: Optional[datetime]
+    step: int
+
+    @strawberry.field
+    def overall_usage(self) -> MonitoringMetricsResult:
+        if Prometheus().get_status() != ServiceStatus.ACTIVE:
+            return MonitoringQueryError(error="Prometheus is not running")
+
+        return MonitoringQueries.disk_usage(self.start, self.end, self.step)
+
+
+@strawberry.type
+class NetworkMonitoring:
+    start: Optional[datetime]
+    end: Optional[datetime]
+    step: int
+
+    @strawberry.field
+    def overall_usage(self) -> MonitoringMetricsResult:
+        if Prometheus().get_status() != ServiceStatus.ACTIVE:
+            return MonitoringQueryError(error="Prometheus is not running")
+
+        return MonitoringQueries.network_usage(self.start, self.end, self.step)
+
+
+@strawberry.type
 class Monitoring:
     @strawberry.field
     def cpu_usage(
@@ -19,11 +75,8 @@ class Monitoring:
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
         step: int = 60,
-    ) -> MonitoringValuesResult:
-        if Prometheus().get_status() != ServiceStatus.ACTIVE:
-            return MonitoringQueryError(error="Prometheus is not running")
-
-        return MonitoringQueries.cpu_usage(start, end, step)
+    ) -> CpuMonitoring:
+        return CpuMonitoring(start=start, end=end, step=step)
 
     @strawberry.field
     def memory_usage(
@@ -31,11 +84,8 @@ class Monitoring:
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
         step: int = 60,
-    ) -> MonitoringValuesResult:
-        if Prometheus().get_status() != ServiceStatus.ACTIVE:
-            return MonitoringQueryError(error="Prometheus is not running")
-
-        return MonitoringQueries.memory_usage(start, end, step)
+    ) -> MemoryMonitoring:
+        return MemoryMonitoring(start=start, end=end, step=step)
 
     @strawberry.field
     def disk_usage(
@@ -43,11 +93,8 @@ class Monitoring:
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
         step: int = 60,
-    ) -> MonitoringMetricsResult:
-        if Prometheus().get_status() != ServiceStatus.ACTIVE:
-            return MonitoringQueryError(error="Prometheus is not running")
-
-        return MonitoringQueries.disk_usage(start, end, step)
+    ) -> DiskMonitoring:
+        return DiskMonitoring(start=start, end=end, step=step)
 
     @strawberry.field
     def network_usage(
@@ -55,8 +102,5 @@ class Monitoring:
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
         step: int = 60,
-    ) -> MonitoringMetricsResult:
-        if Prometheus().get_status() != ServiceStatus.ACTIVE:
-            return MonitoringQueryError(error="Prometheus is not running")
-
-        return MonitoringQueries.network_usage(start, end, step)
+    ) -> NetworkMonitoring:
+        return NetworkMonitoring(start=start, end=end, step=step)
