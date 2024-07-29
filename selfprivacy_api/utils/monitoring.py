@@ -263,7 +263,10 @@ class MonitoringQueries:
 
         offset, duration = MonitoringQueries._calculate_offset_and_duration(start, end)
 
-        query = f'max_over_time(container_memory_rss{{id!~".*slice.*slice", id=~".*slice"}}[{duration}s] offset {offset}s)'
+        if offset == 0:
+            query = f'max_over_time(container_memory_rss{{id!~".*slice.*slice", id=~".*slice"}}[{duration}s])'
+        else:
+            query = f'max_over_time(container_memory_rss{{id!~".*slice.*slice", id=~".*slice"}}[{duration}s] offset {offset}s)'
 
         data = MonitoringQueries._send_query(query, result_type="vector")
 
@@ -299,7 +302,10 @@ class MonitoringQueries:
 
         offset, duration = MonitoringQueries._calculate_offset_and_duration(start, end)
 
-        query = f'avg_over_time(container_memory_rss{{id!~".*slice.*slice", id=~".*slice"}}[{duration}s] offset {offset}s)'
+        if offset == 0:
+            query = f'avg_over_time(container_memory_rss{{id!~".*slice.*slice", id=~".*slice"}}[{duration}s])'
+        else:
+            query = f'avg_over_time(container_memory_rss{{id!~".*slice.*slice", id=~".*slice"}}[{duration}s] offset {offset}s)'
 
         data = MonitoringQueries._send_query(query, result_type="vector")
 
