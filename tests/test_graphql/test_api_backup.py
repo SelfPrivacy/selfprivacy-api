@@ -11,6 +11,8 @@ from selfprivacy_api.graphql.common_types.backup import (
     AutobackupQuotas,
 )
 from selfprivacy_api.jobs import Jobs, JobStatus
+from selfprivacy_api.backup.storage import Storage
+from selfprivacy_api.backup.local_secret import LocalBackupSecret
 
 API_RELOAD_SNAPSHOTS = """
 mutation TestSnapshotsReload {
@@ -152,6 +154,17 @@ allSnapshots {
 }
 """
 
+API_BACKUP_SETTINGS_QUERY = """
+configuration {
+        provider
+        encryptionKey
+        isInitialized
+        autobackupPeriod
+        locationName
+        locationId
+    }
+"""
+
 API_BACK_UP_MUTATION = """
 mutation TestBackupService($service_id: String!) {
     backup {
@@ -246,8 +259,14 @@ def api_reload_snapshots(authorized_client):
     return response
 
 
-def api_init_without_key(
-    authorized_client, kind, login, password, location_name, location_id
+def api_init(
+    authorized_client,
+    kind,
+    login,
+    password,
+    location_name,
+    location_id,
+    local_secret=None,
 ):
     response = authorized_client.post(
         "/graphql",
@@ -260,6 +279,7 @@ def api_init_without_key(
                     "locationName": location_name,
                     "login": login,
                     "password": password,
+                    "localSecret": local_secret,
                 }
             },
         },
@@ -295,6 +315,17 @@ def api_snapshots(authorized_client):
     )
     data = get_data(response)
     result = data["backup"]["allSnapshots"]
+    assert result is not None
+    return result
+
+
+def api_settings(authorized_client):
+    response = authorized_client.post(
+        "/graphql",
+        json={"query": generate_backup_query([API_BACKUP_SETTINGS_QUERY])},
+    )
+    data = get_data(response)
+    result = data["backup"]["configuration"]
     assert result is not None
     return result
 
@@ -354,9 +385,7 @@ def test_restore(authorized_client, dummy_service, backups):
 
 def test_reinit(authorized_client, dummy_service, tmpdir, backups):
     test_repo_path = path.join(tmpdir, "not_at_all_sus")
-    response = api_init_without_key(
-        authorized_client, "FILE", "", "", test_repo_path, ""
-    )
+    response = api_init(authorized_client, "FILE", "", "", test_repo_path, "")
     data = get_data(response)["backup"]["initializeRepository"]
     assert_ok(data)
     configuration = data["configuration"]
@@ -372,6 +401,67 @@ def test_reinit(authorized_client, dummy_service, tmpdir, backups):
     job = data["job"]
 
     assert Jobs.get_job(job["uid"]).status == JobStatus.FINISHED
+
+
+def test_migrate(authorized_client, dummy_service, tmpdir, backups):
+    """
+    Simulate the workflow of migrating to a new server
+    """
+    # Using an alternative path to be sure that we do not
+    # match only by incident
+    test_repo_path = path.join(tmpdir, "not_at_all_sus")
+    response = api_init(authorized_client, "FILE", "", "", test_repo_path, "")
+    data = get_data(response)["backup"]["initializeRepository"]
+    assert_ok(data)
+    snaps = api_snapshots(authorized_client)
+    assert snaps == []
+
+    # Now, forget what we just did
+    del test_repo_path
+    del response
+    del data
+    del snaps
+
+    # I am a user at my old machine, I make a backup
+    response = api_backup(authorized_client, dummy_service)
+    data = get_data(response)["backup"]["startBackup"]
+    assert_ok(data)
+
+    # Then oh no, we need to migrate, we get our settings.
+    # Because we have forgot everything 2000 times already
+    # Was years, was years.
+    # I still remember login though
+    configuration = api_settings(authorized_client)
+
+    # Ok. Let's now go to another machine
+    # Another machine will not have any settings at all
+
+    Storage.reset()
+    LocalBackupSecret._full_reset()
+
+    # That's it, nothing left
+    new_configuration = api_settings(authorized_client)
+    assert new_configuration["isInitialized"] is False
+
+    # Reinit
+    response = api_init(
+        authorized_client,
+        configuration["provider"],
+        "",
+        "",
+        configuration["locationName"],
+        configuration["locationId"],
+        configuration["encryptionKey"],
+    )
+    data = get_data(response)["backup"]["initializeRepository"]
+    assert_ok(data)
+
+    new_configuration = api_settings(authorized_client)
+    assert new_configuration == configuration
+    api_reload_snapshots(authorized_client)
+
+    snaps = api_snapshots(authorized_client)
+    assert len(snaps) == 1
 
 
 def test_remove(authorized_client, generic_userdata, backups):
