@@ -75,8 +75,8 @@ class BackupMutations:
         secret = repository.local_secret
         if secret is not None:
             LocalBackupSecret.set(secret)
-
-        Backups.init_repo()
+        else:
+            Backups.init_repo()
         return GenericBackupConfigReturn(
             success=True,
             message="",
