@@ -446,19 +446,19 @@ def test_migrate(authorized_client, dummy_service, tmpdir, backups):
     # Reinit
     response = api_init(
         authorized_client,
-        configuration["provider"],
-        "",
-        "",
-        configuration["locationName"],
-        configuration["locationId"],
-        configuration["encryptionKey"],
+        kind=configuration["provider"],
+        login="",  # user provides login and password, configuration endpoint does not
+        password="",  # empty for file based repository
+        location_name=configuration["locationName"],
+        location_id=configuration["locationId"],
+        local_secret=configuration["encryptionKey"],
     )
     data = get_data(response)["backup"]["initializeRepository"]
     assert_ok(data)
+    assert data["configuration"] == configuration
 
     new_configuration = api_settings(authorized_client)
     assert new_configuration == configuration
-    api_reload_snapshots(authorized_client)
 
     snaps = api_snapshots(authorized_client)
     assert len(snaps) == 1
