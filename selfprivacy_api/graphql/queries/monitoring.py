@@ -22,7 +22,7 @@ class CpuMonitoring:
         if Prometheus().get_status() != ServiceStatus.ACTIVE:
             return MonitoringQueryError(error="Prometheus is not running")
 
-        return MonitoringQueries.cpu_usage(self.start, self.end, self.step)
+        return MonitoringQueries.cpu_usage_overall(self.start, self.end, self.step)
 
 
 @strawberry.type
@@ -36,7 +36,21 @@ class MemoryMonitoring:
         if Prometheus().get_status() != ServiceStatus.ACTIVE:
             return MonitoringQueryError(error="Prometheus is not running")
 
-        return MonitoringQueries.memory_usage(self.start, self.end, self.step)
+        return MonitoringQueries.memory_usage_overall(self.start, self.end, self.step)
+
+    @strawberry.field
+    def average_usage_by_service(self) -> MonitoringMetricsResult:
+        if Prometheus().get_status() != ServiceStatus.ACTIVE:
+            return MonitoringQueryError(error="Prometheus is not running")
+
+        return MonitoringQueries.memory_usage_average_by_slice(self.start, self.end)
+
+    @strawberry.field
+    def max_usage_by_service(self) -> MonitoringMetricsResult:
+        if Prometheus().get_status() != ServiceStatus.ACTIVE:
+            return MonitoringQueryError(error="Prometheus is not running")
+
+        return MonitoringQueries.memory_usage_max_by_slice(self.start, self.end)
 
 
 @strawberry.type
@@ -50,7 +64,7 @@ class DiskMonitoring:
         if Prometheus().get_status() != ServiceStatus.ACTIVE:
             return MonitoringQueryError(error="Prometheus is not running")
 
-        return MonitoringQueries.disk_usage(self.start, self.end, self.step)
+        return MonitoringQueries.disk_usage_overall(self.start, self.end, self.step)
 
 
 @strawberry.type
@@ -64,7 +78,7 @@ class NetworkMonitoring:
         if Prometheus().get_status() != ServiceStatus.ACTIVE:
             return MonitoringQueryError(error="Prometheus is not running")
 
-        return MonitoringQueries.network_usage(self.start, self.end, self.step)
+        return MonitoringQueries.network_usage_overall(self.start, self.end, self.step)
 
 
 @strawberry.type

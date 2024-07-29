@@ -7,7 +7,6 @@ from datetime import datetime
 from typing import List, Dict
 import pytest
 
-from selfprivacy_api.utils.monitoring import MonitoringQueryResult
 from tests.test_graphql.common import (
     assert_empty,
     get_data,
@@ -37,6 +36,7 @@ MOCK_VALUES = [
     [1720136948, "3.9041666667132375"],
 ]
 
+
 @dataclass
 class DumbResponse:
     status_code: int
@@ -49,44 +49,20 @@ class DumbResponse:
 def generate_prometheus_response(result_type: str, result: List[Dict]):
     return DumbResponse(
         status_code=200,
-        json_data={
-            'data': {
-                'resultType': result_type,
-                'result': result
-            }
-        }
+        json_data={"data": {"resultType": result_type, "result": result}},
     )
 
+
 MOCK_SINGLE_METRIC_PROMETHEUS_RESPONSE = generate_prometheus_response(
-    'matrix',
-    [
-        {
-            'values': MOCK_VALUES
-        }
-    ]
+    "matrix", [{"values": MOCK_VALUES}]
 )
 MOCK_MULTIPLE_METRIC_DEVICE_PROMETHEUS_RESPONSE = generate_prometheus_response(
-    'matrix',
+    "matrix",
     [
-        {
-            'metric': {
-                'device': 'a'
-            },
-            'values': MOCK_VALUES
-        },
-        {
-            'metric': {
-                'device': 'b'
-            },
-            'values': MOCK_VALUES
-        },
-        {
-            'metric': {
-                'device': 'c'
-            },
-            'values': MOCK_VALUES
-        },
-    ]
+        {"metric": {"device": "a"}, "values": MOCK_VALUES},
+        {"metric": {"device": "b"}, "values": MOCK_VALUES},
+        {"metric": {"device": "c"}, "values": MOCK_VALUES},
+    ],
 )
 
 # def generate_mock_metrics(name: str):
@@ -133,7 +109,8 @@ def generate_mock_query_with_options(name):
 
 
 def prometheus_result_from_dict(dict):
-    return MonitoringQueryResult(result_type=dict["resultType"], result=dict["result"])
+    # return MonitoringQueryResult(result_type=dict["resultType"], result=dict["result"])
+    return dict
 
 
 @pytest.fixture
