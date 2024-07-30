@@ -22,7 +22,7 @@ class MonitoringValue:
 @strawberry.type
 @dataclass
 class MonitoringMetric:
-    id: str
+    metric_id: str
     values: List[MonitoringValue]
 
 
@@ -128,7 +128,7 @@ class MonitoringQueries:
             return list(
                 map(
                     lambda x: MonitoringMetric(
-                        id=MonitoringQueries._clean_slice_id(
+                        metric_id=MonitoringQueries._clean_slice_id(
                             x["metric"][id_key], clean_id=clean_id
                         ),
                         values=[
@@ -144,7 +144,7 @@ class MonitoringQueries:
             return list(
                 map(
                     lambda x: MonitoringMetric(
-                        id=MonitoringQueries._clean_slice_id(
+                        metric_id=MonitoringQueries._clean_slice_id(
                             x["metric"][id_key], clean_id=clean_id
                         ),
                         values=list(

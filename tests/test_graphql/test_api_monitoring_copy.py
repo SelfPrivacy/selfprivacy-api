@@ -60,7 +60,7 @@ query {
 
 CPU_USAGE_QUERY_WITH_OPTIONS = """
 query Query($end: String!, $start: String!, $step: String!) {
-  monitoring {    
+  monitoring {
     cpuUsage(end: $end, start: $start, step: $step) {
       end
       overallUsage {
@@ -88,7 +88,7 @@ query Query {
       averageUsageByService {
         ... on MonitoringMetrics {
           metrics {
-            id
+            metricId
             values {
               timestamp
               value
@@ -103,7 +103,7 @@ query Query {
       maxUsageByService {
         ... on MonitoringMetrics {
           metrics {
-            id
+            metricId
             values {
               timestamp
               value
@@ -134,12 +134,12 @@ query Query {
 
 MEMORY_USAGE_QUERY_WITH_OPTIONS = """
 query Query($end: String!, $start: String!, $step: String!) {
-  monitoring {      
+  monitoring {
     memoryUsage(end: $end, start: $start, step: $step) {
       averageUsageByService {
         ... on MonitoringMetrics {
           metrics {
-            id
+            metricId
             values {
               timestamp
               value
@@ -154,7 +154,7 @@ query Query($end: String!, $start: String!, $step: String!) {
       maxUsageByService {
         ... on MonitoringMetrics {
           metrics {
-            id
+            metricId
             values {
               timestamp
               value
@@ -193,7 +193,7 @@ query Query {
       overallUsage {
         ... on MonitoringMetrics {
           metrics {
-            id
+            metricId
             values {
               timestamp
               value
@@ -211,13 +211,13 @@ query Query {
 
 NETWORK_USAGE_QUERY_WITH_OPTIONS = """
 query Query($end: String!, $start: String!, $step: String!) {
-  monitoring {      
+  monitoring {
     networkUsage(end: $end, start: $start, step: $step) {
       end
       overallUsage {
         ... on MonitoringMetrics {
           metrics {
-            id
+            metricId
             values {
               timestamp
               value
@@ -246,7 +246,7 @@ query Query {
       overallUsage {
         ... on MonitoringMetrics {
             metrics {
-              id
+              metricId
               values {
                 timestamp
                 value
@@ -270,7 +270,7 @@ query Query($end: String!, $start: String!, $step: String!) {
       overallUsage {
         ... on MonitoringMetrics {
           metrics {
-            id
+            metricId
             values {
               timestamp
               value
