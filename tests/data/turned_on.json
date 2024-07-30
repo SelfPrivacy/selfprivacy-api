@@ -66,7 +66,7 @@
         "roundcube": {
             "enable": true
         },
-        "prometheus": {
+        "monitoring": {
             "enable": true,
             "location": "sdb"
         }
