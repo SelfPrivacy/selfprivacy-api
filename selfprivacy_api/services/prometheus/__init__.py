@@ -16,7 +16,7 @@ class Prometheus(Service):
 
     @staticmethod
     def get_id() -> str:
-        return "prometheus"
+        return "monitoring"
 
     @staticmethod
     def get_display_name() -> str:
