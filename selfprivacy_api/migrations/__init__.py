@@ -15,10 +15,12 @@ from selfprivacy_api.migrations.check_for_system_rebuild_jobs import (
     CheckForSystemRebuildJobs,
 )
 from selfprivacy_api.migrations.add_roundcube import AddRoundcube
+from selfprivacy_api.migrations.add_monitoring import AddMonitoring
 
 migrations = [
     WriteTokenToRedis(),
     CheckForSystemRebuildJobs(),
+    AddMonitoring(),
     AddRoundcube(),
 ]
 

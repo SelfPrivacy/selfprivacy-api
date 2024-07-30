@@ -8,6 +8,7 @@ DEFAULT_SUBDOMAINS = {
     "pleroma": "social",
     "roundcube": "roundcube",
     "testservice": "test",
+    "monitoring": "",
 }
 
 RESERVED_SUBDOMAINS = [

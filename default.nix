@@ -19,6 +19,7 @@ pythonPackages.buildPythonPackage rec {
     strawberry-graphql
     typing-extensions
     uvicorn
+    requests
     websockets
     httpx
   ];

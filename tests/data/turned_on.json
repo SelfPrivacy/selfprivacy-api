@@ -65,6 +65,10 @@
         },
         "roundcube": {
             "enable": true
+        },
+        "monitoring": {
+            "enable": true,
+            "location": "sdb"
         }
     },
     "volumes": [

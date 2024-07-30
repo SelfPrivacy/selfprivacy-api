@@ -4,6 +4,7 @@ import typing
 from selfprivacy_api.services.bitwarden import Bitwarden
 from selfprivacy_api.services.forgejo import Forgejo
 from selfprivacy_api.services.jitsimeet import JitsiMeet
+from selfprivacy_api.services.prometheus import Prometheus
 from selfprivacy_api.services.roundcube import Roundcube
 from selfprivacy_api.services.mailserver import MailServer
 from selfprivacy_api.services.nextcloud import Nextcloud
@@ -21,6 +22,7 @@ services: list[Service] = [
     Ocserv(),
     JitsiMeet(),
     Roundcube(),
+    Prometheus(),
 ]
 
 

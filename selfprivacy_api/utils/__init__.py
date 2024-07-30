@@ -145,7 +145,9 @@ def check_if_subdomain_is_taken(subdomain: str) -> bool:
     with ReadUserData() as data:
         for module in data["modules"]:
             if (
-                data["modules"][module].get("subdomain", DEFAULT_SUBDOMAINS[module])
+                data["modules"][module].get(
+                    "subdomain", DEFAULT_SUBDOMAINS.get(module, "")
+                )
                 == subdomain
             ):
                 return True
