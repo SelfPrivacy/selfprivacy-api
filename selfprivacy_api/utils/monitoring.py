@@ -213,49 +213,51 @@ class MonitoringQueries:
             )
         )
 
-    @staticmethod
-    def memory_usage_overall(
-        start: Optional[datetime] = None,
-        end: Optional[datetime] = None,
-        step: int = 60,  # seconds
-    ) -> MonitoringValuesResult:
-        """
-        Get memory usage.
+@staticmethod
+def memory_usage_overall(
+    start: Optional[datetime] = None,
+    end: Optional[datetime] = None,
+    step: int = 60,  # seconds
+) -> MonitoringValuesResult:
+    """
+    Get memory usage, including swap.
 
-        Args:
-            start (datetime, optional): The start time.
-                Defaults to 20 minutes ago if not provided.
-            end (datetime, optional): The end time.
-                Defaults to current time if not provided.
-            step (int): Interval in seconds for querying memory usage data.
-        """
+    Args:
+        start (datetime, optional): The start time.
+            Defaults to 20 minutes ago if not provided.
+        end (datetime, optional): The end time.
+            Defaults to current time if not provided.
+        step (int): Interval in seconds for querying memory usage data.
+    """
 
-        if start is None:
-            start = datetime.now() - timedelta(minutes=20)
+    if start is None:
+        start = datetime.now() - timedelta(minutes=20)
 
-        if end is None:
-            end = datetime.now()
+    if end is None:
+        end = datetime.now()
 
-        start_timestamp = int(start.timestamp())
-        end_timestamp = int(end.timestamp())
+    start_timestamp = int(start.timestamp())
+    end_timestamp = int(end.timestamp())
 
-        query = "100 - (100 * (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))"
+    query = """
+        100 - (100 * ((node_memory_MemAvailable_bytes + node_memory_SwapFree_bytes) / (node_memory_MemTotal_bytes + node_memory_SwapTotal_bytes)))
+    """
 
-        data = MonitoringQueries._send_range_query(
-            query, start_timestamp, end_timestamp, step, result_type="matrix"
-        )
+    data = MonitoringQueries._send_range_query(
+        query, start_timestamp, end_timestamp, step, result_type="matrix"
+    )
 
-        if isinstance(data, MonitoringQueryError):
-            return data
+    if isinstance(data, MonitoringQueryError):
+        return data
 
-        return MonitoringValues(
-            values=list(
-                map(
-                    MonitoringQueries._prometheus_value_to_monitoring_value,
-                    data["result"][0]["values"],
-                )
+    return MonitoringValues(
+        values=list(
+            map(
+                MonitoringQueries._prometheus_value_to_monitoring_value,
+                data["result"][0]["values"],
             )
         )
+    )
 
     @staticmethod
     def memory_usage_max_by_slice(
