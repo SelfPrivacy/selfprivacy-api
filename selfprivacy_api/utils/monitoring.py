@@ -213,6 +213,7 @@ class MonitoringQueries:
             )
         )
 
+
 @staticmethod
 def memory_usage_overall(
     start: Optional[datetime] = None,
