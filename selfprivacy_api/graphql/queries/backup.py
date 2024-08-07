@@ -102,4 +102,4 @@ class Backup:
     def last_slice(self) -> typing.List[SnapshotInfo]:
         if not Backups.is_initted():
             return []
-        result = [snapshot_to_api(snap) for snap in which_snapshots_to_full_restore()]
+        return [snapshot_to_api(snap) for snap in which_snapshots_to_full_restore()]
