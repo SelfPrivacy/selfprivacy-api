@@ -1,14 +1,12 @@
-from tests.common import generate_jobs_query
-import tests.test_graphql.test_api_backup
+from selfprivacy_api.jobs import Jobs
 
+from tests.common import generate_jobs_query
 from tests.test_graphql.common import (
-    assert_ok,
     assert_empty,
-    assert_errorcode,
     get_data,
 )
+from tests.test_jobs import jobs
 
-from selfprivacy_api.jobs import Jobs
 
 API_JOBS_QUERY = """
 getJobs {
@@ -42,17 +40,17 @@ def api_jobs(authorized_client):
     return result
 
 
-def test_all_jobs_unauthorized(client):
+def test_all_jobs_unauthorized(client, jobs):
     response = graphql_send_query(client, generate_jobs_query([API_JOBS_QUERY]))
     assert_empty(response)
 
 
-def test_all_jobs_when_none(authorized_client):
+def test_all_jobs_when_none(authorized_client, jobs):
     output = api_jobs(authorized_client)
     assert output == []
 
 
-def test_all_jobs_when_some(authorized_client):
+def test_all_jobs_when_some(authorized_client, jobs):
     # We cannot make new jobs via API, at least directly
     job = Jobs.add("bogus", "bogus.bogus", "fungus")
     output = api_jobs(authorized_client)
