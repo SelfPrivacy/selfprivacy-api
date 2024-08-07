@@ -118,7 +118,7 @@ def do_autobackup() -> None:
 
 
 def eligible_for_full_restoration(snap: Snapshot):
-    service = ServiceManager.get_service_by_id(Snapshot.service_name)
+    service = ServiceManager.get_service_by_id(snap.service_name)
     if service is None:
         return False
     if service.is_enabled() is False:

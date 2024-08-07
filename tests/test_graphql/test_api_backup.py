@@ -161,6 +161,18 @@ mutation TestForgetSnapshot($snapshot_id: String!) {
 }
 """
 
+API_LAST_SLICE_QUERY = """
+lastSlice {
+    id
+    service {
+        id
+        displayName
+    }
+    createdAt
+    reason
+}
+"""
+
 API_SNAPSHOTS_QUERY = """
 allSnapshots {
     id
@@ -345,6 +357,17 @@ def api_snapshots(authorized_client):
     )
     data = get_data(response)
     result = data["backup"]["allSnapshots"]
+    assert result is not None
+    return result
+
+
+def api_last_slice(authorized_client):
+    response = authorized_client.post(
+        "/graphql",
+        json={"query": generate_backup_query([API_LAST_SLICE_QUERY])},
+    )
+    data = get_data(response)
+    result = data["backup"]["lastSlice"]
     assert result is not None
     return result
 
@@ -633,3 +656,10 @@ def test_forget_nonexistent_snapshot(authorized_client, dummy_service, backups):
 
     snaps = api_snapshots(authorized_client)
     assert len(snaps) == 0
+
+
+def test_last_slice(authorized_client, only_dummy_service_and_api, backups):
+    api_manual_autobackup(authorized_client)
+    snaps = api_last_slice(authorized_client)
+
+    assert len(snaps) == 2
