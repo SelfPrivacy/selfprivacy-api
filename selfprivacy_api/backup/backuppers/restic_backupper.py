@@ -95,6 +95,7 @@ class ResticBackupper(AbstractBackupper):
 
         command = [
             "restic",
+            "--verbose",
             "-o",
             self.rclone_args(),
             "-r",
