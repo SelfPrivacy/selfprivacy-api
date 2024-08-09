@@ -71,29 +71,32 @@ class JitsiMeet(Service):
     @staticmethod
     def get_status() -> ServiceStatus:
         return get_service_status_from_several_units(
-            ["jitsi-videobridge.service", "jicofo.service"]
+            ["prosody.service", "jitsi-videobridge2.service", "jicofo.service"]
         )
 
     @staticmethod
     def stop():
         subprocess.run(
-            ["systemctl", "stop", "jitsi-videobridge.service"],
+            ["systemctl", "stop", "jitsi-videobridge2.service"],
             check=False,
         )
         subprocess.run(["systemctl", "stop", "jicofo.service"], check=False)
+        subprocess.run(["systemctl", "stop", "prosody.service"], check=False)
 
     @staticmethod
     def start():
+        subprocess.run(["systemctl", "start", "prosody.service"], check=False)
         subprocess.run(
-            ["systemctl", "start", "jitsi-videobridge.service"],
+            ["systemctl", "start", "jitsi-videobridge2.service"],
             check=False,
         )
         subprocess.run(["systemctl", "start", "jicofo.service"], check=False)
 
     @staticmethod
     def restart():
+        subprocess.run(["systemctl", "restart", "prosody.service"], check=False)
         subprocess.run(
-            ["systemctl", "restart", "jitsi-videobridge.service"],
+            ["systemctl", "restart", "jitsi-videobridge2.service"],
             check=False,
         )
         subprocess.run(["systemctl", "restart", "jicofo.service"], check=False)
