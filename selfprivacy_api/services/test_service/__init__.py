@@ -24,6 +24,7 @@ class DummyService(Service):
     startstop_delay = 0.0
     backuppable = True
     movable = True
+    fail_to_stop = False
     # if False, we try to actually move
     simulate_moving = True
     drive = "sda1"
@@ -149,13 +150,22 @@ class DummyService(Service):
         cls.simulate_moving = enabled
 
     @classmethod
+    def simulate_fail_to_stop(cls, value: bool):
+        cls.fail_to_stop = value
+
+    @classmethod
     def stop(cls):
         # simulate a failing service unable to stop
         if not cls.get_status() == ServiceStatus.FAILED:
             cls.set_status(ServiceStatus.DEACTIVATING)
-            cls.change_status_with_async_delay(
-                ServiceStatus.INACTIVE, cls.startstop_delay
-            )
+            if cls.fail_to_stop:
+                cls.change_status_with_async_delay(
+                    ServiceStatus.FAILED, cls.startstop_delay
+                )
+            else:
+                cls.change_status_with_async_delay(
+                    ServiceStatus.INACTIVE, cls.startstop_delay
+                )
 
     @classmethod
     def start(cls):
