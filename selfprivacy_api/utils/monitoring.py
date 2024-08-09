@@ -67,6 +67,7 @@ class MonitoringQueries:
                     "end": end,
                     "step": step,
                 },
+                timeout=0.8,
             )
             if response.status_code != 200:
                 return MonitoringQueryError(
@@ -93,6 +94,7 @@ class MonitoringQueries:
                 params={
                     "query": query,
                 },
+                timeout=0.8,
             )
             if response.status_code != 200:
                 return MonitoringQueryError(
