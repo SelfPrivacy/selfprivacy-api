@@ -11,6 +11,7 @@ from json.decoder import JSONDecodeError
 from os.path import exists, join
 from os import mkdir
 from shutil import rmtree
+from selfprivacy_api.utils.waitloop import wait_until_success
 
 from selfprivacy_api.graphql.common_types.backup import BackupReason
 from selfprivacy_api.backup.util import output_yielder, sync
@@ -23,6 +24,7 @@ from selfprivacy_api.jobs import Jobs, JobStatus, Job
 from selfprivacy_api.backup.local_secret import LocalBackupSecret
 
 SHORT_ID_LEN = 8
+FILESYSTEM_TIMEOUT_SEC = 60
 
 T = TypeVar("T", bound=Callable)
 
@@ -391,7 +393,9 @@ class ResticBackupper(AbstractBackupper):
 
             else:  # attempting inplace restore
                 for folder in folders:
-                    rmtree(folder)
+                    wait_until_success(
+                        lambda: rmtree(folder), timeout_sec=FILESYSTEM_TIMEOUT_SEC
+                    )
                     mkdir(folder)
                 self._raw_verified_restore(snapshot_id, target="/")
                 return
