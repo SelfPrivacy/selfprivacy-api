@@ -483,19 +483,20 @@ def restore_strategy(request) -> RestoreStrategy:
         return RestoreStrategy.INPLACE
 
 
-@pytest.fixture(params=["failed", "healthy"])
-def failed(request) -> bool:
-    if request.param == "failed":
-        return True
-    return False
+@pytest.fixture(params=["failed", "healthy", "fail_to_stop"])
+def failed(request) -> str:
+    return request.param
 
 
 def test_restore_snapshot_task(
     backups, dummy_service, restore_strategy, simulated_service_stopping_delay, failed
 ):
     dummy_service.set_delay(simulated_service_stopping_delay)
-    if failed:
+    if failed == "failed":
         dummy_service.set_status(ServiceStatus.FAILED)
+
+    if failed == "fail_to_stop":
+        dummy_service.simulate_fail_to_stop(True)
 
     Backups.back_up(dummy_service)
     snaps = Backups.get_snapshots(dummy_service)

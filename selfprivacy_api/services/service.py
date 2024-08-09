@@ -477,7 +477,8 @@ class StoppedService:
             try:
                 self.service.stop()
                 wait_until_true(
-                    lambda: self.service.get_status() == ServiceStatus.INACTIVE,
+                    lambda: self.service.get_status()
+                    in [ServiceStatus.INACTIVE, ServiceStatus.FAILED],
                     timeout_sec=DEFAULT_START_STOP_TIMEOUT,
                 )
             except TimeoutError as error:
