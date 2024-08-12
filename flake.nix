@@ -40,6 +40,14 @@
           black
           nixpkgs-fmt
 
+        [linters]
+
+          bandit
+            CI uses the following command:
+            bandit -ll -r selfprivacy_api
+          mypy
+          pyflakes
+
         [testing in NixOS VM]
 
           nixos-test-driver - run an interactive NixOS VM with all dependencies included and 2 disk volumes
@@ -87,6 +95,7 @@
           rclone
           valkey
           restic
+          bandit
           self.packages.${system}.pytest-vm
           # FIXME consider loading this explicitly only after ArchLinux issue is solved
           self.checks.x86_64-linux.default.driverInteractive
