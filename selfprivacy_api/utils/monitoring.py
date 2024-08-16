@@ -119,7 +119,11 @@ class MonitoringQueries:
     def _clean_slice_id(slice_id: str, clean_id: bool) -> str:
         """Slices come in form of `/slice_name.slice`, we need to remove the `.slice` and `/` part."""
         if clean_id:
-            return slice_id.split(".")[0].split("/")[1]
+            parts = slice_id.split(".")[0].split("/")
+            if len(parts) > 1:
+                return parts[1]
+            else:
+                raise ValueError(f"Incorrect format slice_id: {slice_id}")
         return slice_id
 
     @staticmethod
@@ -131,7 +135,8 @@ class MonitoringQueries:
                 map(
                     lambda x: MonitoringMetric(
                         metric_id=MonitoringQueries._clean_slice_id(
-                            x["metric"][id_key], clean_id=clean_id
+                            x["metric"].get(id_key, "/unknown.slice"),
+                            clean_id=clean_id,
                         ),
                         values=[
                             MonitoringQueries._prometheus_value_to_monitoring_value(
@@ -147,7 +152,7 @@ class MonitoringQueries:
                 map(
                     lambda x: MonitoringMetric(
                         metric_id=MonitoringQueries._clean_slice_id(
-                            x["metric"][id_key], clean_id=clean_id
+                            x["metric"].get(id_key, "/unknown.slice"), clean_id=clean_id
                         ),
                         values=list(
                             map(

@@ -2,252 +2,784 @@
 # pylint: disable=unused-argument
 # pylint: disable=missing-function-docstring
 
-# from dataclasses import dataclass
-# from datetime import datetime
-# from typing import List, Dict
-# import pytest
+from datetime import datetime
+from typing import Optional
+import pytest
 
-# from tests.test_graphql.common import (
-#     assert_empty,
-#     get_data,
-# )
+from selfprivacy_api.models.services import ServiceStatus
 
-# MOCK_VALUES = [
-#     [1720135748, "3.75"],
-#     [1720135808, "4.525000000139698"],
-#     [1720135868, "4.541666666433841"],
-#     [1720135928, "4.574999999798209"],
-#     [1720135988, "4.579166666759804"],
-#     [1720136048, "3.8791666664959195"],
-#     [1720136108, "4.5458333333954215"],
-#     [1720136168, "4.566666666651145"],
-#     [1720136228, "4.791666666666671"],
-#     [1720136288, "4.720833333364382"],
-#     [1720136348, "3.9624999999068677"],
-#     [1720136408, "4.6875"],
-#     [1720136468, "4.404166666790843"],
-#     [1720136528, "4.31666666680637"],
-#     [1720136588, "4.358333333317816"],
-#     [1720136648, "3.7083333334885538"],
-#     [1720136708, "4.558333333116025"],
-#     [1720136768, "4.729166666511446"],
-#     [1720136828, "4.75416666672875"],
-#     [1720136888, "4.624999999844775"],
-#     [1720136948, "3.9041666667132375"],
-# ]
+from tests.test_graphql.common import (
+    assert_empty,
+    get_data,
+)
 
 
-# @dataclass
-# class DumbResponse:
-#     status_code: int
-#     json_data: dict
-
-#     def json(self):
-#         return self.json_data
-
-
-# def generate_prometheus_response(result_type: str, result: List[Dict]):
-#     return DumbResponse(
-#         status_code=200,
-#         json_data={"data": {"resultType": result_type, "result": result}},
-#     )
+@pytest.fixture
+def mock_get_status_active(mocker):
+    mock = mocker.patch(
+        "selfprivacy_api.graphql.queries.monitoring.Prometheus.get_status",
+        return_value=ServiceStatus.ACTIVE,
+    )
+    return mock
 
 
-# MOCK_SINGLE_METRIC_PROMETHEUS_RESPONSE = generate_prometheus_response(
-#     "matrix", [{"values": MOCK_VALUES}]
-# )
-# MOCK_MULTIPLE_METRIC_DEVICE_PROMETHEUS_RESPONSE = generate_prometheus_response(
-#     "matrix",
-#     [
-#         {"metric": {"device": "a"}, "values": MOCK_VALUES},
-#         {"metric": {"device": "b"}, "values": MOCK_VALUES},
-#         {"metric": {"device": "c"}, "values": MOCK_VALUES},
-#     ],
-# )
+@pytest.fixture
+def mock_send_range_query(request, mocker):
+    param = request.param
 
-# # def generate_mock_metrics(name: str):
-# #     return {
-# #         "data": {
-# #             "monitoring": {
-# #                 f"{name}": {
-# #                     "resultType": "matrix",
-# #                     "result": [
-# #                         {
-# #                             "metric": {"instance": "127.0.0.1:9002"},
-# #                             "values": ,
-# #                         }
-# #                     ],
-# #                 }
-# #             }
-# #         }
-# #     }
+    def send_query(
+        query: str, start: int, end: int, step: int, result_type: Optional[str] = None
+    ):
+        return {
+            "resultType": "matrix",
+            "result": list(
+                map(
+                    lambda x: {
+                        "metric": {param[0]: f"metric-{x}"},
+                        "values": [[0, "zero"]],
+                    },
+                    range(0, param[1]),
+                )
+            ),
+        }
+
+    mock = mocker.patch(
+        "selfprivacy_api.utils.monitoring.MonitoringQueries._send_range_query",
+        send_query,
+    )
+
+    return mock
 
 
-# # MOCK_CPU_USAGE_RESPONSE = generate_mock_metrics("cpuUsage")
-# # MOCK_DISK_USAGE_RESPONSE = generate_mock_metrics("diskUsage")
-# # MOCK_MEMORY_USAGE_RESPONSE = generate_mock_metrics("memoryUsage")
+@pytest.fixture
+def mock_send_query(request, mocker):
+    param = request.param
+
+    def send_query(query: str, result_type: Optional[str] = None):
+        return {
+            "resultType": "matrix",
+            "result": list(
+                map(
+                    lambda x: {
+                        "metric": {param[0]: f"metric-{x}"},
+                        "values": [[0, f"/slice_name_{x}.slice"]],
+                    },
+                    range(0, param[1]),
+                )
+            ),
+        }
+
+    mock = mocker.patch(
+        "selfprivacy_api.utils.monitoring.MonitoringQueries._send_query",
+        send_query,
+    )
+
+    return mock
 
 
-# def generate_mock_query(name):
-#     return f"""
-#     query Query {{
-#         monitoring {{
-#             {name} {{ resultType, result }}
-#         }}
-#     }}
-#     """
+# ....
 
 
-# def generate_mock_query_with_options(name):
-#     return f"""
-#     query Query($start: DateTime, $end: DateTime, $step: Int) {{
-#         monitoring {{
-#             {name}(start: $start, end: $end, step: $step) {{ resultType, result }}
-#         }}
-#     }}
-#     """
+CPU_USAGE_QUERY = """
+query {
+  monitoring {
+    cpuUsage {
+      start
+      end
+      step
+      overallUsage {
+        ... on MonitoringValues {
+          values {
+            timestamp
+            value
+          }
+        }
+        ... on MonitoringQueryError {
+          error
+        }
+      }
+    }
+  }
+}
+"""
+
+CPU_USAGE_QUERY_WITH_OPTIONS = """
+query Query($end: DateTime, $start: DateTime, $step: Int) {
+  monitoring {
+    cpuUsage(end: $end, start: $start, step: $step) {
+      end
+      overallUsage {
+        ... on MonitoringValues {
+          values {
+            timestamp
+            value
+          }
+        }
+        ... on MonitoringQueryError {
+          error
+        }
+      }
+      start
+      step
+    }
+  }
+}
+"""
+
+MEMORY_USAGE_QUERY = """
+query Query {
+  monitoring {
+    memoryUsage {
+      averageUsageByService {
+        ... on MonitoringMetrics {
+          metrics {
+            metricId
+            values {
+              timestamp
+              value
+            }
+          }
+        }
+        ... on MonitoringQueryError {
+          error
+        }
+      }
+      end
+      maxUsageByService {
+        ... on MonitoringMetrics {
+          metrics {
+            metricId
+            values {
+              timestamp
+              value
+            }
+          }
+        }
+        ... on MonitoringQueryError {
+          error
+        }
+      }
+      overallUsage {
+        ... on MonitoringValues {
+          values {
+            timestamp
+            value
+          }
+        }
+        ... on MonitoringQueryError {
+          error
+        }
+      }
+      start
+      step
+    }
+  }
+}
+"""
+
+MEMORY_USAGE_QUERY_WITH_OPTIONS = """
+query Query($end: DateTime, $start: DateTime, $step: Int) {
+  monitoring {
+    memoryUsage(end: $end, start: $start, step: $step) {
+      averageUsageByService {
+        ... on MonitoringMetrics {
+          metrics {
+            metricId
+            values {
+              timestamp
+              value
+            }
+          }
+        }
+        ... on MonitoringQueryError {
+          error
+        }
+      }
+      end
+      maxUsageByService {
+        ... on MonitoringMetrics {
+          metrics {
+            metricId
+            values {
+              timestamp
+              value
+            }
+          }
+        }
+        ... on MonitoringQueryError {
+          error
+        }
+      }
+      overallUsage {
+        ... on MonitoringValues {
+          values {
+            timestamp
+            value
+          }
+        }
+        ... on MonitoringQueryError {
+          error
+        }
+      }
+      start
+      step
+    }
+  }
+}
+"""
+
+NETWORK_USAGE_QUERY = """
+query Query {
+  monitoring {
+    networkUsage {
+      end
+      start
+      step
+      overallUsage {
+        ... on MonitoringMetrics {
+          metrics {
+            metricId
+            values {
+              timestamp
+              value
+            }
+          }
+        }
+        ... on MonitoringQueryError {
+          error
+        }
+      }
+    }
+  }
+}
+"""
+
+NETWORK_USAGE_QUERY_WITH_OPTIONS = """
+query Query($end: DateTime, $start: DateTime, $step: Int) {
+  monitoring {
+    networkUsage(end: $end, start: $start, step: $step) {
+      end
+      overallUsage {
+        ... on MonitoringMetrics {
+          metrics {
+            metricId
+            values {
+              timestamp
+              value
+            }
+          }
+        }
+        ... on MonitoringQueryError {
+          error
+        }
+      }
+      start
+      step
+    }
+  }
+}
+"""
+
+DISK_USAGE_QUERY = """
+query Query {
+  monitoring {
+    diskUsage {
+      start
+      end
+      step
+      overallUsage {
+        ... on MonitoringMetrics {
+            metrics {
+              metricId
+              values {
+                timestamp
+                value
+              }
+            }
+        }
+        ... on MonitoringQueryError {
+          error
+        }
+      }
+    }
+  }
+}
+"""
+
+DISK_USAGE_QUERY_WITH_OPTIONS = """
+query Query($end: DateTime, $start: DateTime, $step: Int) {
+  monitoring {
+    diskUsage(end: $end, start: $start, step: $step) {
+      end
+      overallUsage {
+        ... on MonitoringMetrics {
+          metrics {
+            metricId
+            values {
+              timestamp
+              value
+            }
+          }
+        }
+        ... on MonitoringQueryError {
+          error
+        }
+      }
+      start
+      step
+    }
+  }
+}
+"""
 
 
-# def prometheus_result_from_dict(dict):
-#     # return MonitoringQueryResult(result_type=dict["resultType"], result=dict["result"])
-#     return dict
+@pytest.mark.parametrize("mock_send_range_query", [["device", 2]], indirect=True)
+def test_graphql_get_disk_usage(
+    client,
+    authorized_client,
+    mock_send_range_query,
+    mock_get_status_active,
+):
+    response = authorized_client.post(
+        "/graphql",
+        json={"query": DISK_USAGE_QUERY},
+    )
+
+    data = get_data(response)
+    assert data == {
+        "monitoring": {
+            "diskUsage": {
+                "start": None,
+                "end": None,
+                "step": 60,
+                "overallUsage": {
+                    "metrics": [
+                        {
+                            "metricId": "metric-0",
+                            "values": [
+                                {"timestamp": "1970-01-01T00:00:00", "value": "zero"}
+                            ],
+                        },
+                        {
+                            "metricId": "metric-1",
+                            "values": [
+                                {"timestamp": "1970-01-01T00:00:00", "value": "zero"}
+                            ],
+                        },
+                    ]
+                },
+            }
+        }
+    }
 
 
-# @pytest.fixture
-# def mock_cpu_usage(mocker):
-#     mock = mocker.patch(
-#         "selfprivacy_api.utils.prometheus.PrometheusQueries._send_query",
-#         return_value=MOCK_CPU_USAGE_RESPONSE["data"]["monitoring"]["cpuUsage"],
-#     )
-#     return mock
+@pytest.mark.parametrize("mock_send_range_query", [["device", 2]], indirect=True)
+def test_graphql_get_disk_usage_with_options(
+    client,
+    authorized_client,
+    mock_send_range_query,
+    mock_get_status_active,
+):
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": DISK_USAGE_QUERY_WITH_OPTIONS,
+            "variables": {
+                "start": datetime.fromtimestamp(1720136108).isoformat(),
+                "end": datetime.fromtimestamp(1720137319).isoformat(),
+                "step": 90,
+            },
+        },
+    )
+
+    data = get_data(response)
+    assert data == {
+        "monitoring": {
+            "diskUsage": {
+                "start": "2024-07-04T23:35:08",
+                "end": "2024-07-04T23:55:19",
+                "step": 90,
+                "overallUsage": {
+                    "metrics": [
+                        {
+                            "metricId": "metric-0",
+                            "values": [
+                                {"timestamp": "1970-01-01T00:00:00", "value": "zero"}
+                            ],
+                        },
+                        {
+                            "metricId": "metric-1",
+                            "values": [
+                                {"timestamp": "1970-01-01T00:00:00", "value": "zero"}
+                            ],
+                        },
+                    ]
+                },
+            }
+        }
+    }
 
 
-# @pytest.fixture
-# def mock_memory_usage(mocker):
-#     mock = mocker.patch(
-#         "selfprivacy_api.utils.prometheus.PrometheusQueries._send_query",
-#         return_value=prometheus_result_from_dict(
-#             MOCK_MEMORY_USAGE_RESPONSE["data"]["monitoring"]["memoryUsage"]
-#         ),
-#     )
-#     return mock
+def test_graphql_get_disk_usage_unauthorized(client):
+    response = client.post(
+        "/graphql",
+        json={"query": DISK_USAGE_QUERY},
+    )
+    assert_empty(response)
 
 
-# @pytest.fixture
-# def mock_disk_usage(mocker):
-#     mock = mocker.patch(
-#         "selfprivacy_api.utils.prometheus.PrometheusQueries._send_query",
-#         return_value=prometheus_result_from_dict(
-#             MOCK_DISK_USAGE_RESPONSE["data"]["monitoring"]["diskUsage"]
-#         ),
-#     )
-#     return mock
+@pytest.mark.parametrize("mock_send_range_query", [["device", 2]], indirect=True)
+@pytest.mark.parametrize("mock_send_query", [["device", 2]], indirect=True)
+def test_graphql_get_memory_usage(
+    client,
+    authorized_client,
+    mock_send_query,
+    mock_send_range_query,
+    mock_get_status_active,
+):
+    response = authorized_client.post(
+        "/graphql",
+        json={"query": MEMORY_USAGE_QUERY},
+    )
+
+    data = get_data(response)
+    assert data == {
+        "monitoring": {
+            "memoryUsage": {
+                "averageUsageByService": {
+                    "metrics": [
+                        {
+                            "metricId": "unknown",
+                            "values": [
+                                {
+                                    "timestamp": "1970-01-01T00:00:00",
+                                    "value": "/slice_name_0.slice",
+                                },
+                            ],
+                        },
+                        {
+                            "metricId": "unknown",
+                            "values": [
+                                {
+                                    "timestamp": "1970-01-01T00:00:00",
+                                    "value": "/slice_name_1.slice",
+                                },
+                            ],
+                        },
+                    ],
+                },
+                "end": None,
+                "maxUsageByService": {
+                    "metrics": [
+                        {
+                            "metricId": "unknown",
+                            "values": [
+                                {
+                                    "timestamp": "1970-01-01T00:00:00",
+                                    "value": "/slice_name_0.slice",
+                                },
+                            ],
+                        },
+                        {
+                            "metricId": "unknown",
+                            "values": [
+                                {
+                                    "timestamp": "1970-01-01T00:00:00",
+                                    "value": "/slice_name_1.slice",
+                                },
+                            ],
+                        },
+                    ],
+                },
+                "overallUsage": {
+                    "values": [
+                        {
+                            "timestamp": "1970-01-01T00:00:00",
+                            "value": "zero",
+                        },
+                    ],
+                },
+                "start": None,
+                "step": 60,
+            },
+        },
+    }
 
 
-# def test_graphql_get_disk_usage(client, authorized_client, mock_disk_usage):
-#     response = authorized_client.post(
-#         "/graphql",
-#         json={"query": generate_mock_query("diskUsage")},
-#     )
+@pytest.mark.parametrize("mock_send_range_query", [["device", 2]], indirect=True)
+@pytest.mark.parametrize("mock_send_query", [["device", 2]], indirect=True)
+def test_graphql_get_memory_usage_with_options(
+    client,
+    authorized_client,
+    mock_send_query,
+    mock_send_range_query,
+    mock_get_status_active,
+):
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": MEMORY_USAGE_QUERY_WITH_OPTIONS,
+            "variables": {
+                "start": datetime.fromtimestamp(1720136108).isoformat(),
+                "end": datetime.fromtimestamp(1720137319).isoformat(),
+                "step": 90,
+            },
+        },
+    )
 
-#     data = get_data(response)
-#     assert data == MOCK_DISK_USAGE_RESPONSE["data"]
-
-
-# def test_graphql_get_disk_usage_with_options(
-#     client, authorized_client, mock_disk_usage
-# ):
-#     response = authorized_client.post(
-#         "/graphql",
-#         json={
-#             "query": generate_mock_query_with_options("diskUsage"),
-#             "variables": {
-#                 "start": datetime.fromtimestamp(1720136108).isoformat(),
-#                 "end": datetime.fromtimestamp(1720137319).isoformat(),
-#                 "step": 90,
-#             },
-#         },
-#     )
-
-#     data = get_data(response)
-#     assert data == MOCK_DISK_USAGE_RESPONSE["data"]
-
-
-# def test_graphql_get_disk_usage_unauthorized(client):
-#     response = client.post(
-#         "/graphql",
-#         json={"query": generate_mock_query("diskUsage")},
-#     )
-#     assert_empty(response)
-
-
-# def test_graphql_get_memory_usage(client, authorized_client, mock_memory_usage):
-#     response = authorized_client.post(
-#         "/graphql",
-#         json={"query": generate_mock_query("memoryUsage")},
-#     )
-
-#     data = get_data(response)
-#     assert data == MOCK_MEMORY_USAGE_RESPONSE["data"]
-
-
-# def test_graphql_get_memory_usage_with_options(
-#     client, authorized_client, mock_memory_usage
-# ):
-#     response = authorized_client.post(
-#         "/graphql",
-#         json={
-#             "query": generate_mock_query_with_options("memoryUsage"),
-#             "variables": {
-#                 "start": datetime.fromtimestamp(1720136108).isoformat(),
-#                 "end": datetime.fromtimestamp(1720137319).isoformat(),
-#                 "step": 90,
-#             },
-#         },
-#     )
-
-#     data = get_data(response)
-#     assert data == MOCK_MEMORY_USAGE_RESPONSE["data"]
-
-
-# def test_graphql_get_memory_usage_unauthorized(client):
-#     response = client.post(
-#         "/graphql",
-#         json={"query": generate_mock_query("memoryUsage")},
-#     )
-#     assert_empty(response)
-
-
-# def test_graphql_get_cpu_usage(client, authorized_client, mock_cpu_usage):
-#     response = authorized_client.post(
-#         "/graphql",
-#         json={"query": generate_mock_query("cpuUsage")},
-#     )
-
-#     data = get_data(response)
-#     assert data == MOCK_CPU_USAGE_RESPONSE["data"]
-
-
-# def test_graphql_get_cpu_usage_with_options(client, authorized_client, mock_cpu_usage):
-#     response = authorized_client.post(
-#         "/graphql",
-#         json={
-#             "query": generate_mock_query_with_options("cpuUsage"),
-#             "variables": {
-#                 "start": datetime.fromtimestamp(1720136108).isoformat(),
-#                 "end": datetime.fromtimestamp(1720137319).isoformat(),
-#                 "step": 90,
-#             },
-#         },
-#     )
-
-#     data = get_data(response)
-#     assert data == MOCK_CPU_USAGE_RESPONSE["data"]
+    data = get_data(response)
+    assert data == {
+        "monitoring": {
+            "memoryUsage": {
+                "averageUsageByService": {
+                    "metrics": [
+                        {
+                            "metricId": "unknown",
+                            "values": [
+                                {
+                                    "timestamp": "1970-01-01T00:00:00",
+                                    "value": "/slice_name_0.slice",
+                                },
+                            ],
+                        },
+                        {
+                            "metricId": "unknown",
+                            "values": [
+                                {
+                                    "timestamp": "1970-01-01T00:00:00",
+                                    "value": "/slice_name_1.slice",
+                                },
+                            ],
+                        },
+                    ],
+                },
+                "end": "2024-07-04T23:55:19",
+                "maxUsageByService": {
+                    "metrics": [
+                        {
+                            "metricId": "unknown",
+                            "values": [
+                                {
+                                    "timestamp": "1970-01-01T00:00:00",
+                                    "value": "/slice_name_0.slice",
+                                },
+                            ],
+                        },
+                        {
+                            "metricId": "unknown",
+                            "values": [
+                                {
+                                    "timestamp": "1970-01-01T00:00:00",
+                                    "value": "/slice_name_1.slice",
+                                },
+                            ],
+                        },
+                    ],
+                },
+                "overallUsage": {
+                    "values": [
+                        {
+                            "timestamp": "1970-01-01T00:00:00",
+                            "value": "zero",
+                        },
+                    ],
+                },
+                "start": "2024-07-04T23:35:08",
+                "step": 90,
+            },
+        },
+    }
 
 
-# def test_graphql_get_cpu_usage_unauthorized(client):
-#     response = client.post(
-#         "/graphql",
-#         json={"query": generate_mock_query("cpuUsage")},
-#     )
-#     assert_empty(response)
+def test_graphql_get_memory_usage_unauthorized(client):
+    response = client.post(
+        "/graphql",
+        json={"query": MEMORY_USAGE_QUERY},
+    )
+    assert_empty(response)
+
+
+@pytest.mark.parametrize("mock_send_range_query", [["device", 2]], indirect=True)
+def test_graphql_get_cpu_usage(
+    client,
+    authorized_client,
+    mock_send_range_query,
+    mock_get_status_active,
+):
+    response = authorized_client.post(
+        "/graphql",
+        json={"query": CPU_USAGE_QUERY},
+    )
+
+    data = get_data(response)
+    assert data == {
+        "monitoring": {
+            "cpuUsage": {
+                "end": None,
+                "overallUsage": {
+                    "values": [
+                        {
+                            "timestamp": "1970-01-01T00:00:00",
+                            "value": "zero",
+                        },
+                    ],
+                },
+                "start": None,
+                "step": 60,
+            },
+        },
+    }
+
+
+@pytest.mark.parametrize("mock_send_range_query", [["device", 2]], indirect=True)
+def test_graphql_get_cpu_usage_with_options(
+    client,
+    authorized_client,
+    mock_send_range_query,
+    mock_get_status_active,
+):
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": CPU_USAGE_QUERY_WITH_OPTIONS,
+            "variables": {
+                "start": datetime.fromtimestamp(1720136108).isoformat(),
+                "end": datetime.fromtimestamp(1720137319).isoformat(),
+                "step": 90,
+            },
+        },
+    )
+
+    data = get_data(response)
+    assert data == {
+        "monitoring": {
+            "cpuUsage": {
+                "end": "2024-07-04T23:55:19",
+                "overallUsage": {
+                    "values": [
+                        {
+                            "timestamp": "1970-01-01T00:00:00",
+                            "value": "zero",
+                        },
+                    ],
+                },
+                "start": "2024-07-04T23:35:08",
+                "step": 90,
+            },
+        },
+    }
+
+
+def test_graphql_get_cpu_usage_unauthorized(client):
+    response = client.post(
+        "/graphql",
+        json={"query": CPU_USAGE_QUERY},
+    )
+    assert_empty(response)
+
+
+@pytest.mark.parametrize("mock_send_range_query", [["device", 2]], indirect=True)
+def test_graphql_get_network_usage(
+    client,
+    authorized_client,
+    mock_send_range_query,
+    mock_get_status_active,
+):
+    response = authorized_client.post(
+        "/graphql",
+        json={"query": NETWORK_USAGE_QUERY},
+    )
+
+    data = get_data(response)
+    assert data == {
+        "monitoring": {
+            "networkUsage": {
+                "end": None,
+                "overallUsage": {
+                    "metrics": [
+                        {
+                            "metricId": "/unknown.slice",
+                            "values": [
+                                {
+                                    "timestamp": "1970-01-01T00:00:00",
+                                    "value": "zero",
+                                },
+                            ],
+                        },
+                        {
+                            "metricId": "/unknown.slice",
+                            "values": [
+                                {
+                                    "timestamp": "1970-01-01T00:00:00",
+                                    "value": "zero",
+                                },
+                            ],
+                        },
+                    ],
+                },
+                "start": None,
+                "step": 60,
+            },
+        },
+    }
+
+
+@pytest.mark.parametrize("mock_send_range_query", [["device", 2]], indirect=True)
+def test_graphql_get_network_usage_with_options(
+    client,
+    authorized_client,
+    mock_send_range_query,
+    mock_get_status_active,
+):
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": NETWORK_USAGE_QUERY_WITH_OPTIONS,
+            "variables": {
+                "start": datetime.fromtimestamp(1720136108).isoformat(),
+                "end": datetime.fromtimestamp(1720137319).isoformat(),
+                "step": 90,
+            },
+        },
+    )
+
+    data = get_data(response)
+    assert data == {
+        "monitoring": {
+            "networkUsage": {
+                "end": "2024-07-04T23:55:19",
+                "overallUsage": {
+                    "metrics": [
+                        {
+                            "metricId": "/unknown.slice",
+                            "values": [
+                                {
+                                    "timestamp": "1970-01-01T00:00:00",
+                                    "value": "zero",
+                                },
+                            ],
+                        },
+                        {
+                            "metricId": "/unknown.slice",
+                            "values": [
+                                {
+                                    "timestamp": "1970-01-01T00:00:00",
+                                    "value": "zero",
+                                },
+                            ],
+                        },
+                    ],
+                },
+                "start": "2024-07-04T23:35:08",
+                "step": 90,
+            },
+        },
+    }
+
+
+def test_graphql_get_network_usage_unauthorized(client):
+    response = client.post(
+        "/graphql",
+        json={"query": NETWORK_USAGE_QUERY},
+    )
+    assert_empty(response)
