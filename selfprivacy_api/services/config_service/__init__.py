@@ -1,6 +1,7 @@
 """Class representing the configs of our API
 Mostly for backupping purposes
 """
+
 import base64
 import typing
 
