@@ -1,4 +1,6 @@
 from os import path
+from os import mkdir
+
 from tests.test_backup import backups
 from tests.common import generate_backup_query
 
@@ -19,6 +21,7 @@ from tests.test_graphql.test_services import (
     only_dummy_service,
     dkim_file,
 )
+from selfprivacy_api.services import CONFIG_STASH_DIR
 
 
 API_RELOAD_SNAPSHOTS = """
@@ -605,6 +608,21 @@ def test_reload_snapshots_bare_bare_bare(authorized_client, dummy_service, backu
 
     snaps = api_snapshots(authorized_client)
     assert snaps == []
+
+
+def test_induce_autobackup_if_dir_exists(
+    authorized_client, only_dummy_service_and_api, backups
+):
+    # mkdir(CONFIG_STASH_DIR)
+    dummy_service = only_dummy_service_and_api
+
+    response = api_manual_autobackup(authorized_client)
+    # raise ValueError(get_data(response))
+    data = get_data(response)["backup"]["manualAutobackup"]
+    assert_ok(data)
+
+    snaps = api_snapshots(authorized_client)
+    assert len(snaps) == 2
 
 
 def test_induce_autobackup(authorized_client, only_dummy_service_and_api, backups):

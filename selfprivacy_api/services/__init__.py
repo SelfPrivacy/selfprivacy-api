@@ -3,7 +3,9 @@
 import base64
 import typing
 from typing import List
-from os import path, mkdir
+from os import path, mkdir, remove
+from os import makedirs
+from os import listdir
 from os.path import join
 from pathlib import Path
 
@@ -26,7 +28,7 @@ from selfprivacy_api.utils import USERDATA_FILE, DKIM_DIR, SECRETS_FILE
 from selfprivacy_api.utils.block_devices import BlockDevices
 from shutil import copyfile, copytree, rmtree
 
-CONFIG_STASH_DIR = "/tmp/selfprivacy_config_dump"
+CONFIG_STASH_DIR = "/etc/selfprivacy/dump"
 
 
 class ServiceManager(Service):
@@ -233,8 +235,12 @@ class ServiceManager(Service):
     @classmethod
     def pre_backup(cls):
         tempdir = cls.folders[0]
-        rmtree(tempdir, ignore_errors=True)
-        mkdir(tempdir)
+        if not path.exists(tempdir):
+            makedirs(tempdir)
+
+        paths = listdir(tempdir)
+        for file in paths:
+            remove(file)
 
         for p in [USERDATA_FILE, SECRETS_FILE, DKIM_DIR]:
             cls.stash_a_path(p)

@@ -211,6 +211,17 @@ def test_failed_autoback_prevents_more_autobackup(backups, dummy_service):
     assert Backups.is_time_to_backup_service(dummy_service, now) is False
 
 
+def test_slices_with_autobackups_disabled(backups, only_dummy_service_and_api):
+    dummy_service = only_dummy_service_and_api
+    do_autobackup()
+    snaps = Backups.get_all_snapshots()
+    assert len(snaps) == 2
+
+    slice = Backups.last_autobackup_slice()
+    assert len(slice) == 2
+    assert set([snap.id for snap in slice]) == set([snap.id for snap in snaps])
+
+
 def test_slices_minimal(backups, only_dummy_service_and_api):
     dummy_service = only_dummy_service_and_api
     backup_period = 13  # minutes
