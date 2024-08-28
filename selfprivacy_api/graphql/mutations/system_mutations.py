@@ -55,7 +55,7 @@ class SSHSettingsInput:
 
 
 @strawberry.input
-class SetDNSProviderInput:
+class SetDnsProviderInput:
     """Input type to set the provider"""
 
     provider: DnsProvider
@@ -225,7 +225,7 @@ class SystemMutations:
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def set_dns_provider(self, input: SetDNSProviderInput) -> GenericMutationReturn:
+    def set_dns_provider(self, input: SetDnsProviderInput) -> GenericMutationReturn:
 
         try:
             set_dns_provider(input.provider, input.api_token)

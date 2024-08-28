@@ -4,9 +4,17 @@
 import os
 import pytest
 
+from selfprivacy_api.graphql.queries.providers import DnsProvider
+
 from tests.common import generate_system_query, read_json
-from tests.test_graphql.common import assert_empty
+from tests.test_graphql.common import (
+    assert_empty,
+    assert_ok,
+    assert_errorcode,
+    get_data,
+)
 from tests.test_dkim import no_dkim_file, dkim_file
+from tests.test_system import assert_provider
 
 
 @pytest.fixture
@@ -121,6 +129,23 @@ def mock_dkim_key(mocker):
         return_value="I am a DKIM key",
     )
     return mock
+
+
+def api_set_dns_provider_raw(authorized_client, provider: str, token: str):
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_SET_DNS_PROVIDER_MUTATION,
+            "variables": {
+                "input": {"provider": provider, "apiToken": token},
+            },
+        },
+    )
+    return response
+
+
+def api_set_dns_provider(authorized_client, provider: DnsProvider, token: str):
+    return api_set_dns_provider_raw(authorized_client, provider.value, token)
 
 
 API_PYTHON_VERSION_INFO = """
@@ -1002,3 +1027,46 @@ def test_graphql_pull_system_broken_repo(
     assert mock_os_chdir.call_count == 2
     assert mock_os_chdir.call_args_list[0][0][0] == "/etc/nixos"
     assert mock_os_chdir.call_args_list[1][0][0] == current_dir
+
+
+API_SET_DNS_PROVIDER_MUTATION = """
+mutation TestSetDnsProvider($input: SetDnsProviderInput!) {
+    system {
+        setDnsProvider(input: $input) {
+            success
+            message
+            code
+        }
+    }
+}
+"""
+
+
+def test_set_dns_provider(authorized_client, generic_userdata):
+    provider = DnsProvider.DIGITALOCEAN
+    token = "someRandomToken"
+
+    response = api_set_dns_provider(authorized_client, provider, token)
+    data = get_data(response)["system"]["setDnsProvider"]
+    assert_ok(data)
+    assert_provider(provider.value, token)
+
+
+def test_set_dns_provider_nonexistent(authorized_client, generic_userdata):
+    provider = "BOGUSINC"
+    token = "someRandomToken"
+
+    response = api_set_dns_provider_raw(authorized_client, provider, token)
+    assert_empty(response)
+
+    # Test that nothing has indeed changed
+    with pytest.raises(AssertionError):
+        assert_provider(provider, token)
+
+
+def test_set_dns_provider_unauthorized(client, generic_userdata):
+    provider = DnsProvider.DIGITALOCEAN
+    token = "someRandomToken"
+
+    response = api_set_dns_provider(client, provider, token)
+    assert_empty(response)
