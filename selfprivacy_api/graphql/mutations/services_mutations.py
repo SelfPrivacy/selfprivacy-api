@@ -3,11 +3,13 @@
 # pylint: disable=too-few-public-methods
 import typing
 import strawberry
+
+from selfprivacy_api.utils import pretty_error
+
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.common_types.jobs import job_to_api_job
 from selfprivacy_api.jobs import JobStatus
 
-from traceback import format_tb as format_traceback
 
 from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericJobMutationReturn,
@@ -291,8 +293,3 @@ class ServicesMutations:
                 service=service_to_graphql_service(service),
                 job=job_to_api_job(job),
             )
-
-
-def pretty_error(e: Exception) -> str:
-    traceback = "/r".join(format_traceback(e.__traceback__))
-    return type(e).__name__ + ": " + str(e) + ": " + traceback

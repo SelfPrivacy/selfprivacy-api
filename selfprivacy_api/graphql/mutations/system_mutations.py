@@ -3,8 +3,14 @@
 # pylint: disable=too-few-public-methods
 import typing
 import strawberry
+
+from selfprivacy_api.utils import pretty_error
+from selfprivacy_api.jobs.nix_collect_garbage import start_nix_collect_garbage
+
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.common_types.jobs import job_to_api_job
+from selfprivacy_api.graphql.queries.providers import DnsProvider
+
 from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericJobMutationReturn,
     GenericMutationReturn,
@@ -13,9 +19,8 @@ from selfprivacy_api.graphql.mutations.mutation_interface import (
 )
 
 import selfprivacy_api.actions.system as system_actions
-from selfprivacy_api.graphql.common_types.jobs import job_to_api_job
-from selfprivacy_api.jobs.nix_collect_garbage import start_nix_collect_garbage
 import selfprivacy_api.actions.ssh as ssh_actions
+from selfprivacy_api.actions.system import set_dns_provider
 
 
 @strawberry.type
@@ -47,6 +52,14 @@ class SSHSettingsInput:
 
     enable: bool
     password_authentication: bool
+
+
+@strawberry.input
+class SetDNSProviderInput:
+    """Input type to set the provider"""
+
+    provider: DnsProvider
+    api_token: str
 
 
 @strawberry.input
@@ -210,3 +223,20 @@ class SystemMutations:
             message="Garbage collector started...",
             job=job_to_api_job(job),
         )
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    def set_dns_provider(self, input: SetDNSProviderInput) -> GenericMutationReturn:
+
+        try:
+            set_dns_provider(input.provider, input.api_token)
+            return GenericMutationReturn(
+                success=True,
+                code=200,
+                message="Provider set",
+            )
+        except Exception as e:
+            return GenericMutationReturn(
+                success=False,
+                code=400,
+                message=pretty_error(e),
+            )

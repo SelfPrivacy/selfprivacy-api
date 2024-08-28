@@ -8,6 +8,8 @@ import subprocess
 import portalocker
 import typing
 
+from traceback import format_tb as format_traceback
+
 from selfprivacy_api.utils.default_subdomains import (
     DEFAULT_SUBDOMAINS,
     RESERVED_SUBDOMAINS,
@@ -227,3 +229,8 @@ def write_to_log(message):
         log.write(f"{datetime.datetime.now()} {message}\n")
         log.flush()
         os.fsync(log.fileno())
+
+
+def pretty_error(e: Exception) -> str:
+    traceback = "/r".join(format_traceback(e.__traceback__))
+    return type(e).__name__ + ": " + str(e) + ": " + traceback

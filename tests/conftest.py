@@ -88,14 +88,22 @@ def redis_repo_with_tokens():
 @pytest.fixture
 def generic_userdata(mocker, tmpdir):
     filename = "turned_on.json"
+    secrets_filename = "secrets.json"
+
     source_path = path.join(global_data_dir(), filename)
     userdata_path = path.join(tmpdir, filename)
+    secrets_path = path.join(tmpdir, secrets_filename)
+
+    with open(secrets_path, "w") as file:
+        file.write("{}")
 
     with open(userdata_path, "w") as file:
         with open(source_path, "r") as source:
             file.write(source.read())
 
     mock = mocker.patch("selfprivacy_api.utils.USERDATA_FILE", new=userdata_path)
+    mocker.patch("selfprivacy_api.utils.SECRETS_FILE", new=secrets_path)
+
     return mock
 
 

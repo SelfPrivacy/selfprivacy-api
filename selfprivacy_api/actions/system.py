@@ -5,10 +5,14 @@ import subprocess
 import pytz
 from typing import Optional, List
 from pydantic import BaseModel
+
 from selfprivacy_api.jobs import Job, JobStatus, Jobs
 from selfprivacy_api.jobs.upgrade_system import rebuild_system_task
 
 from selfprivacy_api.utils import WriteUserData, ReadUserData
+from selfprivacy_api.utils import UserDataFiles
+
+from selfprivacy_api.graphql.queries.providers import DnsProvider
 
 
 def get_timezone() -> str:
@@ -40,6 +44,18 @@ class UserDataAutoUpgradeSettings(BaseModel):
     allowReboot: bool = False
 
 
+def set_dns_provider(provider: DnsProvider, token: str):
+    with WriteUserData() as user_data:
+        if not "dns" in user_data.keys():
+            user_data["dns"] = {}
+        user_data["dns"]["provider"] = provider.value
+
+    with WriteUserData(file_type=UserDataFiles.SECRETS) as secrets:
+        if not "dns" in secrets.keys():
+            secrets["dns"] = {}
+        secrets["dns"]["apiKey"] = token
+
+
 def get_auto_upgrade_settings() -> UserDataAutoUpgradeSettings:
     """Get the auto-upgrade settings"""
     with ReadUserData() as user_data:
@@ -49,14 +65,14 @@ def get_auto_upgrade_settings() -> UserDataAutoUpgradeSettings:
 
 
 def set_auto_upgrade_settings(
-    enalbe: Optional[bool] = None, allowReboot: Optional[bool] = None
+    enable: Optional[bool] = None, allowReboot: Optional[bool] = None
 ) -> None:
     """Set the auto-upgrade settings"""
     with WriteUserData() as user_data:
         if "autoUpgrade" not in user_data:
             user_data["autoUpgrade"] = {}
-        if enalbe is not None:
-            user_data["autoUpgrade"]["enable"] = enalbe
+        if enable is not None:
+            user_data["autoUpgrade"]["enable"] = enable
         if allowReboot is not None:
             user_data["autoUpgrade"]["allowReboot"] = allowReboot
 
