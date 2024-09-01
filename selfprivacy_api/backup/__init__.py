@@ -275,7 +275,13 @@ class Backups:
         This is a convenience, maybe it is better to write a special comparison
         function for snapshots
         """
-        return Storage.get_cached_snapshot_by_id(snapshot.id)
+
+        snap = Storage.get_cached_snapshot_by_id(snapshot.id)
+        if snap is None:
+            raise ValueError(
+                f"snapshot {snapshot.id} date syncing failed, this should never happen normally"
+            )
+        return snap
 
     @staticmethod
     def _auto_snaps(service) -> List[Snapshot]:
