@@ -46,12 +46,12 @@ class UserDataAutoUpgradeSettings(BaseModel):
 
 def set_dns_provider(provider: DnsProvider, token: str):
     with WriteUserData() as user_data:
-        if not "dns" in user_data.keys():
+        if "dns" not in user_data.keys():
             user_data["dns"] = {}
         user_data["dns"]["provider"] = provider.value
 
     with WriteUserData(file_type=UserDataFiles.SECRETS) as secrets:
-        if not "dns" in secrets.keys():
+        if "dns" not in secrets.keys():
             secrets["dns"] = {}
         secrets["dns"]["apiKey"] = token
 

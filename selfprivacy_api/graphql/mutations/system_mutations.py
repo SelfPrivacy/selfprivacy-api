@@ -15,7 +15,6 @@ from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericJobMutationReturn,
     GenericMutationReturn,
     MutationReturnInterface,
-    GenericJobMutationReturn,
 )
 
 import selfprivacy_api.actions.system as system_actions
