@@ -21,7 +21,13 @@ CLEAR_COMPLETED = "Garbage collection completed."
 
 def delete_old_gens_and_return_dead_report() -> str:
     subprocess.run(
-        ["nix-env", "-p", "/nix/var/nix/profiles/system", "--delete-generations old"],
+        [
+            "nix-env",
+            "-p",
+            "/nix/var/nix/profiles/system",
+            "--delete-generations",
+            "old",
+        ],
         check=False,
     )
 
