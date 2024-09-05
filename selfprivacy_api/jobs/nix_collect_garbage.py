@@ -23,7 +23,8 @@ def delete_old_gens_and_return_dead_report() -> str:
     subprocess.run(
         [
             "nix-env",
-            "-p", "/nix/var/nix/profiles/system",
+            "-p",
+            "/nix/var/nix/profiles/system",
             "--delete-generations",
             "old",
         ],
