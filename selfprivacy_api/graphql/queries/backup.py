@@ -97,9 +97,12 @@ class Backup:
         snapshots = Backups.get_all_snapshots()
         return [snapshot_to_api(snap) for snap in snapshots]
 
-    # A query for seeing which snapshots will be restored when migrating
     @strawberry.field
     def last_slice(self) -> typing.List[SnapshotInfo]:
+        """
+        A query for seeing which snapshots will be restored when migrating
+        """
+
         if not Backups.is_initted():
             return []
         return [snapshot_to_api(snap) for snap in which_snapshots_to_full_restore()]
