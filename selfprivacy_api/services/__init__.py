@@ -138,19 +138,6 @@ class ServiceManager(Service):
         return "How did we get here?"
 
     @classmethod
-    def status_file(cls) -> str:
-        dir = cls.folders[0]
-        # We do not want to store our state in our declared folders
-        # Because they are moved and tossed in tests wildly
-        parent = Path(dir).parent
-
-        return path.join(parent, "service_status")
-
-    @classmethod
-    def set_status(cls, status: ServiceStatus):
-        pass
-
-    @classmethod
     def get_status(cls) -> ServiceStatus:
         return ServiceStatus.ACTIVE
 
@@ -160,7 +147,7 @@ class ServiceManager(Service):
         return True
 
     @classmethod
-    def merge_settings(cls, restored_settings_folder: str):
+    def merge_settings(cls):
         # For now we will just copy settings EXCEPT the locations of services
         # Stash locations as they are set by user right now
         locations = {}
@@ -179,23 +166,28 @@ class ServiceManager(Service):
 
     @classmethod
     def stop(cls):
-        # simulate a failing service unable to stop
-        if not cls.get_status() == ServiceStatus.FAILED:
-            cls.set_status(ServiceStatus.DEACTIVATING)
-            cls.change_status_with_async_delay(
-                ServiceStatus.INACTIVE, cls.startstop_delay
-            )
+        """
+        We are always active
+        """
+        raise ValueError("tried to stop an always active service")
 
     @classmethod
     def start(cls):
+        """
+        We are always active
+        """
         pass
 
     @classmethod
     def restart(cls):
+        """
+        We are always active
+        """
         pass
 
     @staticmethod
     def get_logs():
+        # TODO: maybe return the logs for api itself
         return ""
 
     @classmethod
@@ -209,8 +201,7 @@ class ServiceManager(Service):
     @classmethod
     def stash_for(cls, p: str) -> str:
         basename = path.basename(p)
-        tempdir = cls.folders[0]
-        stashed_file_location = join(tempdir, basename)
+        stashed_file_location = join(cls.dump_dir(), basename)
         return stashed_file_location
 
     @classmethod
@@ -234,7 +225,7 @@ class ServiceManager(Service):
 
     @classmethod
     def pre_backup(cls):
-        tempdir = cls.folders[0]
+        tempdir = cls.dump_dir()
         if not path.exists(tempdir):
             makedirs(tempdir)
 
@@ -246,10 +237,16 @@ class ServiceManager(Service):
             cls.stash_a_path(p)
 
     @classmethod
+    def dump_dir(cls) -> str:
+        """
+        A directory we dump our settings into
+        """
+        return cls.folders[0]
+
+    @classmethod
     def post_restore(cls):
-        tempdir = cls.folders[0]
-        cls.merge_settings(tempdir)
-        rmtree(tempdir, ignore_errors=True)
+        cls.merge_settings()
+        rmtree(cls.dump_dir(), ignore_errors=True)
 
 
 services: list[Service] = [
