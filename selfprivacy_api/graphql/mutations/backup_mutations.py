@@ -1,6 +1,8 @@
 import typing
 import strawberry
 
+from selfprivacy_api.utils.graphql import api_job_mutation_error
+
 from selfprivacy_api.jobs import Jobs
 
 from selfprivacy_api.graphql import IsAuthenticated
@@ -25,12 +27,13 @@ from selfprivacy_api.backup.tasks import (
     restore_snapshot,
     prune_autobackup_snapshots,
     full_restore,
-    trigger_autobackup,
+    total_backup,
 )
 from selfprivacy_api.backup.jobs import (
     add_backup_job,
     add_restore_job,
     add_total_restore_job,
+    add_total_backup_job,
 )
 from selfprivacy_api.backup.local_secret import LocalBackupSecret
 
@@ -173,19 +176,22 @@ class BackupMutations:
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def manual_autobackup(self) -> GenericMutationReturn:
-        """Induce autobackup to back up all the services at once
-        Useful when migrating but a bit of a hack
+    def total_backup(self) -> GenericJobMutationReturn:
+        """Back up all the enabled services at once
+        Useful when migrating
         """
 
-        # This cannot give us a job, unfortunately
-        # TODO: We need to pass it
-        trigger_autobackup()
+        try:
+            job = add_total_backup_job()
+            total_backup(job)
+        except Exception as error:
+            return api_job_mutation_error(error)
 
-        return GenericMutationReturn(
+        return GenericJobMutationReturn(
             success=True,
             code=200,
-            message="Backup task queued",
+            message="Total backup task queued",
+            job=job_to_api_job(job),
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])

@@ -76,18 +76,34 @@ def complain_about_service_operation_running(service: Service) -> str:
 
 
 def add_total_restore_job() -> Job:
-    for service in ServiceManager.get_all_services():
-        if (
-            not isinstance(service, ServiceManager)
-            and is_something_running_for(service) is True
-        ):
-            complain_about_service_operation_running(service)
+    for service in ServiceManager.get_enabled_services():
+        ensure_nothing_runs_for(service)
 
-    display_name = service.get_display_name()
     job = Jobs.add(
         type_id="backups.total_restore",
-        name=f"Restore {display_name}",
-        description="restoring all the services",
+        name=f"Total restore",
+        description="restoring all enabled services",
+    )
+    return job
+
+
+def ensure_nothing_runs_for(service: Service):
+    if (
+        # TODO: try removing the exception. Why would we have it?
+        not isinstance(service, ServiceManager)
+        and is_something_running_for(service) is True
+    ):
+        complain_about_service_operation_running(service)
+
+
+def add_total_backup_job() -> Job:
+    for service in ServiceManager.get_enabled_services():
+        ensure_nothing_runs_for(service)
+
+    job = Jobs.add(
+        type_id="backups.total_backup",
+        name=f"Total backup",
+        description="Backing up all the enabled services",
     )
     return job
 

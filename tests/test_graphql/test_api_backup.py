@@ -36,10 +36,10 @@ mutation TestSnapshotsReload {
 }
 """
 
-API_MANUAL_AUTOBACKUP = """
+API_TOTAL_BACKUP = """
 mutation TestForcedAutobackup {
     backup {
-         manualAutobackup{
+         totalBackup{
             success
             message
             code
@@ -293,11 +293,11 @@ def api_reload_snapshots(authorized_client):
     return response
 
 
-def api_manual_autobackup(authorized_client):
+def api_total_backup(authorized_client):
     response = authorized_client.post(
         "/graphql",
         json={
-            "query": API_MANUAL_AUTOBACKUP,
+            "query": API_TOTAL_BACKUP,
             "variables": {},
         },
     )
@@ -616,9 +616,9 @@ def test_induce_autobackup_if_dir_exists(
     # mkdir(CONFIG_STASH_DIR)
     dummy_service = only_dummy_service_and_api
 
-    response = api_manual_autobackup(authorized_client)
+    response = api_total_backup(authorized_client)
     # raise ValueError(get_data(response))
-    data = get_data(response)["backup"]["manualAutobackup"]
+    data = get_data(response)["backup"]["totalBackup"]
     assert_ok(data)
 
     snaps = api_snapshots(authorized_client)
@@ -628,9 +628,9 @@ def test_induce_autobackup_if_dir_exists(
 def test_induce_autobackup(authorized_client, only_dummy_service_and_api, backups):
     dummy_service = only_dummy_service_and_api
 
-    response = api_manual_autobackup(authorized_client)
+    response = api_total_backup(authorized_client)
     # raise ValueError(get_data(response))
-    data = get_data(response)["backup"]["manualAutobackup"]
+    data = get_data(response)["backup"]["totalBackup"]
     assert_ok(data)
 
     snaps = api_snapshots(authorized_client)
@@ -677,7 +677,7 @@ def test_forget_nonexistent_snapshot(authorized_client, dummy_service, backups):
 
 
 def test_last_slice(authorized_client, only_dummy_service_and_api, backups):
-    api_manual_autobackup(authorized_client)
+    api_total_backup(authorized_client)
     snaps = api_last_slice(authorized_client)
 
     assert len(snaps) == 2
