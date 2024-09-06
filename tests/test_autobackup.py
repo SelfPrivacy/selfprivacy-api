@@ -217,7 +217,7 @@ def test_slices_with_autobackups_disabled(backups, only_dummy_service_and_api):
     snaps = Backups.get_all_snapshots()
     assert len(snaps) == 2
 
-    slice = Backups.last_autobackup_slice()
+    slice = Backups.last_backup_slice()
     assert len(slice) == 2
     assert set([snap.id for snap in slice]) == set([snap.id for snap in snaps])
 
@@ -239,7 +239,7 @@ def test_slices_minimal(backups, only_dummy_service_and_api):
     snaps = Backups.get_all_snapshots()
     assert len(snaps) == 2
 
-    slice = Backups.last_autobackup_slice()
+    slice = Backups.last_backup_slice()
     assert len(slice) == 2
     assert set([snap.id for snap in slice]) == set([snap.id for snap in snaps])
 

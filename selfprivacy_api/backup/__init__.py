@@ -760,9 +760,7 @@ class Backups:
 
     @staticmethod
     def is_same_slice(snap1: Snapshot, snap2: Snapshot) -> bool:
-        # Protologic for slicing. Determines if the snaps were made during the same
-        # autobackup operation
-        # TODO: Replace with slice id tag comparison
+        # Determines if the snaps were made roughly in the same time period
 
         period_minutes = Backups.autobackup_period_minutes()
         # Autobackups are not guaranteed to be enabled during restore.
@@ -779,27 +777,27 @@ class Backups:
         return True
 
     @staticmethod
-    def last_autobackup_slice() -> List[Snapshot]:
+    def last_backup_slice() -> List[Snapshot]:
         """
         Guarantees that the slice is valid, ie, it has an api snapshot too
         Or empty
         """
         slice: List[Snapshot] = []
 
-        # We need snapshots that were made in the same autobackup session.
+        # We need snapshots that were made around the same time.
         # And we need to be sure that api snap is in there
         # That's why we form the slice around api snap
-        api_autosnaps = Backups._auto_snaps(ServiceManager())
-        if api_autosnaps == []:
+        api_snaps = Backups.get_snapshots(ServiceManager())
+        if api_snaps == []:
             return []
 
-        api_autosnaps.sort(key=lambda x: x.created_at, reverse=True)
-        api_snap = api_autosnaps[0]  # pick the latest one
+        api_snaps.sort(key=lambda x: x.created_at, reverse=True)
+        api_snap = api_snaps[0]  # pick the latest one
 
         for service in ServiceManager.get_all_services():
             if isinstance(service, ServiceManager):
                 continue
-            snaps = Backups._auto_snaps(service)
+            snaps = Backups.get_snapshots(service)
             snaps.sort(key=lambda x: x.created_at, reverse=True)
             for snap in snaps:
                 if Backups.is_same_slice(snap, api_snap):

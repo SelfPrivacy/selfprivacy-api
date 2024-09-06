@@ -127,7 +127,7 @@ def eligible_for_full_restoration(snap: Snapshot):
 
 
 def which_snapshots_to_full_restore() -> list[Snapshot]:
-    autoslice = Backups.last_autobackup_slice()
+    autoslice = Backups.last_backup_slice()
     api_snapshot = None
     for snap in autoslice:
         if snap.service_name == "api":
