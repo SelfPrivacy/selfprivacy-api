@@ -427,7 +427,7 @@ class Service(ABC):
             Jobs.update(
                 job=job,
                 status=JobStatus.FINISHED,
-                result=f"{service_name} moved successfully(no folders).",
+                result=f"{service_name} moved successfully (no folders).",
                 status_text=f"NOT starting {service_name}",
                 progress=100,
             )

@@ -3,11 +3,10 @@
 import base64
 import typing
 from typing import List
-from os import path, mkdir, remove
+from os import path, remove
 from os import makedirs
 from os import listdir
 from os.path import join
-from pathlib import Path
 
 from selfprivacy_api.services.bitwarden import Bitwarden
 from selfprivacy_api.services.forgejo import Forgejo
@@ -23,8 +22,8 @@ from selfprivacy_api.services.service import Service, ServiceDnsRecord
 from selfprivacy_api.services.service import ServiceStatus
 import selfprivacy_api.utils.network as network_utils
 
-from selfprivacy_api.services.test_service.icon import BITWARDEN_ICON
-from selfprivacy_api.utils import USERDATA_FILE, DKIM_DIR, SECRETS_FILE
+from selfprivacy_api.services.api_icon import API_ICON
+from selfprivacy_api.utils import USERDATA_FILE, DKIM_DIR, SECRETS_FILE, get_domain
 from selfprivacy_api.utils.block_devices import BlockDevices
 from shutil import copyfile, copytree, rmtree
 
@@ -105,17 +104,18 @@ class ServiceManager(Service):
     def get_svg_icon() -> str:
         """Read SVG icon from file and return it as base64 encoded string."""
         # return ""
-        return base64.b64encode(BITWARDEN_ICON.encode("utf-8")).decode("utf-8")
+        return base64.b64encode(API_ICON.encode("utf-8")).decode("utf-8")
 
     @staticmethod
     def get_url() -> typing.Optional[str]:
         """Return service url."""
-        # TODO : placeholder, get actual domain here
-        return f"https://domain"
+        domain = get_domain()
+        subdomain = ServiceManager.get_subdomain()
+        return f"https://{subdomain}.{domain}" if subdomain else None
 
     @staticmethod
     def get_subdomain() -> typing.Optional[str]:
-        return None
+        return "api"
 
     @staticmethod
     def is_always_active() -> bool:
