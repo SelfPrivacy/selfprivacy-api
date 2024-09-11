@@ -68,10 +68,7 @@ def add_backup_job(service: Service) -> Job:
 
 
 def complain_about_service_operation_running(service: Service) -> str:
-    message = (
-        f"Cannot start a restore of {service.get_id()}, another operation is running: "
-        + get_jobs_by_service(service)[0].type_id
-    )
+    message = f"Cannot start a restore of {service.get_id()}, another operation is running: {get_jobs_by_service(service)[0].type_id}"
     raise ValueError(message)
 
 
@@ -82,7 +79,7 @@ def add_total_restore_job() -> Job:
     job = Jobs.add(
         type_id="backups.total_restore",
         name=f"Total restore",
-        description="restoring all enabled services",
+        description="Restoring all enabled services",
     )
     return job
 
@@ -118,7 +115,7 @@ def add_restore_job(snapshot: Snapshot) -> Job:
     job = Jobs.add(
         type_id=restore_job_type(service),
         name=f"Restore {display_name}",
-        description=f"restoring {display_name} from {snapshot.id}",
+        description=f"Restoring {display_name} from {snapshot.id}",
     )
     return job
 
