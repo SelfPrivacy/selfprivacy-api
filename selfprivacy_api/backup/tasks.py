@@ -16,7 +16,7 @@ from huey import crontab
 
 from selfprivacy_api.services import ServiceManager, Service
 from selfprivacy_api.backup import Backups
-from selfprivacy_api.backup.jobs import add_autobackup_job, add_total_restore_job
+from selfprivacy_api.backup.jobs import add_autobackup_job
 from selfprivacy_api.jobs import Jobs, JobStatus, Job
 from selfprivacy_api.jobs.upgrade_system import rebuild_system
 from selfprivacy_api.actions.system import add_rebuild_job
@@ -131,7 +131,6 @@ def back_up_multiple(
         Jobs.update(job, JobStatus.RUNNING, progress=progress)
 
 
-
 def do_total_backup(job: Job) -> None:
     """
     Body of total backup task, broken out to test it
@@ -207,7 +206,7 @@ def do_full_restore(job: Job) -> None:
     Jobs.update(
         job,
         JobStatus.RUNNING,
-        status_text=f"Finding the last autobackup session",
+        status_text="Finding the last autobackup session",
         progress=0,
     )
     snapshots_to_restore = which_snapshots_to_full_restore()

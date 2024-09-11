@@ -210,7 +210,7 @@ class ServicesMutations:
         self, input: SetServiceConfigurationInput
     ) -> ServiceMutationReturn:
         """Set the new configuration values"""
-        service = get_service_by_id(input.service_id)
+        service = ServiceManager.get_service_by_id(input.service_id)
         if service is None:
             return ServiceMutationReturn(
                 success=False,

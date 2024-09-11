@@ -199,7 +199,7 @@ class Service:
     @strawberry.field
     def configuration(self) -> Optional[List[ConfigItem]]:
         """Get service configuration"""
-        service = get_service_by_id(self.id)
+        service = ServiceManager.get_service_by_id(self.id)
         if service is None:
             return None
         config_items = service.get_configuration()
