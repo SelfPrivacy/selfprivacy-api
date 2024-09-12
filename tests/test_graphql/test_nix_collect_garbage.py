@@ -123,7 +123,13 @@ def test_graphql_nix_collect_garbage(authorized_client, fp):
     assert huey.immediate is True
 
     fp.register(
-        ["nix-env", "-p", "/nix/var/nix/profiles/system", "--delete-generations old"],
+        [
+            "nix-env",
+            "-p",
+            "/nix/var/nix/profiles/system",
+            "--delete-generations",
+            "old",
+        ],
         stdout="",
     )
     fp.register(["nix-store", "--gc", "--print-dead"], stdout=OUTPUT_PRINT_DEAD)
@@ -148,7 +154,8 @@ def test_graphql_nix_collect_garbage(authorized_client, fp):
                 "nix-env",
                 "-p",
                 "/nix/var/nix/profiles/system",
-                "--delete-generations old",
+                "--delete-generations",
+                "old",
             ]
         )
         == 1
@@ -161,7 +168,13 @@ def test_graphql_nix_collect_garbage_return_zero_trash(authorized_client, fp):
     assert huey.immediate is True
 
     fp.register(
-        ["nix-env", "-p", "/nix/var/nix/profiles/system", "--delete-generations old"],
+        [
+            "nix-env",
+            "-p",
+            "/nix/var/nix/profiles/system",
+            "--delete-generations",
+            "old",
+        ],
         stdout="",
     )
     fp.register(["nix-store", "--gc", "--print-dead"], stdout=OUTPUT_PRINT_DEAD)
@@ -186,7 +199,8 @@ def test_graphql_nix_collect_garbage_return_zero_trash(authorized_client, fp):
                 "nix-env",
                 "-p",
                 "/nix/var/nix/profiles/system",
-                "--delete-generations old",
+                "--delete-generations",
+                "old",
             ]
         )
         == 1
@@ -199,7 +213,13 @@ def test_graphql_nix_collect_garbage_not_authorized_client(client, fp):
     assert huey.immediate is True
 
     fp.register(
-        ["nix-env", "-p", "/nix/var/nix/profiles/system", "--delete-generations old"],
+        [
+            "nix-env",
+            "-p",
+            "/nix/var/nix/profiles/system",
+            "--delete-generations",
+            "old",
+        ],
         stdout="",
     )
     fp.register(["nix-store", "--gc", "--print-dead"], stdout=OUTPUT_PRINT_DEAD)
@@ -220,7 +240,8 @@ def test_graphql_nix_collect_garbage_not_authorized_client(client, fp):
                 "nix-env",
                 "-p",
                 "/nix/var/nix/profiles/system",
-                "--delete-generations old",
+                "--delete-generations",
+                "old",
             ]
         )
         == 0
