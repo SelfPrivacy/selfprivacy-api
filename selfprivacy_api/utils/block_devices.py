@@ -54,8 +54,7 @@ class BlockDevice:
     def update_from_dict(self, device_dict: dict):
         self.name = device_dict["name"]
         self.path = device_dict["path"]
-        # lsblk gives us json with strings. Awkwardly.
-        # TODO: maybe parse it more fully?
+        # TODO: maybe parse it as numbers, as in origin?
         self.fsavail = str(device_dict["fsavail"])
         self.fssize = str(device_dict["fssize"])
         self.fstype = device_dict["fstype"]
