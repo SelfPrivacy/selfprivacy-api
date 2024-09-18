@@ -39,6 +39,13 @@ class MemoryMonitoring:
         return MonitoringQueries.memory_usage_overall(self.start, self.end, self.step)
 
     @strawberry.field
+    def swap_usage_overall(self) -> MonitoringValuesResult:
+        if Prometheus().get_status() != ServiceStatus.ACTIVE:
+            return MonitoringQueryError(error="Prometheus is not running")
+
+        return MonitoringQueries.swap_usage_overall(self.start, self.end, self.step)
+
+    @strawberry.field
     def average_usage_by_service(self) -> MonitoringMetricsResult:
         if Prometheus().get_status() != ServiceStatus.ACTIVE:
             return MonitoringQueryError(error="Prometheus is not running")
