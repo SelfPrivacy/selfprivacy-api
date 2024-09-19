@@ -112,6 +112,20 @@ class MonitoringQueries:
             )
 
     @staticmethod
+    def _get_time_range(
+        start: Optional[datetime] = None,
+        end: Optional[datetime] = None,
+    ) -> Tuple[datetime, datetime]:
+        """Get the start and end time for queries."""
+        if start is None:
+            start = datetime.now() - timedelta(minutes=20)
+
+        if end is None:
+            end = datetime.now()
+
+        return start, end
+
+    @staticmethod
     def _prometheus_value_to_monitoring_value(x: Tuple[int, str]):
         return MonitoringValue(timestamp=datetime.fromtimestamp(x[0]), value=x[1])
 
@@ -193,11 +207,7 @@ class MonitoringQueries:
             step (int): Interval in seconds for querying disk usage data.
         """
 
-        if start is None:
-            start = datetime.now() - timedelta(minutes=20)
-
-        if end is None:
-            end = datetime.now()
+        start, end = MonitoringQueries._get_time_range(start, end)
 
         start_timestamp = int(start.timestamp())
         end_timestamp = int(end.timestamp())
@@ -237,11 +247,7 @@ class MonitoringQueries:
             step (int): Interval in seconds for querying memory usage data.
         """
 
-        if start is None:
-            start = datetime.now() - timedelta(minutes=20)
-
-        if end is None:
-            end = datetime.now()
+        start, end = MonitoringQueries._get_time_range(start, end)
 
         start_timestamp = int(start.timestamp())
         end_timestamp = int(end.timestamp())
@@ -281,11 +287,7 @@ class MonitoringQueries:
             step (int): Interval in seconds for querying swap memory usage data.
         """
 
-        if start is None:
-            start = datetime.now() - timedelta(minutes=20)
-
-        if end is None:
-            end = datetime.now()
+        start, end = MonitoringQueries._get_time_range(start, end)
 
         start_timestamp = int(start.timestamp())
         end_timestamp = int(end.timestamp())
@@ -325,11 +327,7 @@ class MonitoringQueries:
                 Defaults to current time if not provided.
         """
 
-        if start is None:
-            start = datetime.now() - timedelta(minutes=20)
-
-        if end is None:
-            end = datetime.now()
+        start, end = MonitoringQueries._get_time_range(start, end)
 
         offset, duration = MonitoringQueries._calculate_offset_and_duration(start, end)
 
@@ -364,11 +362,7 @@ class MonitoringQueries:
                 Defaults to current time if not provided.
         """
 
-        if start is None:
-            start = datetime.now() - timedelta(minutes=20)
-
-        if end is None:
-            end = datetime.now()
+        start, end = MonitoringQueries._get_time_range(start, end)
 
         offset, duration = MonitoringQueries._calculate_offset_and_duration(start, end)
 
@@ -405,11 +399,7 @@ class MonitoringQueries:
             step (int): Interval in seconds for querying disk usage data.
         """
 
-        if start is None:
-            start = datetime.now() - timedelta(minutes=20)
-
-        if end is None:
-            end = datetime.now()
+        start, end = MonitoringQueries._get_time_range(start, end)
 
         start_timestamp = int(start.timestamp())
         end_timestamp = int(end.timestamp())
@@ -446,11 +436,7 @@ class MonitoringQueries:
             step (int): Interval in seconds for querying network data.
         """
 
-        if start is None:
-            start = datetime.now() - timedelta(minutes=20)
-
-        if end is None:
-            end = datetime.now()
+        start, end = MonitoringQueries._get_time_range(start, end)
 
         start_timestamp = int(start.timestamp())
         end_timestamp = int(end.timestamp())
