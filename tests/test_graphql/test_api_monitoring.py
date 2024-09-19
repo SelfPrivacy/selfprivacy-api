@@ -170,6 +170,17 @@ query Query {
           error
         }
       }
+      swapUsageOverall {
+        ... on MonitoringValues {
+          values {
+            timestamp
+            value
+          }
+        }
+        ... on MonitoringQueryError {
+          error
+        }
+      }
       start
       step
     }
@@ -211,6 +222,17 @@ query Query($end: DateTime, $start: DateTime, $step: Int) {
         }
       }
       overallUsage {
+        ... on MonitoringValues {
+          values {
+            timestamp
+            value
+          }
+        }
+        ... on MonitoringQueryError {
+          error
+        }
+      }
+      swapUsageOverall {
         ... on MonitoringValues {
           values {
             timestamp
@@ -499,6 +521,14 @@ def test_graphql_get_memory_usage(
                         },
                     ],
                 },
+                "swapUsageOverall": {
+                    "values": [
+                        {
+                            "timestamp": "1970-01-01T00:00:00",
+                            "value": "zero",
+                        },
+                    ],
+                },
                 "start": None,
                 "step": 60,
             },
@@ -577,6 +607,14 @@ def test_graphql_get_memory_usage_with_options(
                     ],
                 },
                 "overallUsage": {
+                    "values": [
+                        {
+                            "timestamp": "1970-01-01T00:00:00",
+                            "value": "zero",
+                        },
+                    ],
+                },
+                "swapUsageOverall": {
                     "values": [
                         {
                             "timestamp": "1970-01-01T00:00:00",
