@@ -38,14 +38,24 @@ from selfprivacy_api.backup.tasks import (
     start_backup,
     restore_snapshot,
     reload_snapshot_cache,
+    total_backup,
+    do_full_restore,
 )
 from selfprivacy_api.backup.storage import Storage
 from selfprivacy_api.backup.local_secret import LocalBackupSecret
-from selfprivacy_api.backup.jobs import get_backup_fail
+from selfprivacy_api.backup.jobs import (
+    get_backup_fail,
+    add_total_backup_job,
+    add_total_restore_job,
+)
 
 from tests.common import assert_job_errored
 from tests.test_dkim import dkim_file
 
+from tests.test_graphql.test_services import (
+    only_dummy_service_and_api,
+    only_dummy_service,
+)
 
 REPO_NAME = "test_backup"
 
@@ -819,3 +829,19 @@ def test_service_manager_backs_up_without_crashing(
 
     snapshot = Backups.back_up(manager)
     Backups.restore_snapshot(snapshot)
+
+
+# def test_backup_all_restore_all(backups, generic_userdata, dkim_file, only_dummy_service_and_api, catch_nixos_rebuild_calls):
+#     dummy_service = only_dummy_service_and_api
+#     fp = catch_nixos_rebuild_calls
+#     backup_job = add_total_backup_job()
+#     total_backup(backup_job)
+#     assert len(Backups.get_all_snapshots()) == 2
+
+#     restore_job = add_total_restore_job()
+
+#     do_full_restore(restore_job)
+
+#     # TODO: maybe test integrity.
+#     # since it is standard restore operations they would have failed if something went wrong
+#     # however, one still needs to check that all of the required restores have even started

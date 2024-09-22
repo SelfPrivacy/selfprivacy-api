@@ -34,6 +34,12 @@ class DummyService(Service):
         cls.folders = folders
 
     def __init__(self):
+        # Maybe init it with some dummy files right here
+        # currently it is done in a fixture but if we do it here
+        # then we can do some convenience methods of writing and reading
+        # from test files so that
+        # we can easily check integrity in numerous restore tests
+
         super().__init__()
         with open(self.status_file(), "w") as file:
             file.write(ServiceStatus.ACTIVE.value)
