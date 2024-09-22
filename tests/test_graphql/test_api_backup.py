@@ -17,6 +17,7 @@ from selfprivacy_api.backup.storage import Storage
 from selfprivacy_api.backup.local_secret import LocalBackupSecret
 
 from tests.test_graphql.test_services import (
+    # TODO: shuffle them to conftest
     only_dummy_service_and_api,
     only_dummy_service,
     dkim_file,
@@ -43,6 +44,24 @@ mutation TestForcedAutobackup {
             success
             message
             code
+            job{
+                uid
+            }
+        }
+    }
+}
+"""
+
+API_TOTAL_RESTORE = """
+mutation TestTotalRestore {
+    backup {
+         fullRestore{
+            success
+            message
+            code
+			job{
+			    uid
+			}
         }
     }
 }

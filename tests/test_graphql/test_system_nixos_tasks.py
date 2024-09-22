@@ -6,6 +6,13 @@ import pytest
 from selfprivacy_api.jobs import JobStatus, Jobs
 from tests.test_graphql.common import assert_empty, assert_ok, get_data
 
+from tests.conftest import (
+    API_REBUILD_SYSTEM_UNIT,
+    API_UPGRADE_SYSTEM_UNIT,
+    assert_rebuild_or_upgrade_was_made,
+    prepare_nixos_rebuild_calls,
+)
+
 
 class ProcessMock:
     """Mock subprocess.Popen"""
@@ -97,38 +104,16 @@ def test_graphql_system_rebuild_unauthorized(client, fp, action):
     assert fp.call_count([fp.any()]) == 0
 
 
-def prepare_nixos_rebuild_calls(fp, unit_name):
-    # Start the unit
-    fp.register(["systemctl", "start", unit_name])
-
-    # Wait for it to start
-    fp.register(["systemctl", "show", unit_name], stdout="ActiveState=inactive")
-    fp.register(["systemctl", "show", unit_name], stdout="ActiveState=inactive")
-    fp.register(["systemctl", "show", unit_name], stdout="ActiveState=active")
-
-    # Check its exectution
-    fp.register(["systemctl", "show", unit_name], stdout="ActiveState=active")
-    fp.register(
-        ["journalctl", "-u", unit_name, "-n", "1", "-o", "cat"],
-        stdout="Starting rebuild...",
-    )
-
-    fp.register(["systemctl", "show", unit_name], stdout="ActiveState=active")
-    fp.register(
-        ["journalctl", "-u", unit_name, "-n", "1", "-o", "cat"], stdout="Rebuilding..."
-    )
-
-    fp.register(["systemctl", "show", unit_name], stdout="ActiveState=inactive")
-
-
 @pytest.mark.parametrize("action", ["rebuild", "upgrade"])
 def test_graphql_system_rebuild(authorized_client, fp, action, mock_sleep_intervals):
     """Test system rebuild"""
-    unit_name = f"sp-nixos-{action}.service"
     query = (
         API_REBUILD_SYSTEM_MUTATION
         if action == "rebuild"
         else API_UPGRADE_SYSTEM_MUTATION
+    )
+    unit_name = (
+        API_REBUILD_SYSTEM_UNIT if action == "rebuild" else API_UPGRADE_SYSTEM_UNIT
     )
 
     prepare_nixos_rebuild_calls(fp, unit_name)
@@ -142,8 +127,7 @@ def test_graphql_system_rebuild(authorized_client, fp, action, mock_sleep_interv
     data = get_data(response)["system"][f"runSystem{action.capitalize()}"]
     assert_ok(data)
 
-    assert fp.call_count(["systemctl", "start", unit_name]) == 1
-    assert fp.call_count(["systemctl", "show", unit_name]) == 6
+    assert_rebuild_or_upgrade_was_made(fp, unit_name)
 
     job_id = response.json()["data"]["system"][f"runSystem{action.capitalize()}"][
         "job"

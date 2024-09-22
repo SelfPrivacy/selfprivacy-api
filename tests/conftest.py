@@ -25,9 +25,11 @@ from selfprivacy_api.repositories.tokens.redis_tokens_repository import (
     RedisTokensRepository,
 )
 
+API_REBUILD_SYSTEM_UNIT = "sp-nixos-rebuild.service"
+API_UPGRADE_SYSTEM_UNIT = "sp-nixos-upgrade.service"
 
 TESTFILE_BODY = "testytest!"
-TESTFILE_2_BODY = "testissimo!"
+TESTFILE2_BODY = "testissimo!"
 
 TOKENS_FILE_CONTENTS = {
     "tokens": [
@@ -149,6 +151,43 @@ def volume_folders(tmpdir, mocker):
     mock = mocker.patch("selfprivacy_api.services.owned_path.VOLUMES_PATH", volumes_dir)
 
 
+TESTFILE_NAME = "testfile.txt"
+TESTFILE2_NAME = "testfile2.txt"
+
+from typing import List
+from os import listdir
+
+
+def testfile_paths(service_dirs: List[str]) -> List[str]:
+    testfile_path_1 = path.join(service_dirs[0], TESTFILE_NAME)
+    testfile_path_2 = path.join(service_dirs[1], TESTFILE2_NAME)
+    return [testfile_path_1, testfile_path_2]
+
+
+def write_testfile_bodies(service: DummyService, bodies: List[str]):
+    # Convenience for restore tests
+    paths = testfile_paths(service.get_folders())
+    for p, body in zip(paths, bodies):
+        with open(p, "w") as file:
+            file.write(body)
+
+
+def get_testfile_bodies(service: DummyService):
+    # Convenience for restore tests
+    testfiles: List[str] = []
+    for folder in service.get_folders():
+        files = listdir(folder)
+        testfiles.extend(files)
+    bodies = []
+    for f in testfiles:
+        pass
+
+    with open("/usr/tsr.txt") as file:
+        content = file.read()
+        bodies.append(content)
+    return bodies
+
+
 @pytest.fixture()
 def raw_dummy_service(tmpdir) -> DummyService:
     dirnames = ["test_service", "also_test_service"]
@@ -158,13 +197,13 @@ def raw_dummy_service(tmpdir) -> DummyService:
         makedirs(service_dir)
         service_dirs.append(service_dir)
 
-    testfile_path_1 = path.join(service_dirs[0], "testfile.txt")
-    with open(testfile_path_1, "w") as file:
-        file.write(TESTFILE_BODY)
+    bodies = [TESTFILE_BODY, TESTFILE2_BODY]
 
-    testfile_path_2 = path.join(service_dirs[1], "testfile2.txt")
-    with open(testfile_path_2, "w") as file:
-        file.write(TESTFILE_2_BODY)
+    for fullpath, body in zip(testfile_paths(service_dirs), bodies):
+        with open(fullpath, "w") as file:
+            file.write(TESTFILE2_BODY)
+
+    paths = testfile_paths
 
     # we need this to not change get_folders() much
     class TestDummyService(DummyService, folders=service_dirs):
@@ -222,3 +261,46 @@ def dummy_service(
     # Some tests may remove it from the list intentionally, this is fine
     if service in services.services:
         services.services.remove(service)
+
+
+def prepare_nixos_rebuild_calls(fp, unit_name):
+    # Start the unit
+    fp.register(["systemctl", "start", unit_name])
+
+    # Wait for it to start
+    fp.register(["systemctl", "show", unit_name], stdout="ActiveState=inactive")
+    fp.register(["systemctl", "show", unit_name], stdout="ActiveState=inactive")
+    fp.register(["systemctl", "show", unit_name], stdout="ActiveState=active")
+
+    # Check its exectution
+    fp.register(["systemctl", "show", unit_name], stdout="ActiveState=active")
+    fp.register(
+        ["journalctl", "-u", unit_name, "-n", "1", "-o", "cat"],
+        stdout="Starting rebuild...",
+    )
+
+    fp.register(["systemctl", "show", unit_name], stdout="ActiveState=active")
+    fp.register(
+        ["journalctl", "-u", unit_name, "-n", "1", "-o", "cat"], stdout="Rebuilding..."
+    )
+
+    fp.register(["systemctl", "show", unit_name], stdout="ActiveState=inactive")
+
+
+# My best-effort attempt at making tests involving rebuild friendlier
+@pytest.fixture()
+def catch_nixos_rebuild_calls(fp):
+    # A helper function to be used in tests of all systems that requires
+    # rebuilds
+    prepare_nixos_rebuild_calls(fp, API_REBUILD_SYSTEM_UNIT)
+
+
+def assert_rebuild_was_made(fp, unit_name):
+    # You call it after you have done the operation that
+    # calls a rebuild
+    assert_rebuild_or_upgrade_was_made(fp, API_REBUILD_SYSTEM_UNIT)
+
+
+def assert_rebuild_or_upgrade_was_made(fp, unit_name):
+    assert fp.call_count(["systemctl", "start", unit_name]) == 1
+    assert fp.call_count(["systemctl", "show", unit_name]) == 6
