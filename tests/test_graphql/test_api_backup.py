@@ -1,3 +1,5 @@
+from pytest import raises
+
 from os import path
 from os import mkdir
 
@@ -23,6 +25,7 @@ from tests.test_graphql.test_services import (
     dkim_file,
 )
 from selfprivacy_api.services import CONFIG_STASH_DIR
+from tests.test_graphql.common import assert_empty
 
 
 API_RELOAD_SNAPSHOTS = """
@@ -640,7 +643,7 @@ def test_reload_snapshots_bare_bare_bare(authorized_client, dummy_service, backu
     assert snaps == []
 
 
-def test_induce_autobackup_if_dir_exists(
+def test_total_backup_if_dir_exists(
     authorized_client, only_dummy_service_and_api, backups
 ):
     # mkdir(CONFIG_STASH_DIR)
@@ -655,7 +658,7 @@ def test_induce_autobackup_if_dir_exists(
     assert len(snaps) == 2
 
 
-def test_induce_autobackup(authorized_client, only_dummy_service_and_api, backups):
+def test_total_backup(authorized_client, only_dummy_service_and_api, backups):
     dummy_service = only_dummy_service_and_api
 
     response = api_total_backup(authorized_client)
@@ -740,3 +743,39 @@ def test_backup_all_restore_all(
     assert_ok(data)
     # Just in case
     assert len(api_snapshots(authorized_client)) == 2
+
+
+def test_unauthorized(client, dummy_service):
+    quotas = _AutobackupQuotas(
+        last=3,
+        daily=2,
+        weekly=4,
+        monthly=13,
+        yearly=14,
+    )
+    response = api_set_quotas(client, quotas)
+    assert_empty(response)
+    response = api_set_period(client, 11)
+    assert_empty(response)
+    response = api_remove(client)
+    assert_empty(response)
+    response = api_init(client, "FILE", "", "", "/boguspath", "")
+    assert_empty(response)
+    response = api_restore(client, "oiueroiwueo")
+    assert_empty(response)
+    response = api_backup(client, dummy_service)
+    assert_empty(response)
+    response = api_forget(client, "worieuoweiru")
+    assert_empty(response)
+    response = api_total_backup(client)
+    assert_empty(response)
+    response = api_restore_all(client)
+    assert_empty(response)
+    response = api_reload_snapshots(client)
+    assert_empty(response)
+
+    # TODO: make a special error for this in get_data
+    with raises(ValueError):
+        api_last_slice(client)
+    with raises(ValueError):
+        api_snapshots(client)
