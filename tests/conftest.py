@@ -186,11 +186,11 @@ def get_testfile_bodies(service: DummyService):
     return bodies
 
 
-def is_original_files(service: DummyService):
+def assert_original_files(service: DummyService):
     # For use in restoration tests mostly
 
     paths = testfile_paths(service.get_folders())
-    return get_testfile_bodies(service) == {
+    assert get_testfile_bodies(service) == {
         paths[0]: TESTFILE_BODY,
         paths[1]: TESTFILE2_BODY,
     }
@@ -219,7 +219,7 @@ def raw_dummy_service(tmpdir) -> DummyService:
     service = TestDummyService()
     write_testfile_bodies(service, bodies)
 
-    assert is_original_files(service)
+    assert_original_files(service)
 
     return service
 
@@ -306,7 +306,7 @@ def catch_nixos_rebuild_calls(fp):
     return fp
 
 
-def assert_rebuild_was_made(fp, unit_name):
+def assert_rebuild_was_made(fp):
     # You call it after you have done the operation that
     # calls a rebuild
     assert_rebuild_or_upgrade_was_made(fp, API_REBUILD_SYSTEM_UNIT)

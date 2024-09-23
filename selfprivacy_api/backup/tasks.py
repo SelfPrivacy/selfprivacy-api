@@ -220,6 +220,7 @@ def do_full_restore(job: Job) -> None:
             Backups.restore_snapshot(snap)
         except Exception as error:
             report_job_error(error, job)
+            return
         progress = progress + progress_per_service
         Jobs.update(
             job,
