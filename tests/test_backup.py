@@ -831,17 +831,26 @@ def test_service_manager_backs_up_without_crashing(
     Backups.restore_snapshot(snapshot)
 
 
-# def test_backup_all_restore_all(backups, generic_userdata, dkim_file, only_dummy_service_and_api, catch_nixos_rebuild_calls):
-#     dummy_service = only_dummy_service_and_api
-#     fp = catch_nixos_rebuild_calls
-#     backup_job = add_total_backup_job()
-#     total_backup(backup_job)
-#     assert len(Backups.get_all_snapshots()) == 2
+def test_backup_all_restore_all(
+    backups,
+    generic_userdata,
+    dkim_file,
+    only_dummy_service_and_api,
+    catch_nixos_rebuild_calls,
+):
+    dummy_service = only_dummy_service_and_api
+    fp = catch_nixos_rebuild_calls
+    fp.pass_command(["restic", fp.any()])
+    fp.keep_last_process(True)
 
-#     restore_job = add_total_restore_job()
+    backup_job = add_total_backup_job()
+    total_backup(backup_job)
+    assert len(Backups.get_all_snapshots()) == 2
 
-#     do_full_restore(restore_job)
+    restore_job = add_total_restore_job()
 
-#     # TODO: maybe test integrity.
-#     # since it is standard restore operations they would have failed if something went wrong
-#     # however, one still needs to check that all of the required restores have even started
+    do_full_restore(restore_job)
+
+    # TODO: maybe test integrity.
+    # since it is standard restore operations they would have failed if something went wrong
+    # however, one still needs to check that all of the required restores have even started

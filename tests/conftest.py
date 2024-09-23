@@ -293,6 +293,7 @@ def catch_nixos_rebuild_calls(fp):
     # A helper function to be used in tests of all systems that requires
     # rebuilds
     prepare_nixos_rebuild_calls(fp, API_REBUILD_SYSTEM_UNIT)
+    return fp
 
 
 def assert_rebuild_was_made(fp, unit_name):
