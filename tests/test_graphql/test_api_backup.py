@@ -55,7 +55,7 @@ mutation TestForcedAutobackup {
 API_TOTAL_RESTORE = """
 mutation TestTotalRestore {
     backup {
-         fullRestore{
+           restoreAll{
             success
             message
             code
@@ -317,6 +317,17 @@ def api_total_backup(authorized_client):
         "/graphql",
         json={
             "query": API_TOTAL_BACKUP,
+            "variables": {},
+        },
+    )
+    return response
+
+
+def api_restore_all(authorized_client):
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_TOTAL_RESTORE,
             "variables": {},
         },
     )
@@ -700,3 +711,32 @@ def test_last_slice(authorized_client, only_dummy_service_and_api, backups):
     snaps = api_last_slice(authorized_client)
 
     assert len(snaps) == 2
+
+
+def test_backup_all_restore_all(
+    authorized_client,
+    backups,
+    generic_userdata,
+    dkim_file,
+    only_dummy_service_and_api,
+    catch_nixos_rebuild_calls,
+):
+    dummy_service = only_dummy_service_and_api
+    fp = catch_nixos_rebuild_calls
+    fp.pass_command(["restic", fp.any()])
+    fp.keep_last_process(True)
+    fp.pass_command(["rclone", fp.any()])
+    fp.keep_last_process(True)
+    fp.pass_command(["lsblk", fp.any()])
+    fp.keep_last_process(True)
+
+    response = api_total_backup(authorized_client)
+    data = get_data(response)["backup"]["totalBackup"]
+    assert_ok(data)
+
+    assert len(api_snapshots(authorized_client)) == 2
+    response = api_restore_all(authorized_client)
+    data = get_data(response)["backup"]["restoreAll"]
+    assert_ok(data)
+    # Just in case
+    assert len(api_snapshots(authorized_client)) == 2
