@@ -177,15 +177,23 @@ def get_testfile_bodies(service: DummyService):
     testfiles: List[str] = []
     for folder in service.get_folders():
         files = listdir(folder)
+        files = [path.join(folder, file) for file in files]
         testfiles.extend(files)
-    bodies = []
+    bodies = {}
     for f in testfiles:
-        pass
-
-    with open("/usr/tsr.txt") as file:
-        content = file.read()
-        bodies.append(content)
+        with open(f, "r") as file:
+            bodies[f] = file.read()
     return bodies
+
+
+def is_original_files(service: DummyService):
+    # For use in restoration tests mostly
+
+    paths = testfile_paths(service.get_folders())
+    return get_testfile_bodies(service) == {
+        paths[0]: TESTFILE_BODY,
+        paths[1]: TESTFILE2_BODY,
+    }
 
 
 @pytest.fixture()
@@ -197,20 +205,22 @@ def raw_dummy_service(tmpdir) -> DummyService:
         makedirs(service_dir)
         service_dirs.append(service_dir)
 
+    paths = testfile_paths(service_dirs)
     bodies = [TESTFILE_BODY, TESTFILE2_BODY]
 
-    for fullpath, body in zip(testfile_paths(service_dirs), bodies):
+    # Just touching first, filling is separate
+    for fullpath in paths:
         with open(fullpath, "w") as file:
-            file.write(TESTFILE2_BODY)
+            file.write("")
 
-    paths = testfile_paths
-
-    # we need this to not change get_folders() much
     class TestDummyService(DummyService, folders=service_dirs):
         pass
 
     service = TestDummyService()
-    # assert pickle.dumps(service) is not None
+    write_testfile_bodies(service, bodies)
+
+    assert is_original_files(service)
+
     return service
 
 
