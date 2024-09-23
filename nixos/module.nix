@@ -41,6 +41,7 @@ in
         pkgs.gitMinimal
         config.nix.package.out
         pkgs.restic
+        pkgs.rclone
         pkgs.mkpasswd
         pkgs.util-linux
         pkgs.e2fsprogs
@@ -73,6 +74,7 @@ in
         pkgs.gitMinimal
         config.nix.package.out
         pkgs.restic
+        pkgs.rclone
         pkgs.mkpasswd
         pkgs.util-linux
         pkgs.e2fsprogs
