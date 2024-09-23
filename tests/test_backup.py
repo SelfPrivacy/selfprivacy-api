@@ -1,5 +1,7 @@
 import pytest
 
+from typing import List
+
 import os
 import os.path as path
 from os import remove
@@ -10,7 +12,6 @@ from datetime import datetime, timedelta, timezone
 import tempfile
 
 from selfprivacy_api.utils.huey import huey
-
 
 from selfprivacy_api.services.service import ServiceStatus
 from selfprivacy_api.services import ServiceManager
@@ -40,6 +41,7 @@ from selfprivacy_api.backup.tasks import (
     reload_snapshot_cache,
     total_backup,
     do_full_restore,
+    which_snapshots_to_full_restore,
 )
 from selfprivacy_api.backup.storage import Storage
 from selfprivacy_api.backup.local_secret import LocalBackupSecret
@@ -50,6 +52,12 @@ from selfprivacy_api.backup.jobs import (
 )
 
 from tests.common import assert_job_errored
+from tests.conftest import (
+    write_testfile_bodies,
+    get_testfile_bodies,
+    assert_original_files,
+    assert_rebuild_was_made,
+)
 from tests.test_dkim import dkim_file
 
 from tests.test_graphql.test_services import (
@@ -117,6 +125,18 @@ def file_backup(tmpdir) -> AbstractBackupProvider:
     provider = ProviderClass(location=test_repo_path)
     assert provider is not None
     return provider
+
+
+def ids(snapshots: List[Snapshot]) -> List[str]:
+    return [snapshot.id for snapshot in snapshots]
+
+
+def assert_job_ok(job: Job):
+    try:
+        assert job.status == JobStatus.FINISHED
+    # For easier debug
+    except AssertionError:
+        raise ValueError("Job errored out when it was not supposed to:", job.error)
 
 
 def test_reset_sets_to_none1():
@@ -842,15 +862,27 @@ def test_backup_all_restore_all(
     fp = catch_nixos_rebuild_calls
     fp.pass_command(["restic", fp.any()])
     fp.keep_last_process(True)
+    fp.pass_command(["rclone", fp.any()])
+    fp.keep_last_process(True)
+    fp.pass_command(["lsblk", fp.any()])
+    fp.keep_last_process(True)
+
+    assert len(Backups.get_all_snapshots()) == 0
 
     backup_job = add_total_backup_job()
     total_backup(backup_job)
     assert len(Backups.get_all_snapshots()) == 2
 
+    assert set(ids(which_snapshots_to_full_restore())) == set(
+        ids(Backups.get_all_snapshots())
+    )
+
+    write_testfile_bodies(dummy_service, ["bogus", "bleeegh corruption ><"])
+
     restore_job = add_total_restore_job()
 
     do_full_restore(restore_job)
+    assert_job_ok(restore_job)
 
-    # TODO: maybe test integrity.
-    # since it is standard restore operations they would have failed if something went wrong
-    # however, one still needs to check that all of the required restores have even started
+    assert_rebuild_was_made(fp)
+    assert_original_files(dummy_service)
