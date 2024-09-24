@@ -7,6 +7,8 @@ from os import path, remove
 from os import makedirs
 from os import listdir
 from os.path import join
+from pathlib import Path
+import json
 
 from selfprivacy_api.services.bitwarden import Bitwarden
 from selfprivacy_api.services.forgejo import Forgejo
@@ -28,6 +30,22 @@ from selfprivacy_api.utils.block_devices import BlockDevices
 from shutil import copyfile, copytree, rmtree
 
 CONFIG_STASH_DIR = "/etc/selfprivacy/dump"
+
+ACCOUNT_PATH = Path(
+    "/var/lib/acme/.lego/accounts/*/acme-v02.api.letsencrypt.org/*/account.json"
+)
+
+
+def read_account_uri() -> str:
+    try:
+        with ACCOUNT_PATH.open("r") as file:
+            account_info = json.load(file)
+            return account_info.get("registration", {}).get("uri", "URI not found")
+
+    except FileNotFoundError:
+        print(f"Account file not found: {ACCOUNT_PATH}")
+    except json.JSONDecodeError:
+        print(f"Can't get URI from JSON file: {ACCOUNT_PATH}")
 
 
 class ServiceManager(Service):
@@ -81,6 +99,17 @@ class ServiceManager(Service):
                     display_name="SelfPrivacy API (IPv6)",
                 )
             )
+
+        dns_records.append(
+            ServiceDnsRecord(
+                type="CAA",
+                name=get_domain(),
+                content=f'128 issue "letsencrypt.org;accounturi={read_account_uri()}"',
+                ttl=3600,
+                display_name="CAA for LetsEncrypt",
+            )
+        )
+
         for service in ServiceManager.get_enabled_services():
             dns_records += service.get_dns_records(ip4, ip6)
         return dns_records
