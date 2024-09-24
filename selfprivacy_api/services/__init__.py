@@ -40,12 +40,14 @@ def read_account_uri() -> str:
     try:
         with ACCOUNT_PATH.open("r") as file:
             account_info = json.load(file)
-            return account_info.get("registration", {}).get("uri", "URI not found")
+            return account_info["registration"]["uri"]
 
     except FileNotFoundError:
         print(f"Account file not found: {ACCOUNT_PATH}")
     except json.JSONDecodeError:
-        print(f"Can't get URI from JSON file: {ACCOUNT_PATH}")
+        print(f"Can not decode JSON file: {ACCOUNT_PATH}")
+    except KeyError:
+        print(f"URI not found in JSON file {ACCOUNT_PATH}")
 
 
 class ServiceManager(Service):
