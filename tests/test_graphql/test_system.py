@@ -3,6 +3,8 @@
 # pylint: disable=missing-function-docstring
 import os
 import pytest
+import json
+from collections import Counter
 
 from selfprivacy_api.graphql.queries.providers import DnsProvider
 
@@ -352,6 +354,31 @@ def test_graphql_get_domain(
             ttl=18000,
         ),
     )
+
+
+def test_dns_records_no_duplicates(
+    authorized_client, mock_get_ip4, mock_get_ip6, turned_on, mock_dkim_key
+):
+    """Check for duplicate DNS records"""
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": generate_system_query([API_GET_DOMAIN_INFO]),
+        },
+    )
+
+    assert response.status_code == 200
+
+    dns_records = response.json()["data"]["system"]["domainInfo"]["requiredDnsRecords"]
+
+    serialized_records = [json.dumps(record, sort_keys=True) for record in dns_records]
+
+    record_counts = Counter(serialized_records)
+    duplicates = [
+        json.loads(record) for record, count in record_counts.items() if count > 1
+    ]
+
+    assert len(duplicates) == 0, f"Found duplicate DNS records: {duplicates}"
 
 
 def test_graphql_get_domain_no_dkim(

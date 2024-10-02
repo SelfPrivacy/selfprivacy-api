@@ -61,26 +61,8 @@ class ServiceManager(Service):
     def get_all_required_dns_records() -> list[ServiceDnsRecord]:
         ip4 = network_utils.get_ip4()
         ip6 = network_utils.get_ip6()
-        dns_records: list[ServiceDnsRecord] = [
-            ServiceDnsRecord(
-                type="A",
-                name="api",
-                content=ip4,
-                ttl=3600,
-                display_name="SelfPrivacy API",
-            ),
-        ]
+        dns_records: list[ServiceDnsRecord] = []
 
-        if ip6 is not None:
-            dns_records.append(
-                ServiceDnsRecord(
-                    type="AAAA",
-                    name="api",
-                    content=ip6,
-                    ttl=3600,
-                    display_name="SelfPrivacy API (IPv6)",
-                )
-            )
         for service in ServiceManager.get_enabled_services():
             dns_records += service.get_dns_records(ip4, ip6)
         return dns_records
