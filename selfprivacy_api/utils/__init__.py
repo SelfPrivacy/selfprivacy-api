@@ -7,6 +7,7 @@ import os
 import subprocess
 import portalocker
 import typing
+import glob
 
 from traceback import format_tb as format_traceback
 
@@ -19,6 +20,10 @@ from selfprivacy_api.utils.default_subdomains import (
 USERDATA_FILE = "/etc/nixos/userdata.json"
 SECRETS_FILE = "/etc/selfprivacy/secrets.json"
 DKIM_DIR = "/var/dkim/"
+
+ACCOUNT_PATH_PATTERN = (
+    "/var/lib/acme/.lego/accounts/*/acme-v02.api.letsencrypt.org/*/account.json"
+)
 
 
 class UserDataFiles(Enum):
@@ -234,3 +239,16 @@ def write_to_log(message):
 def pretty_error(e: Exception) -> str:
     traceback = "/r".join(format_traceback(e.__traceback__))
     return type(e).__name__ + ": " + str(e) + ": " + traceback
+
+
+def read_account_uri() -> str:
+    account_file = glob.glob(ACCOUNT_PATH_PATTERN)
+
+    if not account_file:
+        raise FileNotFoundError(
+            f"No account files found matching: {ACCOUNT_PATH_PATTERN}"
+        )
+
+    with open(account_file[0], "r") as file:
+        account_info = json.load(file)
+        return account_info["registration"]["uri"]

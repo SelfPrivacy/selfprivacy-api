@@ -19,6 +19,7 @@ class ServiceDnsRecord(BaseModel):
     type: str
     name: str
     content: str
+
     ttl: int
     display_name: str
     priority: Optional[int] = None

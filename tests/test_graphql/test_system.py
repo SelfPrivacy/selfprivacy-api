@@ -18,6 +18,41 @@ from tests.test_graphql.common import (
 from tests.test_dkim import no_dkim_file, dkim_file
 from tests.test_system import assert_provider
 
+from unittest.mock import mock_open
+
+
+@pytest.fixture
+def account_file_mock(mocker, datadir):
+    mocker.patch(
+        "selfprivacy_api.utils.__init__.glob.glob",
+        return_value=[str(datadir / "account.json")],
+    )
+    return datadir
+
+
+@pytest.fixture
+def account_file_404(mocker, datadir):
+    mocker.patch("selfprivacy_api.utils.__init__.glob.glob", return_value=[])
+    return datadir
+
+
+@pytest.fixture
+def no_uri_account_file_mock(mocker, datadir):
+    mocker.patch(
+        "selfprivacy_api.utils.__init__.glob.glob",
+        return_value=[str(datadir / "no_uri_account.json")],
+    )
+    return datadir
+
+
+@pytest.fixture
+def blank_account_file_mock(mocker, datadir):
+    mocker.patch(
+        "selfprivacy_api.utils.__init__.glob.glob",
+        return_value=[str(datadir / "blank_file_account.json")],
+    )
+    return datadir
+
 
 @pytest.fixture
 def turned_on(mocker, datadir):
@@ -272,7 +307,12 @@ def is_dns_record_in_array(records, dns_record) -> bool:
 
 
 def test_graphql_get_domain(
-    authorized_client, mock_get_ip4, mock_get_ip6, turned_on, mock_dkim_key
+    authorized_client,
+    mock_get_ip4,
+    mock_get_ip6,
+    turned_on,
+    mock_dkim_key,
+    account_file_mock,
 ):
     """Test get domain"""
     response = authorized_client.post(
@@ -354,10 +394,24 @@ def test_graphql_get_domain(
             ttl=18000,
         ),
     )
+    assert is_dns_record_in_array(
+        dns_records,
+        dns_record(
+            name="test-domain.tld",
+            record_type="CAA",
+            content='128 issue "letsencrypt.org;accounturi=https://acme-v02.api.letsencrypt.org/acme/acct/234340396"',
+            ttl=3600,
+        ),
+    )
 
 
 def test_dns_records_no_duplicates(
-    authorized_client, mock_get_ip4, mock_get_ip6, turned_on, mock_dkim_key
+    authorized_client,
+    mock_get_ip4,
+    mock_get_ip6,
+    turned_on,
+    mock_dkim_key,
+    account_file_mock,
 ):
     """Check for duplicate DNS records"""
     response = authorized_client.post(
@@ -387,6 +441,7 @@ def test_graphql_get_domain_no_dkim(
     mock_get_ip6,
     no_dkim_file,
     turned_on,
+    account_file_mock,
 ):
     """Test no DKIM file situation gets properly handled"""
     response = authorized_client.post(
@@ -401,6 +456,303 @@ def test_graphql_get_domain_no_dkim(
     for record in dns_records:
         if record["name"] == "selector._domainkey":
             raise ValueError("unexpected record found:", record)
+
+
+def test_graphql_get_domain_no_uri_account_file(
+    authorized_client,
+    mock_get_ip4,
+    mock_get_ip6,
+    turned_on,
+    mock_dkim_key,
+    no_uri_account_file_mock,
+):
+    """Test get domain"""
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": generate_system_query([API_GET_DOMAIN_INFO]),
+        },
+    )
+    assert response.status_code == 200
+    assert response.json().get("data") is not None
+    assert (
+        response.json()["data"]["system"]["domainInfo"]["domain"] == "test-domain.tld"
+    )
+    assert (
+        response.json()["data"]["system"]["domainInfo"]["hostname"] == "test-instance"
+    )
+    assert response.json()["data"]["system"]["domainInfo"]["provider"] == "CLOUDFLARE"
+    dns_records = response.json()["data"]["system"]["domainInfo"]["requiredDnsRecords"]
+    assert is_dns_record_in_array(dns_records, dns_record())
+    assert is_dns_record_in_array(dns_records, dns_record(record_type="AAAA"))
+    assert is_dns_record_in_array(dns_records, dns_record(name="api"))
+    assert is_dns_record_in_array(
+        dns_records, dns_record(name="api", record_type="AAAA")
+    )
+    assert is_dns_record_in_array(dns_records, dns_record(name="cloud"))
+    assert is_dns_record_in_array(
+        dns_records, dns_record(name="cloud", record_type="AAAA")
+    )
+    assert is_dns_record_in_array(dns_records, dns_record(name="git"))
+    assert is_dns_record_in_array(
+        dns_records, dns_record(name="git", record_type="AAAA")
+    )
+    assert is_dns_record_in_array(dns_records, dns_record(name="meet"))
+    assert is_dns_record_in_array(
+        dns_records, dns_record(name="meet", record_type="AAAA")
+    )
+    assert is_dns_record_in_array(dns_records, dns_record(name="password"))
+    assert is_dns_record_in_array(
+        dns_records, dns_record(name="password", record_type="AAAA")
+    )
+    assert is_dns_record_in_array(dns_records, dns_record(name="social"))
+    assert is_dns_record_in_array(
+        dns_records, dns_record(name="social", record_type="AAAA")
+    )
+    assert is_dns_record_in_array(dns_records, dns_record(name="vpn"))
+    assert is_dns_record_in_array(
+        dns_records, dns_record(name="vpn", record_type="AAAA")
+    )
+    assert is_dns_record_in_array(
+        dns_records,
+        dns_record(
+            name="test-domain.tld",
+            record_type="MX",
+            content="test-domain.tld",
+            priority=10,
+        ),
+    )
+    assert is_dns_record_in_array(
+        dns_records,
+        dns_record(
+            name="_dmarc", record_type="TXT", content="v=DMARC1; p=none", ttl=18000
+        ),
+    )
+    assert is_dns_record_in_array(
+        dns_records,
+        dns_record(
+            name="test-domain.tld",
+            record_type="TXT",
+            content="v=spf1 a mx ip4:157.90.247.192 -all",
+            ttl=18000,
+        ),
+    )
+    assert is_dns_record_in_array(
+        dns_records,
+        dns_record(
+            name="selector._domainkey",
+            record_type="TXT",
+            content="I am a DKIM key",
+            ttl=18000,
+        ),
+    )
+    assert not is_dns_record_in_array(
+        dns_records,
+        dns_record(
+            name="test-domain.tld",
+            record_type="CAA",
+            content='128 issue "letsencrypt.org;accounturi=https://acme-v02.api.letsencrypt.org/acme/acct/234340396"',
+            ttl=3600,
+        ),
+    )
+
+
+def test_graphql_get_domain_not_found_account_file(
+    authorized_client,
+    mock_get_ip4,
+    mock_get_ip6,
+    turned_on,
+    mock_dkim_key,
+    account_file_404,
+):
+    """Test get domain"""
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": generate_system_query([API_GET_DOMAIN_INFO]),
+        },
+    )
+    assert response.status_code == 200
+    assert response.json().get("data") is not None
+    assert (
+        response.json()["data"]["system"]["domainInfo"]["domain"] == "test-domain.tld"
+    )
+    assert (
+        response.json()["data"]["system"]["domainInfo"]["hostname"] == "test-instance"
+    )
+    assert response.json()["data"]["system"]["domainInfo"]["provider"] == "CLOUDFLARE"
+    dns_records = response.json()["data"]["system"]["domainInfo"]["requiredDnsRecords"]
+    assert is_dns_record_in_array(dns_records, dns_record())
+    assert is_dns_record_in_array(dns_records, dns_record(record_type="AAAA"))
+    assert is_dns_record_in_array(dns_records, dns_record(name="api"))
+    assert is_dns_record_in_array(
+        dns_records, dns_record(name="api", record_type="AAAA")
+    )
+    assert is_dns_record_in_array(dns_records, dns_record(name="cloud"))
+    assert is_dns_record_in_array(
+        dns_records, dns_record(name="cloud", record_type="AAAA")
+    )
+    assert is_dns_record_in_array(dns_records, dns_record(name="git"))
+    assert is_dns_record_in_array(
+        dns_records, dns_record(name="git", record_type="AAAA")
+    )
+    assert is_dns_record_in_array(dns_records, dns_record(name="meet"))
+    assert is_dns_record_in_array(
+        dns_records, dns_record(name="meet", record_type="AAAA")
+    )
+    assert is_dns_record_in_array(dns_records, dns_record(name="password"))
+    assert is_dns_record_in_array(
+        dns_records, dns_record(name="password", record_type="AAAA")
+    )
+    assert is_dns_record_in_array(dns_records, dns_record(name="social"))
+    assert is_dns_record_in_array(
+        dns_records, dns_record(name="social", record_type="AAAA")
+    )
+    assert is_dns_record_in_array(dns_records, dns_record(name="vpn"))
+    assert is_dns_record_in_array(
+        dns_records, dns_record(name="vpn", record_type="AAAA")
+    )
+    assert is_dns_record_in_array(
+        dns_records,
+        dns_record(
+            name="test-domain.tld",
+            record_type="MX",
+            content="test-domain.tld",
+            priority=10,
+        ),
+    )
+    assert is_dns_record_in_array(
+        dns_records,
+        dns_record(
+            name="_dmarc", record_type="TXT", content="v=DMARC1; p=none", ttl=18000
+        ),
+    )
+    assert is_dns_record_in_array(
+        dns_records,
+        dns_record(
+            name="test-domain.tld",
+            record_type="TXT",
+            content="v=spf1 a mx ip4:157.90.247.192 -all",
+            ttl=18000,
+        ),
+    )
+    assert is_dns_record_in_array(
+        dns_records,
+        dns_record(
+            name="selector._domainkey",
+            record_type="TXT",
+            content="I am a DKIM key",
+            ttl=18000,
+        ),
+    )
+    assert not is_dns_record_in_array(
+        dns_records,
+        dns_record(
+            name="test-domain.tld",
+            record_type="CAA",
+            content='128 issue "letsencrypt.org;accounturi=https://acme-v02.api.letsencrypt.org/acme/acct/234340396"',
+            ttl=3600,
+        ),
+    )
+
+
+def test_graphql_get_domain_black_account_file(
+    authorized_client,
+    mock_get_ip4,
+    mock_get_ip6,
+    turned_on,
+    mock_dkim_key,
+    blank_account_file_mock,
+):
+    """Test get domain"""
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": generate_system_query([API_GET_DOMAIN_INFO]),
+        },
+    )
+    assert response.status_code == 200
+    assert response.json().get("data") is not None
+    assert (
+        response.json()["data"]["system"]["domainInfo"]["domain"] == "test-domain.tld"
+    )
+    assert (
+        response.json()["data"]["system"]["domainInfo"]["hostname"] == "test-instance"
+    )
+    assert response.json()["data"]["system"]["domainInfo"]["provider"] == "CLOUDFLARE"
+    dns_records = response.json()["data"]["system"]["domainInfo"]["requiredDnsRecords"]
+    assert is_dns_record_in_array(dns_records, dns_record())
+    assert is_dns_record_in_array(dns_records, dns_record(record_type="AAAA"))
+    assert is_dns_record_in_array(dns_records, dns_record(name="api"))
+    assert is_dns_record_in_array(
+        dns_records, dns_record(name="api", record_type="AAAA")
+    )
+    assert is_dns_record_in_array(dns_records, dns_record(name="cloud"))
+    assert is_dns_record_in_array(
+        dns_records, dns_record(name="cloud", record_type="AAAA")
+    )
+    assert is_dns_record_in_array(dns_records, dns_record(name="git"))
+    assert is_dns_record_in_array(
+        dns_records, dns_record(name="git", record_type="AAAA")
+    )
+    assert is_dns_record_in_array(dns_records, dns_record(name="meet"))
+    assert is_dns_record_in_array(
+        dns_records, dns_record(name="meet", record_type="AAAA")
+    )
+    assert is_dns_record_in_array(dns_records, dns_record(name="password"))
+    assert is_dns_record_in_array(
+        dns_records, dns_record(name="password", record_type="AAAA")
+    )
+    assert is_dns_record_in_array(dns_records, dns_record(name="social"))
+    assert is_dns_record_in_array(
+        dns_records, dns_record(name="social", record_type="AAAA")
+    )
+    assert is_dns_record_in_array(dns_records, dns_record(name="vpn"))
+    assert is_dns_record_in_array(
+        dns_records, dns_record(name="vpn", record_type="AAAA")
+    )
+    assert is_dns_record_in_array(
+        dns_records,
+        dns_record(
+            name="test-domain.tld",
+            record_type="MX",
+            content="test-domain.tld",
+            priority=10,
+        ),
+    )
+    assert is_dns_record_in_array(
+        dns_records,
+        dns_record(
+            name="_dmarc", record_type="TXT", content="v=DMARC1; p=none", ttl=18000
+        ),
+    )
+    assert is_dns_record_in_array(
+        dns_records,
+        dns_record(
+            name="test-domain.tld",
+            record_type="TXT",
+            content="v=spf1 a mx ip4:157.90.247.192 -all",
+            ttl=18000,
+        ),
+    )
+    assert is_dns_record_in_array(
+        dns_records,
+        dns_record(
+            name="selector._domainkey",
+            record_type="TXT",
+            content="I am a DKIM key",
+            ttl=18000,
+        ),
+    )
+    assert not is_dns_record_in_array(
+        dns_records,
+        dns_record(
+            name="test-domain.tld",
+            record_type="CAA",
+            content='128 issue "letsencrypt.org;accounturi=https://acme-v02.api.letsencrypt.org/acme/acct/234340396"',
+            ttl=3600,
+        ),
+    )
 
 
 API_GET_TIMEZONE = """

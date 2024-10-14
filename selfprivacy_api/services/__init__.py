@@ -8,6 +8,7 @@ from os import makedirs
 from os import listdir
 from os.path import join
 
+from shutil import copyfile, copytree, rmtree
 from selfprivacy_api.services.bitwarden import Bitwarden
 from selfprivacy_api.services.forgejo import Forgejo
 from selfprivacy_api.services.jitsimeet import JitsiMeet
@@ -25,7 +26,7 @@ import selfprivacy_api.utils.network as network_utils
 from selfprivacy_api.services.api_icon import API_ICON
 from selfprivacy_api.utils import USERDATA_FILE, DKIM_DIR, SECRETS_FILE, get_domain
 from selfprivacy_api.utils.block_devices import BlockDevices
-from shutil import copyfile, copytree, rmtree
+from selfprivacy_api.utils import read_account_uri
 
 CONFIG_STASH_DIR = "/etc/selfprivacy/dump"
 
@@ -61,7 +62,21 @@ class ServiceManager(Service):
     def get_all_required_dns_records() -> list[ServiceDnsRecord]:
         ip4 = network_utils.get_ip4()
         ip6 = network_utils.get_ip6()
+
         dns_records: list[ServiceDnsRecord] = []
+
+        try:
+            dns_records.append(
+                ServiceDnsRecord(
+                    type="CAA",
+                    name=get_domain(),
+                    content=f'128 issue "letsencrypt.org;accounturi={read_account_uri()}"',
+                    ttl=3600,
+                    display_name="CAA record",
+                )
+            )
+        except Exception as e:
+            print(f"Error creating CAA: {e}")
 
         for service in ServiceManager.get_enabled_services():
             dns_records += service.get_dns_records(ip4, ip6)
