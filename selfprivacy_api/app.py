@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 """SelfPrivacy server management API"""
+import logging
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from strawberry.fastapi import GraphQLRouter
@@ -11,6 +14,12 @@ from selfprivacy_api.dependencies import get_api_version
 from selfprivacy_api.graphql.schema import schema
 from selfprivacy_api.migrations import run_migrations
 
+
+log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+
+logging.basicConfig(
+    level=getattr(logging, log_level, logging.INFO), format="%(levelname)s: %(message)s"
+)
 
 app = FastAPI()
 

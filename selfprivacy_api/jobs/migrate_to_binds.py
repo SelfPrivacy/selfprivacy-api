@@ -3,6 +3,7 @@
 import subprocess
 import pathlib
 import shutil
+import logging
 
 from pydantic import BaseModel
 from selfprivacy_api.jobs import Job, JobStatus, Jobs
@@ -14,6 +15,8 @@ from selfprivacy_api.services.pleroma import Pleroma
 from selfprivacy_api.utils import ReadUserData, WriteUserData
 from selfprivacy_api.utils.huey import huey
 from selfprivacy_api.utils.block_devices import BlockDevices
+
+logger = logging.getLogger(__name__)
 
 
 class BindMigrationConfig(BaseModel):
@@ -69,7 +72,7 @@ def move_folder(
     try:
         data_path.mkdir(mode=0o750, parents=True, exist_ok=True)
     except Exception as error:
-        print(f"Error creating data path: {error}")
+        logging.error(f"Error creating data path: {error}")
         return
 
     try:
@@ -81,12 +84,12 @@ def move_folder(
     try:
         subprocess.run(["mount", "--bind", str(bind_path), str(data_path)], check=True)
     except subprocess.CalledProcessError as error:
-        print(error)
+        logging.error(error)
 
     try:
         subprocess.run(["chown", "-R", f"{user}:{group}", str(data_path)], check=True)
     except subprocess.CalledProcessError as error:
-        print(error)
+        logging.error(error)
 
 
 @huey.task()

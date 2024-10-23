@@ -1,5 +1,6 @@
 """Services module."""
 
+import logging
 import base64
 import typing
 from typing import List
@@ -29,6 +30,8 @@ from selfprivacy_api.utils.block_devices import BlockDevices
 from selfprivacy_api.utils import read_account_uri
 
 CONFIG_STASH_DIR = "/etc/selfprivacy/dump"
+
+logger = logging.getLogger(__name__)
 
 
 class ServiceManager(Service):
@@ -76,7 +79,7 @@ class ServiceManager(Service):
                 )
             )
         except Exception as e:
-            print(f"Error creating CAA: {e}")
+            logging.error(f"Error creating CAA: {e}")
 
         for service in ServiceManager.get_enabled_services():
             dns_records += service.get_dns_records(ip4, ip6)

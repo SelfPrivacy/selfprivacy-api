@@ -1,6 +1,9 @@
 """Generic size counter using pathlib"""
 
 import pathlib
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def get_storage_usage(path: str) -> int:
@@ -18,5 +21,5 @@ def get_storage_usage(path: str) -> int:
         except FileNotFoundError:
             pass
         except Exception as error:
-            print(error)
+            logging.error(error)
     return storage_usage

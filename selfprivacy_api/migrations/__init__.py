@@ -9,6 +9,8 @@ with IDs of the migrations to skip.
 Adding DISABLE_ALL to that array disables the migrations module entirely.
 """
 
+import logging
+
 from selfprivacy_api.utils import ReadUserData, UserDataFiles
 from selfprivacy_api.migrations.write_token_to_redis import WriteTokenToRedis
 from selfprivacy_api.migrations.check_for_system_rebuild_jobs import (
@@ -16,6 +18,8 @@ from selfprivacy_api.migrations.check_for_system_rebuild_jobs import (
 )
 from selfprivacy_api.migrations.add_roundcube import AddRoundcube
 from selfprivacy_api.migrations.add_monitoring import AddMonitoring
+
+logger = logging.getLogger(__name__)
 
 migrations = [
     WriteTokenToRedis(),
@@ -47,6 +51,6 @@ def run_migrations():
                 if migration.is_migration_needed():
                     migration.migrate()
             except Exception as err:
-                print(f"Error while migrating {migration.get_migration_name()}")
-                print(err)
-                print("Skipping this migration")
+                logging.error(f"Error while migrating {migration.get_migration_name()}")
+                logging.error(err)
+                logging.error("Skipping this migration")

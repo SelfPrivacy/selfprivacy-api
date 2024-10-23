@@ -1,10 +1,15 @@
 from __future__ import annotations
+import logging
 import subprocess
 import pathlib
-from pydantic import BaseModel
 from os.path import exists
 
+from pydantic import BaseModel
+
 from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
+
+
+logger = logging.getLogger(__name__)
 
 # tests override it to a tmpdir
 VOLUMES_PATH = "/volumes"
@@ -87,7 +92,7 @@ class Bind:
                 check=True,
             )
         except subprocess.CalledProcessError as error:
-            print(error.stderr)
+            logging.error(error.stderr)
             raise BindError(f"Unable to bind {source} to {target} :{error.stderr}")
 
     def unbind(self) -> None:
@@ -119,7 +124,7 @@ class Bind:
                 stderr=subprocess.PIPE,
             )
         except subprocess.CalledProcessError as error:
-            print(error.stderr)
+            logging.error(error.stderr)
             error_message = (
                 f"Unable to set ownership of {true_location} :{error.stderr}"
             )

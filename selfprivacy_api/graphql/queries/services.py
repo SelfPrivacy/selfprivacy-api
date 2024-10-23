@@ -2,6 +2,7 @@
 
 # pylint: disable=too-few-public-methods
 import typing
+
 import strawberry
 
 from selfprivacy_api.graphql.common_types.service import (

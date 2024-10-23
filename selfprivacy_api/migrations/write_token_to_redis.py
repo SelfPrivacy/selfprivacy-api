@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from typing import Optional
 from selfprivacy_api.migrations.migration import Migration
@@ -10,6 +11,8 @@ from selfprivacy_api.repositories.tokens.abstract_tokens_repository import (
     AbstractTokensRepository,
 )
 from selfprivacy_api.utils import ReadUserData, UserDataFiles
+
+logger = logging.getLogger(__name__)
 
 
 class WriteTokenToRedis(Migration):
@@ -35,7 +38,7 @@ class WriteTokenToRedis(Migration):
                     created_at=datetime.now(),
                 )
         except Exception as e:
-            print(e)
+            logging.error(e)
             return None
 
     def is_migration_needed(self) -> bool:
@@ -45,7 +48,7 @@ class WriteTokenToRedis(Migration):
             ):
                 return True
         except Exception as e:
-            print(e)
+            logging.error(e)
             return False
         return False
 
@@ -54,11 +57,11 @@ class WriteTokenToRedis(Migration):
         try:
             token = self.get_token_from_json()
             if token is None:
-                print("No token found in secrets.json")
+                logging.error("No token found in secrets.json")
                 return
             RedisTokensRepository()._store_token(token)
 
-            print("Done")
+            logging.error("Done")
         except Exception as e:
-            print(e)
-            print("Error migrating access tokens from json to redis")
+            logging.error(e)
+            logging.error("Error migrating access tokens from json to redis")
