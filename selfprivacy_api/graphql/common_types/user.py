@@ -1,7 +1,7 @@
 import typing
 from enum import Enum
 import strawberry
-import selfprivacy_api.actions.users as users_actions
+from selfprivacy_api.repositories.users import ACTIVE_USERS_PROVIDER as users_actions
 
 from selfprivacy_api.graphql.mutations.mutation_interface import (
     MutationReturnInterface,
@@ -31,7 +31,7 @@ class UserMutationReturn(MutationReturnInterface):
 
 
 def get_user_by_username(username: str) -> typing.Optional[User]:
-    user = users_actions.get_user_by_username(username)
+    user = users_actions.get_user_by_username(username=username)
     if user is None:
         return None
 

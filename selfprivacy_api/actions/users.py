@@ -2,8 +2,6 @@
 
 import re
 from typing import Optional
-from pydantic import BaseModel
-from enum import Enum
 from selfprivacy_api.utils import (
     ReadUserData,
     WriteUserData,
@@ -11,21 +9,21 @@ from selfprivacy_api.utils import (
     is_username_forbidden,
 )
 
+from selfprivacy_api.repositories.users.abstract_user_repository import (
+    UserDataUser,
+    UserDataUserOrigin,
+)
 
-class UserDataUserOrigin(Enum):
-    """Origin of the user in the user data"""
-
-    NORMAL = "NORMAL"
-    PRIMARY = "PRIMARY"
-    ROOT = "ROOT"
-
-
-class UserDataUser(BaseModel):
-    """The user model from the userdata file"""
-
-    username: str
-    ssh_keys: list[str]
-    origin: UserDataUserOrigin
+from selfprivacy_api.repositories.users.exceptions import (
+    InvalidConfiguration,
+    PasswordIsEmpty,
+    UserAlreadyExists,
+    UserIsProtected,
+    UsernameForbidden,
+    UsernameNotAlphanumeric,
+    UsernameTooLong,
+    UserNotFound,
+)
 
 
 def ensure_ssh_and_users_fields_exist(data):
@@ -78,43 +76,7 @@ def get_users(
     return users
 
 
-class UsernameForbidden(Exception):
-    """Attemted to create a user with a forbidden username"""
-
-    pass
-
-
-class UserAlreadyExists(Exception):
-    """Attemted to create a user that already exists"""
-
-    pass
-
-
-class UsernameNotAlphanumeric(Exception):
-    """Attemted to create a user with a non-alphanumeric username"""
-
-    pass
-
-
-class UsernameTooLong(Exception):
-    """Attemted to create a user with a too long username. Username must be less than 32 characters"""
-
-    pass
-
-
-class PasswordIsEmpty(Exception):
-    """Attemted to create a user with an empty password"""
-
-    pass
-
-
-class InvalidConfiguration(Exception):
-    """The userdata is broken"""
-
-    pass
-
-
-def create_user(username: str, password: str):
+def create_user(username: str, password: str) -> None:
     if password == "":
         raise PasswordIsEmpty("Password is empty")
 
@@ -150,19 +112,7 @@ def create_user(username: str, password: str):
         )
 
 
-class UserNotFound(Exception):
-    """Attemted to get a user that does not exist"""
-
-    pass
-
-
-class UserIsProtected(Exception):
-    """Attemted to delete a user that is protected"""
-
-    pass
-
-
-def delete_user(username: str):
+def delete_user(username: str) -> None:
     with WriteUserData() as user_data:
         ensure_ssh_and_users_fields_exist(user_data)
         if username == user_data["username"] or username == "root":
@@ -176,7 +126,7 @@ def delete_user(username: str):
             raise UserNotFound("User did not exist")
 
 
-def update_user(username: str, password: str):
+def update_user(username: str, password: str) -> None:
     if password == "":
         raise PasswordIsEmpty("Password is empty")
 

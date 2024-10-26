@@ -13,7 +13,6 @@ from selfprivacy_api.graphql.mutations.api_mutations import (
     ApiMutations,
     DeviceApiTokenMutationReturn,
 )
-from selfprivacy_api.graphql.mutations.backup_mutations import BackupMutations
 from selfprivacy_api.graphql.mutations.job_mutations import JobMutations
 from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericJobMutationReturn,
@@ -30,7 +29,6 @@ from selfprivacy_api.graphql.mutations.system_mutations import (
     SystemMutations,
     TimezoneMutationReturn,
 )
-from selfprivacy_api.graphql.mutations.backup_mutations import BackupMutations
 from selfprivacy_api.graphql.mutations.users_mutations import UsersMutations
 
 

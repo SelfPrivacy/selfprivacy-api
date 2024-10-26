@@ -2,8 +2,8 @@
 """Users management module"""
 # pylint: disable=too-few-public-methods
 import strawberry
+
 from selfprivacy_api.graphql import IsAuthenticated
-from selfprivacy_api.actions.users import UserNotFound
 from selfprivacy_api.graphql.common_types.user import (
     UserMutationReturn,
     get_user_by_username,
@@ -18,7 +18,17 @@ from selfprivacy_api.actions.ssh import (
 from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericMutationReturn,
 )
-import selfprivacy_api.actions.users as users_actions
+from selfprivacy_api.repositories.users import ACTIVE_USERS_PROVIDER as users_actions
+from selfprivacy_api.repositories.users.exceptions import (
+    PasswordIsEmpty,
+    UsernameForbidden,
+    InvalidConfiguration,
+    UserAlreadyExists,
+    UserIsProtected,
+    UsernameNotAlphanumeric,
+    UsernameTooLong,
+    UserNotFound,
+)
 
 
 @strawberry.input
@@ -45,37 +55,37 @@ class UsersMutations:
     def create_user(self, user: UserMutationInput) -> UserMutationReturn:
         try:
             users_actions.create_user(user.username, user.password)
-        except users_actions.PasswordIsEmpty as e:
+        except PasswordIsEmpty as e:
             return UserMutationReturn(
                 success=False,
                 message=str(e),
                 code=400,
             )
-        except users_actions.UsernameForbidden as e:
+        except UsernameForbidden as e:
             return UserMutationReturn(
                 success=False,
                 message=str(e),
                 code=409,
             )
-        except users_actions.UsernameNotAlphanumeric as e:
+        except UsernameNotAlphanumeric as e:
             return UserMutationReturn(
                 success=False,
                 message=str(e),
                 code=400,
             )
-        except users_actions.UsernameTooLong as e:
+        except UsernameTooLong as e:
             return UserMutationReturn(
                 success=False,
                 message=str(e),
                 code=400,
             )
-        except users_actions.InvalidConfiguration as e:
+        except InvalidConfiguration as e:
             return UserMutationReturn(
                 success=False,
                 message=str(e),
                 code=400,
             )
-        except users_actions.UserAlreadyExists as e:
+        except UserAlreadyExists as e:
             return UserMutationReturn(
                 success=False,
                 message=str(e),
@@ -94,13 +104,13 @@ class UsersMutations:
     def delete_user(self, username: str) -> GenericMutationReturn:
         try:
             users_actions.delete_user(username)
-        except users_actions.UserNotFound as e:
+        except UserNotFound as e:
             return GenericMutationReturn(
                 success=False,
                 message=str(e),
                 code=404,
             )
-        except users_actions.UserIsProtected as e:
+        except UserIsProtected as e:
             return GenericMutationReturn(
                 success=False,
                 message=str(e),
@@ -118,13 +128,13 @@ class UsersMutations:
         """Update user mutation"""
         try:
             users_actions.update_user(user.username, user.password)
-        except users_actions.PasswordIsEmpty as e:
+        except PasswordIsEmpty as e:
             return UserMutationReturn(
                 success=False,
                 message=str(e),
                 code=400,
             )
-        except users_actions.UserNotFound as e:
+        except UserNotFound as e:
             return UserMutationReturn(
                 success=False,
                 message=str(e),
