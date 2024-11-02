@@ -92,6 +92,21 @@ class ReadUserData(object):
         self.userdata_file.close()
 
 
+def ensure_ssh_and_users_fields_exist(data):
+    if "ssh" not in data:
+        data["ssh"] = {}
+        data["ssh"]["rootKeys"] = []
+
+    elif data["ssh"].get("rootKeys") is None:
+        data["ssh"]["rootKeys"] = []
+
+    if "sshKeys" not in data:
+        data["sshKeys"] = []
+
+    if "users" not in data:
+        data["users"] = []
+
+
 def validate_ssh_public_key(key):
     """Validate SSH public key.
     It may be ssh-ed25519, ssh-rsa or ecdsa-sha2-nistp256."""

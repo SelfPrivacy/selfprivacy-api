@@ -18,7 +18,7 @@ from selfprivacy_api.actions.ssh import (
 from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericMutationReturn,
 )
-from selfprivacy_api.repositories.users import ACTIVE_USERS_PROVIDER as users_actions
+from selfprivacy_api.actions.users import create_user, delete_user, update_user
 from selfprivacy_api.repositories.users.exceptions import (
     PasswordIsEmpty,
     UsernameForbidden,
@@ -54,7 +54,7 @@ class UsersMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def create_user(self, user: UserMutationInput) -> UserMutationReturn:
         try:
-            users_actions.create_user(user.username, user.password)
+            create_user(user.username, user.password)
         except PasswordIsEmpty as e:
             return UserMutationReturn(
                 success=False,
@@ -103,7 +103,7 @@ class UsersMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def delete_user(self, username: str) -> GenericMutationReturn:
         try:
-            users_actions.delete_user(username)
+            delete_user(username)
         except UserNotFound as e:
             return GenericMutationReturn(
                 success=False,
@@ -127,7 +127,7 @@ class UsersMutations:
     def update_user(self, user: UserMutationInput) -> UserMutationReturn:
         """Update user mutation"""
         try:
-            users_actions.update_user(user.username, user.password)
+            update_user(user.username, user.password)
         except PasswordIsEmpty as e:
             return UserMutationReturn(
                 success=False,

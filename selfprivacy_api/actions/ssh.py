@@ -2,12 +2,10 @@
 
 from typing import Optional
 from pydantic import BaseModel
-from selfprivacy_api.actions.users import (
-    UserNotFound,
-    ensure_ssh_and_users_fields_exist,
-)
 
 from selfprivacy_api.utils import WriteUserData, ReadUserData, validate_ssh_public_key
+from selfprivacy_api.repositories.users.exceptions import UserNotFound
+from selfprivacy_api.utils import ensure_ssh_and_users_fields_exist
 
 
 def enable_ssh():

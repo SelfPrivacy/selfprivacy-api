@@ -1,4 +1,4 @@
-from selfprivacy_api.utils import ReadUserData, WriteUserData
+from selfprivacy_api.utils import ReadUserData
 from selfprivacy_api.actions.users import delete_user
 
 """
