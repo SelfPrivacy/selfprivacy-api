@@ -2,6 +2,7 @@ from typing import Optional
 
 import requests
 
+from selfprivacy_api.graphql.common_types.user import UserRepositoryError
 from selfprivacy_api.utils import get_domain
 from selfprivacy_api.models.user import UserDataUser
 from selfprivacy_api.repositories.users.abstract_user_repository import (
@@ -33,14 +34,16 @@ class KanidmUserRepository(AbstractUserRepository):
             )
 
             if response.status_code != 200:
-                raise KanidmQueryError(
+                raise UserRepositoryError(
                     error=f"Kanidm returned unexpected HTTP status code. Error: {response.text}."
                 )
             json = response.json()
 
             return json["data"]
         except Exception as error:
-            raise KanidmQueryError(error=f"Kanidm request failed! Error: {str(error)}")
+            raise UserRepositoryError(
+                error=f"Kanidm request failed! Error: {str(error)}"
+            )
 
     @staticmethod
     def create_user(username: str, password: str):
