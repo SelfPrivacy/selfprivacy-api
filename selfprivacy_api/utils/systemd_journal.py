@@ -42,6 +42,8 @@ def get_paginated_logs(
         events = get_events_from_journal(j, limit, lambda j: j.get_previous())
         events.reverse()
 
+	    j.close()
+
         return events
     elif up_cursor is None and down_cursor is not None:
         j.seek_cursor(down_cursor)
@@ -50,6 +52,8 @@ def get_paginated_logs(
         events = get_events_from_journal(j, limit, lambda j: j.get_previous())
         events.reverse()
 
+        j.close()
+
         return events
     elif up_cursor is not None and down_cursor is None:
         j.seek_cursor(up_cursor)
@@ -57,8 +61,12 @@ def get_paginated_logs(
 
         events = get_events_from_journal(j, limit, lambda j: j.get_next())
 
+	    j.close()
+
         return events
     else:
+	    j.close()
+
         raise NotImplementedError(
             "Pagination by both up_cursor and down_cursor is not implemented"
         )

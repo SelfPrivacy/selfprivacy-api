@@ -27,5 +27,6 @@ async def log_stream() -> AsyncGenerator[LogEntry, None]:
             yield LogEntry(entry)
         except Exception:
             asyncio.get_event_loop().remove_reader(j)
+            j.close()
             return
         queue.task_done()
