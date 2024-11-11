@@ -71,7 +71,7 @@ class KanidmUserRepository(AbstractUserRepository):
             user_type = UserDataUser(
                 uuid=attrs.get("uuid", [None])[0],
                 name=attrs.get("name", [None])[0],
-                ssh_keys="test",  # TODO
+                ssh_keys=["test"],  # TODO
                 displayname=attrs.get("displayname", [None])[0],
                 email=attrs.get("mail", [None])[0],
                 origin=UserDataUserOrigin.NORMAL,  # TODO

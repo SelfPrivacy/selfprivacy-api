@@ -14,8 +14,10 @@ class UserDataUserOrigin(Enum):
 class UserDataUser(BaseModel):
     """The user model from the userdata file"""
 
-    username: str
+    uuid: Optional[str]
     displayname: Optional[str]
-    ssh_keys: list[str]
-    origin: UserDataUserOrigin
     email: Optional[str]
+
+    username: str
+    ssh_keys: list[str]  # TODO WHY NOT OPTIONAL?
+    origin: UserDataUserOrigin
