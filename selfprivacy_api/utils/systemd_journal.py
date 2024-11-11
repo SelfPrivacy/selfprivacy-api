@@ -65,7 +65,7 @@ def get_paginated_logs(
 
         return events
     else:
-	    j.close()
+        j.close()
 
         raise NotImplementedError(
             "Pagination by both up_cursor and down_cursor is not implemented"
