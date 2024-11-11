@@ -1,4 +1,4 @@
-{ pythonPackages, rev ? "local" }:
+{ pythonPackages, rev ? "local", pkgs }:
 
 pythonPackages.buildPythonPackage rec {
   pname = "selfprivacy-graphql-api";
@@ -22,6 +22,7 @@ pythonPackages.buildPythonPackage rec {
     requests
     websockets
     httpx
+    pkgs.memray
   ];
   pythonImportsCheck = [ "selfprivacy_api" ];
   doCheck = false;

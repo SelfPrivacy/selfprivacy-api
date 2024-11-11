@@ -8,8 +8,9 @@
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
       selfprivacy-graphql-api = pkgs.callPackage ./default.nix {
-        pythonPackages = pkgs.python312Packages;
+        pythonPackages = pkgs.python311Packages;
         rev = self.shortRev or self.dirtyShortRev or "dirty";
+        pkgs = pkgs;
       };
       python = self.packages.${system}.default.pythonModule;
       python-env =
@@ -29,6 +30,7 @@
             pyflakes
             typer # for strawberry
             types-redis # for mypy
+            pkgs.memray
           ] ++ strawberry-graphql.optional-dependencies.cli));
 
       vmtest-src-dir = "/root/source";

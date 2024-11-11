@@ -45,12 +45,13 @@ in
         pkgs.util-linux
         pkgs.e2fsprogs
         pkgs.iproute2
+        pkgs.memray
       ];
       after = [ "network-online.target" ];
       wantedBy = [ "network-online.target" ];
       serviceConfig = {
         User = "root";
-        ExecStart = "${selfprivacy-graphql-api}/bin/app.py";
+        ExecStart = "${pkgs.memray}/bin/memray --trace-python-allocators --live-remote ${selfprivacy-graphql-api}/bin/app.py";
         Restart = "always";
         RestartSec = "5";
       };
@@ -61,7 +62,7 @@ in
         HOME = "/root";
         PYTHONUNBUFFERED = "1";
         PYTHONPATH =
-          pkgs.python312Packages.makePythonPath [ selfprivacy-graphql-api ];
+          pkgs.python311Packages.makePythonPath [ selfprivacy-graphql-api ];
       } // config.networking.proxy.envVars;
       path = [
         "/var/"
@@ -82,7 +83,7 @@ in
       wantedBy = [ "network-online.target" ];
       serviceConfig = {
         User = "root";
-        ExecStart = "${pkgs.python312Packages.huey}/bin/huey_consumer.py selfprivacy_api.task_registry.huey";
+        ExecStart = "${pkgs.python311Packages.huey}/bin/huey_consumer.py selfprivacy_api.task_registry.huey";
         Restart = "always";
         RestartSec = "5";
       };
