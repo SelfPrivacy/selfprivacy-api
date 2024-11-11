@@ -13,13 +13,6 @@ from selfprivacy_api.graphql.mutations.mutation_interface import (
 )
 
 
-@strawberry.type
-class UserRepositoryError(Exception):
-    """Error occurred during repo query"""
-
-    error: str
-
-
 @strawberry.enum
 class UserType(Enum):
     NORMAL = "NORMAL"
