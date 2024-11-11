@@ -15,8 +15,6 @@ TEST_TOKEN = """eyJhbGciOiJFUzI1NiIsImtpZCI6IjVkNDUyNzdmZWUxY2UzZmNkMTViZDhkZjE3
 class KanidmQueryError(Exception):
     """Error occurred during kanidm query"""
 
-    error: str
-
 
 class KanidmUserRepository(AbstractUserRepository):
     @staticmethod
@@ -37,13 +35,13 @@ class KanidmUserRepository(AbstractUserRepository):
             if response.status_code != 200:
                 error_text = getattr(response, "text", "No response error was found...")
                 raise KanidmQueryError(
-                    error=f"Kanidm returned {response.status_code} unexpected HTTP status code. Error: {error_text}."
+                    f"Kanidm returned {response.status_code} unexpected HTTP status code. Error: {error_text}."
                 )
             json = response.json()
-
             return json["data"]
+
         except Exception as error:
-            raise KanidmQueryError(error=f"Kanidm request failed! Error: {str(error)}")
+            raise KanidmQueryError(f"Kanidm request failed! Error: {str(error)}")
 
     @staticmethod
     def create_user(username: str, password: str):
