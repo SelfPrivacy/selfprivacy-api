@@ -3,7 +3,7 @@ from typing import Optional
 import requests
 
 from selfprivacy_api.utils import get_domain
-from selfprivacy_api.models.user import UserDataUser
+from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
 from selfprivacy_api.repositories.users.abstract_user_repository import (
     AbstractUserRepository,
 )
@@ -38,8 +38,6 @@ class KanidmUserRepository(AbstractUserRepository):
                 raise KanidmQueryError(
                     f"Kanidm returned {response.status_code} unexpected HTTP status code. Endpoint: {full_endpoint}. Error: {response.text}."
                 )
-            # json = response.json()
-            # return json["data"]
             return response.json()
 
         except Exception as error:
@@ -66,7 +64,20 @@ class KanidmUserRepository(AbstractUserRepository):
         exclude_primary: bool = False,
         exclude_root: bool = False,
     ) -> list[UserDataUser]:
-        return KanidmUserRepository._send_query(endpoint="person", method="GET")
+        users_data = KanidmUserRepository.get_users(endpoint="person", method="GET")
+        users = []
+        for user in users_data:
+            attrs = user.get("attrs", {})
+            user_type = UserDataUser(
+                uuid=attrs.get("uuid", [None])[0],
+                name=attrs.get("name", [None])[0],
+                ssh_keys="test",  # TODO
+                displayname=attrs.get("displayname", [None])[0],
+                email=attrs.get("mail", [None])[0],
+                origin=UserDataUserOrigin.NORMAL,  # TODO
+            )
+            users.append(user_type)
+        return users
 
     def delete_user(username: str) -> None:
         """Deletes an existing user"""
