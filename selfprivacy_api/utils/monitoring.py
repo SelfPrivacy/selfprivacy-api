@@ -70,8 +70,9 @@ class MonitoringQueries:
                 timeout=0.8,
             )
             if response.status_code != 200:
+                error_text = getattr(response, "text", "No response error was found...")
                 return MonitoringQueryError(
-                    error=f"Prometheus returned unexpected HTTP status code. Error: {response.text}. The query was {query}"
+                    error=f"Prometheus returned unexpected HTTP status code. Error: {error_text}. The query was {query}"
                 )
             json = response.json()
             if result_type and json["data"]["resultType"] != result_type:

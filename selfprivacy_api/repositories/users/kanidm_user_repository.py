@@ -35,8 +35,9 @@ class KanidmUserRepository(AbstractUserRepository):
             )
 
             if response.status_code != 200:
+                error_text = getattr(response, "text", "No response error was found...")
                 raise KanidmQueryError(
-                    error=f"Kanidm returned unexpected HTTP status code. Error: {response.text}."
+                    error=f"Kanidm returned {response.status_code} unexpected HTTP status code. Error: {error_text}."
                 )
             json = response.json()
 
