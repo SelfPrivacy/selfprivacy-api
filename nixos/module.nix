@@ -51,7 +51,7 @@ in
       wantedBy = [ "network-online.target" ];
       serviceConfig = {
         User = "root";
-        ExecStart = "${pkgs.memray}/bin/memray run --trace-python-allocators --live-remote ${selfprivacy-graphql-api}/bin/app.py";
+        ExecStart = "${pkgs.memray}/bin/memray run --trace-python-allocators --follow-fork ${selfprivacy-graphql-api}/bin/.app.py-wrapped";
         Restart = "always";
         RestartSec = "5";
       };
