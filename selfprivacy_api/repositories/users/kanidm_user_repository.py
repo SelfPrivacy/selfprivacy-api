@@ -31,15 +31,16 @@ class KanidmUserRepository(AbstractUserRepository):
                     "Content-Type": "application/json",
                 },
                 timeout=0.8,  # TODO: change timeout
-                verify=False,
+                verify=False,  # TODO: REMOVE THIS NOTHALAL!!!!!
             )
 
             if response.status_code != 200:
                 raise KanidmQueryError(
                     f"Kanidm returned {response.status_code} unexpected HTTP status code. Endpoint: {full_endpoint}. Error: {response.text}."
                 )
-            json = response.json()
-            return json["data"]
+            # json = response.json()
+            # return json["data"]
+            return response.json()
 
         except Exception as error:
             raise KanidmQueryError(f"Kanidm request failed! Error: {str(error)}")
