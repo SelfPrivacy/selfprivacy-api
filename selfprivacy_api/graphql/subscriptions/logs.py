@@ -21,12 +21,17 @@ async def log_stream() -> AsyncGenerator[LogEntry, None]:
 
     asyncio.get_event_loop().add_reader(j, lambda: asyncio.ensure_future(callback()))
 
-    while True:
-        entry = await queue.get()
-        try:
-            yield LogEntry(entry)
-        except Exception:
-            asyncio.get_event_loop().remove_reader(j)
-            j.close()
-            return
-        queue.task_done()
+    try:
+        while True:
+            entry = await queue.get()
+            try:
+                yield LogEntry(entry)
+            except Exception:
+                asyncio.get_event_loop().remove_reader(j)
+                j.close()
+                return
+            queue.task_done()
+    except asyncio.CancelledError:
+        asyncio.get_event_loop().remove_reader(j)
+        j.close()
+        return
