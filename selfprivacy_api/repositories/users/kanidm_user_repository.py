@@ -31,6 +31,7 @@ class KanidmUserRepository(AbstractUserRepository):
                     "Content-Type": "application/json",
                 },
                 timeout=0.8,  # TODO: change timeout
+                verify=False,
             )
 
             if response.status_code != 200:
