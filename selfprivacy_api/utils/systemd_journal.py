@@ -42,7 +42,7 @@ def get_paginated_logs(
         events = get_events_from_journal(j, limit, lambda j: j.get_previous())
         events.reverse()
 
-	    j.close()
+        j.close()
 
         return events
     elif up_cursor is None and down_cursor is not None:
@@ -61,7 +61,7 @@ def get_paginated_logs(
 
         events = get_events_from_journal(j, limit, lambda j: j.get_next())
 
-	    j.close()
+        j.close()
 
         return events
     else:
