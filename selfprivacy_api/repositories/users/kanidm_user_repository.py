@@ -64,7 +64,7 @@ class KanidmUserRepository(AbstractUserRepository):
         exclude_primary: bool = False,
         exclude_root: bool = False,
     ) -> list[UserDataUser]:
-        users_data = KanidmUserRepository.get_users(endpoint="person", method="GET")
+        users_data = KanidmUserRepository._send_query(endpoint="person", method="GET")
         users = []
         for user in users_data:
             attrs = user.get("attrs", {})
