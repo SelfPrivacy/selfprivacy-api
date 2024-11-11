@@ -20,10 +20,11 @@ class KanidmUserRepository(AbstractUserRepository):
     @staticmethod
     def _send_query(endpoint: str, method: str = "GET", data=None):
         request_method = getattr(requests, method.lower(), None)
+        full_endpoint = f"{KANIDM_URL}/v1/{endpoint}"
 
         try:
             response = request_method(
-                f"{KANIDM_URL}/v1/{endpoint}",
+                full_endpoint,
                 json=data,
                 headers={
                     "Authorization": f"Bearer {TEST_TOKEN}",
@@ -33,9 +34,8 @@ class KanidmUserRepository(AbstractUserRepository):
             )
 
             if response.status_code != 200:
-                error_text = getattr(response, "text", "No response error was found...")
                 raise KanidmQueryError(
-                    f"Kanidm returned {response.status_code} unexpected HTTP status code. Error: {error_text}."
+                    f"Kanidm returned {response.status_code} unexpected HTTP status code. Endpoint: {full_endpoint}. Error: {response.text}."
                 )
             json = response.json()
             return json["data"]
