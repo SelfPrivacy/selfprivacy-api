@@ -44,15 +44,27 @@ class KanidmUserRepository(AbstractUserRepository):
             raise KanidmQueryError(f"Kanidm request failed! Error: {str(error)}")
 
     @staticmethod
-    def create_user(username: str, password: str):
+    def create_user(
+        username: str,
+        password: Optional[str] = None,  # TODO legacy?
+        displayname: Optional[str] = None,
+        email: Optional[str] = None,
+        directmemberof: Optional[list[str]] = None,
+        memberof: Optional[list[str]] = None,
+    ) -> None:
         data = {
             "attrs": {
                 "name": [username],
-                "displayname": [username],
-                "mail": [f"{username}@{get_domain()}"],
-                "class": ["user"],
+                "displayname": [displayname if displayname else username],
+                "mail": [email if email else f"{username}@{get_domain()}"],
+                "class": ["user"],  # TODO read more about it
             }
         }
+
+        if directmemberof:
+            data["attrs"]["directmemberof"] = directmemberof
+        if memberof:
+            data["attrs"]["memberof"] = memberof
 
         return KanidmUserRepository._send_query(
             endpoint="person",
@@ -71,22 +83,70 @@ class KanidmUserRepository(AbstractUserRepository):
             user_type = UserDataUser(
                 uuid=attrs.get("uuid", [None])[0],
                 username=attrs.get("name", [None])[0],
-                ssh_keys=["test"],  # TODO
+                ssh_keys=["test"],  # TODO: подключить реальные SSH-ключи
                 displayname=attrs.get("displayname", [None])[0],
                 email=attrs.get("mail", [None])[0],
                 origin=UserDataUserOrigin.NORMAL,  # TODO
+                directmemberof=attrs.get("directmemberof", []),
+                memberof=attrs.get("memberof", []),
             )
             users.append(user_type)
         return users
 
     def delete_user(username: str) -> None:
         """Deletes an existing user"""
-        return KanidmUserRepository._send_query()
+        return KanidmUserRepository._send_query(
+            endpoint=f"person/{username}", method="DELETE"
+        )
 
-    def update_user(username: str, password: str) -> None:
+    def update_user(
+        username: str,
+        password: Optional[str] = None,  # TODO legacy?
+        displayname: Optional[str] = None,
+        email: Optional[str] = None,
+        directmemberof: Optional[list[str]] = None,
+        memberof: Optional[list[str]] = None,
+    ) -> None:
         """Updates the password of an existing user"""
-        return KanidmUserRepository._send_query()
+
+        data = {
+            "attrs": {
+                "displayname": [displayname if displayname else username],
+                "mail": [email if email else f"{username}@{get_domain()}"],
+                "class": ["user"],  # TODO read more about it
+            }
+        }
+
+        if directmemberof:
+            data["attrs"]["directmemberof"] = directmemberof
+        if memberof:
+            data["attrs"]["memberof"] = memberof
+
+        return KanidmUserRepository._send_query(
+            endpoint=f"person/{username}",
+            method="PATCH",
+            data=data,
+        )
 
     def get_user_by_username(username: str) -> Optional[UserDataUser]:
         """Retrieves user data (UserDataUser) by username"""
-        return KanidmUserRepository._send_query()
+        user_data = KanidmUserRepository._send_query(
+            endpoint=f"person/{username}",
+            method="GET",
+        )
+
+        if not user_data or "attrs" not in user_data:
+            return None
+
+        attrs = user_data["attrs"]
+
+        return UserDataUser(
+            uuid=attrs.get("uuid", [None])[0],
+            username=attrs.get("name", [None])[0],
+            displayname=attrs.get("displayname", [None])[0],
+            email=attrs.get("mail", [None])[0],
+            ssh_keys=attrs.get("ssh_keys", []),
+            origin=UserDataUserOrigin.NORMAL,  # TODO
+            directmemberof=attrs.get("directmemberof", []),
+            memberof=attrs.get("memberof", []),
+        )

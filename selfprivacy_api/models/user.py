@@ -14,10 +14,14 @@ class UserDataUserOrigin(Enum):
 class UserDataUser(BaseModel):
     """The user model from the userdata file"""
 
-    uuid: Optional[str]
-    displayname: Optional[str]
-    email: Optional[str]
-
     username: str
-    ssh_keys: list[str]  # TODO WHY NOT OPTIONAL?
+    displayname: Optional[
+        str
+    ]  # in logic graphql will return "username" if "displayname" None
     origin: UserDataUserOrigin
+
+    uuid: Optional[str]
+    email: Optional[str]
+    ssh_keys: Optional[list[str]]
+    directmemberof: Optional[list[str]]
+    memberof: Optional[list[str]]
