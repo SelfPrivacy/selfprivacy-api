@@ -46,7 +46,7 @@ class KanidmUserRepository(AbstractUserRepository):
     @staticmethod
     def create_user(
         username: str,
-        password: Optional[str] = None,  # TODO legacy?
+        hashed_password: Optional[str] = None,  # TODO legacy?
         displayname: Optional[str] = None,
         email: Optional[str] = None,
         directmemberof: Optional[list[str]] = None,
@@ -101,7 +101,7 @@ class KanidmUserRepository(AbstractUserRepository):
 
     def update_user(
         username: str,
-        password: Optional[str] = None,  # TODO legacy?
+        hashed_password: Optional[str] = None,  # TODO legacy?
         displayname: Optional[str] = None,
         email: Optional[str] = None,
         directmemberof: Optional[list[str]] = None,
