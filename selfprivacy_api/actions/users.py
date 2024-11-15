@@ -33,8 +33,6 @@ def create_user(
     directmemberof: Optional[list[str]] = None,
     memberof: Optional[list[str]] = None,
 ) -> None:
-    if password == "":
-        raise PasswordIsEmpty("Password is empty")
 
     if is_username_forbidden(username):
         raise UsernameForbidden("Username is forbidden")
@@ -47,10 +45,18 @@ def create_user(
     if len(username) >= 32:
         raise UsernameTooLong("Username must be less than 32 characters")
 
-    hashed_password = hash_password(password)
+    if password == "":
+        raise PasswordIsEmpty("Password is empty")
+
+    hashed_password = hash_password(password) if password else None
 
     return ACTIVE_USERS_PROVIDER.create_user(
-        username=username, hashed_password=hashed_password
+        username=username,
+        hashed_password=hashed_password,
+        displayname=displayname,
+        email=email,
+        directmemberof=directmemberof,
+        memberof=memberof,
     )
 
 
@@ -69,10 +75,15 @@ def update_user(
     if password == "":
         raise PasswordIsEmpty("Password is empty")
 
-    hashed_password = hash_password(password)
+    hashed_password = hash_password(password) if password else None
 
     return ACTIVE_USERS_PROVIDER.update_user(
-        username=username, hashed_password=hashed_password
+        username=username,
+        hashed_password=hashed_password,
+        displayname=displayname,
+        email=email,
+        directmemberof=directmemberof,
+        memberof=memberof,
     )
 
 
