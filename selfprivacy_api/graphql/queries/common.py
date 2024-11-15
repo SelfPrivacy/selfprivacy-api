@@ -2,7 +2,7 @@
 
 from enum import Enum
 import datetime
-import typing
+from typing import Optional
 import strawberry
 
 
@@ -28,4 +28,4 @@ class Alert:
     severity: Severity
     title: str
     message: str
-    timestamp: typing.Optional[datetime.datetime]
+    timestamp: Optional[datetime.datetime]

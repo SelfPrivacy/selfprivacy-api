@@ -1,7 +1,7 @@
 """Services mutations"""
 
 # pylint: disable=too-few-public-methods
-import typing
+from typing import Optional
 import strawberry
 
 from selfprivacy_api.utils import pretty_error
@@ -33,7 +33,7 @@ from selfprivacy_api.services import ServiceManager
 class ServiceMutationReturn(GenericMutationReturn):
     """Service mutation return type."""
 
-    service: typing.Optional[Service] = None
+    service: Optional[Service] = None
 
 
 @strawberry.input
@@ -93,7 +93,7 @@ class MoveServiceInput:
 class ServiceJobMutationReturn(GenericJobMutationReturn):
     """Service job mutation return type."""
 
-    service: typing.Optional[Service] = None
+    service: Optional[Service] = None
 
 
 @strawberry.type

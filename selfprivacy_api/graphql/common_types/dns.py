@@ -1,4 +1,4 @@
-import typing
+from typing import Optional
 import strawberry
 
 
@@ -11,5 +11,5 @@ class DnsRecord:
     name: str
     content: str
     ttl: int
-    priority: typing.Optional[int]
+    priority: Optional[int]
     display_name: str

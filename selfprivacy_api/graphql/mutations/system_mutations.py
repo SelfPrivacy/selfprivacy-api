@@ -1,7 +1,7 @@
 """System management mutations"""
 
 # pylint: disable=too-few-public-methods
-import typing
+from typing import Optional
 import strawberry
 
 from selfprivacy_api.utils import pretty_error
@@ -26,7 +26,7 @@ from selfprivacy_api.actions.system import set_dns_provider
 class TimezoneMutationReturn(MutationReturnInterface):
     """Return type of the timezone mutation, contains timezone"""
 
-    timezone: typing.Optional[str]
+    timezone: Optional[str]
 
 
 @strawberry.type
@@ -65,8 +65,8 @@ class SetDnsProviderInput:
 class AutoUpgradeSettingsInput:
     """Input type for auto upgrade settings"""
 
-    enableAutoUpgrade: typing.Optional[bool] = None
-    allowReboot: typing.Optional[bool] = None
+    enableAutoUpgrade: Optional[bool] = None
+    allowReboot: Optional[bool] = None
 
 
 @strawberry.type

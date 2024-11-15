@@ -1,7 +1,7 @@
 """GraphQL API for SelfPrivacy."""
 
 # pylint: disable=too-few-public-methods
-import typing
+from typing import Any
 from strawberry.permission import BasePermission
 from strawberry.types import Info
 
@@ -13,7 +13,7 @@ class IsAuthenticated(BasePermission):
 
     message = "You must be authenticated to access this resource."
 
-    def has_permission(self, source: typing.Any, info: Info, **kwargs) -> bool:
+    def has_permission(self, source: Any, info: Info, **kwargs) -> bool:
         token = info.context["request"].headers.get("Authorization")
         if token is None:
             token = info.context["request"].query_params.get("token")

@@ -6,7 +6,7 @@ import json
 import os
 import subprocess
 import portalocker
-import typing
+from typing import Optional
 import glob
 
 from traceback import format_tb as format_traceback
@@ -217,7 +217,7 @@ def parse_dkim(dkim: str) -> str:
     return dkim
 
 
-def get_dkim_key(domain: str, parse: bool = True) -> typing.Optional[str]:
+def get_dkim_key(domain: str, parse: bool = True) -> Optional[str]:
     """Get DKIM key from /var/dkim/<domain>.selector.txt"""
 
     dkim_path = os.path.join(DKIM_DIR, domain + ".selector.txt")
