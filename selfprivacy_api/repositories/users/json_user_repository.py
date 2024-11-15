@@ -6,6 +6,7 @@ from selfprivacy_api.utils import (
     ReadUserData,
     WriteUserData,
     ensure_ssh_and_users_fields_exist,
+    hash_password,
 )
 from selfprivacy_api.repositories.users.abstract_user_repository import (
     AbstractUserRepository,
@@ -15,10 +16,18 @@ from selfprivacy_api.repositories.users.exceptions import (
     UserAlreadyExists,
     UserIsProtected,
     UserNotFound,
+    PasswordIsEmpty,
 )
 
 
 class JsonUserRepository(AbstractUserRepository):
+    @staticmethod
+    def _check_and_hash_password(password: str):
+        if password == "":
+            raise PasswordIsEmpty("Password is empty")
+
+        return hash_password(password)
+
     @staticmethod
     def get_users(
         exclude_primary: bool = False,
@@ -55,7 +64,9 @@ class JsonUserRepository(AbstractUserRepository):
         return users
 
     @staticmethod
-    def create_user(username: str, hashed_password: str) -> None:
+    def create_user(username: str, password: str) -> None:
+        hashed_password = JsonUserRepository._check_and_hash_password(password)
+
         with ReadUserData() as user_data:
             ensure_ssh_and_users_fields_exist(user_data)
             if "username" not in user_data.keys():
@@ -89,7 +100,9 @@ class JsonUserRepository(AbstractUserRepository):
                 raise UserNotFound("User did not exist")
 
     @staticmethod
-    def update_user(username: str, hashed_password: str) -> None:
+    def update_user(username: str, password: str) -> None:
+        hashed_password = JsonUserRepository._check_and_hash_password(password)
+
         with WriteUserData() as data:
             ensure_ssh_and_users_fields_exist(data)
 

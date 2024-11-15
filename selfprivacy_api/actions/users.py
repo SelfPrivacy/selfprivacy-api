@@ -5,11 +5,10 @@ from typing import Optional
 
 from selfprivacy_api.models.user import UserDataUser
 
-from selfprivacy_api.utils import hash_password, is_username_forbidden
+from selfprivacy_api.utils import is_username_forbidden
 
 from selfprivacy_api.repositories.users import ACTIVE_USERS_PROVIDER
 from selfprivacy_api.repositories.users.exceptions import (
-    PasswordIsEmpty,
     UsernameForbidden,
     UsernameNotAlphanumeric,
     UsernameTooLong,
@@ -45,14 +44,9 @@ def create_user(
     if len(username) >= 32:
         raise UsernameTooLong("Username must be less than 32 characters")
 
-    if password == "":
-        raise PasswordIsEmpty("Password is empty")
-
-    hashed_password = hash_password(password) if password else None
-
     return ACTIVE_USERS_PROVIDER.create_user(
         username=username,
-        hashed_password=hashed_password,
+        password=password,
         displayname=displayname,
         email=email,
         directmemberof=directmemberof,
@@ -72,14 +66,10 @@ def update_user(
     directmemberof: Optional[list[str]] = None,
     memberof: Optional[list[str]] = None,
 ) -> None:
-    if password == "":
-        raise PasswordIsEmpty("Password is empty")
-
-    hashed_password = hash_password(password) if password else None
 
     return ACTIVE_USERS_PROVIDER.update_user(
         username=username,
-        hashed_password=hashed_password,
+        password=password,
         displayname=displayname,
         email=email,
         directmemberof=directmemberof,

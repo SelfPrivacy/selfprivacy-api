@@ -5,7 +5,6 @@ from selfprivacy_api.models.user import UserDataUser
 
 
 class AbstractUserRepository(ABC):
-
     @staticmethod
     @abstractmethod
     def get_users(
@@ -16,7 +15,7 @@ class AbstractUserRepository(ABC):
 
     @staticmethod
     @abstractmethod
-    def create_user(username: str, hashed_password: str) -> None:
+    def create_user(username: str, password: str) -> None:
         """Creates a new user"""
 
     @staticmethod
@@ -26,7 +25,7 @@ class AbstractUserRepository(ABC):
 
     @staticmethod
     @abstractmethod
-    def update_user(username: str, hashed_password: str) -> None:
+    def update_user(username: str, password: str) -> None:
         """Updates the password of an existing user"""
 
     @staticmethod
