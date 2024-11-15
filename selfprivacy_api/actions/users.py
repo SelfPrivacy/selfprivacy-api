@@ -25,7 +25,14 @@ def get_users(
     )
 
 
-def create_user(username: str, password: str) -> None:
+def create_user(
+    username: str,
+    password: Optional[str] = None,
+    displayname: Optional[str] = None,
+    email: Optional[str] = None,
+    directmemberof: Optional[list[str]] = None,
+    memberof: Optional[list[str]] = None,
+) -> None:
     if password == "":
         raise PasswordIsEmpty("Password is empty")
 
@@ -51,7 +58,14 @@ def delete_user(username: str) -> None:
     return ACTIVE_USERS_PROVIDER.delete_user(username=username)
 
 
-def update_user(username: str, password: str) -> None:
+def update_user(
+    username: str,
+    password: Optional[str] = None,
+    displayname: Optional[str] = None,
+    email: Optional[str] = None,
+    directmemberof: Optional[list[str]] = None,
+    memberof: Optional[list[str]] = None,
+) -> None:
     if password == "":
         raise PasswordIsEmpty("Password is empty")
 

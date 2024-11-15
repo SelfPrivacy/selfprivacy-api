@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Users management module"""
 # pylint: disable=too-few-public-methods
+from typing import Optional
 import strawberry
 
 from selfprivacy_api.graphql import IsAuthenticated
@@ -12,13 +13,17 @@ from selfprivacy_api.actions.ssh import (
     InvalidPublicKey,
     KeyAlreadyExists,
     KeyNotFound,
-    create_ssh_key,
-    remove_ssh_key,
+    create_ssh_key as create_ssh_key_action,
+    remove_ssh_key as remove_ssh_key_action,
 )
 from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericMutationReturn,
 )
-from selfprivacy_api.actions.users import create_user, delete_user, update_user
+from selfprivacy_api.actions.users import (
+    create_user as create_user_action,
+    delete_user as delete_user_action,
+    update_user as update_user_action,
+)
 from selfprivacy_api.repositories.users.exceptions import (
     PasswordIsEmpty,
     UsernameForbidden,
@@ -36,7 +41,12 @@ class UserMutationInput:
     """Input type for user mutation"""
 
     username: str
-    password: str
+    password: Optional[str] = None
+    displayname: Optional[str] = None
+    email: Optional[str] = None
+    uuid: Optional[str] = None
+    directmemberof: Optional[list[str]] = strawberry.field(default_factory=list)
+    memberof: Optional[list[str]] = strawberry.field(default_factory=list)
 
 
 @strawberry.input
@@ -54,7 +64,14 @@ class UsersMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def create_user(self, user: UserMutationInput) -> UserMutationReturn:
         try:
-            create_user(user.username, user.password)
+            create_user_action(
+                username=user.username,
+                password=user.password,
+                displayname=user.displayname,
+                email=user.email,
+                directmemberof=user.directmemberof,
+                memberof=user.memberof,
+            )
         except PasswordIsEmpty as e:
             return UserMutationReturn(
                 success=False,
@@ -103,7 +120,7 @@ class UsersMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def delete_user(self, username: str) -> GenericMutationReturn:
         try:
-            delete_user(username)
+            delete_user_action(username)
         except UserNotFound as e:
             return GenericMutationReturn(
                 success=False,
@@ -127,7 +144,14 @@ class UsersMutations:
     def update_user(self, user: UserMutationInput) -> UserMutationReturn:
         """Update user mutation"""
         try:
-            update_user(user.username, user.password)
+            update_user_action(
+                username=user.username,
+                password=user.password,
+                displayname=user.displayname,
+                email=user.email,
+                directmemberof=user.directmemberof,
+                memberof=user.memberof,
+            )
         except PasswordIsEmpty as e:
             return UserMutationReturn(
                 success=False,
@@ -153,7 +177,7 @@ class UsersMutations:
         """Add a new ssh key"""
 
         try:
-            create_ssh_key(ssh_input.username, ssh_input.ssh_key)
+            create_ssh_key_action(ssh_input.username, ssh_input.ssh_key)
         except KeyAlreadyExists:
             return UserMutationReturn(
                 success=False,
@@ -191,7 +215,7 @@ class UsersMutations:
         """Remove ssh key from user"""
 
         try:
-            remove_ssh_key(ssh_input.username, ssh_input.ssh_key)
+            remove_ssh_key_action(ssh_input.username, ssh_input.ssh_key)
         except KeyNotFound:
             return UserMutationReturn(
                 success=False,

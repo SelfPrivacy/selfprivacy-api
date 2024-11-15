@@ -15,11 +15,11 @@ class UserDataUser(BaseModel):
     """The user model from the userdata file"""
 
     username: str
+    origin: UserDataUserOrigin
+
     displayname: Optional[
         str
     ]  # in logic graphql will return "username" if "displayname" None
-    origin: UserDataUserOrigin
-
     uuid: Optional[str]
     email: Optional[str]
     ssh_keys: Optional[list[str]]

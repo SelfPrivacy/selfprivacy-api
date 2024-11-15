@@ -1,4 +1,4 @@
-import typing
+from typing import Optional
 from enum import Enum
 
 import strawberry
@@ -22,16 +22,14 @@ class UserType(Enum):
 
 @strawberry.type
 class User:
-    displayname: str
     username: str
     user_type: UserType
-    ssh_keys: typing.List[str] = strawberry.field(default_factory=list)
-    uuid: typing.Optional[str] = None
-    email: typing.Optional[str] = None
-    directmemberof: typing.Optional[typing.List[str]] = strawberry.field(
-        default_factory=list
-    )
-    memberof: typing.Optional[typing.List[str]] = strawberry.field(default_factory=list)
+    displayname: Optional[str] = None
+    ssh_keys: list[str] = strawberry.field(default_factory=list)
+    uuid: Optional[str] = None
+    email: Optional[str] = None
+    directmemberof: Optional[list[str]] = strawberry.field(default_factory=list)
+    memberof: Optional[list[str]] = strawberry.field(default_factory=list)
     # userHomeFolderspace: UserHomeFolderUsage
 
 
@@ -39,7 +37,7 @@ class User:
 class UserMutationReturn(MutationReturnInterface):
     """Return type for user mutation"""
 
-    user: typing.Optional[User] = None
+    user: Optional[User] = None
 
 
 def get_user_by_username(username: str) -> typing.Optional[User]:
