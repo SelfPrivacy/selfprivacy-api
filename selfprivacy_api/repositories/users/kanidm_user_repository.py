@@ -108,7 +108,7 @@ class KanidmUserRepository(AbstractUserRepository):
                 full_endpoint,
                 json=data,
                 headers={
-                    "Authorization": f"Bearer {KanidmPassword.get()}",
+                    "Authorization": f"Bearer {KanidmAdminToken.get()}",
                     "Content-Type": "application/json",
                 },
                 timeout=0.8,  # TODO: change timeout
