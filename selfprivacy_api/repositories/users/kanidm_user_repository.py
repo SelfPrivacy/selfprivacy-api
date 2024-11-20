@@ -71,7 +71,7 @@ class KanidmAdminToken:
     def reset_and_save_idm_admin_password() -> str:
         new_kanidm_admin_password = subprocess.check_output(
             [
-                "kanidm",
+                "kanidmd",
                 "recover-account",
                 "-c",
                 "/etc/kanidm/server.toml",
