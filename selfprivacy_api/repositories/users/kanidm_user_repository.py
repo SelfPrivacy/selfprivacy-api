@@ -3,7 +3,7 @@ from typing import Optional
 import os
 import subprocess
 import requests
-import json
+import re
 from contextlib import contextmanager
 
 from selfprivacy_api.utils import get_domain
@@ -53,29 +53,17 @@ class KanidmAdminToken:
     @staticmethod
     def create_and_save_token(kanidm_admin_password: str) -> str:
         with temporary_env_var(key="KANIDM_PASSWORD", value=kanidm_admin_password):
-            # kanidm_admin_token = subprocess.check_output(
-            #     [
-            #         "kanidm",
-            #         "service-account",
-            #         "api-token",
-            #         "generate",
-            #         "--rw",
-            #         "selfprivacy",
-            #         "token2",
-            #     ]
-            # )
-            try:
-                kanidm_admin_token = (
-                    subprocess.check_output(
-                        "kanidm service-account api-token generate --rw selfprivacy token2",
-                        shell=True,
-                        stderr=subprocess.STDOUT,
-                    )
-                    .decode("utf-8")
-                    .strip()
-                )
-            except subprocess.CalledProcessError as e:
-                print(e.output.decode())
+            kanidm_admin_token = subprocess.check_output(
+                [
+                    "kanidm",
+                    "service-account",
+                    "api-token",
+                    "generate",
+                    "--rw",
+                    "selfprivacy",
+                    "token2",
+                ]
+            )
 
         redis.set("kanidm:token", kanidm_admin_token)
         return kanidm_admin_token
@@ -95,10 +83,11 @@ class KanidmAdminToken:
             stderr=subprocess.DEVNULL,
         ).decode("utf-8")
 
-        data = json.loads(output)
-        new_kanidm_admin_password = data.get("password", "").strip()
-
+        new_kanidm_admin_password = re.search(r'{"password":"([^"]+)"}', output).group(
+            1
+        )
         redis.set("kanidm:password", new_kanidm_admin_password)
+
         return new_kanidm_admin_password
 
 
