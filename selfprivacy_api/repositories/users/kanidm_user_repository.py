@@ -53,17 +53,22 @@ class KanidmAdminToken:
     @staticmethod
     def create_and_save_token(kanidm_admin_password: str) -> str:
         with temporary_env_var(key="KANIDM_PASSWORD", value=kanidm_admin_password):
-            kanidm_admin_token = subprocess.check_output(
-                [
-                    "kanidm",
-                    "service-account",
-                    "api-token",
-                    "generate",
-                    "--rw",
-                    "selfprivacy",
-                    "token2",
-                ]
-            )
+            try:
+                kanidm_admin_token = subprocess.check_output(
+                    [
+                        "kanidmd",
+                        "recover-account",
+                        "-c",
+                        "/etc/kanidm/server.toml",
+                        "idm_admin",
+                        "-o",
+                        "json",
+                    ],
+                    text=True,
+                    stderr=subprocess.DEVNULL,
+                )
+            except subprocess.CalledProcessError as e:
+                print(e)
 
         redis.set("kanidm:token", kanidm_admin_token)
         return kanidm_admin_token
@@ -80,14 +85,15 @@ class KanidmAdminToken:
                 "-o",
                 "json",
             ],
+            text=True,
             stderr=subprocess.DEVNULL,
-        ).decode("utf-8")
+        )
 
         new_kanidm_admin_password = re.search(r'{"password":"([^"]+)"}', output).group(
             1
-        )
-        redis.set("kanidm:password", new_kanidm_admin_password)
+        )  # we have many not json strings in output
 
+        redis.set("kanidm:password", new_kanidm_admin_password)
         return new_kanidm_admin_password
 
 
