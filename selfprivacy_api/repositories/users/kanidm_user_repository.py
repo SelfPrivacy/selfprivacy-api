@@ -3,6 +3,7 @@ from typing import Optional
 import os
 import subprocess
 import requests
+import json
 from contextlib import contextmanager
 
 from selfprivacy_api.utils import get_domain
@@ -81,37 +82,21 @@ class KanidmAdminToken:
 
     @staticmethod
     def reset_and_save_idm_admin_password() -> str:
-        # new_kanidm_admin_password = subprocess.check_output(
-        #     [
-        #         "kanidmd",
-        #         "recover-account",
-        #         "-c",
-        #         "/etc/kanidm/server.toml",
-        #         "idm_admin",
-        #         "-o",
-        #         "json",
-        #         "2>/dev/null",
-        #         "|",
-        #         "grep",
-        #         "'{\"password'",
-        #         "|",
-        #         "jq",
-        #         "-r",
-        #         ".password",
-        #     ]
-        # ).decode("utf-8")
-        try:
-            new_kanidm_admin_password = (
-                subprocess.check_output(
-                    "kanidmd recover-account -c /etc/kanidm/server.toml idm_admin -o json 2>/dev/null | grep '{\"password' | jq -r .password",
-                    shell=True,
-                    stderr=subprocess.STDOUT,
-                )
-                .decode("utf-8")
-                .strip()
-            )
-        except subprocess.CalledProcessError as e:
-            print(e.output.decode())
+        output = subprocess.check_output(
+            [
+                "kanidmd",
+                "recover-account",
+                "-c",
+                "/etc/kanidm/server.toml",
+                "idm_admin",
+                "-o",
+                "json",
+            ],
+            stderr=subprocess.DEVNULL,
+        ).decode("utf-8")
+
+        data = json.loads(output)
+        new_kanidm_admin_password = data.get("password", "").strip()
 
         redis.set("kanidm:password", new_kanidm_admin_password)
         return new_kanidm_admin_password
