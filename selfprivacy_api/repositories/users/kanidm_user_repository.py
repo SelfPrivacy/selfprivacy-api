@@ -52,16 +52,25 @@ class KanidmAdminToken:
     @staticmethod
     def create_and_save_token(kanidm_admin_password: str) -> str:
         with temporary_env_var(key="KANIDM_PASSWORD", value=kanidm_admin_password):
-            kanidm_admin_token = subprocess.check_output(
-                [
-                    "kanidm",
-                    "service-account",
-                    "api-token",
-                    "generate",
-                    "--rw",
-                    "selfprivacy",
-                    "token2",
-                ]
+            # kanidm_admin_token = subprocess.check_output(
+            #     [
+            #         "kanidm",
+            #         "service-account",
+            #         "api-token",
+            #         "generate",
+            #         "--rw",
+            #         "selfprivacy",
+            #         "token2",
+            #     ]
+            # )
+            kanidm_admin_token = (
+                subprocess.check_output(
+                    "kanidm service-account api-token generate --rw selfprivacy token2",
+                    shell=True,
+                    stderr=subprocess.STDOUT,
+                )
+                .decode("utf-8")
+                .strip()
             )
 
         redis.set("kanidm:token", kanidm_admin_token)
@@ -69,25 +78,34 @@ class KanidmAdminToken:
 
     @staticmethod
     def reset_and_save_idm_admin_password() -> str:
-        new_kanidm_admin_password = subprocess.check_output(
-            [
-                "kanidmd",
-                "recover-account",
-                "-c",
-                "/etc/kanidm/server.toml",
-                "idm_admin",
-                "-o",
-                "json",
-                "2>/dev/null",
-                "|",
-                "grep",
-                "'{\"password'",
-                "|",
-                "jq",
-                "-r",
-                ".password",
-            ]
-        ).decode("utf-8")
+        # new_kanidm_admin_password = subprocess.check_output(
+        #     [
+        #         "kanidmd",
+        #         "recover-account",
+        #         "-c",
+        #         "/etc/kanidm/server.toml",
+        #         "idm_admin",
+        #         "-o",
+        #         "json",
+        #         "2>/dev/null",
+        #         "|",
+        #         "grep",
+        #         "'{\"password'",
+        #         "|",
+        #         "jq",
+        #         "-r",
+        #         ".password",
+        #     ]
+        # ).decode("utf-8")
+        new_kanidm_admin_password = (
+            subprocess.check_output(
+                "kanidmd recover-account -c /etc/kanidm/server.toml idm_admin -o json 2>/dev/null | grep '{\"password' | jq -r .password",
+                shell=True,
+                stderr=subprocess.STDOUT,
+            )
+            .decode("utf-8")
+            .strip()
+        )
 
         redis.set("kanidm:password", new_kanidm_admin_password)
         return new_kanidm_admin_password
