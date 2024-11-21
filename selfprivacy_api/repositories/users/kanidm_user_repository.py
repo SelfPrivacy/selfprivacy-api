@@ -63,15 +63,18 @@ class KanidmAdminToken:
             #         "token2",
             #     ]
             # )
-            kanidm_admin_token = (
-                subprocess.check_output(
-                    "kanidm service-account api-token generate --rw selfprivacy token2",
-                    shell=True,
-                    stderr=subprocess.STDOUT,
+            try:
+                kanidm_admin_token = (
+                    subprocess.check_output(
+                        "kanidm service-account api-token generate --rw selfprivacy token2",
+                        shell=True,
+                        stderr=subprocess.STDOUT,
+                    )
+                    .decode("utf-8")
+                    .strip()
                 )
-                .decode("utf-8")
-                .strip()
-            )
+            except subprocess.CalledProcessError as e:
+                print(e.output.decode())
 
         redis.set("kanidm:token", kanidm_admin_token)
         return kanidm_admin_token
@@ -97,15 +100,18 @@ class KanidmAdminToken:
         #         ".password",
         #     ]
         # ).decode("utf-8")
-        new_kanidm_admin_password = (
-            subprocess.check_output(
-                "kanidmd recover-account -c /etc/kanidm/server.toml idm_admin -o json 2>/dev/null | grep '{\"password' | jq -r .password",
-                shell=True,
-                stderr=subprocess.STDOUT,
+        try:
+            new_kanidm_admin_password = (
+                subprocess.check_output(
+                    "kanidmd recover-account -c /etc/kanidm/server.toml idm_admin -o json 2>/dev/null | grep '{\"password' | jq -r .password",
+                    shell=True,
+                    stderr=subprocess.STDOUT,
+                )
+                .decode("utf-8")
+                .strip()
             )
-            .decode("utf-8")
-            .strip()
-        )
+        except subprocess.CalledProcessError as e:
+            print(e.output.decode())
 
         redis.set("kanidm:password", new_kanidm_admin_password)
         return new_kanidm_admin_password
