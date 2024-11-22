@@ -56,13 +56,13 @@ class KanidmAdminToken:
             try:
                 kanidm_admin_token = subprocess.check_output(
                     [
-                        "kanidmd",
-                        "recover-account",
-                        "-c",
-                        "/etc/kanidm/server.toml",
-                        "idm_admin",
-                        "-o",
-                        "json",
+                        "kanidm",
+                        "service-account",
+                        "api-token",
+                        "generate",
+                        "--rw",
+                        "selfprivacy",
+                        "token2",
                     ],
                     text=True,
                 )
