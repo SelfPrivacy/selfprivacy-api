@@ -65,7 +65,6 @@ class KanidmAdminToken:
                         "json",
                     ],
                     text=True,
-                    stderr=subprocess.DEVNULL,
                 )
             except subprocess.CalledProcessError as e:
                 print(e)
@@ -86,13 +85,22 @@ class KanidmAdminToken:
                 "json",
             ],
             text=True,
-            stderr=subprocess.DEVNULL,
         )
+
+        os.system(f"echo '{output}' >> /root/output.txt)")
+
+        output = output.decode("utf-8")
+
+        os.system(f"echo '{output}' >> /root/outputde.txt)")
 
         match = re.search(r'"password":"([^"]+)"', output)
         new_kanidm_admin_password = match.group(
             1
         )  # we have many not json strings in output
+
+        os.system(
+            f"echo '{new_kanidm_admin_password}' >> /root/new_kanidm_admin_password.txt)"
+        )
 
         redis.set("kanidm:password", new_kanidm_admin_password)
         return new_kanidm_admin_password
