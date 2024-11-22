@@ -74,6 +74,8 @@ class KanidmAdminToken:
 
     @staticmethod
     def reset_and_save_idm_admin_password() -> str:
+        print("ALLLLLLLL ISSS OKKEEEEEEEYEEYEYEYEYEYEYEYEYEyFvsdsnmiosfd")
+
         output = subprocess.check_output(
             [
                 "kanidmd",
@@ -86,6 +88,8 @@ class KanidmAdminToken:
             ],
             text=True,
         )
+
+        print("ALLLLLLLL ISSS OKKEEEEEEEYEEYEYEYEYEYEYEYEYEyFvsdsnmiosfdI HATE YOU")
 
         os.system(f"echo '{output}' >> /root/output.txt)")
 
