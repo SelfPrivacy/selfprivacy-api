@@ -69,6 +69,8 @@ class KanidmAdminToken:
             except subprocess.CalledProcessError as e:
                 print(e)
 
+            kanidm_admin_token = kanidm_admin_token.splitlines()[-1]
+
         redis.set("kanidm:token", kanidm_admin_token)
         return kanidm_admin_token
 
