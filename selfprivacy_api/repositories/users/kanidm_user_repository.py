@@ -120,26 +120,26 @@ class KanidmUserRepository(AbstractUserRepository):
         request_method = getattr(requests, method.lower(), None)
         full_endpoint = f"{KANIDM_URL}/v1/{endpoint}"
 
-        try:
-            response = request_method(
-                full_endpoint,
-                json=data,
-                headers={
-                    "Authorization": f"Bearer {KanidmAdminToken.get()}",
-                    "Content-Type": "application/json",
-                },
-                timeout=0.8,  # TODO: change timeout
-                verify=False,  # TODO: REMOVE THIS NOTHALAL!!!!!
+        # try:
+        response = request_method(
+            full_endpoint,
+            json=data,
+            headers={
+                "Authorization": f"Bearer {KanidmAdminToken.get()}",
+                "Content-Type": "application/json",
+            },
+            timeout=0.8,  # TODO: change timeout
+            verify=False,  # TODO: REMOVE THIS NOTHALAL!!!!!
+        )
+
+        if response.status_code != 200:
+            raise KanidmQueryError(
+                f"Kanidm returned {response.status_code} unexpected HTTP status code. Endpoint: {full_endpoint}. Error: {response.text}."
             )
+        return response.json()
 
-            if response.status_code != 200:
-                raise KanidmQueryError(
-                    f"Kanidm returned {response.status_code} unexpected HTTP status code. Endpoint: {full_endpoint}. Error: {response.text}."
-                )
-            return response.json()
-
-        except Exception as error:
-            raise KanidmQueryError(f"Kanidm request failed! Error: {str(error)}")
+        # except Exception as error:
+        #     raise KanidmQueryError(f"Kanidm request failed! Error: {str(error)}")
 
     @staticmethod
     def create_user(
