@@ -89,8 +89,10 @@ class KanidmAdminToken:
             stderr=subprocess.DEVNULL,
         )
 
-        new_kanidm_admin_password = re.findall(r'{"password":"([^"]+)"}', output)[-1]
-        # we have many not json strings in output
+        match = re.search(r'"password":"([^"]+)"', output)
+        new_kanidm_admin_password = match.group(
+            1
+        )  # we have many not json strings in output
 
         redis.set("kanidm:password", new_kanidm_admin_password)
         return new_kanidm_admin_password
