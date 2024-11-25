@@ -4,6 +4,7 @@ import os
 import subprocess
 import requests
 import re
+import logging
 from contextlib import contextmanager
 
 from selfprivacy_api.utils import get_domain
@@ -16,6 +17,8 @@ from selfprivacy_api.repositories.users.abstract_user_repository import (
 KANIDM_URL = "https://127.0.0.1:3013"
 
 redis = RedisPool().get_connection()
+
+logger = logging.getLogger(__name__)
 
 
 @contextmanager
@@ -52,6 +55,8 @@ class KanidmAdminToken:
 
     @staticmethod
     def create_and_save_token(kanidm_admin_password: str) -> str:
+        logging.error("create_and_save_token START")
+
         with temporary_env_var(key="KANIDM_PASSWORD", value=kanidm_admin_password):
             try:
                 kanidm_admin_token = subprocess.check_output(
@@ -69,14 +74,17 @@ class KanidmAdminToken:
             except subprocess.CalledProcessError as e:
                 print(e)
 
-            kanidm_admin_token = kanidm_admin_token.splitlines()[-1]
+        logging.error("create_and_save_token END subprocess.check_output")
+
+        kanidm_admin_token = kanidm_admin_token.splitlines()[-1]
+        logging.error(f"create_and_save_token FIND {kanidm_admin_token}")
 
         redis.set("kanidm:token", kanidm_admin_token)
         return kanidm_admin_token
 
     @staticmethod
     def reset_and_save_idm_admin_password() -> str:
-        print("ALLLLLLLL ISSS OKKEEEEEEEYEEYEYEYEYEYEYEYEYEyFvsdsnmiosfd")
+        logging.error("reset_and_save_idm_admin_password START")
 
         output = subprocess.check_output(
             [
@@ -91,21 +99,18 @@ class KanidmAdminToken:
             text=True,
         )
 
-        print("ALLLLLLLL ISSS OKKEEEEEEEYEEYEYEYEYEYEYEYEYEyFvsdsnmiosfdI HATE YOU")
-
-        os.system(f"echo '{output}' >> /root/output.txt)")
+        logging.error("reset_and_save_idm_admin_password END subprocess.check_output")
 
         output = output.decode("utf-8")
-
-        os.system(f"echo '{output}' >> /root/outputde.txt)")
 
         match = re.search(r'"password":"([^"]+)"', output)
         new_kanidm_admin_password = match.group(
             1
         )  # we have many not json strings in output
 
-        os.system(
-            f"echo '{new_kanidm_admin_password}' >> /root/new_kanidm_admin_password.txt)"
+        logging.error("reset_and_save_idm_admin_password FULL END")
+        logging.error(
+            f"reset_and_save_idm_admin_password FIND {new_kanidm_admin_password}"
         )
 
         redis.set("kanidm:password", new_kanidm_admin_password)
