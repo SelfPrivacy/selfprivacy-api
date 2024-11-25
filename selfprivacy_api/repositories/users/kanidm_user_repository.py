@@ -74,10 +74,7 @@ class KanidmAdminToken:
             except subprocess.CalledProcessError as e:
                 print(e)
 
-        logging.error("create_and_save_token END subprocess.check_output")
-
         kanidm_admin_token = kanidm_admin_token.splitlines()[-1]
-        logging.error(f"create_and_save_token FIND {kanidm_admin_token}")
 
         redis.set("kanidm:token", kanidm_admin_token)
         return kanidm_admin_token
@@ -99,19 +96,10 @@ class KanidmAdminToken:
             text=True,
         )
 
-        logging.error("reset_and_save_idm_admin_password END subprocess.check_output")
-
-        output = output.decode("utf-8")
-
         match = re.search(r'"password":"([^"]+)"', output)
         new_kanidm_admin_password = match.group(
             1
         )  # we have many not json strings in output
-
-        logging.error("reset_and_save_idm_admin_password FULL END")
-        logging.error(
-            f"reset_and_save_idm_admin_password FIND {new_kanidm_admin_password}"
-        )
 
         redis.set("kanidm:password", new_kanidm_admin_password)
         return new_kanidm_admin_password
