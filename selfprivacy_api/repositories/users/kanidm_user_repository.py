@@ -1,13 +1,11 @@
 from typing import Optional
 
-import os
 import subprocess
 import requests
 import re
 import logging
-from contextlib import contextmanager
 
-from selfprivacy_api.utils import get_domain
+from selfprivacy_api.utils import get_domain, temporary_env_var
 from selfprivacy_api.utils.redis_pool import RedisPool
 from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
 from selfprivacy_api.repositories.users.abstract_user_repository import (
@@ -19,19 +17,6 @@ KANIDM_URL = "https://127.0.0.1:3013"
 redis = RedisPool().get_connection()
 
 logger = logging.getLogger(__name__)
-
-
-@contextmanager
-def temporary_env_var(key, value):
-    """
-    A context manager for temporarily setting an environment variable
-    with automatic cleanup after exiting the block, even in case of an error.
-    """
-    os.environ[key] = value
-    try:
-        yield
-    finally:
-        del os.environ[key]
 
 
 class KanidmAdminToken:
@@ -58,21 +43,22 @@ class KanidmAdminToken:
         logging.error("create_and_save_token START")
 
         with temporary_env_var(key="KANIDM_PASSWORD", value=kanidm_admin_password):
-            try:
-                kanidm_admin_token = subprocess.check_output(
-                    [
-                        "kanidm",
-                        "service-account",
-                        "api-token",
-                        "generate",
-                        "--rw",
-                        "selfprivacy",
-                        "token2",
-                    ],
-                    text=True,
-                )
-            except subprocess.CalledProcessError as e:
-                print(e)
+            subprocess.run("kanidm login -D idm_admin")
+
+            kanidm_admin_token = subprocess.check_output(
+                [
+                    "kanidm",
+                    "service-account",
+                    "api-token",
+                    "generate",
+                    "--rw",
+                    "selfprivacy",
+                    "token2",
+                ],
+                text=True,
+            )
+            # except subprocess.CalledProcessError as e:
+            #     logger.error(e)
 
         kanidm_admin_token = kanidm_admin_token.splitlines()[-1]
 
