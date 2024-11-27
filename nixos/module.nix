@@ -48,7 +48,7 @@ in
         pkgs.iproute2
       ];
       after = [ "network-online.target" ];
-      wantedBy = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
       serviceConfig = {
         User = "root";
         ExecStart = "${selfprivacy-graphql-api}/bin/app.py";
@@ -82,7 +82,7 @@ in
         pkgs.iproute2
       ];
       after = [ "network-online.target" ];
-      wantedBy = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
       serviceConfig = {
         User = "root";
         ExecStart = "${pkgs.python312Packages.huey}/bin/huey_consumer.py selfprivacy_api.task_registry.huey";
