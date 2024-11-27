@@ -45,18 +45,37 @@ class KanidmAdminToken:
         with temporary_env_var(key="KANIDM_PASSWORD", value=kanidm_admin_password):
             subprocess.run(["kanidm", "login", "-D", "idm_admin"])
 
-            kanidm_admin_token = subprocess.check_output(
-                [
-                    "kanidm",
-                    "service-account",
-                    "api-token",
-                    "generate",
-                    "--rw",
-                    "selfprivacy",
-                    "token2",
-                ],
-                text=True,
-            )
+            # kanidm_admin_token = subprocess.check_output(
+            #     [
+            #         "kanidm",
+            #         "service-account",
+            #         "api-token",
+            #         "generate",
+            #         "--rw",
+            #         "selfprivacy",
+            #         "token2",
+            #     ],
+            #     text=True,
+            # )
+            try:
+                kanidm_admin_token = subprocess.check_output(
+                    [
+                        "kanidm",
+                        "service-account",
+                        "api-token",
+                        "generate",
+                        "--rw",
+                        "selfprivacy",
+                        "token2",
+                    ],
+                    text=True,
+                    stderr=subprocess.PIPE,
+                )
+            except subprocess.CalledProcessError as e:
+                logging.error(f"Error executing command: {e.cmd}")
+                logging.error(f"Error message: {e.stderr}")
+                raise
+
             # except subprocess.CalledProcessError as e:
             #     logger.error(e)
 
