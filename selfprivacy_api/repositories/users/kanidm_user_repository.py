@@ -43,7 +43,7 @@ class KanidmAdminToken:
         logging.error("create_and_save_token START")
 
         with temporary_env_var(key="KANIDM_PASSWORD", value=kanidm_admin_password):
-            subprocess.run("kanidm login -D idm_admin")
+            subprocess.run("kanidm", "login", "-D", "idm_admin")
 
             kanidm_admin_token = subprocess.check_output(
                 [
