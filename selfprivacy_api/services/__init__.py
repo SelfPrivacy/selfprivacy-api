@@ -236,7 +236,7 @@ class ServiceManager(Service):
         paths = listdir(tempdir)
         logging.warn(f"Pre_Backup paths are {paths}")
         for file in paths:
-            logging.wart(f"removing {file}")
+            logging.warn(f"removing {file}")
             remove(file)
 
         for p in [USERDATA_FILE, SECRETS_FILE, DKIM_DIR]:
