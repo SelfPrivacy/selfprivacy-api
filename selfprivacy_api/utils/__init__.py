@@ -8,6 +8,7 @@ import subprocess
 import portalocker
 from typing import Optional
 import glob
+from contextlib import contextmanager
 
 from traceback import format_tb as format_traceback
 
@@ -267,3 +268,16 @@ def read_account_uri() -> str:
     with open(account_file[0], "r") as file:
         account_info = json.load(file)
         return account_info["registration"]["uri"]
+
+
+@contextmanager
+def temporary_env_var(key, value):
+    """
+    A context manager for temporarily setting an environment variable
+    with automatic cleanup after exiting the block, even in case of an error.
+    """
+    os.environ[key] = value
+    try:
+        yield
+    finally:
+        del os.environ[key]
