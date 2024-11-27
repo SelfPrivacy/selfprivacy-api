@@ -237,7 +237,7 @@ class ServiceManager(Service):
         logging.warn(f"Pre_Backup paths are {paths}")
         for file in paths:
             logging.warn(f"removing {file}")
-            remove(file)
+            remove(join(cls.dump_dir(), file))
 
         for p in [USERDATA_FILE, SECRETS_FILE, DKIM_DIR]:
             logging.warn(f"Stashing {p}")
