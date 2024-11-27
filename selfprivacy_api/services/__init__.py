@@ -200,8 +200,11 @@ class ServiceManager(Service):
 
     @classmethod
     def stash_for(cls, p: str) -> str:
+        logging.warn(f"Stashing for {p}")
         basename = path.basename(p)
+        logging.warn(f"basename is {basename}")
         stashed_file_location = join(cls.dump_dir(), basename)
+        logging.warn(f"stashed_file_location is {stashed_file_location}")
         return stashed_file_location
 
     @classmethod
@@ -226,14 +229,18 @@ class ServiceManager(Service):
     @classmethod
     def pre_backup(cls):
         tempdir = cls.dump_dir()
+        logging.warn(f"Pre_Backup started. tempdir is {tempdir}")
         if not path.exists(tempdir):
             makedirs(tempdir)
 
         paths = listdir(tempdir)
+        logging.warn(f"Pre_Backup paths are {paths}")
         for file in paths:
+            logging.wart(f"removing {file}")
             remove(file)
 
         for p in [USERDATA_FILE, SECRETS_FILE, DKIM_DIR]:
+            logging.warn(f"Stashing {p}")
             cls.stash_a_path(p)
 
     @classmethod
