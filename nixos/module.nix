@@ -91,7 +91,7 @@ in
         Slice = "selfprivacy_api.slice";
       };
     };
-    systemd.slices."selfprivacy_api.slice" = {
+    systemd.slices."selfprivacy_api" = {
       name = "selfprivacy_api.slice";
       description = "Slice for SelfPrivacy API services";
     };
