@@ -178,7 +178,7 @@ class KanidmUserRepository(AbstractUserRepository):
         for user in users_data:
             attrs = user.get("attrs", {})
 
-            origin = KanidmUserRepository._check_user_origin(
+            origin = KanidmUserRepository._check_user_origin_by_memberof(
                 memberof=attrs.get("memberof", [])
             )
             if exclude_primary and origin == UserDataUserOrigin.PRIMARY:
