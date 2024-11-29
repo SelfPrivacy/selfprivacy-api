@@ -30,10 +30,10 @@ class JsonUserRepository(AbstractUserRepository):
 
     @staticmethod
     def get_users(
-        exclude_primary: bool = False,
-        exclude_root: bool = False,
+        exclude_primary: bool = False,  # TODO
+        exclude_root: bool = False,  # TODO
     ) -> list[UserDataUser]:
-        """Get the list of users"""
+        """Retrieves a list of users with options to exclude specific user groups"""
         users = []
         with ReadUserData() as user_data:
             ensure_ssh_and_users_fields_exist(user_data)
@@ -65,6 +65,8 @@ class JsonUserRepository(AbstractUserRepository):
 
     @staticmethod
     def create_user(username: str, password: str) -> None:
+        """Creates a new user"""
+
         hashed_password = JsonUserRepository._check_and_hash_password(password)
 
         with ReadUserData() as user_data:
@@ -87,6 +89,8 @@ class JsonUserRepository(AbstractUserRepository):
 
     @staticmethod
     def delete_user(username: str) -> None:
+        """Deletes an existing user"""
+
         with WriteUserData() as user_data:
             ensure_ssh_and_users_fields_exist(user_data)
             if username == user_data["username"] or username == "root":
@@ -101,6 +105,8 @@ class JsonUserRepository(AbstractUserRepository):
 
     @staticmethod
     def update_user(username: str, password: str) -> None:
+        """Updates the password of an existing user"""
+
         hashed_password = JsonUserRepository._check_and_hash_password(password)
 
         with WriteUserData() as data:
@@ -120,6 +126,8 @@ class JsonUserRepository(AbstractUserRepository):
 
     @staticmethod
     def get_user_by_username(username: str) -> Optional[UserDataUser]:
+        """Retrieves user data (UserDataUser) by username"""
+
         with ReadUserData() as data:
             ensure_ssh_and_users_fields_exist(data)
 
