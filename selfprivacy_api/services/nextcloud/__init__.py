@@ -10,6 +10,7 @@ from selfprivacy_api.services.service import Service, ServiceStatus
 from selfprivacy_api.services.nextcloud.icon import NEXTCLOUD_ICON
 from selfprivacy_api.services.config_item import (
     StringServiceConfigItem,
+    BoolServiceConfigItem,
     ServiceConfigItem,
 )
 from selfprivacy_api.utils.regex_strings import SUBDOMAIN_REGEX
@@ -25,6 +26,11 @@ class Nextcloud(Service):
             description="Subdomain",
             regex=SUBDOMAIN_REGEX,
             widget="subdomain",
+        ),
+        "enableImagemagick": BoolServiceConfigItem(
+            id="enableImagemagick",
+            default_value=True,
+            description="Enable ImageMagick",
         ),
     }
 
