@@ -189,6 +189,7 @@ class KanidmUserRepository(AbstractUserRepository):
                 username=attrs.get("name", [None])[0],
                 displayname=attrs.get("displayname", [None])[0],
                 email=attrs.get("mail", [None])[0],
+                ssh_keys=[],  # actions layer will full in this field
                 origin=origin,
                 directmemberof=attrs.get("directmemberof", []),
                 memberof=attrs.get("memberof", []),
@@ -258,7 +259,7 @@ class KanidmUserRepository(AbstractUserRepository):
             username=attrs.get("name", [None])[0],
             displayname=attrs.get("displayname", [None])[0],
             email=attrs.get("mail", [None])[0],
-            ssh_keys=attrs.get("ssh_keys", []),
+            ssh_keys=[],  # actions layer will full in this field
             origin=KanidmUserRepository._check_user_origin_by_memberof(
                 memberof=attrs.get("memberof", [])
             ),
