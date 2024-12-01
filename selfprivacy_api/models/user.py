@@ -20,7 +20,6 @@ class UserDataUser(BaseModel):
     displayname: Optional[
         str
     ]  # in logic graphql will return "username" if "displayname" None
-    uuid: Optional[str]
     email: Optional[str]
     ssh_keys: Optional[list[str]]
     directmemberof: Optional[list[str]]

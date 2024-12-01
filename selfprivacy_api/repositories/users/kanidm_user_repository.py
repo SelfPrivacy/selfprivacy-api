@@ -4,6 +4,7 @@ import subprocess
 import requests
 import re
 import logging
+import json
 
 from selfprivacy_api.utils import get_domain, temporary_env_var
 from selfprivacy_api.utils.redis_pool import RedisPool
@@ -185,7 +186,6 @@ class KanidmUserRepository(AbstractUserRepository):
                 continue
 
             user_type = UserDataUser(
-                uuid=attrs.get("uuid", [None])[0],
                 username=attrs.get("name", [None])[0],
                 displayname=attrs.get("displayname", [None])[0],
                 email=attrs.get("mail", [None])[0],
@@ -255,7 +255,6 @@ class KanidmUserRepository(AbstractUserRepository):
         attrs = user_data["attrs"]
 
         return UserDataUser(
-            uuid=attrs.get("uuid", [None])[0],
             username=attrs.get("name", [None])[0],
             displayname=attrs.get("displayname", [None])[0],
             email=attrs.get("mail", [None])[0],
@@ -277,7 +276,6 @@ class KanidmUserRepository(AbstractUserRepository):
             endpoint=f"person/{username}/_credential/_update_intent",
             method="GET",
         )
+        token_information = json.loads(token_information)
 
-        # {"token":"3btDa-sR5yX-q2XqZ-68gRq","expiry_time":1732713745}
-        # TODO: create link
-        return token_information
+        return f"https://id{get_domain()}/ui/reset?token={token_information['token']}"

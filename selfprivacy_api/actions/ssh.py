@@ -135,30 +135,22 @@ def remove_ssh_key(username: str, ssh_key: str):
     raise UserNotFound()
 
 
-# def get_ssh_keys(username: str) -> list:
-#     with ReadUserData() as data:
-#         ensure_ssh_and_users_fields_exist(data)
+def get_ssh_keys(username: str) -> list:
+    """Get all SSH keys for a user"""
 
-#         if username == "root":
-#             if ssh_key in data["ssh"]["rootKeys"]:
-#                 data["ssh"]["rootKeys"].remove(ssh_key)
-#                 return
+    with ReadUserData() as data:
+        ensure_ssh_and_users_fields_exist(data)
 
-#             raise KeyNotFound()
+        if username == "root":
+            return data["ssh"]["rootKeys"]
 
-#         if username == data["username"]:
-#             if ssh_key in data["sshKeys"]:
-#                 data["sshKeys"].remove(ssh_key)
-#                 return
+        if username == data["username"]:
+            return data["sshKeys"]
 
-#             raise KeyNotFound()
+        for user in data["users"]:
+            if user["username"] == username:
+                if "sshKeys" in user:
+                    return user["sshKeys"]
+                return []
 
-#         for user in data["users"]:
-#             if user["username"] == username:
-#                 if "sshKeys" not in user:
-#                     user["sshKeys"] = []
-#                 if ssh_key in user["sshKeys"]:
-#                     user["sshKeys"].remove(ssh_key)
-#                     return
-
-#     raise UserNotFound()
+    raise UserNotFound()

@@ -26,7 +26,6 @@ class User:
     user_type: UserType
     displayname: Optional[str] = None
     ssh_keys: list[str] = strawberry.field(default_factory=list)
-    uuid: Optional[str] = None
     email: Optional[str] = None
     directmemberof: Optional[list[str]] = strawberry.field(default_factory=list)
     memberof: Optional[list[str]] = strawberry.field(default_factory=list)
@@ -49,7 +48,6 @@ def get_user_by_username(username: str) -> Optional[User]:
         user_type=UserType(user.origin.value),
         username=user.username,
         ssh_keys=user.ssh_keys,
-        uuid=user.uuid,
         displayname=(user.displayname if user.displayname else user.username),
         email=user.email,
         directmemberof=user.directmemberof,
@@ -65,7 +63,6 @@ def get_users() -> list[User]:
             user_type=UserType(user.origin.value),
             username=user.username,
             ssh_keys=user.ssh_keys,
-            uuid=user.uuid,
             displayname=(user.displayname if user.displayname else user.username),
             email=user.email,
             directmemberof=user.directmemberof,
