@@ -29,7 +29,7 @@ def get_users(
     if ACTIVE_USERS_PROVIDER != JsonUserRepository:
         for user in users:
             try:
-                user.ssh_keys = get_ssh_keys(user.username)
+                user.ssh_keys = get_ssh_keys(username=user.username)
             except UserNotFound:
                 pass
 
@@ -38,7 +38,7 @@ def get_users(
                 UserDataUser(
                     username="root",
                     origin=UserDataUserOrigin.ROOT,
-                    ssh_keys=get_ssh_keys(user.username),
+                    ssh_keys=get_ssh_keys(username=user.username),
                 )
             )
 
@@ -112,11 +112,11 @@ def get_user_by_username(username: str) -> Optional[UserDataUser]:
             return UserDataUser(
                 username="root",
                 origin=UserDataUserOrigin.ROOT,
-                ssh_keys=get_ssh_keys(user.username),
+                ssh_keys=get_ssh_keys(username="root"),
             )
 
         try:
-            user.ssh_keys = get_ssh_keys(user)
+            user.ssh_keys = get_ssh_keys(username=user)
         except UserNotFound:
             pass
 
