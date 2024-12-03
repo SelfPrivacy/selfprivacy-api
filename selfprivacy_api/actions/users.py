@@ -121,3 +121,10 @@ def get_user_by_username(username: str) -> Optional[UserDataUser]:
             pass
 
     return user
+
+
+def generate_password_reset_link(username: str) -> str:
+    if ACTIVE_USERS_PROVIDER == JsonUserRepository:
+        return "Error: API using old user manager provider!"
+
+    return ACTIVE_USERS_PROVIDER.generate_password_reset_link(username=username)

@@ -23,6 +23,7 @@ from selfprivacy_api.actions.users import (
     create_user as create_user_action,
     delete_user as delete_user_action,
     update_user as update_user_action,
+    generate_password_reset_link as generate_password_reset_link_action,
 )
 from selfprivacy_api.repositories.users.exceptions import (
     PasswordIsEmpty,
@@ -33,7 +34,9 @@ from selfprivacy_api.repositories.users.exceptions import (
     UsernameNotAlphanumeric,
     UsernameTooLong,
     UserNotFound,
+    SelfPrivacyAppIsOutdate,
 )
+from selfprivacy_api import PLEASE_UPDATE_APP_TEXT
 
 
 @strawberry.input
@@ -44,8 +47,8 @@ class UserMutationInput:
     password: Optional[str] = None
     displayname: Optional[str] = None
     email: Optional[str] = None
-    directmemberof: Optional[list[str]] = strawberry.field(default_factory=list)
-    memberof: Optional[list[str]] = strawberry.field(default_factory=list)
+    directmemberof: Optional[list[str]] = None
+    memberof: Optional[list[str]] = None
 
 
 @strawberry.input
@@ -111,7 +114,7 @@ class UsersMutations:
 
         return UserMutationReturn(
             success=True,
-            message="User created",
+            message=PLEASE_UPDATE_APP_TEXT if user.password else "User created",
             code=201,
             user=get_user_by_username(user.username),
         )
@@ -163,6 +166,12 @@ class UsersMutations:
                 message=str(e),
                 code=404,
             )
+        except SelfPrivacyAppIsOutdate:
+            return UserMutationReturn(
+                success=False,
+                message="Error: Failed to change password.", PLEASE_UPDATE_APP_TEXT,
+                code=400,
+            )
 
         return UserMutationReturn(
             success=True,
@@ -195,7 +204,7 @@ class UsersMutations:
                 message="User not found",
                 code=404,
             )
-        except Exception as e:
+        except Exception as e: # TODO why?
             return UserMutationReturn(
                 success=False,
                 message=str(e),
@@ -227,7 +236,7 @@ class UsersMutations:
                 message="User not found",
                 code=404,
             )
-        except Exception as e:
+        except Exception as e: # TODO why?
             return UserMutationReturn(
                 success=False,
                 message=str(e),
@@ -239,4 +248,22 @@ class UsersMutations:
             message="SSH key successfully removed",
             code=200,
             user=get_user_by_username(ssh_input.username),
+        )
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    def generate_password_reset_link(username: str) -> UserMutationReturn:
+        try:
+            password_reset_link = generate_password_reset_link_action(username=username)
+        except UserNotFound:
+            return UserMutationReturn(
+                success=False,
+                message="User not found",
+                code=404,
+            )
+
+        return UserMutationReturn(
+            success=True,
+            message="Link successfully created",
+            code=200,
+            password_reset_link=password_reset_link,
         )

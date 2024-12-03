@@ -73,7 +73,7 @@ def password_auth_spectrum(request):
 def admin_name() -> Optional[str]:
     users = get_users()
     for user in users:
-        if user.origin == UserDataUserOrigin.PRIMARY:
+        if user.user_type == UserDataUserOrigin.PRIMARY:
             return user.username
     return None
 

@@ -23,12 +23,13 @@ class UserType(Enum):
 @strawberry.type
 class User:
     username: str
-    user_type: UserType
+
+    ssh_keys: Optional[list[str]] = strawberry.field(default_factory=list)
+    user_type: Optional[UserType] = None
     displayname: Optional[str] = None
-    ssh_keys: list[str] = strawberry.field(default_factory=list)
     email: Optional[str] = None
-    directmemberof: Optional[list[str]] = strawberry.field(default_factory=list)
-    memberof: Optional[list[str]] = strawberry.field(default_factory=list)
+    directmemberof: Optional[list[str]] = None
+    memberof: Optional[list[str]] = None
     # userHomeFolderspace: UserHomeFolderUsage
 
 
@@ -37,6 +38,7 @@ class UserMutationReturn(MutationReturnInterface):
     """Return type for user mutation"""
 
     user: Optional[User] = None
+    password_reset_link: Optional[str] = None
 
 
 def get_user_by_username(username: str) -> Optional[User]:
@@ -45,13 +47,13 @@ def get_user_by_username(username: str) -> Optional[User]:
         return None
 
     return User(
-        user_type=UserType(user.origin.value),
         username=user.username,
-        ssh_keys=user.ssh_keys,
-        displayname=(user.displayname if user.displayname else user.username),
-        email=user.email,
-        directmemberof=user.directmemberof,
-        memberof=user.memberof,
+        ssh_keys=user.ssh_keys or [],
+        user_type=user.user_type or None,
+        displayname=user.displayname or None,
+        email=user.email or None,
+        directmemberof=user.directmemberof or None,
+        memberof=user.memberof or None,
     )
 
 
@@ -60,13 +62,13 @@ def get_users() -> list[User]:
     users = actions_get_users(exclude_root=True)
     return [
         User(
-            user_type=UserType(user.origin.value),
             username=user.username,
-            ssh_keys=user.ssh_keys,
-            displayname=(user.displayname if user.displayname else user.username),
-            email=user.email,
-            directmemberof=user.directmemberof,
-            memberof=user.memberof,
+            ssh_keys=user.ssh_keys or [],
+            user_type=user.user_type or None,
+            displayname=user.displayname or None,
+            email=user.email or None,
+            directmemberof=user.directmemberof or None,
+            memberof=user.memberof or None,
         )
         for user in users
     ]

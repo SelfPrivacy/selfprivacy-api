@@ -28,3 +28,7 @@ class PasswordIsEmpty(Exception):
 
 class InvalidConfiguration(Exception):
     """The userdata is broken"""
+
+
+class SelfPrivacyAppIsOutdate(Exception):
+    """SelfPrivacy app is out of date, please update. Some important functions are not working at the moment."""

@@ -6,12 +6,15 @@ import re
 import logging
 import json
 
+from selfprivacy_api.repositories.users.exceptions import SelfPrivacyAppIsOutdate
 from selfprivacy_api.utils import get_domain, temporary_env_var
 from selfprivacy_api.utils.redis_pool import RedisPool
 from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
 from selfprivacy_api.repositories.users.abstract_user_repository import (
     AbstractUserRepository,
 )
+from selfprivacy_api import PLEASE_UPDATE_APP_TEXT
+
 
 KANIDM_URL = "https://127.0.0.1:3013"
 
@@ -143,7 +146,7 @@ class KanidmUserRepository(AbstractUserRepository):
         """
 
         if password:
-            pass  # TODO make notif
+            logger.error(PLEASE_UPDATE_APP_TEXT)
 
         data = {
             "attrs": {
@@ -175,27 +178,28 @@ class KanidmUserRepository(AbstractUserRepository):
         The root user will never return.
         """
         users_data = KanidmUserRepository._send_query(endpoint="person", method="GET")
+
         users = []
         for user in users_data:
-            attrs = user.get("attrs", {})
+            user_attrs = user.get("attrs", {})
 
-            origin = KanidmUserRepository._check_user_origin_by_memberof(
-                memberof=attrs.get("memberof", [])
+            user_type = KanidmUserRepository._check_user_origin_by_memberof(
+                memberof=user_attrs.get("memberof", [])
             )
-            if exclude_primary and origin == UserDataUserOrigin.PRIMARY:
+            if exclude_primary and user_type == UserDataUserOrigin.PRIMARY:
                 continue
 
-            user_type = UserDataUser(
-                username=attrs.get("name", [None])[0],
-                displayname=attrs.get("displayname", [None])[0],
-                email=attrs.get("mail", [None])[0],
+            filled_user = UserDataUser(
+                username=user_attrs.get("name", [None])[0],
+                displayname=user_attrs.get("displayname", [None])[0],
+                email=user_attrs.get("mail", [None])[0],
                 ssh_keys=[],  # actions layer will full in this field
-                origin=origin,
-                directmemberof=attrs.get("directmemberof", []),
-                memberof=attrs.get("memberof", []),
+                user_type=user_type,
+                directmemberof=user_attrs.get("directmemberof", []),
+                memberof=user_attrs.get("memberof", []),
             )
 
-            users.append(user_type)
+            users.append(filled_user)
         return users
 
     @staticmethod
@@ -220,7 +224,7 @@ class KanidmUserRepository(AbstractUserRepository):
         use generate_password_reset_link() instead.
         """
         if password:
-            pass  # TODO make notif
+            raise SelfPrivacyAppIsOutdate
 
         data = {
             "attrs": {
@@ -259,7 +263,7 @@ class KanidmUserRepository(AbstractUserRepository):
             displayname=attrs.get("displayname", [None])[0],
             email=attrs.get("mail", [None])[0],
             ssh_keys=[],  # actions layer will full in this field
-            origin=KanidmUserRepository._check_user_origin_by_memberof(
+            user_type=KanidmUserRepository._check_user_origin_by_memberof(
                 memberof=attrs.get("memberof", [])
             ),
             directmemberof=attrs.get("directmemberof", []),
