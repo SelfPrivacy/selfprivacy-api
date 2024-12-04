@@ -37,7 +37,7 @@ def get_users(
             users.append(
                 UserDataUser(
                     username="root",
-                    origin=UserDataUserOrigin.ROOT,
+                    user_type=UserDataUserOrigin.ROOT,
                     ssh_keys=get_ssh_keys(username=user.username),
                 )
             )
@@ -111,7 +111,7 @@ def get_user_by_username(username: str) -> Optional[UserDataUser]:
         if username == "root":
             return UserDataUser(
                 username="root",
-                origin=UserDataUserOrigin.ROOT,
+                user_type=UserDataUserOrigin.ROOT,
                 ssh_keys=get_ssh_keys(username="root"),
             )
 
