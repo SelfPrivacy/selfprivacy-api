@@ -113,10 +113,6 @@ def get_user_by_username(username: str) -> Optional[UserDataUser]:
                 username="root",
                 user_type=UserDataUserOrigin.ROOT,
                 ssh_keys=get_ssh_keys(username="root"),
-                email=None,  # TODO i cant delete this None ????
-                directmemberof=None,
-                memberof=None,
-                displayname=None,
             )
 
         try:
