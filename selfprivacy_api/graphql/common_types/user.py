@@ -49,7 +49,7 @@ def get_user_by_username(username: str) -> Optional[User]:
     return User(
         username=user.username,
         ssh_keys=user.ssh_keys or [],
-        user_type=user.user_type or None,
+        user_type=UserType(user.user_type.value) or None,
         displayname=user.displayname or None,
         email=user.email or None,
         directmemberof=user.directmemberof or None,
@@ -64,7 +64,7 @@ def get_users() -> list[User]:
         User(
             username=user.username,
             ssh_keys=user.ssh_keys or [],
-            user_type=user.user_type or None,
+            user_type=UserType(user.user_type.value) or None,
             displayname=user.displayname or None,
             email=user.email or None,
             directmemberof=user.directmemberof or None,
