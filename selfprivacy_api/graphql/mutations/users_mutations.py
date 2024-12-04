@@ -169,7 +169,7 @@ class UsersMutations:
         except SelfPrivacyAppIsOutdate:
             return UserMutationReturn(
                 success=False,
-                message="Error: Failed to change password.", PLEASE_UPDATE_APP_TEXT,
+                message=f"Error: Failed to change password. {PLEASE_UPDATE_APP_TEXT}",
                 code=400,
             )
 
@@ -204,7 +204,7 @@ class UsersMutations:
                 message="User not found",
                 code=404,
             )
-        except Exception as e: # TODO why?
+        except Exception as e:  # TODO why?
             return UserMutationReturn(
                 success=False,
                 message=str(e),
@@ -236,7 +236,7 @@ class UsersMutations:
                 message="User not found",
                 code=404,
             )
-        except Exception as e: # TODO why?
+        except Exception as e:  # TODO why?
             return UserMutationReturn(
                 success=False,
                 message=str(e),
