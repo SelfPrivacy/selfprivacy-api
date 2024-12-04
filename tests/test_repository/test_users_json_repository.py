@@ -1,5 +1,5 @@
 from selfprivacy_api.utils import ReadUserData
-from selfprivacy_api.actions.users import delete_user
+from selfprivacy_api.repositories.users.json_user_repository import delete_user
 
 """
     A place for user storage tests and other user tests that are not Graphql-specific.
