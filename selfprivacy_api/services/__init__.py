@@ -88,7 +88,7 @@ class ServiceManager(Service):
     @staticmethod
     def get_id() -> str:
         """Return service id."""
-        return "api"
+        return "selfprivacy-api"
 
     @staticmethod
     def get_display_name() -> str:
@@ -98,7 +98,7 @@ class ServiceManager(Service):
     @staticmethod
     def get_description() -> str:
         """Return service description."""
-        return "A proto-service for API itself. Currently manages backups of settings."
+        return "Enables communication between the SelfPrivacy app and the server."
 
     @staticmethod
     def get_svg_icon() -> str:
@@ -135,7 +135,7 @@ class ServiceManager(Service):
 
     @staticmethod
     def get_backup_description() -> str:
-        return "How did we get here?"
+        return "General server settings."
 
     @classmethod
     def get_status(cls) -> ServiceStatus:

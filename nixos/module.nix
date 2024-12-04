@@ -49,12 +49,13 @@ in
         pkgs.kanidm
       ];
       after = [ "network-online.target" ];
-      wantedBy = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
       serviceConfig = {
         User = "root";
         ExecStart = "${selfprivacy-graphql-api}/bin/app.py";
         Restart = "always";
         RestartSec = "5";
+        Slice = "selfprivacy_api.slice";
       };
     };
     systemd.services.selfprivacy-api-worker = {
@@ -82,13 +83,18 @@ in
         pkgs.iproute2
       ];
       after = [ "network-online.target" ];
-      wantedBy = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
       serviceConfig = {
         User = "root";
         ExecStart = "${pkgs.python312Packages.huey}/bin/huey_consumer.py selfprivacy_api.task_registry.huey";
         Restart = "always";
         RestartSec = "5";
+        Slice = "selfprivacy_api.slice";
       };
+    };
+    systemd.slices."selfprivacy_api" = {
+      name = "selfprivacy_api.slice";
+      description = "Slice for SelfPrivacy API services";
     };
     # One shot systemd service to rebuild NixOS using nixos-rebuild
     systemd.services.sp-nixos-rebuild = {
