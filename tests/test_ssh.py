@@ -14,12 +14,12 @@ from selfprivacy_api.actions.ssh import (
     KeyNotFound,
     UserNotFound,
 )
-from selfprivacy_api.actions.users import (
+from selfprivacy_api.repositories.users.json_user_repository import (
     get_users,
     get_user_by_username,
-    UserDataUserOrigin,
 )
 from selfprivacy_api.utils import WriteUserData, ReadUserData
+from selfprivacy_api.models.user import UserDataUserOrigin
 
 
 @pytest.fixture(params=[True, False])

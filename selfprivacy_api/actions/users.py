@@ -1,12 +1,14 @@
 """Actions to manage the users."""
 
 import re
+import uuid
 from typing import Optional
 
 from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
 
 from selfprivacy_api.utils import is_username_forbidden
 from selfprivacy_api.actions.ssh import get_ssh_keys
+
 
 from selfprivacy_api.repositories.users.json_user_repository import JsonUserRepository
 from selfprivacy_api.repositories.users import ACTIVE_USERS_PROVIDER
@@ -16,6 +18,17 @@ from selfprivacy_api.repositories.users.exceptions import (
     UsernameTooLong,
     UserNotFound,
 )
+
+
+class ApiUsingWrongUserRepository(Exception):
+    """
+    API is using a too old or unfinished user repository. Are you debugging?
+    """
+
+    @staticmethod
+    def get_error_message() -> str:
+        """Return text message error."""
+        return "API is using a too old or unfinished user repository"
 
 
 def get_users(
@@ -66,7 +79,9 @@ def create_user(
         raise UsernameTooLong("Username must be less than 32 characters")
 
     if ACTIVE_USERS_PROVIDER != JsonUserRepository:  # for ssh management
-        JsonUserRepository.create_user(username=username, password="legacy")
+        JsonUserRepository.create_user(
+            username=username, password=uuid.uuid4()
+        )  # random password for legacy
 
     return ACTIVE_USERS_PROVIDER.create_user(
         username=username,
@@ -125,6 +140,6 @@ def get_user_by_username(username: str) -> Optional[UserDataUser]:
 
 def generate_password_reset_link(username: str) -> str:
     if ACTIVE_USERS_PROVIDER == JsonUserRepository:
-        return "Error: API using old user manager provider!"
+        raise ApiUsingWrongUserRepository
 
     return ACTIVE_USERS_PROVIDER.generate_password_reset_link(username=username)

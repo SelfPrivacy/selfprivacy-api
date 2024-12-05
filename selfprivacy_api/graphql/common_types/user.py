@@ -30,7 +30,6 @@ class User:
     email: Optional[str] = None
     directmemberof: Optional[list[str]] = None
     memberof: Optional[list[str]] = None
-    # userHomeFolderspace: UserHomeFolderUsage
 
 
 @strawberry.type

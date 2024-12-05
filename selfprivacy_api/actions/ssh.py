@@ -8,19 +8,43 @@ from selfprivacy_api.repositories.users.exceptions import UserNotFound
 from selfprivacy_api.utils import ensure_ssh_and_users_fields_exist
 
 
-def enable_ssh():
-    with WriteUserData() as data:
-        if "ssh" not in data:
-            data["ssh"] = {}
-        data["ssh"]["enable"] = True
-
-
 class UserdataSshSettings(BaseModel):
     """Settings for the SSH."""
 
     enable: bool = True
     passwordAuthentication: bool = True
     rootKeys: list[str] = []
+
+
+class KeyNotFound(Exception):
+    """Key not found"""
+
+    @staticmethod
+    def get_error_message() -> str:
+        return "Key not found"
+
+
+class KeyAlreadyExists(Exception):
+    """Key already exists"""
+
+    @staticmethod
+    def get_error_message() -> str:
+        return "Key already exists"
+
+
+class InvalidPublicKey(Exception):
+    """Invalid public key"""
+
+    @staticmethod
+    def get_error_message() -> str:
+        return "Invalid key type. Only ssh-ed25519, ssh-rsa and ecdsa are supported"
+
+
+def enable_ssh():
+    with WriteUserData() as data:
+        if "ssh" not in data:
+            data["ssh"] = {}
+        data["ssh"]["enable"] = True
 
 
 def get_ssh_settings() -> UserdataSshSettings:
@@ -46,18 +70,6 @@ def set_ssh_settings(
             data["ssh"]["enable"] = enable
         if password_authentication is not None:
             data["ssh"]["passwordAuthentication"] = password_authentication
-
-
-class KeyAlreadyExists(Exception):
-    """Key already exists"""
-
-    pass
-
-
-class InvalidPublicKey(Exception):
-    """Invalid public key"""
-
-    pass
 
 
 def create_ssh_key(username: str, ssh_key: str):
@@ -94,12 +106,6 @@ def create_ssh_key(username: str, ssh_key: str):
                 return
 
         raise UserNotFound()
-
-
-class KeyNotFound(Exception):
-    """Key not found"""
-
-    pass
 
 
 def remove_ssh_key(username: str, ssh_key: str):

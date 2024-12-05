@@ -86,6 +86,10 @@ class KanidmAdminToken:  # TODO CHECK IS TOKEN CORRECT?
 
         return new_kanidm_admin_password
 
+    @staticmethod
+    def _delete_kanidm_token_from_db() -> None:
+        redis.delete("kanidm:token")
+
 
 class KanidmQueryError(Exception):
     """Error occurred during kanidm query"""

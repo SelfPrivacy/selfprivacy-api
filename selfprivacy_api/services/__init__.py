@@ -66,7 +66,15 @@ class ServiceManager(Service):
         ip4 = network_utils.get_ip4()
         ip6 = network_utils.get_ip6()
 
-        dns_records: list[ServiceDnsRecord] = []
+        dns_records: list[ServiceDnsRecord] = [
+            ServiceDnsRecord(
+                type="A",
+                name="auth",
+                content=ip4,
+                ttl=3600,
+                display_name="Record for Kanidm",
+            ),
+        ]
 
         try:
             dns_records.append(

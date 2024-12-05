@@ -39,6 +39,22 @@ from selfprivacy_api.repositories.users.exceptions import (
 from selfprivacy_api import PLEASE_UPDATE_APP_TEXT
 
 
+FAILED_TO_SETUP_PASSWORD_TEXT = "Failed to set a password for a user. The problem occurred due to an old version of the SelfPrivacy app."
+
+
+def return_failed_mutation_return(
+    error: str,
+    code: int = 400,
+    username: str = None,
+) -> UserMutationReturn:
+    return UserMutationReturn(
+        success=False,
+        message=str(error),
+        code=code,
+        user=get_user_by_username(username) if username else None,
+    )
+
+
 @strawberry.input
 class UserMutationInput:
     """Input type for user mutation"""
@@ -74,47 +90,38 @@ class UsersMutations:
                 directmemberof=user.directmemberof,
                 memberof=user.memberof,
             )
-        except PasswordIsEmpty as e:
-            return UserMutationReturn(
-                success=False,
-                message=str(e),
-                code=400,
+        except (
+            PasswordIsEmpty,
+            UsernameNotAlphanumeric,
+            UsernameTooLong,
+            InvalidConfiguration,
+        ) as error:
+            return return_failed_mutation_return(
+                error=error,
+                message=error.get_description(),
             )
-        except UsernameForbidden as e:
-            return UserMutationReturn(
-                success=False,
-                message=str(e),
+        except UsernameForbidden as error:
+            return return_failed_mutation_return(
+                message=error.get_error_message(),
+                code=409,
+                username=user.username,
+            )
+        except UserAlreadyExists as error:
+            return return_failed_mutation_return(
+                message=error.get_error_message(),
                 code=409,
             )
-        except UsernameNotAlphanumeric as e:
-            return UserMutationReturn(
-                success=False,
-                message=str(e),
-                code=400,
-            )
-        except UsernameTooLong as e:
-            return UserMutationReturn(
-                success=False,
-                message=str(e),
-                code=400,
-            )
-        except InvalidConfiguration as e:
-            return UserMutationReturn(
-                success=False,
-                message=str(e),
-                code=400,
-            )
-        except UserAlreadyExists as e:
-            return UserMutationReturn(
-                success=False,
-                message=str(e),
-                code=409,
-                user=get_user_by_username(user.username),
+
+        if user.password:
+            return return_failed_mutation_return(
+                message=f"{FAILED_TO_SETUP_PASSWORD_TEXT} {PLEASE_UPDATE_APP_TEXT}",
+                code=201,
+                username=user.username,
             )
 
         return UserMutationReturn(
             success=True,
-            message=PLEASE_UPDATE_APP_TEXT if user.password else "User created",
+            message="User created",
             code=201,
             user=get_user_by_username(user.username),
         )
@@ -123,18 +130,13 @@ class UsersMutations:
     def delete_user(self, username: str) -> GenericMutationReturn:
         try:
             delete_user_action(username)
-        except UserNotFound as e:
-            return GenericMutationReturn(
-                success=False,
-                message=str(e),
+        except UserNotFound as error:
+            return return_failed_mutation_return(
+                message=error.get_error_message(),
                 code=404,
             )
-        except UserIsProtected as e:
-            return GenericMutationReturn(
-                success=False,
-                message=str(e),
-                code=400,
-            )
+        except UserIsProtected as error:
+            return return_failed_mutation_return(error=error)
 
         return GenericMutationReturn(
             success=True,
@@ -154,23 +156,14 @@ class UsersMutations:
                 directmemberof=user.directmemberof,
                 memberof=user.memberof,
             )
-        except PasswordIsEmpty as e:
-            return UserMutationReturn(
-                success=False,
-                message=str(e),
-                code=400,
+        except (PasswordIsEmpty, SelfPrivacyAppIsOutdate) as error:
+            return return_failed_mutation_return(
+                message=error.get_error_message(),
             )
-        except UserNotFound as e:
-            return UserMutationReturn(
-                success=False,
-                message=str(e),
+        except UserNotFound as error:
+            return return_failed_mutation_return(
+                message=error.get_error_message(),
                 code=404,
-            )
-        except SelfPrivacyAppIsOutdate:
-            return UserMutationReturn(
-                success=False,
-                message=f"Error: Failed to change password. {PLEASE_UPDATE_APP_TEXT}",
-                code=400,
             )
 
         return UserMutationReturn(
@@ -186,28 +179,23 @@ class UsersMutations:
 
         try:
             create_ssh_key_action(ssh_input.username, ssh_input.ssh_key)
-        except KeyAlreadyExists:
-            return UserMutationReturn(
-                success=False,
-                message="Key already exists",
+        except KeyAlreadyExists as error:
+            return return_failed_mutation_return(
+                message=error.get_error_message(),
                 code=409,
             )
-        except InvalidPublicKey:
-            return UserMutationReturn(
-                success=False,
-                message="Invalid key type. Only ssh-ed25519, ssh-rsa and ecdsa are supported",
-                code=400,
+        except InvalidPublicKey as error:
+            return return_failed_mutation_return(
+                message=error.get_error_message(),
             )
-        except UserNotFound:
-            return UserMutationReturn(
-                success=False,
-                message="User not found",
+        except UserNotFound as error:
+            return return_failed_mutation_return(
+                message=error.get_error_message(),
                 code=404,
             )
-        except Exception as e:  # TODO why?
-            return UserMutationReturn(
-                success=False,
-                message=str(e),
+        except Exception as error:  # TODO why?
+            return return_failed_mutation_return(
+                message=str(error),
                 code=500,
             )
 
@@ -224,22 +212,15 @@ class UsersMutations:
 
         try:
             remove_ssh_key_action(ssh_input.username, ssh_input.ssh_key)
-        except KeyNotFound:
-            return UserMutationReturn(
-                success=False,
-                message="Key not found",
+        except (KeyNotFound, UserMutationReturn) as error:
+            return return_failed_mutation_return(
+                message=error.get_error_message(),
                 code=404,
             )
-        except UserNotFound:
+        except Exception as error:  # TODO why?
             return UserMutationReturn(
                 success=False,
-                message="User not found",
-                code=404,
-            )
-        except Exception as e:  # TODO why?
-            return UserMutationReturn(
-                success=False,
-                message=str(e),
+                message=str(error),
                 code=500,
             )
 
@@ -254,10 +235,9 @@ class UsersMutations:
     def generate_password_reset_link(username: str) -> UserMutationReturn:
         try:
             password_reset_link = generate_password_reset_link_action(username=username)
-        except UserNotFound:
-            return UserMutationReturn(
-                success=False,
-                message="User not found",
+        except UserNotFound as error:
+            return return_failed_mutation_return(
+                message=error.get_error_message(),
                 code=404,
             )
 
