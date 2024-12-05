@@ -78,12 +78,13 @@ def create_user(
     if len(username) >= 32:
         raise UsernameTooLong("Username must be less than 32 characters")
 
-    if ACTIVE_USERS_PROVIDER != JsonUserRepository:  # for ssh management
+    # need to maintain the logic of the old repository, since sssh management uses it.
+    if ACTIVE_USERS_PROVIDER != JsonUserRepository:
         JsonUserRepository.create_user(
             username=username, password=uuid.uuid4()
         )  # random password for legacy
 
-    return ACTIVE_USERS_PROVIDER.create_user(
+    ACTIVE_USERS_PROVIDER.create_user(
         username=username,
         password=password,
         displayname=displayname,
@@ -94,10 +95,12 @@ def create_user(
 
 
 def delete_user(username: str) -> None:
-    if ACTIVE_USERS_PROVIDER != JsonUserRepository:  # for ssh management
+
+    # need to maintain the logic of the old repository, since sssh management uses it.
+    if ACTIVE_USERS_PROVIDER != JsonUserRepository:
         JsonUserRepository.delete_user(username=username)
 
-    return ACTIVE_USERS_PROVIDER.delete_user(username=username)
+    ACTIVE_USERS_PROVIDER.delete_user(username=username)
 
 
 def update_user(
@@ -109,7 +112,7 @@ def update_user(
     memberof: Optional[list[str]] = None,
 ) -> None:
 
-    return ACTIVE_USERS_PROVIDER.update_user(
+    ACTIVE_USERS_PROVIDER.update_user(
         username=username,
         password=password,
         displayname=displayname,
