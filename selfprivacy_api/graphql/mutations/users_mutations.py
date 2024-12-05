@@ -43,13 +43,13 @@ FAILED_TO_SETUP_PASSWORD_TEXT = "Failed to set a password for a user. The proble
 
 
 def return_failed_mutation_return(
-    error: str,
+    message: str,
     code: int = 400,
     username: str = None,
 ) -> UserMutationReturn:
     return UserMutationReturn(
         success=False,
-        message=str(error),
+        message=str(message),
         code=code,
         user=get_user_by_username(username) if username else None,
     )
@@ -97,7 +97,6 @@ class UsersMutations:
             InvalidConfiguration,
         ) as error:
             return return_failed_mutation_return(
-                error=error,
                 message=error.get_description(),
             )
         except UsernameForbidden as error:
