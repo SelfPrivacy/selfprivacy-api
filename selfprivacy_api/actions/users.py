@@ -17,6 +17,8 @@ from selfprivacy_api.repositories.users.exceptions import (
     UsernameNotAlphanumeric,
     UsernameTooLong,
     UserNotFound,
+    UserAlreadyExists,
+    InvalidConfiguration,
 )
 
 
@@ -78,11 +80,14 @@ def create_user(
     if len(username) >= 32:
         raise UsernameTooLong("Username must be less than 32 characters")
 
-    # need to maintain the logic of the old repository, since sssh management uses it.
+    # need to maintain the logic of the old repository, since ssh management uses it.
     if ACTIVE_USERS_PROVIDER != JsonUserRepository:
-        JsonUserRepository.create_user(
-            username=username, password=uuid.uuid4()
-        )  # random password for legacy
+        try:
+            JsonUserRepository.create_user(
+                username=username, password=str(uuid.uuid4())
+            )  # random password for legacy
+        except (UserAlreadyExists, InvalidConfiguration):
+            pass
 
     ACTIVE_USERS_PROVIDER.create_user(
         username=username,
@@ -96,9 +101,12 @@ def create_user(
 
 def delete_user(username: str) -> None:
 
-    # need to maintain the logic of the old repository, since sssh management uses it.
+    # need to maintain the logic of the old repository, since ssh management uses it.
     if ACTIVE_USERS_PROVIDER != JsonUserRepository:
-        JsonUserRepository.delete_user(username=username)
+        try:
+            JsonUserRepository.delete_user(username=username)
+        except UserNotFound:
+            pass
 
     ACTIVE_USERS_PROVIDER.delete_user(username=username)
 
