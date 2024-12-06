@@ -181,7 +181,7 @@ def which_snapshots_to_full_restore() -> list[Snapshot]:
     autoslice = Backups.last_backup_slice()
     api_snapshot = None
     for snap in autoslice:
-        if snap.service_name == "api":
+        if snap.service_name == ServiceManager.get_id():
             api_snapshot = snap
             autoslice.remove(snap)
     if api_snapshot is None:
