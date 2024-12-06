@@ -258,7 +258,6 @@ class Backups:
             Backups._on_new_snapshot_created(service_name, snapshot)
             if reason == BackupReason.AUTO:
                 Backups._prune_auto_snaps(service)
-            service.post_restore()
         except Exception as error:
             Jobs.update(job, status=JobStatus.ERROR, error=str(error))
             raise error
