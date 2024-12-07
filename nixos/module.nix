@@ -107,7 +107,7 @@ in
         ExecStart = ''
           ${nixos-rebuild} switch --flake .#${config-id}
         '';
-        KillMode = "none";
+        KillMode = "mixed";
         SendSIGKILL = "no";
       };
       restartIfChanged = false;
@@ -134,7 +134,7 @@ in
         ExecStart = ''
           ${nixos-rebuild} switch --flake .#${config-id}
         '';
-        KillMode = "none";
+        KillMode = "mixed";
         SendSIGKILL = "no";
       };
       restartIfChanged = false;
@@ -156,7 +156,7 @@ in
         ExecStart = ''
           ${nixos-rebuild} switch --rollback --flake .#${config-id}
         '';
-        KillMode = "none";
+        KillMode = "mixed";
         SendSIGKILL = "no";
       };
       restartIfChanged = false;
