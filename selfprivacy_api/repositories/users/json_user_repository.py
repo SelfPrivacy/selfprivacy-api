@@ -30,8 +30,8 @@ class JsonUserRepository(AbstractUserRepository):
 
     @staticmethod
     def get_users(
-        exclude_primary: bool = False,  # TODO
-        exclude_root: bool = False,  # TODO
+        exclude_primary: bool = False,
+        exclude_root: bool = False,
     ) -> list[UserDataUser]:
         """Retrieves a list of users with options to exclude specific user groups"""
         users = []
@@ -41,7 +41,7 @@ class JsonUserRepository(AbstractUserRepository):
                 UserDataUser(
                     username=user["username"],
                     ssh_keys=user.get("sshKeys", []),
-                    origin=UserDataUserOrigin.NORMAL,
+                    user_type=UserDataUserOrigin.NORMAL,
                 )
                 for user in user_data["users"]
             ]
@@ -50,7 +50,7 @@ class JsonUserRepository(AbstractUserRepository):
                     UserDataUser(
                         username=user_data["username"],
                         ssh_keys=user_data["sshKeys"],
-                        origin=UserDataUserOrigin.PRIMARY,
+                        user_type=UserDataUserOrigin.PRIMARY,
                     )
                 )
             if not exclude_root:
@@ -58,7 +58,7 @@ class JsonUserRepository(AbstractUserRepository):
                     UserDataUser(
                         username="root",
                         ssh_keys=user_data["ssh"]["rootKeys"],
-                        origin=UserDataUserOrigin.ROOT,
+                        user_type=UserDataUserOrigin.ROOT,
                     )
                 )
         return users
@@ -133,14 +133,14 @@ class JsonUserRepository(AbstractUserRepository):
 
             if username == "root":
                 return UserDataUser(
-                    origin=UserDataUserOrigin.ROOT,
+                    user_type=UserDataUserOrigin.ROOT,
                     username="root",
                     ssh_keys=data["ssh"]["rootKeys"],
                 )
 
             if username == data["username"]:
                 return UserDataUser(
-                    origin=UserDataUserOrigin.PRIMARY,
+                    user_type=UserDataUserOrigin.PRIMARY,
                     username=username,
                     ssh_keys=data["sshKeys"],
                 )
@@ -151,7 +151,7 @@ class JsonUserRepository(AbstractUserRepository):
                         user["sshKeys"] = []
 
                     return UserDataUser(
-                        origin=UserDataUserOrigin.NORMAL,
+                        user_type=UserDataUserOrigin.NORMAL,
                         username=username,
                         ssh_keys=user["sshKeys"],
                     )

@@ -72,3 +72,11 @@ class SelfPrivacyAppIsOutdate(Exception):
     @staticmethod
     def get_error_message() -> str:
         return "SelfPrivacy app is out of date, please update"
+
+
+class NoPasswordResetLinkFoundInResponse(Exception):
+    """No password reset link was found in the Kanidm response."""
+
+    @staticmethod
+    def get_error_message() -> str:
+        return "The Kanidm response does not contain a password reset link."

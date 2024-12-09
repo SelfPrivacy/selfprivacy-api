@@ -6,6 +6,7 @@ import strawberry
 
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.common_types.user import (
+    PasswordResetLinkReturn,
     UserMutationReturn,
     get_user_by_username,
 )
@@ -26,6 +27,7 @@ from selfprivacy_api.actions.users import (
     generate_password_reset_link as generate_password_reset_link_action,
 )
 from selfprivacy_api.repositories.users.exceptions import (
+    NoPasswordResetLinkFoundInResponse,
     PasswordIsEmpty,
     UsernameForbidden,
     InvalidConfiguration,
@@ -37,6 +39,7 @@ from selfprivacy_api.repositories.users.exceptions import (
     SelfPrivacyAppIsOutdate,
 )
 from selfprivacy_api import PLEASE_UPDATE_APP_TEXT
+from selfprivacy_api.repositories.users.kanidm_user_repository import KanidmDidNotReturnAdminPassword
 
 
 FAILED_TO_SETUP_PASSWORD_TEXT = "Failed to set a password for a user. The problem occurred due to an old version of the SelfPrivacy app."
@@ -45,7 +48,7 @@ FAILED_TO_SETUP_PASSWORD_TEXT = "Failed to set a password for a user. The proble
 def return_failed_mutation_return(
     message: str,
     code: int = 400,
-    username: str = None,
+    username: Optional[str] = None,
 ) -> UserMutationReturn:
     return UserMutationReturn(
         success=False,
@@ -63,8 +66,8 @@ class UserMutationInput:
     password: Optional[str] = None
     displayname: Optional[str] = None
     email: Optional[str] = None
-    directmemberof: Optional[list[str]] = None
-    memberof: Optional[list[str]] = None
+    directmemberof: Optional[list[str]] = []
+    memberof: Optional[list[str]] = []
 
 
 @strawberry.input
@@ -95,9 +98,10 @@ class UsersMutations:
             UsernameNotAlphanumeric,
             UsernameTooLong,
             InvalidConfiguration,
+            KanidmDidNotReturnAdminPassword,
         ) as error:
             return return_failed_mutation_return(
-                message=error.get_description(),
+                message=error.get_error_message(),
             )
         except UsernameForbidden as error:
             return return_failed_mutation_return(
@@ -130,12 +134,23 @@ class UsersMutations:
         try:
             delete_user_action(username)
         except UserNotFound as error:
-            return return_failed_mutation_return(
+            return GenericMutationReturn(
+                success=False,
                 message=error.get_error_message(),
                 code=404,
             )
         except UserIsProtected as error:
-            return return_failed_mutation_return(error=error)
+            return GenericMutationReturn(
+                success=False,
+                code=400,
+                message=error.get_error_message(),
+            )
+        except KanidmDidNotReturnAdminPassword as error:
+            return GenericMutationReturn(
+                success=False,
+                code=500,
+                message=error.get_error_message(),
+            )
 
         return GenericMutationReturn(
             success=True,
@@ -155,7 +170,7 @@ class UsersMutations:
                 directmemberof=user.directmemberof,
                 memberof=user.memberof,
             )
-        except (PasswordIsEmpty, SelfPrivacyAppIsOutdate) as error:
+        except (PasswordIsEmpty, SelfPrivacyAppIsOutdate, KanidmDidNotReturnAdminPassword) as error:
             return return_failed_mutation_return(
                 message=error.get_error_message(),
             )
@@ -211,7 +226,7 @@ class UsersMutations:
 
         try:
             remove_ssh_key_action(ssh_input.username, ssh_input.ssh_key)
-        except (KeyNotFound, UserMutationReturn) as error:
+        except (KeyNotFound, UserNotFound) as error:
             return return_failed_mutation_return(
                 message=error.get_error_message(),
                 code=404,
@@ -231,16 +246,27 @@ class UsersMutations:
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def generate_password_reset_link(username: str) -> UserMutationReturn:
+    def generate_password_reset_link(
+        self, user: UserMutationInput
+    ) -> PasswordResetLinkReturn:
         try:
-            password_reset_link = generate_password_reset_link_action(username=username)
+            password_reset_link = generate_password_reset_link_action(
+                username=user.username
+            )
         except UserNotFound as error:
-            return return_failed_mutation_return(
+            return PasswordResetLinkReturn(
+                success=False,
                 message=error.get_error_message(),
                 code=404,
             )
+        except (NoPasswordResetLinkFoundInResponse, KanidmDidNotReturnAdminPassword) as error:
+            return PasswordResetLinkReturn(
+                success=False,
+                code=500,
+                message=error.get_error_message(),
+            )
 
-        return UserMutationReturn(
+        return PasswordResetLinkReturn(
             success=True,
             message="Link successfully created",
             code=200,

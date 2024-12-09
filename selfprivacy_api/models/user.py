@@ -15,13 +15,11 @@ class UserDataUser(BaseModel):
     """The user model from the userdata file"""
 
     username: str
-
-    ssh_keys: Optional[list[str]] = []
-    user_type: Optional[UserDataUserOrigin] = None
+    user_type: UserDataUserOrigin
+    ssh_keys: list[str] = []
+    directmemberof: Optional[list[str]] = []
+    memberof: Optional[list[str]] = []
     displayname: Optional[str] = (
         None  # in logic graphql will return "username" if "displayname" None
     )
-
     email: Optional[str] = None
-    directmemberof: Optional[list[str]] = None
-    memberof: Optional[list[str]] = None

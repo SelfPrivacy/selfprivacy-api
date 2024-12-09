@@ -28,8 +28,8 @@ class User:
     user_type: Optional[UserType] = None
     displayname: Optional[str] = None
     email: Optional[str] = None
-    directmemberof: Optional[list[str]] = None
-    memberof: Optional[list[str]] = None
+    directmemberof: Optional[list[str]] = []
+    memberof: Optional[list[str]] = []
 
 
 @strawberry.type
@@ -37,6 +37,12 @@ class UserMutationReturn(MutationReturnInterface):
     """Return type for user mutation"""
 
     user: Optional[User] = None
+
+
+@strawberry.type
+class PasswordResetLinkReturn(MutationReturnInterface):
+    """Return password reset link"""
+
     password_reset_link: Optional[str] = None
 
 

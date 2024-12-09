@@ -1,12 +1,13 @@
 from typing import Optional
-
 import subprocess
 import requests
 import re
 import logging
-import json
 
-from selfprivacy_api.repositories.users.exceptions import SelfPrivacyAppIsOutdate
+from selfprivacy_api.repositories.users.exceptions import (
+    NoPasswordResetLinkFoundInResponse,
+    SelfPrivacyAppIsOutdate,
+)
 from selfprivacy_api.utils import get_domain, temporary_env_var
 from selfprivacy_api.utils.redis_pool import RedisPool
 from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
@@ -25,10 +26,34 @@ logger = logging.getLogger(__name__)
 ADMIN_KANIDM_GROUPS = ["sp.admin"]
 
 
+class KanidmQueryError(Exception):
+    """Error occurred during kanidm query"""
+
+    @staticmethod
+    def get_error_message() -> str:
+        return "An error occurred during the Kanidm query."
+
+
+class KanidmReturnEmptyResponse(Exception):
+    """Kanidm returned a blank response"""
+
+    @staticmethod
+    def get_error_message() -> str:
+        return "Kanidm returned an empty response."
+
+
+class KanidmDidNotReturnAdminPassword(Exception):
+    """Kanidm didn't return the admin password"""
+
+    @staticmethod
+    def get_error_message() -> str:
+        return "Kanidm didn't return the admin password."
+
+
 class KanidmAdminToken:  # TODO CHECK IS TOKEN CORRECT?
     @staticmethod
     def get() -> str:
-        kanidm_admin_token = redis.get("kanidm:token")
+        kanidm_admin_token = str(redis.get("kanidm:token"))
 
         if kanidm_admin_token is None:
             kanidm_admin_password = (
@@ -80,9 +105,12 @@ class KanidmAdminToken:  # TODO CHECK IS TOKEN CORRECT?
         )
 
         match = re.search(r'"password":"([^"]+)"', output)
-        new_kanidm_admin_password = match.group(
-            1
-        )  # we have many not json strings in output
+        if match:
+            new_kanidm_admin_password = match.group(
+                1
+            )  # we have many not json strings in output
+        else:
+            raise KanidmDidNotReturnAdminPassword
 
         return new_kanidm_admin_password
 
@@ -91,14 +119,10 @@ class KanidmAdminToken:  # TODO CHECK IS TOKEN CORRECT?
         redis.delete("kanidm:token")
 
 
-class KanidmQueryError(Exception):
-    """Error occurred during kanidm query"""
-
-
 class KanidmUserRepository(AbstractUserRepository):
     @staticmethod
     def _check_user_origin_by_memberof(
-        memberof: Optional[list[str]] = None,
+        memberof: list[str] = [],
     ) -> UserDataUserOrigin:
         if sorted(memberof) == sorted(ADMIN_KANIDM_GROUPS):
             return UserDataUserOrigin.PRIMARY
@@ -166,7 +190,7 @@ class KanidmUserRepository(AbstractUserRepository):
         if memberof:
             data["attrs"]["memberof"] = memberof
 
-        return KanidmUserRepository._send_query(
+        KanidmUserRepository._send_query(
             endpoint="person",
             method="POST",
             data=data,
@@ -183,6 +207,9 @@ class KanidmUserRepository(AbstractUserRepository):
         """
         users_data = KanidmUserRepository._send_query(endpoint="person", method="GET")
 
+        if not users_data or "attrs" not in users_data:
+            raise KanidmReturnEmptyResponse
+
         users = []
         for user in users_data:
             user_attrs = user.get("attrs", {})
@@ -194,9 +221,9 @@ class KanidmUserRepository(AbstractUserRepository):
                 continue
 
             filled_user = UserDataUser(
-                username=user_attrs.get("name", [None])[0],
-                displayname=user_attrs.get("displayname", [None])[0],
-                email=user_attrs.get("mail", [None])[0],
+                username=user_attrs.get("name", [None]),
+                displayname=user_attrs.get("displayname", [None]),
+                email=user_attrs.get("mail", [None]),
                 ssh_keys=[],  # actions layer will full in this field
                 user_type=user_type,
                 directmemberof=user_attrs.get("directmemberof", []),
@@ -209,9 +236,7 @@ class KanidmUserRepository(AbstractUserRepository):
     @staticmethod
     def delete_user(username: str) -> None:
         """Deletes an existing user"""
-        return KanidmUserRepository._send_query(
-            endpoint=f"person/{username}", method="DELETE"
-        )
+        KanidmUserRepository._send_query(endpoint=f"person/{username}", method="DELETE")
 
     @staticmethod
     def update_user(
@@ -243,7 +268,7 @@ class KanidmUserRepository(AbstractUserRepository):
         if memberof:
             data["attrs"]["memberof"] = memberof
 
-        return KanidmUserRepository._send_query(
+        KanidmUserRepository._send_query(
             endpoint=f"person/{username}",
             method="PATCH",
             data=data,
@@ -258,14 +283,14 @@ class KanidmUserRepository(AbstractUserRepository):
         )
 
         if not user_data or "attrs" not in user_data:
-            return None
+            raise KanidmReturnEmptyResponse
 
         attrs = user_data["attrs"]
 
         return UserDataUser(
-            username=attrs.get("name", [None])[0],
-            displayname=attrs.get("displayname", [None])[0],
-            email=attrs.get("mail", [None])[0],
+            username=attrs.get("name", [None]),
+            displayname=attrs.get("displayname", [None]),
+            email=attrs.get("mail", [None]),
             ssh_keys=[],  # actions layer will full in this field
             user_type=KanidmUserRepository._check_user_origin_by_memberof(
                 memberof=attrs.get("memberof", [])
@@ -280,10 +305,17 @@ class KanidmUserRepository(AbstractUserRepository):
         Do not reset the password, just generate a link to reset the password.
         Not implemented in JsonUserRepository.
         """
-        token_information = KanidmUserRepository._send_query(
+        data = KanidmUserRepository._send_query(
             endpoint=f"person/{username}/_credential/_update_intent",
             method="GET",
         )
-        token_information = json.loads(token_information)
 
-        return f"https://id{get_domain()}/ui/reset?token={token_information['token']}"
+        if not data or "attrs" not in data:
+            raise KanidmReturnEmptyResponse
+
+        token = data["attrs"].get["token", [None][0]]
+
+        if token:
+            return f"https://id{get_domain()}/ui/reset?token={token}"
+
+        raise NoPasswordResetLinkFoundInResponse
