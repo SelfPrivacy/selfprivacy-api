@@ -23,13 +23,13 @@ class UserType(Enum):
 @strawberry.type
 class User:
     username: str
+    user_type: UserType
 
     ssh_keys: Optional[list[str]] = strawberry.field(default_factory=list)
-    user_type: Optional[UserType] = None
+    directmemberof: Optional[list[str]] = strawberry.field(default_factory=list)
+    memberof: Optional[list[str]] = strawberry.field(default_factory=list)
     displayname: Optional[str] = None
     email: Optional[str] = None
-    directmemberof: Optional[list[str]] = []
-    memberof: Optional[list[str]] = []
 
 
 @strawberry.type
