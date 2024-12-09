@@ -63,11 +63,11 @@ class UserMutationInput:
     """Input type for user mutation"""
 
     username: str
+    directmemberof: Optional[list[str]] = strawberry.field(default_factory=list)
+    memberof: Optional[list[str]] = strawberry.field(default_factory=list)
     password: Optional[str] = None
     displayname: Optional[str] = None
     email: Optional[str] = None
-    directmemberof: Optional[list[str]] = []
-    memberof: Optional[list[str]] = []
 
 
 @strawberry.input
