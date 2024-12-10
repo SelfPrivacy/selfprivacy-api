@@ -153,14 +153,19 @@ class KanidmUserRepository(AbstractUserRepository):
                     f"Kanidm returned {response.status_code} unexpected HTTP status code. Endpoint: {full_endpoint}. Error: {response.text}."
                 )
 
+            logger.info(str(response))
+
             response = response.json()
 
-            if response and response != []:
+            if isinstance(response, list) and len(response) > 0:
                 if response[0].get("plugin"):
-                    if response[0]["plugin"].get("attrunique") == "duplicate value detected":
+                    if (
+                        response[0]["plugin"].get("attrunique")
+                        == "duplicate value detected"
+                    ):
                         raise UserAlreadyExists  # TODO only user?
             else:
-                raise KanidmReturnEmptyResponse
+                raise KanidmReturnEmptyResponse()
 
             return response
 
