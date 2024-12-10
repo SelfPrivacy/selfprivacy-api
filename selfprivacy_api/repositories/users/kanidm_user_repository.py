@@ -207,7 +207,7 @@ class KanidmUserRepository(AbstractUserRepository):
         """
         users_data = KanidmUserRepository._send_query(endpoint="person", method="GET")
 
-        if not users_data or "attrs" not in users_data:
+        if not users_data:
             raise KanidmReturnEmptyResponse
 
         users = []
@@ -310,10 +310,13 @@ class KanidmUserRepository(AbstractUserRepository):
             method="GET",
         )
 
-        if not data or "attrs" not in data:
+        if not data:
             raise KanidmReturnEmptyResponse
 
-        token = data["attrs"].get["token", [None][0]]
+        token = data.get("token", [None])
+
+        if not token:
+            raise KanidmReturnEmptyResponse
 
         if token:
             return f"https://id{get_domain()}/ui/reset?token={token}"
