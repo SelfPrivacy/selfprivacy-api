@@ -10,10 +10,10 @@ class AbstractUserRepository(ABC):
     def create_user(
         username: str,
         password: Optional[str] = None,
-        displayname: Optional[str] = None,
-        email: Optional[str] = None,
         directmemberof: Optional[list[str]] = None,
         memberof: Optional[list[str]] = None,
+        displayname: Optional[str] = None,
+        email: Optional[str] = None,
     ) -> None:
         """
         Creates a new user. In KanidmUserRepository "password" is a legacy field,
@@ -41,10 +41,10 @@ class AbstractUserRepository(ABC):
     def update_user(
         username: str,
         password: Optional[str] = None,
-        displayname: Optional[str] = None,
-        email: Optional[str] = None,
         directmemberof: Optional[list[str]] = None,
         memberof: Optional[list[str]] = None,
+        displayname: Optional[str] = None,
+        email: Optional[str] = None,
     ) -> None:
         """
         Update user information.

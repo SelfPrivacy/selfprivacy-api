@@ -53,12 +53,12 @@ def get_user_by_username(username: str) -> Optional[User]:
 
     return User(
         username=user.username,
-        ssh_keys=user.ssh_keys or [],
-        user_type=UserType(user.user_type.value) or None,
-        displayname=user.displayname or None,
-        email=user.email or None,
-        directmemberof=user.directmemberof or None,
-        memberof=user.memberof or None,
+        user_type=UserType(user.user_type.value),
+        ssh_keys=getattr(user, "ssh_keys", []),
+        directmemberof=getattr(user, "directmemberof", []),
+        memberof=getattr(user, "memberof", []),
+        displayname=getattr(user, "displayname", None),
+        email=getattr(user, "email", None),
     )
 
 
@@ -68,12 +68,12 @@ def get_users() -> list[User]:
     return [
         User(
             username=user.username,
-            ssh_keys=user.ssh_keys or [],
-            user_type=UserType(user.user_type.value) or None,
-            displayname=user.displayname or None,
-            email=user.email or None,
-            directmemberof=user.directmemberof or None,
-            memberof=user.memberof or None,
+            user_type=UserType(user.user_type.value),
+            ssh_keys=getattr(user, "ssh_keys", []),
+            directmemberof=getattr(user, "directmemberof", []),
+            memberof=getattr(user, "memberof", []),
+            displayname=getattr(user, "displayname", None),
+            email=getattr(user, "email", None),
         )
         for user in users
     ]

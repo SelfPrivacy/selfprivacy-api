@@ -88,10 +88,10 @@ class UsersMutations:
             create_user_action(
                 username=user.username,
                 password=user.password,
-                displayname=user.displayname,
-                email=user.email,
                 directmemberof=user.directmemberof,
                 memberof=user.memberof,
+                displayname=user.displayname,
+                email=user.email,
             )
         except (
             PasswordIsEmpty,
@@ -165,10 +165,10 @@ class UsersMutations:
             update_user_action(
                 username=user.username,
                 password=user.password,
-                displayname=user.displayname,
-                email=user.email,
                 directmemberof=user.directmemberof,
                 memberof=user.memberof,
+                displayname=user.displayname,
+                email=user.email,
             )
         except (PasswordIsEmpty, SelfPrivacyAppIsOutdate, KanidmDidNotReturnAdminPassword) as error:
             return return_failed_mutation_return(

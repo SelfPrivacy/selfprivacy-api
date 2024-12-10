@@ -63,10 +63,10 @@ def get_users(
 def create_user(
     username: str,
     password: Optional[str] = None,
-    displayname: Optional[str] = None,
-    email: Optional[str] = None,
     directmemberof: Optional[list[str]] = None,
     memberof: Optional[list[str]] = None,
+    displayname: Optional[str] = None,
+    email: Optional[str] = None,
 ) -> None:
 
     if is_username_forbidden(username):
@@ -92,10 +92,10 @@ def create_user(
     ACTIVE_USERS_PROVIDER.create_user(
         username=username,
         password=password,
-        displayname=displayname,
-        email=email,
         directmemberof=directmemberof,
         memberof=memberof,
+        displayname=displayname,
+        email=email,
     )
 
 
@@ -114,19 +114,19 @@ def delete_user(username: str) -> None:
 def update_user(
     username: str,
     password: Optional[str] = None,
-    displayname: Optional[str] = None,
-    email: Optional[str] = None,
     directmemberof: Optional[list[str]] = None,
     memberof: Optional[list[str]] = None,
+    displayname: Optional[str] = None,
+    email: Optional[str] = None,
 ) -> None:
 
     ACTIVE_USERS_PROVIDER.update_user(
         username=username,
         password=password,
-        displayname=displayname,
-        email=email,
         directmemberof=directmemberof,
         memberof=memberof,
+        displayname=displayname,
+        email=email,
     )
 
 
