@@ -155,9 +155,11 @@ class KanidmUserRepository(AbstractUserRepository):
 
             response = response.json()
 
-            if response["plugin"]:
-                if response["plugin"].get("attrunique") == "duplicate value detected":
+            if response and response != []:
+                if response[0]["plugin"].get("attrunique") == "duplicate value detected":
                     raise UserAlreadyExists  # TODO only user?
+            else:
+                raise KanidmReturnEmptyResponse
 
             return response
 
@@ -216,9 +218,6 @@ class KanidmUserRepository(AbstractUserRepository):
         The root user will never return.
         """
         users_data = KanidmUserRepository._send_query(endpoint="person", method="GET")
-
-        if not users_data:
-            raise KanidmReturnEmptyResponse
 
         users = []
         for user in users_data:
@@ -291,9 +290,6 @@ class KanidmUserRepository(AbstractUserRepository):
             method="GET",
         )
 
-        if not user_data or "attrs" not in user_data:
-            raise KanidmReturnEmptyResponse
-
         attrs = user_data["attrs"]
 
         return UserDataUser(
@@ -318,9 +314,6 @@ class KanidmUserRepository(AbstractUserRepository):
             endpoint=f"person/{username}/_credential/_update_intent",
             method="GET",
         )
-
-        if not data:
-            raise KanidmReturnEmptyResponse
 
         token = data.get("token", None)
 
