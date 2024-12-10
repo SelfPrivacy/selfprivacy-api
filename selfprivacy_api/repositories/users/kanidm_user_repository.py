@@ -155,19 +155,17 @@ class KanidmUserRepository(AbstractUserRepository):
 
             logger.info(str(response))
 
-            response = response.json()
+            response_data = response.json()
 
-            if isinstance(response, list) and len(response) > 0:
-                if response[0].get("plugin"):
-                    if (
-                        response[0]["plugin"].get("attrunique")
-                        == "duplicate value detected"
-                    ):
-                        raise UserAlreadyExists  # TODO only user?
-            else:
-                raise KanidmReturnEmptyResponse()
+            if 'errors' in response_data and response_data['errors']:
+                error_message = response_data['errors'][0].get('message')
+                if error_message:
+                    if "duplicate value detected" in error_message:
+                        raise UserAlreadyExists
+                    else:
+                        raise KanidmQueryError(f"Kanidm returned an error: {error_message}")
 
-            return response
+            return response_data
 
         except Exception as error:
             raise KanidmQueryError(f"Kanidm request failed! Error: {str(error)}")
