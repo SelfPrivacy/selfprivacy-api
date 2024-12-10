@@ -147,27 +147,29 @@ class KanidmUserRepository(AbstractUserRepository):
                 verify=False,  # TODO: REMOVE THIS NOTHALAL!!!!!
             )
 
-            # TODO make more cases, what if user do not exits?
+            logger.info(str(response))
+            response_data = response.json()
+
+            plugin_error = response_data.get("plugin", {})
+            if plugin_error.get("attrunique") == "duplicate value detected":
+                raise UserAlreadyExists  # TODO only user ?
+
             if response.status_code != 200:
                 raise KanidmQueryError(
                     f"Kanidm returned {response.status_code} unexpected HTTP status code. Endpoint: {full_endpoint}. Error: {response.text}."
                 )
 
-            logger.info(str(response))
-
-            response_data = response.json()
-
-            if 'plugin' in response_data.get('data', {}):
-                plugin_error = response_data['data']['plugin']
-                if plugin_error.get("attrunique") == "duplicate value detected":
-                    raise UserAlreadyExists("Duplicate value detected when creating user.")
-
-            return response_data
+            if (
+                isinstance(response_data, dict)
+                and response_data.get("data") is not None
+            ):
+                return response_data
+            else:
+                raise KanidmReturnEmptyResponse
 
         except Exception as error:
             raise KanidmQueryError(f"Kanidm request failed! Error: {str(error)}")
 
-        # {"plugin": {"attrunique": "duplicate value detected"}}
         # nomatchingentries
 
     @staticmethod
