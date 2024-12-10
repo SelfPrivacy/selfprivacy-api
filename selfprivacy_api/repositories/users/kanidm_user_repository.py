@@ -221,13 +221,13 @@ class KanidmUserRepository(AbstractUserRepository):
                 continue
 
             filled_user = UserDataUser(
-                username=user_attrs["name"],
+                username=user_attrs["name"][0],
                 user_type=user_type,
                 ssh_keys=[],  # actions layer will full in this field
                 directmemberof=user_attrs.get("directmemberof", []),
                 memberof=user_attrs.get("memberof", []),
-                displayname=user_attrs.get("displayname", None),
-                email=user_attrs.get("mail", None),
+                displayname=user_attrs.get("displayname", None)[0],
+                email=user_attrs.get("mail", None)[0],
             )
 
             users.append(filled_user)
@@ -288,15 +288,15 @@ class KanidmUserRepository(AbstractUserRepository):
         attrs = user_data["attrs"]
 
         return UserDataUser(
-            username=attrs["name"],
+            username=attrs["name"][0],
             user_type=KanidmUserRepository._check_user_origin_by_memberof(
                 memberof=attrs.get("memberof", [])
             ),
-            ssh_keys=[],  # actions layer will full in this field
+            ssh_keys=[],  # Actions слой заполнит это поле
             directmemberof=attrs.get("directmemberof", []),
             memberof=attrs.get("memberof", []),
-            displayname=attrs.get("displayname", None),
-            email=attrs.get("mail", None),
+            displayname=attrs.get("displayname", [None])[0],
+            email=attrs.get("mail", [None])[0],
         )
 
     @staticmethod
