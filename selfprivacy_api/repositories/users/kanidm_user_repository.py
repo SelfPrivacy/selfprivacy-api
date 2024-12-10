@@ -156,8 +156,9 @@ class KanidmUserRepository(AbstractUserRepository):
             response = response.json()
 
             if response and response != []:
-                if response[0]["plugin"].get("attrunique") == "duplicate value detected":
-                    raise UserAlreadyExists  # TODO only user?
+                if response[0].get("plugin"):
+                    if response[0]["plugin"].get("attrunique") == "duplicate value detected":
+                        raise UserAlreadyExists  # TODO only user?
             else:
                 raise KanidmReturnEmptyResponse
 
