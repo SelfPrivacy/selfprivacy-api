@@ -21,6 +21,7 @@ from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericMutationReturn,
 )
 from selfprivacy_api.actions.users import (
+    RootIsNotAvailableForModification,
     create_user as create_user_action,
     delete_user as delete_user_action,
     update_user as update_user_action,
@@ -39,7 +40,9 @@ from selfprivacy_api.repositories.users.exceptions import (
     SelfPrivacyAppIsOutdate,
 )
 from selfprivacy_api import PLEASE_UPDATE_APP_TEXT
-from selfprivacy_api.repositories.users.kanidm_user_repository import KanidmDidNotReturnAdminPassword
+from selfprivacy_api.repositories.users.kanidm_user_repository import (
+    KanidmDidNotReturnAdminPassword,
+)
 
 
 FAILED_TO_SETUP_PASSWORD_TEXT = "Failed to set a password for a user. The problem occurred due to an old version of the SelfPrivacy app."
@@ -64,10 +67,8 @@ class UserMutationInput:
 
     username: str
     directmemberof: Optional[list[str]] = strawberry.field(default_factory=list)
-    memberof: Optional[list[str]] = strawberry.field(default_factory=list)
     password: Optional[str] = None
     displayname: Optional[str] = None
-    email: Optional[str] = None
 
 
 @strawberry.input
@@ -89,9 +90,7 @@ class UsersMutations:
                 username=user.username,
                 password=user.password,
                 directmemberof=user.directmemberof,
-                memberof=user.memberof,
                 displayname=user.displayname,
-                email=user.email,
             )
         except (
             PasswordIsEmpty,
@@ -166,11 +165,13 @@ class UsersMutations:
                 username=user.username,
                 password=user.password,
                 directmemberof=user.directmemberof,
-                memberof=user.memberof,
                 displayname=user.displayname,
-                email=user.email,
             )
-        except (PasswordIsEmpty, SelfPrivacyAppIsOutdate, KanidmDidNotReturnAdminPassword) as error:
+        except (
+            PasswordIsEmpty,
+            SelfPrivacyAppIsOutdate,
+            KanidmDidNotReturnAdminPassword,
+        ) as error:
             return return_failed_mutation_return(
                 message=error.get_error_message(),
             )
@@ -246,20 +247,20 @@ class UsersMutations:
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def generate_password_reset_link(
-        self, user: UserMutationInput
-    ) -> PasswordResetLinkReturn:
+    def generate_password_reset_link(self, username: str) -> PasswordResetLinkReturn:
         try:
-            password_reset_link = generate_password_reset_link_action(
-                username=user.username
-            )
+            password_reset_link = generate_password_reset_link_action(username=username)
         except UserNotFound as error:
             return PasswordResetLinkReturn(
                 success=False,
                 message=error.get_error_message(),
                 code=404,
             )
-        except (NoPasswordResetLinkFoundInResponse, KanidmDidNotReturnAdminPassword) as error:
+        except (
+            NoPasswordResetLinkFoundInResponse,
+            KanidmDidNotReturnAdminPassword,
+            RootIsNotAvailableForModification,
+        ) as error:
             return PasswordResetLinkReturn(
                 success=False,
                 code=500,

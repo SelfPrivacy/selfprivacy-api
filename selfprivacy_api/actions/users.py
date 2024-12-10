@@ -29,8 +29,17 @@ class ApiUsingWrongUserRepository(Exception):
 
     @staticmethod
     def get_error_message() -> str:
-        """Return text message error."""
         return "API is using a too old or unfinished user repository"
+
+
+class RootIsNotAvailableForModification(Exception):
+    """
+    Root is not available for modification. Operation is restricted.
+    """
+
+    @staticmethod
+    def get_error_message() -> str:
+        return "Root is not available for modification. Operation is restricted."
 
 
 def get_users(
@@ -64,9 +73,7 @@ def create_user(
     username: str,
     password: Optional[str] = None,
     directmemberof: Optional[list[str]] = None,
-    memberof: Optional[list[str]] = None,
     displayname: Optional[str] = None,
-    email: Optional[str] = None,
 ) -> None:
 
     if is_username_forbidden(username):
@@ -93,9 +100,7 @@ def create_user(
         username=username,
         password=password,
         directmemberof=directmemberof,
-        memberof=memberof,
         displayname=displayname,
-        email=email,
     )
 
 
@@ -115,18 +120,14 @@ def update_user(
     username: str,
     password: Optional[str] = None,
     directmemberof: Optional[list[str]] = None,
-    memberof: Optional[list[str]] = None,
     displayname: Optional[str] = None,
-    email: Optional[str] = None,
 ) -> None:
 
     ACTIVE_USERS_PROVIDER.update_user(
         username=username,
         password=password,
         directmemberof=directmemberof,
-        memberof=memberof,
         displayname=displayname,
-        email=email,
     )
 
 
@@ -155,5 +156,8 @@ def get_user_by_username(username: str) -> Optional[UserDataUser]:
 def generate_password_reset_link(username: str) -> str:
     if isinstance(ACTIVE_USERS_PROVIDER, JsonUserRepository):
         raise ApiUsingWrongUserRepository
+
+    if username == "root":
+        raise RootIsNotAvailableForModification
 
     return ACTIVE_USERS_PROVIDER.generate_password_reset_link(username=username)

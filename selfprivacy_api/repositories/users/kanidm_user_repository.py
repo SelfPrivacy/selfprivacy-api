@@ -7,6 +7,7 @@ import logging
 from selfprivacy_api.repositories.users.exceptions import (
     NoPasswordResetLinkFoundInResponse,
     SelfPrivacyAppIsOutdate,
+    UserAlreadyExists,
 )
 from selfprivacy_api.utils import get_domain, temporary_env_var
 from selfprivacy_api.utils.redis_pool import RedisPool
@@ -151,19 +152,27 @@ class KanidmUserRepository(AbstractUserRepository):
                 raise KanidmQueryError(
                     f"Kanidm returned {response.status_code} unexpected HTTP status code. Endpoint: {full_endpoint}. Error: {response.text}."
                 )
-            return response.json()
+
+            response = response.json()
+
+            if response.get("plugin"):
+                if response["plugin"].get("attrunique") == "duplicate value detected":
+                    raise UserAlreadyExists  # TODO only user?
+
+            return response
 
         except Exception as error:
             raise KanidmQueryError(f"Kanidm request failed! Error: {str(error)}")
+
+        # {"plugin": {"attrunique": "duplicate value detected"}}
 
     @staticmethod
     def create_user(
         username: str,
         password: Optional[str] = None,
-        displayname: Optional[str] = None,
-        email: Optional[str] = None,
         directmemberof: Optional[list[str]] = None,
         memberof: Optional[list[str]] = None,
+        displayname: Optional[str] = None,
     ) -> None:
         """
         Creates a new user."password" is a legacy field,
@@ -180,7 +189,7 @@ class KanidmUserRepository(AbstractUserRepository):
             "attrs": {
                 "name": [username],
                 "displayname": [displayname if displayname else username],
-                "mail": [email if email else f"{username}@{get_domain()}"],
+                "mail": [f"{username}@{get_domain()}"],
                 "class": ["user"],  # TODO read more about it
             }
         }
@@ -245,7 +254,6 @@ class KanidmUserRepository(AbstractUserRepository):
         directmemberof: Optional[list[str]] = None,
         memberof: Optional[list[str]] = None,
         displayname: Optional[str] = None,
-        email: Optional[str] = None,
     ) -> None:
         """
         Update user information.
@@ -258,7 +266,7 @@ class KanidmUserRepository(AbstractUserRepository):
         data = {
             "attrs": {
                 "displayname": [displayname if displayname else username],
-                "mail": [email if email else f"{username}@{get_domain()}"],
+                "mail": [f"{username}@{get_domain()}"],
                 "class": ["user"],  # TODO read more about it
             }
         }
@@ -292,7 +300,7 @@ class KanidmUserRepository(AbstractUserRepository):
             user_type=KanidmUserRepository._check_user_origin_by_memberof(
                 memberof=attrs.get("memberof", [])
             ),
-            ssh_keys=[],  # Actions слой заполнит это поле
+            ssh_keys=[],  # Actions layer will fill this field
             directmemberof=attrs.get("directmemberof", []),
             memberof=attrs.get("memberof", []),
             displayname=attrs.get("displayname", [None])[0],
@@ -319,6 +327,6 @@ class KanidmUserRepository(AbstractUserRepository):
             raise KanidmReturnEmptyResponse
 
         if token:
-            return f"https://id{get_domain()}/ui/reset?token={token}"
+            return f"https://id.{get_domain()}/ui/reset?token={token}"
 
         raise NoPasswordResetLinkFoundInResponse
