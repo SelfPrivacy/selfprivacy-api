@@ -155,7 +155,7 @@ class KanidmUserRepository(AbstractUserRepository):
 
             response = response.json()
 
-            if response.get("plugin"):
+            if response["plugin"]:
                 if response["plugin"].get("attrunique") == "duplicate value detected":
                     raise UserAlreadyExists  # TODO only user?
 
@@ -165,6 +165,7 @@ class KanidmUserRepository(AbstractUserRepository):
             raise KanidmQueryError(f"Kanidm request failed! Error: {str(error)}")
 
         # {"plugin": {"attrunique": "duplicate value detected"}}
+        # nomatchingentries
 
     @staticmethod
     def create_user(
