@@ -146,29 +146,28 @@ class KanidmUserRepository(AbstractUserRepository):
                 timeout=0.8,  # TODO: change timeout
                 verify=False,  # TODO: REMOVE THIS NOTHALAL!!!!!
             )
-
-            logger.info(str(response))
-            response_data = response.json()
-
-            plugin_error = response_data.get("plugin", {})
-            if plugin_error.get("attrunique") == "duplicate value detected":
-                raise UserAlreadyExists  # TODO only user ?
-
-            if response.status_code != 200:
-                raise KanidmQueryError(
-                    f"Kanidm returned {response.status_code} unexpected HTTP status code. Endpoint: {full_endpoint}. Error: {response.text}."
-                )
-
-            if (
-                isinstance(response_data, dict)
-                and response_data.get("data") is not None
-            ):
-                return response_data
-            else:
-                raise KanidmReturnEmptyResponse
-
         except Exception as error:
             raise KanidmQueryError(f"Kanidm request failed! Error: {str(error)}")
+
+        logger.info(str(response))
+        response_data = response.json()
+
+        plugin_error = response_data.get("plugin", {})
+        if plugin_error.get("attrunique") == "duplicate value detected":
+            raise UserAlreadyExists  # TODO only user ?
+
+        if response.status_code != 200:
+            raise KanidmQueryError(
+                f"Kanidm returned {response.status_code} unexpected HTTP status code. Endpoint: {full_endpoint}. Error: {response.text}."
+            )
+
+        if (
+            isinstance(response_data, dict)
+            and response_data.get("data") is not None
+        ):
+            return response_data
+        else:
+            raise KanidmReturnEmptyResponse
 
         # nomatchingentries
 
