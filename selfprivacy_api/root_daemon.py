@@ -8,6 +8,8 @@ import socket as socket_module
 
 import subprocess
 
+from tests.test_common import get_test_mode
+
 SOCKET_PATH = "/tmp/socket_test.s"
 BUFFER_SIZE = 1024
 
@@ -76,21 +78,23 @@ def get_available_commands() -> List[str]:
     return commands
 
 
-def init() -> socket_module.socket:
-    if os.path.exists(SOCKET_PATH):
-        os.remove(SOCKET_PATH)
+def init(socket_path=SOCKET_PATH) -> socket_module.socket:
+    if os.path.exists(socket_path):
+        os.remove(socket_path)
     sock = socket_module.socket(socket_module.AF_UNIX, socket_module.SOCK_STREAM)
-    sock.bind(SOCKET_PATH)
+    sock.bind(socket_path)
+    assert os.path.exists(socket_path)
+    # raise ValueError(socket_path)
     return sock
 
 
-def _spawn_shell(command_string):
+def _spawn_shell(command_string: str):
     # We use sh to refrain from parsing and simplify logic
     # Our commands are hardcoded so sh does not present
     # an extra attack surface here
 
     # TODO: continuous forwarding of command output
-    subprocess.check_output("sh", "-c", command_string)
+    subprocess.check_output(["sh", "-c", command_string])
 
 
 def _process_request(request: str, allowed_commands: str) -> str:
@@ -98,29 +102,42 @@ def _process_request(request: str, allowed_commands: str) -> str:
         if request == command:
             # explicitly only calling a _hardcoded_ command
             # ever
-            _spawn_shell(command)
+            # test mode made like this does not make it more dangerous too
+            raise ValueError("Oh no")
+            if get_test_mode():
+                _spawn_shell(f'echo "{command}"')
+            else:
+                _spawn_shell(command)
     else:
         return "-1"
 
 
 def _root_loop(socket: socket_module.socket, allowed_commands):
-    while True:
-        socket.listen(1)
-        conn, addr = socket.accept()
-        datagram = conn.recv(BUFFER_SIZE)
-        if datagram:
-            request = datagram.strip().decode("utf-8")
-            answer = _process_request(request, allowed_commands)
-            conn.send(answer.encode("utf-8"))
-            conn.close()
+    socket.listen(1)
 
-def main():
+    # in seconds
+    socket.settimeout(1.0)  # we do it so that we can throw exceptions into the loop
+    while True:
+        try:
+            conn, addr = socket.accept()
+        except TimeoutError:
+            continue
+        pipe = conn.makefile("rw")
+        # We accept a single line per connection for simplicity and safety
+        line = pipe.readline()
+        request = line.strip()
+        answer = _process_request(request, allowed_commands)
+        conn.send(answer.encode("utf-8"))
+        conn.close()
+
+
+def main(socket_path=SOCKET_PATH):
     allowed_commands = get_available_commands()
     print("\n".join(allowed_commands))
 
-    sock = init()
+    sock = init(socket_path)
     _root_loop(sock, allowed_commands)
-    
+
 
 if __name__ == "__main__":
     main()
