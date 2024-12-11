@@ -61,7 +61,7 @@ def test_send_command():
     answer = call_root_function(["blabla"])
     assert answer == "not permitted"
     # confirm the loop
-    # answer = call_root_function(["blabla"])
-    # assert answer == "not permitted"
+    answer = call_root_function(["blabla"])
+    assert answer == "not permitted"
 
     proc.kill()
