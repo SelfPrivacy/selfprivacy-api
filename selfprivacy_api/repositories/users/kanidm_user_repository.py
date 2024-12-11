@@ -118,11 +118,12 @@ class KanidmUserRepository(AbstractUserRepository):
 
         logging.info(response_data)
 
+        if response_data is None:
+            raise KanidmReturnEmptyResponse
+
         if data_type == "list":
             if not isinstance(response_data, list):
                 raise KanidmReturnUnknownResponseType(response_data=response_data)
-            if not response_data:
-                raise KanidmReturnEmptyResponse
 
         elif data_type == "dict":
             if not isinstance(response_data, dict):

@@ -158,8 +158,8 @@ def update_user(
     )
 
 
-def get_user_by_username(username: str) -> Optional[UserDataUser]:
-    user: UserDataUser | None = ACTIVE_USERS_PROVIDER.get_user_by_username(
+def get_user_by_username(username: str) -> UserDataUser:
+    user = ACTIVE_USERS_PROVIDER.get_user_by_username(
         username=username
     )
 
