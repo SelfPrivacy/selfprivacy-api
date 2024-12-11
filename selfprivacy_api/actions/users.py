@@ -8,6 +8,7 @@ from typing import Optional
 from selfprivacy_api import PLEASE_UPDATE_APP_TEXT
 from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
 
+from selfprivacy_api.repositories.users.exceptions_kanidm import KanidmReturnEmptyResponse
 from selfprivacy_api.utils import is_username_forbidden
 from selfprivacy_api.actions.ssh import get_ssh_keys
 
@@ -169,7 +170,10 @@ def get_user_by_username(username: str) -> UserDataUser:
             ssh_keys=get_ssh_keys(username="root"),
         )
 
-    user = ACTIVE_USERS_PROVIDER.get_user_by_username(username=username)
+    try:
+        user = ACTIVE_USERS_PROVIDER.get_user_by_username(username=username)
+    except KanidmReturnEmptyResponse:
+        raise UserNotFound
 
     try:
         user.ssh_keys = get_ssh_keys(username=user.username)

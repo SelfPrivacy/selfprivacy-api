@@ -168,7 +168,7 @@ class KanidmUserRepository(AbstractUserRepository):
 
             raise KanidmQueryError(error_text=response.text)
 
-        if isinstance(response_data, str):
+        if isinstance(response_data, str): # TODO
             if response_data == "nomatchingentries":
                 raise UserNotFound
 
