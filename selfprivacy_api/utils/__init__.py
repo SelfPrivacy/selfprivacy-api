@@ -8,6 +8,7 @@ import subprocess
 import portalocker
 import typing
 import glob
+from typing import Optional
 
 from traceback import format_tb as format_traceback
 
@@ -252,3 +253,7 @@ def read_account_uri() -> str:
     with open(account_file[0], "r") as file:
         account_info = json.load(file)
         return account_info["registration"]["uri"]
+
+
+def get_test_mode() -> Optional[str]:
+    return os.environ.get("TEST_MODE")

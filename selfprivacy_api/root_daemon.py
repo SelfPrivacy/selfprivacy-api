@@ -7,8 +7,7 @@ import os.path
 import socket as socket_module
 
 import subprocess
-
-from tests.test_common import get_test_mode
+from typing import Optional
 
 SOCKET_PATH = "/tmp/socket_test.s"
 BUFFER_SIZE = 1024
@@ -141,3 +140,10 @@ def main(socket_path=SOCKET_PATH):
 
 if __name__ == "__main__":
     main()
+
+
+# A copy of the one from utils module.
+# It is possible to remove this duplication but unfortunately it is not
+# trivial and extra complexity does not worth it at the moment.
+def get_test_mode() -> Optional[str]:
+    return os.environ.get("TEST_MODE")
