@@ -168,10 +168,6 @@ class KanidmUserRepository(AbstractUserRepository):
 
             raise KanidmQueryError(error_text=response.text)
 
-        if isinstance(response_data, str): # TODO
-            if response_data == "nomatchingentries":
-                raise UserNotFound
-
         return response_data
 
     @staticmethod
@@ -293,9 +289,12 @@ class KanidmUserRepository(AbstractUserRepository):
             method="GET",
         )
 
-        KanidmUserRepository._check_response_type_and_not_empty(
-            data_type="dict", response_data=user_data
-        )
+        try:
+            KanidmUserRepository._check_response_type_and_not_empty(
+                data_type="dict", response_data=user_data
+            )
+        except KanidmReturnEmptyResponse:
+            raise UserNotFound
 
         attrs = user_data["attrs"]
 
