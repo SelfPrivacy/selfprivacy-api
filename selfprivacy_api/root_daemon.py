@@ -114,21 +114,18 @@ def _process_request(request: str, allowed_commands: str) -> str:
 def _root_loop(socket: socket_module.socket, allowed_commands):
     socket.listen(1)
 
-    # in seconds
-    socket.settimeout(1.0)  # we do it so that we can throw exceptions into the loop
+    # XXX
+    socket.settimeout(6.0)
     while True:
-        try:
-            conn, addr = socket.accept()
-        except TimeoutError:
-            raise ValueError("nooo, there was a timeout!")
-            continue
-
+        conn, addr = socket.accept()
         pipe = conn.makefile("rw")
+
         # We accept a single line per connection for simplicity and safety
         line = pipe.readline()
         request = line.strip()
         answer = _process_request(request, allowed_commands)
         conn.send(answer.encode("utf-8"))
+        pipe.close()
         conn.close()
 
 
