@@ -41,6 +41,7 @@ from selfprivacy_api.repositories.users.exceptions import (
 )
 from selfprivacy_api.repositories.users.exceptions_kanidm import (
     KanidmDidNotReturnAdminPassword,
+    KanidmQueryError,
     KanidmReturnEmptyResponse,
     KanidmReturnUnknownResponseType,
 )
@@ -102,6 +103,7 @@ class UsersMutations:
             KanidmDidNotReturnAdminPassword,
             KanidmReturnUnknownResponseType,
             KanidmReturnEmptyResponse,
+            KanidmQueryError,
         ) as error:
             return return_failed_mutation_return(
                 message=error.get_error_message(),
@@ -148,7 +150,7 @@ class UsersMutations:
                 code=400,
                 message=error.get_error_message(),
             )
-        except KanidmDidNotReturnAdminPassword as error:
+        except (KanidmDidNotReturnAdminPassword, KanidmQueryError) as error:
             return GenericMutationReturn(
                 success=False,
                 code=500,
@@ -177,6 +179,7 @@ class UsersMutations:
             KanidmDidNotReturnAdminPassword,
             KanidmReturnUnknownResponseType,
             KanidmReturnEmptyResponse,
+            KanidmQueryError,
         ) as error:
             return return_failed_mutation_return(
                 message=error.get_error_message(),
@@ -268,6 +271,7 @@ class UsersMutations:
             RootIsNotAvailableForModification,
             KanidmReturnUnknownResponseType,
             KanidmReturnEmptyResponse,
+            KanidmQueryError,
         ) as error:
             return PasswordResetLinkReturn(
                 success=False,
