@@ -126,7 +126,7 @@ class KanidmAdminToken:
     @staticmethod
     def _is_token_valid(token: str) -> bool:
         response = requests.get(
-            "{KANIDM_URL}/v1/person/root",
+            f"{KANIDM_URL}/v1/person/root",
             headers={
                 "Authorization": f"Bearer {token}",
                 "Content-Type": "application/json",
