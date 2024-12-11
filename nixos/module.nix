@@ -50,6 +50,7 @@ in
       ];
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
+      wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         User = "root";
         ExecStart = "${selfprivacy-graphql-api}/bin/app.py";
@@ -84,6 +85,7 @@ in
       ];
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
+      wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         User = "root";
         ExecStart = "${pkgs.python312Packages.huey}/bin/huey_consumer.py selfprivacy_api.task_registry.huey";
@@ -116,7 +118,7 @@ in
         ExecStart = ''
           ${nixos-rebuild} switch --flake .#${config-id}
         '';
-        KillMode = "none";
+        KillMode = "mixed";
         SendSIGKILL = "no";
       };
       restartIfChanged = false;
@@ -143,7 +145,7 @@ in
         ExecStart = ''
           ${nixos-rebuild} switch --flake .#${config-id}
         '';
-        KillMode = "none";
+        KillMode = "mixed";
         SendSIGKILL = "no";
       };
       restartIfChanged = false;
@@ -165,7 +167,7 @@ in
         ExecStart = ''
           ${nixos-rebuild} switch --rollback --flake .#${config-id}
         '';
-        KillMode = "none";
+        KillMode = "mixed";
         SendSIGKILL = "no";
       };
       restartIfChanged = false;

@@ -828,7 +828,7 @@ def test_cache_invalidaton_task(backups, dummy_service):
 
 def test_service_manager_backup_snapshot_persists(backups, generic_userdata, dkim_file):
     # There was a bug with snapshot disappearance due to post_restore hooks, checking for that
-    manager = ServiceManager.get_service_by_id("api")
+    manager = ServiceManager.get_service_by_id(ServiceManager.get_id())
     assert manager is not None
 
     snapshot = Backups.back_up(manager)
@@ -844,7 +844,7 @@ def test_service_manager_backs_up_without_crashing(
     """
     Service manager is special and needs testing.
     """
-    manager = ServiceManager.get_service_by_id("api")
+    manager = ServiceManager.get_service_by_id(ServiceManager.get_id())
     assert manager is not None
 
     snapshot = Backups.back_up(manager)

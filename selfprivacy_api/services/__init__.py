@@ -234,12 +234,8 @@ class ServiceManager(Service):
     @classmethod
     def pre_backup(cls):
         tempdir = cls.dump_dir()
-        if not path.exists(tempdir):
-            makedirs(tempdir)
-
-        paths = listdir(tempdir)
-        for file in paths:
-            remove(file)
+        rmtree(join(tempdir), ignore_errors=True)
+        makedirs(tempdir)
 
         for p in [USERDATA_FILE, SECRETS_FILE, DKIM_DIR]:
             cls.stash_a_path(p)
