@@ -17,6 +17,7 @@ from selfprivacy_api.utils.root_interface import call_root_function
 from os.path import join, exists
 
 from typing import List
+from time import sleep
 
 
 @pytest.fixture()
@@ -51,6 +52,11 @@ def test_send_command():
     root_daemon_file = selfprivacy_api.root_daemon.__file__
     # this is a prototype of how we need to run it`
     proc = subprocess.Popen(args=["python", root_daemon_file], shell=False)
+
+    # check that it did not error out
+    sleep(0.3)
+    finished = proc.poll()
+    assert finished is None
 
     # thread = threading.Thread(target=start_root_daemon,args=[])
     # thread.start()
