@@ -101,8 +101,6 @@ class UsersMutations:
             UsernameTooLong,
             InvalidConfiguration,
             KanidmDidNotReturnAdminPassword,
-            KanidmReturnUnknownResponseType,
-            KanidmReturnEmptyResponse,
             KanidmQueryError,
         ) as error:
             return return_failed_mutation_return(
@@ -177,8 +175,6 @@ class UsersMutations:
             PasswordIsEmpty,
             SelfPrivacyAppIsOutdate,
             KanidmDidNotReturnAdminPassword,
-            KanidmReturnUnknownResponseType,
-            KanidmReturnEmptyResponse,
             KanidmQueryError,
         ) as error:
             return return_failed_mutation_return(

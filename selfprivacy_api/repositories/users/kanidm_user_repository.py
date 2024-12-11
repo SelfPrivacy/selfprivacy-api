@@ -102,20 +102,22 @@ class KanidmAdminToken:  # TODO CHECK IS TOKEN CORRECT?
 
 
 class KanidmUserRepository(AbstractUserRepository):
-    """
-    Validates the type and that content of the response data is not empty.
-
-    Args:
-        data_type (str): Expected type of response data ('list' or 'dict').
-        response_data (any): Response data to validate.
-
-    Raises:
-        KanidmReturnEmptyResponse: If the response data is empty.
-        KanidmReturnUnknownResponseType: If the response data is not of the expected type.
-    """
-
     @staticmethod
     def _check_response_type_and_not_empty(data_type: str, response_data: Any) -> None:
+        """
+        Validates the type and that content of the response data is not empty.
+
+        Args:
+            data_type (str): Expected type of response data ('list' or 'dict').
+            response_data (any): Response data to validate.
+
+        Raises:
+            KanidmReturnEmptyResponse: If the response data is empty.
+            KanidmReturnUnknownResponseType: If the response data is not of the expected type.
+        """
+
+        logging.info(response_data)
+
         if data_type == "list":
             if not isinstance(response_data, list):
                 raise KanidmReturnUnknownResponseType(response_data=response_data)
@@ -127,9 +129,6 @@ class KanidmUserRepository(AbstractUserRepository):
                 raise KanidmReturnUnknownResponseType(response_data=response_data)
             if not response_data.get("data"):
                 raise KanidmReturnEmptyResponse
-
-        else:
-            raise KanidmReturnUnknownResponseType(response_data=response_data)
 
     @staticmethod
     def _check_user_origin_by_memberof(
@@ -172,8 +171,6 @@ class KanidmUserRepository(AbstractUserRepository):
                     raise UserNotFound
 
             raise KanidmQueryError(error_text=response.text)
-
-        # nomatchingentries
 
     @staticmethod
     def create_user(
