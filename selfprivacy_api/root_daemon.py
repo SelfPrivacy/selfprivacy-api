@@ -101,14 +101,14 @@ def _process_request(request: str, allowed_commands: str) -> str:
         if request == command:
             # explicitly only calling a _hardcoded_ command
             # ever
-            # test mode made like this does not make it more dangerous too
+            # test mode made like this does not mae it more dangerous too
             raise ValueError("Oh no")
             if get_test_mode():
                 _spawn_shell(f'echo "{command}"')
             else:
                 _spawn_shell(command)
     else:
-        return "-1"
+        return "not permitted"
 
 
 def _root_loop(socket: socket_module.socket, allowed_commands):
@@ -120,7 +120,9 @@ def _root_loop(socket: socket_module.socket, allowed_commands):
         try:
             conn, addr = socket.accept()
         except TimeoutError:
+            raise ValueError("nooo, there was a timeout!")
             continue
+
         pipe = conn.makefile("rw")
         # We accept a single line per connection for simplicity and safety
         line = pipe.readline()
