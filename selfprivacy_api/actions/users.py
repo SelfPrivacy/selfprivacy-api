@@ -15,6 +15,8 @@ from selfprivacy_api.actions.ssh import get_ssh_keys
 from selfprivacy_api.repositories.users.json_user_repository import JsonUserRepository
 from selfprivacy_api.repositories.users import ACTIVE_USERS_PROVIDER
 from selfprivacy_api.repositories.users.exceptions import (
+    DisplaynameNotAlphanumeric,
+    DisplaynameTooLong,
     SelfPrivacyAppIsOutdate,
     UserIsProtected,
     UsernameForbidden,
@@ -36,6 +38,14 @@ class ApiUsingWrongUserRepository(Exception):
     @staticmethod
     def get_error_message() -> str:
         return "API is using a too old or unfinished user repository"
+
+
+def _check_displayname_is_correct(displayname: str) -> None:
+    if not re.match(r"^[a-z_][a-z0-9_]+$", displayname):
+        raise DisplaynameNotAlphanumeric
+
+    if len(displayname) >= 16:  # we don't know the limitations of each service
+        raise DisplaynameTooLong
 
 
 def get_users(
@@ -73,18 +83,19 @@ def create_user(
 ) -> None:
 
     if is_username_forbidden(username):
-        raise UsernameForbidden("Username is forbidden")
+        raise UsernameForbidden
 
     if not re.match(r"^[a-z_][a-z0-9_]+$", username):
-        raise UsernameNotAlphanumeric(
-            "Username must be alphanumeric and start with a letter"
-        )
+        raise UsernameNotAlphanumeric
 
     if len(username) >= 32:
-        raise UsernameTooLong("Username must be less than 32 characters")
+        raise UsernameTooLong
 
     if password:
         logger.error(PLEASE_UPDATE_APP_TEXT)
+
+    if displayname:
+        _check_displayname_is_correct(displayname=displayname)
 
     # need to maintain the logic of the old repository, since ssh management uses it.
     if not isinstance(ACTIVE_USERS_PROVIDER, JsonUserRepository):
@@ -136,6 +147,9 @@ def update_user(
 
     if username == "root":
         raise UserIsProtected
+
+    if displayname:
+        _check_displayname_is_correct(displayname=displayname)
 
     ACTIVE_USERS_PROVIDER.update_user(
         username=username,

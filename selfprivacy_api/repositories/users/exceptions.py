@@ -35,7 +35,7 @@ class UsernameNotAlphanumeric(Exception):
 
     @staticmethod
     def get_error_message() -> str:
-        return "Username not alphanumeric"
+        return "Username must be alphanumeric and start with a letter"
 
 
 class UsernameTooLong(Exception):
@@ -80,3 +80,21 @@ class NoPasswordResetLinkFoundInResponse(Exception):
     @staticmethod
     def get_error_message() -> str:
         return "The Kanidm response does not contain a password reset link."
+
+
+class DisplaynameNotAlphanumeric(Exception):
+    """Attempted to create a display name with non-alphanumeric characters"""
+
+    @staticmethod
+    def get_error_message() -> str:
+        return "Display name must be alphanumeric"
+
+
+class DisplaynameTooLong(Exception):
+    """
+    Attempted to create a display name that is too long. Display name must be less than 16 characters
+    """
+
+    @staticmethod
+    def get_error_message() -> str:
+        return "Display name is too long. Must be less than 16 characters"

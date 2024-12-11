@@ -11,13 +11,13 @@ class AbstractUserRepository(ABC):
         username: str,
         password: Optional[str] = None,
         directmemberof: Optional[list[str]] = None,
-        memberof: Optional[list[str]] = None,
         displayname: Optional[str] = None,
         email: Optional[str] = None,
     ) -> None:
         """
-        Creates a new user. In KanidmUserRepository "password" is a legacy field,
-        please use generate_password_reset_link() instead.
+        Creates a new user.
+        ! In KanidmUserRepository "password" is a legacy field,
+        please use generate_password_reset_link() instead !
         """
 
     @staticmethod
@@ -28,7 +28,7 @@ class AbstractUserRepository(ABC):
     ) -> list[UserDataUser]:
         """
         Gets a list of users with options to exclude specific user groups.
-        In KanidmUserRepository, the root user will never return.
+        ! In KanidmUserRepository, the root user will never return !
         """
 
     @staticmethod
@@ -41,15 +41,14 @@ class AbstractUserRepository(ABC):
     def update_user(
         username: str,
         directmemberof: Optional[list[str]] = None,
-        memberof: Optional[list[str]] = None,
         displayname: Optional[str] = None,
         email: Optional[str] = None,
     ) -> None:
         """
         Update user information.
         In the JsonUserRepository, only update the password of an existing user.
-        Do not update the password in KanidmUserRepository,
-        use generate_password_reset_link() instead.
+        ! Do not update the password in KanidmUserRepository,
+        use generate_password_reset_link() instead !
         """
 
     @staticmethod
@@ -62,5 +61,5 @@ class AbstractUserRepository(ABC):
     def generate_password_reset_link(username: str) -> str:
         """
         Do not reset the password, just generate a link to reset the password.
-        Not implemented in JsonUserRepository.
+        ! Not implemented in JsonUserRepository !
         """

@@ -27,6 +27,8 @@ from selfprivacy_api.actions.users import (
     generate_password_reset_link as generate_password_reset_link_action,
 )
 from selfprivacy_api.repositories.users.exceptions import (
+    DisplaynameNotAlphanumeric,
+    DisplaynameTooLong,
     NoPasswordResetLinkFoundInResponse,
     PasswordIsEmpty,
     UsernameForbidden,
@@ -43,6 +45,7 @@ from selfprivacy_api.repositories.users.exceptions_kanidm import (
     KanidmQueryError,
     KanidmReturnEmptyResponse,
     KanidmReturnUnknownResponseType,
+    KanidmCliSubprocessError,
 )
 from selfprivacy_api import PLEASE_UPDATE_APP_TEXT
 
@@ -101,6 +104,9 @@ class UsersMutations:
             InvalidConfiguration,
             KanidmDidNotReturnAdminPassword,
             KanidmQueryError,
+            DisplaynameNotAlphanumeric,
+            DisplaynameTooLong,
+            KanidmCliSubprocessError,
         ) as error:
             return return_failed_mutation_return(
                 message=error.get_error_message(),
@@ -150,6 +156,7 @@ class UsersMutations:
         except (
             KanidmDidNotReturnAdminPassword,
             KanidmQueryError,
+            KanidmCliSubprocessError,
         ) as error:
             return GenericMutationReturn(
                 success=False,
@@ -178,6 +185,9 @@ class UsersMutations:
             SelfPrivacyAppIsOutdate,
             KanidmDidNotReturnAdminPassword,
             KanidmQueryError,
+            DisplaynameNotAlphanumeric,
+            DisplaynameTooLong,
+            KanidmCliSubprocessError,
         ) as error:
             return return_failed_mutation_return(
                 message=error.get_error_message(),
@@ -275,6 +285,7 @@ class UsersMutations:
             KanidmReturnUnknownResponseType,
             KanidmReturnEmptyResponse,
             KanidmQueryError,
+            KanidmCliSubprocessError,
         ) as error:
             return PasswordResetLinkReturn(
                 success=False,

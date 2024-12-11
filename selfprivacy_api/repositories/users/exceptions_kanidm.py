@@ -44,3 +44,17 @@ class KanidmDidNotReturnAdminPassword(Exception):
     @staticmethod
     def get_error_message() -> str:
         return "Kanidm didn't return the admin password."
+
+
+class KanidmCliSubprocessError(Exception):
+    """An error occurred when using Kanidm cli"""
+
+    def __init__(self, error: Optional[str] = None) -> None:
+        self.error = error
+
+    def get_error_message(self) -> str:
+        return (
+            f"An error occurred when using Kanidm cli. Error: {self.error}"
+            if self.error
+            else "An error occurred when using Kanidm cli."
+        )
