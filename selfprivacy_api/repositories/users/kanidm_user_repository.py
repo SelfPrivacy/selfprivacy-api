@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Any, Optional, Union
 import subprocess
 import requests
 import re
@@ -103,6 +103,35 @@ class KanidmAdminToken:  # TODO CHECK IS TOKEN CORRECT?
 
 
 class KanidmUserRepository(AbstractUserRepository):
+    """
+    Validates the type and that content of the response data is not empty.
+
+    Args:
+        data_type (str): Expected type of response data ('list' or 'dict').
+        response_data (any): Response data to validate.
+
+    Raises:
+        KanidmReturnEmptyResponse: If the response data is empty.
+        KanidmReturnUnknownResponseType: If the response data is not of the expected type.
+    """
+
+    @staticmethod
+    def _check_response_type_and_not_empty(data_type: str, response_data: Any) -> None:
+        if data_type == "list":
+            if not isinstance(response_data, list):
+                raise KanidmReturnUnknownResponseType(response_data=response_data)
+            if not response_data:
+                raise KanidmReturnEmptyResponse
+
+        elif data_type == "dict":
+            if not isinstance(response_data, dict):
+                raise KanidmReturnUnknownResponseType(response_data=response_data)
+            if not response_data.get("data"):
+                raise KanidmReturnEmptyResponse
+
+        else:
+            raise KanidmReturnUnknownResponseType(response_data=response_data)
+
     @staticmethod
     def _check_user_origin_by_memberof(
         memberof: list[str] = [],
@@ -131,8 +160,8 @@ class KanidmUserRepository(AbstractUserRepository):
         except Exception as error:
             raise KanidmQueryError(error_text=str(error))
 
-        logger.info(str(response))
         response_data = response.json()
+        logger.info(str(response))
 
         if response.status_code != 200:
             if isinstance(response_data, dict):
@@ -141,20 +170,6 @@ class KanidmUserRepository(AbstractUserRepository):
                     raise UserAlreadyExists  # TODO only user ?
 
             raise KanidmQueryError(error_text=response.text)
-
-        if isinstance(response_data, dict):
-            if response_data.get("data") is None:
-                return response_data
-            else:
-                raise KanidmReturnEmptyResponse
-
-        elif isinstance(response_data, list):
-            if len(response_data) > 0:
-                return response_data
-            else:
-                raise KanidmReturnEmptyResponse
-        else:
-            raise KanidmReturnUnknownResponseType(response_data=response_data)
 
         # nomatchingentries
 
@@ -207,6 +222,8 @@ class KanidmUserRepository(AbstractUserRepository):
         The root user will never return.
         """
         users_data = KanidmUserRepository._send_query(endpoint="person", method="GET")
+
+        KanidmUserRepository._check_response_type_and_not_empty(data_type="list", response_data=users_data)
 
         users = []
         for user in users_data:
@@ -279,6 +296,8 @@ class KanidmUserRepository(AbstractUserRepository):
             method="GET",
         )
 
+        KanidmUserRepository._check_response_type_and_not_empty(data_type="dict", response_data=user_data)
+
         attrs = user_data["attrs"]
 
         return UserDataUser(
@@ -303,6 +322,8 @@ class KanidmUserRepository(AbstractUserRepository):
             endpoint=f"person/{username}/_credential/_update_intent",
             method="GET",
         )
+
+        KanidmUserRepository._check_response_type_and_not_empty(data_type="dict", response_data=data)
 
         token = data.get("token", None)
 

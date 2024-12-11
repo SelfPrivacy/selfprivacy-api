@@ -1,4 +1,5 @@
 from typing import Optional
+from typing import Any
 
 
 class KanidmQueryError(Exception):
@@ -26,8 +27,8 @@ class KanidmReturnEmptyResponse(Exception):
 class KanidmReturnUnknownResponseType(Exception):
     """Kanidm returned a blank response"""
 
-    def __init__(self, response_data: Optional[str] = None) -> None:
-        self.response_data = response_data
+    def __init__(self, response_data: Optional[Any] = None) -> None:
+        self.response_data = str(response_data)
 
     def get_error_message(self) -> str:
         return (
