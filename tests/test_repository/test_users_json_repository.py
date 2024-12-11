@@ -1,5 +1,5 @@
 from selfprivacy_api.utils import ReadUserData
-from selfprivacy_api.repositories.users.json_user_repository import delete_user
+from selfprivacy_api.repositories.users.json_user_repository import JsonUserRepository
 
 """
     A place for user storage tests and other user tests that are not Graphql-specific.
@@ -11,7 +11,7 @@ from selfprivacy_api.repositories.users.json_user_repository import delete_user
 
 
 def test_delete_user_writes_json(generic_userdata):
-    delete_user("user2")
+    JsonUserRepository.delete_user("user2")
     with ReadUserData() as data:
         assert data["users"] == [
             {

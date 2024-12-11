@@ -3,9 +3,6 @@
 import pytest
 from typing import Optional
 
-from selfprivacy_api.graphql.mutations.system_mutations import SystemMutations
-from selfprivacy_api.graphql.queries.system import System
-
 # only allowed in fixtures and utils
 from selfprivacy_api.actions.ssh import remove_ssh_key, get_ssh_settings
 from selfprivacy_api.actions.users import get_users, UserDataUserOrigin
@@ -17,7 +14,7 @@ from tests.test_graphql.common import (
     get_data,
     assert_errorcode,
 )
-from tests.test_graphql.test_users import API_USERS_INFO
+from tests.test_graphql.test_users_json_repository import API_USERS_INFO
 
 key_users = ["root", "tester", "user1", "user2", "user3"]
 

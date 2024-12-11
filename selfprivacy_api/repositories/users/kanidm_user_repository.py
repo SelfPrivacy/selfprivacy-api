@@ -142,8 +142,6 @@ class KanidmUserRepository(AbstractUserRepository):
             KanidmReturnUnknownResponseType: If the response data is not of the expected type.
         """
 
-        logging.info(response_data)
-
         if not response_data and response_data is None:
             raise KanidmReturnEmptyResponse
 
@@ -216,16 +214,18 @@ class KanidmUserRepository(AbstractUserRepository):
             raise KanidmQueryError(error_text=str(error))
 
         response_data = response.json()
-        logger.info(str(response))
 
         if response.status_code != 200:
             if isinstance(response_data, dict):
                 plugin_error = response_data.get("plugin", {})
                 if plugin_error.get("attrunique") == "duplicate value detected":
-                    raise UserAlreadyExists  # TODO only user ?
+                    raise UserAlreadyExists  # does it work only for user? NO ONE KNOWS
 
-            if isinstance(response_data, str) and response_data == "nomatchingentries":
-                raise UserNotFound  # does it work only for user?
+            if isinstance(response_data, str):
+                if response_data == "nomatchingentries":
+                    raise UserNotFound  # does it work only for user? hate kanidm's response
+                elif response_data == "accessdenied":
+                    raise KanidmQueryError(error_text="Kanidm access issue")
 
             logger.error(f"Kanidm query error: {response.text}")
             raise KanidmQueryError(error_text=response.text)
