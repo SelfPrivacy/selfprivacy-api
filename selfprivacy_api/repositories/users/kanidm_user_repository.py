@@ -128,7 +128,7 @@ class KanidmAdminToken:
         response = requests.get(
             "{KANIDM_URL}/v1/person/root",
             headers={
-                "Authorization": f"Bearer {KanidmAdminToken.get()}",
+                "Authorization": f"Bearer {token}",
                 "Content-Type": "application/json",
             },
             timeout=1,
@@ -222,14 +222,13 @@ class KanidmUserRepository(AbstractUserRepository):
             raise ValueError(f"Unsupported HTTP method: {method}")
 
         full_endpoint = f"{KANIDM_URL}/v1/{endpoint}"
-        kanidm_token = KanidmAdminToken.get()
 
         try:
             response = request_method(
                 full_endpoint,
                 json=data,
                 headers={
-                    "Authorization": f"Bearer {kanidm_token}",
+                    "Authorization": f"Bearer {KanidmAdminToken.get()}",
                     "Content-Type": "application/json",
                 },
                 timeout=1,
