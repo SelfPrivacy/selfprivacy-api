@@ -40,7 +40,6 @@ class AbstractUserRepository(ABC):
     @abstractmethod
     def update_user(
         username: str,
-        password: Optional[str] = None,
         directmemberof: Optional[list[str]] = None,
         memberof: Optional[list[str]] = None,
         displayname: Optional[str] = None,
@@ -55,7 +54,7 @@ class AbstractUserRepository(ABC):
 
     @staticmethod
     @abstractmethod
-    def get_user_by_username(username: str) -> Optional[UserDataUser]:
+    def get_user_by_username(username: str) -> UserDataUser:
         """Retrieves user data (UserDataUser) by username"""
 
     @staticmethod

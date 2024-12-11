@@ -2,10 +2,17 @@
 
 import re
 import uuid
+import logging
 from typing import Optional
 
+from selfprivacy_api import PLEASE_UPDATE_APP_TEXT
 from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
 
+from selfprivacy_api.repositories.users.exceptions_kanidm import (
+    KanidmQueryError,
+    KanidmReturnEmptyResponse,
+    KanidmReturnUnknownResponseType,
+)
 from selfprivacy_api.utils import is_username_forbidden
 from selfprivacy_api.actions.ssh import get_ssh_keys
 
@@ -13,6 +20,7 @@ from selfprivacy_api.actions.ssh import get_ssh_keys
 from selfprivacy_api.repositories.users.json_user_repository import JsonUserRepository
 from selfprivacy_api.repositories.users import ACTIVE_USERS_PROVIDER
 from selfprivacy_api.repositories.users.exceptions import (
+    SelfPrivacyAppIsOutdate,
     UsernameForbidden,
     UsernameNotAlphanumeric,
     UsernameTooLong,
@@ -20,6 +28,8 @@ from selfprivacy_api.repositories.users.exceptions import (
     UserAlreadyExists,
     InvalidConfiguration,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ApiUsingWrongUserRepository(Exception):
@@ -40,6 +50,14 @@ class RootIsNotAvailableForModification(Exception):
     @staticmethod
     def get_error_message() -> str:
         return "Root is not available for modification. Operation is restricted."
+
+
+class PrimaryUserDeletionNotAllowed(Exception):
+    """The primary user cannot be deleted."""
+
+    @staticmethod
+    def get_error_message() -> str:
+        return "The primary user cannot be deleted."
 
 
 def get_users(
@@ -87,6 +105,9 @@ def create_user(
     if len(username) >= 32:
         raise UsernameTooLong("Username must be less than 32 characters")
 
+    if password:
+        logger.error(PLEASE_UPDATE_APP_TEXT)
+
     # need to maintain the logic of the old repository, since ssh management uses it.
     if not isinstance(ACTIVE_USERS_PROVIDER, JsonUserRepository):
         try:
@@ -98,13 +119,19 @@ def create_user(
 
     ACTIVE_USERS_PROVIDER.create_user(
         username=username,
-        password=password,
         directmemberof=directmemberof,
         displayname=displayname,
     )
 
 
 def delete_user(username: str) -> None:
+    if username == "root":
+        raise RootIsNotAvailableForModification
+
+    user = ACTIVE_USERS_PROVIDER.get_user_by_username(username=username)
+
+    if user.user_type == UserDataUserOrigin.PRIMARY:
+        raise PrimaryUserDeletionNotAllowed
 
     # need to maintain the logic of the old repository, since ssh management uses it.
     if not isinstance(ACTIVE_USERS_PROVIDER, JsonUserRepository):
@@ -123,9 +150,14 @@ def update_user(
     displayname: Optional[str] = None,
 ) -> None:
 
+    if password:
+        raise SelfPrivacyAppIsOutdate
+
+    if username == "root":
+        raise RootIsNotAvailableForModification
+
     ACTIVE_USERS_PROVIDER.update_user(
         username=username,
-        password=password,
         directmemberof=directmemberof,
         displayname=displayname,
     )

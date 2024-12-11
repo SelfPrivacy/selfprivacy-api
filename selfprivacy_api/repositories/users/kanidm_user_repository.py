@@ -6,8 +6,8 @@ import logging
 
 from selfprivacy_api.repositories.users.exceptions import (
     NoPasswordResetLinkFoundInResponse,
-    SelfPrivacyAppIsOutdate,
     UserAlreadyExists,
+    UserNotFound,
 )
 from selfprivacy_api.repositories.users.exceptions_kanidm import (
     KanidmDidNotReturnAdminPassword,
@@ -21,7 +21,6 @@ from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
 from selfprivacy_api.repositories.users.abstract_user_repository import (
     AbstractUserRepository,
 )
-from selfprivacy_api import PLEASE_UPDATE_APP_TEXT
 
 
 KANIDM_URL = "https://127.0.0.1:3013"
@@ -168,6 +167,9 @@ class KanidmUserRepository(AbstractUserRepository):
                 plugin_error = response_data.get("plugin", {})
                 if plugin_error.get("attrunique") == "duplicate value detected":
                     raise UserAlreadyExists  # TODO only user ?
+            if isinstance(response_data, str):
+                if response_data == "nomatchingentries":
+                    raise UserNotFound
 
             raise KanidmQueryError(error_text=response.text)
 
@@ -176,7 +178,6 @@ class KanidmUserRepository(AbstractUserRepository):
     @staticmethod
     def create_user(
         username: str,
-        password: Optional[str] = None,
         directmemberof: Optional[list[str]] = None,
         memberof: Optional[list[str]] = None,
         displayname: Optional[str] = None,
@@ -188,9 +189,6 @@ class KanidmUserRepository(AbstractUserRepository):
         If displayname is None, it will default to the username.
         If email is None, it will default to username@get_domain().
         """
-
-        if password:
-            logger.error(PLEASE_UPDATE_APP_TEXT)
 
         data = {
             "attrs": {
@@ -223,7 +221,9 @@ class KanidmUserRepository(AbstractUserRepository):
         """
         users_data = KanidmUserRepository._send_query(endpoint="person", method="GET")
 
-        KanidmUserRepository._check_response_type_and_not_empty(data_type="list", response_data=users_data)
+        KanidmUserRepository._check_response_type_and_not_empty(
+            data_type="list", response_data=users_data
+        )
 
         users = []
         for user in users_data:
@@ -251,12 +251,12 @@ class KanidmUserRepository(AbstractUserRepository):
     @staticmethod
     def delete_user(username: str) -> None:
         """Deletes an existing user"""
+
         KanidmUserRepository._send_query(endpoint=f"person/{username}", method="DELETE")
 
     @staticmethod
     def update_user(
         username: str,
-        password: Optional[str] = None,
         directmemberof: Optional[list[str]] = None,
         memberof: Optional[list[str]] = None,
         displayname: Optional[str] = None,
@@ -266,8 +266,6 @@ class KanidmUserRepository(AbstractUserRepository):
         Do not update the password, please
         use generate_password_reset_link() instead.
         """
-        if password:
-            raise SelfPrivacyAppIsOutdate
 
         data = {
             "attrs": {
@@ -289,14 +287,16 @@ class KanidmUserRepository(AbstractUserRepository):
         )
 
     @staticmethod
-    def get_user_by_username(username: str) -> Optional[UserDataUser]:
+    def get_user_by_username(username: str) -> UserDataUser:
         """Retrieves user data (UserDataUser) by username"""
         user_data = KanidmUserRepository._send_query(
             endpoint=f"person/{username}",
             method="GET",
         )
 
-        KanidmUserRepository._check_response_type_and_not_empty(data_type="dict", response_data=user_data)
+        KanidmUserRepository._check_response_type_and_not_empty(
+            data_type="dict", response_data=user_data
+        )
 
         attrs = user_data["attrs"]
 
@@ -323,7 +323,9 @@ class KanidmUserRepository(AbstractUserRepository):
             method="GET",
         )
 
-        KanidmUserRepository._check_response_type_and_not_empty(data_type="dict", response_data=data)
+        KanidmUserRepository._check_response_type_and_not_empty(
+            data_type="dict", response_data=data
+        )
 
         token = data.get("token", None)
 
