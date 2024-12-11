@@ -237,7 +237,9 @@ def test_adding_root_key_writes_json(generic_userdata):
 
 def test_read_admin_keys_from_json(generic_userdata):
     admin_name = "tester"
-    assert JsonUserRepository.get_user_by_username(admin_name).ssh_keys == ["ssh-rsa KEY test@pc"]
+    assert JsonUserRepository.get_user_by_username(admin_name).ssh_keys == [
+        "ssh-rsa KEY test@pc"
+    ]
     new_keys = ["ssh-rsa KEY test@pc", "ssh-ed25519 KEY2 test@pc"]
 
     with WriteUserData() as data:
