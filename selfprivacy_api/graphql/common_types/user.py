@@ -47,6 +47,7 @@ class PasswordResetLinkReturn(MutationReturnInterface):
 
 
 def get_user_by_username(username: str) -> Optional[User]:
+    # TODO: why isn't there TRY
     user = actions_get_user_by_username(username=username)
     if user is None:
         return None

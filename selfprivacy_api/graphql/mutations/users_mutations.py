@@ -39,10 +39,12 @@ from selfprivacy_api.repositories.users.exceptions import (
     UserNotFound,
     SelfPrivacyAppIsOutdate,
 )
-from selfprivacy_api import PLEASE_UPDATE_APP_TEXT
-from selfprivacy_api.repositories.users.kanidm_user_repository import (
+from selfprivacy_api.repositories.users.exceptions_kanidm import (
     KanidmDidNotReturnAdminPassword,
+    KanidmReturnEmptyResponse,
+    KanidmReturnUnknownResponseType,
 )
+from selfprivacy_api import PLEASE_UPDATE_APP_TEXT
 
 
 FAILED_TO_SETUP_PASSWORD_TEXT = "Failed to set a password for a user. The problem occurred due to an old version of the SelfPrivacy app."
@@ -98,6 +100,8 @@ class UsersMutations:
             UsernameTooLong,
             InvalidConfiguration,
             KanidmDidNotReturnAdminPassword,
+            KanidmReturnUnknownResponseType,
+            KanidmReturnEmptyResponse,
         ) as error:
             return return_failed_mutation_return(
                 message=error.get_error_message(),
@@ -171,6 +175,8 @@ class UsersMutations:
             PasswordIsEmpty,
             SelfPrivacyAppIsOutdate,
             KanidmDidNotReturnAdminPassword,
+            KanidmReturnUnknownResponseType,
+            KanidmReturnEmptyResponse,
         ) as error:
             return return_failed_mutation_return(
                 message=error.get_error_message(),
@@ -260,6 +266,8 @@ class UsersMutations:
             NoPasswordResetLinkFoundInResponse,
             KanidmDidNotReturnAdminPassword,
             RootIsNotAvailableForModification,
+            KanidmReturnUnknownResponseType,
+            KanidmReturnEmptyResponse,
         ) as error:
             return PasswordResetLinkReturn(
                 success=False,
