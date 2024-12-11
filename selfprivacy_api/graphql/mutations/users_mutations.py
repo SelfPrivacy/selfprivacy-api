@@ -21,6 +21,7 @@ from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericMutationReturn,
 )
 from selfprivacy_api.actions.users import (
+    PrimaryUserDeletionNotAllowed,
     RootIsNotAvailableForModification,
     create_user as create_user_action,
     delete_user as delete_user_action,
@@ -148,7 +149,12 @@ class UsersMutations:
                 code=400,
                 message=error.get_error_message(),
             )
-        except (KanidmDidNotReturnAdminPassword, KanidmQueryError) as error:
+        except (
+            KanidmDidNotReturnAdminPassword,
+            KanidmQueryError,
+            PrimaryUserDeletionNotAllowed,
+            RootIsNotAvailableForModification,
+        ) as error:
             return GenericMutationReturn(
                 success=False,
                 code=500,

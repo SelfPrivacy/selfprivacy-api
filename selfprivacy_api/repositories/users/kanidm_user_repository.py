@@ -172,6 +172,8 @@ class KanidmUserRepository(AbstractUserRepository):
 
             raise KanidmQueryError(error_text=response.text)
 
+        return response_data
+
     @staticmethod
     def create_user(
         username: str,
