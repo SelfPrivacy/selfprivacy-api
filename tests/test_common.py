@@ -2,6 +2,7 @@
 # pylint: disable=unused-argument
 import os
 import pytest
+from typing import Optional
 
 from selfprivacy_api.utils import WriteUserData, ReadUserData
 
@@ -30,9 +31,15 @@ def test_write_invalid_user_data():
             pass
 
 
+def get_test_mode() -> Optional[str]:
+    return os.environ.get("TEST_MODE")
+
+
+# TODO: Does it make any sense to have such a fixture though?
+# If it can only be called from tests then it is always test
 @pytest.fixture
 def test_mode():
-    return os.environ.get("TEST_MODE")
+    return get_test_mode()
 
 
 def test_the_test_mode(test_mode):

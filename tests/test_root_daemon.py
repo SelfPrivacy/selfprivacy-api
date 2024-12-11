@@ -1,4 +1,8 @@
 import pytest
+import os
+import asyncio
+import threading
+import subprocess
 
 from selfprivacy_api.root_daemon import (
     get_available_commands,
@@ -7,7 +11,9 @@ from selfprivacy_api.root_daemon import (
     service_commands,
     services,
 )
-import selfprivacy_api.root_daemon
+import selfprivacy_api
+import selfprivacy_api.root_daemon as root_daemon
+from selfprivacy_api.utils.root_interface import call_root_function
 from os.path import join, exists
 
 from typing import List
@@ -35,12 +41,21 @@ def test_available_commands():
         assert is_in_strings(commands, service)
 
 
-def test_init(test_socket):
+def test_init():
     sock = init()
-    assert exists(test_socket)
+    assert exists(root_daemon.SOCKET_PATH)
     assert sock is not None
 
 
-def test_main():
-    # main()
-    pass
+def test_send_command():
+    root_daemon_file = selfprivacy_api.root_daemon.__file__
+    # this is a prototype of how we need to run it`
+    proc = subprocess.Popen(args=["python", root_daemon_file], shell=False)
+
+    # thread = threading.Thread(target=start_root_daemon,args=[])
+    # thread.start()
+    answer = call_root_function("blabla")
+    assert answer == "done"
+
+    proc.kill()
+    # thread.join(timeout=1.0)
