@@ -4,7 +4,7 @@ import os
 import pytest
 from typing import Optional
 
-from selfprivacy_api.utils import WriteUserData, ReadUserData
+from selfprivacy_api.utils import WriteUserData, ReadUserData, get_test_mode
 
 
 def test_get_api_version(authorized_client):
@@ -29,10 +29,6 @@ def test_write_invalid_user_data():
     with pytest.raises(ValueError):
         with WriteUserData("invalid") as user_data:
             pass
-
-
-def get_test_mode() -> Optional[str]:
-    return os.environ.get("TEST_MODE")
 
 
 # TODO: Does it make any sense to have such a fixture though?
