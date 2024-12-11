@@ -58,10 +58,10 @@ def test_send_command():
     finished = proc.poll()
     assert finished is None
 
-    # thread = threading.Thread(target=start_root_daemon,args=[])
-    # thread.start()
-    answer = call_root_function("blabla")
-    assert answer == "done"
+    answer = call_root_function(["blabla"])
+    assert answer == "not permitted"
+    # confirm the loop
+    # answer = call_root_function(["blabla"])
+    # assert answer == "not permitted"
 
     proc.kill()
-    # thread.join(timeout=1.0)
