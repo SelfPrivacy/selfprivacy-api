@@ -10,7 +10,7 @@ from selfprivacy_api.graphql.common_types.user import (
     get_users,
 )
 from selfprivacy_api.graphql import IsAuthenticated
-# from selfprivacy_api.repositories.users.exceptions import UserNotFound
+from selfprivacy_api.repositories.users.exceptions import UserNotFound
 
 
 @strawberry.type
@@ -19,10 +19,10 @@ class Users:
     def get_user(self, username: str) -> typing.Optional[User]:
         """Get users"""
 
-        # try:
-        return get_user_by_username(username)
-        # except UserNotFound:
-        #     return None
+        try:
+            return get_user_by_username(username)
+        except UserNotFound:
+            return None
 
     all_users: typing.List[User] = strawberry.field(
         permission_classes=[IsAuthenticated], resolver=get_users
