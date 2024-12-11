@@ -159,23 +159,22 @@ def update_user(
 
 
 def get_user_by_username(username: str) -> UserDataUser:
-    user = ACTIVE_USERS_PROVIDER.get_user_by_username(
-        username=username
-    )
+    if isinstance(ACTIVE_USERS_PROVIDER, JsonUserRepository):
+        return ACTIVE_USERS_PROVIDER.get_user_by_username(username=username)
 
-    if not isinstance(ACTIVE_USERS_PROVIDER, JsonUserRepository):
-        if username == "root":
-            return UserDataUser(
-                username="root",
-                user_type=UserDataUserOrigin.ROOT,
-                ssh_keys=get_ssh_keys(username="root"),
-            )
+    if username == "root":
+        return UserDataUser(
+            username="root",
+            user_type=UserDataUserOrigin.ROOT,
+            ssh_keys=get_ssh_keys(username="root"),
+        )
 
-        try:
-            if user:
-                user.ssh_keys = get_ssh_keys(username=user.username)
-        except UserNotFound:
-            pass
+    user = ACTIVE_USERS_PROVIDER.get_user_by_username(username=username)
+
+    try:
+        user.ssh_keys = get_ssh_keys(username=user.username)
+    except UserNotFound:
+        pass
 
     return user
 
