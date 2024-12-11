@@ -11,7 +11,7 @@ class UserIsProtected(Exception):
 
     @staticmethod
     def get_error_message() -> str:
-        return "User is protected and cannot be deleted"
+        return "User is protected and cannot be deleted or modified"
 
 
 class UsernameForbidden(Exception):

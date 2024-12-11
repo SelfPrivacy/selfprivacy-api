@@ -166,6 +166,9 @@ class KanidmUserRepository(AbstractUserRepository):
                 if plugin_error.get("attrunique") == "duplicate value detected":
                     raise UserAlreadyExists  # TODO only user ?
 
+            if isinstance(response_data, str) and response_data == "nomatchingentries":
+                raise UserNotFound  # is it works only for user?
+
             raise KanidmQueryError(error_text=response.text)
 
         return response_data
