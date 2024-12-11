@@ -118,7 +118,7 @@ class KanidmUserRepository(AbstractUserRepository):
 
         logging.info(response_data)
 
-        if response_data is None:
+        if not response_data and response_data is None:
             raise KanidmReturnEmptyResponse
 
         if data_type == "list":
@@ -128,8 +128,6 @@ class KanidmUserRepository(AbstractUserRepository):
         elif data_type == "dict":
             if not isinstance(response_data, dict):
                 raise KanidmReturnUnknownResponseType(response_data=response_data)
-            if not response_data.get("data"):
-                raise KanidmReturnEmptyResponse
 
     @staticmethod
     def _check_user_origin_by_memberof(
@@ -153,7 +151,7 @@ class KanidmUserRepository(AbstractUserRepository):
                     "Authorization": f"Bearer {KanidmAdminToken.get()}",
                     "Content-Type": "application/json",
                 },
-                timeout=0.8,  # TODO: change timeout
+                timeout=0.5,
                 verify=False,  # TODO: REMOVE THIS NOT HALAL!!!!!
             )  # type: ignore
         except Exception as error:
