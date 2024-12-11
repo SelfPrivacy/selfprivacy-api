@@ -21,6 +21,7 @@ def _write_to_daemon_socket(cmd: List[str]) -> str:
     payload = " ".join(cmd).encode("utf-8") + b"\n"
     sock.send(payload)
     pipe = sock.makefile("r")
-    line = pipe.readline()
-    sleep(2)
-    return line
+    answer = pipe.readline()
+    pipe.close()
+    sock.close()
+    return answer
