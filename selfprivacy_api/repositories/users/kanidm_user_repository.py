@@ -451,6 +451,6 @@ class KanidmUserRepository(AbstractUserRepository):
             raise KanidmReturnEmptyResponse
 
         if token:
-            return f"https://id.{get_domain()}/ui/reset?token={token}"
+            return f"https://auth.{get_domain()}/ui/reset?token={token}"
 
         raise NoPasswordResetLinkFoundInResponse
