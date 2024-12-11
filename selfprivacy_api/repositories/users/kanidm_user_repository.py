@@ -126,8 +126,8 @@ class KanidmUserRepository(AbstractUserRepository):
                     "Content-Type": "application/json",
                 },
                 timeout=0.8,  # TODO: change timeout
-                verify=False,  # TODO: REMOVE THIS NOTHALAL!!!!!
-            )
+                verify=False,  # TODO: REMOVE THIS NOT HALAL!!!!!
+            )  # type: ignore
         except Exception as error:
             raise KanidmQueryError(error_text=str(error))
 
@@ -154,7 +154,7 @@ class KanidmUserRepository(AbstractUserRepository):
             else:
                 raise KanidmReturnEmptyResponse
         else:
-            raise KanidmReturnUnknownResponseType
+            raise KanidmReturnUnknownResponseType(response_data=response_data)
 
         # nomatchingentries
 

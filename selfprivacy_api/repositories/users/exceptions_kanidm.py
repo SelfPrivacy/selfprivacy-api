@@ -26,9 +26,15 @@ class KanidmReturnEmptyResponse(Exception):
 class KanidmReturnUnknownResponseType(Exception):
     """Kanidm returned a blank response"""
 
-    @staticmethod
-    def get_error_message() -> str:
-        return "Kanidm returned an empty response."
+    def __init__(self, response_data: Optional[str] = None) -> None:
+        self.response_data = response_data
+
+    def get_error_message(self) -> str:
+        return (
+            f"Kanidm returned unknown type response. Response: {self.response_data}"
+            if self.response_data
+            else "Kanidm returned unknown type response."
+        )
 
 
 class KanidmDidNotReturnAdminPassword(Exception):
