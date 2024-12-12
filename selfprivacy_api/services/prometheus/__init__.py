@@ -31,6 +31,10 @@ class Prometheus(Service):
         return base64.b64encode(PROMETHEUS_ICON.encode("utf-8")).decode("utf-8")
 
     @staticmethod
+    def get_units() -> List[str]:
+        return ["prometheus.service"]
+
+    @staticmethod
     def get_url() -> Optional[str]:
         """Return service url."""
         return None
@@ -64,16 +68,8 @@ class Prometheus(Service):
         return get_service_status("prometheus.service")
 
     @staticmethod
-    def stop():
-        subprocess.run(["systemctl", "stop", "prometheus.service"])
-
-    @staticmethod
-    def start():
-        subprocess.run(["systemctl", "start", "prometheus.service"])
-
-    @staticmethod
-    def restart():
-        subprocess.run(["systemctl", "restart", "prometheus.service"])
+    def get_logs():
+        return ""
 
     @staticmethod
     def get_owned_folders() -> List[OwnedPath]:

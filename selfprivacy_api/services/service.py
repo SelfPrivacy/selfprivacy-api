@@ -4,6 +4,8 @@ from abc import ABC, abstractmethod
 import logging
 from typing import List, Optional
 from os.path import exists
+from subprocess import run
+from selfprivacy_api.utils.root_interface import call_root_function
 
 from selfprivacy_api import utils
 from selfprivacy_api.services.config_item import ServiceConfigItem
@@ -109,6 +111,13 @@ class Service(ABC):
         Defaults to the service's id.
         """
         return cls.get_id()
+
+    @staticmethod
+    @abstractmethod
+    def get_units() -> List[str]:
+        """
+        List of all units associated with this service.
+        """
 
     @classmethod
     def get_group(cls) -> Optional[str]:
@@ -228,23 +237,27 @@ class Service(ABC):
         """Disable the service. Usually this means disabling systemd unit."""
         cls._set_enable(False)
 
-    @staticmethod
-    @abstractmethod
-    def stop():
+    @classmethod
+    def stop(cls):
         """Stop the service. Usually this means stopping systemd unit."""
-        pass
+        for unit in cls.get_units():
+            run(["systemctl", "stop", unit], check=False)
+            # TODO: use root separation daemon:
+            # call_root_function(["systemctl", "stop", unit])
 
     @staticmethod
-    @abstractmethod
-    def start():
+    def start(cls):
         """Start the service. Usually this means starting systemd unit."""
-        pass
+        for unit in cls.get_units():
+            run(["systemctl", "start", unit], check=False)
+            # call_root_function(["systemctl", "start", unit])
 
     @staticmethod
-    @abstractmethod
-    def restart():
+    def restart(cls):
         """Restart the service. Usually this means restarting systemd unit."""
-        pass
+        for unit in cls.get_units():
+            run(["systemctl", "restart", unit], check=False)
+            # call_root_function(["systemctl", "restart", unit])
 
     @classmethod
     def get_configuration(cls):
