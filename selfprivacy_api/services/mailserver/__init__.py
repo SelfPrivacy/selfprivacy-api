@@ -28,6 +28,10 @@ class MailServer(Service):
         return "E-Mail for company and family."
 
     @staticmethod
+    def get_units() -> List[str]:
+        return ["dovecot2.service", "postfix.service"]
+
+    @staticmethod
     def get_svg_icon() -> str:
         return base64.b64encode(MAILSERVER_ICON.encode("utf-8")).decode("utf-8")
 
@@ -75,19 +79,8 @@ class MailServer(Service):
         raise NotImplementedError("disable is not implemented for MailServer")
 
     @staticmethod
-    def stop():
-        subprocess.run(["systemctl", "stop", "dovecot2.service"], check=False)
-        subprocess.run(["systemctl", "stop", "postfix.service"], check=False)
-
-    @staticmethod
-    def start():
-        subprocess.run(["systemctl", "start", "dovecot2.service"], check=False)
-        subprocess.run(["systemctl", "start", "postfix.service"], check=False)
-
-    @staticmethod
-    def restart():
-        subprocess.run(["systemctl", "restart", "dovecot2.service"], check=False)
-        subprocess.run(["systemctl", "restart", "postfix.service"], check=False)
+    def get_logs():
+        return ""
 
     @staticmethod
     def get_folders() -> List[str]:
