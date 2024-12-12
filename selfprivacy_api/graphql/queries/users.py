@@ -31,4 +31,4 @@ class Users:
 
     @strawberry.field(permission_classes=[IsAuthenticated])
     def groups_list() -> list:
-        action_groups_list()
+        return action_groups_list()
