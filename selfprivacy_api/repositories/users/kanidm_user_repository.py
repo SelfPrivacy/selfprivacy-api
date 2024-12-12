@@ -4,6 +4,7 @@ import requests
 import re
 import logging
 
+from selfprivacy_api.models.group import Group
 from selfprivacy_api.repositories.users.exceptions import (
     NoPasswordResetLinkFoundInResponse,
     UserAlreadyExists,
@@ -484,14 +485,28 @@ class KanidmUserRepository(AbstractUserRepository):
         raise NoPasswordResetLinkFoundInResponse
 
     @staticmethod
-    def groups_list() -> list:
+    def get_groups() -> list[Group]:
         groups_list_data = KanidmUserRepository._send_query(
             endpoint="/v1/group",
             method="GET",
         )
 
         KanidmUserRepository._check_response_type_and_not_empty(
-            data_type="list", response_data=groups_list_data
+            data_type="dict", response_data=groups_list_data
         )
 
-        return groups_list_data  # type: ignore
+        groups = []
+        for group_data in groups_list_data:
+            attrs = group_data.get("attrs", {})
+            group = Group(
+                name=attrs["name"],
+                group_class=attrs.get("class", []),
+                member=attrs.get("member", []),
+                memberof=attrs.get("memberof", []),
+                directmemberof=attrs.get("directmemberof", []),
+                spn=attrs.get("spn", [None])[0],
+                description=attrs.get("description", [None])[0],
+            )
+            groups.append(group)
+
+        return groups

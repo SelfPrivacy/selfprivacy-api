@@ -6,6 +6,7 @@ import logging
 from typing import Optional
 
 from selfprivacy_api import PLEASE_UPDATE_APP_TEXT
+from selfprivacy_api.models.group import Group
 from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
 
 from selfprivacy_api.utils import is_username_forbidden
@@ -189,8 +190,8 @@ def generate_password_reset_link(username: str) -> str:
     return ACTIVE_USERS_PROVIDER.generate_password_reset_link(username=username)
 
 
-def groups_list() -> list:
+def get_groups() -> list[Group]:
     if isinstance(ACTIVE_USERS_PROVIDER, JsonUserRepository):
         raise ApiUsingWrongUserRepository
 
-    return ACTIVE_USERS_PROVIDER.groups_list()
+    return ACTIVE_USERS_PROVIDER.get_groups()
