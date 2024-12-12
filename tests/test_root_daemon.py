@@ -71,3 +71,16 @@ def test_send_command():
     assert answer == "not permitted"
 
     proc.kill()
+
+
+def test_send_valid_command():
+    proc = start_root_demon()
+
+    command = ["systemctl", "start", "forgejo.service"]
+    answer = call_root_function(command)
+    assert answer == " ".join(command)
+    # confirm the loop still works
+    answer = call_root_function(["blabla"])
+    assert answer == "not permitted"
+
+    proc.kill()

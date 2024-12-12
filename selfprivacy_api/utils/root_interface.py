@@ -24,4 +24,4 @@ def _write_to_daemon_socket(cmd: List[str]) -> str:
     answer = pipe.readline()
     pipe.close()
     sock.close()
-    return answer
+    return answer.strip()

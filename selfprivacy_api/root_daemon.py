@@ -16,7 +16,6 @@ services = [
     # Check that it is the same as the names in systemd services.
     "bitwarden",
     "forgejo",
-    "gitea",
     "jitsimeet",
     "mailserver",
     "nextcloud",
@@ -24,6 +23,7 @@ services = [
     "pleroma",
     "prometheus",
     "roundcube",
+    "postgresql",
 ]
 
 service_folders: Dict[str, List[str]] = {
@@ -64,7 +64,7 @@ def get_available_commands() -> List[str]:
     for command in service_commands:
         for service in services:
             # Concatenation of hardcoded strings
-            commands.append(command + " " + service)
+            commands.append(command + " " + service + ".service")
 
     chowns = [CHOWN_COMMAND + " " + folder for folder in service_folders]
     commands.extend(chowns)
@@ -87,13 +87,20 @@ def init(socket_path=SOCKET_PATH) -> socket_module.socket:
     return sock
 
 
-def _spawn_shell(command_string: str):
+def _spawn_shell(command_string: str) -> str:
     # We use sh to refrain from parsing and simplify logic
     # Our commands are hardcoded so sh does not present
     # an extra attack surface here
 
     # TODO: continuous forwarding of command output
-    subprocess.check_output(["sh", "-c", command_string])
+    return subprocess.check_output(["sh", "-c", command_string]).decode("utf-8")
+
+
+# A copy of the one from utils module.
+# It is possible to remove this duplication but unfortunately it is not
+# trivial and extra complexity does not worth it at the moment.
+def get_test_mode() -> Optional[str]:
+    return os.environ.get("TEST_MODE")
 
 
 def _process_request(request: str, allowed_commands: str) -> str:
@@ -102,11 +109,10 @@ def _process_request(request: str, allowed_commands: str) -> str:
             # explicitly only calling a _hardcoded_ command
             # ever
             # test mode made like this does not mae it more dangerous too
-            raise ValueError("Oh no")
             if get_test_mode():
-                _spawn_shell(f'echo "{command}"')
+                return _spawn_shell(f'echo "{command}"')
             else:
-                _spawn_shell(command)
+                return _spawn_shell(command)
     else:
         return "not permitted"
 
@@ -139,10 +145,3 @@ def main(socket_path=SOCKET_PATH):
 
 if __name__ == "__main__":
     main()
-
-
-# A copy of the one from utils module.
-# It is possible to remove this duplication but unfortunately it is not
-# trivial and extra complexity does not worth it at the moment.
-def get_test_mode() -> Optional[str]:
-    return os.environ.get("TEST_MODE")
