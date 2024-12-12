@@ -58,3 +58,11 @@ class KanidmCliSubprocessError(Exception):
             if self.error
             else "An error occurred when using Kanidm cli."
         )
+
+
+class FailedToGetValidKanidmToken(Exception):
+    """Kanidm failed to return a valid token"""
+
+    @staticmethod
+    def get_error_message() -> str:
+        return "Failed to get valid Kanidm token."

@@ -11,6 +11,7 @@ from selfprivacy_api.graphql.common_types.user import (
 )
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.repositories.users.exceptions import UserNotFound
+from selfprivacy_api.actions.users import groups_list as action_groups_list
 
 
 @strawberry.type
@@ -27,3 +28,7 @@ class Users:
     all_users: typing.List[User] = strawberry.field(
         permission_classes=[IsAuthenticated], resolver=get_users
     )
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    def groups_list() -> list:
+        action_groups_list()

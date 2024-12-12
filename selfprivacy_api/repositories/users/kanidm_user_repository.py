@@ -10,6 +10,7 @@ from selfprivacy_api.repositories.users.exceptions import (
     UserNotFound,
 )
 from selfprivacy_api.repositories.users.exceptions_kanidm import (
+    FailedToGetValidKanidmToken,
     KanidmCliSubprocessError,
     KanidmDidNotReturnAdminPassword,
     KanidmQueryError,
@@ -252,9 +253,7 @@ class KanidmUserRepository(AbstractUserRepository):
                 elif response_data == "accessdenied":
                     raise KanidmQueryError(error_text="Kanidm access issue")
                 elif response_data == "notauthenticated":
-                    raise KanidmQueryError(
-                        error_text="Failed to get valid Kanidm token"
-                    )
+                    raise FailedToGetValidKanidmToken
 
             logger.error(f"Kanidm query error: {response.text}")
             raise KanidmQueryError(error_text=response.text)
@@ -483,3 +482,16 @@ class KanidmUserRepository(AbstractUserRepository):
             return f"https://auth.{get_domain()}/ui/reset?token={token}"
 
         raise NoPasswordResetLinkFoundInResponse
+
+    @staticmethod
+    def groups_list() -> list:
+        groups_list_data = KanidmUserRepository._send_query(
+            endpoint="/v1/group",
+            method="GET",
+        )
+
+        KanidmUserRepository._check_response_type_and_not_empty(
+            data_type="list", response_data=groups_list_data
+        )
+
+        return groups_list_data  # type: ignore

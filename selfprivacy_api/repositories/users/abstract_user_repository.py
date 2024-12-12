@@ -63,3 +63,8 @@ class AbstractUserRepository(ABC):
         Do not reset the password, just generate a link to reset the password.
         ! Not implemented in JsonUserRepository !
         """
+
+    @staticmethod
+    @abstractmethod
+    def groups_list() -> list:
+        """Get groups list"""

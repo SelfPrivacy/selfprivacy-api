@@ -41,6 +41,7 @@ from selfprivacy_api.repositories.users.exceptions import (
     SelfPrivacyAppIsOutdate,
 )
 from selfprivacy_api.repositories.users.exceptions_kanidm import (
+    FailedToGetValidKanidmToken,
     KanidmDidNotReturnAdminPassword,
     KanidmQueryError,
     KanidmReturnEmptyResponse,
@@ -107,6 +108,7 @@ class UsersMutations:
             DisplaynameNotAlphanumeric,
             DisplaynameTooLong,
             KanidmCliSubprocessError,
+            FailedToGetValidKanidmToken,
         ) as error:
             return return_failed_mutation_return(
                 message=error.get_error_message(),
@@ -157,6 +159,7 @@ class UsersMutations:
             KanidmDidNotReturnAdminPassword,
             KanidmQueryError,
             KanidmCliSubprocessError,
+            FailedToGetValidKanidmToken,
         ) as error:
             return GenericMutationReturn(
                 success=False,
@@ -188,6 +191,7 @@ class UsersMutations:
             DisplaynameNotAlphanumeric,
             DisplaynameTooLong,
             KanidmCliSubprocessError,
+            FailedToGetValidKanidmToken,
         ) as error:
             return return_failed_mutation_return(
                 message=error.get_error_message(),
@@ -286,6 +290,7 @@ class UsersMutations:
             KanidmReturnEmptyResponse,
             KanidmQueryError,
             KanidmCliSubprocessError,
+            FailedToGetValidKanidmToken,
         ) as error:
             return PasswordResetLinkReturn(
                 success=False,

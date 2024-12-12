@@ -187,3 +187,10 @@ def generate_password_reset_link(username: str) -> str:
         raise UserIsProtected
 
     return ACTIVE_USERS_PROVIDER.generate_password_reset_link(username=username)
+
+
+def groups_list() -> list:
+    if isinstance(ACTIVE_USERS_PROVIDER, JsonUserRepository):
+        raise ApiUsingWrongUserRepository
+
+    return ACTIVE_USERS_PROVIDER.groups_list()
