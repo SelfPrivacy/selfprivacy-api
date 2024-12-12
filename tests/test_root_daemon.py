@@ -48,7 +48,7 @@ def test_init():
     assert sock is not None
 
 
-def test_send_command():
+def start_root_demon():
     root_daemon_file = selfprivacy_api.root_daemon.__file__
     # this is a prototype of how we need to run it`
     proc = subprocess.Popen(args=["python", root_daemon_file], shell=False)
@@ -57,6 +57,12 @@ def test_send_command():
     sleep(0.3)
     finished = proc.poll()
     assert finished is None
+
+    return proc
+
+
+def test_send_command():
+    proc = start_root_demon()
 
     answer = call_root_function(["blabla"])
     assert answer == "not permitted"
