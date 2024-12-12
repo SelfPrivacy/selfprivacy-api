@@ -117,20 +117,31 @@ def _process_request(request: str, allowed_commands: str) -> str:
         return "not permitted"
 
 
+TIMEOUT = 6.0
+
+
 def _root_loop(socket: socket_module.socket, allowed_commands):
     socket.listen(1)
 
-    # XXX
-    socket.settimeout(6.0)
+    socket.settimeout(TIMEOUT)
     while True:
-        conn, addr = socket.accept()
+        try:
+            conn, addr = socket.accept()
+        except TimeoutError:
+            continue
+        # conn is a new socket
+        # TODO: check that it can inherit timeout
+        conn.settimeout(TIMEOUT)
         pipe = conn.makefile("rw")
 
         # We accept a single line per connection for simplicity and safety
         line = pipe.readline()
         request = line.strip()
         answer = _process_request(request, allowed_commands)
-        conn.send(answer.encode("utf-8"))
+        try:
+            conn.send(answer.encode("utf-8"))
+        except TimeoutError:
+            pass
         pipe.close()
         conn.close()
 
