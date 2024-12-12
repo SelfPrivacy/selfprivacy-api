@@ -59,6 +59,10 @@ class Bitwarden(Service):
         return "Bitwarden is a password manager."
 
     @staticmethod
+    def get_units() -> List[str]:
+        return ["bitwarden.service"]
+
+    @staticmethod
     def get_svg_icon() -> str:
         """Read SVG icon from file and return it as base64 encoded string."""
         return base64.b64encode(BITWARDEN_ICON.encode("utf-8")).decode("utf-8")
@@ -91,18 +95,6 @@ class Bitwarden(Service):
         Return code 4 means service is off.
         """
         return get_service_status("vaultwarden.service")
-
-    @staticmethod
-    def stop():
-        subprocess.run(["systemctl", "stop", "vaultwarden.service"])
-
-    @staticmethod
-    def start():
-        subprocess.run(["systemctl", "start", "vaultwarden.service"])
-
-    @staticmethod
-    def restart():
-        subprocess.run(["systemctl", "restart", "vaultwarden.service"])
 
     @staticmethod
     def get_logs():

@@ -47,19 +47,8 @@ class Pleroma(Service):
         return get_service_status("pleroma.service")
 
     @staticmethod
-    def stop():
-        subprocess.run(["systemctl", "stop", "pleroma.service"])
-        subprocess.run(["systemctl", "stop", "postgresql.service"])
-
-    @staticmethod
-    def start():
-        subprocess.run(["systemctl", "start", "pleroma.service"])
-        subprocess.run(["systemctl", "start", "postgresql.service"])
-
-    @staticmethod
-    def restart():
-        subprocess.run(["systemctl", "restart", "pleroma.service"])
-        subprocess.run(["systemctl", "restart", "postgresql.service"])
+    def get_units() -> List[str]:
+        return ["pleroma.service", "postgresql.service"]
 
     @classmethod
     def get_configuration(cls):

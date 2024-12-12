@@ -60,6 +60,13 @@ class DummyService(Service):
         return "A small service used for test purposes. Does nothing."
 
     @staticmethod
+    def get_units() -> List[str]:
+        """
+        List of all units associated with this service.
+        """
+        return []
+
+    @staticmethod
     def get_svg_icon() -> str:
         """Read SVG icon from file and return it as base64 encoded string."""
         # return ""

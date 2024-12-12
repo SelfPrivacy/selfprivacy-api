@@ -47,6 +47,10 @@ class Roundcube(Service):
         return "Roundcube is an open source webmail software."
 
     @staticmethod
+    def get_units() -> List[str]:
+        return ["phpfpm-roundcube.service"]
+
+    @staticmethod
     def get_svg_icon() -> str:
         """Read SVG icon from file and return it as base64 encoded string."""
         return base64.b64encode(ROUNDCUBE_ICON.encode("utf-8")).decode("utf-8")
@@ -70,27 +74,6 @@ class Roundcube(Service):
     @staticmethod
     def get_status() -> ServiceStatus:
         return get_service_status_from_several_units(["phpfpm-roundcube.service"])
-
-    @staticmethod
-    def stop():
-        subprocess.run(
-            ["systemctl", "stop", "phpfpm-roundcube.service"],
-            check=False,
-        )
-
-    @staticmethod
-    def start():
-        subprocess.run(
-            ["systemctl", "start", "phpfpm-roundcube.service"],
-            check=False,
-        )
-
-    @staticmethod
-    def restart():
-        subprocess.run(
-            ["systemctl", "restart", "phpfpm-roundcube.service"],
-            check=False,
-        )
 
     @staticmethod
     def get_logs():

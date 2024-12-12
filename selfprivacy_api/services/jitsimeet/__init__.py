@@ -52,6 +52,10 @@ class JitsiMeet(Service):
         return "Jitsi Meet is a free and open-source video conferencing solution."
 
     @staticmethod
+    def get_units() -> List[str]:
+        return ["jitsi-videobridge2.service", "jicofo.service", "prosody.service"]
+
+    @staticmethod
     def get_svg_icon() -> str:
         """Read SVG icon from file and return it as base64 encoded string."""
         return base64.b64encode(JITSI_ICON.encode("utf-8")).decode("utf-8")
@@ -73,33 +77,6 @@ class JitsiMeet(Service):
         return get_service_status_from_several_units(
             ["prosody.service", "jitsi-videobridge2.service", "jicofo.service"]
         )
-
-    @staticmethod
-    def stop():
-        subprocess.run(
-            ["systemctl", "stop", "jitsi-videobridge2.service"],
-            check=False,
-        )
-        subprocess.run(["systemctl", "stop", "jicofo.service"], check=False)
-        subprocess.run(["systemctl", "stop", "prosody.service"], check=False)
-
-    @staticmethod
-    def start():
-        subprocess.run(["systemctl", "start", "prosody.service"], check=False)
-        subprocess.run(
-            ["systemctl", "start", "jitsi-videobridge2.service"],
-            check=False,
-        )
-        subprocess.run(["systemctl", "start", "jicofo.service"], check=False)
-
-    @staticmethod
-    def restart():
-        subprocess.run(["systemctl", "restart", "prosody.service"], check=False)
-        subprocess.run(
-            ["systemctl", "restart", "jitsi-videobridge2.service"],
-            check=False,
-        )
-        subprocess.run(["systemctl", "restart", "jicofo.service"], check=False)
 
     @staticmethod
     def get_logs():

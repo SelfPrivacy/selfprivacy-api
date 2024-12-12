@@ -50,6 +50,10 @@ class Nextcloud(Service):
         return "Nextcloud is a cloud storage service that offers a web interface and a desktop client."
 
     @staticmethod
+    def get_units() -> List[str]:
+        return ["phpfpm-nextcloud.service"]
+
+    @staticmethod
     def get_svg_icon() -> str:
         """Read SVG icon from file and return it as base64 encoded string."""
         return base64.b64encode(NEXTCLOUD_ICON.encode("utf-8")).decode("utf-8")
@@ -78,21 +82,6 @@ class Nextcloud(Service):
         Return code 4 means service is off.
         """
         return get_service_status("phpfpm-nextcloud.service")
-
-    @staticmethod
-    def stop():
-        """Stop Nextcloud service."""
-        subprocess.Popen(["systemctl", "stop", "phpfpm-nextcloud.service"])
-
-    @staticmethod
-    def start():
-        """Start Nextcloud service."""
-        subprocess.Popen(["systemctl", "start", "phpfpm-nextcloud.service"])
-
-    @staticmethod
-    def restart():
-        """Restart Nextcloud service."""
-        subprocess.Popen(["systemctl", "restart", "phpfpm-nextcloud.service"])
 
     @staticmethod
     def get_logs():

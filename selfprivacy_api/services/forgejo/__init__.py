@@ -88,6 +88,10 @@ class Forgejo(Service):
         return "Forgejo is a Git forge."
 
     @staticmethod
+    def get_units() -> List[str]:
+        return ["forgejo.service"]
+
+    @staticmethod
     def get_svg_icon() -> str:
         """Read SVG icon from file and return it as base64 encoded string."""
         return base64.b64encode(FORGEJO_ICON.encode("utf-8")).decode("utf-8")
@@ -115,18 +119,6 @@ class Forgejo(Service):
         Return code 4 means service is off.
         """
         return get_service_status("forgejo.service")
-
-    @staticmethod
-    def stop():
-        subprocess.run(["systemctl", "stop", "forgejo.service"])
-
-    @staticmethod
-    def start():
-        subprocess.run(["systemctl", "start", "forgejo.service"])
-
-    @staticmethod
-    def restart():
-        subprocess.run(["systemctl", "restart", "forgejo.service"])
 
     @staticmethod
     def get_logs():

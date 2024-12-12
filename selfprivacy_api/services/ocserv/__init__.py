@@ -3,6 +3,7 @@
 import base64
 import subprocess
 import typing
+from typing import List
 from selfprivacy_api.jobs import Job
 from selfprivacy_api.utils.systemd import get_service_status
 from selfprivacy_api.services.service import Service, ServiceStatus
@@ -24,6 +25,10 @@ class Ocserv(Service):
     @staticmethod
     def get_description() -> str:
         return "OpenConnect VPN to connect your devices and access the internet."
+
+    @staticmethod
+    def get_units() -> List[str]:
+        return ["ocserv.service"]
 
     @staticmethod
     def get_svg_icon() -> str:
@@ -53,18 +58,6 @@ class Ocserv(Service):
     @staticmethod
     def get_status() -> ServiceStatus:
         return get_service_status("ocserv.service")
-
-    @staticmethod
-    def stop():
-        subprocess.run(["systemctl", "stop", "ocserv.service"], check=False)
-
-    @staticmethod
-    def start():
-        subprocess.run(["systemctl", "start", "ocserv.service"], check=False)
-
-    @staticmethod
-    def restart():
-        subprocess.run(["systemctl", "restart", "ocserv.service"], check=False)
 
     @classmethod
     def get_configuration(cls):
