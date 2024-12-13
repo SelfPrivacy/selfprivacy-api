@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 
+from selfprivacy_api.models.group import Group
 from selfprivacy_api.models.user import UserDataUser
 
 
@@ -34,7 +35,9 @@ class AbstractUserRepository(ABC):
     @staticmethod
     @abstractmethod
     def delete_user(username: str) -> None:
-        """Deletes an existing user"""
+        """
+        Deletes an existing user
+        """
 
     @staticmethod
     @abstractmethod
@@ -54,17 +57,25 @@ class AbstractUserRepository(ABC):
     @staticmethod
     @abstractmethod
     def get_user_by_username(username: str) -> UserDataUser:
-        """Retrieves user data (UserDataUser) by username"""
+        """
+        Retrieves user data (UserDataUser) by username
+        """
+
+    # ! Not implemented in JsonUserRepository !
+
+    #           |                |
+    #          \|/              \|/
 
     @staticmethod
     @abstractmethod
     def generate_password_reset_link(username: str) -> str:
         """
         Do not reset the password, just generate a link to reset the password.
-        ! Not implemented in JsonUserRepository !
         """
 
     @staticmethod
     @abstractmethod
-    def groups_list() -> list:
-        """Get groups list"""
+    def groups_list() -> list[Group]:
+        """
+        Get groups list.
+        """

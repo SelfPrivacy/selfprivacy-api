@@ -5,15 +5,19 @@ from typing import Any
 class KanidmQueryError(Exception):
     """Error occurred during kanidm query"""
 
-    def __init__(self, error_text: Optional[str] = None) -> None:
-        self.error_text = error_text
+    def __init__(
+        self, error_text: Optional[Any] = None, endpoint: Optional[str] = None
+    ) -> None:
+        self.error_text = str(error_text)
+        self.endpoint = endpoint
 
     def get_error_message(self) -> str:
-        return (
-            f"An error occurred during the Kanidm query. Error {self.error_text}"
-            if self.error_text
-            else "An error occurred during the Kanidm query."
-        )
+        message = "An error occurred during the Kanidm query."
+        if self.endpoint:
+            message += f" Endpoint: {self.endpoint}"
+        if self.error_text:
+            message += f" Error: {self.error_text}"
+        return message
 
 
 class KanidmReturnEmptyResponse(Exception):

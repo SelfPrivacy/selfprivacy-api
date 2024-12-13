@@ -1,9 +1,9 @@
 from json import JSONDecodeError
 from typing import Any, Optional, Union
 import subprocess
-import requests
 import re
 import logging
+import requests
 
 from selfprivacy_api.models.group import Group
 from selfprivacy_api.repositories.users.exceptions import (
@@ -130,15 +130,24 @@ class KanidmAdminToken:
 
     @staticmethod
     def _is_token_valid(token: str) -> bool:
-        response = requests.get(
-            f"{KANIDM_URL}/v1/person/root",
-            headers={
-                "Authorization": f"Bearer {token}",
-                "Content-Type": "application/json",
-            },
-            timeout=1,
-            verify=False,  # TODO: REMOVE THIS NOT HALAL!!!!!
-        )
+        endpoint = f"{KANIDM_URL}/v1/person/root"
+        try:
+            response = requests.get(
+                endpoint,
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                },
+                timeout=1,
+                verify=False,  # TODO: REMOVE THIS NOT HALAL!!!!!
+            )
+
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as error:
+            raise KanidmQueryError(error_text=f"Kanidm is not responding to requests. Error: {str(error)}", endpoint=endpoint)
+
+        except Exception as error:
+            raise KanidmQueryError(error_text=error, endpoint=endpoint)
+
         response_data = response.json()
 
         # we do not handle the other errors, this is handled by the main function in KanidmUserRepository._send_query
@@ -243,11 +252,16 @@ class KanidmUserRepository(AbstractUserRepository):
 
         except JSONDecodeError as error:
             logger.error(f"Kanidm query error: {str(error)}")
-            raise KanidmQueryError(error_text=f"No JSON found in Kanidm response. Error: {str(error)}")
+            raise KanidmQueryError(
+                error_text=f"No JSON found in Kanidm response. Error: {str(error)}",
+                endpoint=full_endpoint,
+            )
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as error:
+            raise KanidmQueryError(error_text=f"Kanidm is not responding to requests. Error: {str(error)}", endpoint=endpoint)
 
         except Exception as error:
             logger.error(f"Kanidm query error: {str(error)}")
-            raise KanidmQueryError(error_text=str(error))
+            raise KanidmQueryError(error_text=error, endpoint=full_endpoint)
 
         if response.status_code != 200:
             if isinstance(response_data, dict):
@@ -259,12 +273,14 @@ class KanidmUserRepository(AbstractUserRepository):
                 if response_data == "nomatchingentries":
                     raise UserNotFound  # does it work only for user? hate kanidm's response
                 elif response_data == "accessdenied":
-                    raise KanidmQueryError(error_text="Kanidm access issue")
+                    raise KanidmQueryError(
+                        error_text="Kanidm access issue", endpoint=full_endpoint
+                    )
                 elif response_data == "notauthenticated":
                     raise FailedToGetValidKanidmToken
 
             logger.error(f"Kanidm query error: {response.text}")
-            raise KanidmQueryError(error_text=response.text)
+            raise KanidmQueryError(error_text=response.text, endpoint=full_endpoint)
 
         return response_data
 
