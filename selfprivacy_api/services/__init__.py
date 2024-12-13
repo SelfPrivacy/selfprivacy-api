@@ -4,9 +4,8 @@ import logging
 import base64
 import typing
 from typing import List
-from os import path, remove
+from os import path
 from os import makedirs
-from os import listdir
 from os.path import join
 
 from shutil import copyfile, copytree, rmtree
@@ -30,6 +29,7 @@ from selfprivacy_api.utils.block_devices import BlockDevices
 from selfprivacy_api.utils import read_account_uri
 
 CONFIG_STASH_DIR = "/etc/selfprivacy/dump"
+KANIDM_A_RECORD = "auth"
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +69,7 @@ class ServiceManager(Service):
         dns_records: list[ServiceDnsRecord] = [
             ServiceDnsRecord(
                 type="A",
-                name="auth",
+                name=KANIDM_A_RECORD,
                 content=ip4,
                 ttl=3600,
                 display_name="Record for Kanidm",

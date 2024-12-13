@@ -19,6 +19,7 @@ from selfprivacy_api.repositories.users.exceptions_kanidm import (
     KanidmReturnEmptyResponse,
     KanidmReturnUnknownResponseType,
 )
+from selfprivacy_api.services import KANIDM_A_RECORD
 from selfprivacy_api.utils import get_domain, temporary_env_var
 from selfprivacy_api.utils.redis_pool import RedisPool
 from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
@@ -27,8 +28,9 @@ from selfprivacy_api.repositories.users.abstract_user_repository import (
 )
 
 
-KANIDM_URL = "https://127.0.0.1:3013"
 REDIS_TOKEN_KEY = "kanidm:token"
+
+KANIDM_URL = "https://127.0.0.1:3013"
 ADMIN_KANIDM_GROUPS = ["sp.admin"]
 
 redis = RedisPool().get_connection()
@@ -485,7 +487,7 @@ class KanidmUserRepository(AbstractUserRepository):
             raise KanidmReturnEmptyResponse
 
         if token:
-            return f"https://auth.{get_domain()}/ui/reset?token={token}"
+            return f"https://{KANIDM_A_RECORD}.{get_domain()}/ui/reset?token={token}"
 
         raise NoPasswordResetLinkFoundInResponse
 
