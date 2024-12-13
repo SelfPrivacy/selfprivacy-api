@@ -188,7 +188,7 @@ class KanidmUserRepository(AbstractUserRepository):
             KanidmReturnUnknownResponseType: If the response data is not of the expected type.
         """
 
-        if not response_data and response_data is None:
+        if not response_data or response_data is None:
             raise KanidmReturnEmptyResponse
 
         if data_type == "list":
@@ -523,6 +523,19 @@ class KanidmUserRepository(AbstractUserRepository):
 
     @staticmethod
     def get_groups() -> list[Group]:
+        """
+        Return Kanidm groups.
+        ! Not implemented in JsonUserRepository !
+
+        Returns:
+            list[Group]
+
+        Raises:
+            KanidmReturnEmptyResponse: If the response from Kanidm is empty.
+            KanidmQueryError: If an error occurs while generating the link.
+            KanidmReturnUnknownResponseType: If response type is unknown.
+        """
+
         groups_list_data = KanidmUserRepository._send_query(
             endpoint="group",
             method="GET",
