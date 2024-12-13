@@ -8,7 +8,7 @@ from selfprivacy_api.actions.users import get_groups as actions_get_groups
 @strawberry.type
 class Group:
     name: str
-    group_class: list
+    group_class: Optional[list[str]] = strawberry.field(default_factory=list)
     member: Optional[list[str]] = strawberry.field(default_factory=list)
     memberof: Optional[list[str]] = strawberry.field(default_factory=list)
     directmemberof: Optional[list[str]] = strawberry.field(default_factory=list)
