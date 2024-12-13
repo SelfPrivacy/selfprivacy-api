@@ -497,7 +497,7 @@ class KanidmUserRepository(AbstractUserRepository):
         )
 
         KanidmUserRepository._check_response_type_and_not_empty(
-            data_type="dict", response_data=groups_list_data
+            data_type="list", response_data=groups_list_data
         )
 
         groups = []
