@@ -142,8 +142,15 @@ class KanidmAdminToken:
                 verify=False,  # TODO: REMOVE THIS NOT HALAL!!!!!
             )
 
-        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as error:
-            raise KanidmQueryError(error_text=f"Kanidm is not responding to requests. Error: {str(error)}", endpoint=endpoint)
+        except (
+            requests.exceptions.Timeout,
+            requests.exceptions.ConnectionError,
+            requests.exceptions.HTTPError,
+        ) as error:
+            raise KanidmQueryError(
+                error_text=f"Kanidm is not responding to requests. Error: {str(error)}",
+                endpoint=endpoint,
+            )
 
         except Exception as error:
             raise KanidmQueryError(error_text=error, endpoint=endpoint)
@@ -256,8 +263,15 @@ class KanidmUserRepository(AbstractUserRepository):
                 error_text=f"No JSON found in Kanidm response. Error: {str(error)}",
                 endpoint=full_endpoint,
             )
-        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as error:
-            raise KanidmQueryError(error_text=f"Kanidm is not responding to requests. Error: {str(error)}", endpoint=endpoint)
+        except (
+            requests.exceptions.Timeout,
+            requests.exceptions.ConnectionError,
+            requests.exceptions.HTTPError,
+        ) as error:
+            raise KanidmQueryError(
+                error_text=f"Kanidm is not responding to requests. Error: {str(error)}",
+                endpoint=endpoint,
+            )
 
         except Exception as error:
             logger.error(f"Kanidm query error: {str(error)}")
