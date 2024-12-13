@@ -504,7 +504,7 @@ class KanidmUserRepository(AbstractUserRepository):
         for group_data in groups_list_data:
             attrs = group_data.get("attrs", {})
             group = Group(
-                name=attrs["name"],
+                name=attrs["name"][0],
                 group_class=attrs.get("class", []),
                 member=attrs.get("member", []),
                 memberof=attrs.get("memberof", []),
