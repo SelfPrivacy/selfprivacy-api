@@ -236,11 +236,11 @@ class KanidmUserRepository(AbstractUserRepository):
                 timeout=1,
                 verify=False,  # TODO: REMOVE THIS NOT HALAL!!!!!
             )
+            response_data = response.json()
+
         except Exception as error:
             logger.error(f"Kanidm query error: {str(error)}")
             raise KanidmQueryError(error_text=str(error))
-
-        response_data = response.json()
 
         if response.status_code != 200:
             if isinstance(response_data, dict):
