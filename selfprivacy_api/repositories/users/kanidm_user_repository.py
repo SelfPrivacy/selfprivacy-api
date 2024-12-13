@@ -1,3 +1,4 @@
+from json import JSONDecodeError
 from typing import Any, Optional, Union
 import subprocess
 import requests
@@ -237,6 +238,10 @@ class KanidmUserRepository(AbstractUserRepository):
                 verify=False,  # TODO: REMOVE THIS NOT HALAL!!!!!
             )
             response_data = response.json()
+
+        except JSONDecodeError as error:
+            logger.error(f"Kanidm query error: {str(error)}")
+            raise KanidmQueryError(error_text=f"No JSON found in Kanidm response. Error: {str(error)}")
 
         except Exception as error:
             logger.error(f"Kanidm query error: {str(error)}")
@@ -487,7 +492,7 @@ class KanidmUserRepository(AbstractUserRepository):
     @staticmethod
     def get_groups() -> list[Group]:
         groups_list_data = KanidmUserRepository._send_query(
-            endpoint="/v1/group",
+            endpoint="group",
             method="GET",
         )
 
