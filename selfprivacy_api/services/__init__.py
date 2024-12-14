@@ -205,10 +205,16 @@ class ServiceManager(Service):
     @classmethod
     def stash_a_path(cls, p: str):
         if path.isdir(p):
+            logging.warning(f"It is a folder")
             rmtree(cls.stash_for(p), ignore_errors=True)
+            logging.warning(f"Copying {p} to {cls.stash_for(p)}")
             copytree(p, cls.stash_for(p))
         else:
+            logging.warning(f"It is a file")
+            logging.warning(f"Copying {p} to {cls.stash_for(p)}")
             copyfile(p, cls.stash_for(p))
+            # Assert the file is copied
+            assert path.isfile(cls.stash_for(p))
 
     @classmethod
     def retrieve_stashed_path(cls, p: str):
@@ -223,11 +229,17 @@ class ServiceManager(Service):
 
     @classmethod
     def pre_backup(cls):
+        logging.warning("Pre-backup")
         tempdir = cls.dump_dir()
+        logging.warning(f"Tempdir: {tempdir}")
         rmtree(join(tempdir), ignore_errors=True)
         makedirs(tempdir)
 
+        # Assert the tempdir is empty
+        assert len(listdir(tempdir)) == 0
+
         for p in [USERDATA_FILE, SECRETS_FILE, DKIM_DIR]:
+            logging.warning(f"Stashing {p}")
             cls.stash_a_path(p)
 
     @classmethod
