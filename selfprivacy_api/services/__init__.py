@@ -109,9 +109,7 @@ class ServiceManager(Service):
     @staticmethod
     def get_url() -> typing.Optional[str]:
         """Return service url."""
-        domain = get_domain()
-        subdomain = ServiceManager.get_subdomain()
-        return f"https://{subdomain}.{domain}" if subdomain else None
+        return None
 
     @staticmethod
     def get_subdomain() -> typing.Optional[str]:
