@@ -480,6 +480,9 @@ class Service(ABC):
     def pre_backup(self):
         pass
 
+    def post_backup(self):
+        pass
+
     def post_restore(self):
         pass
 

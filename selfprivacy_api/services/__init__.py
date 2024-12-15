@@ -150,7 +150,8 @@ class ServiceManager(Service):
         # Stash locations as they are set by user right now
         locations = {}
         for service in services:
-            locations[service.get_id()] = service.get_drive()
+            if service.is_movable():
+                locations[service.get_id()] = service.get_drive()
 
         # Copy files
         for p in [USERDATA_FILE, SECRETS_FILE, DKIM_DIR]:
@@ -158,9 +159,10 @@ class ServiceManager(Service):
 
         # Pop locations
         for service in services:
-            device = BlockDevices().get_block_device(locations[service.get_id()])
-            if device is not None:
-                service.set_location(device)
+            if service.is_movable():
+                device = BlockDevices().get_block_device(locations[service.get_id()])
+                if device is not None:
+                    service.set_location(device)
 
     @classmethod
     def stop(cls):
@@ -229,6 +231,10 @@ class ServiceManager(Service):
 
         for p in [USERDATA_FILE, SECRETS_FILE, DKIM_DIR]:
             cls.stash_a_path(p)
+
+    @classmethod
+    def post_backup(cls):
+        rmtree(cls.dump_dir(), ignore_errors=True)
 
     @classmethod
     def dump_dir(cls) -> str:

@@ -19,7 +19,7 @@ from selfprivacy_api.utils.default_subdomains import (
 
 USERDATA_FILE = "/etc/nixos/userdata.json"
 SECRETS_FILE = "/etc/selfprivacy/secrets.json"
-DKIM_DIR = "/var/dkim/"
+DKIM_DIR = "/var/dkim"
 
 ACCOUNT_PATH_PATTERN = (
     "/var/lib/acme/.lego/accounts/*/acme-v02.api.letsencrypt.org/*/account.json"
