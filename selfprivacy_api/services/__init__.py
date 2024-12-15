@@ -150,7 +150,8 @@ class ServiceManager(Service):
         # Stash locations as they are set by user right now
         locations = {}
         for service in services:
-            locations[service.get_id()] = service.get_drive()
+            if service.is_movable():
+                locations[service.get_id()] = service.get_drive()
 
         # Copy files
         for p in [USERDATA_FILE, SECRETS_FILE, DKIM_DIR]:
@@ -158,9 +159,10 @@ class ServiceManager(Service):
 
         # Pop locations
         for service in services:
-            device = BlockDevices().get_block_device(locations[service.get_id()])
-            if device is not None:
-                service.set_location(device)
+            if service.is_movable():
+                device = BlockDevices().get_block_device(locations[service.get_id()])
+                if device is not None:
+                    service.set_location(device)
 
     @classmethod
     def stop(cls):
@@ -205,13 +207,9 @@ class ServiceManager(Service):
     @classmethod
     def stash_a_path(cls, p: str):
         if path.isdir(p):
-            logging.warning(f"It is a folder")
             rmtree(cls.stash_for(p), ignore_errors=True)
-            logging.warning(f"Copying {p} to {cls.stash_for(p)}")
             copytree(p, cls.stash_for(p))
         else:
-            logging.warning(f"It is a file")
-            logging.warning(f"Copying {p} to {cls.stash_for(p)}")
             copyfile(p, cls.stash_for(p))
             # Assert the file is copied
             assert path.isfile(cls.stash_for(p))
@@ -229,9 +227,7 @@ class ServiceManager(Service):
 
     @classmethod
     def pre_backup(cls):
-        logging.warning("Pre-backup")
         tempdir = cls.dump_dir()
-        logging.warning(f"Tempdir: {tempdir}")
         rmtree(join(tempdir), ignore_errors=True)
         makedirs(tempdir)
 
@@ -239,8 +235,11 @@ class ServiceManager(Service):
         assert len(listdir(tempdir)) == 0
 
         for p in [USERDATA_FILE, SECRETS_FILE, DKIM_DIR]:
-            logging.warning(f"Stashing {p}")
             cls.stash_a_path(p)
+
+    @classmethod
+    def post_backup(cls):
+        rmtree(cls.dump_dir(), ignore_errors=True)
 
     @classmethod
     def dump_dir(cls) -> str:
