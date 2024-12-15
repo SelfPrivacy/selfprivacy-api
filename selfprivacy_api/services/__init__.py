@@ -211,8 +211,6 @@ class ServiceManager(Service):
             copytree(p, cls.stash_for(p))
         else:
             copyfile(p, cls.stash_for(p))
-            # Assert the file is copied
-            assert path.isfile(cls.stash_for(p))
 
     @classmethod
     def retrieve_stashed_path(cls, p: str):
@@ -230,9 +228,6 @@ class ServiceManager(Service):
         tempdir = cls.dump_dir()
         rmtree(join(tempdir), ignore_errors=True)
         makedirs(tempdir)
-
-        # Assert the tempdir is empty
-        assert len(listdir(tempdir)) == 0
 
         for p in [USERDATA_FILE, SECRETS_FILE, DKIM_DIR]:
             cls.stash_a_path(p)
