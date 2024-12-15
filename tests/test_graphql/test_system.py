@@ -394,15 +394,16 @@ def test_graphql_get_domain(
             ttl=18000,
         ),
     )
-    assert is_dns_record_in_array(
-        dns_records,
-        dns_record(
-            name="test-domain.tld",
-            record_type="CAA",
-            content='128 issue "letsencrypt.org;accounturi=https://acme-v02.api.letsencrypt.org/acme/acct/234340396"',
-            ttl=3600,
-        ),
-    )
+    # TODO: Reenable with 3.5.0 release when clients are ready.
+    # assert is_dns_record_in_array(
+    #     dns_records,
+    #     dns_record(
+    #         name="test-domain.tld",
+    #         record_type="CAA",
+    #         content='128 issue "letsencrypt.org;accounturi=https://acme-v02.api.letsencrypt.org/acme/acct/234340396"',
+    #         ttl=3600,
+    #     ),
+    # )
 
 
 def test_dns_records_no_duplicates(
@@ -546,15 +547,16 @@ def test_graphql_get_domain_no_uri_account_file(
             ttl=18000,
         ),
     )
-    assert not is_dns_record_in_array(
-        dns_records,
-        dns_record(
-            name="test-domain.tld",
-            record_type="CAA",
-            content='128 issue "letsencrypt.org;accounturi=https://acme-v02.api.letsencrypt.org/acme/acct/234340396"',
-            ttl=3600,
-        ),
-    )
+    # TODO: Reenable with 3.5.0 release when clients are ready.
+    # assert not is_dns_record_in_array(
+    #     dns_records,
+    #     dns_record(
+    #         name="test-domain.tld",
+    #         record_type="CAA",
+    #         content='128 issue "letsencrypt.org;accounturi=https://acme-v02.api.letsencrypt.org/acme/acct/234340396"',
+    #         ttl=3600,
+    #     ),
+    # )
 
 
 def test_graphql_get_domain_not_found_account_file(
@@ -645,15 +647,16 @@ def test_graphql_get_domain_not_found_account_file(
             ttl=18000,
         ),
     )
-    assert not is_dns_record_in_array(
-        dns_records,
-        dns_record(
-            name="test-domain.tld",
-            record_type="CAA",
-            content='128 issue "letsencrypt.org;accounturi=https://acme-v02.api.letsencrypt.org/acme/acct/234340396"',
-            ttl=3600,
-        ),
-    )
+    # TODO: Reenable with 3.5.0 release when clients are ready.
+    # assert not is_dns_record_in_array(
+    #     dns_records,
+    #     dns_record(
+    #         name="test-domain.tld",
+    #         record_type="CAA",
+    #         content='128 issue "letsencrypt.org;accounturi=https://acme-v02.api.letsencrypt.org/acme/acct/234340396"',
+    #         ttl=3600,
+    #     ),
+    # )
 
 
 def test_graphql_get_domain_black_account_file(
@@ -744,15 +747,16 @@ def test_graphql_get_domain_black_account_file(
             ttl=18000,
         ),
     )
-    assert not is_dns_record_in_array(
-        dns_records,
-        dns_record(
-            name="test-domain.tld",
-            record_type="CAA",
-            content='128 issue "letsencrypt.org;accounturi=https://acme-v02.api.letsencrypt.org/acme/acct/234340396"',
-            ttl=3600,
-        ),
-    )
+    # TODO: Reenable with 3.5.0 release when clients are ready.
+    # assert not is_dns_record_in_array(
+    #     dns_records,
+    #     dns_record(
+    #         name="test-domain.tld",
+    #         record_type="CAA",
+    #         content='128 issue "letsencrypt.org;accounturi=https://acme-v02.api.letsencrypt.org/acme/acct/234340396"',
+    #         ttl=3600,
+    #     ),
+    # )
 
 
 API_GET_TIMEZONE = """

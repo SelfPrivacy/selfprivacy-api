@@ -68,18 +68,20 @@ class ServiceManager(Service):
 
         dns_records: list[ServiceDnsRecord] = []
 
-        try:
-            dns_records.append(
-                ServiceDnsRecord(
-                    type="CAA",
-                    name=get_domain(),
-                    content=f'128 issue "letsencrypt.org;accounturi={read_account_uri()}"',
-                    ttl=3600,
-                    display_name="CAA record",
-                )
-            )
-        except Exception as e:
-            logging.error(f"Error creating CAA: {e}")
+        # TODO: Reenable with 3.5.0 release when clients are ready.
+        # Do not forget about tests!
+        # try:
+        #     dns_records.append(
+        #         ServiceDnsRecord(
+        #             type="CAA",
+        #             name=get_domain(),
+        #             content=f'128 issue "letsencrypt.org;accounturi={read_account_uri()}"',
+        #             ttl=3600,
+        #             display_name="CAA record",
+        #         )
+        #     )
+        # except Exception as e:
+        #     logging.error(f"Error creating CAA: {e}")
 
         for service in ServiceManager.get_enabled_services():
             dns_records += service.get_dns_records(ip4, ip6)
