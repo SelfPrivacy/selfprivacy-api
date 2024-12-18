@@ -1,5 +1,8 @@
+from selfprivacy_api.utils.strings import PLEASE_UPDATE_APP_TEXT
+
+
 class UserNotFound(Exception):
-    """Attempted to get a user that does not exist"""
+    """User not found"""
 
     @staticmethod
     def get_error_message() -> str:
@@ -7,7 +10,7 @@ class UserNotFound(Exception):
 
 
 class UserIsProtected(Exception):
-    """Attempted to delete a user that is protected"""
+    """User is protected and cannot be deleted or modified"""
 
     @staticmethod
     def get_error_message() -> str:
@@ -15,7 +18,7 @@ class UserIsProtected(Exception):
 
 
 class UsernameForbidden(Exception):
-    """Attempted to create a user with a forbidden username"""
+    """Username is forbidden"""
 
     @staticmethod
     def get_error_message() -> str:
@@ -23,7 +26,7 @@ class UsernameForbidden(Exception):
 
 
 class UserAlreadyExists(Exception):
-    """Attempted to create a user that already exists"""
+    """User already exists"""
 
     @staticmethod
     def get_error_message() -> str:
@@ -31,7 +34,7 @@ class UserAlreadyExists(Exception):
 
 
 class UsernameNotAlphanumeric(Exception):
-    """Attempted to create a user with a non-alphanumeric username"""
+    """Username must be alphanumeric and start with a letter"""
 
     @staticmethod
     def get_error_message() -> str:
@@ -39,9 +42,7 @@ class UsernameNotAlphanumeric(Exception):
 
 
 class UsernameTooLong(Exception):
-    """
-    Attempted to create a user with a too long username. Username must be less than 32 characters
-    """
+    """Username is too long. Must be less than 32 characters"""
 
     @staticmethod
     def get_error_message() -> str:
@@ -49,7 +50,7 @@ class UsernameTooLong(Exception):
 
 
 class PasswordIsEmpty(Exception):
-    """Attempted to create a user with an empty password"""
+    """Password cannot be empty"""
 
     @staticmethod
     def get_error_message() -> str:
@@ -57,7 +58,7 @@ class PasswordIsEmpty(Exception):
 
 
 class InvalidConfiguration(Exception):
-    """The userdata is broken"""
+    """Invalid configuration, userdata is broken"""
 
     @staticmethod
     def get_error_message() -> str:
@@ -71,7 +72,7 @@ class SelfPrivacyAppIsOutdate(Exception):
 
     @staticmethod
     def get_error_message() -> str:
-        return "SelfPrivacy app is out of date, please update"
+        return PLEASE_UPDATE_APP_TEXT
 
 
 class NoPasswordResetLinkFoundInResponse(Exception):
@@ -82,18 +83,8 @@ class NoPasswordResetLinkFoundInResponse(Exception):
         return "The Kanidm response does not contain a password reset link."
 
 
-class DisplaynameNotAlphanumeric(Exception):
-    """Attempted to create a display name with non-alphanumeric characters"""
-
-    @staticmethod
-    def get_error_message() -> str:
-        return "Display name must be alphanumeric"
-
-
 class DisplaynameTooLong(Exception):
-    """
-    Attempted to create a display name that is too long. Display name must be less than 16 characters
-    """
+    """Display name is too long. Must be less than 16 characters"""
 
     @staticmethod
     def get_error_message() -> str:

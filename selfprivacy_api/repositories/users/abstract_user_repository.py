@@ -13,7 +13,6 @@ class AbstractUserRepository(ABC):
         password: Optional[str] = None,
         directmemberof: Optional[list[str]] = None,
         displayname: Optional[str] = None,
-        email: Optional[str] = None,
     ) -> None:
         """
         Creates a new user.
@@ -36,7 +35,7 @@ class AbstractUserRepository(ABC):
     @abstractmethod
     def delete_user(username: str) -> None:
         """
-        Deletes an existing user
+        Deletes an existing user.
         """
 
     @staticmethod
@@ -45,7 +44,6 @@ class AbstractUserRepository(ABC):
         username: str,
         directmemberof: Optional[list[str]] = None,
         displayname: Optional[str] = None,
-        email: Optional[str] = None,
     ) -> None:
         """
         Update user information.
@@ -58,7 +56,7 @@ class AbstractUserRepository(ABC):
     @abstractmethod
     def get_user_by_username(username: str) -> UserDataUser:
         """
-        Retrieves user data (UserDataUser) by username
+        Retrieves user data (UserDataUser) by username.
         """
 
     # ! Not implemented in JsonUserRepository !
@@ -79,3 +77,13 @@ class AbstractUserRepository(ABC):
         """
         Get groups list.
         """
+
+    @staticmethod
+    @abstractmethod
+    def add_users_to_group(users: list[str], group_name: str) -> None:
+        """"""
+
+    @staticmethod
+    @abstractmethod
+    def remove_users_from_group(users: list[str], group_name: str) -> None:
+        """"""

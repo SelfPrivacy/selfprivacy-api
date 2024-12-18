@@ -60,7 +60,7 @@ class KanidmCliSubprocessError(Exception):
         return (
             f"An error occurred when using Kanidm cli. Error: {self.error}"
             if self.error
-            else "An error occurred when using Kanidm cli."
+            else "An error occurred when using Kanidm cli"
         )
 
 

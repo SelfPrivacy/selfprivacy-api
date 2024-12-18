@@ -41,14 +41,6 @@ class ApiUsingWrongUserRepository(Exception):
         return "API is using a too old or unfinished user repository"
 
 
-def _check_displayname_is_correct(displayname: str) -> None:
-    if not re.match(r"^[a-z_][a-z0-9_]+$", displayname):
-        raise DisplaynameNotAlphanumeric
-
-    if len(displayname) >= 16:  # we don't know the limitations of each service
-        raise DisplaynameTooLong
-
-
 def get_users(
     exclude_primary: bool = False,
     exclude_root: bool = False,
@@ -95,8 +87,10 @@ def create_user(
     if password:
         logger.error(PLEASE_UPDATE_APP_TEXT)
 
-    if displayname:
-        _check_displayname_is_correct(displayname=displayname)
+    if (
+        displayname and len(displayname) >= 32
+    ):  # we don't know the limitations of each service
+        raise DisplaynameTooLong
 
     # need to maintain the logic of the old repository, since ssh management uses it.
     if not isinstance(ACTIVE_USERS_PROVIDER, JsonUserRepository):
@@ -149,8 +143,10 @@ def update_user(
     if username == "root":
         raise UserIsProtected
 
-    if displayname:
-        _check_displayname_is_correct(displayname=displayname)
+    if (
+        displayname and len(displayname) >= 32
+    ):  # we don't know the limitations of each service
+        raise DisplaynameTooLong
 
     ACTIVE_USERS_PROVIDER.update_user(
         username=username,

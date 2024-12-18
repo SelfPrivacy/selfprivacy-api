@@ -213,7 +213,7 @@ class KanidmUserRepository(AbstractUserRepository):
             UserDataUserOrigin: The origin type of the user (PRIMARY or NORMAL).
         """
 
-        if sorted(memberof) == sorted(ADMIN_KANIDM_GROUPS):
+        if all(group in memberof for group in ADMIN_KANIDM_GROUPS):
             return UserDataUserOrigin.PRIMARY
         else:
             return UserDataUserOrigin.NORMAL
@@ -285,7 +285,7 @@ class KanidmUserRepository(AbstractUserRepository):
 
             if isinstance(response_data, str):
                 if response_data == "nomatchingentries":
-                    raise UserNotFound  # does it work only for user? hate kanidm's response
+                    raise UserNotFound  # does it work only for user?
                 elif response_data == "accessdenied":
                     raise KanidmQueryError(
                         error_text="Kanidm access issue", endpoint=full_endpoint
@@ -425,11 +425,13 @@ class KanidmUserRepository(AbstractUserRepository):
 
         data = {
             "attrs": {
-                "displayname": [displayname if displayname else username],
                 "mail": [f"{username}@{get_domain()}"],
                 "class": ["user"],  # TODO read more about it
             }
         }
+
+        if displayname:
+            data["attrs"]["displayname"] = [displayname]
 
         if directmemberof:
             data["attrs"]["directmemberof"] = directmemberof
@@ -483,12 +485,15 @@ class KanidmUserRepository(AbstractUserRepository):
             email=attrs.get("mail", [None])[0],
         )
 
+    # ! Not implemented in JsonUserRepository !
+
+    #           |                |
+    #          \|/              \|/
+
     @staticmethod
     def generate_password_reset_link(username: str) -> str:
         """
         Do not reset the password, just generate a link to reset the password.
-        ! Not implemented in JsonUserRepository !
-
         Args:
             username (str): The username for which to generate the reset link.
 
@@ -525,7 +530,6 @@ class KanidmUserRepository(AbstractUserRepository):
     def get_groups() -> list[Group]:
         """
         Return Kanidm groups.
-        ! Not implemented in JsonUserRepository !
 
         Returns:
             list[Group]
@@ -560,3 +564,31 @@ class KanidmUserRepository(AbstractUserRepository):
             groups.append(group)
 
         return groups
+
+    @staticmethod
+    def add_users_to_group(users: list[str], group_name: str) -> None:
+        data = {
+            "attrs": {
+                "members": users,
+            }
+        }
+
+        KanidmUserRepository._send_query(
+            endpoint=f"group/{group_name}/_attr/member",
+            method="POST",
+            data=data,
+        )
+
+    @staticmethod
+    def remove_users_from_group(users: list[str], group_name: str) -> None:
+        data = {
+            "attrs": {
+                "members": users,
+            }
+        }
+
+        KanidmUserRepository._send_query(
+            endpoint=f"group/{group_name}/_attr/member",
+            method="POST",
+            data=data,
+        )
