@@ -27,7 +27,6 @@ from selfprivacy_api.actions.users import (
     generate_password_reset_link as generate_password_reset_link_action,
 )
 from selfprivacy_api.repositories.users.exceptions import (
-    DisplaynameNotAlphanumeric,
     DisplaynameTooLong,
     NoPasswordResetLinkFoundInResponse,
     PasswordIsEmpty,
@@ -48,7 +47,7 @@ from selfprivacy_api.repositories.users.exceptions_kanidm import (
     KanidmReturnUnknownResponseType,
     KanidmCliSubprocessError,
 )
-from selfprivacy_api import PLEASE_UPDATE_APP_TEXT
+from selfprivacy_api.utils.strings import PLEASE_UPDATE_APP_TEXT
 
 
 FAILED_TO_SETUP_PASSWORD_TEXT = "Failed to set a password for a user. The problem occurred due to an old version of the SelfPrivacy app."
@@ -105,7 +104,6 @@ class UsersMutations:
             InvalidConfiguration,
             KanidmDidNotReturnAdminPassword,
             KanidmQueryError,
-            DisplaynameNotAlphanumeric,
             DisplaynameTooLong,
             KanidmCliSubprocessError,
             FailedToGetValidKanidmToken,
@@ -188,7 +186,6 @@ class UsersMutations:
             SelfPrivacyAppIsOutdate,
             KanidmDidNotReturnAdminPassword,
             KanidmQueryError,
-            DisplaynameNotAlphanumeric,
             DisplaynameTooLong,
             KanidmCliSubprocessError,
             FailedToGetValidKanidmToken,
