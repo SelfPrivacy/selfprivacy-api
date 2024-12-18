@@ -42,7 +42,6 @@ class AbstractUserRepository(ABC):
     @abstractmethod
     def update_user(
         username: str,
-        directmemberof: Optional[list[str]] = None,
         displayname: Optional[str] = None,
     ) -> None:
         """

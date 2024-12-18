@@ -406,7 +406,6 @@ class KanidmUserRepository(AbstractUserRepository):
     @staticmethod
     def update_user(
         username: str,
-        directmemberof: Optional[list[str]] = None,
         displayname: Optional[str] = None,
     ) -> None:
         """
@@ -432,9 +431,6 @@ class KanidmUserRepository(AbstractUserRepository):
 
         if displayname:
             data["attrs"]["displayname"] = [displayname]
-
-        if directmemberof:
-            data["attrs"]["directmemberof"] = directmemberof
 
         KanidmUserRepository._send_query(
             endpoint=f"person/{username}",
@@ -589,6 +585,6 @@ class KanidmUserRepository(AbstractUserRepository):
 
         KanidmUserRepository._send_query(
             endpoint=f"group/{group_name}/_attr/member",
-            method="POST",
+            method="DELETE",
             data=data,
         )

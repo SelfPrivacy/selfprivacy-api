@@ -5,7 +5,7 @@ import uuid
 import logging
 from typing import Optional
 
-from selfprivacy_api import PLEASE_UPDATE_APP_TEXT
+from selfprivacy_api.utils.strings import PLEASE_UPDATE_APP_TEXT
 from selfprivacy_api.models.group import Group
 from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
 
@@ -16,7 +16,6 @@ from selfprivacy_api.actions.ssh import get_ssh_keys
 from selfprivacy_api.repositories.users.json_user_repository import JsonUserRepository
 from selfprivacy_api.repositories.users import ACTIVE_USERS_PROVIDER
 from selfprivacy_api.repositories.users.exceptions import (
-    DisplaynameNotAlphanumeric,
     DisplaynameTooLong,
     SelfPrivacyAppIsOutdate,
     UserIsProtected,
@@ -144,13 +143,26 @@ def update_user(
         raise UserIsProtected
 
     if (
-        displayname and len(displayname) >= 32
+        displayname and len(displayname) >= 512
     ):  # we don't know the limitations of each service
         raise DisplaynameTooLong
 
+    if directmemberof:
+        user = ACTIVE_USERS_PROVIDER.get_user_by_username(username=username)
+
+        groups_to_add = [item for item in directmemberof if item not in user.directmemberof]  # type: ignore
+        groups_to_delete = [item for item in user.directmemberof if item not in directmemberof]  # type: ignore
+
+        if groups_to_add:
+            for group in groups_to_add:
+                ACTIVE_USERS_PROVIDER.add_users_to_group(group_name=group, users=[username])
+
+        if groups_to_delete:
+            for group in groups_to_delete:
+                ACTIVE_USERS_PROVIDER.remove_users_from_group(group_name=group, users=[username])
+
     ACTIVE_USERS_PROVIDER.update_user(
         username=username,
-        directmemberof=directmemberof,
         displayname=displayname,
     )
 
