@@ -80,9 +80,9 @@ class AbstractUserRepository(ABC):
     @staticmethod
     @abstractmethod
     def add_users_to_group(users: list[str], group_name: str) -> None:
-        """"""
+        """Add users to a specified group."""
 
     @staticmethod
     @abstractmethod
     def remove_users_from_group(users: list[str], group_name: str) -> None:
-        """"""
+        """Remove users from a specified group."""

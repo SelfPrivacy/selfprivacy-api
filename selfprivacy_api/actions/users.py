@@ -155,11 +155,15 @@ def update_user(
 
         if groups_to_add:
             for group in groups_to_add:
-                ACTIVE_USERS_PROVIDER.add_users_to_group(group_name=group, users=[username])
+                ACTIVE_USERS_PROVIDER.add_users_to_group(
+                    group_name=group, users=[username]
+                )
 
         if groups_to_delete:
             for group in groups_to_delete:
-                ACTIVE_USERS_PROVIDER.remove_users_from_group(group_name=group, users=[username])
+                ACTIVE_USERS_PROVIDER.remove_users_from_group(
+                    group_name=group, users=[username]
+                )
 
     ACTIVE_USERS_PROVIDER.update_user(
         username=username,

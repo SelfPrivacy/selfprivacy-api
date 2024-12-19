@@ -3,7 +3,7 @@ from typing import Any, Optional, Union
 import subprocess
 import re
 import logging
-import requests
+import requests  # type: ignore
 
 from selfprivacy_api.models.group import Group
 from selfprivacy_api.repositories.users.exceptions import (
@@ -235,6 +235,11 @@ class KanidmUserRepository(AbstractUserRepository):
             KanidmQueryError: If an error occurs during the request.
             UserAlreadyExists: If the user already exists.
             UserNotFound: If the user is not found.
+
+        Raises from KanidmAdminToken:
+            KanidmCliSubprocessError: If there is an error with the Kanidm CLI subprocess.
+            KanidmDidNotReturnAdminPassword: If Kanidm did not return the admin password.
+            FailedToGetValidKanidmToken: If a valid Kanidm token could not be retrieved.
         """
 
         request_method = getattr(requests, method.lower(), None)
@@ -317,6 +322,11 @@ class KanidmUserRepository(AbstractUserRepository):
         Raises:
             KanidmQueryError: If an error occurs while creating the user.
             UserAlreadyExists: If the user already exists.
+
+        Raises from KanidmAdminToken:
+            KanidmCliSubprocessError: If there is an error with the Kanidm CLI subprocess.
+            KanidmDidNotReturnAdminPassword: If Kanidm did not return the admin password.
+            FailedToGetValidKanidmToken: If a valid Kanidm token could not be retrieved.
         """
 
         data = {
@@ -357,6 +367,11 @@ class KanidmUserRepository(AbstractUserRepository):
             KanidmQueryError: If an error occurs while retrieving users.
             KanidmReturnUnknownResponseType: If response type is unknown.
             KanidmReturnEmptyResponse: If response is empty.
+
+        Raises from KanidmAdminToken:
+            KanidmCliSubprocessError: If there is an error with the Kanidm CLI subprocess.
+            KanidmDidNotReturnAdminPassword: If Kanidm did not return the admin password.
+            FailedToGetValidKanidmToken: If a valid Kanidm token could not be retrieved.
         """
 
         users_data = KanidmUserRepository._send_query(endpoint="person", method="GET")
@@ -399,6 +414,11 @@ class KanidmUserRepository(AbstractUserRepository):
         Raises:
             KanidmQueryError: If an error occurs while deleting the user.
             UserNotFound: If the user does not exist.
+
+        Raises from KanidmAdminToken:
+            KanidmCliSubprocessError: If there is an error with the Kanidm CLI subprocess.
+            KanidmDidNotReturnAdminPassword: If Kanidm did not return the admin password.
+            FailedToGetValidKanidmToken: If a valid Kanidm token could not be retrieved.
         """
 
         KanidmUserRepository._send_query(endpoint=f"person/{username}", method="DELETE")
@@ -420,6 +440,11 @@ class KanidmUserRepository(AbstractUserRepository):
         Raises:
             KanidmQueryError: If an error occurs while updating the user.
             UserNotFound: If the user does not exist.
+
+        Raises from KanidmAdminToken:
+            KanidmCliSubprocessError: If there is an error with the Kanidm CLI subprocess.
+            KanidmDidNotReturnAdminPassword: If Kanidm did not return the admin password.
+            FailedToGetValidKanidmToken: If a valid Kanidm token could not be retrieved.
         """
 
         data = {
@@ -453,6 +478,11 @@ class KanidmUserRepository(AbstractUserRepository):
             UserNotFound: If the user does not exist.
             KanidmQueryError: If an error occurs while retrieving the user data.
             KanidmReturnUnknownResponseType: If response type is unknown.
+
+        Raises from KanidmAdminToken:
+            KanidmCliSubprocessError: If there is an error with the Kanidm CLI subprocess.
+            KanidmDidNotReturnAdminPassword: If Kanidm did not return the admin password.
+            FailedToGetValidKanidmToken: If a valid Kanidm token could not be retrieved.
         """
 
         user_data = KanidmUserRepository._send_query(
@@ -501,6 +531,11 @@ class KanidmUserRepository(AbstractUserRepository):
             KanidmReturnEmptyResponse: If the response from Kanidm is empty.
             KanidmQueryError: If an error occurs while generating the link.
             KanidmReturnUnknownResponseType: If response type is unknown.
+
+        Raises from KanidmAdminToken:
+            KanidmCliSubprocessError: If there is an error with the Kanidm CLI subprocess.
+            KanidmDidNotReturnAdminPassword: If Kanidm did not return the admin password.
+            FailedToGetValidKanidmToken: If a valid Kanidm token could not be retrieved.
         """
 
         data = KanidmUserRepository._send_query(
@@ -534,6 +569,11 @@ class KanidmUserRepository(AbstractUserRepository):
             KanidmReturnEmptyResponse: If the response from Kanidm is empty.
             KanidmQueryError: If an error occurs while generating the link.
             KanidmReturnUnknownResponseType: If response type is unknown.
+
+        Raises from KanidmAdminToken:
+            KanidmCliSubprocessError: If there is an error with the Kanidm CLI subprocess.
+            KanidmDidNotReturnAdminPassword: If Kanidm did not return the admin password.
+            FailedToGetValidKanidmToken: If a valid Kanidm token could not be retrieved.
         """
 
         groups_list_data = KanidmUserRepository._send_query(
@@ -563,28 +603,48 @@ class KanidmUserRepository(AbstractUserRepository):
 
     @staticmethod
     def add_users_to_group(users: list[str], group_name: str) -> None:
-        data = {
-            "attrs": {
-                "members": users,
-            }
-        }
+        """
+        Add users to a specified group in Kanidm.
+
+        Args:
+            users (list[str]): A list of usernames to add to the group.
+            group_name (str): The name of the group to which the users will be added.
+
+        Raises:
+            KanidmQueryError: If an error occurs while adding users to the group.
+
+        Raises from KanidmAdminToken:
+            KanidmCliSubprocessError: If there is an error with the Kanidm CLI subprocess.
+            KanidmDidNotReturnAdminPassword: If Kanidm did not return the admin password.
+            FailedToGetValidKanidmToken: If a valid Kanidm token could not be retrieved.
+        """
 
         KanidmUserRepository._send_query(
             endpoint=f"group/{group_name}/_attr/member",
             method="POST",
-            data=data,
+            data=users,
         )
 
     @staticmethod
     def remove_users_from_group(users: list[str], group_name: str) -> None:
-        data = {
-            "attrs": {
-                "members": users,
-            }
-        }
+        """
+        Remove users from a specified group in Kanidm.
+
+        Args:
+            users (list[str]): A list of usernames to remove from the group.
+            group_name (str): The name of the group from which the users will be removed.
+
+        Raises:
+            KanidmQueryError: If an error occurs while removing users from the group.
+
+        Raises from KanidmAdminToken:
+            KanidmCliSubprocessError: If there is an error with the Kanidm CLI subprocess.
+            KanidmDidNotReturnAdminPassword: If Kanidm did not return the admin password.
+            FailedToGetValidKanidmToken: If a valid Kanidm token could not be retrieved.
+        """
 
         KanidmUserRepository._send_query(
             endpoint=f"group/{group_name}/_attr/member",
             method="DELETE",
-            data=data,
+            data=users,
         )
