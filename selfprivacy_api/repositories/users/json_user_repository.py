@@ -64,7 +64,12 @@ class JsonUserRepository(AbstractUserRepository):
         return users
 
     @staticmethod
-    def create_user(username: str, password: str) -> None:
+    def create_user(
+        username: str,
+        password: str,
+        directmemberof: Optional[list[str]] = None,
+        displayname: Optional[str] = None,
+    ) -> None:
         """Creates a new user"""
 
         hashed_password = JsonUserRepository._check_and_hash_password(password)
@@ -104,7 +109,11 @@ class JsonUserRepository(AbstractUserRepository):
                 raise UserNotFound("User did not exist")
 
     @staticmethod
-    def update_user(username: str, password: str) -> None:
+    def update_user(
+        username: str,
+        password: str,
+        displayname: Optional[str] = None,
+    ) -> None:
         """Updates the password of an existing user"""
 
         hashed_password = JsonUserRepository._check_and_hash_password(password)
