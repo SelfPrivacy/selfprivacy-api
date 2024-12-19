@@ -31,7 +31,7 @@ from selfprivacy_api.repositories.users.abstract_user_repository import (
 REDIS_TOKEN_KEY = "kanidm:token"
 
 KANIDM_URL = "https://127.0.0.1:3013"
-ADMIN_GROUPS = ["sp.admin"]
+ADMIN_GROUPS = ["idm_admins"]
 
 redis = RedisPool().get_connection()
 
@@ -450,7 +450,6 @@ class KanidmUserRepository(AbstractUserRepository):
         data = {
             "attrs": {
                 "mail": [f"{username}@{get_domain()}"],
-                "class": ["user"],  # TODO read more about it
             }
         }
 

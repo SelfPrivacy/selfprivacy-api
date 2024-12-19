@@ -145,10 +145,13 @@ def update_user(
     if username == "root":
         raise UserIsProtected
 
-    if (
-        displayname and len(displayname) >= 512
-    ):  # we don't know the limitations of each service
-        raise DisplaynameTooLong
+    if displayname:
+        if len(displayname) >= 512:  # we don't know the limitations of each service
+            raise DisplaynameTooLong
+        ACTIVE_USERS_PROVIDER.update_user(
+            username=username,
+            displayname=displayname,
+        )
 
     if directmemberof:
         user = ACTIVE_USERS_PROVIDER.get_user_by_username(username=username)
@@ -175,11 +178,6 @@ def update_user(
                 ACTIVE_USERS_PROVIDER.remove_users_from_group(
                     group_name=group, users=[username]
                 )
-
-    ACTIVE_USERS_PROVIDER.update_user(
-        username=username,
-        displayname=displayname,
-    )
 
 
 def get_user_by_username(username: str) -> UserDataUser:
