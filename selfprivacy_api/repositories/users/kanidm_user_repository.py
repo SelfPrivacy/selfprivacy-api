@@ -298,13 +298,17 @@ class KanidmUserRepository(AbstractUserRepository):
                     raise UserNotFound  # does it work only for user?
                 elif response_data == "accessdenied":
                     raise KanidmQueryError(
-                        error_text="Kanidm access issue", endpoint=full_endpoint, method=method
+                        error_text="Kanidm access issue",
+                        endpoint=full_endpoint,
+                        method=method,
                     )
                 elif response_data == "notauthenticated":
                     raise FailedToGetValidKanidmToken
 
             logger.error(f"Kanidm query error: {response.text}")
-            raise KanidmQueryError(error_text=response.text, endpoint=full_endpoint, method=method)
+            raise KanidmQueryError(
+                error_text=response.text, endpoint=full_endpoint, method=method
+            )
 
         return response_data
 
