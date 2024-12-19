@@ -325,7 +325,6 @@ class KanidmUserRepository(AbstractUserRepository):
         Args:
             username (str): The username.
             directmemberof (Optional[List[str]], optional): List of direct group memberships. Defaults to None.
-            memberof (Optional[List[str]], optional): List of indirect group memberships. Defaults to None.
             displayname (Optional[str], optional): If displayname is None, it will default to the username.
 
         Raises:
