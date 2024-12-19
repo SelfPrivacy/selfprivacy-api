@@ -76,18 +76,20 @@ class ServiceManager(Service):
             ),
         ]
 
-        try:
-            dns_records.append(
-                ServiceDnsRecord(
-                    type="CAA",
-                    name=get_domain(),
-                    content=f'128 issue "letsencrypt.org;accounturi={read_account_uri()}"',
-                    ttl=3600,
-                    display_name="CAA record",
-                )
-            )
-        except Exception as e:
-            logging.error(f"Error creating CAA: {e}")
+        # TODO: Reenable with 3.5.0 release when clients are ready.
+        # Do not forget about tests!
+        # try:
+        #     dns_records.append(
+        #         ServiceDnsRecord(
+        #             type="CAA",
+        #             name=get_domain(),
+        #             content=f'128 issue "letsencrypt.org;accounturi={read_account_uri()}"',
+        #             ttl=3600,
+        #             display_name="CAA record",
+        #         )
+        #     )
+        # except Exception as e:
+        #     logging.error(f"Error creating CAA: {e}")
 
         for service in ServiceManager.get_enabled_services():
             dns_records += service.get_dns_records(ip4, ip6)
@@ -117,9 +119,7 @@ class ServiceManager(Service):
     @staticmethod
     def get_url() -> typing.Optional[str]:
         """Return service url."""
-        domain = get_domain()
-        subdomain = ServiceManager.get_subdomain()
-        return f"https://{subdomain}.{domain}" if subdomain else None
+        return None
 
     @staticmethod
     def get_subdomain() -> typing.Optional[str]:
@@ -160,7 +160,8 @@ class ServiceManager(Service):
         # Stash locations as they are set by user right now
         locations = {}
         for service in services:
-            locations[service.get_id()] = service.get_drive()
+            if service.is_movable():
+                locations[service.get_id()] = service.get_drive()
 
         # Copy files
         for p in [USERDATA_FILE, SECRETS_FILE, DKIM_DIR]:
@@ -168,9 +169,10 @@ class ServiceManager(Service):
 
         # Pop locations
         for service in services:
-            device = BlockDevices().get_block_device(locations[service.get_id()])
-            if device is not None:
-                service.set_location(device)
+            if service.is_movable():
+                device = BlockDevices().get_block_device(locations[service.get_id()])
+                if device is not None:
+                    service.set_location(device)
 
     @classmethod
     def stop(cls):
@@ -239,6 +241,10 @@ class ServiceManager(Service):
 
         for p in [USERDATA_FILE, SECRETS_FILE, DKIM_DIR]:
             cls.stash_a_path(p)
+
+    @classmethod
+    def post_backup(cls):
+        rmtree(cls.dump_dir(), ignore_errors=True)
 
     @classmethod
     def dump_dir(cls) -> str:
