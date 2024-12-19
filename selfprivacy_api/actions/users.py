@@ -153,7 +153,7 @@ def update_user(
             displayname=displayname,
         )
 
-    if directmemberof:
+    if directmemberof is not None:
         user = ACTIVE_USERS_PROVIDER.get_user_by_username(username=username)
 
         groups_to_add = [item for item in directmemberof if item not in user.directmemberof]  # type: ignore
