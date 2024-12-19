@@ -9,6 +9,14 @@ class UserNotFound(Exception):
         return "User not found"
 
 
+class UserOrGroupNotFound(Exception):
+    """User or group not found"""
+
+    @staticmethod
+    def get_error_message() -> str:
+        return "User or group not found"
+
+
 class UserIsProtected(Exception):
     """User is protected and cannot be deleted or modified"""
 

@@ -31,6 +31,7 @@ from selfprivacy_api.repositories.users.exceptions import (
     DisplaynameTooLong,
     NoPasswordResetLinkFoundInResponse,
     PasswordIsEmpty,
+    UserOrGroupNotFound,
     UsernameForbidden,
     InvalidConfiguration,
     UserAlreadyExists,
@@ -142,7 +143,7 @@ class UsersMutations:
     def delete_user(self, username: str) -> GenericMutationReturn:
         try:
             delete_user_action(username)
-        except UserNotFound as error:
+        except (UserNotFound, UserOrGroupNotFound) as error:
             return GenericMutationReturn(
                 success=False,
                 message=error.get_error_message(),
@@ -195,7 +196,7 @@ class UsersMutations:
             return return_failed_mutation_return(
                 message=error.get_error_message(),
             )
-        except UserNotFound as error:
+        except (UserNotFound, UserOrGroupNotFound) as error:
             return return_failed_mutation_return(
                 message=error.get_error_message(),
                 code=404,
@@ -270,7 +271,7 @@ class UsersMutations:
     def generate_password_reset_link(self, username: str) -> PasswordResetLinkReturn:
         try:
             password_reset_link = generate_password_reset_link_action(username=username)
-        except UserNotFound as error:
+        except (UserNotFound, UserOrGroupNotFound) as error:
             return PasswordResetLinkReturn(
                 success=False,
                 message=error.get_error_message(),

@@ -10,6 +10,7 @@ from selfprivacy_api.repositories.users.exceptions import (
     NoPasswordResetLinkFoundInResponse,
     UserAlreadyExists,
     UserNotFound,
+    UserOrGroupNotFound,
 )
 from selfprivacy_api.repositories.users.exceptions_kanidm import (
     FailedToGetValidKanidmToken,
@@ -236,6 +237,7 @@ class KanidmUserRepository(AbstractUserRepository):
             KanidmQueryError: If an error occurs during the request.
             UserAlreadyExists: If the user already exists.
             UserNotFound: If the user is not found.
+            UserOrGroupNotFound: If the user or group does not exist.
 
         Raises from KanidmAdminToken:
             KanidmCliSubprocessError: If there is an error with the Kanidm CLI subprocess.
@@ -295,7 +297,7 @@ class KanidmUserRepository(AbstractUserRepository):
 
             if isinstance(response_data, str):
                 if response_data == "nomatchingentries":
-                    raise UserNotFound  # does it work only for user?
+                    raise UserOrGroupNotFound  # does it work only for user? - NO
                 elif response_data == "accessdenied":
                     raise KanidmQueryError(
                         error_text="Kanidm access issue",
@@ -422,6 +424,7 @@ class KanidmUserRepository(AbstractUserRepository):
         Raises:
             KanidmQueryError: If an error occurs while deleting the user.
             UserNotFound: If the user does not exist.
+            UserOrGroupNotFound: If the user does not exist.
 
         Raises from KanidmAdminToken:
             KanidmCliSubprocessError: If there is an error with the Kanidm CLI subprocess.
@@ -448,6 +451,7 @@ class KanidmUserRepository(AbstractUserRepository):
         Raises:
             KanidmQueryError: If an error occurs while updating the user.
             UserNotFound: If the user does not exist.
+            UserOrGroupNotFound: If the user or group does not exist.
 
         Raises from KanidmAdminToken:
             KanidmCliSubprocessError: If there is an error with the Kanidm CLI subprocess.
@@ -483,6 +487,7 @@ class KanidmUserRepository(AbstractUserRepository):
 
         Raises:
             UserNotFound: If the user does not exist.
+            UserOrGroupNotFound: If the user does not exist.
             KanidmQueryError: If an error occurs while retrieving the user data.
             KanidmReturnUnknownResponseType: If response type is unknown.
 
