@@ -146,14 +146,20 @@ def update_user(
         raise UserIsProtected
 
     if displayname:
+        if isinstance(ACTIVE_USERS_PROVIDER, JsonUserRepository):
+            raise ApiUsingWrongUserRepository
         if len(displayname) >= 512:  # we don't know the limitations of each service
             raise DisplaynameTooLong
+
         ACTIVE_USERS_PROVIDER.update_user(
             username=username,
             displayname=displayname,
         )
 
     if directmemberof is not None:
+        if isinstance(ACTIVE_USERS_PROVIDER, JsonUserRepository):
+            raise ApiUsingWrongUserRepository
+
         user = ACTIVE_USERS_PROVIDER.get_user_by_username(username=username)
 
         groups_to_add = [item for item in directmemberof if item not in user.directmemberof]  # type: ignore

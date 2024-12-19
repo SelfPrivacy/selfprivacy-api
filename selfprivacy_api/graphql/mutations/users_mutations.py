@@ -21,6 +21,7 @@ from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericMutationReturn,
 )
 from selfprivacy_api.actions.users import (
+    ApiUsingWrongUserRepository,
     create_user as create_user_action,
     delete_user as delete_user_action,
     update_user as update_user_action,
@@ -189,6 +190,7 @@ class UsersMutations:
             DisplaynameTooLong,
             KanidmCliSubprocessError,
             FailedToGetValidKanidmToken,
+            ApiUsingWrongUserRepository,
         ) as error:
             return return_failed_mutation_return(
                 message=error.get_error_message(),
@@ -288,6 +290,7 @@ class UsersMutations:
             KanidmQueryError,
             KanidmCliSubprocessError,
             FailedToGetValidKanidmToken,
+            ApiUsingWrongUserRepository,
         ) as error:
             return PasswordResetLinkReturn(
                 success=False,
