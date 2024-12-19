@@ -6,13 +6,19 @@ class KanidmQueryError(Exception):
     """Error occurred during kanidm query"""
 
     def __init__(
-        self, error_text: Optional[Any] = None, endpoint: Optional[str] = None
+        self,
+        error_text: Optional[Any] = None,
+        endpoint: Optional[str] = None,
+        method: Optional[str] = None,
     ) -> None:
         self.error_text = str(error_text)
         self.endpoint = endpoint
+        self.method = method
 
     def get_error_message(self) -> str:
         message = "An error occurred during the Kanidm query."
+        if self.method:
+            message += f" Method: {self.method}"
         if self.endpoint:
             message += f" Endpoint: {self.endpoint}"
         if self.error_text:

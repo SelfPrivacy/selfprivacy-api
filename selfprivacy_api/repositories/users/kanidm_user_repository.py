@@ -150,6 +150,7 @@ class KanidmAdminToken:
             raise KanidmQueryError(
                 error_text=f"Kanidm is not responding to requests. Error: {str(error)}",
                 endpoint=endpoint,
+                method="GET",
             )
 
         except Exception as error:
@@ -267,6 +268,7 @@ class KanidmUserRepository(AbstractUserRepository):
             raise KanidmQueryError(
                 error_text=f"No JSON found in Kanidm response. Error: {str(error)}",
                 endpoint=full_endpoint,
+                method=method,
             )
         except (
             requests.exceptions.Timeout,
@@ -276,11 +278,14 @@ class KanidmUserRepository(AbstractUserRepository):
             raise KanidmQueryError(
                 error_text=f"Kanidm is not responding to requests. Error: {str(error)}",
                 endpoint=endpoint,
+                method=method,
             )
 
         except Exception as error:
             logger.error(f"Kanidm query error: {str(error)}")
-            raise KanidmQueryError(error_text=error, endpoint=full_endpoint)
+            raise KanidmQueryError(
+                error_text=error, endpoint=full_endpoint, method=method
+            )
 
         if response.status_code != 200:
             if isinstance(response_data, dict):
@@ -293,13 +298,13 @@ class KanidmUserRepository(AbstractUserRepository):
                     raise UserNotFound  # does it work only for user?
                 elif response_data == "accessdenied":
                     raise KanidmQueryError(
-                        error_text="Kanidm access issue", endpoint=full_endpoint
+                        error_text="Kanidm access issue", endpoint=full_endpoint, method=method
                     )
                 elif response_data == "notauthenticated":
                     raise FailedToGetValidKanidmToken
 
             logger.error(f"Kanidm query error: {response.text}")
-            raise KanidmQueryError(error_text=response.text, endpoint=full_endpoint)
+            raise KanidmQueryError(error_text=response.text, endpoint=full_endpoint, method=method)
 
         return response_data
 
