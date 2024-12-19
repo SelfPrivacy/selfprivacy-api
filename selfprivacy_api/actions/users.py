@@ -27,6 +27,9 @@ from selfprivacy_api.repositories.users.exceptions import (
     InvalidConfiguration,
 )
 
+
+DEFAULT_GROUPS = ["idm_all_persons@bloodwine.cyou", "idm_all_accounts@bloodwine.cyou"]
+
 logger = logging.getLogger(__name__)
 
 
@@ -155,12 +158,20 @@ def update_user(
 
         if groups_to_add:
             for group in groups_to_add:
+
+                if group in DEFAULT_GROUPS:
+                    continue
+
                 ACTIVE_USERS_PROVIDER.add_users_to_group(
                     group_name=group, users=[username]
                 )
 
         if groups_to_delete:
             for group in groups_to_delete:
+
+                if group in DEFAULT_GROUPS:
+                    continue
+
                 ACTIVE_USERS_PROVIDER.remove_users_from_group(
                     group_name=group, users=[username]
                 )
