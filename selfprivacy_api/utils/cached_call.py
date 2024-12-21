@@ -1,4 +1,3 @@
-import asyncio
 import pickle
 from functools import wraps
 from typing import Any, Optional, Callable
@@ -28,7 +27,7 @@ def save_redis_object(key: str, obj: Any, expire: Optional[int] = 60) -> None:
 def redis_cached_call(ttl: Optional[int] = 60) -> Callable[..., Callable]:
     def decorator(func: Callable) -> Callable:
         @wraps(func)
-        async def wrapper(*args, **kwargs) -> Any:
+        def wrapper(*args, **kwargs) -> Any:
             key = f"{CACHE_PREFIX}{func.__name__}:{args}:{kwargs}"
             cached_value = get_redis_object(key)
             if cached_value is not None:
