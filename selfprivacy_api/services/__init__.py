@@ -4,6 +4,7 @@ import logging
 import base64
 import typing
 import subprocess
+import json
 from typing import List
 from os import path, remove
 from os import makedirs
@@ -305,7 +306,7 @@ def get_services() -> List[Service]:
     if path.exists(SP_SUGGESTED_MODULES_PATH):
         # It is a file with a JSON array
         with open(SP_SUGGESTED_MODULES_PATH) as f:
-            suggested_modules = f.read().splitlines()
+            suggested_modules = json.load(f)
         for module in suggested_modules:
             if module in service_ids:
                 continue
