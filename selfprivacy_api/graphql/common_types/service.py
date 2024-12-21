@@ -207,7 +207,10 @@ class Service:
         if not config_items:
             return None
         # By the "type" field convert every dict into a ConfigItem. In the future there will be more types.
-        return [config_item_to_graphql(config_items[item]) for item in config_items]
+        unsorted_config_items = [config_items[item] for item in config_items]
+        # Sort the items by their weight. If there is no weight, implicitly set it to 50.
+        config_items = sorted(unsorted_config_items, key=lambda x: x.get("weight", 50))
+        return [config_item_to_graphql(item) for item in config_items]
 
     # TODO: fill this
     @strawberry.field

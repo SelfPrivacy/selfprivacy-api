@@ -245,6 +245,7 @@ class SupportLevel(Enum):
 
 def config_item_from_json(json_data: dict) -> Optional[ServiceConfigItem]:
     """Create a ServiceConfigItem from JSON data."""
+    weight = json_data.get("meta", {}).get("weight", 50)
     if json_data["meta"]["type"] == "enable":
         return None
     if json_data["meta"]["type"] == "location":
@@ -257,6 +258,7 @@ def config_item_from_json(json_data: dict) -> Optional[ServiceConfigItem]:
             regex=json_data["meta"].get("regex"),
             widget=json_data["meta"].get("widget"),
             allow_empty=json_data["meta"].get("allowEmpty", False),
+            weight=weight,
         )
     if json_data["meta"]["type"] == "bool":
         return BoolServiceConfigItem(
@@ -264,6 +266,7 @@ def config_item_from_json(json_data: dict) -> Optional[ServiceConfigItem]:
             default_value=json_data["default"],
             description=json_data["description"],
             widget=json_data["meta"].get("widget"),
+            weight=weight,
         )
     if json_data["meta"]["type"] == "enum":
         return EnumServiceConfigItem(
@@ -272,6 +275,7 @@ def config_item_from_json(json_data: dict) -> Optional[ServiceConfigItem]:
             description=json_data["description"],
             options=json_data["meta"]["options"],
             widget=json_data["meta"].get("widget"),
+            weight=weight,
         )
     if json_data["meta"]["type"] == "int":
         return IntServiceConfigItem(
@@ -281,6 +285,7 @@ def config_item_from_json(json_data: dict) -> Optional[ServiceConfigItem]:
             widget=json_data["meta"].get("widget"),
             min_value=json_data["meta"].get("minValue"),
             max_value=json_data["meta"].get("maxValue"),
+            weight=weight,
         )
     raise ValueError("Unknown config item type")
 
@@ -493,6 +498,9 @@ class TemplatedService(Service):
             subprocess.run(["systemctl", "restart", unit], check=False)
 
     def get_configuration(self) -> dict:
+        # If there are no options, return an empty dict
+        if not self.config_items:
+            return {}
         return {
             key: self.config_items[key].as_dict(self.get_id())
             for key in self.config_items
