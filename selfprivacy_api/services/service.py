@@ -388,7 +388,6 @@ class Service(ABC):
         """
         service_name = self.get_display_name()
         binds = self.binds()
-        logger.warning(f"Binds: {binds}")
 
         report_progress(10, job, "Unmounting folders from old volume...")
         unbind_folders(binds)
