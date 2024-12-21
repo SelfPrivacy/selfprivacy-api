@@ -72,10 +72,6 @@ class Prometheus(Service):
         subprocess.run(["systemctl", "restart", "prometheus.service"])
 
     @staticmethod
-    def get_logs():
-        return ""
-
-    @staticmethod
     def get_owned_folders() -> List[OwnedPath]:
         return [
             OwnedPath(

@@ -75,10 +75,6 @@ class Ocserv(Service):
         return super().set_configuration(config_items)
 
     @staticmethod
-    def get_logs():
-        return ""
-
-    @staticmethod
     def get_folders() -> typing.List[str]:
         return []
 

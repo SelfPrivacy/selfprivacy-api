@@ -95,10 +95,5 @@ class Nextcloud(Service):
         subprocess.Popen(["systemctl", "restart", "phpfpm-nextcloud.service"])
 
     @staticmethod
-    def get_logs():
-        """Return Nextcloud logs."""
-        return ""
-
-    @staticmethod
     def get_folders() -> List[str]:
         return ["/var/lib/nextcloud"]

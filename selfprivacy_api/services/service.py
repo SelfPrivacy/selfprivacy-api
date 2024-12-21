@@ -226,11 +226,6 @@ class Service(ABC):
                 cls.get_id(),
             )
 
-    @staticmethod
-    @abstractmethod
-    def get_logs():
-        pass
-
     @classmethod
     def get_storage_usage(cls) -> int:
         """

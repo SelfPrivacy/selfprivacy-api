@@ -187,11 +187,6 @@ class ServiceManager(Service):
         """
         pass
 
-    @staticmethod
-    def get_logs():
-        # TODO: maybe return the logs for api itself
-        return ""
-
     @classmethod
     def get_drive(cls) -> str:
         return BlockDevices().get_root_block_device().name

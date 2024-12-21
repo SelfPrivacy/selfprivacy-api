@@ -129,10 +129,6 @@ class Forgejo(Service):
         subprocess.run(["systemctl", "restart", "forgejo.service"])
 
     @staticmethod
-    def get_logs():
-        return ""
-
-    @staticmethod
     def get_folders() -> List[str]:
         """The data folder is still called gitea for compatibility."""
         return ["/var/lib/gitea"]

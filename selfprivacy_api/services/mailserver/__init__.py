@@ -90,10 +90,6 @@ class MailServer(Service):
         subprocess.run(["systemctl", "restart", "postfix.service"], check=False)
 
     @staticmethod
-    def get_logs():
-        return ""
-
-    @staticmethod
     def get_folders() -> List[str]:
         return ["/var/vmail", "/var/sieve"]
 

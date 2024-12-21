@@ -70,10 +70,6 @@ class Pleroma(Service):
         return super().set_configuration(config_items)
 
     @staticmethod
-    def get_logs():
-        return ""
-
-    @staticmethod
     def get_owned_folders() -> List[OwnedPath]:
         """
         Get a list of occupied directories with ownership info

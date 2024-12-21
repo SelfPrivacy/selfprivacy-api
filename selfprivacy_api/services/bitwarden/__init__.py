@@ -105,9 +105,5 @@ class Bitwarden(Service):
         subprocess.run(["systemctl", "restart", "vaultwarden.service"])
 
     @staticmethod
-    def get_logs():
-        return ""
-
-    @staticmethod
     def get_folders() -> List[str]:
         return ["/var/lib/bitwarden", "/var/lib/bitwarden_rs"]

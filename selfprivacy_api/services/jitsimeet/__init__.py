@@ -102,10 +102,6 @@ class JitsiMeet(Service):
         subprocess.run(["systemctl", "restart", "jicofo.service"], check=False)
 
     @staticmethod
-    def get_logs():
-        return ""
-
-    @staticmethod
     def get_folders() -> List[str]:
         return ["/var/lib/jitsi-meet"]
 

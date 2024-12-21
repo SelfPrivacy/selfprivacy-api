@@ -93,10 +93,6 @@ class Roundcube(Service):
         )
 
     @staticmethod
-    def get_logs():
-        return ""
-
-    @staticmethod
     def get_folders() -> List[str]:
         return []
 
