@@ -1,6 +1,7 @@
 """Abstract class for a service running on a server"""
 
 from abc import ABC, abstractmethod
+import logging
 from typing import List, Optional
 from os.path import exists
 
@@ -29,6 +30,8 @@ from selfprivacy_api.services.moving import (
 
 
 DEFAULT_START_STOP_TIMEOUT = 5 * 60
+
+logger = logging.getLogger(__name__)
 
 
 class Service(ABC):
@@ -385,6 +388,7 @@ class Service(ABC):
         """
         service_name = self.get_display_name()
         binds = self.binds()
+        logger.warning(f"Binds: {binds}")
 
         report_progress(10, job, "Unmounting folders from old volume...")
         unbind_folders(binds)

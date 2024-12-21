@@ -2,6 +2,7 @@
 
 import base64
 from enum import Enum
+import logging
 import json
 import subprocess
 from typing import List, Optional
@@ -27,200 +28,9 @@ from selfprivacy_api.services.config_item import (
 from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
 from selfprivacy_api.utils.systemd import get_service_status_from_several_units
 
-"""The structure of the JSON used:
-```json
-{
-  "configPathsNeeded": [
-    [
-      "selfprivacy",
-      "domain"
-    ],
-    [
-      "selfprivacy",
-      "useBinds"
-    ],
-    [
-      "selfprivacy",
-      "modules",
-      "gitea"
-    ]
-  ],
-  "meta": {
-    "backupDescription": "Git repositories, database and user data.",
-    "description": "Forgejo is a Git forge.",
-    "folders": [
-      "/var/lib/gitea"
-    ],
-    "homepage": "https://forgejo.org",
-    "id": "gitea",
-    "isMovable": true,
-    "isRequired": false,
-    "license": [
-      {
-        "deprecated": false,
-        "free": true,
-        "fullName": "GNU General Public License v3.0 or later",
-        "redistributable": true,
-        "shortName": "gpl3Plus",
-        "spdxId": "GPL-3.0-or-later",
-        "url": "https://spdx.org/licenses/GPL-3.0-or-later.html"
-      }
-    ],
-    "name": "Forgejo",
-    "sourcePage": "https://codeberg.org/forgejo/forgejo",
-    "spModuleVersion": 1,
-    "supportLevel": "normal",
-    "svgIcon": "<svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path d=\"M2.60007 10.5899L8.38007 4.79995L10.0701 6.49995C9.83007 7.34995 10.2201 8.27995 11.0001 8.72995V14.2699C10.4001 14.6099 10.0001 15.2599 10.0001 15.9999C10.0001 16.5304 10.2108 17.0391 10.5859 17.4142C10.9609 17.7892 11.4696 17.9999 12.0001 17.9999C12.5305 17.9999 13.0392 17.7892 13.4143 17.4142C13.7894 17.0391 14.0001 16.5304 14.0001 15.9999C14.0001 15.2599 13.6001 14.6099 13.0001 14.2699V9.40995L15.0701 11.4999C15.0001 11.6499 15.0001 11.8199 15.0001 11.9999C15.0001 12.5304 15.2108 13.0391 15.5859 13.4142C15.9609 13.7892 16.4696 13.9999 17.0001 13.9999C17.5305 13.9999 18.0392 13.7892 18.4143 13.4142C18.7894 13.0391 19.0001 12.5304 19.0001 11.9999C19.0001 11.4695 18.7894 10.9608 18.4143 10.5857C18.0392 10.2107 17.5305 9.99995 17.0001 9.99995C16.8201 9.99995 16.6501 9.99995 16.5001 10.0699L13.9301 7.49995C14.1901 6.56995 13.7101 5.54995 12.7801 5.15995C12.3501 4.99995 11.9001 4.95995 11.5001 5.06995L9.80007 3.37995L10.5901 2.59995C11.3701 1.80995 12.6301 1.80995 13.4101 2.59995L21.4001 10.5899C22.1901 11.3699 22.1901 12.6299 21.4001 13.4099L13.4101 21.3999C12.6301 22.1899 11.3701 22.1899 10.5901 21.3999L2.60007 13.4099C1.81007 12.6299 1.81007 11.3699 2.60007 10.5899Z\" fill=\"black\"/>\n</svg>\n",
-    "systemdServices": [
-      "forgejo.service"
-    ]
-  },
-  "options": {
-    "appName": {
-      "default": "SelfPrivacy git Service",
-      "description": "The name displayed in the web interface",
-      "loc": [
-        "selfprivacy",
-        "modules",
-        "gitea",
-        "appName"
-      ],
-      "meta": {
-        "type": "string"
-      },
-      "name": "appName"
-    },
-    "defaultTheme": {
-      "default": "forgejo-auto",
-      "description": "Default theme",
-      "loc": [
-        "selfprivacy",
-        "modules",
-        "gitea",
-        "defaultTheme"
-      ],
-      "meta": {
-        "options": [
-          "forgejo-auto",
-          "forgejo-light",
-          "forgejo-dark",
-          "gitea-auto",
-          "gitea-light",
-          "gitea-dark"
-        ],
-        "type": "enum"
-      },
-      "name": "defaultTheme"
-    },
-    "disableRegistration": {
-      "default": false,
-      "description": "Disable registration of new users",
-      "loc": [
-        "selfprivacy",
-        "modules",
-        "gitea",
-        "disableRegistration"
-      ],
-      "meta": {
-        "type": "bool"
-      },
-      "name": "disableRegistration"
-    },
-    "enable": {
-      "default": false,
-      "description": "Enable Forgejo",
-      "loc": [
-        "selfprivacy",
-        "modules",
-        "gitea",
-        "enable"
-      ],
-      "meta": {
-        "type": "enable"
-      },
-      "name": "enable"
-    },
-    "enableLfs": {
-      "default": true,
-      "description": "Enable Git LFS",
-      "loc": [
-        "selfprivacy",
-        "modules",
-        "gitea",
-        "enableLfs"
-      ],
-      "meta": {
-        "type": "bool"
-      },
-      "name": "enableLfs"
-    },
-    "forcePrivate": {
-      "default": false,
-      "description": "Force all new repositories to be private",
-      "loc": [
-        "selfprivacy",
-        "modules",
-        "gitea",
-        "forcePrivate"
-      ],
-      "meta": {
-        "type": "bool"
-      },
-      "name": "forcePrivate"
-    },
-    "location": {
-      "default": null,
-      "description": "Forgejo location",
-      "loc": [
-        "selfprivacy",
-        "modules",
-        "gitea",
-        "location"
-      ],
-      "meta": {
-        "type": "location"
-      },
-      "name": "location"
-    },
-    "requireSigninView": {
-      "default": false,
-      "description": "Force users to log in to view any page",
-      "loc": [
-        "selfprivacy",
-        "modules",
-        "gitea",
-        "requireSigninView"
-      ],
-      "meta": {
-        "type": "bool"
-      },
-      "name": "requireSigninView"
-    },
-    "subdomain": {
-      "default": "git",
-      "description": "Subdomain",
-      "loc": [
-        "selfprivacy",
-        "modules",
-        "gitea",
-        "subdomain"
-      ],
-      "meta": {
-        "regex": "[A-Za-z0-9][A-Za-z0-9-]{0,61}[A-Za-z0-9]",
-        "type": "string",
-        "widget": "subdomain"
-      },
-      "name": "subdomain"
-    }
-  }
-}
-
-```
-
-Theses files are stored in `/etc/sp-modules` and are named after the service id.
-"""
-
 SP_MODULES_DEFENITIONS_PATH = "/etc/sp-modules"
+
+logger = logging.getLogger(__name__)
 
 
 class SupportLevel(Enum):
@@ -601,8 +411,11 @@ class TemplatedService(Service):
     def get_owned_folders(self) -> List[OwnedPath]:
         folders = self.meta.folders
         owned_folders = self.meta.owned_folders
+        logger.warning(f"folders: {folders}")
+        logger.warning(f"owned_folders: {owned_folders}")
         for folder in folders:
             owned_folders.append(self.owned_path(folder))
+        logger.warning(f"returning owned_folders: {owned_folders}")
         return owned_folders
 
     def set_location(self, volume: BlockDevice):
