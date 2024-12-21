@@ -321,7 +321,7 @@ class ServiceMetaData(BaseSchema):
     user: Optional[str] = None
     group: Optional[str] = None
     folders: List[str] = []
-    owned_folders: List[str] = []
+    owned_folders: List[OwnedPath] = []
     postgresql_databases: List[str] = []
     license: List[License] = []
     homepage: Optional[str] = None
@@ -581,14 +581,14 @@ class TemplatedService(Service):
 
     def get_folders(self) -> List[str]:
         folders = self.meta.folders
-        owned_folders = self.get_owned_folders()
+        owned_folders = self.meta.owned_folders
         for folder in owned_folders:
             folders.append(folder.path)
         return folders
 
     def get_owned_folders(self) -> List[OwnedPath]:
         folders = self.meta.folders
-        owned_folders = self.get_owned_folders()
+        owned_folders = self.meta.owned_folders
         for folder in folders:
             owned_folders.append(self.owned_path(folder))
         return owned_folders
