@@ -338,13 +338,16 @@ class ServiceMetaData(BaseSchema):
 class TemplatedService(Service):
     """Class representing a dynamically loaded service."""
 
-    def __init__(self, service_id: str) -> None:
-        # Check if the service exists
-        if not path.exists(join(SP_MODULES_DEFENITIONS_PATH, service_id)):
-            raise FileNotFoundError(f"Service {service_id} not found")
-        # Load the service
-        with open(join(SP_MODULES_DEFENITIONS_PATH, service_id)) as file:
-            self.definition_data = json.load(file)
+    def __init__(self, service_id: str, source_data: Optional[str] = None) -> None:
+        if source_data:
+            self.definition_data = json.loads(source_data)
+        else:
+            # Check if the service exists
+            if not path.exists(join(SP_MODULES_DEFENITIONS_PATH, service_id)):
+                raise FileNotFoundError(f"Service {service_id} not found")
+            # Load the service
+            with open(join(SP_MODULES_DEFENITIONS_PATH, service_id)) as file:
+                self.definition_data = json.load(file)
         # Check if required fields are present
         if "meta" not in self.definition_data:
             raise ValueError("meta not found in service definition")

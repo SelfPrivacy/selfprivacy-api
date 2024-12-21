@@ -5,6 +5,19 @@ let
   config-id = "default";
   nixos-rebuild = "${config.system.build.nixos-rebuild}/bin/nixos-rebuild";
   nix = "${config.nix.package.out}/bin/nix";
+  sp-fetch-remote-module = pkgs.writeShellApplication {
+    name = "sp-fetch-remote-module";
+    runtimeInputs = [ config.nix.package.out ];
+    text = ''
+      if [ "$#" -ne 1 ]; then
+        echo "Usage: $0 <URL>"
+        exit 1
+      fi
+
+      URL="$1"
+      nix eval --file /etc/nixos/sp-fetch-remote-module.nix --raw --apply "f: f { flakeURL = \"$URL\"; }" | jq .
+    '';
+  };
 in
 {
   options.services.selfprivacy-api = {
@@ -46,6 +59,7 @@ in
         pkgs.util-linux
         pkgs.e2fsprogs
         pkgs.iproute2
+        sp-fetch-remote-module
       ];
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
@@ -81,6 +95,7 @@ in
         pkgs.util-linux
         pkgs.e2fsprogs
         pkgs.iproute2
+        sp-fetch-remote-module
       ];
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
