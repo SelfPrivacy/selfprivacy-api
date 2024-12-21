@@ -28,6 +28,10 @@ from selfprivacy_api.services.api_icon import API_ICON
 from selfprivacy_api.utils import USERDATA_FILE, DKIM_DIR, SECRETS_FILE, get_domain
 from selfprivacy_api.utils.block_devices import BlockDevices
 from selfprivacy_api.utils import read_account_uri
+from selfprivacy_api.services.templated_service import (
+    SP_MODULES_DEFENITIONS_PATH,
+    TemplatedService,
+)
 
 CONFIG_STASH_DIR = "/etc/selfprivacy/dump"
 
@@ -246,15 +250,33 @@ class ServiceManager(Service):
         rmtree(cls.dump_dir(), ignore_errors=True)
 
 
-services: list[Service] = [
-    Bitwarden(),
-    Forgejo(),
-    MailServer(),
-    Nextcloud(),
-    Pleroma(),
-    Ocserv(),
-    JitsiMeet(),
-    Roundcube(),
-    ServiceManager(),
-    Prometheus(),
-]
+def get_services() -> List[Service]:
+    hardcoded_services: list[Service] = [
+        Bitwarden(),
+        # Forgejo(),
+        MailServer(),
+        Nextcloud(),
+        Pleroma(),
+        Ocserv(),
+        JitsiMeet(),
+        Roundcube(),
+        ServiceManager(),
+        Prometheus(),
+    ]
+    hardcoded_services_ids = [service.get_id() for service in hardcoded_services]
+
+    # Load services from SP_MODULES_DEFENITIONS_PATH
+    templated_services: List[Service] = []
+    if path.exists(SP_MODULES_DEFENITIONS_PATH):
+        for module in listdir(SP_MODULES_DEFENITIONS_PATH):
+            if module in hardcoded_services_ids:
+                continue
+            try:
+                templated_services.append(TemplatedService(module))
+            except Exception as e:
+                logger.error(f"Failed to load service {module}: {e}")
+
+    return hardcoded_services + templated_services
+
+
+services = get_services()

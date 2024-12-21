@@ -27,13 +27,13 @@ class ServiceConfigItem(ABC):
     def validate_value(self, value):
         return True
 
-    def as_dict(self, service_options):
+    def as_dict(self, service_id: str):
         return {
             "id": self.id,
             "type": self.type,
             "description": self.description,
             "widget": self.widget,
-            "value": self.get_value(service_options),
+            "value": self.get_value(service_id),
         }
 
 
@@ -73,13 +73,13 @@ class StringServiceConfigItem(ServiceConfigItem):
                 user_data["modules"][service_id] = {}
             user_data["modules"][service_id][self.id] = value
 
-    def as_dict(self, service_options):
+    def as_dict(self, service_id):
         return {
             "id": self.id,
             "type": self.type,
             "description": self.description,
             "widget": self.widget,
-            "value": self.get_value(service_options),
+            "value": self.get_value(service_id),
             "default_value": self.default_value,
             "regex": self.regex.pattern if self.regex else None,
         }
@@ -127,13 +127,13 @@ class BoolServiceConfigItem(ServiceConfigItem):
                 user_data["modules"][service_id] = {}
             user_data["modules"][service_id][self.id] = value
 
-    def as_dict(self, service_options):
+    def as_dict(self, service_id):
         return {
             "id": self.id,
             "type": self.type,
             "description": self.description,
             "widget": self.widget,
-            "value": self.get_value(service_options),
+            "value": self.get_value(service_id),
             "default_value": self.default_value,
         }
 
@@ -173,13 +173,13 @@ class EnumServiceConfigItem(ServiceConfigItem):
                 user_data["modules"][service_id] = {}
             user_data["modules"][service_id][self.id] = value
 
-    def as_dict(self, service_options):
+    def as_dict(self, service_id):
         return {
             "id": self.id,
             "type": self.type,
             "description": self.description,
             "widget": self.widget,
-            "value": self.get_value(service_options),
+            "value": self.get_value(service_id),
             "default_value": self.default_value,
             "options": self.options,
         }
@@ -225,13 +225,13 @@ class IntServiceConfigItem(ServiceConfigItem):
                 user_data["modules"][service_id] = {}
             user_data["modules"][service_id][self.id] = value
 
-    def as_dict(self, service_options):
+    def as_dict(self, service_id):
         return {
             "id": self.id,
             "type": self.type,
             "description": self.description,
             "widget": self.widget,
-            "value": self.get_value(service_options),
+            "value": self.get_value(service_id),
             "default_value": self.default_value,
             "min_value": self.min_value,
             "max_value": self.max_value,
