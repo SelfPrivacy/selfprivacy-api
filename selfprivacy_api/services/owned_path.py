@@ -100,6 +100,7 @@ class Bind:
             raise BindError(f"cannot unbind a non-existing path: {self.binding_path}")
 
         try:
+            logger.warning(f"Unmounting '{self.binding_path}'")
             subprocess.run(
                 # umount -l ?
                 ["umount", self.binding_path],
