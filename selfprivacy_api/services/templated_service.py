@@ -1,5 +1,6 @@
 """A Service implementation that loads all needed data from a JSON file"""
 
+import base64
 from enum import Enum
 import json
 import subprocess
@@ -373,7 +374,7 @@ class TemplatedService(Service):
         return self.meta.description
 
     def get_svg_icon(self) -> str:
-        return self.meta.svg_icon
+        return base64.b64encode(self.meta.svg_icon.encode("utf-8")).decode("utf-8")
 
     def get_subdomain(self) -> Optional[str]:
         # If there are no subdomain options, return None
