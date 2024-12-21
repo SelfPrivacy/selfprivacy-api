@@ -404,8 +404,10 @@ class TemplatedService(Service):
     def get_folders(self) -> List[str]:
         folders = self.meta.folders
         owned_folders = self.meta.owned_folders
+        # Include the contents of folders list
+        resulting_folders = folders.copy()
         for folder in owned_folders:
-            folders.append(folder.path)
+            resulting_folders.append(folder.path)
         return folders
 
     def get_owned_folders(self) -> List[OwnedPath]:
@@ -413,10 +415,11 @@ class TemplatedService(Service):
         owned_folders = self.meta.owned_folders
         logger.warning(f"folders: {folders}")
         logger.warning(f"owned_folders: {owned_folders}")
+        resulting_folders = owned_folders.copy()
         for folder in folders:
-            owned_folders.append(self.owned_path(folder))
-        logger.warning(f"returning owned_folders: {owned_folders}")
-        return owned_folders
+            resulting_folders.append(self.owned_path(folder))
+        logger.warning(f"returning owned_folders: {resulting_folders}")
+        return resulting_folders
 
     def set_location(self, volume: BlockDevice):
         """
