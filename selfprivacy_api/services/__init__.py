@@ -263,7 +263,7 @@ def get_templated_service(service_id: str) -> TemplatedService:
 
 
 @redis_cached_call(ttl=3600)
-def get_remote_service(url: str, id: str) -> TemplatedService:
+def get_remote_service(id: str, url: str) -> TemplatedService:
     # Get JSON from calling the sp-fetch-remote-module command with the URL
     # Parse the JSON into a TemplatedService object
     response = subprocess.run(

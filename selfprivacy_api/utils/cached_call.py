@@ -8,7 +8,7 @@ CACHE_PREFIX = "exec_cache:"
 
 
 def get_redis_object(key: str) -> Optional[Any]:
-    redis = RedisPool().get_connection()
+    redis = RedisPool().get_raw_connection()
     binary_obj = redis.get(key)
     if binary_obj is None:
         return None
@@ -16,7 +16,7 @@ def get_redis_object(key: str) -> Optional[Any]:
 
 
 def save_redis_object(key: str, obj: Any, expire: Optional[int] = 60) -> None:
-    redis = RedisPool().get_connection()
+    redis = RedisPool().get_raw_connection()
     binary_obj = pickle.dumps(obj)
     if expire:
         redis.setex(key, expire, binary_obj)

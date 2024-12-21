@@ -29,6 +29,7 @@ class RedisPool:
             url,
             decode_responses=True,
         )
+        self._raw_pool = redis.ConnectionPool.from_url(url)
 
     @staticmethod
     def connection_url(dbnumber: int) -> str:
@@ -43,6 +44,12 @@ class RedisPool:
         Get a connection from the pool.
         """
         return redis.Redis(connection_pool=self._pool)
+
+    def get_raw_connection(self):
+        """
+        Get a raw connection from the pool.
+        """
+        return redis.Redis(connection_pool=self._raw_pool)
 
     def get_connection_async(self) -> redis_async.Redis:
         """
