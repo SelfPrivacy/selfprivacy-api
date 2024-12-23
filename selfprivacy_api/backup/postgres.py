@@ -25,11 +25,10 @@ class PostgresDumper:
     def restore_database(self, backup_file: str):
         restore_command = [
             "pg_restore",
-            "--dbname=postgresql://{}@{}/{}".format(
-                self.user, self.socket_dir, self.db_name
-            ),
+            f"--dbname=postgresql://{self.user}@{self.socket_dir}",
             "--clean",
             "--create",
+            "--exit-on-error",
             backup_file,
         ]
         subprocess.run(restore_command, check=True)
