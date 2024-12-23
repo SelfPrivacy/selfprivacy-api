@@ -294,6 +294,18 @@ class TemplatedService(Service):
 
     def enable(self):
         """Enable the service. Usually this means enabling systemd unit."""
+        if "location" in self.options:
+            name = self.get_id()
+            with WriteUserData() as user_data:
+                if "modules" not in user_data:
+                    user_data["modules"] = {}
+                if name not in user_data["modules"]:
+                    user_data["modules"][name] = {}
+                if "location" not in user_data["modules"][name]:
+                    user_data["modules"][name]["location"] = (
+                        BlockDevices().get_root_block_device().name
+                    )
+
         self._set_enable(True)
 
     def disable(self):
