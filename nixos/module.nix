@@ -82,7 +82,7 @@ in
         pkgs.util-linux
         pkgs.e2fsprogs
         pkgs.iproute2
-          pkgs.kanidm
+        pkgs.kanidm
       ];
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];

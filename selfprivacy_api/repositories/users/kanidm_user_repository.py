@@ -32,7 +32,7 @@ from selfprivacy_api.repositories.users.abstract_user_repository import (
 REDIS_TOKEN_KEY = "kanidm:token"
 
 KANIDM_URL = "https://127.0.0.1:3013"
-ADMIN_GROUPS = ["idm_admins@bloodwine.cyou"]
+ADMIN_GROUPS = ["sp.admin"]
 
 redis = RedisPool().get_connection()
 

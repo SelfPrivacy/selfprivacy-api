@@ -9,7 +9,7 @@ from selfprivacy_api.utils.strings import PLEASE_UPDATE_APP_TEXT
 from selfprivacy_api.models.group import Group
 from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
 
-from selfprivacy_api.utils import is_username_forbidden
+from selfprivacy_api.utils import get_domain, is_username_forbidden
 from selfprivacy_api.actions.ssh import get_ssh_keys
 
 
@@ -27,8 +27,9 @@ from selfprivacy_api.repositories.users.exceptions import (
     InvalidConfiguration,
 )
 
+domain = get_domain()
 
-DEFAULT_GROUPS = ["idm_all_persons@bloodwine.cyou", "idm_all_accounts@bloodwine.cyou"]
+DEFAULT_GROUPS = [f"idm_all_persons@{domain}", "idm_all_accounts@{domain}"]
 
 logger = logging.getLogger(__name__)
 
@@ -89,9 +90,7 @@ def create_user(
     if password:
         logger.error(PLEASE_UPDATE_APP_TEXT)
 
-    if (
-        displayname and len(displayname) >= 32
-    ):  # we don't know the limitations of each service
+    if displayname and len(displayname) >= 255:
         raise DisplaynameTooLong
 
     # need to maintain the logic of the old repository, since ssh management uses it.
@@ -148,7 +147,7 @@ def update_user(
     if displayname:
         if isinstance(ACTIVE_USERS_PROVIDER, JsonUserRepository):
             raise ApiUsingWrongUserRepository
-        if len(displayname) >= 512:  # we don't know the limitations of each service
+        if len(displayname) >= 255:
             raise DisplaynameTooLong
 
         ACTIVE_USERS_PROVIDER.update_user(
