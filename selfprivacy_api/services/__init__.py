@@ -282,7 +282,7 @@ def get_services() -> List[Service]:
         # Forgejo(),
         MailServer(),
         Nextcloud(),
-        Pleroma(),
+        # Pleroma(),
         Ocserv(),
         JitsiMeet(),
         Roundcube(),
