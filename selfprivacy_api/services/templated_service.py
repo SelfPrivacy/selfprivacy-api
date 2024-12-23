@@ -419,7 +419,7 @@ class TemplatedService(Service):
             resulting_folders.append(folder.path)
         if self.get_postgresql_databases():
             resulting_folders.append(self._get_db_dumps_folder())
-        return folders
+        return resulting_folders
 
     def get_owned_folders(self) -> List[OwnedPath]:
         folders = self.meta.folders
