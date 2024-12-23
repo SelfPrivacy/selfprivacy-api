@@ -5,12 +5,12 @@ import json
 import datetime
 import tempfile
 import logging
+import os
 
 from typing import List, Optional, TypeVar, Callable
 from collections.abc import Iterable
 from json.decoder import JSONDecodeError
-from os.path import exists, join
-from os import mkdir
+from os.path import exists, join, isfile, islink, isdir
 from shutil import rmtree
 from selfprivacy_api.utils.waitloop import wait_until_success
 
@@ -371,7 +371,27 @@ class ResticBackupper(AbstractBackupper):
                 parsed_output = ResticBackupper.parse_json_output(output)
                 return parsed_output["total_size"]
             except ValueError as error:
-                raise ValueError("cannot restore a snapshot: " + output) from error
+                raise ValueError("Cannot restore a snapshot: " + output) from error
+
+    def _rm_all_folder_contents(self, folder: str) -> None:
+        """
+        Remove all contents of a folder, including subfolders.
+
+        Raises:
+            ValueError: If it encounters an error while removing contents.
+        """
+        try:
+            for filename in os.listdir(folder):
+                path = join(folder, filename)
+                try:
+                    if isfile(path) or islink(path):
+                        os.unlink(path)
+                    elif isdir(path):
+                        rmtree(path)
+                except Exception as error:
+                    raise ValueError("Cannot remove folder contents: ", path) from error
+        except OSError as error:
+            raise ValueError("Cannot access folder: ", folder) from error
 
     @unlocked_repo
     def restore_from_backup(
@@ -384,7 +404,7 @@ class ResticBackupper(AbstractBackupper):
         Restore from backup with restic
         """
         if folders is None or folders == []:
-            raise ValueError("cannot restore without knowing where to!")
+            raise ValueError("Cannot restore without knowing where to!")
 
         with tempfile.TemporaryDirectory() as temp_dir:
             if verify:
@@ -402,9 +422,9 @@ class ResticBackupper(AbstractBackupper):
             else:  # attempting inplace restore
                 for folder in folders:
                     wait_until_success(
-                        lambda: rmtree(folder), timeout_sec=FILESYSTEM_TIMEOUT_SEC
+                        lambda: self._rm_all_folder_contents(folder),
+                        timeout_sec=FILESYSTEM_TIMEOUT_SEC,
                     )
-                    mkdir(folder)
                 self._raw_verified_restore(snapshot_id, target="/")
                 return
 
