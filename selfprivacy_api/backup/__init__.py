@@ -249,6 +249,7 @@ class Backups:
             folders = service.get_folders()
             service_name = service.get_id()
             service.pre_backup(job=job)
+            Jobs.update(job, status=JobStatus.RUNNING, status_text="Uploading backup")
             snapshot = Backups.provider().backupper.start_backup(
                 folders,
                 service_name,
@@ -263,7 +264,7 @@ class Backups:
             Jobs.update(job, status=JobStatus.ERROR, error=str(error))
             raise error
 
-        Jobs.update(job, status=JobStatus.FINISHED)
+        Jobs.update(job, status=JobStatus.FINISHED, result="Backup finished")
         if reason in [BackupReason.AUTO, BackupReason.PRE_RESTORE]:
             Jobs.set_expiration(job, AUTOBACKUP_JOB_EXPIRATION_SECONDS)
         return Backups.sync_date_from_cache(snapshot)
