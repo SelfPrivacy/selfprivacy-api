@@ -495,14 +495,14 @@ class TemplatedService(Service):
                         status=JobStatus.RUNNING,
                     )
                 db_dumper = PostgresDumper(db_name)
-                backup_file = join(db_dumps_folder, f"{db_name}.sql.gz")
+                backup_file = join(db_dumps_folder, f"{db_name}.dump")
                 logger.warning(f"Pre backup: backup_file: {backup_file}")
                 db_dumper.backup_database(backup_file)
 
     def _clear_db_dumps(self):
         db_dumps_folder = self._get_db_dumps_folder()
         for db_name in self.get_postgresql_databases():
-            backup_file = join(db_dumps_folder, f"{db_name}.sql.gz")
+            backup_file = join(db_dumps_folder, f"{db_name}.dump")
             if exists(backup_file):
                 remove(backup_file)
             unpacked_file = backup_file.replace(".gz", "")
@@ -514,7 +514,7 @@ class TemplatedService(Service):
             db_dumps_folder = self._get_db_dumps_folder()
             # Remove the backup files
             for db_name in self.get_postgresql_databases():
-                backup_file = join(db_dumps_folder, f"{db_name}.sql.gz")
+                backup_file = join(db_dumps_folder, f"{db_name}.dump")
                 if exists(backup_file):
                     remove(backup_file)
 
@@ -532,7 +532,7 @@ class TemplatedService(Service):
             # Recover the databases
             db_dumps_folder = self._get_db_dumps_folder()
             for db_name in self.get_postgresql_databases():
-                if exists(join(db_dumps_folder, f"{db_name}.sql.gz")):
+                if exists(join(db_dumps_folder, f"{db_name}.dump")):
                     if job is not None:
                         Jobs.update(
                             job,
@@ -540,7 +540,7 @@ class TemplatedService(Service):
                             status=JobStatus.RUNNING,
                         )
                     db_dumper = PostgresDumper(db_name)
-                    backup_file = join(db_dumps_folder, f"{db_name}.sql.gz")
+                    backup_file = join(db_dumps_folder, f"{db_name}.dump")
                     db_dumper.restore_database(backup_file)
                 else:
                     logger.error(f"Database dump for {db_name} not found")
