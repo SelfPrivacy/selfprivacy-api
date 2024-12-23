@@ -248,7 +248,7 @@ class Backups:
                 raise ValueError("cannot backup a non-backuppable service")
             folders = service.get_folders()
             service_name = service.get_id()
-            service.pre_backup()
+            service.pre_backup(job=job)
             snapshot = Backups.provider().backupper.start_backup(
                 folders,
                 service_name,
@@ -258,7 +258,7 @@ class Backups:
             Backups._on_new_snapshot_created(service_name, snapshot)
             if reason == BackupReason.AUTO:
                 Backups._prune_auto_snaps(service)
-            service.post_backup()
+            service.post_backup(job=job)
         except Exception as error:
             Jobs.update(job, status=JobStatus.ERROR, error=str(error))
             raise error
@@ -452,7 +452,7 @@ class Backups:
             with StoppedService(service):
                 if not service.is_always_active():
                     Backups.assert_dead(service)
-                service.pre_restore()
+                service.pre_restore(job=job)
                 if strategy == RestoreStrategy.INPLACE:
                     Backups._inplace_restore(service, snapshot, job)
                 else:  # verify_before_download is our default
@@ -465,7 +465,7 @@ class Backups:
                         service, snapshot.id, verify=True
                     )
 
-                service.post_restore()
+                service.post_restore(job=job)
                 Jobs.update(
                     job,
                     status=JobStatus.RUNNING,

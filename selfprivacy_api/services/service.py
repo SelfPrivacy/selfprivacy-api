@@ -478,16 +478,16 @@ class Service(ABC):
             group=group,
         )
 
-    def pre_backup(self):
+    def pre_backup(self, job: Job):
         pass
 
-    def post_backup(self):
+    def post_backup(self, job: Job):
         pass
 
-    def pre_restore(self):
+    def pre_restore(self, job: Job):
         pass
 
-    def post_restore(self):
+    def post_restore(self, job: Job):
         pass
 
 

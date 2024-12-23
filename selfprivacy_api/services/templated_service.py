@@ -12,9 +12,8 @@ from os import mkdir, rmdir
 from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
 
-from selfprivacy_api.backup.jobs import get_backup_job
 from selfprivacy_api.backup.postgres import PostgresDumper
-from selfprivacy_api.jobs import JobStatus, Jobs
+from selfprivacy_api.jobs import Job, JobStatus, Jobs
 from selfprivacy_api.models.services import ServiceDnsRecord, ServiceStatus
 from selfprivacy_api.services.flake_service_manager import FlakeServiceManager
 from selfprivacy_api.services.generic_size_counter import get_storage_usage
@@ -475,9 +474,8 @@ class TemplatedService(Service):
             group=group,
         )
 
-    def pre_backup(self):
+    def pre_backup(self, job: Job):
         if self.get_postgresql_databases():
-            job = get_backup_job(self)
             # Create the folder for the database dumps
             db_dumps_folder = self._get_db_dumps_folder()
             if not exists(db_dumps_folder):
@@ -494,23 +492,22 @@ class TemplatedService(Service):
                 backup_file = join(db_dumps_folder, f"{db_name}.sql.gz")
                 db_dumper.backup_database(backup_file)
 
-    def post_backup(self):
+    def post_backup(self, job: Job):
         if self.get_postgresql_databases():
             # Remove the folder for the database dumps
             db_dumps_folder = self._get_db_dumps_folder()
             if exists(db_dumps_folder):
                 rmdir(db_dumps_folder)
 
-    def pre_restore(self):
+    def pre_restore(self, job: Job):
         if self.get_postgresql_databases():
             # Create the folder for the database dumps
             db_dumps_folder = self._get_db_dumps_folder()
             if not exists(db_dumps_folder):
                 mkdir(db_dumps_folder)
 
-    def post_restore(self):
+    def post_restore(self, job: Job):
         if self.get_postgresql_databases():
-            job = get_backup_job(self)
             # Recover the databases
             db_dumps_folder = self._get_db_dumps_folder()
             for db_name in self.get_postgresql_databases():
