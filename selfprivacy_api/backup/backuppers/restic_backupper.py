@@ -222,9 +222,10 @@ class ResticBackupper(AbstractBackupper):
             tags=tags,
         )
 
-        logger.info(
+        logger.warning(
             "Starting backup: " + " ".join(self._censor_command(backup_command))
         )
+        logger.warning("Folders: " + str(folders))
 
         try:
             messages = ResticBackupper._run_backup_command(backup_command, job)
