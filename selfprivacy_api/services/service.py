@@ -328,6 +328,9 @@ class Service(ABC):
     def get_foldername(path: str) -> str:
         return path.split("/")[-1]
 
+    def get_postgresql_databases(self) -> List[str]:
+        return []
+
     # TODO: with better json utils, it can be one line, and not a separate function
     @classmethod
     def set_location(cls, volume: BlockDevice):
@@ -479,6 +482,9 @@ class Service(ABC):
         pass
 
     def post_backup(self):
+        pass
+
+    def pre_restore(self):
         pass
 
     def post_restore(self):

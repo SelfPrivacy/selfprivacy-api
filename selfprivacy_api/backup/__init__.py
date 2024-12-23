@@ -452,6 +452,7 @@ class Backups:
             with StoppedService(service):
                 if not service.is_always_active():
                     Backups.assert_dead(service)
+                service.pre_restore()
                 if strategy == RestoreStrategy.INPLACE:
                     Backups._inplace_restore(service, snapshot, job)
                 else:  # verify_before_download is our default

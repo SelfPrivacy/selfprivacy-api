@@ -65,6 +65,7 @@ in
       wants = [ "network-online.target" ];
       wantedBy = [ "multi-user.target" ];
       serviceConfig = {
+        # Do not forget to edit Postgres identMap if you change the user!
         User = "root";
         ExecStart = "${selfprivacy-graphql-api}/bin/app.py";
         Restart = "always";
@@ -101,6 +102,7 @@ in
       wants = [ "network-online.target" ];
       wantedBy = [ "multi-user.target" ];
       serviceConfig = {
+        # Do not forget to edit Postgres identMap if you change the user!
         User = "root";
         ExecStart = "${pkgs.python312Packages.huey}/bin/huey_consumer.py selfprivacy_api.task_registry.huey";
         Restart = "always";

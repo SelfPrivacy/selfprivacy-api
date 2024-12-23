@@ -6,12 +6,15 @@ import logging
 import json
 import subprocess
 from typing import List, Optional
-from os import path
 from os.path import join, exists
+from os import mkdir, rmdir
 
 from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
 
+from selfprivacy_api.backup.jobs import get_backup_job
+from selfprivacy_api.backup.postgres import PostgresDumper
+from selfprivacy_api.jobs import JobStatus, Jobs
 from selfprivacy_api.models.services import ServiceDnsRecord, ServiceStatus
 from selfprivacy_api.services.flake_service_manager import FlakeServiceManager
 from selfprivacy_api.services.generic_size_counter import get_storage_usage
@@ -153,7 +156,7 @@ class TemplatedService(Service):
             self.definition_data = json.loads(source_data)
         else:
             # Check if the service exists
-            if not path.exists(join(SP_MODULES_DEFENITIONS_PATH, service_id)):
+            if not exists(join(SP_MODULES_DEFENITIONS_PATH, service_id)):
                 raise FileNotFoundError(f"Service {service_id} not found")
             # Load the service
             with open(join(SP_MODULES_DEFENITIONS_PATH, service_id)) as file:
@@ -401,6 +404,10 @@ class TemplatedService(Service):
             else:
                 return root_device
 
+    def _get_db_dumps_folder(self) -> str:
+        # Get the drive where the service is located and append the folder name
+        return join("/", "volumes", self.get_drive(), f"db_dumps_{self.get_id()}")
+
     def get_folders(self) -> List[str]:
         folders = self.meta.folders
         owned_folders = self.meta.owned_folders
@@ -408,6 +415,8 @@ class TemplatedService(Service):
         resulting_folders = folders.copy()
         for folder in owned_folders:
             resulting_folders.append(folder.path)
+        if self.get_postgresql_databases():
+            resulting_folders.append(self._get_db_dumps_folder())
         return folders
 
     def get_owned_folders(self) -> List[OwnedPath]:
@@ -416,6 +425,14 @@ class TemplatedService(Service):
         resulting_folders = owned_folders.copy()
         for folder in folders:
             resulting_folders.append(self.owned_path(folder))
+        if self.get_postgresql_databases():
+            resulting_folders.append(
+                OwnedPath(
+                    path=self._get_db_dumps_folder(),
+                    owner="selfprivacy-api",
+                    group="selfprivacy-api",
+                )
+            )
         return resulting_folders
 
     def set_location(self, volume: BlockDevice):
@@ -430,6 +447,9 @@ class TemplatedService(Service):
             if service_id not in user_data["modules"]:
                 user_data["modules"][service_id] = {}
             user_data["modules"][service_id]["location"] = volume.name
+
+    def get_postgresql_databases(self) -> List[str]:
+        return self.meta.postgresql_databases
 
     def owned_path(self, path: str):
         """Default folder ownership"""
@@ -454,3 +474,56 @@ class TemplatedService(Service):
             owner=owner,
             group=group,
         )
+
+    def pre_backup(self):
+        if self.get_postgresql_databases():
+            job = get_backup_job(self)
+            # Create the folder for the database dumps
+            db_dumps_folder = self._get_db_dumps_folder()
+            if not exists(db_dumps_folder):
+                mkdir(db_dumps_folder)
+            # Dump the databases
+            for db_name in self.get_postgresql_databases():
+                if job is not None:
+                    Jobs.update(
+                        job,
+                        status_text=f"Creating a dump of database {db_name}",
+                        status=JobStatus.RUNNING,
+                    )
+                db_dumper = PostgresDumper(db_name)
+                backup_file = join(db_dumps_folder, f"{db_name}.sql.gz")
+                db_dumper.backup_database(backup_file)
+
+    def post_backup(self):
+        if self.get_postgresql_databases():
+            # Remove the folder for the database dumps
+            db_dumps_folder = self._get_db_dumps_folder()
+            if exists(db_dumps_folder):
+                rmdir(db_dumps_folder)
+
+    def pre_restore(self):
+        if self.get_postgresql_databases():
+            # Create the folder for the database dumps
+            db_dumps_folder = self._get_db_dumps_folder()
+            if not exists(db_dumps_folder):
+                mkdir(db_dumps_folder)
+
+    def post_restore(self):
+        if self.get_postgresql_databases():
+            job = get_backup_job(self)
+            # Recover the databases
+            db_dumps_folder = self._get_db_dumps_folder()
+            for db_name in self.get_postgresql_databases():
+                if exists(join(db_dumps_folder, f"{db_name}.sql.gz")):
+                    if job is not None:
+                        Jobs.update(
+                            job,
+                            status_text=f"Restoring database {db_name}",
+                            status=JobStatus.RUNNING,
+                        )
+                    db_dumper = PostgresDumper(db_name)
+                    backup_file = join(db_dumps_folder, f"{db_name}.sql.gz")
+                    db_dumper.restore_database(backup_file)
+                else:
+                    logger.error(f"Database dump for {db_name} not found")
+                    raise FileNotFoundError(f"Database dump for {db_name} not found")
