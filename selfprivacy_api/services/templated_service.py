@@ -475,13 +475,18 @@ class TemplatedService(Service):
         )
 
     def pre_backup(self, job: Job):
+        logger.warning("Pre backup")
         if self.get_postgresql_databases():
+            logger.warning("Pre backup: postgresql databases")
             # Create the folder for the database dumps
             db_dumps_folder = self._get_db_dumps_folder()
+            logger.warning(f"Pre backup: db_dumps_folder: {db_dumps_folder}")
             if not exists(db_dumps_folder):
+                logger.warning("Pre backup: db_dumps_folder does not exist")
                 mkdir(db_dumps_folder)
             # Dump the databases
             for db_name in self.get_postgresql_databases():
+                logger.warning(f"Pre backup: db_name: {db_name}")
                 if job is not None:
                     Jobs.update(
                         job,
@@ -490,6 +495,7 @@ class TemplatedService(Service):
                     )
                 db_dumper = PostgresDumper(db_name)
                 backup_file = join(db_dumps_folder, f"{db_name}.sql.gz")
+                logger.warning(f"Pre backup: backup_file: {backup_file}")
                 db_dumper.backup_database(backup_file)
 
     def post_backup(self, job: Job):
