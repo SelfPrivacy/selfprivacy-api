@@ -140,7 +140,7 @@ class ServiceMetaData(BaseSchema):
     group: Optional[str] = None
     folders: List[str] = []
     owned_folders: List[OwnedPath] = []
-    postgresql_databases: List[str] = []
+    postgre_databases: List[str] = []
     license: List[License] = []
     homepage: Optional[str] = None
     source_page: Optional[str] = None
@@ -448,7 +448,7 @@ class TemplatedService(Service):
             user_data["modules"][service_id]["location"] = volume.name
 
     def get_postgresql_databases(self) -> List[str]:
-        return self.meta.postgresql_databases
+        return self.meta.postgre_databases
 
     def owned_path(self, path: str):
         """Default folder ownership"""
