@@ -4,6 +4,7 @@ import subprocess
 import json
 import datetime
 import tempfile
+import logging
 
 from typing import List, Optional, TypeVar, Callable
 from collections.abc import Iterable
@@ -27,6 +28,8 @@ SHORT_ID_LEN = 8
 FILESYSTEM_TIMEOUT_SEC = 60
 
 T = TypeVar("T", bound=Callable)
+
+logger = logging.getLogger(__name__)
 
 
 def unlocked_repo(func: T) -> T:
@@ -217,6 +220,10 @@ class ResticBackupper(AbstractBackupper):
             "--json",
             folders,
             tags=tags,
+        )
+
+        logger.info(
+            "Starting backup: " + " ".join(self._censor_command(backup_command))
         )
 
         try:

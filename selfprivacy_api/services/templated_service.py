@@ -5,10 +5,9 @@ from enum import Enum
 import logging
 import json
 import subprocess
-import shutil
 from typing import List, Optional
 from os.path import join, exists
-from os import mkdir
+from os import mkdir, remove
 
 from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
@@ -409,7 +408,7 @@ class TemplatedService(Service):
 
     def _get_db_dumps_folder(self) -> str:
         # Get the drive where the service is located and append the folder name
-        return join("/", "volumes", self.get_drive(), f"db_dumps_{self.get_id()}")
+        return join("/var/lib/postgresql-dumps", self.get_id())
 
     def get_folders(self) -> List[str]:
         folders = self.meta.folders
@@ -481,14 +480,11 @@ class TemplatedService(Service):
     def pre_backup(self, job: Job):
         logger.warning("Pre backup")
         if self.get_postgresql_databases():
-            logger.warning("Pre backup: postgresql databases")
-            # Create the folder for the database dumps
             db_dumps_folder = self._get_db_dumps_folder()
-            logger.warning(f"Pre backup: db_dumps_folder: {db_dumps_folder}")
-            if exists(db_dumps_folder):
-                logger.warning("Pre backup: db_dumps_folder exists")
-                shutil.rmtree(db_dumps_folder, ignore_errors=True)
-            mkdir(db_dumps_folder)
+            logger.warning("Pre backup: postgresql databases")
+            # Create folder for the dumps if it does not exist
+            if not exists(db_dumps_folder):
+                mkdir(db_dumps_folder)
             # Dump the databases
             for db_name in self.get_postgresql_databases():
                 logger.warning(f"Pre backup: db_name: {db_name}")
@@ -503,19 +499,33 @@ class TemplatedService(Service):
                 logger.warning(f"Pre backup: backup_file: {backup_file}")
                 db_dumper.backup_database(backup_file)
 
+    def _clear_db_dumps(self):
+        db_dumps_folder = self._get_db_dumps_folder()
+        for db_name in self.get_postgresql_databases():
+            backup_file = join(db_dumps_folder, f"{db_name}.sql.gz")
+            if exists(backup_file):
+                remove(backup_file)
+            unpacked_file = backup_file.replace(".gz", "")
+            if exists(unpacked_file):
+                remove(unpacked_file)
+
     def post_backup(self, job: Job):
         if self.get_postgresql_databases():
-            # Remove the folder for the database dumps
             db_dumps_folder = self._get_db_dumps_folder()
-            if exists(db_dumps_folder):
-                shutil.rmtree(db_dumps_folder, ignore_errors=True)
+            # Remove the backup files
+            for db_name in self.get_postgresql_databases():
+                backup_file = join(db_dumps_folder, f"{db_name}.sql.gz")
+                if exists(backup_file):
+                    remove(backup_file)
 
     def pre_restore(self, job: Job):
         if self.get_postgresql_databases():
-            # Create the folder for the database dumps
+            # Create folder for the dumps if it does not exist
             db_dumps_folder = self._get_db_dumps_folder()
             if not exists(db_dumps_folder):
                 mkdir(db_dumps_folder)
+            # Remove existing dumps if they exist
+            self._clear_db_dumps()
 
     def post_restore(self, job: Job):
         if self.get_postgresql_databases():
@@ -535,4 +545,5 @@ class TemplatedService(Service):
                 else:
                     logger.error(f"Database dump for {db_name} not found")
                     raise FileNotFoundError(f"Database dump for {db_name} not found")
-        shutil.rmtree(self._get_db_dumps_folder(), ignore_errors=True)
+        # Remove the dumps
+        self._clear_db_dumps()
