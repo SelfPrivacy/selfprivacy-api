@@ -5,9 +5,10 @@ from enum import Enum
 import logging
 import json
 import subprocess
+import shutil
 from typing import List, Optional
 from os.path import join, exists
-from os import mkdir, rmdir
+from os import mkdir
 
 from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
@@ -185,6 +186,9 @@ class TemplatedService(Service):
                 self.subdomain_options.append(option["name"])
 
     def get_id(self) -> str:
+        # Check if ID contains elements that might be a part of the path
+        if "/" in self.meta.id or "\\" in self.meta.id:
+            raise ValueError("Invalid ID")
         return self.meta.id
 
     def get_display_name(self) -> str:
@@ -481,9 +485,10 @@ class TemplatedService(Service):
             # Create the folder for the database dumps
             db_dumps_folder = self._get_db_dumps_folder()
             logger.warning(f"Pre backup: db_dumps_folder: {db_dumps_folder}")
-            if not exists(db_dumps_folder):
-                logger.warning("Pre backup: db_dumps_folder does not exist")
-                mkdir(db_dumps_folder)
+            if exists(db_dumps_folder):
+                logger.warning("Pre backup: db_dumps_folder exists")
+                shutil.rmtree(db_dumps_folder, ignore_errors=True)
+            mkdir(db_dumps_folder)
             # Dump the databases
             for db_name in self.get_postgresql_databases():
                 logger.warning(f"Pre backup: db_name: {db_name}")
@@ -503,7 +508,7 @@ class TemplatedService(Service):
             # Remove the folder for the database dumps
             db_dumps_folder = self._get_db_dumps_folder()
             if exists(db_dumps_folder):
-                rmdir(db_dumps_folder)
+                shutil.rmtree(db_dumps_folder, ignore_errors=True)
 
     def pre_restore(self, job: Job):
         if self.get_postgresql_databases():
@@ -530,3 +535,4 @@ class TemplatedService(Service):
                 else:
                     logger.error(f"Database dump for {db_name} not found")
                     raise FileNotFoundError(f"Database dump for {db_name} not found")
+        shutil.rmtree(self._get_db_dumps_folder(), ignore_errors=True)
