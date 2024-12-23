@@ -59,6 +59,7 @@ in
         pkgs.util-linux
         pkgs.e2fsprogs
         pkgs.iproute2
+        pkgs.postgresql_16
         sp-fetch-remote-module
       ];
       after = [ "network-online.target" ];
@@ -96,6 +97,7 @@ in
         pkgs.util-linux
         pkgs.e2fsprogs
         pkgs.iproute2
+        pkgs.postgresql_16
         sp-fetch-remote-module
       ];
       after = [ "network-online.target" ];
