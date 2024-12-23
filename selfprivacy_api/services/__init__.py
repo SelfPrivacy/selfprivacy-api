@@ -33,14 +33,13 @@ from selfprivacy_api.utils.block_devices import BlockDevices
 from selfprivacy_api.utils import read_account_uri
 from selfprivacy_api.services.templated_service import (
     SP_MODULES_DEFENITIONS_PATH,
+    SP_SUGGESTED_MODULES_PATH,
     TemplatedService,
 )
 
 CONFIG_STASH_DIR = "/etc/selfprivacy/dump"
 
 logger = logging.getLogger(__name__)
-
-SP_SUGGESTED_MODULES_PATH = "/etc/suggested-sp-modules"
 
 
 class ServiceManager(Service):

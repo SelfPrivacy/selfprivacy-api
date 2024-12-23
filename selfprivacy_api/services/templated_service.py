@@ -31,6 +31,7 @@ from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
 from selfprivacy_api.utils.systemd import get_service_status_from_several_units
 
 SP_MODULES_DEFENITIONS_PATH = "/etc/sp-modules"
+SP_SUGGESTED_MODULES_PATH = "/etc/suggested-sp-modules"
 
 logger = logging.getLogger(__name__)
 
@@ -294,8 +295,21 @@ class TemplatedService(Service):
 
     def enable(self):
         """Enable the service. Usually this means enabling systemd unit."""
+        name = self.get_id()
+        if not self.is_installed():
+            # First, double-check that it is a suggested module
+            if exists(SP_SUGGESTED_MODULES_PATH):
+                with open(SP_SUGGESTED_MODULES_PATH) as file:
+                    suggested_modules = json.load(file)
+                if name not in suggested_modules:
+                    raise ValueError("Service is not a suggested module")
+            else:
+                raise FileNotFoundError("Suggested modules file not found")
+            with FlakeServiceManager() as service_manager:
+                service_manager.services[name] = (
+                    f"git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=inex/experimental-templating&dir=sp-modules/{name}"
+                )
         if "location" in self.options:
-            name = self.get_id()
             with WriteUserData() as user_data:
                 if "modules" not in user_data:
                     user_data["modules"] = {}
