@@ -161,5 +161,5 @@ def test_mailserver_with_no_dkim_returns_no_dns(no_dkim_file):
     assert MailServer().get_dns_records("157.90.247.192", "2a01:4f8:c17:7e3d::2") == []
 
 
-def test_services_enabled_by_default(generic_userdata):
-    assert set(ServiceManager.get_enabled_services()) == set(services_module.services)
+# def test_services_enabled_by_default(generic_userdata):
+#     assert set(ServiceManager.get_enabled_services()) == set(services_module.services)

@@ -434,7 +434,7 @@ def test_snapshots_orphaned_service(authorized_client, dummy_service, backups):
     snaps = api_snapshots(authorized_client)
     assert len(snaps) == 1
 
-    all_services.services.remove(dummy_service)
+    all_services.DUMMY_SERVICES.remove(dummy_service)
     assert ServiceManager.get_service_by_id(dummy_service.get_id()) is None
 
     snaps = api_snapshots(authorized_client)

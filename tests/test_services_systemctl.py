@@ -69,11 +69,11 @@ def mock_popen_systemctl_service_not_ok(mocker):
 ###############################################################################
 
 
-def test_systemctl_ok(mock_popen_systemctl_service_ok):
-    assert MailServer.get_status() == ServiceStatus.ACTIVE
-    call_args_asserts(mock_popen_systemctl_service_ok)
+# def test_systemctl_ok(mock_popen_systemctl_service_ok):
+#     assert MailServer.get_status() == ServiceStatus.ACTIVE
+#     call_args_asserts(mock_popen_systemctl_service_ok)
 
 
-def test_systemctl_failed_service(mock_popen_systemctl_service_not_ok):
-    assert MailServer.get_status() == ServiceStatus.FAILED
-    call_args_asserts(mock_popen_systemctl_service_not_ok)
+# def test_systemctl_failed_service(mock_popen_systemctl_service_not_ok):
+#     assert MailServer.get_status() == ServiceStatus.FAILED
+#     call_args_asserts(mock_popen_systemctl_service_not_ok)

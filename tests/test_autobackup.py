@@ -177,7 +177,9 @@ def test_services_to_autobackup(backups, dummy_service):
     Backups.set_autobackup_period_minutes(backup_period)
 
     services = Backups.services_to_back_up(now)
-    assert set(services) == set(backuppable_services())
+    assert set(service.get_id() for service in services) == set(
+        service.get_id() for service in backuppable_services()
+    )
     assert dummy_service.get_id() in [
         service.get_id() for service in backuppable_services()
     ]
