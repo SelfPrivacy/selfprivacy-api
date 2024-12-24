@@ -56,7 +56,10 @@ class ServiceManager(Service):
     def get_enabled_services() -> list[Service]:
         return [
             service
-            for service in get_services(ttl_hash=get_ttl_hash(5))
+            for service in get_services(
+                ttl_hash=get_ttl_hash(5),
+                exclude_remote=True,
+            )
             if service.is_enabled()
         ]
 
@@ -73,7 +76,10 @@ class ServiceManager(Service):
     def get_services_by_location(location: str) -> list[Service]:
         return [
             service
-            for service in get_services(ttl_hash=get_ttl_hash(5))
+            for service in get_services(
+                ttl_hash=get_ttl_hash(5),
+                exclude_remote=True,
+            )
             if service.get_drive() == location
         ]
 
@@ -171,7 +177,10 @@ class ServiceManager(Service):
         # For now we will just copy settings EXCEPT the locations of services
         # Stash locations as they are set by user right now
         locations = {}
-        for service in get_services(ttl_hash=get_ttl_hash(5)):
+        for service in get_services(
+            ttl_hash=get_ttl_hash(5),
+            exclude_remote=True,
+        ):
             if service.is_movable():
                 locations[service.get_id()] = service.get_drive()
 
@@ -179,8 +188,11 @@ class ServiceManager(Service):
         for p in [USERDATA_FILE, SECRETS_FILE, DKIM_DIR]:
             cls.retrieve_stashed_path(p)
 
-        # Pop locations
-        for service in get_services(ttl_hash=get_ttl_hash(5)):
+        # Pop location
+        for service in get_services(
+            ttl_hash=get_ttl_hash(5),
+            exclude_remote=True,
+        ):
             if service.is_movable():
                 device = BlockDevices().get_block_device(locations[service.get_id()])
                 if device is not None:
@@ -266,7 +278,7 @@ class ServiceManager(Service):
         return cls.folders[0]
 
     @classmethod
-    def post_restore(cls):
+    def post_restore(cls, job: Job):
         cls.merge_settings()
         rmtree(cls.dump_dir(), ignore_errors=True)
 
@@ -297,7 +309,7 @@ TEST_FLAGS: list[str] = []
 
 # @redis_cached_call(ttl=5)
 @lru_cache(maxsize=1)
-def get_services(ttl_hash=None) -> List[Service]:
+def get_services(ttl_hash=None, exclude_remote=False) -> List[Service]:
     del ttl_hash
 
     if "ONLY_DUMMY_SERVICE" in TEST_FLAGS:
@@ -327,7 +339,7 @@ def get_services(ttl_hash=None) -> List[Service]:
             except Exception as e:
                 logger.error(f"Failed to load service {module}: {e}")
 
-    if path.exists(SP_SUGGESTED_MODULES_PATH):
+    if not exclude_remote and path.exists(SP_SUGGESTED_MODULES_PATH):
         # It is a file with a JSON array
         with open(SP_SUGGESTED_MODULES_PATH) as f:
             suggested_modules = json.load(f)
