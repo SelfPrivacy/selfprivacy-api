@@ -456,12 +456,11 @@ class TemplatedService(Service):
                 mkdir(db_dumps_folder)
             # Dump the databases
             for db_name in self.get_postgresql_databases():
-                if job is not None:
-                    Jobs.update(
-                        job,
-                        status_text=f"Creating a dump of database {db_name}",
-                        status=JobStatus.RUNNING,
-                    )
+                Jobs.update(
+                    job,
+                    status_text=f"Creating a dump of database {db_name}",
+                    status=JobStatus.RUNNING,
+                )
                 db_dumper = PostgresDumper(db_name)
                 backup_file = join(db_dumps_folder, f"{db_name}.dump")
                 db_dumper.backup_database(backup_file)
@@ -500,12 +499,11 @@ class TemplatedService(Service):
             db_dumps_folder = self._get_db_dumps_folder()
             for db_name in self.get_postgresql_databases():
                 if exists(join(db_dumps_folder, f"{db_name}.dump")):
-                    if job is not None:
-                        Jobs.update(
-                            job,
-                            status_text=f"Restoring database {db_name}",
-                            status=JobStatus.RUNNING,
-                        )
+                    Jobs.update(
+                        job,
+                        status_text=f"Restoring database {db_name}",
+                        status=JobStatus.RUNNING,
+                    )
                     db_dumper = PostgresDumper(db_name)
                     backup_file = join(db_dumps_folder, f"{db_name}.dump")
                     db_dumper.restore_database(backup_file)

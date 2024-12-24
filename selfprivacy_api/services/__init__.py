@@ -14,6 +14,7 @@ from functools import lru_cache
 
 
 from shutil import copyfile, copytree, rmtree
+from selfprivacy_api.jobs import Job, JobStatus, Jobs
 from selfprivacy_api.services.prometheus import Prometheus
 from selfprivacy_api.services.mailserver import MailServer
 
@@ -240,7 +241,12 @@ class ServiceManager(Service):
             copyfile(cls.stash_for(p), p)
 
     @classmethod
-    def pre_backup(cls):
+    def pre_backup(cls, job: Job):
+        Jobs.update(
+            job,
+            status_text="Stashing settings",
+            status=JobStatus.RUNNING,
+        )
         tempdir = cls.dump_dir()
         rmtree(join(tempdir), ignore_errors=True)
         makedirs(tempdir)
@@ -249,7 +255,7 @@ class ServiceManager(Service):
             cls.stash_a_path(p)
 
     @classmethod
-    def post_backup(cls):
+    def post_backup(cls, job: Job):
         rmtree(cls.dump_dir(), ignore_errors=True)
 
     @classmethod
