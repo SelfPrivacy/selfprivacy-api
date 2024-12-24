@@ -15,7 +15,7 @@ let
       fi
 
       URL="$1"
-      nix eval --file /etc/nixos/sp-fetch-remote-module.nix --raw --apply "f: f { flakeURL = \"$URL\"; }" | jq .
+      nix eval --file /etc/sp-fetch-remote-module.nix --raw --apply "f: f { flakeURL = \"$URL\"; }" | jq .
     '';
   };
 in
