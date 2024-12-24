@@ -56,9 +56,7 @@ class ServiceManager(Service):
     def get_enabled_services() -> list[Service]:
         return [
             service
-            for service in get_services(
-                exclude_remote=True,
-            )
+            for service in get_services()
             if service.is_enabled()
         ]
 
