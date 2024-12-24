@@ -43,11 +43,11 @@ class ServiceManager(Service):
 
     @staticmethod
     def get_all_services() -> list[Service]:
-        return get_services(ttl_hash=get_ttl_hash(5))
+        return get_services()
 
     @staticmethod
     def get_service_by_id(service_id: str) -> typing.Optional[Service]:
-        for service in get_services(ttl_hash=get_ttl_hash(5)):
+        for service in get_services():
             if service.get_id() == service_id:
                 return service
         return None
@@ -57,7 +57,6 @@ class ServiceManager(Service):
         return [
             service
             for service in get_services(
-                ttl_hash=get_ttl_hash(5),
                 exclude_remote=True,
             )
             if service.is_enabled()
@@ -66,18 +65,13 @@ class ServiceManager(Service):
     # This one is not currently used by any code.
     @staticmethod
     def get_disabled_services() -> list[Service]:
-        return [
-            service
-            for service in get_services(ttl_hash=get_ttl_hash(5))
-            if not service.is_enabled()
-        ]
+        return [service for service in get_services() if not service.is_enabled()]
 
     @staticmethod
     def get_services_by_location(location: str) -> list[Service]:
         return [
             service
             for service in get_services(
-                ttl_hash=get_ttl_hash(5),
                 exclude_remote=True,
             )
             if service.get_drive() == location
@@ -178,7 +172,6 @@ class ServiceManager(Service):
         # Stash locations as they are set by user right now
         locations = {}
         for service in get_services(
-            ttl_hash=get_ttl_hash(5),
             exclude_remote=True,
         ):
             if service.is_movable():
@@ -190,7 +183,6 @@ class ServiceManager(Service):
 
         # Pop location
         for service in get_services(
-            ttl_hash=get_ttl_hash(5),
             exclude_remote=True,
         ):
             if service.is_movable():
@@ -307,11 +299,7 @@ DUMMY_SERVICES = []
 TEST_FLAGS: list[str] = []
 
 
-# @redis_cached_call(ttl=5)
-@lru_cache(maxsize=1)
-def get_services(ttl_hash=None, exclude_remote=False) -> List[Service]:
-    del ttl_hash
-
+def get_services(exclude_remote=False) -> List[Service]:
     if "ONLY_DUMMY_SERVICE" in TEST_FLAGS:
         return DUMMY_SERVICES
     if "DUMMY_SERVICE_AND_API" in TEST_FLAGS:
