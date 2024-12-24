@@ -48,6 +48,10 @@ class Prometheus(Service):
         return True
 
     @staticmethod
+    def is_system_service() -> bool:
+        return True
+
+    @staticmethod
     def can_be_backed_up() -> bool:
         return False
 
@@ -70,10 +74,6 @@ class Prometheus(Service):
     @staticmethod
     def restart():
         subprocess.run(["systemctl", "restart", "prometheus.service"])
-
-    @staticmethod
-    def get_logs():
-        return ""
 
     @staticmethod
     def get_owned_folders() -> List[OwnedPath]:

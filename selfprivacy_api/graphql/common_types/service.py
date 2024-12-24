@@ -6,6 +6,7 @@ import strawberry
 from selfprivacy_api.graphql.common_types.backup import BackupReason
 from selfprivacy_api.graphql.common_types.dns import DnsRecord
 
+from selfprivacy_api.models.services import License
 from selfprivacy_api.services import ServiceManager
 from selfprivacy_api.services import Service as ServiceInterface
 from selfprivacy_api.services import ServiceDnsRecord
@@ -69,6 +70,28 @@ class ServiceStatusEnum(Enum):
     ACTIVATING = "ACTIVATING"
     DEACTIVATING = "DEACTIVATING"
     OFF = "OFF"
+
+
+@strawberry.enum
+class SupportLevelEnum(Enum):
+    """Enum representing the support level of a service."""
+
+    NORMAL = "normal"
+    EXPERIMENTAL = "experimental"
+    DEPRECATED = "deprecated"
+    COMMUNITY = "community"
+    UNKNOWN = "unknown"
+
+
+@strawberry.experimental.pydantic.type(model=License)
+class LicenseType:
+    free: strawberry.auto
+    full_name: strawberry.auto
+    redistributable: strawberry.auto
+    short_name: strawberry.auto
+    spdx_id: strawberry.auto
+    url: strawberry.auto
+    deprecated: strawberry.auto
 
 
 def get_storage_usage(root: "Service") -> ServiceStorageUsage:
@@ -176,10 +199,15 @@ class Service:
     is_required: bool
     is_enabled: bool
     is_installed: bool
+    is_system_service: bool
     can_be_backed_up: bool
     backup_description: str
     status: ServiceStatusEnum
     url: Optional[str]
+    license: List[LicenseType]
+    homepage: Optional[str]
+    source_page: Optional[str]
+    support_level: SupportLevelEnum
 
     @strawberry.field
     def dns_records(self) -> Optional[List[DnsRecord]]:
@@ -207,7 +235,10 @@ class Service:
         if not config_items:
             return None
         # By the "type" field convert every dict into a ConfigItem. In the future there will be more types.
-        return [config_item_to_graphql(config_items[item]) for item in config_items]
+        unsorted_config_items = [config_items[item] for item in config_items]
+        # Sort the items by their weight. If there is no weight, implicitly set it to 50.
+        config_items = sorted(unsorted_config_items, key=lambda x: x.get("weight", 50))
+        return [config_item_to_graphql(item) for item in config_items]
 
     # TODO: fill this
     @strawberry.field
@@ -238,6 +269,13 @@ def service_to_graphql_service(service: ServiceInterface) -> Service:
         backup_description=service.get_backup_description(),
         status=ServiceStatusEnum(service.get_status().value),
         url=service.get_url(),
+        is_system_service=service.is_system_service(),
+        license=[
+            LicenseType.from_pydantic(license) for license in service.get_license()
+        ],
+        homepage=service.get_homepage(),
+        source_page=service.get_source_page(),
+        support_level=SupportLevelEnum(service.get_support_level().value),
     )
 
 

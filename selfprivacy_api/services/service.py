@@ -1,6 +1,7 @@
 """Abstract class for a service running on a server"""
 
 from abc import ABC, abstractmethod
+import logging
 from typing import List, Optional
 from os.path import exists
 
@@ -14,7 +15,12 @@ from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
 from selfprivacy_api.jobs import Job, Jobs, JobStatus, report_progress
 from selfprivacy_api.jobs.upgrade_system import rebuild_system
 
-from selfprivacy_api.models.services import ServiceStatus, ServiceDnsRecord
+from selfprivacy_api.models.services import (
+    License,
+    ServiceStatus,
+    ServiceDnsRecord,
+    SupportLevel,
+)
 from selfprivacy_api.services.generic_size_counter import get_storage_usage
 from selfprivacy_api.services.owned_path import OwnedPath, Bind
 from selfprivacy_api.services.moving import (
@@ -29,6 +35,8 @@ from selfprivacy_api.services.moving import (
 
 
 DEFAULT_START_STOP_TIMEOUT = 5 * 60
+
+logger = logging.getLogger(__name__)
 
 
 class Service(ABC):
@@ -163,6 +171,37 @@ class Service(ABC):
         with ReadUserData() as user_data:
             return user_data.get("modules", {}).get(name, {}) != {}
 
+    def is_system_service(self) -> bool:
+        """
+        `True` if the service is a system service and should be hidden from the user.
+        `False` if it is not a system service.
+        """
+        return False
+
+    def get_license(self) -> List[License]:
+        """
+        The licenses of the service.
+        """
+        return []
+
+    def get_homepage(self) -> Optional[str]:
+        """
+        The homepage of the service.
+        """
+        return None
+
+    def get_source_page(self) -> Optional[str]:
+        """
+        The source page of the service.
+        """
+        return None
+
+    def get_support_level(self) -> SupportLevel:
+        """
+        The support level of the service.
+        """
+        return SupportLevel.NORMAL
+
     @staticmethod
     @abstractmethod
     def get_status() -> ServiceStatus:
@@ -225,11 +264,6 @@ class Service(ABC):
                 value,
                 cls.get_id(),
             )
-
-    @staticmethod
-    @abstractmethod
-    def get_logs():
-        pass
 
     @classmethod
     def get_storage_usage(cls) -> int:
@@ -315,6 +349,10 @@ class Service(ABC):
         return [owned_folder.path for owned_folder in cls.get_owned_folders()]
 
     @classmethod
+    def get_folders_to_back_up(cls) -> List[str]:
+        return cls.get_folders()
+
+    @classmethod
     def get_owned_folders(cls) -> List[OwnedPath]:
         """
         Get a list of occupied directories with ownership info
@@ -329,6 +367,9 @@ class Service(ABC):
     @staticmethod
     def get_foldername(path: str) -> str:
         return path.split("/")[-1]
+
+    def get_postgresql_databases(self) -> List[str]:
+        return []
 
     # TODO: with better json utils, it can be one line, and not a separate function
     @classmethod
@@ -477,13 +518,16 @@ class Service(ABC):
             group=group,
         )
 
-    def pre_backup(self):
+    def pre_backup(self, job: Job):
         pass
 
-    def post_backup(self):
+    def post_backup(self, job: Job):
         pass
 
-    def post_restore(self):
+    def pre_restore(self, job: Job):
+        pass
+
+    def post_restore(self, job: Job):
         pass
 
 

@@ -105,8 +105,8 @@ class Bind:
                 ["umount", self.binding_path],
                 check=True,
             )
-        except subprocess.CalledProcessError:
-            raise BindError(f"Unable to unmount folder {self.binding_path}.")
+        except subprocess.CalledProcessError as error:
+            raise BindError(f"Unable to unmount folder {self.binding_path}. {error}")
         pass
 
     def ensure_ownership(self) -> None:
