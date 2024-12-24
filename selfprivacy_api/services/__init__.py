@@ -54,11 +54,7 @@ class ServiceManager(Service):
 
     @staticmethod
     def get_enabled_services() -> list[Service]:
-        return [
-            service
-            for service in get_services()
-            if service.is_enabled()
-        ]
+        return [service for service in get_services() if service.is_enabled()]
 
     # This one is not currently used by any code.
     @staticmethod
@@ -82,7 +78,7 @@ class ServiceManager(Service):
 
         dns_records: list[ServiceDnsRecord] = []
 
-        # TODO: Reenable with 3.5.0 release when clients are ready.
+        # TODO: Reenable with 3.6.0 release when clients are ready.
         # Do not forget about tests!
         # try:
         #     dns_records.append(
@@ -333,11 +329,10 @@ def get_services(exclude_remote=False) -> List[Service]:
             if module in service_ids:
                 continue
             try:
-                # TODO: Replace the branch!
                 templated_services.append(
                     get_remote_service(
                         module,
-                        f"git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=inex/experimental-templating&dir=sp-modules/{module}",
+                        f"git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/{module}",
                         ttl_hash=get_ttl_hash(3600),
                     )
                 )
