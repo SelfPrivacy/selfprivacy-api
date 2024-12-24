@@ -258,7 +258,7 @@ def dummy_service(
     ensure_user_exists(user)
 
     # register our service
-    services.services.append(service)
+    services.DUMMY_SERVICES.append(service)
 
     huey.immediate = True
     assert huey.immediate is True
@@ -269,8 +269,8 @@ def dummy_service(
 
     # Cleanup because apparently it matters wrt tasks
     # Some tests may remove it from the list intentionally, this is fine
-    if service in services.services:
-        services.services.remove(service)
+    if service in services.DUMMY_SERVICES:
+        services.DUMMY_SERVICES.remove(service)
 
 
 def prepare_nixos_rebuild_calls(fp, unit_name):

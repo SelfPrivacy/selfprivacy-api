@@ -1,7 +1,6 @@
 """A Service implementation that loads all needed data from a JSON file"""
 
 import base64
-from enum import Enum
 import logging
 import json
 import subprocess
@@ -9,12 +8,15 @@ from typing import List, Optional
 from os.path import join, exists
 from os import mkdir, remove
 
-from pydantic import BaseModel, ConfigDict
-from pydantic.alias_generators import to_camel
-
-from selfprivacy_api.backup.postgres import PostgresDumper
+from selfprivacy_api.utils.postgres import PostgresDumper
 from selfprivacy_api.jobs import Job, JobStatus, Jobs
-from selfprivacy_api.models.services import ServiceDnsRecord, ServiceStatus
+from selfprivacy_api.models.services import (
+    License,
+    ServiceDnsRecord,
+    ServiceMetaData,
+    ServiceStatus,
+    SupportLevel,
+)
 from selfprivacy_api.services.flake_service_manager import FlakeServiceManager
 from selfprivacy_api.services.generic_size_counter import get_storage_usage
 from selfprivacy_api.services.owned_path import OwnedPath
@@ -34,26 +36,6 @@ SP_MODULES_DEFENITIONS_PATH = "/etc/sp-modules"
 SP_SUGGESTED_MODULES_PATH = "/etc/suggested-sp-modules"
 
 logger = logging.getLogger(__name__)
-
-
-class SupportLevel(Enum):
-    """Enum representing the support level of a service."""
-
-    NORMAL = "normal"
-    EXPERIMENTAL = "experimental"
-    DEPRECATED = "deprecated"
-    UNKNOWN = "unknown"
-
-    @classmethod
-    def from_str(cls, support_level: str) -> "SupportLevel":
-        """Return the SupportLevel from a string."""
-        if support_level == "normal":
-            return cls.NORMAL
-        if support_level == "experimental":
-            return cls.EXPERIMENTAL
-        if support_level == "deprecated":
-            return cls.DEPRECATED
-        return cls.UNKNOWN
 
 
 def config_item_from_json(json_data: dict) -> Optional[ServiceConfigItem]:
@@ -101,51 +83,6 @@ def config_item_from_json(json_data: dict) -> Optional[ServiceConfigItem]:
             weight=weight,
         )
     raise ValueError("Unknown config item type")
-
-
-class BaseSchema(BaseModel):
-    model_config = ConfigDict(
-        alias_generator=to_camel,
-        populate_by_name=True,
-        from_attributes=True,
-    )
-
-
-class License(BaseSchema):
-    """Model representing a license."""
-
-    deprecated: bool
-    free: bool
-    full_name: str
-    redistributable: bool
-    short_name: str
-    spdx_id: str
-    url: str
-
-
-class ServiceMetaData(BaseSchema):
-    """Model representing the meta data of a service."""
-
-    id: str
-    name: str
-    description: str = "No description found!"
-    svg_icon: str = ""
-    showUrl: bool = True
-    primary_subdomain: Optional[str] = None
-    is_movable: bool = False
-    is_required: bool = False
-    can_be_backed_up: bool = True
-    backup_description: str = "No backup description found!"
-    systemd_services: List[str]
-    user: Optional[str] = None
-    group: Optional[str] = None
-    folders: List[str] = []
-    owned_folders: List[OwnedPath] = []
-    postgre_databases: List[str] = []
-    license: List[License] = []
-    homepage: Optional[str] = None
-    source_page: Optional[str] = None
-    support_level: SupportLevel = SupportLevel.UNKNOWN
 
 
 class TemplatedService(Service):
@@ -278,6 +215,18 @@ class TemplatedService(Service):
         name = self.get_id()
         with FlakeServiceManager() as service_manager:
             return name in service_manager.services
+
+    def get_license(self) -> List[License]:
+        return self.meta.license
+
+    def get_homepage(self) -> Optional[str]:
+        return self.meta.homepage
+
+    def get_source_page(self) -> Optional[str]:
+        return self.meta.source_page
+
+    def get_support_level(self) -> SupportLevel:
+        return self.meta.support_level
 
     def get_status(self) -> ServiceStatus:
         if not self.meta.systemd_services:
@@ -443,8 +392,6 @@ class TemplatedService(Service):
         resulting_folders = folders.copy()
         for folder in owned_folders:
             resulting_folders.append(folder.path)
-        if self.get_postgresql_databases():
-            resulting_folders.append(self._get_db_dumps_folder())
         return resulting_folders
 
     def get_owned_folders(self) -> List[OwnedPath]:
@@ -453,14 +400,12 @@ class TemplatedService(Service):
         resulting_folders = owned_folders.copy()
         for folder in folders:
             resulting_folders.append(self.owned_path(folder))
+        return resulting_folders
+
+    def get_folders_to_back_up(self) -> List[str]:
+        resulting_folders = self.meta.folders.copy()
         if self.get_postgresql_databases():
-            resulting_folders.append(
-                OwnedPath(
-                    path=self._get_db_dumps_folder(),
-                    owner="selfprivacy-api",
-                    group="selfprivacy-api",
-                )
-            )
+            resulting_folders.append(self._get_db_dumps_folder())
         return resulting_folders
 
     def set_location(self, volume: BlockDevice):
@@ -504,16 +449,13 @@ class TemplatedService(Service):
         )
 
     def pre_backup(self, job: Job):
-        logger.warning("Pre backup")
         if self.get_postgresql_databases():
             db_dumps_folder = self._get_db_dumps_folder()
-            logger.warning("Pre backup: postgresql databases")
             # Create folder for the dumps if it does not exist
             if not exists(db_dumps_folder):
                 mkdir(db_dumps_folder)
             # Dump the databases
             for db_name in self.get_postgresql_databases():
-                logger.warning(f"Pre backup: db_name: {db_name}")
                 if job is not None:
                     Jobs.update(
                         job,
@@ -522,7 +464,6 @@ class TemplatedService(Service):
                     )
                 db_dumper = PostgresDumper(db_name)
                 backup_file = join(db_dumps_folder, f"{db_name}.dump")
-                logger.warning(f"Pre backup: backup_file: {backup_file}")
                 db_dumper.backup_database(backup_file)
 
     def _clear_db_dumps(self):

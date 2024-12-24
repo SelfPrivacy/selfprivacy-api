@@ -250,6 +250,7 @@ def test_error_censoring_encryptionkey(dummy_service, backups):
         Backups.back_up(dummy_service)
 
     job = get_backup_fail(dummy_service)
+    assert job is not None
     assert_job_errored(job)
 
     job_text = all_job_text(job)
@@ -287,6 +288,7 @@ def test_error_censoring_loginkey(dummy_service, backups, fp):
         Backups.back_up(dummy_service)
 
     job = get_backup_fail(dummy_service)
+    assert job is not None
     assert_job_errored(job)
 
     job_text = all_job_text(job)
@@ -705,6 +707,7 @@ def test_provider_storage(backups):
     Storage.store_provider(test_provider)
 
     restored_provider_model = Storage.load_provider()
+    assert restored_provider_model is not None
     assert restored_provider_model.kind == "BACKBLAZE"
     assert restored_provider_model.login == test_login
     assert restored_provider_model.key == test_key

@@ -246,7 +246,7 @@ class Backups:
         try:
             if service.can_be_backed_up() is False:
                 raise ValueError("cannot backup a non-backuppable service")
-            folders = service.get_folders()
+            folders = service.get_folders_to_back_up()
             service_name = service.get_id()
             service.pre_backup(job=job)
             Jobs.update(job, status=JobStatus.RUNNING, status_text="Uploading backup")
@@ -517,7 +517,7 @@ class Backups:
         snapshot_id: str,
         verify=True,
     ) -> None:
-        folders = service.get_folders()
+        folders = service.get_folders_to_back_up()
 
         Backups.provider().backupper.restore_from_backup(
             snapshot_id,
@@ -717,7 +717,7 @@ class Backups:
         Returns the amount of space available on the volume the given
         service is located on.
         """
-        folders = service.get_folders()
+        folders = service.get_folders_to_back_up()
         if folders == []:
             raise ValueError("unallocated service", service.get_id())
 

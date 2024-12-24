@@ -6,21 +6,14 @@ import typing
 import subprocess
 import json
 from typing import List
-from os import path, remove
+from os import path
 from os import makedirs
 from os import listdir
 from os.path import join
 
 from shutil import copyfile, copytree, rmtree
-from selfprivacy_api.services.bitwarden import Bitwarden
-from selfprivacy_api.services.forgejo import Forgejo
-from selfprivacy_api.services.jitsimeet import JitsiMeet
 from selfprivacy_api.services.prometheus import Prometheus
-from selfprivacy_api.services.roundcube import Roundcube
 from selfprivacy_api.services.mailserver import MailServer
-from selfprivacy_api.services.nextcloud import Nextcloud
-from selfprivacy_api.services.pleroma import Pleroma
-from selfprivacy_api.services.ocserv import Ocserv
 
 from selfprivacy_api.services.service import Service, ServiceDnsRecord
 from selfprivacy_api.services.service import ServiceStatus
@@ -28,7 +21,7 @@ from selfprivacy_api.utils.cached_call import redis_cached_call
 import selfprivacy_api.utils.network as network_utils
 
 from selfprivacy_api.services.api_icon import API_ICON
-from selfprivacy_api.utils import USERDATA_FILE, DKIM_DIR, SECRETS_FILE, get_domain
+from selfprivacy_api.utils import USERDATA_FILE, DKIM_DIR, SECRETS_FILE
 from selfprivacy_api.utils.block_devices import BlockDevices
 from selfprivacy_api.utils import read_account_uri
 from selfprivacy_api.services.templated_service import (
@@ -141,6 +134,10 @@ class ServiceManager(Service):
 
     @staticmethod
     def is_enabled() -> bool:
+        return True
+
+    @staticmethod
+    def is_system_service() -> bool:
         return True
 
     @staticmethod
@@ -263,8 +260,6 @@ def get_templated_service(service_id: str) -> TemplatedService:
 
 @redis_cached_call(ttl=3600)
 def get_remote_service(id: str, url: str) -> TemplatedService:
-    # Get JSON from calling the sp-fetch-remote-module command with the URL
-    # Parse the JSON into a TemplatedService object
     response = subprocess.run(
         ["sp-fetch-remote-module", url],
         capture_output=True,
@@ -274,23 +269,26 @@ def get_remote_service(id: str, url: str) -> TemplatedService:
     return TemplatedService(id, response.stdout)
 
 
+DUMMY_SERVICES = []
+TEST_FLAGS: list[str] = []
+
+
 @redis_cached_call(ttl=5)
 def get_services() -> List[Service]:
+    if "ONLY_DUMMY_SERVICE" in TEST_FLAGS:
+        return DUMMY_SERVICES
+    if "DUMMY_SERVICE_AND_API" in TEST_FLAGS:
+        return DUMMY_SERVICES + [ServiceManager()]
+
     hardcoded_services: list[Service] = [
-        Bitwarden(),
-        # Forgejo(),
         MailServer(),
-        Nextcloud(),
-        # Pleroma(),
-        Ocserv(),
-        JitsiMeet(),
-        Roundcube(),
         ServiceManager(),
         Prometheus(),
     ]
+    if DUMMY_SERVICES:
+        hardcoded_services += DUMMY_SERVICES
     service_ids = [service.get_id() for service in hardcoded_services]
 
-    # Load services from SP_MODULES_DEFENITIONS_PATH
     templated_services: List[Service] = []
     if path.exists(SP_MODULES_DEFENITIONS_PATH):
         for module in listdir(SP_MODULES_DEFENITIONS_PATH):
@@ -322,6 +320,3 @@ def get_services() -> List[Service]:
                 logger.error(f"Failed to load service {module}: {e}")
 
     return hardcoded_services + templated_services
-
-
-# services = get_services()

@@ -48,6 +48,10 @@ class Prometheus(Service):
         return True
 
     @staticmethod
+    def is_system_service() -> bool:
+        return True
+
+    @staticmethod
     def can_be_backed_up() -> bool:
         return False
 

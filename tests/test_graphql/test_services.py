@@ -88,20 +88,26 @@ def dummy_service_with_binds(dummy_service, mock_lsblk_devices, volume_folders):
 @pytest.fixture()
 def only_dummy_service(dummy_service) -> Generator[DummyService, None, None]:
     # because queries to services that are not really there error out
-    back_copy = service_module.services.copy()
-    service_module.services.clear()
-    service_module.services.append(dummy_service)
+    service_module.TEST_FLAGS.clear()
+    service_module.TEST_FLAGS.append("ONLY_DUMMY_SERVICE")
+    service_module.DUMMY_SERVICES.clear()
+    service_module.DUMMY_SERVICES.append(dummy_service)
     yield dummy_service
-    service_module.services.clear()
-    service_module.services.extend(back_copy)
+    service_module.TEST_FLAGS.clear()
+    service_module.DUMMY_SERVICES.clear()
 
 
 @pytest.fixture
 def only_dummy_service_and_api(
-    only_dummy_service, generic_userdata, dkim_file
+    generic_userdata, dkim_file, dummy_service
 ) -> Generator[DummyService, None, None]:
-    service_module.services.append(ServiceManager())
-    return only_dummy_service
+    service_module.TEST_FLAGS.clear()
+    service_module.TEST_FLAGS.append("DUMMY_SERVICE_AND_API")
+    service_module.DUMMY_SERVICES.clear()
+    service_module.DUMMY_SERVICES.append(dummy_service)
+    yield dummy_service
+    service_module.TEST_FLAGS.clear()
+    service_module.DUMMY_SERVICES.clear()
 
 
 @pytest.fixture()
@@ -727,6 +733,7 @@ def test_graphql_move_service(
 
 def test_mailservice_cannot_enable_disable(authorized_client):
     mailservice = ServiceManager.get_service_by_id("simple-nixos-mailserver")
+    assert mailservice is not None
 
     mutation_response = api_enable(authorized_client, mailservice)
     data = get_data(mutation_response)["services"]["enableService"]

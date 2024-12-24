@@ -10,8 +10,6 @@ from selfprivacy_api.utils.waitloop import wait_until_true
 
 import selfprivacy_api.services as services_module
 
-from selfprivacy_api.services.bitwarden import Bitwarden
-from selfprivacy_api.services.pleroma import Pleroma
 from selfprivacy_api.services.mailserver import MailServer
 from selfprivacy_api.services.owned_path import OwnedPath
 
@@ -63,22 +61,22 @@ def test_delayed_start_stop(raw_dummy_service):
     assert dummy.get_status() == ServiceStatus.ACTIVE
 
 
-def test_owned_folders_from_not_owned():
-    assert Bitwarden.get_owned_folders() == [
-        OwnedPath(
-            path=folder,
-            group="vaultwarden",
-            owner="vaultwarden",
-        )
-        for folder in Bitwarden.get_folders()
-    ]
+# def test_owned_folders_from_not_owned():
+#     assert Bitwarden.get_owned_folders() == [
+#         OwnedPath(
+#             path=folder,
+#             group="vaultwarden",
+#             owner="vaultwarden",
+#         )
+#         for folder in Bitwarden.get_folders()
+#     ]
 
 
-def test_paths_from_owned_paths():
-    assert len(Pleroma.get_folders()) == 2
-    assert Pleroma.get_folders() == [
-        ownedpath.path for ownedpath in Pleroma.get_owned_folders()
-    ]
+# def test_paths_from_owned_paths():
+#     assert len(Pleroma.get_folders()) == 2
+#     assert Pleroma.get_folders() == [
+#         ownedpath.path for ownedpath in Pleroma.get_owned_folders()
+#     ]
 
 
 def test_enabling_disabling_reads_json(dummy_service: DummyService):
