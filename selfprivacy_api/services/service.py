@@ -241,23 +241,23 @@ class Service(ABC):
     def stop(cls):
         """Stop the service. Usually this means stopping systemd unit."""
         for unit in cls.get_units():
-            run(["systemctl", "stop", unit], check=False)
+            # run(["systemctl", "stop", unit], check=False)
             # TODO: use root separation daemon:
-            # call_root_function(["systemctl", "stop", unit])
+            call_root_function(["systemctl", "stop", unit])
 
     @staticmethod
     def start(cls):
         """Start the service. Usually this means starting systemd unit."""
         for unit in cls.get_units():
-            run(["systemctl", "start", unit], check=False)
-            # call_root_function(["systemctl", "start", unit])
+            # run(["systemctl", "start", unit], check=False)
+            call_root_function(["systemctl", "start", unit])
 
     @staticmethod
     def restart(cls):
         """Restart the service. Usually this means restarting systemd unit."""
         for unit in cls.get_units():
-            run(["systemctl", "restart", unit], check=False)
-            # call_root_function(["systemctl", "restart", unit])
+            # run(["systemctl", "restart", unit], check=False)
+            call_root_function(["systemctl", "restart", unit])
 
     @classmethod
     def get_configuration(cls):
