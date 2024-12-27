@@ -85,42 +85,62 @@ def config_item_from_json(json_data: dict) -> Optional[ServiceConfigItem]:
     raise ValueError("Unknown config item type")
 
 
+def validate_definition(definition: dict):
+    """Check if required fields are present"""
+    if "meta" not in definition:
+        raise ValueError("meta not found in service definition")
+    if "options" not in definition:
+        raise ValueError("options not found in service definition")
+
+
+def validate_meta(meta: ServiceMetaData, options: dict):
+    # If it is movable, check for the location option
+    if meta.is_movable and "location" not in options:
+        raise ValueError("Service is movable but does not have a location option")
+
+
+def get_raw_definition(service_id: str, source_data: Optional[str] = None) -> dict:
+    if source_data:
+        return json.loads(source_data)
+    else:
+        # Check if the service exists
+        if not exists(join(SP_MODULES_DEFENITIONS_PATH, service_id)):
+            raise FileNotFoundError(f"Service {service_id} not found")
+        # Load the service
+        with open(join(SP_MODULES_DEFENITIONS_PATH, service_id)) as file:
+            return json.load(file)
+
+
+def parse_config_items(options: dict):
+    config_items = {}
+    for option in options.values():
+        config_item = config_item_from_json(option)
+        if config_item:
+            config_items[config_item.id] = config_item
+    return config_items
+
+
 class TemplatedService(Service):
     """Class representing a dynamically loaded service."""
 
     def __init__(self, service_id: str, source_data: Optional[str] = None) -> None:
-        if source_data:
-            self.definition_data = json.loads(source_data)
-        else:
-            # Check if the service exists
-            if not exists(join(SP_MODULES_DEFENITIONS_PATH, service_id)):
-                raise FileNotFoundError(f"Service {service_id} not found")
-            # Load the service
-            with open(join(SP_MODULES_DEFENITIONS_PATH, service_id)) as file:
-                self.definition_data = json.load(file)
-        # Check if required fields are present
-        if "meta" not in self.definition_data:
-            raise ValueError("meta not found in service definition")
-        if "options" not in self.definition_data:
-            raise ValueError("options not found in service definition")
-        # Load the meta data
+        self.definition_data = get_raw_definition(service_id, source_data)
+        validate_definition(self.definition_data)
+
         self.meta = ServiceMetaData(**self.definition_data["meta"])
-        # Load the options
         self.options = self.definition_data["options"]
-        # Load the config items
-        self.config_items = {}
-        for option in self.options.values():
-            config_item = config_item_from_json(option)
-            if config_item:
-                self.config_items[config_item.id] = config_item
-        # If it is movable, check for the location option
-        if self.meta.is_movable and "location" not in self.options:
-            raise ValueError("Service is movable but does not have a location option")
+        validate_meta(self.meta, self.options)
+
+        self.config_items = parse_config_items(self.options)
+
         # Load all subdomains via options with "subdomain" widget
         self.subdomain_options: List[str] = []
         for option in self.options.values():
             if option.get("meta", {}).get("widget") == "subdomain":
                 self.subdomain_options.append(option["name"])
+
+    def get_units(self) -> List[str]:
+        return self.meta.systemd_services
 
     def get_id(self) -> str:
         # Check if ID contains elements that might be a part of the path
@@ -274,21 +294,6 @@ class TemplatedService(Service):
     def disable(self):
         """Disable the service. Usually this means disabling systemd unit."""
         self._set_enable(False)
-
-    def start(self):
-        """Start the systemd units"""
-        for unit in self.meta.systemd_services:
-            subprocess.run(["systemctl", "start", unit], check=False)
-
-    def stop(self):
-        """Stop the systemd units"""
-        for unit in self.meta.systemd_services:
-            subprocess.run(["systemctl", "stop", unit], check=False)
-
-    def restart(self):
-        """Restart the systemd units"""
-        for unit in self.meta.systemd_services:
-            subprocess.run(["systemctl", "restart", unit], check=False)
 
     def get_configuration(self) -> dict:
         # If there are no options, return an empty dict
