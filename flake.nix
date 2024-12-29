@@ -21,6 +21,7 @@
             pytest-mock
             pytest-subprocess
             pytest-asyncio
+            pydantic
             black
             mypy
             pylsp-mypy
