@@ -5,7 +5,7 @@ import logging
 from typing import List, Optional
 from os.path import exists
 from subprocess import run
-from selfprivacy_api.utils.root_interface import call_root_function
+from selfprivacy_api.root_daemon.root_interface import call_root_function
 
 from selfprivacy_api import utils
 from selfprivacy_api.services.config_item import ServiceConfigItem

@@ -1,23 +1,23 @@
 import pytest
-import os
-import asyncio
-import threading
 import subprocess
+from typing import List
+from time import sleep
 
-from selfprivacy_api.root_daemon import (
+from os import path
+from os.path import join, exists
+from os import chdir
+
+import selfprivacy_api
+import tests
+
+from selfprivacy_api.root_daemon.daemon import (
     get_available_commands,
     init,
-    main,
     service_commands,
     services,
 )
-import selfprivacy_api
-import selfprivacy_api.root_daemon as root_daemon
-from selfprivacy_api.utils.root_interface import call_root_function
-from os.path import join, exists
-
-from typing import List
-from time import sleep
+import selfprivacy_api.root_daemon.daemon as root_daemon
+from selfprivacy_api.root_daemon.root_interface import call_root_function
 
 
 @pytest.fixture()
@@ -48,15 +48,34 @@ def test_init():
     assert sock is not None
 
 
+def get_root_sp_directory() -> str:
+    package_file = selfprivacy_api.__file__
+    tests_file = tests.__file__
+    sp_dir = path.commonpath([package_file, tests_file])
+
+    # raise ValueError(sp_dir,package_file, tests_file)
+
+    return sp_dir
+
+
 def start_root_demon():
-    root_daemon_file = selfprivacy_api.root_daemon.__file__
+
+    old_dir = path.abspath(path.curdir)
+    chdir(get_root_sp_directory())
+
+    assert path.abspath(path.curdir) == get_root_sp_directory()
+
     # this is a prototype of how we need to run it`
-    proc = subprocess.Popen(args=["python", root_daemon_file], shell=False)
+    proc = subprocess.Popen(
+        args=["python", "-m", "selfprivacy_api.root_daemon.daemon"], shell=False
+    )
 
     # check that it did not error out
     sleep(0.3)
     finished = proc.poll()
     assert finished is None
+
+    chdir(old_dir)
 
     return proc
 
