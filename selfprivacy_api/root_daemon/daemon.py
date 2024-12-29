@@ -9,7 +9,10 @@ import socket as socket_module
 import subprocess
 from typing import Optional
 
-SOCKET_PATH = "/tmp/socket_test.s"
+from . import SOCKET_PATH
+
+# from selfprivacy_api.services.templated_service import SP_MODULES_DEFENITIONS_PATH
+
 BUFFER_SIZE = 1024
 
 services = [
@@ -51,6 +54,14 @@ static_commands = ["nixos rebuild" "nixos-store --gc"]
 CHOWN_COMMAND = "chown selfprivacy"
 # other_commands = [ CHOWN_COMMAND
 # ]
+
+
+def sync_with_dynamic_services():
+    """
+    We need to look at the file, then fetch service names
+    and preferably service folders
+
+    """
 
 
 def get_available_commands() -> List[str]:

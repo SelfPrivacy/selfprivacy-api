@@ -1,8 +1,9 @@
 from typing import List
 from time import sleep
+import socket as socket_module
 
 # from subprocess import check_output
-from selfprivacy_api.root_daemon import SOCKET_PATH, socket_module
+from selfprivacy_api.root_daemon import SOCKET_PATH
 from tests.test_common import get_test_mode
 
 
