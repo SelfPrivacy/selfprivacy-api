@@ -32,7 +32,7 @@ from selfprivacy_api.repositories.users.abstract_user_repository import (
 REDIS_TOKEN_KEY = "kanidm:token"
 
 KANIDM_URL = "https://127.0.0.1:3013"
-ADMIN_GROUPS = ["sp.admin"]
+ADMIN_GROUPS = ["sp.admins"]
 
 redis = RedisPool().get_connection()
 
@@ -403,11 +403,11 @@ class KanidmUserRepository(AbstractUserRepository):
             filled_user = UserDataUser(
                 username=user_attrs["name"][0],
                 user_type=user_type,
-                ssh_keys=[],  # actions layer will full in this field
+                ssh_keys=[],  # actions layer will fill in this field
                 directmemberof=user_attrs.get("directmemberof", []),
                 memberof=user_attrs.get("memberof", []),
-                displayname=user_attrs.get("displayname", None)[0],
-                email=user_attrs.get("mail", None)[0],
+                displayname=user_attrs.get("displayname", [None])[0],
+                email=user_attrs.get("mail", [None])[0],
             )
 
             users.append(filled_user)
@@ -600,6 +600,10 @@ class KanidmUserRepository(AbstractUserRepository):
         groups = []
         for group_data in groups_list_data:
             attrs = group_data.get("attrs", {})
+
+            if "builtin" in attrs.get("class", []):
+                continue
+
             group = Group(
                 name=attrs["name"][0],
                 group_class=attrs.get("class", []),

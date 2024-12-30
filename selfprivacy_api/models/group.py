@@ -14,7 +14,7 @@ class Group(BaseModel):
         group or assign it different roles/categories. Defaults to an empty list.
 
     member (Optional[list[str]]):
-        A list of members who belong to the group.
+        A list of the groups within a given group.
         Optional, defaults to an empty list.
 
     memberof (Optional[list[str]]):
