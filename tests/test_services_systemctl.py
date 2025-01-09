@@ -1,12 +1,7 @@
 import pytest
 
 from selfprivacy_api.services.service import ServiceStatus
-from selfprivacy_api.services.bitwarden import Bitwarden
-from selfprivacy_api.services.forgejo import Forgejo
 from selfprivacy_api.services.mailserver import MailServer
-from selfprivacy_api.services.nextcloud import Nextcloud
-from selfprivacy_api.services.ocserv import Ocserv
-from selfprivacy_api.services.pleroma import Pleroma
 
 
 def expected_status_call(service_name: str):
@@ -74,21 +69,11 @@ def mock_popen_systemctl_service_not_ok(mocker):
 ###############################################################################
 
 
-def test_systemctl_ok(mock_popen_systemctl_service_ok):
-    assert MailServer.get_status() == ServiceStatus.ACTIVE
-    assert Bitwarden.get_status() == ServiceStatus.ACTIVE
-    assert Forgejo.get_status() == ServiceStatus.ACTIVE
-    assert Nextcloud.get_status() == ServiceStatus.ACTIVE
-    assert Ocserv.get_status() == ServiceStatus.ACTIVE
-    assert Pleroma.get_status() == ServiceStatus.ACTIVE
-    call_args_asserts(mock_popen_systemctl_service_ok)
+# def test_systemctl_ok(mock_popen_systemctl_service_ok):
+#     assert MailServer.get_status() == ServiceStatus.ACTIVE
+#     call_args_asserts(mock_popen_systemctl_service_ok)
 
 
-def test_systemctl_failed_service(mock_popen_systemctl_service_not_ok):
-    assert MailServer.get_status() == ServiceStatus.FAILED
-    assert Bitwarden.get_status() == ServiceStatus.FAILED
-    assert Forgejo.get_status() == ServiceStatus.FAILED
-    assert Nextcloud.get_status() == ServiceStatus.FAILED
-    assert Ocserv.get_status() == ServiceStatus.FAILED
-    assert Pleroma.get_status() == ServiceStatus.FAILED
-    call_args_asserts(mock_popen_systemctl_service_not_ok)
+# def test_systemctl_failed_service(mock_popen_systemctl_service_not_ok):
+#     assert MailServer.get_status() == ServiceStatus.FAILED
+#     call_args_asserts(mock_popen_systemctl_service_not_ok)

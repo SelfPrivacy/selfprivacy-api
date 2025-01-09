@@ -14,6 +14,7 @@ class ServiceConfigItem(ABC):
     description: str
     widget: str
     type: str
+    weight: int
 
     @abstractmethod
     def get_value(self, service_id):
@@ -27,13 +28,14 @@ class ServiceConfigItem(ABC):
     def validate_value(self, value):
         return True
 
-    def as_dict(self, service_options):
+    def as_dict(self, service_id: str):
         return {
             "id": self.id,
             "type": self.type,
             "description": self.description,
             "widget": self.widget,
-            "value": self.get_value(service_options),
+            "value": self.get_value(service_id),
+            "weight": self.weight,
         }
 
 
@@ -46,6 +48,7 @@ class StringServiceConfigItem(ServiceConfigItem):
         regex: Optional[str] = None,
         widget: Optional[str] = None,
         allow_empty: bool = False,
+        weight: int = 50,
     ):
         if widget == "subdomain" and not regex:
             raise ValueError("Subdomain widget requires regex")
@@ -56,6 +59,7 @@ class StringServiceConfigItem(ServiceConfigItem):
         self.regex = re.compile(regex) if regex else None
         self.widget = widget if widget else "text"
         self.allow_empty = allow_empty
+        self.weight = weight
 
     def get_value(self, service_id):
         with ReadUserData() as user_data:
@@ -73,15 +77,16 @@ class StringServiceConfigItem(ServiceConfigItem):
                 user_data["modules"][service_id] = {}
             user_data["modules"][service_id][self.id] = value
 
-    def as_dict(self, service_options):
+    def as_dict(self, service_id):
         return {
             "id": self.id,
             "type": self.type,
             "description": self.description,
             "widget": self.widget,
-            "value": self.get_value(service_options),
+            "value": self.get_value(service_id),
             "default_value": self.default_value,
             "regex": self.regex.pattern if self.regex else None,
+            "weight": self.weight,
         }
 
     def validate_value(self, value):
@@ -104,12 +109,14 @@ class BoolServiceConfigItem(ServiceConfigItem):
         default_value: bool,
         description: str,
         widget: Optional[str] = None,
+        weight: int = 50,
     ):
         self.id = id
         self.type = "bool"
         self.default_value = default_value
         self.description = description
         self.widget = widget if widget else "switch"
+        self.weight = weight
 
     def get_value(self, service_id):
         with ReadUserData() as user_data:
@@ -127,14 +134,15 @@ class BoolServiceConfigItem(ServiceConfigItem):
                 user_data["modules"][service_id] = {}
             user_data["modules"][service_id][self.id] = value
 
-    def as_dict(self, service_options):
+    def as_dict(self, service_id):
         return {
             "id": self.id,
             "type": self.type,
             "description": self.description,
             "widget": self.widget,
-            "value": self.get_value(service_options),
+            "value": self.get_value(service_id),
             "default_value": self.default_value,
+            "weight": self.weight,
         }
 
     def validate_value(self, value):
@@ -149,6 +157,7 @@ class EnumServiceConfigItem(ServiceConfigItem):
         description: str,
         options: list[str],
         widget: Optional[str] = None,
+        weight: int = 50,
     ):
         self.id = id
         self.type = "enum"
@@ -156,6 +165,7 @@ class EnumServiceConfigItem(ServiceConfigItem):
         self.description = description
         self.options = options
         self.widget = widget if widget else "select"
+        self.weight = weight
 
     def get_value(self, service_id):
         with ReadUserData() as user_data:
@@ -173,15 +183,16 @@ class EnumServiceConfigItem(ServiceConfigItem):
                 user_data["modules"][service_id] = {}
             user_data["modules"][service_id][self.id] = value
 
-    def as_dict(self, service_options):
+    def as_dict(self, service_id):
         return {
             "id": self.id,
             "type": self.type,
             "description": self.description,
             "widget": self.widget,
-            "value": self.get_value(service_options),
+            "value": self.get_value(service_id),
             "default_value": self.default_value,
             "options": self.options,
+            "weight": self.weight,
         }
 
     def validate_value(self, value):
@@ -200,6 +211,7 @@ class IntServiceConfigItem(ServiceConfigItem):
         widget: Optional[str] = None,
         min_value: Optional[int] = None,
         max_value: Optional[int] = None,
+        weight: int = 50,
     ) -> None:
         self.id = id
         self.type = "int"
@@ -208,6 +220,7 @@ class IntServiceConfigItem(ServiceConfigItem):
         self.widget = widget if widget else "number"
         self.min_value = min_value
         self.max_value = max_value
+        self.weight = weight
 
     def get_value(self, service_id):
         with ReadUserData() as user_data:
@@ -225,16 +238,17 @@ class IntServiceConfigItem(ServiceConfigItem):
                 user_data["modules"][service_id] = {}
             user_data["modules"][service_id][self.id] = value
 
-    def as_dict(self, service_options):
+    def as_dict(self, service_id):
         return {
             "id": self.id,
             "type": self.type,
             "description": self.description,
             "widget": self.widget,
-            "value": self.get_value(service_options),
+            "value": self.get_value(service_id),
             "default_value": self.default_value,
             "min_value": self.min_value,
             "max_value": self.max_value,
+            "weight": self.weight,
         }
 
     def validate_value(self, value):
