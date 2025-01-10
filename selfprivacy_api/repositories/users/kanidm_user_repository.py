@@ -62,7 +62,7 @@ class KanidmAdminToken:
 
     @staticmethod
     def get() -> str:
-        kanidm_admin_token: str | None = redis.get(REDIS_TOKEN_KEY) # type: ignore
+        kanidm_admin_token: str | None = redis.get(REDIS_TOKEN_KEY)  # type: ignore
 
         if kanidm_admin_token is None or not KanidmAdminToken._is_token_valid(
             kanidm_admin_token
@@ -90,8 +90,8 @@ class KanidmAdminToken:
                         "api-token",
                         "generate",
                         "--rw",
-                        "selfprivacy",
-                        "token2",
+                        "sp.selfprivacy-api.service-account",
+                        "selfprivacy_api_token",
                     ],
                     text=True,
                 )
