@@ -3,7 +3,7 @@ from typing import Any, Optional, Union
 import subprocess
 import re
 import logging
-import requests  # type: ignore
+import requests
 
 from selfprivacy_api.models.group import Group
 from selfprivacy_api.repositories.users.exceptions import (
@@ -62,7 +62,7 @@ class KanidmAdminToken:
 
     @staticmethod
     def get() -> str:
-        kanidm_admin_token = str(redis.get(REDIS_TOKEN_KEY))
+        kanidm_admin_token: str | None = redis.get(REDIS_TOKEN_KEY) # type: ignore
 
         if kanidm_admin_token is None or not KanidmAdminToken._is_token_valid(
             kanidm_admin_token
