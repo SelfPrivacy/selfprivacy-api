@@ -13,6 +13,7 @@ from selfprivacy_api.graphql.common_types.service import (
     Service,
     ServiceStatusEnum,
     SnapshotInfo,
+    SupportLevelEnum,
     service_to_graphql_service,
 )
 from selfprivacy_api.graphql.common_types.backup import AutobackupQuotas
@@ -53,6 +54,11 @@ def tombstone_service(service_id: str) -> Service:
         can_be_backed_up=False,
         backup_description="",
         is_installed=False,
+        homepage=None,
+        source_page=None,
+        license=[],
+        is_system_service=False,
+        support_level=SupportLevelEnum.UNKNOWN,
     )
 
 

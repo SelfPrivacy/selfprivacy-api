@@ -95,7 +95,7 @@ class DummyService(Service):
     def get_status(cls) -> ServiceStatus:
         filepath = cls.status_file()
         if filepath in [None, ""]:
-            raise ValueError(f"We do not have a path for our test dummy status file!")
+            raise ValueError("We do not have a path for our test dummy status file!")
         if not path.exists(filepath):
             raise FileNotFoundError(filepath)
 
@@ -194,10 +194,6 @@ class DummyService(Service):
     @classmethod
     def set_configuration(cls, config_items):
         return super().set_configuration(config_items)
-
-    @staticmethod
-    def get_logs():
-        return ""
 
     @staticmethod
     def get_storage_usage() -> int:

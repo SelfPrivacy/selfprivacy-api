@@ -3,30 +3,34 @@
 import logging
 import base64
 import typing
+import subprocess
+import json
 from typing import List
 from os import path
 from os import makedirs
 from os.path import join
+from functools import lru_cache
+
 
 from shutil import copyfile, copytree, rmtree
-from selfprivacy_api.services.bitwarden import Bitwarden
-from selfprivacy_api.services.forgejo import Forgejo
-from selfprivacy_api.services.jitsimeet import JitsiMeet
+from selfprivacy_api.jobs import Job, JobStatus, Jobs
 from selfprivacy_api.services.prometheus import Prometheus
-from selfprivacy_api.services.roundcube import Roundcube
 from selfprivacy_api.services.mailserver import MailServer
-from selfprivacy_api.services.nextcloud import Nextcloud
-from selfprivacy_api.services.pleroma import Pleroma
-from selfprivacy_api.services.ocserv import Ocserv
 
 from selfprivacy_api.services.service import Service, ServiceDnsRecord
 from selfprivacy_api.services.service import ServiceStatus
+from selfprivacy_api.utils.cached_call import get_ttl_hash
 import selfprivacy_api.utils.network as network_utils
 
 from selfprivacy_api.services.api_icon import API_ICON
-from selfprivacy_api.utils import USERDATA_FILE, DKIM_DIR, SECRETS_FILE, get_domain
+from selfprivacy_api.utils import USERDATA_FILE, DKIM_DIR, SECRETS_FILE
 from selfprivacy_api.utils.block_devices import BlockDevices
 from selfprivacy_api.utils import read_account_uri
+from selfprivacy_api.services.templated_service import (
+    SP_MODULES_DEFENITIONS_PATH,
+    SP_SUGGESTED_MODULES_PATH,
+    TemplatedService,
+)
 
 CONFIG_STASH_DIR = "/etc/selfprivacy/dump"
 KANIDM_A_RECORD = "auth"
@@ -39,27 +43,33 @@ class ServiceManager(Service):
 
     @staticmethod
     def get_all_services() -> list[Service]:
-        return services
+        return get_services()
 
     @staticmethod
     def get_service_by_id(service_id: str) -> typing.Optional[Service]:
-        for service in services:
+        for service in get_services():
             if service.get_id() == service_id:
                 return service
         return None
 
     @staticmethod
     def get_enabled_services() -> list[Service]:
-        return [service for service in services if service.is_enabled()]
+        return [service for service in get_services() if service.is_enabled()]
 
     # This one is not currently used by any code.
     @staticmethod
     def get_disabled_services() -> list[Service]:
-        return [service for service in services if not service.is_enabled()]
+        return [service for service in get_services() if not service.is_enabled()]
 
     @staticmethod
     def get_services_by_location(location: str) -> list[Service]:
-        return [service for service in services if service.get_drive() == location]
+        return [
+            service
+            for service in get_services(
+                exclude_remote=True,
+            )
+            if service.get_drive() == location
+        ]
 
     @staticmethod
     def get_all_required_dns_records() -> list[ServiceDnsRecord]:
@@ -76,7 +86,7 @@ class ServiceManager(Service):
             ),
         ]
 
-        # TODO: Reenable with 3.5.0 release when clients are ready.
+        # TODO: Reenable with 3.6.0 release when clients are ready.
         # Do not forget about tests!
         # try:
         #     dns_records.append(
@@ -142,6 +152,10 @@ class ServiceManager(Service):
         return True
 
     @staticmethod
+    def is_system_service() -> bool:
+        return True
+
+    @staticmethod
     def get_backup_description() -> str:
         return "General server settings."
 
@@ -159,7 +173,9 @@ class ServiceManager(Service):
         # For now we will just copy settings EXCEPT the locations of services
         # Stash locations as they are set by user right now
         locations = {}
-        for service in services:
+        for service in get_services(
+            exclude_remote=True,
+        ):
             if service.is_movable():
                 locations[service.get_id()] = service.get_drive()
 
@@ -167,8 +183,10 @@ class ServiceManager(Service):
         for p in [USERDATA_FILE, SECRETS_FILE, DKIM_DIR]:
             cls.retrieve_stashed_path(p)
 
-        # Pop locations
-        for service in services:
+        # Pop location
+        for service in get_services(
+            exclude_remote=True,
+        ):
             if service.is_movable():
                 device = BlockDevices().get_block_device(locations[service.get_id()])
                 if device is not None:
@@ -194,11 +212,6 @@ class ServiceManager(Service):
         We are always active
         """
         pass
-
-    @staticmethod
-    def get_logs():
-        # TODO: maybe return the logs for api itself
-        return ""
 
     @classmethod
     def get_drive(cls) -> str:
@@ -234,7 +247,12 @@ class ServiceManager(Service):
             copyfile(cls.stash_for(p), p)
 
     @classmethod
-    def pre_backup(cls):
+    def pre_backup(cls, job: Job):
+        Jobs.update(
+            job,
+            status_text="Stashing settings",
+            status=JobStatus.RUNNING,
+        )
         tempdir = cls.dump_dir()
         rmtree(join(tempdir), ignore_errors=True)
         makedirs(tempdir)
@@ -243,7 +261,7 @@ class ServiceManager(Service):
             cls.stash_a_path(p)
 
     @classmethod
-    def post_backup(cls):
+    def post_backup(cls, job: Job):
         rmtree(cls.dump_dir(), ignore_errors=True)
 
     @classmethod
@@ -254,20 +272,80 @@ class ServiceManager(Service):
         return cls.folders[0]
 
     @classmethod
-    def post_restore(cls):
+    def post_restore(cls, job: Job):
         cls.merge_settings()
         rmtree(cls.dump_dir(), ignore_errors=True)
 
 
-services: list[Service] = [
-    Bitwarden(),
-    Forgejo(),
-    MailServer(),
-    Nextcloud(),
-    Pleroma(),
-    Ocserv(),
-    JitsiMeet(),
-    Roundcube(),
-    ServiceManager(),
-    Prometheus(),
-]
+# @redis_cached_call(ttl=30)
+@lru_cache()
+def get_templated_service(service_id: str, ttl_hash=None) -> TemplatedService:
+    del ttl_hash
+    return TemplatedService(service_id)
+
+
+# @redis_cached_call(ttl=3600)
+@lru_cache()
+def get_remote_service(id: str, url: str, ttl_hash=None) -> TemplatedService:
+    del ttl_hash
+    response = subprocess.run(
+        ["sp-fetch-remote-module", url],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return TemplatedService(id, response.stdout)
+
+
+DUMMY_SERVICES = []
+TEST_FLAGS: list[str] = []
+
+
+def get_services(exclude_remote=False) -> List[Service]:
+    if "ONLY_DUMMY_SERVICE" in TEST_FLAGS:
+        return DUMMY_SERVICES
+    if "DUMMY_SERVICE_AND_API" in TEST_FLAGS:
+        return DUMMY_SERVICES + [ServiceManager()]
+
+    hardcoded_services: list[Service] = [
+        MailServer(),
+        ServiceManager(),
+        Prometheus(),
+    ]
+    if DUMMY_SERVICES:
+        hardcoded_services += DUMMY_SERVICES
+    service_ids = [service.get_id() for service in hardcoded_services]
+
+    templated_services: List[Service] = []
+    if path.exists(SP_MODULES_DEFENITIONS_PATH):
+        for module in listdir(SP_MODULES_DEFENITIONS_PATH):
+            if module in service_ids:
+                continue
+            try:
+                templated_services.append(
+                    get_templated_service(module, ttl_hash=get_ttl_hash(30))
+                )
+                service_ids.append(module)
+            except Exception as e:
+                logger.error(f"Failed to load service {module}: {e}")
+
+    if not exclude_remote and path.exists(SP_SUGGESTED_MODULES_PATH):
+        # It is a file with a JSON array
+        with open(SP_SUGGESTED_MODULES_PATH) as f:
+            suggested_modules = json.load(f)
+        for module in suggested_modules:
+            if module in service_ids:
+                continue
+            try:
+                templated_services.append(
+                    get_remote_service(
+                        module,
+                        f"git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/{module}",
+                        ttl_hash=get_ttl_hash(3600),
+                    )
+                )
+                service_ids.append(module)
+            except Exception as e:
+                logger.error(f"Failed to load service {module}: {e}")
+
+    return hardcoded_services + templated_services

@@ -5,6 +5,19 @@ let
   config-id = "default";
   nixos-rebuild = "${config.system.build.nixos-rebuild}/bin/nixos-rebuild";
   nix = "${config.nix.package.out}/bin/nix";
+  sp-fetch-remote-module = pkgs.writeShellApplication {
+    name = "sp-fetch-remote-module";
+    runtimeInputs = [ config.nix.package.out ];
+    text = ''
+      if [ "$#" -ne 1 ]; then
+        echo "Usage: $0 <URL>"
+        exit 1
+      fi
+
+      URL="$1"
+      nix eval --file /etc/sp-fetch-remote-module.nix --raw --apply "f: f { flakeURL = \"$URL\"; }"
+    '';
+  };
 in
 {
   options.services.selfprivacy-api = {
@@ -46,12 +59,12 @@ in
         pkgs.util-linux
         pkgs.e2fsprogs
         pkgs.iproute2
-        pkgs.kanidm
       ];
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
       wantedBy = [ "multi-user.target" ];
       serviceConfig = {
+        # Do not forget to edit Postgres identMap if you change the user!
         User = "root";
         ExecStart = "${selfprivacy-graphql-api}/bin/app.py";
         Restart = "always";
@@ -82,12 +95,15 @@ in
         pkgs.util-linux
         pkgs.e2fsprogs
         pkgs.iproute2
+        pkgs.postgresql_16.out
+        sp-fetch-remote-module
         pkgs.kanidm
       ];
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
       wantedBy = [ "multi-user.target" ];
       serviceConfig = {
+        # Do not forget to edit Postgres identMap if you change the user!
         User = "root";
         ExecStart = "${pkgs.python312Packages.huey}/bin/huey_consumer.py selfprivacy_api.task_registry.huey";
         Restart = "always";

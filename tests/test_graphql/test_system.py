@@ -337,30 +337,30 @@ def test_graphql_get_domain(
     assert is_dns_record_in_array(
         dns_records, dns_record(name="api", record_type="AAAA")
     )
-    assert is_dns_record_in_array(dns_records, dns_record(name="cloud"))
-    assert is_dns_record_in_array(
-        dns_records, dns_record(name="cloud", record_type="AAAA")
-    )
-    assert is_dns_record_in_array(dns_records, dns_record(name="git"))
-    assert is_dns_record_in_array(
-        dns_records, dns_record(name="git", record_type="AAAA")
-    )
-    assert is_dns_record_in_array(dns_records, dns_record(name="meet"))
-    assert is_dns_record_in_array(
-        dns_records, dns_record(name="meet", record_type="AAAA")
-    )
-    assert is_dns_record_in_array(dns_records, dns_record(name="password"))
-    assert is_dns_record_in_array(
-        dns_records, dns_record(name="password", record_type="AAAA")
-    )
-    assert is_dns_record_in_array(dns_records, dns_record(name="social"))
-    assert is_dns_record_in_array(
-        dns_records, dns_record(name="social", record_type="AAAA")
-    )
-    assert is_dns_record_in_array(dns_records, dns_record(name="vpn"))
-    assert is_dns_record_in_array(
-        dns_records, dns_record(name="vpn", record_type="AAAA")
-    )
+    # assert is_dns_record_in_array(dns_records, dns_record(name="cloud"))
+    # assert is_dns_record_in_array(
+    #     dns_records, dns_record(name="cloud", record_type="AAAA")
+    # )
+    # assert is_dns_record_in_array(dns_records, dns_record(name="git"))
+    # assert is_dns_record_in_array(
+    #     dns_records, dns_record(name="git", record_type="AAAA")
+    # )
+    # assert is_dns_record_in_array(dns_records, dns_record(name="meet"))
+    # assert is_dns_record_in_array(
+    #     dns_records, dns_record(name="meet", record_type="AAAA")
+    # )
+    # assert is_dns_record_in_array(dns_records, dns_record(name="password"))
+    # assert is_dns_record_in_array(
+    #     dns_records, dns_record(name="password", record_type="AAAA")
+    # )
+    # assert is_dns_record_in_array(dns_records, dns_record(name="social"))
+    # assert is_dns_record_in_array(
+    #     dns_records, dns_record(name="social", record_type="AAAA")
+    # )
+    # assert is_dns_record_in_array(dns_records, dns_record(name="vpn"))
+    # assert is_dns_record_in_array(
+    #     dns_records, dns_record(name="vpn", record_type="AAAA")
+    # )
     assert is_dns_record_in_array(
         dns_records,
         dns_record(
@@ -490,30 +490,30 @@ def test_graphql_get_domain_no_uri_account_file(
     assert is_dns_record_in_array(
         dns_records, dns_record(name="api", record_type="AAAA")
     )
-    assert is_dns_record_in_array(dns_records, dns_record(name="cloud"))
-    assert is_dns_record_in_array(
-        dns_records, dns_record(name="cloud", record_type="AAAA")
-    )
-    assert is_dns_record_in_array(dns_records, dns_record(name="git"))
-    assert is_dns_record_in_array(
-        dns_records, dns_record(name="git", record_type="AAAA")
-    )
-    assert is_dns_record_in_array(dns_records, dns_record(name="meet"))
-    assert is_dns_record_in_array(
-        dns_records, dns_record(name="meet", record_type="AAAA")
-    )
-    assert is_dns_record_in_array(dns_records, dns_record(name="password"))
-    assert is_dns_record_in_array(
-        dns_records, dns_record(name="password", record_type="AAAA")
-    )
-    assert is_dns_record_in_array(dns_records, dns_record(name="social"))
-    assert is_dns_record_in_array(
-        dns_records, dns_record(name="social", record_type="AAAA")
-    )
-    assert is_dns_record_in_array(dns_records, dns_record(name="vpn"))
-    assert is_dns_record_in_array(
-        dns_records, dns_record(name="vpn", record_type="AAAA")
-    )
+    # assert is_dns_record_in_array(dns_records, dns_record(name="cloud"))
+    # assert is_dns_record_in_array(
+    #     dns_records, dns_record(name="cloud", record_type="AAAA")
+    # )
+    # assert is_dns_record_in_array(dns_records, dns_record(name="git"))
+    # assert is_dns_record_in_array(
+    #     dns_records, dns_record(name="git", record_type="AAAA")
+    # )
+    # assert is_dns_record_in_array(dns_records, dns_record(name="meet"))
+    # assert is_dns_record_in_array(
+    #     dns_records, dns_record(name="meet", record_type="AAAA")
+    # )
+    # assert is_dns_record_in_array(dns_records, dns_record(name="password"))
+    # assert is_dns_record_in_array(
+    #     dns_records, dns_record(name="password", record_type="AAAA")
+    # )
+    # assert is_dns_record_in_array(dns_records, dns_record(name="social"))
+    # assert is_dns_record_in_array(
+    #     dns_records, dns_record(name="social", record_type="AAAA")
+    # )
+    # assert is_dns_record_in_array(dns_records, dns_record(name="vpn"))
+    # assert is_dns_record_in_array(
+    #     dns_records, dns_record(name="vpn", record_type="AAAA")
+    # )
     assert is_dns_record_in_array(
         dns_records,
         dns_record(
@@ -590,30 +590,30 @@ def test_graphql_get_domain_not_found_account_file(
     assert is_dns_record_in_array(
         dns_records, dns_record(name="api", record_type="AAAA")
     )
-    assert is_dns_record_in_array(dns_records, dns_record(name="cloud"))
-    assert is_dns_record_in_array(
-        dns_records, dns_record(name="cloud", record_type="AAAA")
-    )
-    assert is_dns_record_in_array(dns_records, dns_record(name="git"))
-    assert is_dns_record_in_array(
-        dns_records, dns_record(name="git", record_type="AAAA")
-    )
-    assert is_dns_record_in_array(dns_records, dns_record(name="meet"))
-    assert is_dns_record_in_array(
-        dns_records, dns_record(name="meet", record_type="AAAA")
-    )
-    assert is_dns_record_in_array(dns_records, dns_record(name="password"))
-    assert is_dns_record_in_array(
-        dns_records, dns_record(name="password", record_type="AAAA")
-    )
-    assert is_dns_record_in_array(dns_records, dns_record(name="social"))
-    assert is_dns_record_in_array(
-        dns_records, dns_record(name="social", record_type="AAAA")
-    )
-    assert is_dns_record_in_array(dns_records, dns_record(name="vpn"))
-    assert is_dns_record_in_array(
-        dns_records, dns_record(name="vpn", record_type="AAAA")
-    )
+    # assert is_dns_record_in_array(dns_records, dns_record(name="cloud"))
+    # assert is_dns_record_in_array(
+    #     dns_records, dns_record(name="cloud", record_type="AAAA")
+    # )
+    # assert is_dns_record_in_array(dns_records, dns_record(name="git"))
+    # assert is_dns_record_in_array(
+    #     dns_records, dns_record(name="git", record_type="AAAA")
+    # )
+    # assert is_dns_record_in_array(dns_records, dns_record(name="meet"))
+    # assert is_dns_record_in_array(
+    #     dns_records, dns_record(name="meet", record_type="AAAA")
+    # )
+    # assert is_dns_record_in_array(dns_records, dns_record(name="password"))
+    # assert is_dns_record_in_array(
+    #     dns_records, dns_record(name="password", record_type="AAAA")
+    # )
+    # assert is_dns_record_in_array(dns_records, dns_record(name="social"))
+    # assert is_dns_record_in_array(
+    #     dns_records, dns_record(name="social", record_type="AAAA")
+    # )
+    # assert is_dns_record_in_array(dns_records, dns_record(name="vpn"))
+    # assert is_dns_record_in_array(
+    #     dns_records, dns_record(name="vpn", record_type="AAAA")
+    # )
     assert is_dns_record_in_array(
         dns_records,
         dns_record(
@@ -690,30 +690,30 @@ def test_graphql_get_domain_black_account_file(
     assert is_dns_record_in_array(
         dns_records, dns_record(name="api", record_type="AAAA")
     )
-    assert is_dns_record_in_array(dns_records, dns_record(name="cloud"))
-    assert is_dns_record_in_array(
-        dns_records, dns_record(name="cloud", record_type="AAAA")
-    )
-    assert is_dns_record_in_array(dns_records, dns_record(name="git"))
-    assert is_dns_record_in_array(
-        dns_records, dns_record(name="git", record_type="AAAA")
-    )
-    assert is_dns_record_in_array(dns_records, dns_record(name="meet"))
-    assert is_dns_record_in_array(
-        dns_records, dns_record(name="meet", record_type="AAAA")
-    )
-    assert is_dns_record_in_array(dns_records, dns_record(name="password"))
-    assert is_dns_record_in_array(
-        dns_records, dns_record(name="password", record_type="AAAA")
-    )
-    assert is_dns_record_in_array(dns_records, dns_record(name="social"))
-    assert is_dns_record_in_array(
-        dns_records, dns_record(name="social", record_type="AAAA")
-    )
-    assert is_dns_record_in_array(dns_records, dns_record(name="vpn"))
-    assert is_dns_record_in_array(
-        dns_records, dns_record(name="vpn", record_type="AAAA")
-    )
+    # assert is_dns_record_in_array(dns_records, dns_record(name="cloud"))
+    # assert is_dns_record_in_array(
+    #     dns_records, dns_record(name="cloud", record_type="AAAA")
+    # )
+    # assert is_dns_record_in_array(dns_records, dns_record(name="git"))
+    # assert is_dns_record_in_array(
+    #     dns_records, dns_record(name="git", record_type="AAAA")
+    # )
+    # assert is_dns_record_in_array(dns_records, dns_record(name="meet"))
+    # assert is_dns_record_in_array(
+    #     dns_records, dns_record(name="meet", record_type="AAAA")
+    # )
+    # assert is_dns_record_in_array(dns_records, dns_record(name="password"))
+    # assert is_dns_record_in_array(
+    #     dns_records, dns_record(name="password", record_type="AAAA")
+    # )
+    # assert is_dns_record_in_array(dns_records, dns_record(name="social"))
+    # assert is_dns_record_in_array(
+    #     dns_records, dns_record(name="social", record_type="AAAA")
+    # )
+    # assert is_dns_record_in_array(dns_records, dns_record(name="vpn"))
+    # assert is_dns_record_in_array(
+    #     dns_records, dns_record(name="vpn", record_type="AAAA")
+    # )
     assert is_dns_record_in_array(
         dns_records,
         dns_record(

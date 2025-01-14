@@ -16,5 +16,8 @@ from selfprivacy_api.services import ServiceManager
 class Services:
     @strawberry.field
     def all_services(self) -> typing.List[Service]:
-        services = ServiceManager.get_all_services()
-        return [service_to_graphql_service(service) for service in services]
+        services = [
+            service_to_graphql_service(service)
+            for service in ServiceManager.get_all_services()
+        ]
+        return sorted(services, key=lambda service: service.display_name)

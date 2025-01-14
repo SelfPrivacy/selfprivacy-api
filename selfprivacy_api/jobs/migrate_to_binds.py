@@ -7,11 +7,8 @@ import logging
 
 from pydantic import BaseModel
 from selfprivacy_api.jobs import Job, JobStatus, Jobs
-from selfprivacy_api.services.bitwarden import Bitwarden
-from selfprivacy_api.services.forgejo import Forgejo
+from selfprivacy_api.services import ServiceManager
 from selfprivacy_api.services.mailserver import MailServer
-from selfprivacy_api.services.nextcloud import Nextcloud
-from selfprivacy_api.services.pleroma import Pleroma
 from selfprivacy_api.utils import ReadUserData, WriteUserData
 from selfprivacy_api.utils.huey import huey
 from selfprivacy_api.utils.block_devices import BlockDevices
@@ -109,6 +106,50 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         job=job,
         status=JobStatus.RUNNING,
         progress=0,
+        status_text="Checking if services are present.",
+    )
+
+    nextcloud_service = ServiceManager.get_service_by_id("nextcloud")
+    bitwarden_service = ServiceManager.get_service_by_id("bitwarden")
+    gitea_service = ServiceManager.get_service_by_id("gitea")
+    pleroma_service = ServiceManager.get_service_by_id("pleroma")
+
+    if not nextcloud_service:
+        Jobs.update(
+            job=job,
+            status=JobStatus.ERROR,
+            error="Nextcloud service not found.",
+        )
+        return
+
+    if not bitwarden_service:
+        Jobs.update(
+            job=job,
+            status=JobStatus.ERROR,
+            error="Bitwarden service not found.",
+        )
+        return
+
+    if not gitea_service:
+        Jobs.update(
+            job=job,
+            status=JobStatus.ERROR,
+            error="Gitea service not found.",
+        )
+        return
+
+    if not pleroma_service:
+        Jobs.update(
+            job=job,
+            status=JobStatus.ERROR,
+            error="Pleroma service not found.",
+        )
+        return
+
+    Jobs.update(
+        job=job,
+        status=JobStatus.RUNNING,
+        progress=0,
         status_text="Checking if all volumes are available.",
     )
     # Get block devices.
@@ -172,7 +213,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         status_text="Migrating Nextcloud.",
     )
 
-    Nextcloud().stop()
+    nextcloud_service.stop()
 
     # If /volumes/sda1/nextcloud or /volumes/sdb/nextcloud exists, skip it.
     if not pathlib.Path("/volumes/sda1/nextcloud").exists():
@@ -187,7 +228,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
             )
 
     # Start Nextcloud
-    Nextcloud().start()
+    nextcloud_service.start()
 
     # Perform migration of Bitwarden
 
@@ -198,7 +239,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         status_text="Migrating Bitwarden.",
     )
 
-    Bitwarden().stop()
+    bitwarden_service.stop()
 
     if not pathlib.Path("/volumes/sda1/bitwarden").exists():
         if not pathlib.Path("/volumes/sdb/bitwarden").exists():
@@ -223,7 +264,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
             )
 
     # Start Bitwarden
-    Bitwarden().start()
+    bitwarden_service.start()
 
     # Perform migration of Gitea
 
@@ -234,7 +275,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         status_text="Migrating Gitea.",
     )
 
-    Forgejo().stop()
+    gitea_service.stop()
 
     if not pathlib.Path("/volumes/sda1/gitea").exists():
         if not pathlib.Path("/volumes/sdb/gitea").exists():
@@ -245,7 +286,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
                 group="gitea",
             )
 
-    Forgejo().start()
+    gitea_service.start()
 
     # Perform migration of Mail server
 
@@ -287,7 +328,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         status_text="Migrating Pleroma.",
     )
 
-    Pleroma().stop()
+    pleroma_service.stop()
 
     if not pathlib.Path("/volumes/sda1/pleroma").exists():
         if not pathlib.Path("/volumes/sdb/pleroma").exists():
@@ -311,7 +352,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
                 group="postgres",
             )
 
-    Pleroma().start()
+    pleroma_service.start()
 
     Jobs.update(
         job=job,
