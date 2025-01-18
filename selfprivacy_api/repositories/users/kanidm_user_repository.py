@@ -28,13 +28,14 @@ from selfprivacy_api.repositories.users.abstract_user_repository import (
     AbstractUserRepository,
 )
 
+DOMAIN = get_domain()
 
 REDIS_TOKEN_KEY = "kanidm:token"
+redis = RedisPool().get_connection()
 
 KANIDM_URL = "https://127.0.0.1:3013"
 ADMIN_GROUPS = ["sp.admins"]
-
-redis = RedisPool().get_connection()
+DEFAULT_GROUPS = [f"idm_all_persons@{DOMAIN}", f"idm_all_accounts@{DOMAIN}"] 
 
 logger = logging.getLogger(__name__)
 
@@ -62,18 +63,18 @@ class KanidmAdminToken:
 
     @staticmethod
     def get() -> str:
-        kanidm_admin_token = str(redis.get(REDIS_TOKEN_KEY))
+        kanidm_admin_token = redis.get(REDIS_TOKEN_KEY)
 
-        if kanidm_admin_token is None or not KanidmAdminToken._is_token_valid(
-            kanidm_admin_token
-        ):
-            kanidm_admin_password = (
-                KanidmAdminToken._reset_and_save_idm_admin_password()
-            )
+        if kanidm_admin_token:
+            if KanidmAdminToken._is_token_valid(kanidm_admin_token):  # type: ignore
+                return kanidm_admin_token  # type: ignore
 
-            kanidm_admin_token = KanidmAdminToken._create_and_save_token(
-                kanidm_admin_password=kanidm_admin_password
-            )
+        logging.warning("Kanidm admin token is missing or invalid. Regenerating.")
+
+        kanidm_admin_password = KanidmAdminToken._reset_and_save_idm_admin_password()
+        kanidm_admin_token = KanidmAdminToken._create_and_save_token(
+            kanidm_admin_password=kanidm_admin_password
+        )
 
         return kanidm_admin_token
 
@@ -511,14 +512,17 @@ class KanidmUserRepository(AbstractUserRepository):
 
         attrs = user_data["attrs"]  # type: ignore
 
+        directmemberof = [item for item in attrs.get("directmemberof", []) if item not in DEFAULT_GROUPS]
+        memberof = [item for item in attrs.get("memberof", []) if item not in DEFAULT_GROUPS]
+
         return UserDataUser(
             username=attrs["name"][0],
             user_type=KanidmUserRepository._check_user_origin_by_memberof(
                 memberof=attrs.get("memberof", [])
             ),
             ssh_keys=[],  # Actions layer will fill this field
-            directmemberof=attrs.get("directmemberof", []),
-            memberof=attrs.get("memberof", []),
+            directmemberof=directmemberof,
+            memberof=memberof,
             displayname=attrs.get("displayname", [None])[0],
             email=attrs.get("mail", [None])[0],
         )
