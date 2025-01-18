@@ -6,7 +6,7 @@ import typing
 import subprocess
 import json
 from typing import List
-from os import path
+from os import listdir, path
 from os import makedirs
 from os.path import join
 from functools import lru_cache
@@ -25,7 +25,6 @@ import selfprivacy_api.utils.network as network_utils
 from selfprivacy_api.services.api_icon import API_ICON
 from selfprivacy_api.utils import USERDATA_FILE, DKIM_DIR, SECRETS_FILE
 from selfprivacy_api.utils.block_devices import BlockDevices
-from selfprivacy_api.utils import read_account_uri
 from selfprivacy_api.services.templated_service import (
     SP_MODULES_DEFENITIONS_PATH,
     SP_SUGGESTED_MODULES_PATH,

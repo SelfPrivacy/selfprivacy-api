@@ -91,8 +91,8 @@ class KanidmAdminToken:
                         "api-token",
                         "generate",
                         "--rw",
-                        "selfprivacy",
-                        "token2",
+                        "sp.selfprivacy-api.service-account",
+                        "kanidm_service_account_token",
                     ],
                     text=True,
                 )
