@@ -405,8 +405,12 @@ class KanidmUserRepository(AbstractUserRepository):
             if exclude_primary and user_type == UserDataUserOrigin.PRIMARY:
                 continue
 
-            directmemberof = KanidmUserRepository._remove_default_groups(groups=user_attrs.get("directmemberof", []))
-            memberof = KanidmUserRepository._remove_default_groups(groups=user_attrs.get("memberof", []))
+            directmemberof = KanidmUserRepository._remove_default_groups(
+                groups=user_attrs.get("directmemberof", [])
+            )
+            memberof = KanidmUserRepository._remove_default_groups(
+                groups=user_attrs.get("memberof", [])
+            )
 
             filled_user = UserDataUser(
                 username=user_attrs["name"][0],
@@ -519,8 +523,12 @@ class KanidmUserRepository(AbstractUserRepository):
 
         attrs = user_data["attrs"]  # type: ignore
 
-        directmemberof = KanidmUserRepository._remove_default_groups(groups=attrs.get("directmemberof", []))
-        memberof = KanidmUserRepository._remove_default_groups(groups=attrs.get("memberof", []))
+        directmemberof = KanidmUserRepository._remove_default_groups(
+            groups=attrs.get("directmemberof", [])
+        )
+        memberof = KanidmUserRepository._remove_default_groups(
+            groups=attrs.get("memberof", [])
+        )
 
         return UserDataUser(
             username=attrs["name"][0],
