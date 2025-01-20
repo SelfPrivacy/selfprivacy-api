@@ -178,6 +178,10 @@ class KanidmUserRepository(AbstractUserRepository):
     """
 
     @staticmethod
+    def _remove_default_groups(groups: list) -> list:
+        return [item for item in groups if item not in DEFAULT_GROUPS]
+
+    @staticmethod
     def _check_response_type_and_not_empty(data_type: str, response_data: Any) -> None:
         """
         Validates the type and that content of the response data is not empty.
@@ -401,12 +405,15 @@ class KanidmUserRepository(AbstractUserRepository):
             if exclude_primary and user_type == UserDataUserOrigin.PRIMARY:
                 continue
 
+            directmemberof = KanidmUserRepository._remove_default_groups(groups=user_attrs.get("directmemberof", []))
+            memberof = KanidmUserRepository._remove_default_groups(groups=user_attrs.get("memberof", []))
+
             filled_user = UserDataUser(
                 username=user_attrs["name"][0],
                 user_type=user_type,
                 ssh_keys=[],  # actions layer will fill in this field
-                directmemberof=user_attrs.get("directmemberof", []),
-                memberof=user_attrs.get("memberof", []),
+                directmemberof=directmemberof,
+                memberof=memberof,
                 displayname=user_attrs.get("displayname", [None])[0],
                 email=user_attrs.get("mail", [None])[0],
             )
@@ -512,14 +519,8 @@ class KanidmUserRepository(AbstractUserRepository):
 
         attrs = user_data["attrs"]  # type: ignore
 
-        directmemberof = [
-            item
-            for item in attrs.get("directmemberof", [])
-            if item not in DEFAULT_GROUPS
-        ]
-        memberof = [
-            item for item in attrs.get("memberof", []) if item not in DEFAULT_GROUPS
-        ]
+        directmemberof = KanidmUserRepository._remove_default_groups(groups=attrs.get("directmemberof", []))
+        memberof = KanidmUserRepository._remove_default_groups(groups=attrs.get("memberof", []))
 
         return UserDataUser(
             username=attrs["name"][0],
