@@ -35,7 +35,11 @@ redis = RedisPool().get_connection()
 
 KANIDM_URL = "https://127.0.0.1:3013"
 ADMIN_GROUPS = ["sp.admins"]
-DEFAULT_GROUPS = [f"idm_all_persons@{DOMAIN}", f"idm_all_accounts@{DOMAIN}"]
+DEFAULT_GROUPS = [
+    f"idm_all_persons@{DOMAIN}",
+    f"idm_all_accounts@{DOMAIN}",
+    f"idm_people_self_name_write@{DOMAIN}",
+]
 
 logger = logging.getLogger(__name__)
 
