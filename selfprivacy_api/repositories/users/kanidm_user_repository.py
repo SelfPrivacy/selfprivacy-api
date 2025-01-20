@@ -35,7 +35,7 @@ redis = RedisPool().get_connection()
 
 KANIDM_URL = "https://127.0.0.1:3013"
 ADMIN_GROUPS = ["sp.admins"]
-DEFAULT_GROUPS = [f"idm_all_persons@{DOMAIN}", f"idm_all_accounts@{DOMAIN}"] 
+DEFAULT_GROUPS = [f"idm_all_persons@{DOMAIN}", f"idm_all_accounts@{DOMAIN}"]
 
 logger = logging.getLogger(__name__)
 
@@ -512,8 +512,14 @@ class KanidmUserRepository(AbstractUserRepository):
 
         attrs = user_data["attrs"]  # type: ignore
 
-        directmemberof = [item for item in attrs.get("directmemberof", []) if item not in DEFAULT_GROUPS]
-        memberof = [item for item in attrs.get("memberof", []) if item not in DEFAULT_GROUPS]
+        directmemberof = [
+            item
+            for item in attrs.get("directmemberof", [])
+            if item not in DEFAULT_GROUPS
+        ]
+        memberof = [
+            item for item in attrs.get("memberof", []) if item not in DEFAULT_GROUPS
+        ]
 
         return UserDataUser(
             username=attrs["name"][0],

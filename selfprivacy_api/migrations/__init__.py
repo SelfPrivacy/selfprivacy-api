@@ -18,6 +18,7 @@ from selfprivacy_api.migrations.check_for_system_rebuild_jobs import (
 )
 from selfprivacy_api.migrations.add_roundcube import AddRoundcube
 from selfprivacy_api.migrations.add_monitoring import AddMonitoring
+from selfprivacy_api.migrations.add_auth import AddAuth
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +27,7 @@ migrations = [
     CheckForSystemRebuildJobs(),
     AddMonitoring(),
     AddRoundcube(),
+    AddAuth(),
 ]
 
 
