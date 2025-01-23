@@ -29,7 +29,7 @@ from selfprivacy_api.repositories.users.exceptions import (
 
 domain = get_domain()
 
-DEFAULT_GROUPS = [f"idm_all_persons@{domain}", "idm_all_accounts@{domain}"]
+DEFAULT_GROUPS = [f"idm_all_persons@{domain}", f"idm_all_accounts@{domain}"]
 
 logger = logging.getLogger(__name__)
 
