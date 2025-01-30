@@ -1,7 +1,6 @@
 from selfprivacy_api.migrations.migration import Migration
 
 from selfprivacy_api.models.user import UserDataUserOrigin
-from selfprivacy_api.repositories.users import ACTIVE_USERS_PROVIDER
 from selfprivacy_api.repositories.users.kanidm_user_repository import (
     ADMIN_GROUPS,
     KanidmUserRepository,
@@ -24,9 +23,6 @@ class MigrateUsersToKanidm(Migration):
         return "Migrate users to kanidm."
 
     def is_migration_needed(self) -> bool:
-        if isinstance(ACTIVE_USERS_PROVIDER, JsonUserRepository):
-            return False
-
         json_repo_users = JsonUserRepository.get_users(exclude_root=True)
         kanidm_repo_users = KanidmUserRepository.get_users(exclude_root=True)
 
