@@ -59,6 +59,8 @@ in
         pkgs.util-linux
         pkgs.e2fsprogs
         pkgs.iproute2
+        pkgs.postgresql_16.out
+        sp-fetch-remote-module
         pkgs.kanidm
       ];
       after = [ "network-online.target" ];
