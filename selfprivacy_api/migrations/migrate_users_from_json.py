@@ -1,3 +1,4 @@
+from typing import Optional
 from selfprivacy_api.migrations.migration import Migration
 
 from selfprivacy_api.models.user import UserDataUserOrigin
@@ -6,8 +7,9 @@ from selfprivacy_api.repositories.users.kanidm_user_repository import (
     KanidmUserRepository,
 )
 from selfprivacy_api.repositories.users.json_user_repository import JsonUserRepository
+from selfprivacy_api.actions.email_passwords import add_new_email_password
 
-from selfprivacy_api.actions.users import create_user
+from selfprivacy_api.utils import ReadUserData
 
 
 class MigrateUsersToKanidm(Migration):
@@ -15,6 +17,12 @@ class MigrateUsersToKanidm(Migration):
 
     def __init__(self):
         self.users_to_migrate = None
+
+    def _get_password_hash(self, username: str) -> Optional[str]:
+        with ReadUserData() as data:
+            for user in data.get("users", []):
+                if user.get("username") == username:
+                    return user.get("hashedPassword", None)
 
     def get_migration_name(self) -> str:
         return "migrate_users_to_kanidm"
@@ -35,10 +43,17 @@ class MigrateUsersToKanidm(Migration):
     def migrate(self) -> None:
         for user in self.users_to_migrate:  # type: ignore
 
+            password_hash = self._get_password_hash(username=user.username)
+            if password_hash:
+                add_new_email_password(
+                    username=user.username,
+                    password_hash=password_hash,
+                )
+
             if user.user_type == UserDataUserOrigin.PRIMARY:
-                create_user(
+                KanidmUserRepository.create_user(
                     username=user.username,
                     directmemberof=ADMIN_GROUPS,
                 )
-
-            create_user(username=user.username)
+            else:
+                KanidmUserRepository.create_user(username=user.username)

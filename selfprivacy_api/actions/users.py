@@ -5,13 +5,13 @@ import uuid
 import logging
 from typing import Optional
 
+from selfprivacy_api.utils import get_domain, is_username_forbidden
 from selfprivacy_api.utils.strings import PLEASE_UPDATE_APP_TEXT
+
 from selfprivacy_api.models.group import Group
 from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
 
-from selfprivacy_api.utils import get_domain, is_username_forbidden
 from selfprivacy_api.actions.ssh import get_ssh_keys
-
 
 from selfprivacy_api.repositories.users.json_user_repository import JsonUserRepository
 from selfprivacy_api.repositories.users import ACTIVE_USERS_PROVIDER
@@ -26,6 +26,7 @@ from selfprivacy_api.repositories.users.exceptions import (
     UserAlreadyExists,
     InvalidConfiguration,
 )
+
 
 domain = get_domain()
 
