@@ -25,4 +25,4 @@ class UserDataUser(BaseModel):
         None  # in logic graphql will return "username" if "displayname" None
     )
     email: Optional[str] = None
-    email_credentials_metadata = list[EmailPasswordMetadata]
+    email_credentials_metadata: list[EmailPasswordMetadata] = []
