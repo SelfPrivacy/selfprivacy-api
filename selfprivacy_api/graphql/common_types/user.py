@@ -11,6 +11,10 @@ from selfprivacy_api.actions.users import get_users as actions_get_users
 from selfprivacy_api.graphql.mutations.mutation_interface import (
     MutationReturnInterface,
 )
+from selfprivacy_api.graphql.common_types.email_password_metadata import (
+    EmailPasswordMetadata,
+    get_email_credentials_metadata,
+)
 
 
 @strawberry.enum
@@ -30,6 +34,13 @@ class User:
     memberof: Optional[list[str]] = strawberry.field(default_factory=list)
     displayname: Optional[str] = None
     email: Optional[str] = None
+
+    email_password_metadata: Optional[list[EmailPasswordMetadata]] = strawberry.field(
+        default_factory=list,
+        resolver=lambda info: get_email_credentials_metadata(
+            info.context["user"]["username"]
+        ),
+    )
 
 
 @strawberry.type

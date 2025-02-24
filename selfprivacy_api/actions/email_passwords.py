@@ -10,7 +10,7 @@ def get_email_credentials_metadata(username: str) -> list[EmailPasswordMetadata]
     )
 
 
-def add_new_email_password(username: str, password_hash: str) -> None:
+def add_email_password(username: str) -> None:
     credential_metadata = EmailPasswordMetadata(
         uuid=str(uuid4()),
         display_name="Legacy password",
@@ -18,7 +18,7 @@ def add_new_email_password(username: str, password_hash: str) -> None:
 
     ACTIVE_EMAIL_PASSWORD_PROVIDER.add_new_email_password(
         username=username,
-        password_hash=password_hash,
+        password_hash=str(uuid4()),
         credential_metadata=credential_metadata,
     )
 
