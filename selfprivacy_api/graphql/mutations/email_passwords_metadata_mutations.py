@@ -1,6 +1,7 @@
 """Email passwords metadata management module"""
 
 # pylint: disable=too-few-public-methods
+from uuid import uuid4
 import strawberry
 
 from selfprivacy_api.graphql import IsAuthenticated
@@ -23,7 +24,7 @@ class EmailPasswordMetadataMutations:
         username: str,
     ) -> GenericMutationReturn:
         try:
-            action_add_email_password(username=username)
+            action_add_email_password(username=username, password_hash=str(uuid4()))
         except Exception as error:
             return GenericMutationReturn(
                 success=False,
