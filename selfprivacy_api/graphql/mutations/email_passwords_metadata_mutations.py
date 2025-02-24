@@ -15,7 +15,7 @@ from selfprivacy_api.actions.email_passwords import (
 
 
 @strawberry.type
-class EmailPasswordMetadataMutations:
+class EmailPasswordsMetadataMutations:
     """Mutations change email passwords metadata records"""
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
