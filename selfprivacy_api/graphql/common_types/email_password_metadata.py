@@ -21,6 +21,9 @@ def get_email_credentials_metadata(username: str) -> list[EmailPasswordMetadata]
         username=username
     )
 
+    if not email_credintials_metadata_list:
+        return []
+
     return [
         EmailPasswordMetadata(
             uuid=email_credintial_metadata.uuid,
