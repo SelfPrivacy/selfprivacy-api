@@ -36,9 +36,7 @@ class User:
     email: Optional[str] = None
 
     email_password_metadata: Optional[list[EmailPasswordMetadata]] = strawberry.field(
-        resolver=lambda info: get_email_credentials_metadata(
-            info.context["user"]["username"]
-        )
+        resolver=lambda root, info: get_email_credentials_metadata(username=root.username)  # root == self
     )
 
 
