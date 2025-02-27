@@ -5,7 +5,7 @@ from selfprivacy_api.repositories.email_password import ACTIVE_EMAIL_PASSWORD_PR
 
 
 def get_email_credentials_metadata(username: str) -> list[EmailPasswordMetadata]:
-    return ACTIVE_EMAIL_PASSWORD_PROVIDER.get_all_email_passwords_matadata(
+    return ACTIVE_EMAIL_PASSWORD_PROVIDER.get_all_email_passwords_metadata(
         username=username,
     )
 
