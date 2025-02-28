@@ -5,7 +5,7 @@ import re
 import logging
 import requests  # type: ignore
 
-from selfprivacy_api.models.group import Group
+from selfprivacy_api.models.group import Group, get_default_groops
 from selfprivacy_api.repositories.users.exceptions import (
     NoPasswordResetLinkFoundInResponse,
     UserAlreadyExists,
@@ -28,18 +28,11 @@ from selfprivacy_api.repositories.users.abstract_user_repository import (
     AbstractUserRepository,
 )
 
-DOMAIN = get_domain()
 
 REDIS_TOKEN_KEY = "kanidm:token"
-redis = RedisPool().get_connection()
 
 KANIDM_URL = "https://127.0.0.1:3013"
 ADMIN_GROUPS = ["sp.admins"]
-DEFAULT_GROUPS = [
-    f"idm_all_persons@{DOMAIN}",
-    f"idm_all_accounts@{DOMAIN}",
-    f"idm_people_self_name_write@{DOMAIN}",
-]
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +60,7 @@ class KanidmAdminToken:
 
     @staticmethod
     def get() -> str:
+        redis = RedisPool().get_connection()
         kanidm_admin_token = redis.get(REDIS_TOKEN_KEY)
 
         if kanidm_admin_token:
@@ -84,6 +78,8 @@ class KanidmAdminToken:
 
     @staticmethod
     def _create_and_save_token(kanidm_admin_password: str) -> str:
+        redis = RedisPool().get_connection()
+
         with temporary_env_var(key="KANIDM_PASSWORD", value=kanidm_admin_password):
             try:
                 subprocess.run(["kanidm", "login", "-D", "idm_admin"], check=True)
@@ -173,6 +169,7 @@ class KanidmAdminToken:
 
     @staticmethod
     def _delete_kanidm_token_from_db() -> None:
+        redis = RedisPool().get_connection()
         redis.delete("kanidm:token")
 
 
@@ -183,7 +180,7 @@ class KanidmUserRepository(AbstractUserRepository):
 
     @staticmethod
     def _remove_default_groups(groups: list) -> list:
-        return [item for item in groups if item not in DEFAULT_GROUPS]
+        return [item for item in groups if item not in get_default_groops()]
 
     @staticmethod
     def _check_response_type_and_not_empty(data_type: str, response_data: Any) -> None:

@@ -2,6 +2,8 @@ from typing import Optional
 
 from pydantic import BaseModel
 
+from selfprivacy_api.utils import get_domain
+
 
 class Group(BaseModel):
     """
@@ -40,3 +42,13 @@ class Group(BaseModel):
     directmemberof: Optional[list[str]] = []
     spn: Optional[str] = None
     description: Optional[str] = None
+
+
+def get_default_groops() -> list[str]:
+    domain = get_domain()
+
+    return [
+        f"idm_all_persons@{domain}",
+        f"idm_all_accounts@{domain}",
+        f"idm_people_self_name_write@{domain}",
+    ]
