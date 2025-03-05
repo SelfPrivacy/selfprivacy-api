@@ -9,9 +9,8 @@ import socket as socket_module
 import subprocess
 from typing import Optional
 
-from . import SOCKET_PATH
+from selfprivacy_api.root_daemon import SOCKET_PATH
 
-# from selfprivacy_api.services.templated_service import SP_MODULES_DEFENITIONS_PATH
 
 BUFFER_SIZE = 1024
 
@@ -94,7 +93,6 @@ def init(socket_path=SOCKET_PATH) -> socket_module.socket:
     sock = socket_module.socket(socket_module.AF_UNIX, socket_module.SOCK_STREAM)
     sock.bind(socket_path)
     assert os.path.exists(socket_path)
-    # raise ValueError(socket_path)
     return sock
 
 
