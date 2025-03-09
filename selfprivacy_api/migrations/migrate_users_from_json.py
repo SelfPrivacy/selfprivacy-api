@@ -12,8 +12,8 @@ from selfprivacy_api.actions.email_passwords import add_email_password
 from selfprivacy_api.utils import ReadUserData
 
 
-class MigrateUsersToKanidm(Migration):
-    """Migrate users to kanidm."""
+class MigrateUsersFromJson(Migration):
+    """Migrate users to kanidm, passwords to redis"""
 
     def __init__(self):
         self.users_to_migrate = None

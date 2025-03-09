@@ -23,7 +23,9 @@ from selfprivacy_api.graphql.mutations.services_mutations import ServicesMutatio
 from selfprivacy_api.graphql.mutations.storage_mutations import StorageMutations
 from selfprivacy_api.graphql.mutations.system_mutations import SystemMutations
 from selfprivacy_api.graphql.mutations.backup_mutations import BackupMutations
-from selfprivacy_api.graphql.mutations.email_passwords_metadata_mutations import EmailPasswordsMetadataMutations
+from selfprivacy_api.graphql.mutations.email_passwords_metadata_mutations import (
+    EmailPasswordsMetadataMutations,
+)
 
 from selfprivacy_api.graphql.queries.api_queries import Api
 from selfprivacy_api.graphql.queries.backup import Backup

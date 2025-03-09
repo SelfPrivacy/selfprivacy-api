@@ -1,5 +1,5 @@
 from typing import Optional
-
+from uuid import uuid4
 
 from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
 from selfprivacy_api.utils import (
@@ -18,6 +18,7 @@ from selfprivacy_api.repositories.users.exceptions import (
     UserNotFound,
     PasswordIsEmpty,
 )
+from selfprivacy_api.models.group import Group
 
 
 class JsonUserRepository(AbstractUserRepository):
@@ -66,11 +67,14 @@ class JsonUserRepository(AbstractUserRepository):
     @staticmethod
     def create_user(
         username: str,
-        password: str,
         directmemberof: Optional[list[str]] = None,
         displayname: Optional[str] = None,
+        password: Optional[str] = None,
     ) -> None:
         """Creates a new user"""
+
+        if password is None:
+            password = str(uuid4())
 
         hashed_password = JsonUserRepository._check_and_hash_password(password)
 
@@ -111,10 +115,13 @@ class JsonUserRepository(AbstractUserRepository):
     @staticmethod
     def update_user(
         username: str,
-        password: str,
         displayname: Optional[str] = None,
+        password: Optional[str] = None,
     ) -> None:
         """Updates the password of an existing user"""
+
+        if password is None:
+            password = str(uuid4())
 
         hashed_password = JsonUserRepository._check_and_hash_password(password)
 
@@ -166,3 +173,29 @@ class JsonUserRepository(AbstractUserRepository):
                     )
 
             return None
+
+    @staticmethod
+    def generate_password_reset_link(username: str) -> str:
+        """
+        ! Not implemented in JsonUserRepository !
+        """
+        return ""
+
+    @staticmethod
+    def get_groups() -> list[Group]:
+        """
+        ! Not implemented in JsonUserRepository !
+        """
+        return []
+
+    @staticmethod
+    def add_users_to_group(users: list[str], group_name: str) -> None:
+        """
+        ! Not implemented in JsonUserRepository !
+        """
+
+    @staticmethod
+    def remove_users_from_group(users: list[str], group_name: str) -> None:
+        """
+        ! Not implemented in JsonUserRepository !
+        """

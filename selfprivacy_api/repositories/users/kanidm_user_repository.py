@@ -325,6 +325,7 @@ class KanidmUserRepository(AbstractUserRepository):
         username: str,
         directmemberof: Optional[list[str]] = None,
         displayname: Optional[str] = None,
+        password: Optional[str] = None,
     ) -> None:
         """
         Creates a new user.
@@ -451,6 +452,7 @@ class KanidmUserRepository(AbstractUserRepository):
     def update_user(
         username: str,
         displayname: Optional[str] = None,
+        password: Optional[str] = None,
     ) -> None:
         """
         Update user information.

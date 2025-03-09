@@ -49,7 +49,9 @@ def get_users(
         exclude_primary=exclude_primary, exclude_root=exclude_root
     )
 
-    if isinstance(ACTIVE_USERS_PROVIDER, JsonUserRepository):
+    # TODO: isinstance fail, why?
+    # if isinstance(ACTIVE_USERS_PROVIDER, JsonUserRepository):
+    if not ACTIVE_USERS_PROVIDER == JsonUserRepository:
         for user in users:
             try:
                 user.ssh_keys = get_ssh_keys(username=user.username)
@@ -57,13 +59,12 @@ def get_users(
                 pass
 
         if not exclude_root:
-            users.append(
-                UserDataUser(
-                    username="root",
-                    user_type=UserDataUserOrigin.ROOT,
-                    ssh_keys=get_ssh_keys(username=user.username),
-                )
+            root_user = UserDataUser(
+                username="root",
+                user_type=UserDataUserOrigin.ROOT,
+                ssh_keys=get_ssh_keys(username="root"),
             )
+            users.append(root_user)
 
     return users
 
@@ -90,8 +91,9 @@ def create_user(
     if displayname and len(displayname) >= 255:
         raise DisplaynameTooLong
 
-    # need to maintain the logic of the old repository, since ssh management uses it.
-    if not isinstance(ACTIVE_USERS_PROVIDER, JsonUserRepository):
+    # # need to maintain the logic of the old repository, since ssh management uses it.
+    # if not isinstance(ACTIVE_USERS_PROVIDER, JsonUserRepository):
+    if not ACTIVE_USERS_PROVIDER == JsonUserRepository:
         try:
             JsonUserRepository.create_user(
                 username=username, password=str(uuid.uuid4())
@@ -103,6 +105,7 @@ def create_user(
         username=username,
         directmemberof=directmemberof,
         displayname=displayname,
+        password=password,
     )
 
 
@@ -116,13 +119,14 @@ def delete_user(username: str) -> None:
         raise UserNotFound
     finally:
         # need to maintain the logic of the old repository, since ssh management uses it.
-        if not isinstance(ACTIVE_USERS_PROVIDER, JsonUserRepository):
+        # if not isinstance(ACTIVE_USERS_PROVIDER, JsonUserRepository):
+        if not ACTIVE_USERS_PROVIDER == JsonUserRepository:
             try:
                 JsonUserRepository.delete_user(username=username)
             except (UserNotFound, UserIsProtected):
                 pass
 
-    if user.user_type == UserDataUserOrigin.PRIMARY:
+    if user and user.user_type == UserDataUserOrigin.PRIMARY:
         raise UserIsProtected
 
     ACTIVE_USERS_PROVIDER.delete_user(username=username)
@@ -130,9 +134,9 @@ def delete_user(username: str) -> None:
 
 def update_user(
     username: str,
-    password: Optional[str] = None,
     directmemberof: Optional[list[str]] = None,
     displayname: Optional[str] = None,
+    password: Optional[str] = None,
 ) -> None:
 
     if password:
@@ -182,8 +186,9 @@ def update_user(
                 )
 
 
-def get_user_by_username(username: str) -> UserDataUser:
-    if isinstance(ACTIVE_USERS_PROVIDER, JsonUserRepository):
+def get_user_by_username(username: str) -> Optional[UserDataUser]:
+    # if isinstance(ACTIVE_USERS_PROVIDER, JsonUserRepository):
+    if not ACTIVE_USERS_PROVIDER == JsonUserRepository:
         return ACTIVE_USERS_PROVIDER.get_user_by_username(username=username)
 
     if username == "root":
@@ -195,10 +200,11 @@ def get_user_by_username(username: str) -> UserDataUser:
 
     user = ACTIVE_USERS_PROVIDER.get_user_by_username(username=username)
 
-    try:
-        user.ssh_keys = get_ssh_keys(username=user.username)
-    except UserNotFound:
-        pass
+    if user:
+        try:
+            user.ssh_keys = get_ssh_keys(username=user.username)
+        except UserNotFound:
+            pass
 
     return user
 

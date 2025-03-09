@@ -10,9 +10,9 @@ class AbstractUserRepository(ABC):
     @abstractmethod
     def create_user(
         username: str,
-        password: Optional[str] = None,
         directmemberof: Optional[list[str]] = None,
         displayname: Optional[str] = None,
+        password: Optional[str] = None,  # Legacy
     ) -> None:
         """
         Creates a new user.
@@ -43,6 +43,7 @@ class AbstractUserRepository(ABC):
     def update_user(
         username: str,
         displayname: Optional[str] = None,
+        password: Optional[str] = None,  # Legacy
     ) -> None:
         """
         Update user information.
@@ -53,7 +54,7 @@ class AbstractUserRepository(ABC):
 
     @staticmethod
     @abstractmethod
-    def get_user_by_username(username: str) -> UserDataUser:
+    def get_user_by_username(username: str) -> Optional[UserDataUser]:
         """
         Retrieves user data (UserDataUser) by username.
         """
@@ -72,7 +73,7 @@ class AbstractUserRepository(ABC):
 
     @staticmethod
     @abstractmethod
-    def groups_list() -> list[Group]:
+    def get_groups() -> list[Group]:
         """
         Get groups list.
         """
