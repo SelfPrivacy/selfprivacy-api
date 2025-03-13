@@ -40,7 +40,7 @@ class MigrateUsersFromJson(Migration):
         return "Migrate users to kanidm, passwords to redis."
 
     def is_migration_needed(self) -> bool:
-        if self._get_users_to_migrate:
+        if self._get_users_to_migrate():
             return True
         return False
 
