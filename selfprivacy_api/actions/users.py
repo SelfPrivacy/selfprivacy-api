@@ -49,8 +49,6 @@ def get_users(
         exclude_primary=exclude_primary, exclude_root=exclude_root
     )
 
-    # TODO: isinstance fail, why?
-    # if isinstance(ACTIVE_USERS_PROVIDER, JsonUserRepository):
     if not ACTIVE_USERS_PROVIDER == JsonUserRepository:
         for user in users:
             try:
@@ -91,8 +89,6 @@ def create_user(
     if displayname and len(displayname) >= 255:
         raise DisplaynameTooLong
 
-    # # need to maintain the logic of the old repository, since ssh management uses it.
-    # if not isinstance(ACTIVE_USERS_PROVIDER, JsonUserRepository):
     if not ACTIVE_USERS_PROVIDER == JsonUserRepository:
         try:
             JsonUserRepository.create_user(
@@ -118,8 +114,6 @@ def delete_user(username: str) -> None:
     except UserNotFound:
         raise UserNotFound
     finally:
-        # need to maintain the logic of the old repository, since ssh management uses it.
-        # if not isinstance(ACTIVE_USERS_PROVIDER, JsonUserRepository):
         if not ACTIVE_USERS_PROVIDER == JsonUserRepository:
             try:
                 JsonUserRepository.delete_user(username=username)
@@ -146,7 +140,7 @@ def update_user(
         raise UserIsProtected
 
     if displayname:
-        if isinstance(ACTIVE_USERS_PROVIDER, JsonUserRepository):
+        if ACTIVE_USERS_PROVIDER == JsonUserRepository:
             raise ApiUsingWrongUserRepository
         if len(displayname) >= 255:
             raise DisplaynameTooLong
@@ -157,7 +151,7 @@ def update_user(
         )
 
     if directmemberof is not None:
-        if isinstance(ACTIVE_USERS_PROVIDER, JsonUserRepository):
+        if ACTIVE_USERS_PROVIDER == JsonUserRepository:
             raise ApiUsingWrongUserRepository
 
         user = ACTIVE_USERS_PROVIDER.get_user_by_username(username=username)
@@ -187,7 +181,6 @@ def update_user(
 
 
 def get_user_by_username(username: str) -> Optional[UserDataUser]:
-    # if isinstance(ACTIVE_USERS_PROVIDER, JsonUserRepository):
     if not ACTIVE_USERS_PROVIDER == JsonUserRepository:
         return ACTIVE_USERS_PROVIDER.get_user_by_username(username=username)
 
@@ -210,7 +203,7 @@ def get_user_by_username(username: str) -> Optional[UserDataUser]:
 
 
 def generate_password_reset_link(username: str) -> str:
-    if isinstance(ACTIVE_USERS_PROVIDER, JsonUserRepository):
+    if ACTIVE_USERS_PROVIDER == JsonUserRepository:
         raise ApiUsingWrongUserRepository
 
     if username == "root":
@@ -220,7 +213,7 @@ def generate_password_reset_link(username: str) -> str:
 
 
 def get_groups() -> list[Group]:
-    if isinstance(ACTIVE_USERS_PROVIDER, JsonUserRepository):
+    if ACTIVE_USERS_PROVIDER == JsonUserRepository:
         raise ApiUsingWrongUserRepository
 
     return ACTIVE_USERS_PROVIDER.get_groups()
