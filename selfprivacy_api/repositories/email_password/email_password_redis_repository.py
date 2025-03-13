@@ -48,6 +48,7 @@ class EmailPasswordManager(AbstractEmailPasswordManager):
         password_data = {
             "password_hash": password_hash,
             "display_name": credential_metadata.display_name,
+            "created_at": credential_metadata.created_at,
         }
 
         redis.hmset(key, password_data)

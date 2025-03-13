@@ -54,8 +54,20 @@ class MigrateUsersFromJson(Migration):
                 if user.user_type == UserDataUserOrigin.PRIMARY:
                     KanidmUserRepository.create_user(
                         username=user.username,
-                        directmemberof=ADMIN_GROUPS,
+                        directmemberof=ADMIN_GROUPS,  # TODO
                     )
+
+                # [ 635µs | 22.47% / 100.00% ] method: POST | uri: /v1/person | version: HTTP/1.1
+                # handle_create [ 493µs | 43.81% / 77.53% ]
+                # ┝━ validate_client_auth_info_to_ident [ 214µs | 33.72% ]
+                # │  ┕━ ｉ [info]: A valid session value exists for this token | event_tag_id: 10
+                # ┝━ ｉ [info]: create initiator | event_tag_id: 10 | name: User( selfprivacy@bloodwine.cyou, bfe7c16a-5654-4c01-ad23-9e6b68901410 ) (e7bb32d6-03fd-409d-94ae-72aba8951bed, read write)
+                # ┝━ ｉ [info]: entry matches acs | event_tag_id: 11 | entry_name: aadin | acs: "idm_acp_people_create"
+                # ┝━ 🚨 [error]: create_attrs is not a subset of allowed | event_tag_id: 12
+                # ┝━ 🚨 [error]: create: {"class", "directmemberof", "displayname", "mail", "name"} !⊆ allowed: {"account_expire", "account_valid_from", "class", "displayname", "mail", "name", "uuid"} | event_tag_id: 12
+                # ┕━ ｉ [info]: denied ❌ - create may not proceed | event_tag_id: 11
+                # 🚧 [warn]:  | latency: 661.49µs | status_code: 403 | kopid: "43800134-7c79-4cd5-9d10-d8929455d82f" | msg: "client error"
+
                 else:
                     KanidmUserRepository.create_user(username=user.username)
 
@@ -63,6 +75,7 @@ class MigrateUsersFromJson(Migration):
                     add_email_password(
                         username=user.username,
                         password_hash=password_hash,
+                        with_zero_uuid=True,
                     )
             except Exception as error:
                 logging.error(f"Failed to migrate {user.username}. Error: {str(error)}")

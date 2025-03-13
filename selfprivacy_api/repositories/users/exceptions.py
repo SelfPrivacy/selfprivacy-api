@@ -73,16 +73,6 @@ class InvalidConfiguration(Exception):
         return "Invalid configuration, userdata is broken"
 
 
-class SelfPrivacyAppIsOutdate(Exception):
-    """
-    SelfPrivacy app is out of date, please update. Some important functions are not working at the moment.
-    """
-
-    @staticmethod
-    def get_error_message() -> str:
-        return PLEASE_UPDATE_APP_TEXT
-
-
 class NoPasswordResetLinkFoundInResponse(Exception):
     """No password reset link was found in the Kanidm response."""
 
@@ -97,3 +87,13 @@ class DisplaynameTooLong(Exception):
     @staticmethod
     def get_error_message() -> str:
         return "Display name is too long. Must be less than 16 characters"
+
+
+# class SelfPrivacyAppIsOutdate(Exception):
+#     """
+#     SelfPrivacy app is out of date, please update. Some important functions are not working at the moment.
+#     """
+
+#     @staticmethod
+#     def get_error_message() -> str:
+#         return PLEASE_UPDATE_APP_TEXT

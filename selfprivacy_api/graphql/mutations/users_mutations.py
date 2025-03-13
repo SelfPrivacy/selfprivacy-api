@@ -39,7 +39,6 @@ from selfprivacy_api.repositories.users.exceptions import (
     UsernameNotAlphanumeric,
     UsernameTooLong,
     UserNotFound,
-    SelfPrivacyAppIsOutdate,
 )
 from selfprivacy_api.repositories.users.exceptions_kanidm import (
     FailedToGetValidKanidmToken,
@@ -185,7 +184,6 @@ class UsersMutations:
             )
         except (
             PasswordIsEmpty,
-            SelfPrivacyAppIsOutdate,
             KanidmDidNotReturnAdminPassword,
             KanidmQueryError,
             DisplaynameTooLong,
