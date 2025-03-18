@@ -46,3 +46,13 @@ class AbstractEmailPasswordManager(ABC):
             username (str)
             uuid (str): The unique identifier of the password entry to be removed.
         """
+
+    @staticmethod
+    def delete_all_email_passwords(username: str) -> None:
+        """
+        Remove all stored email passwords along with their metadata
+        for a specified user.
+
+        Args:
+            username (str): The username whose email passwords should be deleted.
+        """

@@ -42,7 +42,6 @@ class EmailPasswordManager(AbstractEmailPasswordManager):
     def add_new_email_password(
         username: str, password_hash: str, credential_metadata: EmailPasswordMetadata
     ) -> None:
-        """ """
         key = f"priv/user/{username}/passwords/{credential_metadata.uuid}"
 
         password_data = {
@@ -58,3 +57,12 @@ class EmailPasswordManager(AbstractEmailPasswordManager):
         key = f"priv/user/{username}/passwords/{uuid}"
 
         redis.delete(key)
+
+    @staticmethod
+    def delete_all_email_passwords(username: str) -> None:
+        pattern = f"priv/user/{username}/passwords/*"
+
+        keys = redis.keys(pattern)
+
+        if keys:
+            redis.delete(*keys)

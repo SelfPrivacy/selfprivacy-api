@@ -4,7 +4,8 @@ from selfprivacy_api.migrations.migration import Migration
 
 from selfprivacy_api.models.user import UserDataUserOrigin
 from selfprivacy_api.repositories.users.kanidm_user_repository import (
-    ADMIN_GROUPS,
+    SP_ADMIN_GROUPS,
+    SP_DEFOULT_GROUPS,
     KanidmUserRepository,
 )
 from selfprivacy_api.repositories.users.json_user_repository import JsonUserRepository
@@ -54,7 +55,7 @@ class MigrateUsersFromJson(Migration):
                 if user.user_type == UserDataUserOrigin.PRIMARY:
                     KanidmUserRepository.create_user(
                         username=user.username,
-                        directmemberof=ADMIN_GROUPS,  # TODO
+                        directmemberof=SP_ADMIN_GROUPS,  # TODO
                     )
 
                 # [ 635µs | 22.47% / 100.00% ] method: POST | uri: /v1/person | version: HTTP/1.1
@@ -69,7 +70,9 @@ class MigrateUsersFromJson(Migration):
                 # 🚧 [warn]:  | latency: 661.49µs | status_code: 403 | kopid: "43800134-7c79-4cd5-9d10-d8929455d82f" | msg: "client error"
 
                 else:
-                    KanidmUserRepository.create_user(username=user.username)
+                    KanidmUserRepository.create_user(
+                        username=user.username, directmemberof=SP_DEFOULT_GROUPS
+                    )
 
                 if password_hash:
                     add_email_password(

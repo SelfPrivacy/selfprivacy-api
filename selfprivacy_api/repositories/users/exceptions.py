@@ -1,6 +1,3 @@
-from selfprivacy_api.utils.strings import PLEASE_UPDATE_APP_TEXT
-
-
 class UserNotFound(Exception):
     """User not found"""
 
@@ -88,6 +85,8 @@ class DisplaynameTooLong(Exception):
     def get_error_message() -> str:
         return "Display name is too long. Must be less than 16 characters"
 
+
+# from selfprivacy_api.utils.strings import PLEASE_UPDATE_APP_TEXT
 
 # class SelfPrivacyAppIsOutdate(Exception):
 #     """

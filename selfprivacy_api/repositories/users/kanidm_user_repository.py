@@ -32,7 +32,8 @@ from selfprivacy_api.repositories.users.abstract_user_repository import (
 REDIS_TOKEN_KEY = "kanidm:token"
 
 KANIDM_URL = "https://127.0.0.1:3013"
-ADMIN_GROUPS = ["sp.admins"]
+SP_ADMIN_GROUPS = ["sp.admins"]
+SP_DEFAULT_GROUPS = ["sp.full_users"]
 
 logger = logging.getLogger(__name__)
 
@@ -221,7 +222,7 @@ class KanidmUserRepository(AbstractUserRepository):
             UserDataUserOrigin: The origin type of the user (PRIMARY or NORMAL).
         """
 
-        if all(group in memberof for group in ADMIN_GROUPS):
+        if all(group in memberof for group in SP_ADMIN_GROUPS):
             return UserDataUserOrigin.PRIMARY
         else:
             return UserDataUserOrigin.NORMAL
