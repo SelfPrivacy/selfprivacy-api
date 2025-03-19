@@ -51,7 +51,7 @@ from selfprivacy_api.repositories.users.exceptions_kanidm import (
 from selfprivacy_api.utils.strings import PLEASE_UPDATE_APP_TEXT
 
 
-FAILED_TO_SETUP_PASSWORD_TEXT = "Failed to set a password for a user. The problem occurred due to an old version of the SelfPrivacy app."
+FAILED_TO_SETUP_SSO_PASSWORD_TEXT = "Password has been changed only for email, to change it in other services, please update the SelfPrivacy app."
 
 
 def return_failed_mutation_return(
@@ -122,13 +122,15 @@ class UsersMutations:
             return return_failed_mutation_return(
                 message=error.get_error_message(),
                 code=409,
+                username=user.username,
             )
 
         if user.password:
-            return return_failed_mutation_return(
-                message=f"{FAILED_TO_SETUP_PASSWORD_TEXT} {PLEASE_UPDATE_APP_TEXT}",
+            return UserMutationReturn(
+                success=True,
+                message=f"{FAILED_TO_SETUP_SSO_PASSWORD_TEXT} {PLEASE_UPDATE_APP_TEXT}",
                 code=201,
-                username=user.username,
+                user=get_user_by_username(user.username),
             )
 
         return UserMutationReturn(
@@ -193,11 +195,21 @@ class UsersMutations:
         ) as error:
             return return_failed_mutation_return(
                 message=error.get_error_message(),
+                username=user.username,
             )
         except (UserNotFound, UserOrGroupNotFound) as error:
             return return_failed_mutation_return(
                 message=error.get_error_message(),
                 code=404,
+                username=user.username,
+            )
+
+        if user.password:
+            return UserMutationReturn(
+                success=True,
+                message=f"{FAILED_TO_SETUP_SSO_PASSWORD_TEXT} {PLEASE_UPDATE_APP_TEXT}",
+                code=200,
+                user=get_user_by_username(user.username),
             )
 
         return UserMutationReturn(
