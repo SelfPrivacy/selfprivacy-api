@@ -121,6 +121,11 @@ class DeprecatedSystemMutations:
         "system",
     )
 
+    set_ssh_settings: GenericMutationReturn = deprecated_mutation(
+        SystemMutations.change_ssh_settings,
+        "system",
+    )
+
 
 @strawberry.type
 class DeprecatedUsersMutations:

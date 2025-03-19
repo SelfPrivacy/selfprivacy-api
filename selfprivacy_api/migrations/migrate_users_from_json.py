@@ -5,7 +5,7 @@ from selfprivacy_api.migrations.migration import Migration
 from selfprivacy_api.models.user import UserDataUserOrigin
 from selfprivacy_api.repositories.users.kanidm_user_repository import (
     SP_ADMIN_GROUPS,
-    SP_DEFOULT_GROUPS,
+    SP_DEFAULT_GROUPS,
     KanidmUserRepository,
 )
 from selfprivacy_api.repositories.users.json_user_repository import JsonUserRepository
@@ -71,7 +71,7 @@ class MigrateUsersFromJson(Migration):
 
                 else:
                     KanidmUserRepository.create_user(
-                        username=user.username, directmemberof=SP_DEFOULT_GROUPS
+                        username=user.username, directmemberof=SP_DEFAULT_GROUPS
                     )
 
                 if password_hash:

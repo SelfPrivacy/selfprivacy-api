@@ -17,7 +17,7 @@ from selfprivacy_api.actions.ssh import get_ssh_keys
 
 from selfprivacy_api.repositories.users.json_user_repository import JsonUserRepository
 from selfprivacy_api.repositories.users import ACTIVE_USERS_PROVIDER
-from selfprivacy_api.repositories.users.kanidm_user_repository import SP_DEFOULT_GROUPS
+from selfprivacy_api.repositories.users.kanidm_user_repository import SP_DEFAULT_GROUPS
 from selfprivacy_api.repositories.users.exceptions import (
     DisplaynameTooLong,
     UserIsProtected,
@@ -112,7 +112,7 @@ def create_user(
 
     ACTIVE_USERS_PROVIDER.create_user(
         username=username,
-        directmemberof=directmemberof if directmemberof else SP_DEFOULT_GROUPS,
+        directmemberof=directmemberof if directmemberof else SP_DEFAULT_GROUPS,
         displayname=displayname,
         password=password,
     )
