@@ -68,8 +68,6 @@ def set_ssh_settings(
             data["ssh"] = {}
         if enable is not None:
             data["ssh"]["enable"] = enable
-        if password_authentication is not None:
-            data["ssh"]["passwordAuthentication"] = password_authentication
 
 
 def create_ssh_key(username: str, ssh_key: str):

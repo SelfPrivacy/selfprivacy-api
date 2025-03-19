@@ -73,7 +73,9 @@ class SshSettings:
     """SSH settings and root SSH keys"""
 
     enable: bool
-    password_authentication: bool
+    password_authentication: bool = strawberry.field(
+        deprecation_reason="For security reasons, password authentication is no longer supported. Please use SSH keys."
+    )
     root_ssh_keys: typing.List[str]
 
 
@@ -82,7 +84,7 @@ def get_ssh_settings() -> SshSettings:
     settings = ssh_actions.get_ssh_settings()
     return SshSettings(
         enable=settings.enable,
-        password_authentication=settings.passwordAuthentication,
+        password_authentication=False,
         root_ssh_keys=settings.rootKeys,
     )
 

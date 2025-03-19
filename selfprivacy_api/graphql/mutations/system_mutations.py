@@ -50,7 +50,7 @@ class SSHSettingsInput:
     """Input type for SSH settings"""
 
     enable: bool
-    password_authentication: bool
+    password_authentication: Optional[bool]
 
 
 @strawberry.input
