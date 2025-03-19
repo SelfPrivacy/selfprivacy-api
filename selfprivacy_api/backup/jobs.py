@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Iterable
 
 from selfprivacy_api.models.backup.snapshot import Snapshot
 from selfprivacy_api.jobs import Jobs, Job, JobStatus
@@ -120,21 +120,47 @@ def add_restore_job(snapshot: Snapshot) -> Job:
     return job
 
 
+def last_if_any(jobs: List[Job]) -> Optional[Job]:
+    if not jobs:
+        return None
+    newest_jobs = sorted(jobs, key=lambda x: x.created_at, reverse=True)
+    return newest_jobs[0]
+
+
 def get_job_by_type(type_id: str) -> Optional[Job]:
-    for job in Jobs.get_jobs():
-        if job.type_id == type_id and job.status in [
-            JobStatus.CREATED,
-            JobStatus.RUNNING,
-        ]:
-            return job
-    return None
+    jobs = intersection(get_jobs_by_type(type_id), get_ok_jobs())
+    return last_if_any(jobs)
 
 
 def get_failed_job_by_type(type_id: str) -> Optional[Job]:
-    for job in Jobs.get_jobs():
-        if job.type_id == type_id and job.status == JobStatus.ERROR:
-            return job
-    return None
+    jobs = intersection(get_jobs_by_type(type_id), get_failed_jobs())
+    return last_if_any(jobs)
+
+
+def get_jobs_by_type(type_id: str):
+    return [job for job in Jobs.get_jobs() if job.type_id == type_id]
+
+
+# Can be moved out to Jobs
+def get_ok_jobs() -> List[Job]:
+    return [
+        job
+        for job in Jobs.get_jobs()
+        if job.status
+        in [
+            JobStatus.CREATED,
+            JobStatus.RUNNING,
+        ]
+    ]
+
+
+# Can be moved out to Jobs
+def get_failed_jobs() -> List[Job]:
+    return [job for job in Jobs.get_jobs() if job.status == JobStatus.ERROR]
+
+
+def intersection(a: Iterable, b: Iterable):
+    return [x for x in a if x in b]
 
 
 def get_backup_job(service: Service) -> Optional[Job]:
@@ -143,6 +169,10 @@ def get_backup_job(service: Service) -> Optional[Job]:
 
 def get_backup_fail(service: Service) -> Optional[Job]:
     return get_failed_job_by_type(backup_job_type(service))
+
+
+def get_backup_fails(service: Service) -> List[Job]:
+    return intersection(get_failed_jobs(), get_jobs_by_type(backup_job_type(service)))
 
 
 def get_restore_job(service: Service) -> Optional[Job]:

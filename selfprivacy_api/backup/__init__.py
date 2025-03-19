@@ -41,6 +41,7 @@ from selfprivacy_api.backup.jobs import (
     add_backup_job,
     get_restore_job,
     add_restore_job,
+    get_backup_fails,
 )
 
 
@@ -267,7 +268,18 @@ class Backups:
         Jobs.update(job, status=JobStatus.FINISHED, result="Backup finished")
         if reason in [BackupReason.AUTO, BackupReason.PRE_RESTORE]:
             Jobs.set_expiration(job, AUTOBACKUP_JOB_EXPIRATION_SECONDS)
+
+        # To not confuse user
+        if reason is not BackupReason.PRE_RESTORE:
+            Backups.clear_failed_backups(service)
+
         return Backups.sync_date_from_cache(snapshot)
+
+    @staticmethod
+    def clear_failed_backups(service: Service):
+        jobs_to_clear = get_backup_fails(service)
+        for job in jobs_to_clear:
+            Jobs.remove(job)
 
     @staticmethod
     def sync_date_from_cache(snapshot: Snapshot) -> Snapshot:

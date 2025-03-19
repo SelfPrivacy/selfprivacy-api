@@ -245,15 +245,10 @@ def test_error_censoring_encryptionkey(dummy_service, backups):
     LocalBackupSecret.reset()
     new_key = LocalBackupSecret.get()
 
-    with pytest.raises(ValueError):
-        # Should fail without correct key
-        Backups.back_up(dummy_service)
+    # Should fail without correct key and create a failed job
+    failed_job = assert_backup_fails(dummy_service)
 
-    job = get_backup_fail(dummy_service)
-    assert job is not None
-    assert_job_errored(job)
-
-    job_text = all_job_text(job)
+    job_text = all_job_text(failed_job)
 
     assert old_key not in job_text
     assert new_key not in job_text
@@ -261,6 +256,35 @@ def test_error_censoring_encryptionkey(dummy_service, backups):
     # assert Backups.provider().key not in job_text
 
     assert "CENSORED" in job_text
+
+
+def assert_backup_fails(service) -> Job:
+    with pytest.raises(ValueError):
+        Backups.back_up(service)
+
+    job = get_backup_fail(service)
+    assert job is not None
+    assert_job_errored(job)
+
+    return job
+
+
+def test_backup_clears_failed_jobs(dummy_service, backups):
+    assert get_backup_fail(dummy_service) is None
+
+    # Discard our key to inject a failure
+    old_key = LocalBackupSecret.get()
+    LocalBackupSecret.reset()
+
+    assert_backup_fails(dummy_service)
+
+    # Restore the key
+    LocalBackupSecret.set(old_key)
+    assert LocalBackupSecret.get() == old_key
+
+    Backups.back_up(dummy_service)
+
+    assert get_backup_fail(dummy_service) is None
 
 
 def test_error_censoring_loginkey(dummy_service, backups, fp):
