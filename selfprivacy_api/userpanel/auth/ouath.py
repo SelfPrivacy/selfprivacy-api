@@ -16,7 +16,7 @@ oauth.register(
     # authorize_url=f"{idm_domain}/ui/oauth2",
     # authorize_params=None,
     client_kwargs={
-        "scope": ("openid", "profile", "email", "groups"),
+        "scope": "openid profile email groups",
         "code_challenge_method": "S256",
     },
     userinfo_endpoint=f"{idm_domain}/oauth2/openid/{OAUTH_CLIENT_ID}/userinfo",
