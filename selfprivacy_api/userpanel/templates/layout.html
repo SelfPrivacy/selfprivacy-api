@@ -7,9 +7,9 @@
     <div class="flex-1">
 		<a href="/" class="text-lg font-bold">SelfPrivacy self-service portal</a>
 	</div>
-    {{ call() button.destructive(href='/user/logout') }}
+    {% call() button.destructive(href='/user/logout') %}
         Sign out
-    {{ endcall }}
+    {% endcall %}
 </header>
 <div class="p-4">
 	{% block content %}{% endblock %}
