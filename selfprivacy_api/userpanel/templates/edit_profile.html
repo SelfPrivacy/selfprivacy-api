@@ -8,7 +8,7 @@
     <div>
         <h1 class="my-4 text-2xl font-bold">Edit Profile</h1>
         <form method="post">
-            <div class="space-y-2">
+            <div class="space-y-2 mb-2">
                 {{ forms.label("displayname", "Display Name:", errors.displayname) }}
                 {{ forms.input("text", "displayname", "displayname", values.displayname, errors.displayname) }}
                 {{ forms.description("This is your public display name.") }}

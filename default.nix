@@ -30,6 +30,7 @@ pythonPackages.buildPythonPackage rec {
     pypng
     python-multipart
     bleach
+    argon2-cffi
   ];
   pythonImportsCheck = [ "selfprivacy_api" ];
   doCheck = false;
