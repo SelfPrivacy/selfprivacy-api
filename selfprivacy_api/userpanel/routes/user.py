@@ -1,17 +1,24 @@
 from fastapi import APIRouter, Depends, Request
-from fastapi.templating import Jinja2Templates
-from selfprivacy_api.userpanel.auth.session import Session
+from fastapi.responses import HTMLResponse, RedirectResponse
+from selfprivacy_api.userpanel.templates import templates
+from selfprivacy_api.userpanel.auth.session import Session, delete_session_token_cookie
 from selfprivacy_api.userpanel.routes.dependencies import get_current_user
 from typing import Annotated
 
 router = APIRouter()
-templates = Jinja2Templates(directory="selfprivacy_api/userpanel/templates")
 
 
-@router.get("/")
+@router.get("/", response_class=HTMLResponse)
 async def get_profile(
     request: Request, user: Annotated[Session, Depends(get_current_user)]
 ):
     return templates.TemplateResponse(
         "profile.html", {"request": request, "username": user.user_id}
     )
+
+
+@router.get("/logout")
+async def logout(request: Request, user: Annotated[Session, Depends(get_current_user)]):
+    response = RedirectResponse(url="/login")
+    delete_session_token_cookie(response)
+    return response

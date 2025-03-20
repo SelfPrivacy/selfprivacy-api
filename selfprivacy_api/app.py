@@ -5,6 +5,7 @@ import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from strawberry.fastapi import GraphQLRouter
 from strawberry.subscriptions import GRAPHQL_TRANSPORT_WS_PROTOCOL, GRAPHQL_WS_PROTOCOL
 
@@ -48,6 +49,7 @@ app.add_middleware(
 secret_key = token_urlsafe(32)
 app.add_middleware(SessionMiddleware, secret_key=secret_key)
 
+app.mount("/static", StaticFiles(directory="userpanel/static"), name="static")
 
 app.include_router(graphql_app, prefix="/graphql")
 app.include_router(login_router, prefix="/login")

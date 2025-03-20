@@ -1,8 +1,9 @@
 from fastapi import APIRouter, HTTPException, Response
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, HTMLResponse
 from starlette.requests import Request
 from authlib.integrations.starlette_client import OAuth
 from authlib.integrations.base_client.errors import OAuthError
+from selfprivacy_api.userpanel.templates import templates
 from selfprivacy_api.utils.oauth_secrets import (
     load_oauth_client_secret,
     OAUTH_CLIENT_ID,
@@ -21,7 +22,12 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
-@router.get("/")
+@router.get("/", response_class=HTMLResponse)
+async def login(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
+
+
+@router.get("/oauth")
 async def login_via_kanidm(request: Request):
     kanidm = oauth.create_client("kanidm")
     if not kanidm:
