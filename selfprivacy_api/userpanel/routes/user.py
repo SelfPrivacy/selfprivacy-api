@@ -9,6 +9,7 @@ from selfprivacy_api.services import ServiceManager
 from selfprivacy_api.repositories.users.kanidm_user_repository import (
     KanidmUserRepository,
 )
+from selfprivacy_api.utils import get_domain
 from selfprivacy_api.utils.icons import sanitize_svg
 
 from typing import Annotated
@@ -52,9 +53,17 @@ async def get_profile(
                     "icon": sanitize_svg(service.get_svg_icon(raw=True)),
                 }
             )
+
+    kanidm_url = f"https://auth.{get_domain()}/ui/profile"
+
     return templates.TemplateResponse(
         "profile.html",
-        {"request": request, "user": user.model_dump(), "services": services},
+        {
+            "request": request,
+            "user": user.model_dump(),
+            "services": services,
+            "kanidm_url": kanidm_url,
+        },
     )
 
 
