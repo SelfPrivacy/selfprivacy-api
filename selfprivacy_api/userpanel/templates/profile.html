@@ -4,6 +4,7 @@
 {% block title %}User Profile{% endblock %}
 
 {% block content %}
+<div>
     <h1 class="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
         Hello, {{ user.displayname|default(user.username)|e }}
     </h1>
@@ -34,4 +35,5 @@
             </a>
         {% endfor %}
     </div>
+</div>
 {% endblock %}
