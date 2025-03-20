@@ -8,7 +8,7 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
-@app.route("/")
+@router.route("/")
 async def login_via_kanidm(request: Request):
     kanidm = oauth.create_client("kanidm")
     if not kanidm:
@@ -18,7 +18,7 @@ async def login_via_kanidm(request: Request):
     return await kanidm.authorize_redirect(request, redirect_uri)
 
 
-@app.route("/callback")
+@router.route("/callback")
 async def auth_via_kanidm(request: Request):
     kanidm = oauth.create_client("kanidm")
     if not kanidm:
