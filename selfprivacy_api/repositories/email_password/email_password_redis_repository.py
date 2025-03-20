@@ -3,7 +3,7 @@ from selfprivacy_api.repositories.email_password.abstract_email_password_reposit
     AbstractEmailPasswordManager,
 )
 from selfprivacy_api.utils.redis_pool import RedisPool
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 redis = RedisPool().get_userpanel_connection()
@@ -59,19 +59,21 @@ class EmailPasswordManager(AbstractEmailPasswordManager):
         password_data = {
             "password_hash": password_hash,
             "display_name": credential_metadata.display_name,
-            "created_at": (
-                credential_metadata.created_at.isoformat()
-                if credential_metadata.created_at
-                else None
-            ),
-            "expires_at": (
-                credential_metadata.expires_at.isoformat()
-                if credential_metadata.expires_at
-                else None
-            ),
         }
 
+        if credential_metadata.created_at is not None:
+            password_data["created_at"] = credential_metadata.created_at.isoformat()
+
+        if credential_metadata.expires_at is not None:
+            password_data["expires_at"] = credential_metadata.expires_at.isoformat()
+
         redis.hmset(key, password_data)
+
+    @staticmethod
+    def update_email_password_hash_last_used(username: str, uuid: str) -> None:
+        key = f"priv/user/{username}/passwords/{uuid}"
+
+        redis.hset(key, "last_used", datetime.now(timezone.utc).isoformat())
 
     @staticmethod
     def delete_email_password_hash(username: str, uuid: str) -> None:

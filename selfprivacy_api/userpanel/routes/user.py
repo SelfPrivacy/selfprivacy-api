@@ -150,7 +150,11 @@ async def email_passwords_get(
         timezone = get_timezone()
         return templates.TemplateResponse(
             "email_passwords.html",
-            {"request": request, "email_passwords": email_passwords_dict, "timezone": timezone},
+            {
+                "request": request,
+                "email_passwords": email_passwords_dict,
+                "timezone": timezone,
+            },
         )
     except Exception as e:
         logger.error(f"Error getting email passwords: {e}")

@@ -4,7 +4,9 @@ from fastapi.templating import Jinja2Templates
 from pytz import timezone
 
 
-def format_datetime(value: datetime | None, format="%Y-%m-%d %H:%M:%S", tz_str: str = None):
+def format_datetime(
+    value: datetime | None, format="%Y-%m-%d %H:%M:%S", tz_str: str = None
+):
     if value is None:
         return ""
     if tz_str:
