@@ -20,11 +20,10 @@ def generate_password_hash(password: str) -> str:
 def verify_password(password: str, password_hash: str) -> bool:
     password = unicodedata.normalize("NFKC", password)
 
-    if argon2.verify(password, password_hash) or sha512_crypt.verify(
-        password, password_hash
-    ):
-        return True
-    return False
+    if "$argon2" in password_hash:
+        return argon2.verify(password, password_hash)
+    else:
+        return sha512_crypt.verify(password, password_hash)
 
 
 def get_email_credentials_metadata_with_passwords_hashes(
@@ -47,6 +46,6 @@ def validate_email_password(username: str, password: str) -> bool:
         return False
 
     for i in email_passwords_data:
-        return verify_password(password=password, password_hash=str(i.hash))
-
+        if verify_password(password=password, password_hash=str(i.hash)):
+            return True
     return False
