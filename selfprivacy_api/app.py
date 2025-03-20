@@ -5,6 +5,7 @@ import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from strawberry.fastapi import GraphQLRouter
 from strawberry.subscriptions import GRAPHQL_TRANSPORT_WS_PROTOCOL, GRAPHQL_WS_PROTOCOL
@@ -62,6 +63,10 @@ app.include_router(user_router, prefix="/user")
 async def get_version():
     """Get the version of the server"""
     return {"version": get_api_version()}
+
+@app.get("/")
+async def root():
+    return RedirectResponse(url="/user")
 
 
 @app.on_event("startup")
