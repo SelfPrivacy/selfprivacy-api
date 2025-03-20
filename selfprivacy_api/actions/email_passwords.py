@@ -21,7 +21,7 @@ def add_email_password(
     username: str,
     password: str,
     display_name: Optional[str] = None,
-    with_created_at: Optional[bool] = False,
+    with_created_at: Optional[bool] = True,
     with_zero_uuid: Optional[bool] = False,
     expires_at: Optional[datetime] = None,
 ) -> None:
@@ -39,7 +39,7 @@ def add_email_password_hash(
     username: str,
     password_hash: str,
     display_name: Optional[str] = None,
-    with_created_at: Optional[bool] = False,
+    with_created_at: Optional[bool] = True,
     with_zero_uuid: Optional[bool] = False,
     expires_at: Optional[datetime] = None,
 ) -> None:

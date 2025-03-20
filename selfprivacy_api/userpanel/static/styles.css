@@ -240,6 +240,9 @@
   .mx-auto {
     margin-inline: auto;
   }
+  .my-2 {
+    margin-block: calc(var(--spacing) * 2);
+  }
   .my-4 {
     margin-block: calc(var(--spacing) * 4);
   }
@@ -433,9 +436,6 @@
   }
   .fill-current {
     fill: currentColor;
-  }
-  .stroke-green-950 {
-    stroke: var(--color-green-950);
   }
   .p-4 {
     padding: calc(var(--spacing) * 4);
@@ -786,6 +786,11 @@
   .\[\&\>svg\]\:left-4 {
     &>svg {
       left: calc(var(--spacing) * 4);
+    }
+  }
+  .\[\&\>svg\]\:stroke-green-950 {
+    &>svg {
+      stroke: var(--color-green-950);
     }
   }
   .\[\&\>svg\]\:text-foreground {

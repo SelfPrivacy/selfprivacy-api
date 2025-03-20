@@ -240,8 +240,14 @@ async def create_email_password_post(
         raise HTTPException(status_code=500)
 
     server_domain = get_domain()
+    login = f"{session.user_id}@{server_domain}"
 
     return templates.TemplateResponse(
         "email_password_created.html",
-        {"request": request, "password": password, "server_domain": server_domain},
+        {
+            "request": request,
+            "password": password,
+            "server_domain": server_domain,
+            "login": login,
+        },
     )
