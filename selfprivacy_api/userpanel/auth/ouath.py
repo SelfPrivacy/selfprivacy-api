@@ -5,11 +5,12 @@ from selfprivacy_api.utils import get_domain
 oauth = OAuth()
 
 idm_domain = f"https://auth.{get_domain()}"
+client_secret = load_oauth_client_secret()
 
 oauth.register(
     name="kanidm",
     client_id=OAUTH_CLIENT_ID,
-    client_secret=load_oauth_client_secret(),
+    client_secret=client_secret,
     server_metadata_url=f"{idm_domain}/oauth2/openid/{OAUTH_CLIENT_ID}/.well-known/openid-configuration",
     # access_token_url=f"{idm_domain}/oauth2/token",
     # access_token_params=None,
