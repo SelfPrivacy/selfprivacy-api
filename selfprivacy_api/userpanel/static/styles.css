@@ -230,6 +230,9 @@
   .my-8 {
     margin-block: calc(var(--spacing) * 8);
   }
+  .mt-2 {
+    margin-top: calc(var(--spacing) * 2);
+  }
   .block {
     display: block;
   }
@@ -653,6 +656,10 @@
     background-color: hsl(var(--background) / 1);
     color: hsl(var(--foreground) / 1);
   }
+}
+html {
+  visibility: visible;
+  opacity: 1;
 }
 @keyframes enter {
   from {
