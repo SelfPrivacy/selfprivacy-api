@@ -8,10 +8,10 @@
         Hello, {{ user.username|e }}
     </h1>
     <div class="my-4 flex gap-2">
-		{{ call() button.primary('/user/edit') }}
+		{{ call() button.primary(href='/user/edit') }}
 		    Edit profile
 		{{ endcall }}
-		{{ call() button.primary('/user/email-passwords') }}
+		{{ call() button.primary(href='/user/email-passwords') }}
 		    Email passwords
 		{{ endcall }}
 	</div>
