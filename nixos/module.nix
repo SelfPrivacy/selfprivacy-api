@@ -313,7 +313,7 @@ in
           ];
         };
         systems.oauth2.${oauth-client-id} = {
-          displayName = "SelfPrivacy";
+          displayName = "SelfPrivacy Self-Service Portal";
           originUrl = oauth-redirect-uri;
           originLanding = "https://api.${domain}/";
           basicSecretFile = kanidm-oauth-client-secret-fp;
