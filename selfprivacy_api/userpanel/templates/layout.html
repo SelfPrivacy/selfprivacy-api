@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% import "button.html" as button %}
+{% block title %}SelfPrivacy user panel{% endblock %}
+
+{% block body %}
+<header class="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4">
+    <div class="flex-1">
+		<a href="/" class="text-lg font-bold">SelfPrivacy self-service portal</a>
+	</div>
+    {{ call() button.destructive_default('/user/logout') }}
+        Sign out
+    {{ endcall }}
+</header>
+<div class="p-4">
+	{% block content %}{% endblock %}
+</div>
+{% endblock %}

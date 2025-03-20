@@ -1,7 +1,18 @@
-{% extends "base.html" %}
+{% extends "layout.html" %}
+{% import "button.html" as button %}
 
 {% block title %}User Profile{% endblock %}
 
 {% block content %}
-    <h1>Welcome, {{ username }}!</h1>
+    <h1 class="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
+        Hello, {{ user.username }}
+    </h1>
+    <div class="my-4 flex gap-2">
+		{{ call() button.default('/user/edit') }}
+		    Edit profile
+		{{ endcall }}
+		{{ call() button.default('/user/email-passwords') }}
+		    Email passwords
+		{{ endcall }}
+	</div>
 {% endblock %}
