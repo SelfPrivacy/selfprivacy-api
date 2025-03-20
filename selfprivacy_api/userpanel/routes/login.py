@@ -36,8 +36,7 @@ oauth.register(
     client_kwargs={
         "scope": "openid profile email groups",
         "code_challenge_method": "S256",
-        'token_endpoint_auth_method': 'client_secret_basic',
-        'token_placement': 'header',
+        'token_endpoint_auth_method': 'client_secret_post',
     },
     userinfo_endpoint=f"{idm_domain}/oauth2/openid/{OAUTH_CLIENT_ID}/userinfo",
 )
