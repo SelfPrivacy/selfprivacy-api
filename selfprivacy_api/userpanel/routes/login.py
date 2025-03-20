@@ -17,6 +17,8 @@ oauth = OAuth()
 idm_domain = f"https://auth.{get_domain()}"
 client_secret = load_oauth_client_secret()
 
+logger.info(f"This is the client secret from the global scope: {client_secret}")
+
 oauth.register(
     name="kanidm",
     client_id=OAUTH_CLIENT_ID,
@@ -29,6 +31,8 @@ oauth.register(
     client_kwargs={
         "scope": "openid profile email groups",
         "code_challenge_method": "S256",
+        'token_endpoint_auth_method': 'client_secret_basic',
+        'token_placement': 'header',
     },
     userinfo_endpoint=f"{idm_domain}/oauth2/openid/{OAUTH_CLIENT_ID}/userinfo",
 )
@@ -36,6 +40,7 @@ oauth.register(
 
 @router.route("/")
 async def login_via_kanidm(request: Request):
+    logger.info(f"Logging in via kanidm. The client secret is: {client_secret}")
     kanidm = oauth.create_client("kanidm")
     if not kanidm:
         logger.error("Kanidm not found in oauth clients")
