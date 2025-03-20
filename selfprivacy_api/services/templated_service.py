@@ -228,6 +228,16 @@ class TemplatedService(Service):
     def get_support_level(self) -> SupportLevel:
         return self.meta.support_level
 
+    def get_sso_access_group(self) -> Optional[str]:
+        if not self.meta.sso:
+            return None
+        return self.meta.sso.access_group
+
+    def get_sso_admin_group(self) -> Optional[str]:
+        if not self.meta.sso:
+            return None
+        return self.meta.sso.admin_group
+
     def get_status(self) -> ServiceStatus:
         if not self.meta.systemd_services:
             return ServiceStatus.INACTIVE

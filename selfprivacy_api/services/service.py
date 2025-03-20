@@ -202,6 +202,18 @@ class Service(ABC):
         """
         return SupportLevel.NORMAL
 
+    def get_sso_access_group(self) -> Optional[str]:
+        """
+        The access group for Single Sign On.
+        """
+        return None
+
+    def get_sso_admin_group(self) -> Optional[str]:
+        """
+        The admin group for Single Sign On.
+        """
+        return None
+
     @staticmethod
     @abstractmethod
     def get_status() -> ServiceStatus:

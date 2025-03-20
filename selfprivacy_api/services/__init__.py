@@ -55,6 +55,14 @@ class ServiceManager(Service):
     def get_enabled_services() -> list[Service]:
         return [service for service in get_services() if service.is_enabled()]
 
+    @staticmethod
+    def get_enabled_services_with_urls() -> list[Service]:
+        return [
+            service
+            for service in get_services(exclude_remote=True)
+            if service.is_enabled() and service.get_url()
+        ]
+
     # This one is not currently used by any code.
     @staticmethod
     def get_disabled_services() -> list[Service]:

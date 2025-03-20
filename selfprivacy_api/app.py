@@ -64,6 +64,7 @@ async def get_version():
     """Get the version of the server"""
     return {"version": get_api_version()}
 
+
 @app.get("/")
 async def root():
     return RedirectResponse(url="/user")

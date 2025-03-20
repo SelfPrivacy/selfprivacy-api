@@ -5,6 +5,7 @@ from selfprivacy_api.models.user import UserDataUser
 from selfprivacy_api.userpanel.templates import templates
 from selfprivacy_api.userpanel.auth.session import Session, delete_session_token_cookie
 from selfprivacy_api.userpanel.routes.dependencies import get_current_user
+from selfprivacy_api.services import ServiceManager
 from selfprivacy_api.repositories.users.kanidm_user_repository import (
     KanidmUserRepository,
 )
@@ -15,6 +16,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
 
 class EditProfileForm(BaseModel):
     displayname: str = Field(..., min_length=1, max_length=255)
@@ -29,8 +31,30 @@ async def get_profile(
     except Exception as e:
         logger.error(f"Error getting user by username: {e}")
         raise HTTPException(status_code=500)
+    enabled_services = ServiceManager.get_enabled_services_with_urls()
+    # Prepare a list of services with their names, URLs, descriptions and icons.
+    # If the service has an access group, check if the user is a member of that group
+    # If not, do not include the service.
+    # Split by @ and take the first part to get the group name
+    if user.memberof is None:
+        user_groups = []
+    else:
+        user_groups = [group.split("@")[0] for group in user.memberof]
+    services = []
+    for service in enabled_services:
+        access_group = service.get_sso_access_group()
+        if (access_group and (access_group in user_groups)) or not access_group:
+            services.append(
+                {
+                    "name": service.get_display_name(),
+                    "url": service.get_url(),
+                    "description": service.get_description(),
+                    "icon": service.get_svg_icon(),
+                }
+            )
     return templates.TemplateResponse(
-        "profile.html", {"request": request, "user": user.model_dump()}
+        "profile.html",
+        {"request": request, "user": user.model_dump(), "services": services},
     )
 
 
@@ -65,14 +89,20 @@ async def edit_profile_post(
     try:
         form = EditProfileForm(displayname=displayname)
     except ValidationError as e:
-        errors = {err['loc'][0]: err['msg'] for err in e.errors()}
+        errors = {err["loc"][0]: err["msg"] for err in e.errors()}
         return templates.TemplateResponse(
             "edit_profile.html",
-            {"request": request, "values": {"displayname": displayname}, "errors": errors},
+            {
+                "request": request,
+                "values": {"displayname": displayname},
+                "errors": errors,
+            },
         )
 
     try:
-        KanidmUserRepository.update_user(username=session.user_id, displayname=form.displayname)
+        KanidmUserRepository.update_user(
+            username=session.user_id, displayname=form.displayname
+        )
     except Exception as e:
         logger.error(f"Error updating user: {e}")
         raise HTTPException(status_code=500)
