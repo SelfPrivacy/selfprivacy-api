@@ -14,7 +14,7 @@ def generate_urlsave_password() -> str:
 
 
 def generate_password_hash(password: str) -> str:
-    return argon2.hash(password)
+    return argon2.hash(unicodedata.normalize("NFKC", password))
 
 
 def verify_password(password: str, password_hash: str) -> bool:
@@ -46,6 +46,8 @@ def validate_email_password(username: str, password: str) -> bool:
         return False
 
     for i in email_passwords_data:
+        if i.hash is None:
+            continue
         if verify_password(password=password, password_hash=str(i.hash)):
             return True
     return False
