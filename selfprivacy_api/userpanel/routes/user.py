@@ -40,6 +40,8 @@ async def get_profile(
         user_groups = [group.split("@")[0] for group in user.memberof]
     services = []
     for service in enabled_services:
+        if service.get_id() == "selfprivacy-api":
+            continue
         access_group = service.get_sso_access_group()
         if (access_group and (access_group in user_groups)) or not access_group:
             services.append(

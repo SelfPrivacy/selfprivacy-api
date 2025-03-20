@@ -23,7 +23,7 @@ from selfprivacy_api.utils.cached_call import get_ttl_hash
 import selfprivacy_api.utils.network as network_utils
 
 from selfprivacy_api.services.api_icon import API_ICON
-from selfprivacy_api.utils import USERDATA_FILE, DKIM_DIR, SECRETS_FILE
+from selfprivacy_api.utils import USERDATA_FILE, DKIM_DIR, SECRETS_FILE, get_domain
 from selfprivacy_api.utils.block_devices import BlockDevices
 from selfprivacy_api.services.templated_service import (
     SP_MODULES_DEFENITIONS_PATH,
@@ -137,7 +137,8 @@ class ServiceManager(Service):
     @staticmethod
     def get_url() -> typing.Optional[str]:
         """Return service url."""
-        return None
+        domain = get_domain()
+        return f"https://api.{domain}"
 
     @staticmethod
     def get_subdomain() -> typing.Optional[str]:
