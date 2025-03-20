@@ -4,6 +4,9 @@
   :root, :host {
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
       "Courier New", monospace;
+    --color-green-100: oklch(0.962 0.044 156.743);
+    --color-green-950: oklch(0.266 0.065 152.934);
+    --color-blue-600: oklch(0.546 0.245 262.881);
     --color-gray-600: oklch(0.446 0.03 256.802);
     --spacing: 0.25rem;
     --container-xs: 20rem;
@@ -27,6 +30,7 @@
     --font-weight-bold: 700;
     --font-weight-extrabold: 800;
     --tracking-tight: -0.025em;
+    --leading-relaxed: 1.625;
     --ease-out: cubic-bezier(0, 0, 0.2, 1);
     --default-transition-duration: 150ms;
     --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
@@ -184,6 +188,9 @@
   }
 }
 @layer utilities {
+  .relative {
+    position: relative;
+  }
   .static {
     position: static;
   }
@@ -224,6 +231,9 @@
       max-width: 1400px;
     }
   }
+  .mx-2 {
+    margin-inline: calc(var(--spacing) * 2);
+  }
   .mx-4 {
     margin-inline: calc(var(--spacing) * 4);
   }
@@ -244,6 +254,9 @@
   }
   .mt-8 {
     margin-top: calc(var(--spacing) * 8);
+  }
+  .mb-1 {
+    margin-bottom: calc(var(--spacing) * 1);
   }
   .ml-3 {
     margin-left: calc(var(--spacing) * 3);
@@ -319,6 +332,12 @@
   }
   .scroll-m-20 {
     scroll-margin: calc(var(--spacing) * 20);
+  }
+  .list-inside {
+    list-style-position: inside;
+  }
+  .list-disc {
+    list-style-type: disc;
   }
   .grid-cols-1 {
     grid-template-columns: repeat(1, minmax(0, 1fr));
@@ -400,11 +419,17 @@
   .bg-destructive {
     background-color: hsl(var(--destructive) / 1);
   }
+  .bg-green-100 {
+    background-color: var(--color-green-100);
+  }
   .bg-primary {
     background-color: hsl(var(--primary) / 1);
   }
   .fill-current {
     fill: currentColor;
+  }
+  .stroke-green-950 {
+    stroke: var(--color-green-950);
   }
   .p-4 {
     padding: calc(var(--spacing) * 4);
@@ -429,6 +454,9 @@
   }
   .text-center {
     text-align: center;
+  }
+  .font-mono {
+    font-family: var(--font-mono);
   }
   .text-2xl {
     font-size: var(--text-2xl);
@@ -481,6 +509,9 @@
   .whitespace-nowrap {
     white-space: nowrap;
   }
+  .text-blue-600 {
+    color: var(--color-blue-600);
+  }
   .text-card-foreground {
     color: hsl(var(--card-foreground) / 1);
   }
@@ -495,6 +526,9 @@
   }
   .text-gray-600 {
     color: var(--color-gray-600);
+  }
+  .text-green-950 {
+    color: var(--color-green-950);
   }
   .text-muted-foreground {
     color: hsl(var(--muted-foreground) / 1);
@@ -574,6 +608,13 @@
       color: hsl(var(--muted-foreground) / 1);
     }
   }
+  .hover\:bg-accent {
+    &:hover {
+      @media (hover: hover) {
+        background-color: hsl(var(--accent) / 1);
+      }
+    }
+  }
   .hover\:bg-destructive {
     &:hover {
       @media (hover: hover) {
@@ -595,10 +636,24 @@
       }
     }
   }
+  .hover\:text-accent-foreground {
+    &:hover {
+      @media (hover: hover) {
+        color: hsl(var(--accent-foreground) / 1);
+      }
+    }
+  }
   .hover\:text-destructive-foreground {
     &:hover {
       @media (hover: hover) {
         color: hsl(var(--destructive-foreground) / 1);
+      }
+    }
+  }
+  .hover\:underline {
+    &:hover {
+      @media (hover: hover) {
+        text-decoration-line: underline;
       }
     }
   }
@@ -690,6 +745,12 @@
       grid-template-columns: repeat(4, minmax(0, 1fr));
     }
   }
+  .\[\&_p\]\:leading-relaxed {
+    & p {
+      --tw-leading: var(--leading-relaxed);
+      line-height: var(--leading-relaxed);
+    }
+  }
   .\[\&_svg\]\:pointer-events-none {
     & svg {
       pointer-events: none;
@@ -704,6 +765,31 @@
   .\[\&_svg\]\:shrink-0 {
     & svg {
       flex-shrink: 0;
+    }
+  }
+  .\[\&\>svg\]\:absolute {
+    &>svg {
+      position: absolute;
+    }
+  }
+  .\[\&\>svg\]\:top-4 {
+    &>svg {
+      top: calc(var(--spacing) * 4);
+    }
+  }
+  .\[\&\>svg\]\:left-4 {
+    &>svg {
+      left: calc(var(--spacing) * 4);
+    }
+  }
+  .\[\&\>svg\]\:text-foreground {
+    &>svg {
+      color: hsl(var(--foreground) / 1);
+    }
+  }
+  .\[\&\>svg\~\*\]\:pl-7 {
+    &>svg~* {
+      padding-left: calc(var(--spacing) * 7);
     }
   }
 }
@@ -784,6 +870,9 @@ html {
 .icon-container svg {
   width: calc(var(--spacing) * 12);
   height: calc(var(--spacing) * 12);
+}
+.icon-container svg path {
+  fill: hsl(var(--primary) / 1);
 }
 @keyframes enter {
   from {

@@ -29,10 +29,9 @@ ALLOWED_TAGS = [
     "use",
     "image",
     "switch",
-    "style",
 ]
 ALLOWED_ATTRIBUTES = {
-    "*": ["class", "style", "transform"],
+    "*": ["class", "transform"],
     "svg": ["width", "height", "viewBox", "xmlns"],
     "path": ["d", "fill", "stroke", "stroke-width"],
     "rect": ["x", "y", "width", "height", "rx", "ry", "fill", "stroke", "stroke-width"],

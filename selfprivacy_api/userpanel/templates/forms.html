@@ -1,0 +1,35 @@
+{% macro label(for_id, text, error) %}
+<label
+    for="{{ for_id }}"
+    class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 data-[fs-error]:text-destructive"
+    {% if error %}data-[fs-error]{% endif %}
+>
+    {{ text }}
+</label>
+{% endmacro %}
+
+{% macro input(type, id, name, value, error) %}
+<input
+    type="{{ type }}"
+    id="{{ id }}"
+    name="{{ name }}"
+    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+    value="{{ value|e }}"
+    aria-required="true"
+    aria-invalid="{{ error is defined }}"
+    required />
+{% endmacro %}
+
+{% macro description(text) %}
+<div class="text-sm text-muted-foreground">
+    {{ text }}
+</div>
+{% endmacro %}
+
+{% macro error_message(error) %}
+{% if error %}
+    <div class="text-sm font-medium text-destructive" aria-live="assertive">
+        {{ error|e }}
+    </div>
+{% endif %}
+{% endmacro %}

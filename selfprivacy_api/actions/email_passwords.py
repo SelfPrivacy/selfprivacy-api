@@ -1,11 +1,14 @@
 from typing_extensions import Optional
 from selfprivacy_api.models.email_password_metadata import EmailPasswordData
 from uuid import UUID, uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 
+from selfprivacy_api.models.tokens.time import ensure_timezone
 from selfprivacy_api.repositories.email_password import ACTIVE_EMAIL_PASSWORD_PROVIDER
 
 from passlib.hash import argon2
+
+from selfprivacy_api.utils.argon2 import generate_password_hash
 
 
 def get_email_credentials_metadata(username: str) -> list[EmailPasswordData]:
@@ -20,13 +23,15 @@ def add_email_password(
     display_name: Optional[str] = None,
     with_created_at: Optional[bool] = False,
     with_zero_uuid: Optional[bool] = False,
+    expires_at: Optional[datetime] = None,
 ) -> None:
     add_email_password_hash(
         username=username,
-        password_hash=argon2.hash(password),
+        password_hash=generate_password_hash(password),
         display_name=display_name,
         with_created_at=with_created_at,
         with_zero_uuid=with_zero_uuid,
+        expires_at=expires_at,
     )
 
 
@@ -36,12 +41,14 @@ def add_email_password_hash(
     display_name: Optional[str] = None,
     with_created_at: Optional[bool] = False,
     with_zero_uuid: Optional[bool] = False,
+    expires_at: Optional[datetime] = None,
 ) -> None:
     credential_metadata = EmailPasswordData(
         # UUID(int=0) == '00000000-0000-0000-0000-000000000000'
         uuid=str(UUID(int=0)) if with_zero_uuid else str(uuid4()),
         display_name=display_name if display_name else "Legacy password",
-        created_at=datetime.now().isoformat() if with_created_at else None,
+        created_at=datetime.now(timezone.utc) if with_created_at else None,
+        expires_at=ensure_timezone(expires_at) if expires_at else None,
     )
 
     ACTIVE_EMAIL_PASSWORD_PROVIDER.add_email_password_hash(
