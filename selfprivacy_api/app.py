@@ -14,6 +14,11 @@ from selfprivacy_api.dependencies import get_api_version
 from selfprivacy_api.graphql.schema import schema
 from selfprivacy_api.migrations import run_migrations
 
+from starlette.middleware.sessions import SessionMiddleware
+from secrets import token_urlsafe
+
+from selfprivacy_api.userpanel.routes.login import router as login_router
+
 
 log_level = os.getenv("LOG_LEVEL", "INFO").upper()
 
@@ -39,8 +44,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+secret_key = token_urlsafe(32)
+app.add_middleware(SessionMiddleware, secret_key=secret_key)
+
 
 app.include_router(graphql_app, prefix="/graphql")
+app.include_router(login_router, prefix="/login")
 
 
 @app.get("/api/version")

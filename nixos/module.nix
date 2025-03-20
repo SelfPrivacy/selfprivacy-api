@@ -18,6 +18,58 @@ let
       nix eval --file /etc/sp-fetch-remote-module.nix --raw --apply "f: f { flakeURL = \"$URL\"; }"
     '';
   };
+
+  # TODO: Move it to a more appropriate place.
+  sp = config.selfprivacy;
+  auth-passthru = sp.passthru.auth;
+  domain = sp.domain;
+  unix-user = "selfprivacy-api";
+  port = "5050";
+
+  oauth-client-id = "selfprivacy-api";
+  kanidm-oauth-client-secret-fp = "/run/keys/${oauth-client-id}/kanidm-oauth-client-secret";
+  kanidmExecStartPreScriptRoot = pkgs.writeShellScript "${oauth-client-id}-kanidm-ExecStartPre-root-script.sh" ''
+    # set-group-ID bit allows for kanidm user to create files,
+    mkdir -p -v --mode=u+rwx,g+rs,g-w,o-rwx /run/keys/${oauth-client-id}
+    chown kanidm:${unix-user} /run/keys/${oauth-client-id}
+  '';
+  kanidmExecStartPreScript = pkgs.writeShellScript "${oauth-client-id}-kanidm-ExecStartPre-script.sh" ''
+    [ -f "${kanidm-oauth-client-secret-fp}" ] || \
+      "${lib.getExe pkgs.openssl}" rand -base64 -out "${kanidm-oauth-client-secret-fp}" 32
+  '';
+
+  oauth-redirect-uri = "https://api.${domain}/login/callback";
+  users-group = "sp.selfprivacy-ssp.users";
+
+  dovecot-auth-script = pkgs.writeShellApplication {
+    name = "dovecot-auth-script.sh";
+    runtimeInputs = with pkgs; [
+      coreutils-full
+      gnugrep
+      curl
+      jq
+    ];
+    text = ''
+      CHECKPASSWORD_REPLY_BINARY="$1"
+
+      IFS= read -r -d ''' username <&3
+      IFS= read -r -d ''' password <&3
+
+      if ! response=$(curl -s -X POST http://127.0.0.1:${port}/check-email-password \
+        -H "Content-Type: application/json" \
+        -d "{\"username\": \"$username\", \"password\": \"$password\"}"); then
+        exit 111
+      fi
+
+      isValid=$(echo "$response" | jq -r '.isValid')
+
+      if [ "$isValid" = "true" ]; then
+        exec "$CHECKPASSWORD_REPLY_BINARY"
+      else
+        exit 1
+      fi
+    '';
+  };
 in
 {
   options.services.selfprivacy-api = {
@@ -30,13 +82,19 @@ in
     };
   };
   config = lib.mkIf cfg.enable {
-    users.users."selfprivacy-api" = {
-      isNormalUser = false;
-      isSystemUser = true;
-      extraGroups = [ "opendkim" ];
-      group = "selfprivacy-api";
+    users = {
+      users."selfprivacy-api" = {
+        isNormalUser = false;
+        isSystemUser = true;
+        extraGroups = [ "opendkim" ];
+        group = "selfprivacy-api";
+      };
+      groups = {
+        "selfprivacy-api".members = [ unix-user ];
+        keys.members = [ unix-user ];
+        redis-sp-api.members = [ unix-user ];
+      };
     };
-    users.groups."selfprivacy-api".members = [ "selfprivacy-api" ];
 
     systemd.services.selfprivacy-api = {
       description = "API Server used to control system from the mobile application";
@@ -192,6 +250,39 @@ in
       };
       restartIfChanged = false;
       unitConfig.X-StopOnRemoval = false;
+    };
+
+    services = {
+      kanidm.provision = {
+        groups = {
+          ${users-group}.members = [
+            auth-passthru.admins-group
+            auth-passthru.full-users-group
+          ];
+        };
+        systems.oauth2.${oauth-client-id} = {
+          displayName = "SelfPrivacy";
+          originUrl = oauth-redirect-uri;
+          originLanding = "https://api.${domain}/";
+          basicSecretFile = kanidm-oauth-client-secret-fp;
+          preferShortUsername = true;
+          allowInsecureClientDisablePkce = false;
+          scopeMaps.${users-group} = [
+            "email"
+            "groups"
+            "openid"
+            "profile"
+          ];
+        };
+
+        dovecot2.extraConfig = lib.mkAfter ''
+          passdb {
+            driver = checkpassword
+            mechanisms = plain login
+            args = ${dovecot-auth-script}/bin/dovecot-auth-script.sh
+          }
+        '';
+      };
     };
   };
 }
