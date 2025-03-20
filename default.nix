@@ -23,6 +23,8 @@ pythonPackages.buildPythonPackage rec {
     websockets
     httpx
     passlib # password hasher
+    authlib
+    jinja2
   ];
   pythonImportsCheck = [ "selfprivacy_api" ];
   doCheck = false;
