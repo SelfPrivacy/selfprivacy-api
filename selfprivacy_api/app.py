@@ -21,6 +21,8 @@ from secrets import token_urlsafe
 from selfprivacy_api.userpanel.routes.login import router as login_router
 from selfprivacy_api.userpanel.routes.user import router as user_router
 
+from selfprivacy_api.userpanel.static import static_dir
+
 
 log_level = os.getenv("LOG_LEVEL", "INFO").upper()
 
@@ -49,7 +51,7 @@ app.add_middleware(
 secret_key = token_urlsafe(32)
 app.add_middleware(SessionMiddleware, secret_key=secret_key)
 
-app.mount("/static", StaticFiles(directory="selfprivacy_api/userpanel/static"), name="static")
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 app.include_router(graphql_app, prefix="/graphql")
 app.include_router(login_router, prefix="/login")
