@@ -36,9 +36,9 @@ def validate_email_password(username: str, password: str) -> bool:
         return False
 
     for i in email_passwords_data:
-        if i.hash is None:
+        if i.password is None:
             continue
-        if verify_password(password=password, password_hash=str(i.hash)):
+        if verify_password(password=password, password_hash=str(i.password)):
             ACTIVE_EMAIL_PASSWORD_PROVIDER.update_email_password_hash_last_used(
                 username=username,
                 uuid=i.uuid,

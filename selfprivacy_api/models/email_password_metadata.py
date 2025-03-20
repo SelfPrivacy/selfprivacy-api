@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 class EmailPasswordData(BaseModel):
     uuid: str
-    hash: Optional[str] = None
+    password: Optional[str] = None
     display_name: str
     created_at: Optional[datetime] = None
     expires_at: Optional[datetime] = None

@@ -34,8 +34,8 @@ class EmailPasswordManager(AbstractEmailPasswordManager):
                     email_passwords_metadata.append(
                         EmailPasswordData(
                             uuid=key.split("/")[-1],
-                            hash=(
-                                data.get("hash", None)
+                            password=(
+                                data.get("password", None)
                                 if with_passwords_hashes
                                 else None
                             ),
@@ -57,7 +57,7 @@ class EmailPasswordManager(AbstractEmailPasswordManager):
         key = f"priv/user/{username}/passwords/{credential_metadata.uuid}"
 
         password_data = {
-            "password_hash": password_hash,
+            "password": password_hash,
             "display_name": credential_metadata.display_name,
         }
 
