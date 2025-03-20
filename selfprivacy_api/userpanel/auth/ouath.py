@@ -1,6 +1,6 @@
 from authlib.integrations.starlette_client import OAuth
-from utils.oauth_secrets import load_oauth_client_secret, OAUTH_CLIENT_ID
-from utils import get_domain
+from selfprivacy_api.utils.oauth_secrets import load_oauth_client_secret, OAUTH_CLIENT_ID
+from selfprivacy_api.utils import get_domain
 
 oauth = OAuth()
 
