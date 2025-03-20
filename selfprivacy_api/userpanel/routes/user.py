@@ -11,6 +11,9 @@ from selfprivacy_api.repositories.users.kanidm_user_repository import (
 )
 from selfprivacy_api.utils import get_domain
 from selfprivacy_api.utils.icons import sanitize_svg
+from selfprivacy_api.repositories.email_password import ACTIVE_EMAIL_PASSWORD_PROVIDER
+from selfprivacy_api.models.email_password_metadata import EmailPasswordData
+from uuid import UUID
 
 from typing import Annotated
 
@@ -117,3 +120,47 @@ async def edit_profile_post(
         raise HTTPException(status_code=500)
 
     return RedirectResponse(url="/user", status_code=303)
+
+
+@router.get("/email-passwords", response_class=HTMLResponse)
+async def email_passwords_get(
+    request: Request, session: Annotated[Session, Depends(get_current_user)]
+):
+    try:
+        email_passwords: list[EmailPasswordData] = (
+            ACTIVE_EMAIL_PASSWORD_PROVIDER.get_all_email_passwords_metadata(
+                session.user_id
+            )
+        )
+
+        email_passwords_dict = [
+            email_password.model_dump() for email_password in email_passwords
+        ]
+        return templates.TemplateResponse(
+            "email_passwords.html",
+            {"request": request, "email_passwords": email_passwords_dict},
+        )
+    except Exception as e:
+        logger.error(f"Error getting email passwords: {e}")
+        raise HTTPException(status_code=500)
+
+
+@router.post("/email-passwords/delete", response_class=HTMLResponse)
+async def email_passwords_delete(
+    request: Request,
+    session: Annotated[Session, Depends(get_current_user)],
+    uuid: Annotated[str, Form()],
+):
+    try:
+        # Make sure the UUID is actually a valid UUID
+        uuid = str(UUID(uuid))
+
+        ACTIVE_EMAIL_PASSWORD_PROVIDER.delete_email_password_hash(
+            session.user_id,
+            uuid,
+        )
+
+        return RedirectResponse(url="/user/email-passwords", status_code=303)
+    except Exception as e:
+        logger.error(f"Error deleting email password: {e}")
+        raise HTTPException(status_code=400)
