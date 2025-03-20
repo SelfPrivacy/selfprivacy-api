@@ -25,6 +25,7 @@ pythonPackages.buildPythonPackage rec {
     passlib # password hasher
     authlib
     jinja2
+    itsdangerous
   ];
   pythonImportsCheck = [ "selfprivacy_api" ];
   doCheck = false;
