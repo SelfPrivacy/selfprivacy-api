@@ -3,7 +3,7 @@ from selfprivacy_api.utils.redis_pool import RedisPool
 import secrets
 import base64
 from hashlib import sha256
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import json
 
 
@@ -31,7 +31,7 @@ async def create_session(token: str, user_id: str) -> Session:
         raise Exception("Redis storage is not available")
 
     session_id = sha256(token.encode()).hexdigest()
-    expires_at = datetime.now() + timedelta(hours=1)
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
     session = Session(id=session_id, user_id=user_id, expires_at=expires_at)
 
     session_data = {
@@ -64,12 +64,12 @@ async def validate_session_token(token: str) -> Session | None:
         expires_at=datetime.fromtimestamp(result["expires_at"]),
     )
 
-    if datetime.now() >= session.expires_at:
+    if datetime.now(timezone.utc) >= session.expires_at:
         await redis_conn.delete(f"session:{session_id}")
         return None
 
-    if datetime.now() >= session.expires_at - timedelta(minutes=30):
-        session.expires_at = datetime.now() + timedelta(hours=1)
+    if datetime.now(timezone.utc) >= session.expires_at - timedelta(minutes=30):
+        session.expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
         session_data = {
             "id": session.id,
             "user_id": session.user_id,
