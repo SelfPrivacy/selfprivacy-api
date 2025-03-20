@@ -275,14 +275,14 @@ in
           ];
         };
 
-        dovecot2.extraConfig = lib.mkAfter ''
-          passdb {
-            driver = checkpassword
-            mechanisms = plain login
-            args = ${dovecot-auth-script}/bin/dovecot-auth-script.sh
-          }
-        '';
       };
+      dovecot2.extraConfig = lib.mkAfter ''
+        passdb {
+          driver = checkpassword
+          mechanisms = plain login
+          args = ${dovecot-auth-script}/bin/dovecot-auth-script.sh
+        }
+      '';
     };
   };
 }
