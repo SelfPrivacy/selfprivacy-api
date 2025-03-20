@@ -60,9 +60,11 @@ class DummyService(Service):
         return "A small service used for test purposes. Does nothing."
 
     @staticmethod
-    def get_svg_icon() -> str:
+    def get_svg_icon(raw=False) -> str:
         """Read SVG icon from file and return it as base64 encoded string."""
         # return ""
+        if raw:
+            return BITWARDEN_ICON
         return base64.b64encode(BITWARDEN_ICON.encode("utf-8")).decode("utf-8")
 
     @classmethod

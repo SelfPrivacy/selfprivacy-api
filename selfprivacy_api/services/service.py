@@ -73,7 +73,7 @@ class Service(ABC):
 
     @staticmethod
     @abstractmethod
-    def get_svg_icon() -> str:
+    def get_svg_icon(raw=False) -> str:
         """
         The monochrome svg icon of the service.
         """

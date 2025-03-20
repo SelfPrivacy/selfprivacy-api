@@ -128,9 +128,10 @@ class ServiceManager(Service):
         return "Enables communication between the SelfPrivacy app and the server."
 
     @staticmethod
-    def get_svg_icon() -> str:
+    def get_svg_icon(raw=False) -> str:
         """Read SVG icon from file and return it as base64 encoded string."""
-        # return ""
+        if raw:
+            return API_ICON
         return base64.b64encode(API_ICON.encode("utf-8")).decode("utf-8")
 
     @staticmethod

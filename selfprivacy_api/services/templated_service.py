@@ -40,7 +40,12 @@ logger = logging.getLogger(__name__)
 
 def config_item_from_json(json_data: dict) -> Optional[ServiceConfigItem]:
     """Create a ServiceConfigItem from JSON data."""
+    if "meta" not in json_data:
+        return None
+    if "type" not in json_data["meta"]:
+        return None
     weight = json_data.get("meta", {}).get("weight", 50)
+    # if no meta, return None
     if json_data["meta"]["type"] == "enable":
         return None
     if json_data["meta"]["type"] == "location":
@@ -134,7 +139,9 @@ class TemplatedService(Service):
     def get_description(self) -> str:
         return self.meta.description
 
-    def get_svg_icon(self) -> str:
+    def get_svg_icon(self, raw=False) -> str:
+        if raw:
+            return self.meta.svg_icon
         return base64.b64encode(self.meta.svg_icon.encode("utf-8")).decode("utf-8")
 
     def get_subdomain(self) -> Optional[str]:
