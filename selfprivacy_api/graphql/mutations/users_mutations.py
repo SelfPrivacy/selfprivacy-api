@@ -2,6 +2,7 @@
 """Users management module"""
 # pylint: disable=too-few-public-methods
 from typing import Optional
+
 import strawberry
 
 from selfprivacy_api.graphql import IsAuthenticated

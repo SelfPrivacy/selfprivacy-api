@@ -1,7 +1,8 @@
 """Users"""
 
 # pylint: disable=too-few-public-methods
-import typing
+from typing import Optional, List
+
 import strawberry
 
 from selfprivacy_api.graphql.common_types.user import (
@@ -16,7 +17,7 @@ from selfprivacy_api.repositories.users.exceptions import UserNotFound
 @strawberry.type
 class Users:
     @strawberry.field(permission_classes=[IsAuthenticated])
-    def get_user(self, username: str) -> typing.Optional[User]:
+    def get_user(self, username: str) -> Optional[User]:
         """Get users"""
 
         try:
@@ -24,6 +25,6 @@ class Users:
         except UserNotFound:
             return None
 
-    all_users: typing.List[User] = strawberry.field(
+    all_users: List[User] = strawberry.field(
         permission_classes=[IsAuthenticated], resolver=get_users
     )
