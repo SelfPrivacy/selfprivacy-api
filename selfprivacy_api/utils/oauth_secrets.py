@@ -11,8 +11,3 @@ def load_oauth_client_secret():
             return secret_file.read().strip()
     else:
         raise FileNotFoundError(f"Secret file not found at {secret_path}")
-
-
-# Export the secret
-oauth_client_secret = load_oauth_client_secret()
-oauth_client_id = OAUTH_CLIENT_ID
