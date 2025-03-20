@@ -29,6 +29,7 @@
             pyflakes
             typer # for strawberry
             types-redis # for mypy
+            passlib # password hasher
           ] ++ strawberry-graphql.optional-dependencies.cli));
 
       vmtest-src-dir = "/root/source";

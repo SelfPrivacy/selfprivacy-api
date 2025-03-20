@@ -9,7 +9,7 @@ from selfprivacy_api.repositories.users.kanidm_user_repository import (
     KanidmUserRepository,
 )
 from selfprivacy_api.repositories.users.json_user_repository import JsonUserRepository
-from selfprivacy_api.actions.email_passwords import add_email_password
+from selfprivacy_api.actions.email_passwords import add_email_password_hash
 
 from selfprivacy_api.utils import ReadUserData
 
@@ -75,7 +75,7 @@ class MigrateUsersFromJson(Migration):
                     )
 
                 if password_hash:
-                    add_email_password(
+                    add_email_password_hash(
                         username=user.username,
                         password_hash=password_hash,
                         with_zero_uuid=True,

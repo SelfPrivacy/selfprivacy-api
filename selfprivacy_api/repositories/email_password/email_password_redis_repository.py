@@ -1,4 +1,4 @@
-from selfprivacy_api.models.email_password_metadata import EmailPasswordMetadata
+from selfprivacy_api.models.email_password_metadata import EmailPasswordData
 from selfprivacy_api.repositories.email_password.abstract_email_password_repository import (
     AbstractEmailPasswordManager,
 )
@@ -10,7 +10,10 @@ redis = RedisPool().get_connection()
 
 class EmailPasswordManager(AbstractEmailPasswordManager):
     @staticmethod
-    def get_all_email_passwords_metadata(username: str) -> list[EmailPasswordMetadata]:
+    def get_all_email_passwords_metadata(
+        username: str,
+        with_passwords_hashes: bool = False,
+    ) -> list[EmailPasswordData]:
         pattern = f"priv/user/{username}/passwords/*"
 
         email_passwords_metadata = []
@@ -23,24 +26,27 @@ class EmailPasswordManager(AbstractEmailPasswordManager):
 
                 if data:
                     email_passwords_metadata.append(
-                        EmailPasswordMetadata(
+                        EmailPasswordData(
                             uuid=key.split("/")[-1],
+                            hash=(
+                                data.get("hash", None)
+                                if with_passwords_hashes
+                                else None
+                            ),
                             display_name=data.get("display_name", None),  # type: ignore
                             created_at=data.get("created_at", None),  # type: ignore
                             expires_at=data.get("expires_at", None),  # type: ignore
                             last_used=data.get("last_used", None),  # type: ignore
                         )
                     )
-            if (
-                cursor == 0
-            ):  # When SCAN finishes enumerating, it will retvurn cursor = 0
+            if cursor == 0:  # When SCAN finishes enumerating, it will return cursor = 0
                 break
 
         return email_passwords_metadata
 
     @staticmethod
-    def add_new_email_password(
-        username: str, password_hash: str, credential_metadata: EmailPasswordMetadata
+    def add_email_password_hash(
+        username: str, password_hash: str, credential_metadata: EmailPasswordData
     ) -> None:
         key = f"priv/user/{username}/passwords/{credential_metadata.uuid}"
 
@@ -53,13 +59,13 @@ class EmailPasswordManager(AbstractEmailPasswordManager):
         redis.hmset(key, password_data)
 
     @staticmethod
-    def delete_email_password(username: str, uuid: str) -> None:
+    def delete_email_password_hash(username: str, uuid: str) -> None:
         key = f"priv/user/{username}/passwords/{uuid}"
 
         redis.delete(key)
 
     @staticmethod
-    def delete_all_email_passwords(username: str) -> None:
+    def delete_all_email_passwords_hashes(username: str) -> None:
         pattern = f"priv/user/{username}/passwords/*"
 
         keys = redis.keys(pattern)

@@ -5,8 +5,6 @@ import uuid
 import logging
 from typing import Optional
 
-from argon2 import PasswordHasher
-
 from selfprivacy_api.utils import is_username_forbidden
 from selfprivacy_api.utils.strings import PLEASE_UPDATE_APP_TEXT
 
@@ -30,11 +28,10 @@ from selfprivacy_api.repositories.users.exceptions import (
 )
 from selfprivacy_api.actions.email_passwords import (
     add_email_password,
-    update_legecy_email_password,
-    delete_all_email_passwords,
+    update_legacy_email_password_hash,
+    delete_all_email_passwords_hashes,
 )
 
-password_hasher = PasswordHasher()
 logger = logging.getLogger(__name__)
 
 
@@ -95,7 +92,7 @@ def create_user(
 
         add_email_password(
             username=username,
-            password_hash=password_hasher.hash(password),
+            password=password,
             with_created_at=True,
         )
 
@@ -136,7 +133,7 @@ def delete_user(username: str) -> None:
     if user and user.user_type == UserDataUserOrigin.PRIMARY:
         raise UserIsProtected
 
-    delete_all_email_passwords(username=username)
+    delete_all_email_passwords_hashes(username=username)
 
     ACTIVE_USERS_PROVIDER.delete_user(username=username)
 
@@ -151,9 +148,9 @@ def update_user(
     if password:
         logger.warning(PLEASE_UPDATE_APP_TEXT)
 
-        update_legecy_email_password(
+        update_legacy_email_password_hash(
             username=username,
-            password_hash=password_hasher.hash(password),
+            password=password,
             with_created_at=True,
         )
 

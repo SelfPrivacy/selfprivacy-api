@@ -10,7 +10,7 @@ from selfprivacy_api.graphql.mutations.mutation_interface import (
 )
 from selfprivacy_api.actions.email_passwords import (
     add_email_password as action_add_email_password,
-    delete_email_password as action_delete_email_password,
+    delete_email_password_hash as action_delete_email_password,
 )
 
 

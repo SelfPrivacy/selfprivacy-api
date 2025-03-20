@@ -1,12 +1,15 @@
 from abc import ABC, abstractmethod
 
-from selfprivacy_api.models.email_password_metadata import EmailPasswordMetadata
+from selfprivacy_api.models.email_password_metadata import EmailPasswordData
 
 
 class AbstractEmailPasswordManager(ABC):
     @staticmethod
     @abstractmethod
-    def get_all_email_passwords_matadata(username: str) -> list[EmailPasswordMetadata]:
+    def get_all_email_passwords_matadata(
+        username: str,
+        with_passwords_hashes: bool = False,
+    ) -> list[EmailPasswordData]:
         """
         Retrieve metadata of all stored email passwords for a given user.
 
@@ -21,8 +24,8 @@ class AbstractEmailPasswordManager(ABC):
 
     @staticmethod
     @abstractmethod
-    def add_new_email_password(
-        username: str, password_hash: str, credential_metadata: EmailPasswordMetadata
+    def add_email_password_hash(
+        username: str, password_hash: str, credential_metadata: EmailPasswordData
     ) -> None:
         """
         Store a new email password along with its metadata for a given user.
@@ -37,7 +40,7 @@ class AbstractEmailPasswordManager(ABC):
 
     @staticmethod
     @abstractmethod
-    def delete_email_password(username: str, uuid: str) -> None:
+    def delete_email_password_hash(username: str, uuid: str) -> None:
         """
         Remove a stored email password with its metadata
         for a given user by its unique identifier.
@@ -48,7 +51,7 @@ class AbstractEmailPasswordManager(ABC):
         """
 
     @staticmethod
-    def delete_all_email_passwords(username: str) -> None:
+    def delete_all_email_passwords_hashes(username: str) -> None:
         """
         Remove all stored email passwords along with their metadata
         for a specified user.
