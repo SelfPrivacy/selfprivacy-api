@@ -8,6 +8,11 @@ from selfprivacy_api.utils.oauth_secrets import (
 from selfprivacy_api.utils import get_domain
 import logging
 
+import sys
+log = logging.getLogger('authlib')
+log.addHandler(logging.StreamHandler(sys.stdout))
+log.setLevel(logging.DEBUG)
+
 router = APIRouter()
 
 logger = logging.getLogger(__name__)
