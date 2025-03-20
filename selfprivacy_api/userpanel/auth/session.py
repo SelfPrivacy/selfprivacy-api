@@ -61,7 +61,7 @@ async def validate_session_token(token: str) -> Session | None:
     session = Session(
         id=result["id"],
         user_id=result["user_id"],
-        expires_at=datetime.fromtimestamp(result["expires_at"]),
+        expires_at=datetime.fromtimestamp(result["expires_at"], timezone.utc),
     )
 
     if datetime.now(timezone.utc) >= session.expires_at:
