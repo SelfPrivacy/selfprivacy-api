@@ -68,6 +68,8 @@ async def auth_via_kanidm(request: Request, response: Response):
         username,
     )
 
+    response = RedirectResponse(url="/user")
+
     set_session_token_cookie(response, session_token, session.expires_at)
 
-    return RedirectResponse(url="/user")
+    return response

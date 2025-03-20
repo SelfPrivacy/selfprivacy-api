@@ -6,6 +6,7 @@ from selfprivacy_api.userpanel.routes.dependencies import get_current_user
 from typing import Annotated
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
@@ -22,7 +23,7 @@ async def get_profile(
 
 
 @router.get("/logout")
-async def logout(request: Request, user: Annotated[Session, Depends(get_current_user)]):
+async def logout(request: Request):
     response = RedirectResponse(url="/login")
     delete_session_token_cookie(response)
     return response
