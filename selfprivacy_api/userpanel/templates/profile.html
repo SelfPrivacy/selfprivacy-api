@@ -5,13 +5,13 @@
 
 {% block content %}
     <h1 class="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-        Hello, {{ user.username }}
+        Hello, {{ user.username|e }}
     </h1>
     <div class="my-4 flex gap-2">
-		{{ call() button.default('/user/edit') }}
+		{{ call() button.primary('/user/edit') }}
 		    Edit profile
 		{{ endcall }}
-		{{ call() button.default('/user/email-passwords') }}
+		{{ call() button.primary('/user/email-passwords') }}
 		    Email passwords
 		{{ endcall }}
 	</div>
