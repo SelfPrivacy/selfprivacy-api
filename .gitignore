@@ -151,3 +151,5 @@ cython_debug/
 
 /result
 /.nixos-test-history
+
+node_modules/
