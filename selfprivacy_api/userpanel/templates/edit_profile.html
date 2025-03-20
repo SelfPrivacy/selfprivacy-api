@@ -31,8 +31,10 @@
                 </div>
             {% endif %}
         </div>
-        {% call() button.submit('submit') %}
-            Submit
-        {% endcall %}
+        <div class="mt-2">
+            {% call() button.submit('submit') %}
+                Submit
+            {% endcall %}
+        </div>
     </form>
 {% endblock %}
