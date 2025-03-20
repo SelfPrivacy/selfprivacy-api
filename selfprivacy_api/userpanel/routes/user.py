@@ -49,7 +49,7 @@ async def get_profile(
                     "name": service.get_display_name(),
                     "url": service.get_url(),
                     "description": service.get_description(),
-                    "icon": service.get_svg_icon(),
+                    "icon": service.get_svg_icon(raw=True),
                 }
             )
     return templates.TemplateResponse(
