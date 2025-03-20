@@ -625,6 +625,11 @@
       line-height: var(--tw-leading, var(--text-5xl--line-height));
     }
   }
+  .\32 xl\:grid-cols-4 {
+    @media (width >= 96rem) {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
   .\[\&_svg\]\:pointer-events-none {
     & svg {
       pointer-events: none;
