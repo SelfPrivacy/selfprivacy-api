@@ -5,7 +5,7 @@ from selfprivacy_api.repositories.email_password.abstract_email_password_reposit
 from selfprivacy_api.utils.redis_pool import RedisPool
 
 
-redis = RedisPool().get_connection()
+redis = RedisPool().get_userpanel_connection()
 
 
 class EmailPasswordManager(AbstractEmailPasswordManager):

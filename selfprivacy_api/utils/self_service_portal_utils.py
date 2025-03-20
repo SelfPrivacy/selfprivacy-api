@@ -1,9 +1,8 @@
 import secrets
 import base64
-import hashlib
 import unicodedata
 
-from passlib.hash import argon2
+from passlib.hash import argon2, sha512_crypt
 
 from selfprivacy_api.repositories.email_password import ACTIVE_EMAIL_PASSWORD_PROVIDER
 from selfprivacy_api.models.email_password_metadata import EmailPasswordData
@@ -21,12 +20,10 @@ def generate_password_hash(password: str) -> str:
 def verify_password(password: str, password_hash: str) -> bool:
     password = unicodedata.normalize("NFKC", password)
 
-    if "$argon2" in password:
-        return argon2.verify(password, password_hash)
-
-    elif password[0] == "$" and password[1] == "6":
-        return password_hash == hashlib.sha256(password.encode()).hexdigest()
-
+    if argon2.verify(password, password_hash) or sha512_crypt.verify(
+        password, password_hash
+    ):
+        return True
     return False
 
 
@@ -50,6 +47,6 @@ def validate_email_password(username: str, password: str) -> bool:
         return False
 
     for i in email_passwords_data:
-        if argon2.verify(password, i.hash):
-            return True
+        return verify_password(password=password, password_hash=str(i.hash))
+
     return False
