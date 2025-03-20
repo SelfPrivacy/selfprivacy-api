@@ -26,6 +26,8 @@ pythonPackages.buildPythonPackage rec {
     authlib
     jinja2
     itsdangerous
+    qrcode
+    pypng
   ];
   pythonImportsCheck = [ "selfprivacy_api" ];
   doCheck = false;

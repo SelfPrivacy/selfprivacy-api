@@ -1,3 +1,4 @@
+from fastapi import Response
 from selfprivacy_api.utils.redis_pool import RedisPool
 import secrets
 import base64
@@ -87,3 +88,18 @@ async def invalidate_session(session_id: str) -> None:
     redis_conn = RedisPool().get_userpanel_connection_async()
 
     await redis_conn.delete(f"session:{session_id}")
+
+
+def set_session_token_cookie(response: Response, token: str, expires_at: datetime):
+    response.set_cookie(
+        "session_token",
+        token,
+        httponly=True,
+        samesite="lax",
+        secure=True,
+        expires=expires_at,
+    )
+
+
+def delete_session_token_cookie(response: Response):
+    response.delete_cookie("session_token")
