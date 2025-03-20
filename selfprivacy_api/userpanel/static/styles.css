@@ -303,6 +303,9 @@
   .shrink-0 {
     flex-shrink: 0;
   }
+  .transform {
+    transform: var(--tw-rotate-x) var(--tw-rotate-y) var(--tw-rotate-z) var(--tw-skew-x) var(--tw-skew-y);
+  }
   .resize {
     resize: both;
   }
@@ -713,6 +716,10 @@ html {
   visibility: visible;
   opacity: 1;
 }
+.icon-container svg {
+  width: calc(var(--spacing) * 12);
+  height: calc(var(--spacing) * 12);
+}
 @keyframes enter {
   from {
     opacity: var(--tw-enter-opacity, 1);
@@ -724,6 +731,31 @@ html {
     opacity: var(--tw-exit-opacity, 1);
     transform: translate3d(var(--tw-exit-translate-x, 0), var(--tw-exit-translate-y, 0), 0) scale3d(var(--tw-exit-scale, 1), var(--tw-exit-scale, 1), var(--tw-exit-scale, 1)) rotate(var(--tw-exit-rotate, 0));
   }
+}
+@property --tw-rotate-x {
+  syntax: "*";
+  inherits: false;
+  initial-value: rotateX(0);
+}
+@property --tw-rotate-y {
+  syntax: "*";
+  inherits: false;
+  initial-value: rotateY(0);
+}
+@property --tw-rotate-z {
+  syntax: "*";
+  inherits: false;
+  initial-value: rotateZ(0);
+}
+@property --tw-skew-x {
+  syntax: "*";
+  inherits: false;
+  initial-value: skewX(0);
+}
+@property --tw-skew-y {
+  syntax: "*";
+  inherits: false;
+  initial-value: skewY(0);
 }
 @property --tw-space-y-reverse {
   syntax: "*";

@@ -9,6 +9,8 @@ from selfprivacy_api.services import ServiceManager
 from selfprivacy_api.repositories.users.kanidm_user_repository import (
     KanidmUserRepository,
 )
+from selfprivacy_api.utils.icons import sanitize_svg
+
 from typing import Annotated
 
 import logging
@@ -32,10 +34,6 @@ async def get_profile(
         logger.error(f"Error getting user by username: {e}")
         raise HTTPException(status_code=500)
     enabled_services = ServiceManager.get_enabled_services_with_urls()
-    # Prepare a list of services with their names, URLs, descriptions and icons.
-    # If the service has an access group, check if the user is a member of that group
-    # If not, do not include the service.
-    # Split by @ and take the first part to get the group name
     if user.memberof is None:
         user_groups = []
     else:
@@ -49,7 +47,7 @@ async def get_profile(
                     "name": service.get_display_name(),
                     "url": service.get_url(),
                     "description": service.get_description(),
-                    "icon": service.get_svg_icon(raw=True),
+                    "icon": sanitize_svg(service.get_svg_icon(raw=True)),
                 }
             )
     return templates.TemplateResponse(

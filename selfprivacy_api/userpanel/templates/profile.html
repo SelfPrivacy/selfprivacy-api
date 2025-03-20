@@ -20,7 +20,7 @@
         {% for service in services %}
             <a href="{{ service.url }}" class="block p-4 border rounded-lg shadow-sm hover:shadow-md transition-shadow" aria-label="{{ service.name }}" rel="noopener noreferrer" target="_blank">
                 <div class="flex items-center space-x-4">
-                    <div class="w-12 h-12" aria-hidden="true">
+                    <div class="w-12 h-12 icon-container" aria-hidden="true">
                         {{ service.icon|safe }}
                     </div>
                     <div>

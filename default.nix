@@ -29,6 +29,7 @@ pythonPackages.buildPythonPackage rec {
     qrcode
     pypng
     python-multipart
+    bleach
   ];
   pythonImportsCheck = [ "selfprivacy_api" ];
   doCheck = false;
