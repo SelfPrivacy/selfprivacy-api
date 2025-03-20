@@ -12,7 +12,7 @@ def format_datetime(
     if tz_str:
         tz = timezone(tz_str)
         value = value.astimezone(tz)
-        return f"{value.strftime(format)} ({tz.tzname})"
+        return f"{value.strftime(format)} ({tz.zone})"
 
     return value.strftime(format)
 

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Request, Form
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 from selfprivacy_api.utils.self_service_portal_utils import validate_email_password
 from selfprivacy_api.utils import get_domain
 from typing import Annotated
@@ -11,16 +12,20 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+class EmailPasswordCheckInput(BaseModel):
+    username: str
+    password: str
+
+
 @router.post("/check-email-password")
-async def check_email_password(
-    request: Request,
-    username: Annotated[str, Form()],
-    password: Annotated[str, Form()],
-):
+async def check_email_password(request: Request, input_data: EmailPasswordCheckInput):
     headers = request.headers
     logger.info("Headers:")
     for key, value in headers.items():
         logger.info(f"{key}: {value}")
+
+    username = input_data.username
+    password = input_data.password
 
     if not username or not password:
         logger.error("Invalid request")
