@@ -21,6 +21,7 @@ from uuid import UUID
 
 from typing import Annotated, Optional
 from datetime import datetime, timezone, date
+from selfprivacy_api.actions.system import get_timezone
 
 import logging
 
@@ -146,9 +147,10 @@ async def email_passwords_get(
         email_passwords_dict = [
             email_password.model_dump() for email_password in email_passwords
         ]
+        timezone = get_timezone()
         return templates.TemplateResponse(
             "email_passwords.html",
-            {"request": request, "email_passwords": email_passwords_dict},
+            {"request": request, "email_passwords": email_passwords_dict, "timezone": timezone},
         )
     except Exception as e:
         logger.error(f"Error getting email passwords: {e}")
