@@ -42,10 +42,11 @@ let
   kanidmExecStartPreScript = pkgs.writeShellScript "${oauth-client-id}-kanidm-ExecStartPre-script.sh" ''
     [ -f "${kanidm-oauth-client-secret-fp}" ] || \
       "${lib.getExe pkgs.openssl}" rand -base64 -out "${kanidm-oauth-client-secret-fp}" 32
+    chmod 640 "${kanidm-oauth-client-secret-fp}"
   '';
 
   oauth-redirect-uri = "https://api.${domain}/login/callback";
-  users-group = "sp.selfprivacy-ssp.users";
+  users-group = "sp.selfprivacy-api-ssp.users";
 
   dovecot-auth-script = pkgs.writeShellApplication {
     name = "dovecot-auth-script.sh";
