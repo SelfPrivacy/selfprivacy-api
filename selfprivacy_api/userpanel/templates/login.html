@@ -1,12 +1,13 @@
 {% extends "base.html" %}
-{% import "logo.html" %}
+{% import "logo.html" as logo %}
+{% import "button.html" as button %}
 {% block title %}Login{% endblock %}
 
 {% block content %}
 <div class="flex h-screen w-full flex-col items-center justify-center px-4">
 	<div class="my-8 w-full max-w-xs">
 		<div class="w-full">
-			{{ selfprivacy_horizontal_mono() }}
+			{{ logo.selfprivacy_horizontal_mono() }}
 		</div>
 	</div>
 	<div class="rounded-lg border bg-card text-card-foreground shadow-sm min-w-xs mx-auto max-w-sm">
@@ -17,7 +18,9 @@
 			<p class="text-sm text-muted-foreground">Tap on the button below to begin</p>
 		</div>
 		<div class="flex items-center gap-4 p-6">
-			<a class="ring-offset-background focus-visible:ring-ring inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2" href="/login/oauth">Sign in with OAuth</a>
+			{% call() button.primary_default(href='/login/oauth') %}
+			Sign in with OAuth
+			{% endcall %}
 		</div>
 	</div>
 </div>

@@ -5,6 +5,9 @@ from selfprivacy_api.userpanel.auth.session import Session, delete_session_token
 from selfprivacy_api.userpanel.routes.dependencies import get_current_user
 from typing import Annotated
 
+import logging
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
 
 
@@ -12,6 +15,7 @@ router = APIRouter()
 async def get_profile(
     request: Request, user: Annotated[Session, Depends(get_current_user)]
 ):
+    logger.info(f"User {user}")
     return templates.TemplateResponse(
         "profile.html", {"request": request, "username": user.user_id}
     )
