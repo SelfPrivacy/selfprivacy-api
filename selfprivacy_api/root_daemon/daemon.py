@@ -63,6 +63,32 @@ def sync_with_dynamic_services():
     """
 
 
+# it does not actually need to be there, doas allows for different
+# config files?
+DOAS_SETTINGS_LOCATION = "/etc/doas.conf"
+
+
+def make_doas_row(command: str) -> str:
+
+    tokens = command.split(" ")
+    cmd = tokens.pop(0)
+    args = tokens
+
+    return f"permit nopass selfprivacy as root cmd {cmd} args {" ".join(args)}."
+
+
+def generate_file_body(commands: List[str]) -> str:
+    buffer = ""
+    for command in commands:
+        buffer += make_doas_row(command) + "\n"
+    return buffer
+
+
+def make_doas_conf(commands: List) -> None:
+    with open(DOAS_SETTINGS_LOCATION, "w") as file:
+        file.write(generate_file_body(commands))
+
+
 def get_available_commands() -> List[str]:
     """
     Generate all commands with combinatorics.

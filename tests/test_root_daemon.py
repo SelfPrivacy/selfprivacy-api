@@ -17,6 +17,7 @@ from selfprivacy_api.root_daemon.daemon import (
     services,
 )
 import selfprivacy_api.root_daemon.daemon as root_daemon
+from selfprivacy_api.root_daemon.daemon import generate_file_body
 from selfprivacy_api.root_daemon.root_interface import call_root_function
 
 
@@ -40,6 +41,30 @@ def test_available_commands():
     assert len(commands) >= len(services) * len(service_commands)
     for service in services:
         assert is_in_strings(commands, service)
+
+
+def test_generating_file_content():
+    commands = get_available_commands()
+    assert commands != []
+    config_body = generate_file_body(commands)
+    config_lines = config_body.splitlines()
+    for command in commands:
+        tokens = command.split(" ")
+        cmd = tokens.pop(0)
+        args = " ".join(tokens).strip()
+        seen = False
+        for line in config_lines:
+            # if cmd in line and "args " + args in line:
+            if cmd in line:
+                seen = True
+        if not seen:
+            raise ValueError(
+                "not all requested commands are present, could not find",
+                cmd,
+                "in",
+                config_lines,
+            )
+    assert len(config_lines) == len(commands)
 
 
 def test_init():
