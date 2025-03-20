@@ -28,6 +28,7 @@ pythonPackages.buildPythonPackage rec {
     itsdangerous
     qrcode
     pypng
+    python-multipart
   ];
   pythonImportsCheck = [ "selfprivacy_api" ];
   doCheck = false;
