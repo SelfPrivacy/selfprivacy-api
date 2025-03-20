@@ -32,6 +32,10 @@ class MigrateUsersFromJson(Migration):
         json_repo_users = JsonUserRepository.get_users(exclude_root=True)
         kanidm_repo_users = KanidmUserRepository.get_users(exclude_root=True)
 
+        logger.info(f"Users in json repo: {json_repo_users}")
+        logger.info(f"Users in kanidm repo: {kanidm_repo_users}")
+        logger.info(f"Users to migrate: {[user for user in json_repo_users if user not in kanidm_repo_users]}")
+
         return [user for user in json_repo_users if user not in kanidm_repo_users]
 
     def get_migration_name(self) -> str:
