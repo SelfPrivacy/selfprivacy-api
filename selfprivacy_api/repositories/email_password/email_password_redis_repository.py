@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from selfprivacy_api.models.email_password_metadata import EmailPasswordData
 from selfprivacy_api.repositories.email_password.abstract_email_password_repository import (
     AbstractEmailPasswordManager,
@@ -25,11 +27,16 @@ class EmailPasswordManager(AbstractEmailPasswordManager):
                 data = redis.hgetall(key)
 
                 if data:
+                    # Parse datetimes
+                    for date_key in ["created_at", "expires_at", "last_used"]:
+                        if date_key in data:
+                            data[date_key] = datetime.fromisoformat(data[date_key])
+
                     email_passwords_metadata.append(
                         EmailPasswordData(
                             uuid=key.split("/")[-1],
-                            hash=(
-                                data.get("hash", None)
+                            password=(
+                                data.get("password", None)
                                 if with_passwords_hashes
                                 else None
                             ),
@@ -51,12 +58,30 @@ class EmailPasswordManager(AbstractEmailPasswordManager):
         key = f"priv/user/{username}/passwords/{credential_metadata.uuid}"
 
         password_data = {
-            "password_hash": password_hash,
+            "password": password_hash,
             "display_name": credential_metadata.display_name,
-            "created_at": credential_metadata.created_at,
         }
 
-        redis.hmset(key, password_data)
+        if credential_metadata.created_at is not None:
+            password_data["created_at"] = credential_metadata.created_at.isoformat()
+
+        if credential_metadata.expires_at is not None:
+            password_data["expires_at"] = credential_metadata.expires_at.isoformat()
+
+        redis.hset(key, mapping=password_data)
+
+        if credential_metadata.expires_at:
+            try:
+                redis.expireat(key, int(credential_metadata.expires_at.timestamp()))
+            except Exception as e:
+                # Handle the exception (e.g., log it)
+                print(f"Failed to set expiration time for {key}: {e}")
+
+    @staticmethod
+    def update_email_password_hash_last_used(username: str, uuid: str) -> None:
+        key = f"priv/user/{username}/passwords/{uuid}"
+
+        redis.hset(key, "last_used", datetime.now(timezone.utc).isoformat())
 
     @staticmethod
     def delete_email_password_hash(username: str, uuid: str) -> None:

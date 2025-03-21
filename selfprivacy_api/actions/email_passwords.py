@@ -1,14 +1,28 @@
-from typing_extensions import Optional
-from selfprivacy_api.models.email_password_metadata import EmailPasswordData
+from typing import Optional
 from uuid import UUID, uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 
+from selfprivacy_api.models.email_password_metadata import EmailPasswordData
+from selfprivacy_api.models.tokens.time import ensure_timezone
 from selfprivacy_api.repositories.email_password import ACTIVE_EMAIL_PASSWORD_PROVIDER
+<<<<<<< HEAD
 
 from passlib.hash import argon2
+=======
+from selfprivacy_api.utils.argon2 import generate_password_hash
+>>>>>>> d5eaf399d26f7350239b524ac291a6b5711b6b72
 
 
 def get_email_credentials_metadata(username: str) -> list[EmailPasswordData]:
+    """
+    Retrieve all email password metadata for a given username.
+
+    Args:
+        username (str): The username to retrieve email password metadata for.
+
+    Returns:
+        list[EmailPasswordData]: A list of EmailPasswordData objects containing the metadata.
+    """
     return ACTIVE_EMAIL_PASSWORD_PROVIDER.get_all_email_passwords_metadata(
         username=username,
     )
@@ -18,15 +32,21 @@ def add_email_password(
     username: str,
     password: str,
     display_name: Optional[str] = None,
-    with_created_at: Optional[bool] = False,
+    with_created_at: Optional[bool] = True,
     with_zero_uuid: Optional[bool] = False,
+    expires_at: Optional[datetime] = None,
 ) -> None:
     add_email_password_hash(
         username=username,
+<<<<<<< HEAD
         password_hash=argon2.hash(password),
+=======
+        password_hash=generate_password_hash(password),
+>>>>>>> d5eaf399d26f7350239b524ac291a6b5711b6b72
         display_name=display_name,
         with_created_at=with_created_at,
         with_zero_uuid=with_zero_uuid,
+        expires_at=expires_at,
     )
 
 
@@ -34,14 +54,16 @@ def add_email_password_hash(
     username: str,
     password_hash: str,
     display_name: Optional[str] = None,
-    with_created_at: Optional[bool] = False,
+    with_created_at: Optional[bool] = True,
     with_zero_uuid: Optional[bool] = False,
+    expires_at: Optional[datetime] = None,
 ) -> None:
     credential_metadata = EmailPasswordData(
         # UUID(int=0) == '00000000-0000-0000-0000-000000000000'
         uuid=str(UUID(int=0)) if with_zero_uuid else str(uuid4()),
         display_name=display_name if display_name else "Legacy password",
-        created_at=datetime.now().isoformat() if with_created_at else None,
+        created_at=datetime.now(timezone.utc) if with_created_at else None,
+        expires_at=ensure_timezone(expires_at) if expires_at else None,
     )
 
     ACTIVE_EMAIL_PASSWORD_PROVIDER.add_email_password_hash(

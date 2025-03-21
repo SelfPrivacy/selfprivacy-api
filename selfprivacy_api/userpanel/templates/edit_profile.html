@@ -1,40 +1,24 @@
 {% extends "layout.html" %}
 {% import "button.html" as button %}
+{% import "forms.html" as forms %}
 
 {% block title %}Edit profile{% endblock %}
 
 {% block content %}
-    <form method="post">
-        <div class="space-y-2">
-            <label
-                for="displayname"
-                class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 data-[fs-error]:text-destructive"
-                {% if errors.displayname %}data-[fs-error]{% endif %}
-            >
-                Display Name:
-            </label>
-            <input
-                type="text"
-                id="displayname"
-                name="displayname"
-                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                value="{{ values.displayname|e }}"
-                aria-required="true"
-                aria-invalid="{{ errors.displayname is defined }}"
-                required />
-            <div class="text-sm text-muted-foreground">
-                This is your public display name.
+    <div>
+        <h1 class="my-4 text-2xl font-bold">Edit Profile</h1>
+        <form method="post">
+            <div class="space-y-2 mb-2">
+                {{ forms.label("displayname", "Display Name:", errors.displayname) }}
+                {{ forms.input("text", "displayname", "displayname", values.displayname, errors.displayname) }}
+                {{ forms.description("This is your public display name.") }}
+                {{ forms.error_message(errors.displayname) }}
             </div>
-            {% if errors.displayname %}
-                <div class="text-sm font-medium text-destructive" aria-live="assertive">
-                    {{ errors.displayname|e }}
-                </div>
-            {% endif %}
-        </div>
-        <div class="mt-2">
-            {% call() button.submit('submit') %}
-                Submit
-            {% endcall %}
-        </div>
-    </form>
+            <div class="mt-2">
+                {% call() button.submit('submit') %}
+                    Submit
+                {% endcall %}
+            </div>
+        </form>
+    </div>
 {% endblock %}

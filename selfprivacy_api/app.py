@@ -21,6 +21,7 @@ from secrets import token_urlsafe
 
 from selfprivacy_api.userpanel.routes.login import router as login_router
 from selfprivacy_api.userpanel.routes.user import router as user_router
+from selfprivacy_api.userpanel.routes.internal import router as internal_router
 
 from selfprivacy_api.userpanel.static import static_dir
 
@@ -57,12 +58,14 @@ app.mount("/static", StaticFiles(directory=static_dir), name="static")
 app.include_router(graphql_app, prefix="/graphql")
 app.include_router(login_router, prefix="/login")
 app.include_router(user_router, prefix="/user")
+app.include_router(internal_router, prefix="/internal")
 
 
 @app.get("/api/version")
 async def get_version():
     """Get the version of the server"""
     return {"version": get_api_version()}
+
 
 @app.get("/")
 async def root():

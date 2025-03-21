@@ -23,7 +23,7 @@ from selfprivacy_api.utils.cached_call import get_ttl_hash
 import selfprivacy_api.utils.network as network_utils
 
 from selfprivacy_api.services.api_icon import API_ICON
-from selfprivacy_api.utils import USERDATA_FILE, DKIM_DIR, SECRETS_FILE
+from selfprivacy_api.utils import USERDATA_FILE, DKIM_DIR, SECRETS_FILE, get_domain
 from selfprivacy_api.utils.block_devices import BlockDevices
 from selfprivacy_api.services.templated_service import (
     SP_MODULES_DEFENITIONS_PATH,
@@ -54,6 +54,14 @@ class ServiceManager(Service):
     @staticmethod
     def get_enabled_services() -> list[Service]:
         return [service for service in get_services() if service.is_enabled()]
+
+    @staticmethod
+    def get_enabled_services_with_urls() -> list[Service]:
+        return [
+            service
+            for service in get_services(exclude_remote=True)
+            if service.is_enabled() and service.get_url()
+        ]
 
     # This one is not currently used by any code.
     @staticmethod
@@ -120,15 +128,17 @@ class ServiceManager(Service):
         return "Enables communication between the SelfPrivacy app and the server."
 
     @staticmethod
-    def get_svg_icon() -> str:
+    def get_svg_icon(raw=False) -> str:
         """Read SVG icon from file and return it as base64 encoded string."""
-        # return ""
+        if raw:
+            return API_ICON
         return base64.b64encode(API_ICON.encode("utf-8")).decode("utf-8")
 
     @staticmethod
     def get_url() -> typing.Optional[str]:
         """Return service url."""
-        return None
+        domain = get_domain()
+        return f"https://api.{domain}"
 
     @staticmethod
     def get_subdomain() -> typing.Optional[str]:

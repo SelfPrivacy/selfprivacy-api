@@ -31,11 +31,14 @@ from selfprivacy_api.repositories.users.abstract_user_repository import (
 
 REDIS_TOKEN_KEY = "kanidm:token"
 
-KANIDM_URL = "https://127.0.0.1:3013"
 SP_ADMIN_GROUPS = ["sp.admins"]
 SP_DEFAULT_GROUPS = ["sp.full_users"]
 
 logger = logging.getLogger(__name__)
+
+
+def get_kanidm_url():
+    return f"https://auth.{get_domain()}"
 
 
 class KanidmAdminToken:
@@ -62,11 +65,11 @@ class KanidmAdminToken:
     @staticmethod
     def get() -> str:
         redis = RedisPool().get_connection()
-        kanidm_admin_token = redis.get(REDIS_TOKEN_KEY)
+        kanidm_admin_token: str = redis.get(REDIS_TOKEN_KEY)  # type: ignore
 
         if kanidm_admin_token:
-            if KanidmAdminToken._is_token_valid(kanidm_admin_token):  # type: ignore
-                return kanidm_admin_token  # type: ignore
+            if KanidmAdminToken._is_token_valid(kanidm_admin_token):
+                return kanidm_admin_token
 
         logging.warning("Kanidm admin token is missing or invalid. Regenerating.")
 
@@ -133,7 +136,7 @@ class KanidmAdminToken:
 
     @staticmethod
     def _is_token_valid(token: str) -> bool:
-        endpoint = f"{KANIDM_URL}/v1/person/root"
+        endpoint = f"{get_kanidm_url()}/v1/person/root"
         try:
             response = requests.get(
                 endpoint,
@@ -142,7 +145,6 @@ class KanidmAdminToken:
                     "Content-Type": "application/json",
                 },
                 timeout=1,
-                verify=False,  # TODO: REMOVE THIS NOT HALAL!!!!!
             )
 
         except (
@@ -257,7 +259,7 @@ class KanidmUserRepository(AbstractUserRepository):
             logger.error(f"HTTP method '{method}' is not supported.")
             raise ValueError(f"Unsupported HTTP method: {method}")
 
-        full_endpoint = f"{KANIDM_URL}/v1/{endpoint}"
+        full_endpoint = f"{get_kanidm_url()}/v1/{endpoint}"
 
         try:
             response = request_method(
@@ -268,7 +270,6 @@ class KanidmUserRepository(AbstractUserRepository):
                     "Content-Type": "application/json",
                 },
                 timeout=1,
-                verify=False,  # TODO: REMOVE THIS NOT HALAL!!!!!
             )
             response_data = response.json()
 
@@ -352,7 +353,7 @@ class KanidmUserRepository(AbstractUserRepository):
                 "name": [username],
                 "displayname": [displayname if displayname else username],
                 "mail": [f"{username}@{get_domain()}"],
-                "class": ["user"],  # TODO read more about it
+                "class": ["user"],
             }
         }
 

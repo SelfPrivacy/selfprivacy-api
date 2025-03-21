@@ -73,7 +73,7 @@ class Service(ABC):
 
     @staticmethod
     @abstractmethod
-    def get_svg_icon() -> str:
+    def get_svg_icon(raw=False) -> str:
         """
         The monochrome svg icon of the service.
         """
@@ -201,6 +201,18 @@ class Service(ABC):
         The support level of the service.
         """
         return SupportLevel.NORMAL
+
+    def get_sso_access_group(self) -> Optional[str]:
+        """
+        The access group for Single Sign On.
+        """
+        return None
+
+    def get_sso_admin_group(self) -> Optional[str]:
+        """
+        The admin group for Single Sign On.
+        """
+        return None
 
     @staticmethod
     @abstractmethod
@@ -475,7 +487,8 @@ class Service(ABC):
             return job
 
         report_progress(5, job, f"Stopping {service_name}...")
-        assert self is not None
+        if self is not None:
+            raise AssertionError
         with StoppedService(self):
             report_progress(9, job, "Stopped service, starting the move...")
             self.do_move_to_volume(volume, job)

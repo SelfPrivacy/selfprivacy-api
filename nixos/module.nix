@@ -62,7 +62,7 @@ let
       IFS= read -r -d ''' username <&3
       IFS= read -r -d ''' password <&3
 
-      if ! response=$(curl -s -X POST http://127.0.0.1:${port}/check-email-password \
+      if ! response=$(curl -s -X POST http://127.0.0.1:${port}/internal/check-email-password \
         -H "Content-Type: application/json" \
         -d "{\"username\": \"$username\", \"password\": \"$password\"}"); then
         exit 111
@@ -313,7 +313,7 @@ in
           ];
         };
         systems.oauth2.${oauth-client-id} = {
-          displayName = "SelfPrivacy";
+          displayName = "SelfPrivacy Self-Service Portal";
           originUrl = oauth-redirect-uri;
           originLanding = "https://api.${domain}/";
           basicSecretFile = kanidm-oauth-client-secret-fp;

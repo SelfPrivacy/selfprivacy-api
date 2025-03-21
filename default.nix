@@ -1,6 +1,6 @@
 { pythonPackages, rev ? "local" }:
 
-pythonPackages.buildPythonPackage rec {
+pythonPackages.buildPythonPackage {
   pname = "selfprivacy-graphql-api";
   version = rev;
   src = builtins.filterSource (p: t: p != ".git" && t != "symlink") ./.;
@@ -29,6 +29,8 @@ pythonPackages.buildPythonPackage rec {
     qrcode
     pypng
     python-multipart
+    bleach
+    argon2-cffi
   ];
   pythonImportsCheck = [ "selfprivacy_api" ];
   doCheck = false;

@@ -72,3 +72,17 @@
 		@apply bg-background text-foreground;
 	}
 }
+
+html {
+	visibility: visible;
+	opacity: 1;
+}
+
+.icon-container svg {
+	width: calc(var(--spacing) * 12);
+	height: calc(var(--spacing) * 12);
+}
+
+.icon-container svg path {
+	fill: hsl(var(--primary) / 1);
+}

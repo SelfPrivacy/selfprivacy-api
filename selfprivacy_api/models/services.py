@@ -70,6 +70,13 @@ class License(BaseSchema):
     url: str
 
 
+class SingleSignOnGroups(BaseSchema):
+    """Model representing the groups for Single Sign On."""
+
+    access_group: Optional[str] = None
+    admin_group: Optional[str] = None
+
+
 class ServiceMetaData(BaseSchema):
     """Model representing the meta data of a service."""
 
@@ -93,3 +100,4 @@ class ServiceMetaData(BaseSchema):
     homepage: Optional[str] = None
     source_page: Optional[str] = None
     support_level: SupportLevel = SupportLevel.UNKNOWN
+    sso: Optional[SingleSignOnGroups] = None
