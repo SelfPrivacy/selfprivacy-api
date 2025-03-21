@@ -3,5 +3,8 @@
     "@tailwindcss/cli": "^4.0.14",
     "tailwindcss": "^4.0.14",
     "tailwindcss-animate": "^1.0.7"
+  },
+  "scripts": {
+    "build:css": "bunx @tailwindcss/cli -i selfprivacy_api/userpanel/css/input.css -o selfprivacy_api/userpanel/static/styles.css"
   }
 }
