@@ -46,6 +46,7 @@ class EditProfileForm(BaseModel):
 class CreateEmailPasswordForm(BaseModel):
     display_name: str = Field(..., min_length=1, max_length=255)
     expires_at: Optional[datetime] = None
+    deltachat: Optional[bool] = False
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -209,7 +210,7 @@ async def create_email_password_post(
     session: Annotated[Session, Depends(get_current_user)],
     display_name: Annotated[str, Form()],
     expires_at: Annotated[Optional[str], Form()] = None,
-    deltachat: Annotated[bool, Form()] = False,
+    deltachat: Annotated[Optional[str], Form()] = None,
 ):
     try:
         expires_at_dt = (
@@ -219,8 +220,11 @@ async def create_email_password_post(
         )
         if expires_at_dt and expires_at_dt <= datetime.now(timezone.utc):
             raise ValueError("Expiration date must be in the future")
+        deltachat_parsed = deltachat is not None
         form = CreateEmailPasswordForm(
-            display_name=display_name, expires_at=expires_at_dt
+            display_name=display_name,
+            expires_at=expires_at_dt,
+            deltachat=deltachat_parsed,
         )
     except (ValidationError, ValueError) as e:
         errors = (
@@ -253,7 +257,7 @@ async def create_email_password_post(
     deltachat_uri = None
     deltachat_qr_base64 = None
 
-    if deltachat:
+    if form.deltachat:
         deltachat_params = {
             "p": password,
             "v": 1,

@@ -67,7 +67,12 @@ class EmailPasswordManager(AbstractEmailPasswordManager):
         if credential_metadata.expires_at is not None:
             password_data["expires_at"] = credential_metadata.expires_at.isoformat()
 
-        redis.hmset(key, password_data)
+        if credential_metadata.expires_at:
+            redis.hmset(
+                key, password_data, exat=credential_metadata.expires_at.timestamp()
+            )
+        else:
+            redis.hmset(key, password_data)
 
     @staticmethod
     def update_email_password_hash_last_used(username: str, uuid: str) -> None:
