@@ -1,11 +1,14 @@
 import os
+from typing import Optional
 from datetime import datetime
 from fastapi.templating import Jinja2Templates
 from pytz import timezone
 
 
 def format_datetime(
-    value: datetime | None, format="%Y-%m-%d %H:%M:%S", tz_str: str = None
+    value: Optional[datetime],
+    format="%Y-%m-%d %H:%M:%S",
+    tz_str: Optional[str] = None,
 ):
     if value is None:
         return ""

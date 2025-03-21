@@ -55,7 +55,19 @@ ALLOWED_ATTRIBUTES = {
 }
 
 
-def sanitize_svg(svg_content):
+def sanitize_svg(svg_content: str):
+    """
+    Sanitize the given SVG content by removing any potentially harmful elements and attributes.
+
+    Args:
+        svg_content (str): The SVG content to sanitize.
+
+    Returns:
+        str: The sanitized SVG content.
+    """
     return bleach.clean(
-        svg_content, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, strip=True
+        svg_content,
+        tags=ALLOWED_TAGS,
+        attributes=ALLOWED_ATTRIBUTES,
+        strip=True,
     )

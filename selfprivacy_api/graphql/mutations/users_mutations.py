@@ -52,7 +52,7 @@ from selfprivacy_api.repositories.users.exceptions_kanidm import (
 from selfprivacy_api.utils.strings import PLEASE_UPDATE_APP_TEXT
 
 
-FAILED_TO_SETUP_SSO_PASSWORD_TEXT = "Password has been changed only for email, to change it in other services, please update the SelfPrivacy app."
+FAILED_TO_SETUP_SSO_PASSWORD_TEXT = "New password for applied to email, to use Single Sign On, please update the SelfPrivacy app."
 
 
 def return_failed_mutation_return(

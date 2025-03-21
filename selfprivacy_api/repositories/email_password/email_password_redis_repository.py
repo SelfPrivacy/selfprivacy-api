@@ -1,9 +1,10 @@
+from datetime import datetime, timezone
+
 from selfprivacy_api.models.email_password_metadata import EmailPasswordData
 from selfprivacy_api.repositories.email_password.abstract_email_password_repository import (
     AbstractEmailPasswordManager,
 )
 from selfprivacy_api.utils.redis_pool import RedisPool
-from datetime import datetime, timezone
 
 
 redis = RedisPool().get_userpanel_connection()
@@ -67,10 +68,14 @@ class EmailPasswordManager(AbstractEmailPasswordManager):
         if credential_metadata.expires_at is not None:
             password_data["expires_at"] = credential_metadata.expires_at.isoformat()
 
-        redis.hmset(key, password_data)
+        redis.hset(key, mapping=password_data)
 
         if credential_metadata.expires_at:
-            redis.expireat(key, int(credential_metadata.expires_at.timestamp()))
+            try:
+                redis.expireat(key, int(credential_metadata.expires_at.timestamp()))
+            except Exception as e:
+                # Handle the exception (e.g., log it)
+                print(f"Failed to set expiration time for {key}: {e}")
 
     @staticmethod
     def update_email_password_hash_last_used(username: str, uuid: str) -> None:

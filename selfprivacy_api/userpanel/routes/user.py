@@ -1,8 +1,18 @@
+import base64
+import logging
+from uuid import UUID
+from typing import Annotated, Optional
+from datetime import datetime, timezone
+from urllib.parse import urlencode
+from io import BytesIO
+
 from fastapi import APIRouter, Depends, HTTPException, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel, Field, ValidationError
+import qrcode
 from qrcode.image.pil import PilImage
 from qrcode.image.pure import PyPNGImage
+
 from selfprivacy_api.models.user import UserDataUser
 from selfprivacy_api.userpanel.templates import templates
 from selfprivacy_api.userpanel.auth.session import Session, delete_session_token_cookie
@@ -15,24 +25,11 @@ from selfprivacy_api.utils import get_domain
 from selfprivacy_api.utils.icons import sanitize_svg
 from selfprivacy_api.models.email_password_metadata import EmailPasswordData
 from selfprivacy_api.actions.email_passwords import (
-    add_email_password,
     delete_email_password_hash,
     get_email_credentials_metadata,
 )
-from uuid import UUID
-
-from typing import Annotated, Optional
-from datetime import datetime, timezone, date
 from selfprivacy_api.actions.system import get_timezone
-
-import logging
-
 from selfprivacy_api.utils.self_service_portal_utils import generate_new_email_password
-from urllib.parse import urlencode
-
-import qrcode
-from io import BytesIO
-import base64
 
 logger = logging.getLogger(__name__)
 

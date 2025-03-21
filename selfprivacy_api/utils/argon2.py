@@ -11,10 +11,29 @@ def generate_urlsave_password() -> str:
 
 
 def generate_password_hash(password: str) -> str:
+    """
+    Generate a hash for the given password using Argon2.
+
+    Args:
+        password (str): The password to hash.
+
+    Returns:
+        str: The hashed password.
+    """
     return argon2.hash(unicodedata.normalize("NFKC", password))
 
 
 def verify_password(password: str, password_hash: str) -> bool:
+    """
+    Verify a password against a hash.
+
+    Args:
+        password (str): The password to verify.
+        password_hash (str): The hash to verify against.
+
+    Returns:
+        bool: True if the password is correct, False otherwise
+    """
     password = unicodedata.normalize("NFKC", password)
 
     if "$argon2" in password_hash:

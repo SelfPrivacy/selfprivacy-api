@@ -1,10 +1,12 @@
-from fastapi import Response
-from selfprivacy_api.utils.redis_pool import RedisPool
-import secrets
 import base64
-from hashlib import sha256
-from datetime import datetime, timedelta, timezone
+import secrets
 import json
+from datetime import datetime, timedelta, timezone
+
+from fastapi import Response
+from hashlib import sha256
+
+from selfprivacy_api.utils.redis_pool import RedisPool
 
 
 def generate_password() -> str:
@@ -52,6 +54,9 @@ async def create_session(token: str, user_id: str) -> Session:
 async def validate_session_token(token: str) -> Session | None:
     redis_conn = RedisPool().get_userpanel_connection_async()
 
+    if redis_conn is None:
+        raise Exception("Redis storage is not available")
+
     session_id = sha256(token.encode()).hexdigest()
     item = await redis_conn.get(f"session:{session_id}")
     if item is None:
@@ -87,10 +92,21 @@ async def validate_session_token(token: str) -> Session | None:
 async def invalidate_session(session_id: str) -> None:
     redis_conn = RedisPool().get_userpanel_connection_async()
 
+    if redis_conn is None:
+        raise Exception("Redis storage is not available")
+
     await redis_conn.delete(f"session:{session_id}")
 
 
 def set_session_token_cookie(response: Response, token: str, expires_at: datetime):
+    """
+    Set a session token cookie in the response.
+
+    Args:
+        response (Response): The response object to set the cookie on.
+        token (str): The session token to be set in the cookie.
+        expires_at (datetime): The expiration time of the cookie.
+    """
     response.set_cookie(
         "session_token",
         token,
@@ -102,4 +118,10 @@ def set_session_token_cookie(response: Response, token: str, expires_at: datetim
 
 
 def delete_session_token_cookie(response: Response):
+    """
+    Delete the session token cookie from the response.
+
+    Args:
+        response (Response): The response object to delete the cookie from.
+    """
     response.delete_cookie("session_token")

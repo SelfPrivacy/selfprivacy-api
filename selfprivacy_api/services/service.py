@@ -487,7 +487,8 @@ class Service(ABC):
             return job
 
         report_progress(5, job, f"Stopping {service_name}...")
-        assert self is not None
+        if self is not None:
+            raise AssertionError
         with StoppedService(self):
             report_progress(9, job, "Stopped service, starting the move...")
             self.do_move_to_volume(volume, job)

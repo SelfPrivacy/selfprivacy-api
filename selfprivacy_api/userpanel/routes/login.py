@@ -1,20 +1,17 @@
+import logging
+
 from fastapi import APIRouter, HTTPException, Response
 from fastapi.responses import RedirectResponse, HTMLResponse
 from starlette.requests import Request
-from authlib.integrations.starlette_client import OAuth
 from authlib.integrations.base_client.errors import OAuthError
+
 from selfprivacy_api.userpanel.templates import templates
-from selfprivacy_api.utils.oauth_secrets import (
-    load_oauth_client_secret,
-    OAUTH_CLIENT_ID,
-)
 from selfprivacy_api.userpanel.auth.oauth import oauth
 from selfprivacy_api.userpanel.auth.session import (
     generate_session_token,
     create_session,
     set_session_token_cookie,
 )
-import logging
 
 
 router = APIRouter()

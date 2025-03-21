@@ -1,17 +1,23 @@
-from typing_extensions import Optional
-from selfprivacy_api.models.email_password_metadata import EmailPasswordData
+from typing import Optional
 from uuid import UUID, uuid4
 from datetime import datetime, timezone
 
+from selfprivacy_api.models.email_password_metadata import EmailPasswordData
 from selfprivacy_api.models.tokens.time import ensure_timezone
 from selfprivacy_api.repositories.email_password import ACTIVE_EMAIL_PASSWORD_PROVIDER
-
-from passlib.hash import argon2
-
 from selfprivacy_api.utils.argon2 import generate_password_hash
 
 
 def get_email_credentials_metadata(username: str) -> list[EmailPasswordData]:
+    """
+    Retrieve all email password metadata for a given username.
+
+    Args:
+        username (str): The username to retrieve email password metadata for.
+
+    Returns:
+        list[EmailPasswordData]: A list of EmailPasswordData objects containing the metadata.
+    """
     return ACTIVE_EMAIL_PASSWORD_PROVIDER.get_all_email_passwords_metadata(
         username=username,
     )

@@ -6,7 +6,7 @@ from selfprivacy_api.models.email_password_metadata import EmailPasswordData
 class AbstractEmailPasswordManager(ABC):
     @staticmethod
     @abstractmethod
-    def get_all_email_passwords_matadata(
+    def get_all_email_passwords_metadata(
         username: str,
         with_passwords_hashes: bool = False,
     ) -> list[EmailPasswordData]:
@@ -17,7 +17,7 @@ class AbstractEmailPasswordManager(ABC):
             username (str)
 
         Returns:
-            List[EmailPasswordMetadata]:
+            List[EmailPasswordData]:
                 A list of metadata objects containing details
                 about stored passwords. Without hashed password.
         """
@@ -33,7 +33,7 @@ class AbstractEmailPasswordManager(ABC):
         Args:
             username (str)
             password_hash (str): The hashed password value.
-            credential_metadata (EmailPasswordMetadata):
+            credential_metadata (EmailPasswordData):
                 Metadata associated with the password,
                 including display name and timestamps.
         """
@@ -51,6 +51,7 @@ class AbstractEmailPasswordManager(ABC):
         """
 
     @staticmethod
+    @abstractmethod
     def delete_all_email_passwords_hashes(username: str) -> None:
         """
         Remove all stored email passwords along with their metadata

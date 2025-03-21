@@ -1,11 +1,11 @@
-from fastapi import APIRouter, Request, Form
+import logging
+
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+
 from selfprivacy_api.utils.self_service_portal_utils import validate_email_password
 from selfprivacy_api.utils import get_domain
-from typing import Annotated
-
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -19,33 +19,23 @@ class EmailPasswordCheckInput(BaseModel):
 
 @router.post("/check-email-password")
 async def check_email_password(request: Request, input_data: EmailPasswordCheckInput):
-    headers = request.headers
-    logger.info("Headers:")
-    for key, value in headers.items():
-        logger.info(f"{key}: {value}")
 
     username = input_data.username
     password = input_data.password
 
     if not username or not password:
-        logger.error("Invalid request")
         return JSONResponse({"isValid": False}, status_code=400)
 
-    if "@" in username:
-        parsed_user, domain = username.split("@")
+    if not (username and password):
+        parsed_user, domain = username.rsplit("@", 1)
         if domain != get_domain():
-            logger.error(f"Invalid domain for user: {username}")
             return JSONResponse({"isValid": False}, status_code=400)
         user = parsed_user
     else:
-        logger.error("Invalid input: username must contain a domain")
         return JSONResponse({"isValid": False}, status_code=400)
 
     try:
         is_valid = validate_email_password(user, password)
-        logger.info(
-            f"Password for user {username} is {'valid' if is_valid else 'invalid'}"
-        )
         return JSONResponse({"isValid": is_valid})
     except Exception as e:
         logger.error(f"Error validating user: {e}")

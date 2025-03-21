@@ -1,19 +1,16 @@
 from datetime import datetime, timezone
-import secrets
-import base64
 from typing import Optional
-import unicodedata
-
-from passlib.hash import argon2, sha512_crypt
+import logging
 
 from selfprivacy_api.repositories.email_password import ACTIVE_EMAIL_PASSWORD_PROVIDER
 from selfprivacy_api.models.email_password_metadata import EmailPasswordData
 from selfprivacy_api.utils.argon2 import (
     verify_password,
     generate_urlsave_password,
-    generate_password_hash,
 )
 from selfprivacy_api.actions.email_passwords import add_email_password
+
+logger = logging.getLogger(__name__)
 
 
 def get_email_credentials_metadata_with_passwords_hashes(
@@ -23,6 +20,10 @@ def get_email_credentials_metadata_with_passwords_hashes(
         username=username,
         with_passwords_hashes=True,
     )
+
+
+def is_expired(expires_at: Optional[datetime]) -> bool:
+    return expires_at is not None and expires_at < datetime.now(timezone.utc)
 
 
 def validate_email_password(username: str, password: str) -> bool:
@@ -38,13 +39,16 @@ def validate_email_password(username: str, password: str) -> bool:
     for i in email_passwords_data:
         if i.password is None:
             continue
-        if i.expires_at is not None and i.expires_at < datetime.now(timezone.utc):
+        if is_expired(i.expires_at):
             continue
         if verify_password(password=password, password_hash=str(i.password)):
-            ACTIVE_EMAIL_PASSWORD_PROVIDER.update_email_password_hash_last_used(
-                username=username,
-                uuid=i.uuid,
-            )
+            try:
+                ACTIVE_EMAIL_PASSWORD_PROVIDER.update_email_password_hash_last_used(
+                    username=username,
+                    uuid=i.uuid,
+                )
+            except Exception as e:
+                logger.error(f"Failed to update email password hash last_used: {e}")
             return True
     return False
 
