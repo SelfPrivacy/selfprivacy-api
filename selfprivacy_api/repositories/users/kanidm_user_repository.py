@@ -357,14 +357,18 @@ class KanidmUserRepository(AbstractUserRepository):
             }
         }
 
-        if directmemberof:
-            data["attrs"]["directmemberof"] = directmemberof
-
         KanidmUserRepository._send_query(
             endpoint="person",
             method="POST",
             data=data,
         )
+
+        if directmemberof:
+            for group in directmemberof:
+                KanidmUserRepository.add_users_to_group(
+                    users=[username],
+                    group_name=group,
+                )
 
     @staticmethod
     def get_users(

@@ -482,18 +482,15 @@ users_witn_undefined_fields = [
 ]
 
 
-# TODO: fix
-# E       KeyError: 'errors'
-#
-# @pytest.mark.parametrize("user_json", users_witn_undefined_fields)
-# def test_graphql_add_with_undefined_fields(
-#     authorized_client, one_user, user_json, use_json_repository
-# ):
-#     # checking that all fields are mandatory
-#     response = api_add_user_json(authorized_client, user_json)
+@pytest.mark.parametrize("user_json", users_witn_undefined_fields)
+def test_graphql_add_with_undefined_fields(
+    authorized_client, one_user, user_json, use_json_repository
+):
+    # checking that all fields are mandatory
+    response = api_add_user_json(authorized_client, user_json)
 
-#     assert response.json()["errors"] is not None
-#     assert response.json()["errors"] != []
+    assert response.json()["errors"] is not None
+    assert response.json()["errors"] != []
 
 
 @pytest.mark.parametrize("username", invalid_usernames)
@@ -704,9 +701,15 @@ def test_graphql_update_user(
     assert response.status_code == 200
     assert response.json().get("data") is not None
 
-    assert response.json()["data"]["users"]["updateUser"]["code"] == 400
+    assert response.json()["data"]["users"]["updateUser"]["code"] == 200
     assert response.json()["data"]["users"]["updateUser"]["message"] is not None
-    assert response.json()["data"]["users"]["updateUser"]["success"] is False
+    assert response.json()["data"]["users"]["updateUser"]["success"] is True
+
+    assert response.json()["data"]["users"]["updateUser"]["user"]["username"] == "user1"
+    assert response.json()["data"]["users"]["updateUser"]["user"]["sshKeys"] == [
+        "ssh-rsa KEY user1@pc"
+    ]
+    assert mock_subprocess_popen.call_count == 1
 
 
 def test_graphql_update_nonexistent_user(
