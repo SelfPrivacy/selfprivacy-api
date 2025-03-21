@@ -4,6 +4,8 @@
   :root, :host {
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
       "Courier New", monospace;
+    --color-orange-100: oklch(0.954 0.038 75.164);
+    --color-orange-950: oklch(0.266 0.079 36.259);
     --color-green-100: oklch(0.962 0.044 156.743);
     --color-green-950: oklch(0.266 0.065 152.934);
     --color-blue-600: oklch(0.546 0.245 262.881);
@@ -13,6 +15,7 @@
     --spacing: 0.25rem;
     --container-xs: 20rem;
     --container-sm: 24rem;
+    --container-xl: 36rem;
     --text-sm: 0.875rem;
     --text-sm--line-height: calc(1.25 / 0.875);
     --text-base: 1rem;
@@ -326,6 +329,9 @@
   .max-w-sm {
     max-width: var(--container-sm);
   }
+  .max-w-xl {
+    max-width: var(--container-xl);
+  }
   .max-w-xs {
     max-width: var(--container-xs);
   }
@@ -451,6 +457,9 @@
   .bg-green-100 {
     background-color: var(--color-green-100);
   }
+  .bg-orange-100 {
+    background-color: var(--color-orange-100);
+  }
   .bg-primary {
     background-color: hsl(var(--primary) / 1);
   }
@@ -564,6 +573,9 @@
   }
   .text-muted-foreground {
     color: hsl(var(--muted-foreground) / 1);
+  }
+  .text-orange-950 {
+    color: var(--color-orange-950);
   }
   .text-primary {
     color: hsl(var(--primary) / 1);
@@ -769,11 +781,6 @@
       line-height: var(--tw-leading, var(--text-sm--line-height));
     }
   }
-  .lg\:grid-cols-2 {
-    @media (width >= 64rem) {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
   .lg\:grid-cols-3 {
     @media (width >= 64rem) {
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -830,6 +837,11 @@
   .\[\&\>svg\]\:stroke-green-950 {
     &>svg {
       stroke: var(--color-green-950);
+    }
+  }
+  .\[\&\>svg\]\:stroke-orange-950 {
+    &>svg {
+      stroke: var(--color-orange-950);
     }
   }
   .\[\&\>svg\]\:text-foreground {
