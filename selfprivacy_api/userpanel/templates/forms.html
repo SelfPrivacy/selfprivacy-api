@@ -33,3 +33,18 @@
     </div>
 {% endif %}
 {% endmacro %}
+
+{% macro checkbox(id, name, checked, error) %}
+<div class="flex items-center">
+    <input
+        type="checkbox"
+        id="{{ id }}"
+        name="{{ name }}"
+        class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+        {% if checked %}checked{% endif %}
+    />
+    <label for="{{ id }}" class="ml-2 block text-sm text-gray-900">
+        {{ name }}
+    </label>
+</div>
+{% endmacro %}

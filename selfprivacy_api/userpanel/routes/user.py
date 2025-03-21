@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel, Field, ValidationError
+from qrcode.image.pil import PilImage
+from qrcode.image.pure import PyPNGImage
 from selfprivacy_api.models.user import UserDataUser
 from selfprivacy_api.userpanel.templates import templates
 from selfprivacy_api.userpanel.auth.session import Session, delete_session_token_cookie
@@ -26,6 +28,11 @@ from selfprivacy_api.actions.system import get_timezone
 import logging
 
 from selfprivacy_api.utils.self_service_portal_utils import generate_new_email_password
+from urllib.parse import urlencode
+
+import qrcode
+from io import BytesIO
+import base64
 
 logger = logging.getLogger(__name__)
 
@@ -190,7 +197,7 @@ async def create_email_password_get(
         "create_email_password.html",
         {
             "request": request,
-            "values": {"display_name": "", "expires_at": ""},
+            "values": {"display_name": "", "expires_at": "", "deltachat": False},
             "errors": {},
         },
     )
@@ -202,6 +209,7 @@ async def create_email_password_post(
     session: Annotated[Session, Depends(get_current_user)],
     display_name: Annotated[str, Form()],
     expires_at: Annotated[Optional[str], Form()] = None,
+    deltachat: Annotated[bool, Form()] = False,
 ):
     try:
         expires_at_dt = (
@@ -242,6 +250,24 @@ async def create_email_password_post(
     server_domain = get_domain()
     login = f"{session.user_id}@{server_domain}"
 
+    deltachat_uri = None
+    deltachat_qr_base64 = None
+
+    if deltachat:
+        deltachat_params = {
+            "p": password,
+            "v": 1,
+            "ih": server_domain,
+            "ip": 993,
+            "sh": server_domain,
+            "sp": 587,
+        }
+        deltachat_uri = f"dclogin://{login}?{urlencode(deltachat_params)}"
+        deltachat_qr: PilImage | PyPNGImage = qrcode.make(deltachat_uri)
+        buffered = BytesIO()
+        deltachat_qr.save(buffered)
+        deltachat_qr_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
+
     return templates.TemplateResponse(
         "email_password_created.html",
         {
@@ -249,5 +275,7 @@ async def create_email_password_post(
             "password": password,
             "server_domain": server_domain,
             "login": login,
+            "deltachat_uri": deltachat_uri,
+            "deltachat_qr_base64": deltachat_qr_base64,
         },
     )

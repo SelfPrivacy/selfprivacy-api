@@ -7,7 +7,9 @@
     --color-green-100: oklch(0.962 0.044 156.743);
     --color-green-950: oklch(0.266 0.065 152.934);
     --color-blue-600: oklch(0.546 0.245 262.881);
+    --color-gray-300: oklch(0.872 0.01 258.338);
     --color-gray-600: oklch(0.446 0.03 256.802);
+    --color-gray-900: oklch(0.21 0.034 264.665);
     --spacing: 0.25rem;
     --container-xs: 20rem;
     --container-sm: 24rem;
@@ -264,6 +266,9 @@
   .mb-2 {
     margin-bottom: calc(var(--spacing) * 2);
   }
+  .ml-2 {
+    margin-left: calc(var(--spacing) * 2);
+  }
   .ml-3 {
     margin-left: calc(var(--spacing) * 3);
   }
@@ -285,6 +290,9 @@
   .inline-flex {
     display: inline-flex;
   }
+  .h-4 {
+    height: calc(var(--spacing) * 4);
+  }
   .h-10 {
     height: calc(var(--spacing) * 10);
   }
@@ -302,6 +310,9 @@
   }
   .max-h-full {
     max-height: 100%;
+  }
+  .w-4 {
+    width: calc(var(--spacing) * 4);
   }
   .w-12 {
     width: calc(var(--spacing) * 12);
@@ -402,6 +413,9 @@
       border-bottom-width: calc(1px * calc(1 - var(--tw-divide-y-reverse)));
     }
   }
+  .rounded {
+    border-radius: 0.25rem;
+  }
   .rounded-lg {
     border-radius: var(--radius);
   }
@@ -415,6 +429,9 @@
   .border-b {
     border-bottom-style: var(--tw-border-style);
     border-bottom-width: 1px;
+  }
+  .border-gray-300 {
+    border-color: var(--color-gray-300);
   }
   .border-input {
     border-color: hsl(var(--input) / 1);
@@ -533,11 +550,17 @@
   .text-gray-600 {
     color: var(--color-gray-600);
   }
+  .text-gray-900 {
+    color: var(--color-gray-900);
+  }
   .text-green-950 {
     color: var(--color-green-950);
   }
   .text-muted-foreground {
     color: hsl(var(--muted-foreground) / 1);
+  }
+  .text-primary {
+    color: hsl(var(--primary) / 1);
   }
   .text-primary-foreground {
     color: hsl(var(--primary-foreground) / 1);
@@ -669,6 +692,11 @@
         --tw-shadow: 0 4px 6px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 2px 4px -2px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
         box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
       }
+    }
+  }
+  .focus\:ring-primary {
+    &:focus {
+      --tw-ring-color: hsl(var(--primary) / 1);
     }
   }
   .focus-visible\:ring-2 {
