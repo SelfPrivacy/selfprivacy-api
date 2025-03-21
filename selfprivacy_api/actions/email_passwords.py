@@ -5,12 +5,7 @@ from datetime import datetime, timezone
 from selfprivacy_api.models.email_password_metadata import EmailPasswordData
 from selfprivacy_api.models.tokens.time import ensure_timezone
 from selfprivacy_api.repositories.email_password import ACTIVE_EMAIL_PASSWORD_PROVIDER
-<<<<<<< HEAD
-
-from passlib.hash import argon2
-=======
 from selfprivacy_api.utils.argon2 import generate_password_hash
->>>>>>> d5eaf399d26f7350239b524ac291a6b5711b6b72
 
 
 def get_email_credentials_metadata(username: str) -> list[EmailPasswordData]:
@@ -38,11 +33,7 @@ def add_email_password(
 ) -> None:
     add_email_password_hash(
         username=username,
-<<<<<<< HEAD
-        password_hash=argon2.hash(password),
-=======
         password_hash=generate_password_hash(password),
->>>>>>> d5eaf399d26f7350239b524ac291a6b5711b6b72
         display_name=display_name,
         with_created_at=with_created_at,
         with_zero_uuid=with_zero_uuid,
