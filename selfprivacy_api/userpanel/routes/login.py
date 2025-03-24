@@ -6,7 +6,7 @@ from starlette.requests import Request
 from authlib.integrations.base_client.errors import OAuthError
 
 from selfprivacy_api.userpanel.templates import templates
-from selfprivacy_api.userpanel.auth.oauth import oauth
+from selfprivacy_api.userpanel.auth.oauth import get_oauth
 from selfprivacy_api.userpanel.auth.session import (
     generate_session_token,
     create_session,
@@ -26,7 +26,7 @@ async def login(request: Request):
 
 @router.get("/oauth")
 async def login_via_kanidm(request: Request):
-    kanidm = oauth.create_client("kanidm")
+    kanidm = get_oauth().create_client("kanidm")
     if not kanidm:
         logger.error("Kanidm not found in oauth clients")
         raise HTTPException(status_code=500)
@@ -36,7 +36,7 @@ async def login_via_kanidm(request: Request):
 
 @router.get("/callback")
 async def auth_via_kanidm(request: Request, response: Response):
-    kanidm = oauth.create_client("kanidm")
+    kanidm = get_oauth().create_client("kanidm")
     if not kanidm:
         logger.error("Kanidm not found in oauth clients")
         raise HTTPException(status_code=500)
