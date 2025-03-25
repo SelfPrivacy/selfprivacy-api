@@ -306,12 +306,6 @@ in
 
     services = {
       kanidm.provision = {
-        groups = {
-          ${users-group}.members = [
-            auth-passthru.admins-group
-            auth-passthru.full-users-group
-          ];
-        };
         systems.oauth2.${oauth-client-id} = {
           displayName = "SelfPrivacy Self-Service Portal";
           originUrl = oauth-redirect-uri;
@@ -319,7 +313,7 @@ in
           basicSecretFile = kanidm-oauth-client-secret-fp;
           preferShortUsername = true;
           allowInsecureClientDisablePkce = false;
-          scopeMaps.${users-group} = [
+          scopeMaps."idm_all_persons" = [
             "email"
             "groups"
             "openid"
