@@ -46,7 +46,6 @@ let
   '';
 
   oauth-redirect-uri = "https://api.${domain}/login/callback";
-  users-group = "sp.selfprivacy-api-ssp.users";
 
   dovecot-auth-script = pkgs.writeShellApplication {
     name = "dovecot-auth-script.sh";

@@ -199,9 +199,6 @@ def update_user(
 
 
 def get_user_by_username(username: str) -> Optional[UserDataUser]:
-    if not ACTIVE_USERS_PROVIDER == JsonUserRepository:
-        return ACTIVE_USERS_PROVIDER.get_user_by_username(username=username)
-
     if username == "root":
         return UserDataUser(
             username="root",
