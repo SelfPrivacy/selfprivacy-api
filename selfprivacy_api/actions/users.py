@@ -168,7 +168,7 @@ def update_user(
             displayname=displayname,
         )
 
-    if directmemberof is not None:
+    if directmemberof:
         if ACTIVE_USERS_PROVIDER == JsonUserRepository:
             raise ApiUsingWrongUserRepository
 

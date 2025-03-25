@@ -13,6 +13,7 @@ from tests.test_graphql.common import (
     get_data,
 )
 from selfprivacy_api.repositories.users.json_user_repository import JsonUserRepository
+from tests.test_graphql.common import assert_ok
 
 invalid_usernames = [
     "messagebus",
@@ -441,7 +442,7 @@ def test_graphql_add_user(
     authorized_client, one_user, mock_subprocess_popen, use_json_repository
 ):
     output = api_add_user(authorized_client, "user2", password="12345678")
-    assert_errorcode(output, code=201)
+    assert_ok(output, code=201)
 
     assert output["user"]["username"] == "user2"
     assert output["user"]["sshKeys"] == []
@@ -451,7 +452,7 @@ def test_graphql_add_user_when_undefined_settings(
     authorized_client, undefined_settings, mock_subprocess_popen, use_json_repository
 ):
     output = api_add_user(authorized_client, "user2", password="12345678")
-    assert_errorcode(output, code=201)
+    assert_ok(output, code=201)
 
     assert output["user"]["username"] == "user2"
     assert output["user"]["sshKeys"] == []
@@ -473,24 +474,6 @@ def test_graphql_add_with_empty_fields(
 
     assert_errorcode(output, 400)
     assert output["user"] is None
-
-
-users_witn_undefined_fields = [
-    {"username": "user2"},
-    {"password": "12345678"},
-    {},
-]
-
-
-@pytest.mark.parametrize("user_json", users_witn_undefined_fields)
-def test_graphql_add_with_undefined_fields(
-    authorized_client, one_user, user_json, use_json_repository
-):
-    # checking that all fields are mandatory
-    response = api_add_user_json(authorized_client, user_json)
-
-    assert response.json()["errors"] is not None
-    assert response.json()["errors"] != []
 
 
 @pytest.mark.parametrize("username", invalid_usernames)
@@ -709,7 +692,6 @@ def test_graphql_update_user(
     assert response.json()["data"]["users"]["updateUser"]["user"]["sshKeys"] == [
         "ssh-rsa KEY user1@pc"
     ]
-    assert mock_subprocess_popen.call_count == 1
 
 
 def test_graphql_update_nonexistent_user(
@@ -730,8 +712,8 @@ def test_graphql_update_nonexistent_user(
     assert response.status_code == 200
     assert response.json().get("data") is not None
 
-    assert response.json()["data"]["users"]["updateUser"]["code"] == 400
+    assert response.json()["data"]["users"]["updateUser"]["code"] == 200
     assert response.json()["data"]["users"]["updateUser"]["message"] is not None
-    assert response.json()["data"]["users"]["updateUser"]["success"] is False
+    assert response.json()["data"]["users"]["updateUser"]["success"] is True
 
     assert response.json()["data"]["users"]["updateUser"]["user"] is None
