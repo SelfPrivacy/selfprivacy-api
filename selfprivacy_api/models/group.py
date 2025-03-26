@@ -45,10 +45,8 @@ class Group(BaseModel):
 
 
 def get_default_groops() -> list[str]:
-    domain = get_domain()
-
     return [
-        f"idm_all_persons@{domain}",
-        f"idm_all_accounts@{domain}",
-        f"idm_people_self_name_write@{domain}",
+        f"idm_all_persons",
+        f"idm_all_accounts",
+        f"idm_people_self_name_write",
     ]

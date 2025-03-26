@@ -408,16 +408,23 @@ class KanidmUserRepository(AbstractUserRepository):
             user_attrs = user.get("attrs", {})
 
             user_type = KanidmUserRepository._check_user_origin_by_memberof(
-                memberof=user_attrs.get("memberof", [])
+                memberof=[
+                    group.rsplit("@")[0] for group in user_attrs.get("memberof", [])
+                ]
             )
             if exclude_primary and user_type == UserDataUserOrigin.PRIMARY:
                 continue
 
             directmemberof = KanidmUserRepository._remove_default_groups(
-                groups=user_attrs.get("directmemberof", [])
+                groups=[
+                    group.rsplit("@")[0]
+                    for group in user_attrs.get("directmemberof", [])
+                ]
             )
             memberof = KanidmUserRepository._remove_default_groups(
-                groups=user_attrs.get("memberof", [])
+                groups=[
+                    group.rsplit("@")[0] for group in user_attrs.get("memberof", [])
+                ]
             )
 
             filled_user = UserDataUser(
@@ -533,16 +540,16 @@ class KanidmUserRepository(AbstractUserRepository):
         attrs = user_data["attrs"]  # type: ignore
 
         directmemberof = KanidmUserRepository._remove_default_groups(
-            groups=attrs.get("directmemberof", [])
+            groups=[group.rsplit("@")[0] for group in attrs.get("directmemberof", [])]
         )
         memberof = KanidmUserRepository._remove_default_groups(
-            groups=attrs.get("memberof", [])
+            groups=[group.rsplit("@")[0] for group in attrs.get("memberof", [])]
         )
 
         return UserDataUser(
             username=attrs["name"][0],
             user_type=KanidmUserRepository._check_user_origin_by_memberof(
-                memberof=attrs.get("memberof", [])
+                memberof=[group.rsplit("@")[0] for group in attrs.get("memberof", [])]
             ),
             ssh_keys=[],  # Actions layer will fill this field
             directmemberof=directmemberof,
@@ -635,9 +642,11 @@ class KanidmUserRepository(AbstractUserRepository):
             group = Group(
                 name=attrs["name"][0],
                 group_class=attrs.get("class", []),
-                member=attrs.get("member", []),
-                memberof=attrs.get("memberof", []),
-                directmemberof=attrs.get("directmemberof", []),
+                member=[user.rsplit("@")[0] for user in attrs.get("member", [])],
+                memberof=[group.rsplit("@")[0] for group in attrs.get("memberof", [])],
+                directmemberof=[
+                    group.rsplit("@")[0] for group in attrs.get("directmemberof", [])
+                ],
                 spn=attrs.get("spn", [None])[0],
                 description=attrs.get("description", [None])[0],
             )
