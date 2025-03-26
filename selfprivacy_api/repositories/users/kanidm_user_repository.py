@@ -433,7 +433,7 @@ class KanidmUserRepository(AbstractUserRepository):
                 ssh_keys=[],  # actions layer will fill in this field
                 directmemberof=directmemberof,
                 memberof=memberof,
-                displayname=user_attrs.get("displayname", [None])[0],
+                display_name=user_attrs.get("displayname", [None])[0],
                 email=user_attrs.get("mail", [None])[0],
             )
 
@@ -554,7 +554,7 @@ class KanidmUserRepository(AbstractUserRepository):
             ssh_keys=[],  # Actions layer will fill this field
             directmemberof=directmemberof,
             memberof=memberof,
-            displayname=attrs.get("displayname", [None])[0],
+            display_name=attrs.get("displayname", [None])[0],
             email=attrs.get("mail", [None])[0],
         )
 
