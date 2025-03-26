@@ -61,7 +61,7 @@ def get_ssh_settings() -> UserdataSshSettings:
 
 
 def set_ssh_settings(
-    enable: Optional[bool] = None, password_authentication: Optional[bool] = None
+    enable: Optional[bool] = None,
 ) -> None:
     with WriteUserData() as data:
         if "ssh" not in data:
