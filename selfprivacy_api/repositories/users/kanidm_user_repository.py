@@ -199,7 +199,7 @@ class KanidmUserRepository(AbstractUserRepository):
             KanidmReturnUnknownResponseType: If the response data is not of the expected type.
         """
 
-        if not response_data or response_data is None:
+        if response_data is None:
             raise KanidmReturnEmptyResponse
 
         if data_type == "list":
