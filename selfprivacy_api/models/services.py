@@ -73,7 +73,7 @@ class License(BaseSchema):
 class SingleSignOnGroups(BaseSchema):
     """Model representing the groups for Single Sign On."""
 
-    access_group: Optional[str] = None
+    user_group: Optional[str] = None
     admin_group: Optional[str] = None
 
 

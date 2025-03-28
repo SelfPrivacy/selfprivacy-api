@@ -64,8 +64,8 @@ async def get_profile(
     for service in enabled_services:
         if service.get_id() == "selfprivacy-api":
             continue
-        access_group = service.get_sso_access_group()
-        if (access_group and (access_group in user_groups)) or not access_group:
+        user_group = service.get_sso_user_group()
+        if (user_group and (user_group in user_groups)) or not user_group:
             services.append(
                 {
                     "name": service.get_display_name(),

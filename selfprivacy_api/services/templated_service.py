@@ -235,10 +235,10 @@ class TemplatedService(Service):
     def get_support_level(self) -> SupportLevel:
         return self.meta.support_level
 
-    def get_sso_access_group(self) -> Optional[str]:
+    def get_sso_user_group(self) -> Optional[str]:
         if not self.meta.sso:
             return None
-        return self.meta.sso.access_group
+        return self.meta.sso.user_group
 
     def get_sso_admin_group(self) -> Optional[str]:
         if not self.meta.sso:
