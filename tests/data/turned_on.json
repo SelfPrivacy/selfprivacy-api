@@ -1,88 +1,84 @@
 {
-    "dns": {
-        "provider": "CLOUDFLARE",
-        "useStagingACME": false
+  "dns": {
+    "provider": "CLOUDFLARE",
+    "useStagingACME": false
+  },
+  "server": {
+    "provider": "HETZNER"
+  },
+  "domain": "test-domain.tld",
+  "hashedMasterPassword": "HASHED_PASSWORD",
+  "hostname": "test-instance",
+  "timezone": "Etc/UTC",
+  "username": "tester",
+  "useBinds": true,
+  "sshKeys": ["ssh-rsa KEY test@pc"],
+  "users": [
+    {
+      "username": "user1",
+      "hashedPassword": "HASHED_PASSWORD_1",
+      "sshKeys": ["ssh-rsa KEY user1@pc"]
     },
-    "server": {
-        "provider": "HETZNER"
+    {
+      "username": "user2",
+      "hashedPassword": "HASHED_PASSWORD_2",
+      "sshKeys": ["ssh-rsa KEY user2@pc"]
     },
-    "domain": "test-domain.tld",
-    "hashedMasterPassword": "HASHED_PASSWORD",
-    "hostname": "test-instance",
-    "timezone": "Etc/UTC",
-    "username": "tester",
-    "useBinds": true,
-    "sshKeys": [
-        "ssh-rsa KEY test@pc"
-    ],
-    "users": [
-        {
-            "username": "user1",
-            "hashedPassword": "HASHED_PASSWORD_1",
-            "sshKeys": ["ssh-rsa KEY user1@pc"]
-        },
-        {
-            "username": "user2",
-            "hashedPassword": "HASHED_PASSWORD_2",
-            "sshKeys": ["ssh-rsa KEY user2@pc"]
-        },
-        {
-            "username": "user3",
-            "hashedPassword": "HASHED_PASSWORD_3",
-            "sshKeys": ["ssh-rsa KEY user3@pc"]
-        }
-    ],
-    "autoUpgrade": {
-        "enable": true,
-        "allowReboot": true
-    },
-    "modules": {
-        "bitwarden": {
-            "enable": true,
-            "location": "sdb"
-        },
-        "gitea": {
-            "enable": true,
-            "location": "sdb"
-        },
-        "jitsi-meet": {
-            "enable": true
-        },
-        "nextcloud": {
-            "enable": true,
-            "location": "sdb"
-        },
-        "ocserv": {
-            "enable": true
-        },
-        "pleroma": {
-            "enable": true,
-            "location": "sdb"
-        },
-        "simple-nixos-mailserver": {
-            "enable": true,
-            "location": "sdb"
-        },
-        "roundcube": {
-            "enable": true
-        },
-        "monitoring": {
-            "enable": true,
-            "location": "sdb"
-        }
-    },
-    "volumes": [
-        {
-            "device": "/dev/sdb",
-            "mountPoint": "/volumes/sdb",
-            "fsType": "ext4"
-        }
-    ],
-    "ssh": {
-        "enable": true,
-        "passwordAuthentication": true,
-        "rootKeys": [
-            "ssh-ed25519 KEY test@pc"
-        ]
+    {
+      "username": "user3",
+      "hashedPassword": "HASHED_PASSWORD_3",
+      "sshKeys": ["ssh-rsa KEY user3@pc"]
     }
+  ],
+  "autoUpgrade": {
+    "enable": true,
+    "allowReboot": true
+  },
+  "modules": {
+    "bitwarden": {
+      "enable": true,
+      "location": "sdb"
+    },
+    "gitea": {
+      "enable": true,
+      "location": "sdb"
+    },
+    "jitsi-meet": {
+      "enable": true
+    },
+    "nextcloud": {
+      "enable": true,
+      "location": "sdb"
+    },
+    "ocserv": {
+      "enable": true
+    },
+    "pleroma": {
+      "enable": true,
+      "location": "sdb"
+    },
+    "simple-nixos-mailserver": {
+      "enable": true,
+      "location": "sdb"
+    },
+    "roundcube": {
+      "enable": true
+    },
+    "monitoring": {
+      "enable": true,
+      "location": "sdb"
+    }
+  },
+  "volumes": [
+    {
+      "device": "/dev/sdb",
+      "mountPoint": "/volumes/sdb",
+      "fsType": "ext4"
+    }
+  ],
+  "ssh": {
+    "enable": true,
+    "passwordAuthentication": false,
+    "rootKeys": ["ssh-ed25519 KEY test@pc"]
+  }
 }

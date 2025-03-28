@@ -13,7 +13,6 @@ from tests.test_graphql.common import (
     get_data,
 )
 from selfprivacy_api.repositories.users.json_user_repository import JsonUserRepository
-from selfprivacy_api.repositories.users.test_repository import TestUserRepository
 
 from tests.test_graphql.common import assert_ok
 
@@ -59,7 +58,7 @@ invalid_usernames = [
 @pytest.fixture
 def use_json_repository(mocker):
     mocker.patch(
-        "selfprivacy_api.actions.users.ACTIVE_USERS_PROVIDER", TestUserRepository
+        "selfprivacy_api.actions.users.ACTIVE_USERS_PROVIDER", JsonUserRepository
     )
 
 

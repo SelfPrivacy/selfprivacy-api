@@ -87,9 +87,8 @@ def test_read_json(possibly_undefined_ssh_settings):
             assert get_ssh_settings().enable is not None
             assert get_ssh_settings().passwordAuthentication is not None
 
-            # TODO: Is it really a good idea to have password ssh enabled by default?
             assert get_ssh_settings().enable is True
-            assert get_ssh_settings().passwordAuthentication is True
+            assert get_ssh_settings().passwordAuthentication is False
             return
 
         if "enable" not in data["ssh"].keys():

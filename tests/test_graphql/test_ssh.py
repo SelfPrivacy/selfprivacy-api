@@ -16,7 +16,18 @@ from tests.test_graphql.common import (
 )
 from tests.test_graphql.test_users_json_repository import API_USERS_INFO
 
+from selfprivacy_api.repositories.users.test_user_repository import TestUserRepository
+from selfprivacy_api.repositories.users.json_user_repository import JsonUserRepository
+
+
 key_users = ["root", "tester", "user1", "user2", "user3"]
+
+
+@pytest.fixture
+def use_json_repository(mocker):
+    mocker.patch(
+        "selfprivacy_api.actions.users.ACTIVE_USERS_PROVIDER", TestUserRepository
+    )
 
 
 class ProcessMock:
@@ -252,18 +263,20 @@ def api_set_ssh_settings(authorized_client, enable: bool, password_auth: bool):
 # TESTS ########################################################
 
 
-def test_graphql_ssh_query(authorized_client, some_users):
+def test_graphql_ssh_query(authorized_client, use_json_repository, some_users):
     settings = api_ssh_settings(authorized_client)
     assert settings["enable"] is True
-    assert settings["passwordAuthentication"] is True
+    assert settings["passwordAuthentication"] is False
 
 
-def test_graphql_get_ssh_settings_unauthorized(client, some_users):
+def test_graphql_get_ssh_settings_unauthorized(client, use_json_repository, some_users):
     response = api_ssh_settings_raw(client)
     assert_empty(response)
 
 
-def test_graphql_change_ssh_settings_unauthorized(client, some_users):
+def test_graphql_change_ssh_settings_unauthorized(
+    client, use_json_repository, some_users
+):
     response = client.post(
         "/graphql",
         json={
@@ -284,87 +297,52 @@ def assert_includes(smaller_dict: dict, bigger_dict: dict):
         assert item in bigger_dict.items()
 
 
-available_settings = [
-    {"enable": True, "passwordAuthentication": True},
-    {"enable": True, "passwordAuthentication": False},
-    {"enable": False, "passwordAuthentication": True},
-    {"enable": False, "passwordAuthentication": False},
-]
-
-
-original_settings = [
-    {"enable": True, "passwordAuthentication": True},
-    {"enable": True, "passwordAuthentication": False},
-    {"enable": False, "passwordAuthentication": True},
-    {"enable": False, "passwordAuthentication": False},
-]
-
-
-@pytest.mark.parametrize("original_settings", original_settings)
-@pytest.mark.parametrize("settings", available_settings)
-def test_graphql_readwrite_ssh_settings(
-    authorized_client, some_users, settings, original_settings
-):
-    # Userdata-related tests like undefined fields are in actions-level tests.
-    output = api_set_ssh_settings_dict(authorized_client, original_settings)
-    assert_includes(api_ssh_settings(authorized_client), output)
-
-    output = api_set_ssh_settings_dict(authorized_client, settings)
-    assert_ok(output)
-    assert_includes(settings, output)
-    if "enable" not in settings.keys():
-        assert output["enable"] == original_settings["enable"]
-    assert_includes(api_ssh_settings(authorized_client), output)
-
-
-forbidden_settings = [
-    # we include this here so that if the next version makes the fields
-    # optional, the tests will remind the person that tests are to be extended accordingly
-    {"enable": True},
-    {"passwordAuthentication": True},
-]
-
-
-@pytest.mark.parametrize("original_settings", original_settings)
-@pytest.mark.parametrize("settings", forbidden_settings)
-def test_graphql_readwrite_ssh_settings_partial(
-    authorized_client, some_users, settings, original_settings
-):
-    output = api_set_ssh_settings_dict(authorized_client, original_settings)
-    with pytest.raises(Exception):
-        output = api_set_ssh_settings_dict(authorized_client, settings)
-
-
-def test_graphql_disable_twice(authorized_client, some_users):
-    output = api_set_ssh_settings(authorized_client, enable=False, password_auth=False)
+def test_graphql_disable_twice(authorized_client, use_json_repository, some_users):
+    output = api_set_ssh_settings(authorized_client, enable=False, password_auth=True)
     assert_ok(output)
     assert output["enable"] is False
     assert output["passwordAuthentication"] is False
 
-    output = api_set_ssh_settings(authorized_client, enable=False, password_auth=False)
+    output = api_set_ssh_settings(authorized_client, enable=False, password_auth=True)
     assert_ok(output)
     assert output["enable"] is False
     assert output["passwordAuthentication"] is False
 
 
-def test_graphql_enable_twice(authorized_client, some_users):
+def test_graphql_enable_twice(authorized_client, use_json_repository, some_users):
     output = api_set_ssh_settings(authorized_client, enable=True, password_auth=True)
     assert_ok(output)
     assert output["enable"] is True
-    assert output["passwordAuthentication"] is True
+    assert output["passwordAuthentication"] is False
     assert_includes(api_ssh_settings(authorized_client), output)
 
     output = api_set_ssh_settings(authorized_client, enable=True, password_auth=True)
     assert_ok(output)
     assert output["enable"] is True
-    assert output["passwordAuthentication"] is True
+    assert output["passwordAuthentication"] is False
     assert_includes(api_ssh_settings(authorized_client), output)
+
+
+def test_graphql_password_auth_always_false(
+    authorized_client, use_json_repository, some_users
+):
+    output = api_set_ssh_settings(authorized_client, enable=True, password_auth=True)
+    assert_ok(output)
+    assert output["enable"] is True
+    assert output["passwordAuthentication"] is False
+
+    output = api_set_ssh_settings(authorized_client, enable=False, password_auth=True)
+    assert_ok(output)
+    assert output["enable"] is False
+    assert output["passwordAuthentication"] is False
 
 
 ############## KEYS
 
 
-def test_graphql_add_ssh_key_unauthorized(client, some_users, mock_subprocess_popen):
+def test_graphql_add_ssh_key_unauthorized(
+    client, use_json_repository, some_users, mock_subprocess_popen
+):
     response = client.post(
         "/graphql",
         json={
@@ -383,23 +361,27 @@ def test_graphql_add_ssh_key_unauthorized(client, some_users, mock_subprocess_po
 # Unauth getting of keys is tested in test_users.py because it is a part of users interface
 
 
-def test_graphql_get_root_key(authorized_client, some_users):
+def test_graphql_get_root_key(authorized_client, use_json_repository, some_users):
     assert api_rootkeys(authorized_client) == ["ssh-ed25519 KEY test@pc"]
 
 
-def test_graphql_get_root_key_when_none(authorized_client, no_rootkeys):
+def test_graphql_get_root_key_when_none(
+    authorized_client, use_json_repository, no_rootkeys
+):
     assert api_rootkeys(authorized_client) == []
 
 
 # Getting admin keys when they are present is tested in test_users.py
 
 
-def test_get_admin_key_when_none(authorized_client, no_admin_key):
+def test_get_admin_key_when_none(authorized_client, use_json_repository, no_admin_key):
     assert api_get_user_keys(authorized_client, admin_name()) == []
 
 
 @pytest.mark.parametrize("user", key_users)
-def test_graphql_add_ssh_key_when_none(authorized_client, no_keys, user):
+def test_graphql_add_ssh_key_when_none(
+    authorized_client, use_json_repository, no_keys, user
+):
     key1 = "ssh-rsa KEY test_key@pc"
     if user == "root":
         assert api_rootkeys(authorized_client) == []
@@ -420,7 +402,9 @@ def test_graphql_add_ssh_key_when_none(authorized_client, no_keys, user):
 
 
 @pytest.mark.parametrize("user", key_users)
-def test_graphql_add_ssh_key_one_more(authorized_client, no_keys, user):
+def test_graphql_add_ssh_key_one_more(
+    authorized_client, use_json_repository, no_keys, user
+):
     keys = [
         "ssh-rsa KEY test_key@pc",
         "ssh-rsa KEY2 test_key@pc",
@@ -442,7 +426,9 @@ def test_graphql_add_ssh_key_one_more(authorized_client, no_keys, user):
 
 
 @pytest.mark.parametrize("user", key_users)
-def test_graphql_add_ssh_key_same(authorized_client, no_keys, user):
+def test_graphql_add_ssh_key_same(
+    authorized_client, use_json_repository, no_keys, user
+):
     key = "ssh-rsa KEY test_key@pc"
     output = api_add_ssh_key(authorized_client, user, key)
     assert output["user"]["sshKeys"] == [key]
@@ -452,7 +438,9 @@ def test_graphql_add_ssh_key_same(authorized_client, no_keys, user):
 
 
 @pytest.mark.parametrize("user", key_users)
-def test_graphql_add_bad_ssh_key(authorized_client, some_users, user):
+def test_graphql_add_bad_ssh_key(
+    authorized_client, use_json_repository, some_users, user
+):
     output = api_add_ssh_key(authorized_client, user, "trust me, this is the ssh key")
     assert_errorcode(output, 400)
 
@@ -497,7 +485,9 @@ mutation removeSshKey($sshInput: SshMutationInput!) {
 """
 
 
-def test_graphql_remove_ssh_key_unauthorized(client, some_users, mock_subprocess_popen):
+def test_graphql_remove_ssh_key_unauthorized(
+    client, use_json_repository, some_users, mock_subprocess_popen
+):
     response = client.post(
         "/graphql",
         json={
@@ -514,7 +504,7 @@ def test_graphql_remove_ssh_key_unauthorized(client, some_users, mock_subprocess
 
 
 @pytest.mark.parametrize("user", key_users)
-def test_graphql_remove_ssh_key(authorized_client, no_keys, user):
+def test_graphql_remove_ssh_key(authorized_client, use_json_repository, no_keys, user):
     keys = [
         "ssh-rsa KEY test_key@pc",
         "ssh-rsa KEY2 test_key@pc",
@@ -535,7 +525,9 @@ def test_graphql_remove_ssh_key(authorized_client, no_keys, user):
 
 
 @pytest.mark.parametrize("user", key_users)
-def test_graphql_remove_nonexistent_ssh_key(authorized_client, some_users, user):
+def test_graphql_remove_nonexistent_ssh_key(
+    authorized_client, use_json_repository, some_users, user
+):
     output = api_remove_ssh_key(authorized_client, user, "ssh-rsa nonexistent")
     assert_errorcode(output, 404)
 

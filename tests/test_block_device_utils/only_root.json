@@ -1,65 +1,61 @@
 {
-    "dns": {
-        "provider": "CLOUDFLARE",
-        "useStagingACME": false
+  "dns": {
+    "provider": "CLOUDFLARE",
+    "useStagingACME": false
+  },
+  "server": {
+    "provider": "HETZNER"
+  },
+  "domain": "test-domain.tld",
+  "hashedMasterPassword": "HASHED_PASSWORD",
+  "hostname": "test-instance",
+  "timezone": "Etc/UTC",
+  "username": "tester",
+  "useBinds": true,
+  "sshKeys": ["ssh-rsa KEY test@pc"],
+  "users": [],
+  "autoUpgrade": {
+    "enable": true,
+    "allowReboot": true
+  },
+  "modules": {
+    "bitwarden": {
+      "enable": true,
+      "location": "sdb"
     },
-    "server": {
-        "provider": "HETZNER"
+    "gitea": {
+      "enable": true,
+      "location": "sdb"
     },
-    "domain": "test-domain.tld",
-    "hashedMasterPassword": "HASHED_PASSWORD",
-    "hostname": "test-instance",
-    "timezone": "Etc/UTC",
-    "username": "tester",
-    "useBinds": true,
-    "sshKeys": [
-        "ssh-rsa KEY test@pc"
-    ],
-    "users": [],
-    "autoUpgrade": {
-        "enable": true,
-        "allowReboot": true
+    "jitsi-meet": {
+      "enable": true
     },
-    "modules": {
-        "bitwarden": {
-            "enable": true,
-            "location": "sdb"
-        },
-        "gitea": {
-            "enable": true,
-            "location": "sdb"
-        },
-        "jitsi-meet": {
-            "enable": true
-        },
-        "nextcloud": {
-            "enable": true,
-            "location": "sdb"
-        },
-        "ocserv": {
-            "enable": true
-        },
-        "pleroma": {
-            "enable": true,
-            "location": "sdb"
-        },
-        "simple-nixos-mailserver": {
-            "enable": true,
-            "location": "sdb"
-        }
+    "nextcloud": {
+      "enable": true,
+      "location": "sdb"
     },
-    "volumes": [
-        {
-            "device": "/dev/sda1",
-            "mountPoint": "/volumes/sda1",
-            "fsType": "ext4"
-        }
-    ],
-    "ssh": {
-        "enable": true,
-        "passwordAuthentication": true,
-        "rootKeys": [
-            "ssh-ed25519 KEY test@pc"
-        ]
+    "ocserv": {
+      "enable": true
+    },
+    "pleroma": {
+      "enable": true,
+      "location": "sdb"
+    },
+    "simple-nixos-mailserver": {
+      "enable": true,
+      "location": "sdb"
     }
+  },
+  "volumes": [
+    {
+      "device": "/dev/sda1",
+      "mountPoint": "/volumes/sda1",
+      "fsType": "ext4"
+    }
+  ],
+  "ssh": {
+    "enable": true,
+    "passwordAuthentication": false,
+    "rootKeys": ["ssh-ed25519 KEY test@pc"]
+  }
 }
