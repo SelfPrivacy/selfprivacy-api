@@ -249,7 +249,7 @@ in
             # TODO get URL from systemd template parameter?
             ExecStartPre = ''
               ${nix} flake update \
-              --override-input selfprivacy-nixos-config git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes
+              --override-input selfprivacy-nixos-config git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=sso
             '';
             ExecStart = ''
               ${nixos-rebuild} switch --flake .#${config-id}
