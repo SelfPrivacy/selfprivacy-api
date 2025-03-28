@@ -50,7 +50,7 @@ class SSHSettingsInput:
     """Input type for SSH settings"""
 
     enable: bool
-    password_authentication: Optional[bool]
+    password_authentication: Optional[bool] = None
 
 
 @strawberry.input
@@ -118,7 +118,6 @@ class SystemMutations:
         """Change ssh settings of the server."""
         ssh_actions.set_ssh_settings(
             enable=settings.enable,
-            password_authentication=settings.password_authentication,
         )
 
         new_settings = ssh_actions.get_ssh_settings()

@@ -106,7 +106,11 @@ async def edit_profile_get(
         raise HTTPException(status_code=500)
     return templates.TemplateResponse(
         "edit_profile.html",
-        {"request": request, "values": {"displayname": user.displayname}, "errors": {}},
+        {
+            "request": request,
+            "values": {"displayname": user.display_name},
+            "errors": {},
+        },
     )
 
 

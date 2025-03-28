@@ -32,7 +32,7 @@ class User:
     ssh_keys: Optional[list[str]] = strawberry.field(default_factory=list)
     directmemberof: Optional[list[str]] = strawberry.field(default_factory=list)
     memberof: Optional[list[str]] = strawberry.field(default_factory=list)
-    displayname: Optional[str] = None
+    display_name: Optional[str] = None
     email: Optional[str] = None
 
     email_password_metadata: Optional[list[EmailPasswordMetadata]] = strawberry.field(
@@ -68,7 +68,7 @@ def get_user_by_username(username: str) -> Optional[User]:
         ssh_keys=getattr(user, "ssh_keys", []),
         directmemberof=getattr(user, "directmemberof", []),
         memberof=getattr(user, "memberof", []),
-        displayname=getattr(user, "displayname", None),
+        display_name=getattr(user, "display_name", None),
         email=getattr(user, "email", None),
     )
 
@@ -83,7 +83,7 @@ def get_users() -> list[User]:
             ssh_keys=getattr(user, "ssh_keys", []),
             directmemberof=getattr(user, "directmemberof", []),
             memberof=getattr(user, "memberof", []),
-            displayname=getattr(user, "displayname", None),
+            display_name=getattr(user, "display_name", None),
             email=getattr(user, "email", None),
         )
         for user in users

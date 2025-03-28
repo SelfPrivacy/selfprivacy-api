@@ -75,7 +75,7 @@ class UserMutationInput:
     username: str
     directmemberof: Optional[list[str]] = strawberry.field(default_factory=list)
     password: Optional[str] = None
-    displayname: Optional[str] = None
+    display_name: Optional[str] = None
 
 
 @strawberry.input
@@ -97,7 +97,7 @@ class UsersMutations:
                 username=user.username,
                 password=user.password,
                 directmemberof=user.directmemberof,
-                displayname=user.displayname,
+                displayname=user.display_name,
             )
         except (
             PasswordIsEmpty,
@@ -183,7 +183,7 @@ class UsersMutations:
                 username=user.username,
                 password=user.password,
                 directmemberof=user.directmemberof,
-                displayname=user.displayname,
+                displayname=user.display_name,
             )
         except (
             PasswordIsEmpty,
