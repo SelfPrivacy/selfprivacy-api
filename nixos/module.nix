@@ -220,6 +220,8 @@ in
             '';
             KillMode = "mixed";
             SendSIGKILL = "no";
+            StandardOutput = "journal";
+            StandardError = "journal";
           };
           restartIfChanged = false;
           unitConfig.X-StopOnRemoval = false;
@@ -256,6 +258,8 @@ in
             '';
             KillMode = "mixed";
             SendSIGKILL = "no";
+            StandardOutput = "journal";
+            StandardError = "journal";
           };
           restartIfChanged = false;
           unitConfig.X-StopOnRemoval = false;
@@ -290,6 +294,8 @@ in
             '';
             KillMode = "mixed";
             SendSIGKILL = "no";
+            StandardOutput = "journal";
+            StandardError = "journal";
           };
           restartIfChanged = false;
           unitConfig.X-StopOnRemoval = false;
