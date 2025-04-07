@@ -41,46 +41,54 @@ logger = logging.getLogger(__name__)
 def config_item_from_json(json_data: dict) -> Optional[ServiceConfigItem]:
     """Create a ServiceConfigItem from JSON data."""
     weight = json_data.get("meta", {}).get("weight", 50)
-    if json_data["meta"]["type"] == "enable":
+
+    meta = json_data["meta"]
+    type = meta["type"]
+    if type in ["enable", "location"]:
         return None
-    if json_data["meta"]["type"] == "location":
-        return None
-    if json_data["meta"]["type"] == "string":
-        return StringServiceConfigItem(
-            id=json_data["name"],
-            default_value=json_data["default"],
-            description=json_data["description"],
-            regex=json_data["meta"].get("regex"),
-            widget=json_data["meta"].get("widget"),
-            allow_empty=json_data["meta"].get("allowEmpty", False),
-            weight=weight,
-        )
-    if json_data["meta"]["type"] == "bool":
+
+    id = json_data["name"]
+    default_value = json_data["default"]
+    description = json_data["description"]
+    widget = json_data["meta"].get("widget")
+
+    if type == "bool":
         return BoolServiceConfigItem(
-            id=json_data["name"],
-            default_value=json_data["default"],
-            description=json_data["description"],
-            widget=json_data["meta"].get("widget"),
+            id=id,
+            default_value=default_value,
+            description=description,
+            widget=widget,
             weight=weight,
         )
-    if json_data["meta"]["type"] == "enum":
+
+    if type == "string":
+        return StringServiceConfigItem(
+            id=id,
+            default_value=default_value,
+            description=description,
+            widget=widget,
+            weight=weight,
+            regex=meta.get("regex"),
+            allow_empty=meta.get("allowEmpty", False),
+        )
+    if type == "enum":
         return EnumServiceConfigItem(
-            id=json_data["name"],
-            default_value=json_data["default"],
-            description=json_data["description"],
-            options=json_data["meta"]["options"],
-            widget=json_data["meta"].get("widget"),
+            id=id,
+            default_value=default_value,
+            description=description,
+            widget=widget,
             weight=weight,
+            options=meta["options"],
         )
-    if json_data["meta"]["type"] == "int":
+    if type == "int":
         return IntServiceConfigItem(
-            id=json_data["name"],
-            default_value=json_data["default"],
-            description=json_data["description"],
-            widget=json_data["meta"].get("widget"),
-            min_value=json_data["meta"].get("minValue"),
-            max_value=json_data["meta"].get("maxValue"),
+            id=id,
+            default_value=default_value,
+            description=description,
             weight=weight,
+            widget=widget,
+            min_value=meta.get("minValue"),
+            max_value=meta.get("maxValue"),
         )
     raise ValueError("Unknown config item type")
 
