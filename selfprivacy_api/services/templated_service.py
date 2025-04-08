@@ -273,7 +273,7 @@ class TemplatedService(Service):
                 raise FileNotFoundError("Suggested modules file not found")
             with FlakeServiceManager() as service_manager:
                 service_manager.services[name] = (
-                    f"git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/{name}"
+                    f"git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=sso&dir=sp-modules/{name}"
                 )
         if "location" in self.options:
             with WriteUserData() as user_data:
