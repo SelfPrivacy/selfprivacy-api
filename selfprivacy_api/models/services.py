@@ -66,8 +66,8 @@ class License(BaseSchema):
     full_name: str
     redistributable: bool
     short_name: str
-    spdx_id: str
-    url: str
+    spdx_id: Optional[str] = None
+    url: Optional[str] = None
 
 
 class SingleSignOnGroups(BaseSchema):
