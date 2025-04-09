@@ -1,3 +1,8 @@
+import sys
+
+# Dirty hack
+sys.path.append(sys.argv[1])
+
 from typing import List
 from typing import Dict
 
@@ -10,6 +15,7 @@ import subprocess
 from typing import Optional
 
 from selfprivacy_api.root_daemon import SOCKET_PATH
+from selfprivacy_api.services import get_services
 
 
 BUFFER_SIZE = 1024

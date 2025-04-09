@@ -3,6 +3,11 @@ import subprocess
 from typing import List
 from time import sleep
 
+import pickle
+
+import os
+import sys
+
 from os import path
 from os.path import join, exists
 from os import chdir
@@ -41,6 +46,35 @@ def test_available_commands():
     assert len(commands) >= len(services) * len(service_commands)
     for service in services:
         assert is_in_strings(commands, service)
+
+
+def test_module_paths():
+    assert pickle.__file__ == get_python_module_path("pickle")
+
+
+def get_python_module_path(module: str):
+    # needs to be a standard module
+    return (
+        subprocess.check_output(
+            ["python", "-c", f"import {module}; print({module}.__file__)"]
+        )
+        .decode("utf-8")
+        .strip()
+    )
+
+
+def get_modules():
+    return subprocess.check_output(["python", "-c", "help('modules')"])
+
+
+# We then test the daemon which includes the fix
+def test_pydantic_standalone_nofix():
+    # check that we have it in test environment
+    import pydantic
+
+    # but we do NOT have it in test python
+    with pytest.raises(Exception):
+        subprocess.check_output(["python", "-c", "import pydantic"])
 
 
 def test_generating_file_content():
@@ -90,13 +124,21 @@ def start_root_demon():
 
     assert path.abspath(path.curdir) == get_root_sp_directory()
 
+    # maybe just give it all the paths with PYTHONPATH?
+    env_path = None
+    for p in sys.path:
+        if "-env" in p:
+            env_path = p
+    assert env_path is not None
+
     # this is a prototype of how we need to run it`
     proc = subprocess.Popen(
-        args=["python", "-m", "selfprivacy_api.root_daemon.daemon"], shell=False
+        args=["python", "-m", "selfprivacy_api.root_daemon.daemon", env_path],
+        shell=False,
     )
 
     # check that it did not error out
-    sleep(0.3)
+    sleep(3)
     finished = proc.poll()
     assert finished is None
 
