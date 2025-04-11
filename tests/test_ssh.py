@@ -111,7 +111,7 @@ def test_enabling_disabling_writes_json(
     original_enable = get_raw_json_ssh_setting("enable")
     original_password_auth = get_raw_json_ssh_setting("passwordAuthentication")
 
-    set_ssh_settings(ssh_enable_spectrum, password_auth_spectrum)
+    set_ssh_settings(ssh_enable_spectrum)
 
     with ReadUserData() as data:
         if ssh_enable_spectrum is None:
