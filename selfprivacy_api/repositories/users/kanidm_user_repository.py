@@ -5,7 +5,7 @@ import re
 import logging
 import requests  # type: ignore
 
-from selfprivacy_api.models.group import Group, get_default_groups
+from selfprivacy_api.models.group import Group, get_default_grops
 from selfprivacy_api.repositories.users.exceptions import (
     NoPasswordResetLinkFoundInResponse,
     UserAlreadyExists,
@@ -183,7 +183,7 @@ class KanidmUserRepository(AbstractUserRepository):
 
     @staticmethod
     def _remove_default_groups(groups: list) -> list:
-        return [item for item in groups if item not in get_default_groups()]
+        return [item for item in groups if item not in get_default_grops()]
 
     @staticmethod
     def _check_response_type_and_not_empty(data_type: str, response_data: Any) -> None:

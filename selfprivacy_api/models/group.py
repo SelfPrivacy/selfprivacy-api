@@ -44,9 +44,9 @@ class Group(BaseModel):
     description: Optional[str] = None
 
 
-def get_default_groops() -> list[str]:
+def get_default_grops() -> list[str]:
     return [
-        f"idm_all_persons",
-        f"idm_all_accounts",
-        f"idm_people_self_name_write",
+        "idm_all_persons",
+        "idm_all_accounts",
+        "idm_people_self_name_write",
     ]

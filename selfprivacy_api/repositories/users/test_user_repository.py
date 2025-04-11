@@ -12,7 +12,7 @@ from selfprivacy_api.repositories.users.abstract_user_repository import (
     AbstractUserRepository,
 )
 from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
-from selfprivacy_api.models.group import Group, get_default_groops
+from selfprivacy_api.models.group import Group, get_default_grops
 from selfprivacy_api.utils import get_domain
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ class TestUserRepository(AbstractUserRepository):
 
     @staticmethod
     def _remove_default_groups(groups: list[str]) -> list[str]:
-        return [group for group in groups if group not in get_default_groops()]
+        return [group for group in groups if group not in get_default_grops()]
 
     @staticmethod
     def _check_user_origin_by_memberof(memberof: list[str]) -> UserDataUserOrigin:
@@ -76,7 +76,7 @@ class TestUserRepository(AbstractUserRepository):
             ssh_keys=[],
             directmemberof=directmemberof,
             memberof=total_memberof,
-            displayname=displayname if displayname else username,
+            display_name=displayname if displayname else username,
             email=f"{username}@{get_domain()}",
         )
 
