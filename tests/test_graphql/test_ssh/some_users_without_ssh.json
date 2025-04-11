@@ -1,0 +1,76 @@
+{
+  "dns": {
+    "provider": "CLOUDFLARE",
+    "useStagingACME": false
+  },
+  "server": {
+    "provider": "HETZNER"
+  },
+  "domain": "test-domain.tld",
+  "hashedMasterPassword": "HASHED_PASSWORD",
+  "hostname": "test-instance",
+  "timezone": "Europe/Moscow",
+  "username": "tester",
+  "useBinds": true,
+  "sshKeys": [],
+  "users": [
+    {
+      "username": "user1",
+      "hashedPassword": "HASHED_PASSWORD_1",
+      "sshKeys": []
+    },
+    {
+      "username": "user2",
+      "hashedPassword": "HASHED_PASSWORD_2",
+      "sshKeys": []
+    },
+    {
+      "username": "user3",
+      "hashedPassword": "HASHED_PASSWORD_3"
+    }
+  ],
+  "autoUpgrade": {
+    "enable": true,
+    "allowReboot": true
+  },
+  "modules": {
+    "bitwarden": {
+      "enable": true,
+      "location": "sdb"
+    },
+    "gitea": {
+      "enable": true,
+      "location": "sdb"
+    },
+    "jitsi-meet": {
+      "enable": true
+    },
+    "nextcloud": {
+      "enable": true,
+      "location": "sdb"
+    },
+    "ocserv": {
+      "enable": true
+    },
+    "pleroma": {
+      "enable": true,
+      "location": "sdb"
+    },
+    "simple-nixos-mailserver": {
+      "enable": true,
+      "location": "sdb"
+    }
+  },
+  "volumes": [
+    {
+      "device": "/dev/sdb",
+      "mountPoint": "/volumes/sdb",
+      "fsType": "ext4"
+    }
+  ],
+  "ssh": {
+    "enable": true,
+    "passwordAuthentication": false,
+    "rootKeys": []
+  }
+}
