@@ -44,10 +44,12 @@ def test_available_commands():
     commands = get_available_commands()
     assert commands != []
     services = get_services()
-    assert len(commands) >= len(services) * len(service_commands)
+    assert len(commands) >= len(services) * len(service_commands) + len(services)
     for service in services:
         for unit in service.get_units():
             assert is_in_strings(commands, unit)
+        for folder in service.get_folders():
+            assert is_in_strings(commands, folder)
 
 
 def test_module_paths():
@@ -161,6 +163,20 @@ def test_send_command():
     answer = call_root_function(["blabla"])
     assert answer == "not permitted"
     # confirm the loop
+    answer = call_root_function(["blabla"])
+    assert answer == "not permitted"
+
+    proc.kill()
+
+
+def test_chowns():
+    service = get_services()[0]
+    command = ["chown", "selfprivacy", service.get_folders()[0]]
+
+    proc = start_root_demon()
+    answer = call_root_function(command)
+    assert answer == " ".join(command)
+    # confirm the loop still works
     answer = call_root_function(["blabla"])
     assert answer == "not permitted"
 
