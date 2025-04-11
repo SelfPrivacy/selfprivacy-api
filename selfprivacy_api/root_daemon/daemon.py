@@ -1,8 +1,5 @@
 import sys
 
-# Dirty hack
-sys.path.append(sys.argv[1])
-
 from typing import List
 from typing import Dict
 

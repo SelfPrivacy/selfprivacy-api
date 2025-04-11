@@ -117,6 +117,10 @@ def get_root_sp_directory() -> str:
     return sp_dir
 
 
+def make_pythonpath() -> str:
+    return ":".join(sys.path)
+
+
 def start_root_demon():
 
     old_dir = path.abspath(path.curdir)
@@ -124,17 +128,19 @@ def start_root_demon():
 
     assert path.abspath(path.curdir) == get_root_sp_directory()
 
-    # maybe just give it all the paths with PYTHONPATH?
-    env_path = None
-    for p in sys.path:
-        if "-env" in p:
-            env_path = p
-    assert env_path is not None
+    # for some reason we do not have pythonpath set and so the process
+    # cannot inherit it
+    assert "PYTHONPATH" not in os.environ.keys()
+
+    new_env = os.environ.copy()
+    new_env["PYTHONPATH"] = make_pythonpath()
+    assert "PYTHONPATH" in new_env.keys()
 
     # this is a prototype of how we need to run it`
     proc = subprocess.Popen(
-        args=["python", "-m", "selfprivacy_api.root_daemon.daemon", env_path],
+        args=["python", "-m", "selfprivacy_api.root_daemon.daemon"],
         shell=False,
+        env=new_env,
     )
 
     # check that it did not error out
