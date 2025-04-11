@@ -220,6 +220,8 @@ in
             '';
             KillMode = "mixed";
             SendSIGKILL = "no";
+            StandardOutput = "journal";
+            StandardError = "journal";
           };
           restartIfChanged = false;
           unitConfig.X-StopOnRemoval = false;
@@ -249,13 +251,15 @@ in
             # TODO get URL from systemd template parameter?
             ExecStartPre = ''
               ${nix} flake update \
-              --override-input selfprivacy-nixos-config git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes
+              --override-input selfprivacy-nixos-config git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=sso
             '';
             ExecStart = ''
               ${nixos-rebuild} switch --flake .#${config-id}
             '';
             KillMode = "mixed";
             SendSIGKILL = "no";
+            StandardOutput = "journal";
+            StandardError = "journal";
           };
           restartIfChanged = false;
           unitConfig.X-StopOnRemoval = false;
@@ -290,6 +294,8 @@ in
             '';
             KillMode = "mixed";
             SendSIGKILL = "no";
+            StandardOutput = "journal";
+            StandardError = "journal";
           };
           restartIfChanged = false;
           unitConfig.X-StopOnRemoval = false;

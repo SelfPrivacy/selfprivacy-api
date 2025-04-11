@@ -26,7 +26,7 @@ async def check_email_password(request: Request, input_data: EmailPasswordCheckI
     if not username or not password:
         return JSONResponse({"isValid": False}, status_code=400)
 
-    if not (username and password):
+    if "@" in username:
         parsed_user, domain = username.rsplit("@", 1)
         if domain != get_domain():
             return JSONResponse({"isValid": False}, status_code=400)

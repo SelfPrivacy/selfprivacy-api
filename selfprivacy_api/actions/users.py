@@ -8,7 +8,7 @@ from typing import Optional
 from selfprivacy_api.utils import is_username_forbidden
 from selfprivacy_api.utils.strings import PLEASE_UPDATE_APP_TEXT
 
-from selfprivacy_api.models.group import Group, get_default_groops
+from selfprivacy_api.models.group import Group, get_default_groups
 from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
 
 from selfprivacy_api.actions.ssh import get_ssh_keys
@@ -180,7 +180,7 @@ def update_user(
         if groups_to_add:
             for group in groups_to_add:
 
-                if group in get_default_groops():
+                if group in get_default_groups():
                     continue
 
                 ACTIVE_USERS_PROVIDER.add_users_to_group(
@@ -190,7 +190,7 @@ def update_user(
         if groups_to_delete:
             for group in groups_to_delete:
 
-                if group in get_default_groops():
+                if group in get_default_groups():
                     continue
 
                 ACTIVE_USERS_PROVIDER.remove_users_from_group(

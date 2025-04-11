@@ -5,7 +5,7 @@ import re
 import logging
 import requests  # type: ignore
 
-from selfprivacy_api.models.group import Group, get_default_groops
+from selfprivacy_api.models.group import Group, get_default_groups
 from selfprivacy_api.repositories.users.exceptions import (
     NoPasswordResetLinkFoundInResponse,
     UserAlreadyExists,
@@ -183,7 +183,7 @@ class KanidmUserRepository(AbstractUserRepository):
 
     @staticmethod
     def _remove_default_groups(groups: list) -> list:
-        return [item for item in groups if item not in get_default_groops()]
+        return [item for item in groups if item not in get_default_groups()]
 
     @staticmethod
     def _check_response_type_and_not_empty(data_type: str, response_data: Any) -> None:
@@ -199,7 +199,7 @@ class KanidmUserRepository(AbstractUserRepository):
             KanidmReturnUnknownResponseType: If the response data is not of the expected type.
         """
 
-        if not response_data or response_data is None:
+        if response_data is None:
             raise KanidmReturnEmptyResponse
 
         if data_type == "list":
@@ -637,6 +637,9 @@ class KanidmUserRepository(AbstractUserRepository):
             attrs = group_data.get("attrs", {})
 
             if "builtin" in attrs.get("class", []):
+                continue
+
+            if attrs.get("name", [None])[0] in ["ext_idm_provisioned_entities"]:
                 continue
 
             group = Group(

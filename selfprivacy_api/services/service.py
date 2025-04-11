@@ -202,7 +202,7 @@ class Service(ABC):
         """
         return SupportLevel.NORMAL
 
-    def get_sso_access_group(self) -> Optional[str]:
+    def get_sso_user_group(self) -> Optional[str]:
         """
         The access group for Single Sign On.
         """

@@ -66,14 +66,14 @@ class License(BaseSchema):
     full_name: str
     redistributable: bool
     short_name: str
-    spdx_id: str
-    url: str
+    spdx_id: Optional[str] = None
+    url: Optional[str] = None
 
 
 class SingleSignOnGroups(BaseSchema):
     """Model representing the groups for Single Sign On."""
 
-    access_group: Optional[str] = None
+    user_group: Optional[str] = None
     admin_group: Optional[str] = None
 
 
