@@ -1,7 +1,4 @@
-import sys
-
 from typing import List
-from typing import Dict
 
 import os
 import os.path
@@ -16,34 +13,6 @@ from selfprivacy_api.services import get_services
 
 
 BUFFER_SIZE = 1024
-
-services = [
-    # Check that it is the same as the names in systemd services.
-    "bitwarden",
-    "forgejo",
-    "jitsimeet",
-    "mailserver",
-    "nextcloud",
-    "ocserv",
-    "pleroma",
-    "prometheus",
-    "roundcube",
-    "postgresql",
-]
-
-service_folders: Dict[str, List[str]] = {
-    # Fill by hand from service data
-    "bitwarden": [],
-    "forgejo": [],
-    "gitea": [],
-    "jitsimeet": [],
-    "mailserver": [],
-    "nextcloud": [],
-    "ocserv": [],
-    "pleroma": [],
-    "prometheus": [],
-    "roundcube": [],
-}
 
 service_commands = [
     "systemctl start",
@@ -119,6 +88,7 @@ def get_available_commands() -> List[str]:
         for service in services:
             commands.append(command + " " + service)
 
+    service_folders = get_all_folders()
     chowns = [CHOWN_COMMAND + " " + folder for folder in service_folders]
     commands.extend(chowns)
 
