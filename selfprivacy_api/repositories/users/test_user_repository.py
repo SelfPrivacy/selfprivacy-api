@@ -195,9 +195,7 @@ class TestUserRepository(AbstractUserRepository):
             if user.directmemberof and group_name in user.directmemberof:
                 user.directmemberof.remove(group_name)
 
-            total_memberof = list(
-                set((user.directmemberof or []) + SP_DEFAULT_GROUPS)
-            )
+            total_memberof = list(set((user.directmemberof or []) + SP_DEFAULT_GROUPS))
             user.memberof = total_memberof
             user.user_type = TestUserRepository._check_user_origin_by_memberof(
                 user.memberof
