@@ -58,6 +58,20 @@ CHOWN_COMMAND = "chown selfprivacy"
 # ]
 
 
+def get_all_folders() -> List[str]:
+    folders = []
+    for service in get_services():
+        folders.extend(service.get_folders())
+    return folders
+
+
+def get_all_systemd_units() -> List[str]:
+    units = []
+    for service in get_services():
+        units.extend(service.get_units())
+    return units
+
+
 def sync_with_dynamic_services():
     """
     We need to look at the file, then fetch service names
@@ -100,10 +114,10 @@ def get_available_commands() -> List[str]:
     # selfprivacy being in mount group
     # chowning still needs root
     commands = []
+    services = get_all_systemd_units()
     for command in service_commands:
         for service in services:
-            # Concatenation of hardcoded strings
-            commands.append(command + " " + service + ".service")
+            commands.append(command + " " + service)
 
     chowns = [CHOWN_COMMAND + " " + folder for folder in service_folders]
     commands.extend(chowns)
