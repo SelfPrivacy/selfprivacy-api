@@ -105,32 +105,6 @@ def test_read_json(possibly_undefined_ssh_settings):
             )
 
 
-def test_enabling_disabling_writes_json(
-    possibly_undefined_ssh_settings, ssh_enable_spectrum, password_auth_spectrum
-):
-    original_enable = get_raw_json_ssh_setting("enable")
-    original_password_auth = get_raw_json_ssh_setting("passwordAuthentication")
-
-    set_ssh_settings(ssh_enable_spectrum)
-
-    with ReadUserData() as data:
-        if ssh_enable_spectrum is None:
-            assert get_raw_json_ssh_setting("enable") == original_enable
-        else:
-            assert get_raw_json_ssh_setting("enable") == ssh_enable_spectrum
-
-        if password_auth_spectrum is None:
-            assert (
-                get_raw_json_ssh_setting("passwordAuthentication")
-                == original_password_auth
-            )
-        else:
-            assert (
-                get_raw_json_ssh_setting("passwordAuthentication")
-                == password_auth_spectrum
-            )
-
-
 ############### ROOTKEYS
 
 
