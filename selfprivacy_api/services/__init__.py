@@ -161,6 +161,10 @@ class ServiceManager(Service):
         return True
 
     @staticmethod
+    def is_installed() -> bool:
+        return True
+
+    @staticmethod
     def is_system_service() -> bool:
         return True
 
