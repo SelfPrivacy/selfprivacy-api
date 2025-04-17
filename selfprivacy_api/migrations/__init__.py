@@ -19,6 +19,7 @@ from selfprivacy_api.migrations.check_for_system_rebuild_jobs import (
 from selfprivacy_api.migrations.add_roundcube import AddRoundcube
 from selfprivacy_api.migrations.add_monitoring import AddMonitoring
 from selfprivacy_api.migrations.migrate_users_from_json import MigrateUsersFromJson
+from selfprivacy_api.migrations.add_postgres_location import AddPostgresLocation
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ migrations = [
     AddMonitoring(),
     AddRoundcube(),
     MigrateUsersFromJson(),
+    AddPostgresLocation(),
 ]
 
 
