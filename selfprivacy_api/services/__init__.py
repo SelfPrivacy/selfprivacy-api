@@ -161,6 +161,10 @@ class ServiceManager(Service):
         return True
 
     @staticmethod
+    def is_installed() -> bool:
+        return True
+
+    @staticmethod
     def is_system_service() -> bool:
         return True
 
@@ -349,7 +353,7 @@ def get_services(exclude_remote=False) -> List[Service]:
                 templated_services.append(
                     get_remote_service(
                         module,
-                        f"git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/{module}",
+                        f"git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=sso&dir=sp-modules/{module}",
                         ttl_hash=get_ttl_hash(3600),
                     )
                 )
