@@ -23,7 +23,13 @@ from selfprivacy_api.utils.cached_call import get_ttl_hash
 import selfprivacy_api.utils.network as network_utils
 
 from selfprivacy_api.services.api_icon import API_ICON
-from selfprivacy_api.utils import USERDATA_FILE, DKIM_DIR, SECRETS_FILE, get_domain
+from selfprivacy_api.utils import (
+    USERDATA_FILE,
+    DKIM_DIR,
+    SECRETS_FILE,
+    get_domain,
+    read_account_uri,
+)
 from selfprivacy_api.utils.block_devices import BlockDevices
 from selfprivacy_api.services.templated_service import (
     SP_MODULES_DEFENITIONS_PATH,
@@ -93,20 +99,18 @@ class ServiceManager(Service):
             ),
         ]
 
-        # TODO: Reenable with 3.6.0 release when clients are ready.
-        # Do not forget about tests!
-        # try:
-        #     dns_records.append(
-        #         ServiceDnsRecord(
-        #             type="CAA",
-        #             name=get_domain(),
-        #             content=f'128 issue "letsencrypt.org;accounturi={read_account_uri()}"',
-        #             ttl=3600,
-        #             display_name="CAA record",
-        #         )
-        #     )
-        # except Exception as e:
-        #     logging.error(f"Error creating CAA: {e}")
+        try:
+            dns_records.append(
+                ServiceDnsRecord(
+                    type="CAA",
+                    name=get_domain(),
+                    content=f'128 issue "letsencrypt.org;accounturi={read_account_uri()}"',
+                    ttl=3600,
+                    display_name="CAA record",
+                )
+            )
+        except Exception as e:
+            logging.error(f"Error creating CAA: {e}")
 
         for service in ServiceManager.get_enabled_services():
             dns_records += service.get_dns_records(ip4, ip6)
