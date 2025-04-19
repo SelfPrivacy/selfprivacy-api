@@ -2,6 +2,7 @@ from json import JSONDecodeError
 from typing import Any, Optional, Union
 import subprocess
 import re
+import os
 import logging
 import requests  # type: ignore
 
@@ -65,20 +66,33 @@ class KanidmAdminToken:
     @staticmethod
     def get() -> str:
         redis = RedisPool().get_connection()
-        kanidm_admin_token: str = redis.get(REDIS_TOKEN_KEY)  # type: ignore
+        kanidm_admin_token: str = redis.get(REDIS_TOKEN_KEY)
 
-        if kanidm_admin_token:
-            if KanidmAdminToken._is_token_valid(kanidm_admin_token):
-                return kanidm_admin_token
+        if kanidm_admin_token and KanidmAdminToken._is_token_valid(kanidm_admin_token):
+            return kanidm_admin_token
 
-        logging.warning("Kanidm admin token is missing or invalid. Regenerating.")
+        logging.warning(
+            "The Kanidm admin token from Redis is missing or invalid. Trying to retrieve it from the environment."
+        )
+
+        new_kanidm_admin_token = KanidmAdminToken._get_admin_token_from_env()
+        if new_kanidm_admin_token and KanidmAdminToken._is_token_valid(
+            new_kanidm_admin_token
+        ):
+            return new_kanidm_admin_token
+
+        logging.warning(
+            "The Kanidm admin token from the environment is missing or invalid. Regenerating."
+        )
 
         kanidm_admin_password = KanidmAdminToken._reset_and_save_idm_admin_password()
-        kanidm_admin_token = KanidmAdminToken._create_and_save_token(
+        return KanidmAdminToken._create_and_save_token(
             kanidm_admin_password=kanidm_admin_password
         )
 
-        return kanidm_admin_token
+    @staticmethod
+    def _get_admin_token_from_env() -> Optional[str]:
+        return os.environ.get("KANIDM_ADMIN_TOKEN")
 
     @staticmethod
     def _create_and_save_token(kanidm_admin_password: str) -> str:
