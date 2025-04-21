@@ -1,9 +1,8 @@
 selfprivacy-graphql-api:
-{
-  config,
-  lib,
-  pkgs,
-  ...
+{ config
+, lib
+, pkgs
+, ...
 }:
 
 let
@@ -25,26 +24,12 @@ let
     '';
   };
 
-  # TODO: Move it to a more appropriate place.
   sp = config.selfprivacy;
-  auth-passthru = sp.passthru.auth;
   domain = sp.domain;
   unix-user = "selfprivacy-api";
   port = "5050";
 
   oauth-client-id = "selfprivacy-api";
-  kanidm-oauth-client-secret-fp = "/run/keys/${oauth-client-id}/kanidm-oauth-client-secret";
-  kanidmExecStartPreScriptRoot = pkgs.writeShellScript "${oauth-client-id}-kanidm-ExecStartPre-root-script.sh" ''
-    # set-group-ID bit allows for kanidm user to create files,
-    mkdir -p -v --mode=u+rwx,g+rs,g-w,o-rwx /run/keys/${oauth-client-id}
-    chown kanidm:${unix-user} /run/keys/${oauth-client-id}
-  '';
-  kanidmExecStartPreScript = pkgs.writeShellScript "${oauth-client-id}-kanidm-ExecStartPre-script.sh" ''
-    [ -f "${kanidm-oauth-client-secret-fp}" ] || \
-      "${lib.getExe pkgs.openssl}" rand -base64 -out "${kanidm-oauth-client-secret-fp}" 32
-    chmod 640 "${kanidm-oauth-client-secret-fp}"
-  '';
-
   oauth-redirect-uri = "https://api.${domain}/login/callback";
 
   dovecot-auth-script = pkgs.writeShellApplication {
@@ -104,10 +89,6 @@ in
 
     systemd = {
       services = {
-        kanidm.serviceConfig.ExecStartPre = lib.mkAfter [
-          ("-+" + kanidmExecStartPreScriptRoot)
-          ("-" + kanidmExecStartPreScript)
-        ];
         selfprivacy-api = {
           description = "API Server used to control system from the mobile application";
           environment =
@@ -309,31 +290,31 @@ in
       };
     };
 
-    services = {
-      kanidm.provision = {
-        systems.oauth2.${oauth-client-id} = {
-          displayName = "SelfPrivacy Self-Service Portal";
-          originUrl = oauth-redirect-uri;
-          originLanding = "https://api.${domain}/";
-          basicSecretFile = kanidm-oauth-client-secret-fp;
-          preferShortUsername = true;
-          allowInsecureClientDisablePkce = false;
-          scopeMaps."idm_all_persons" = [
-            "email"
-            "groups"
-            "openid"
-            "profile"
-          ];
-        };
+    services.dovecot2.extraConfig = lib.mkAfter ''
+      passdb {
+        driver = checkpassword
+        mechanisms = plain login
+        args = ${dovecot-auth-script}/bin/dovecot-auth-script.sh
+      }
+    '';
 
-      };
-      dovecot2.extraConfig = lib.mkAfter ''
-        passdb {
-          driver = checkpassword
-          mechanisms = plain login
-          args = ${dovecot-auth-script}/bin/dovecot-auth-script.sh
-        }
-      '';
+    selfprivacy.auth.clients."${oauth-client-id}" = {
+      displayName = "SelfPrivacy Self-Service Portal";
+      subdomain = cfg.subdomain;
+      isTokenNeeded = true;
+      originLanding = "https://api.${domain}/";
+      originUrl = oauth-redirect-uri;
+      clientSystemdUnits = [ "${oauth-client-id}.service" ];
+      enablePkce = true;
+      linuxUserOfClient = unix-user;
+      linuxGroupOfClient = unix-user;
+      scopeMaps."idm_all_persons" = [
+        "email"
+        "groups"
+        "openid"
+        "profile"
+      ];
     };
+
   };
 }
