@@ -96,6 +96,8 @@ in
             // {
               HOME = "/root";
               PYTHONUNBUFFERED = "1";
+              KANIDM_ADMIN_TOKEN_FILE =
+                sp.passthru.auth.mkServiceAccountTokenFP unix-user;
             }
             // config.networking.proxy.envVars;
           path = [
