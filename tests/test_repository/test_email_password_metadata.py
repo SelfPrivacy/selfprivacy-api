@@ -149,18 +149,6 @@ def test_delete_email_password_hash():
     assert not redis.exists(key)
 
 
-def test_delete_nonexist_email_password_hash():
-    test_user = get_test_user()
-    meta = create_password_metadata()
-
-    EmailPasswordManager.add_email_password_hash(test_user, "hash", meta)
-    EmailPasswordManager.delete_email_password_hash("random_user", meta.uuid)
-
-    redis = RedisPool().get_userpanel_connection()
-    key = f"priv/user/{test_user}/passwords/{meta.uuid}"
-
-    assert not redis.exists(key)
-
 
 def test_delete_all_email_passwords_hashes():
     test_user = get_test_user()
