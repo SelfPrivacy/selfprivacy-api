@@ -20,6 +20,7 @@ from selfprivacy_api.migrations.add_roundcube import AddRoundcube
 from selfprivacy_api.migrations.add_monitoring import AddMonitoring
 from selfprivacy_api.migrations.migrate_users_from_json import MigrateUsersFromJson
 from selfprivacy_api.migrations.add_postgres_location import AddPostgresLocation
+from selfprivacy_api.migrations.switch_to_flakes import SwitchToFlakes
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,7 @@ migrations = [
     AddRoundcube(),
     MigrateUsersFromJson(),
     AddPostgresLocation(),
+    SwitchToFlakes(),
 ]
 
 
