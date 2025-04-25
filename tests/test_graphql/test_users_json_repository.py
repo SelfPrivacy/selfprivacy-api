@@ -245,7 +245,7 @@ def test_graphql_get_users_undefined_no_admin(
     assert len(response.json()["data"]["users"]["allUsers"]) == 0
 
 
-API_GET_USERS = """
+API_GET_USER = """
 query TestUsers($username: String!) {
     users {
         getUser(username: $username) {
@@ -263,7 +263,7 @@ def test_graphql_get_one_user_unauthorized(
     response = client.post(
         "/graphql",
         json={
-            "query": API_GET_USERS,
+            "query": API_GET_USER,
             "variables": {
                 "username": "user1",
             },
@@ -278,7 +278,7 @@ def test_graphql_get_one_user(
     response = authorized_client.post(
         "/graphql",
         json={
-            "query": API_GET_USERS,
+            "query": API_GET_USER,
             "variables": {
                 "username": "user1",
             },
@@ -300,7 +300,7 @@ def test_graphql_get_some_user_undefined(
     response = authorized_client.post(
         "/graphql",
         json={
-            "query": API_GET_USERS,
+            "query": API_GET_USER,
             "variables": {
                 "username": "user1",
             },
@@ -318,7 +318,7 @@ def test_graphql_get_some_user(
     response = authorized_client.post(
         "/graphql",
         json={
-            "query": API_GET_USERS,
+            "query": API_GET_USER,
             "variables": {
                 "username": "user2",
             },
@@ -338,7 +338,7 @@ def test_graphql_get_root_user(
     response = authorized_client.post(
         "/graphql",
         json={
-            "query": API_GET_USERS,
+            "query": API_GET_USER,
             "variables": {
                 "username": "root",
             },
@@ -360,7 +360,7 @@ def test_graphql_get_main_user(
     response = authorized_client.post(
         "/graphql",
         json={
-            "query": API_GET_USERS,
+            "query": API_GET_USER,
             "variables": {
                 "username": "tester",
             },
@@ -382,7 +382,7 @@ def test_graphql_get_nonexistent_user(
     response = authorized_client.post(
         "/graphql",
         json={
-            "query": API_GET_USERS,
+            "query": API_GET_USER,
             "variables": {
                 "username": "tyler_durden",
             },
