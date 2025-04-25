@@ -92,7 +92,35 @@ class KanidmAdminToken:
 
     @staticmethod
     def _get_admin_token_from_env() -> Optional[str]:
-        return os.environ.get("KANIDM_ADMIN_TOKEN")
+        token_path = os.environ.get("KANIDM_ADMIN_TOKEN_FILE")
+        if not token_path:
+            logger.warning(
+                "KANIDM_ADMIN_TOKEN_FILE environment variable is not set. "
+                "The Kanidm admin token will be generated."
+            )
+            return None
+        try:
+            with open(token_path, "r") as file:
+                token = file.read().strip()
+                if not token:
+                    logger.warning(
+                        "KANIDM_ADMIN_TOKEN_FILE is empty. "
+                        "The Kanidm admin token will be generated."
+                    )
+                    return None
+                return token
+        except FileNotFoundError:
+            logger.warning(
+                f"KANIDM_ADMIN_TOKEN_FILE '{token_path}' not found. "
+                "The Kanidm admin token will be generated."
+            )
+            return None
+        except Exception as error:
+            logger.warning(
+                f"Error reading KANIDM_ADMIN_TOKEN_FILE '{token_path}': {error}. "
+                "The Kanidm admin token will be generated."
+            )
+            return None
 
     @staticmethod
     def _create_and_save_token(kanidm_admin_password: str) -> str:
