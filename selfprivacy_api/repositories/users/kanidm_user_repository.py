@@ -92,6 +92,7 @@ class KanidmAdminToken:
 
     @staticmethod
     def _get_admin_token_from_env() -> Optional[str]:
+        redis = RedisPool().get_connection()
         token_path = os.environ.get("KANIDM_ADMIN_TOKEN_FILE")
         if not token_path:
             logger.warning(
@@ -108,6 +109,7 @@ class KanidmAdminToken:
                         "The Kanidm admin token will be generated."
                     )
                     return None
+                redis.set("kanidm:token", token)
                 return token
         except FileNotFoundError:
             logger.warning(
