@@ -14,12 +14,10 @@ from selfprivacy_api.actions.ssh import (
     KeyNotFound,
     UserNotFound,
 )
-from selfprivacy_api.actions.users import (
-    get_users,
-    get_user_by_username,
-    UserDataUserOrigin,
-)
+from selfprivacy_api.repositories.users.json_user_repository import JsonUserRepository
+
 from selfprivacy_api.utils import WriteUserData, ReadUserData
+from selfprivacy_api.models.user import UserDataUserOrigin
 
 
 @pytest.fixture(params=[True, False])
@@ -71,9 +69,9 @@ def password_auth_spectrum(request):
 
 
 def admin_name() -> Optional[str]:
-    users = get_users()
+    users = JsonUserRepository.get_users()
     for user in users:
-        if user.origin == UserDataUserOrigin.PRIMARY:
+        if user.user_type == UserDataUserOrigin.PRIMARY:
             return user.username
     return None
 
@@ -89,9 +87,8 @@ def test_read_json(possibly_undefined_ssh_settings):
             assert get_ssh_settings().enable is not None
             assert get_ssh_settings().passwordAuthentication is not None
 
-            # TODO: Is it really a good idea to have password ssh enabled by default?
             assert get_ssh_settings().enable is True
-            assert get_ssh_settings().passwordAuthentication is True
+            assert get_ssh_settings().passwordAuthentication is False
             return
 
         if "enable" not in data["ssh"].keys():
@@ -105,32 +102,6 @@ def test_read_json(possibly_undefined_ssh_settings):
             assert (
                 get_ssh_settings().passwordAuthentication
                 == data["ssh"]["passwordAuthentication"]
-            )
-
-
-def test_enabling_disabling_writes_json(
-    possibly_undefined_ssh_settings, ssh_enable_spectrum, password_auth_spectrum
-):
-    original_enable = get_raw_json_ssh_setting("enable")
-    original_password_auth = get_raw_json_ssh_setting("passwordAuthentication")
-
-    set_ssh_settings(ssh_enable_spectrum, password_auth_spectrum)
-
-    with ReadUserData() as data:
-        if ssh_enable_spectrum is None:
-            assert get_raw_json_ssh_setting("enable") == original_enable
-        else:
-            assert get_raw_json_ssh_setting("enable") == ssh_enable_spectrum
-
-        if password_auth_spectrum is None:
-            assert (
-                get_raw_json_ssh_setting("passwordAuthentication")
-                == original_password_auth
-            )
-        else:
-            assert (
-                get_raw_json_ssh_setting("passwordAuthentication")
-                == password_auth_spectrum
             )
 
 
@@ -239,18 +210,20 @@ def test_adding_root_key_writes_json(generic_userdata):
 
 def test_read_admin_keys_from_json(generic_userdata):
     admin_name = "tester"
-    assert get_user_by_username(admin_name).ssh_keys == ["ssh-rsa KEY test@pc"]
+    assert JsonUserRepository.get_user_by_username(admin_name).ssh_keys == [
+        "ssh-rsa KEY test@pc"
+    ]
     new_keys = ["ssh-rsa KEY test@pc", "ssh-ed25519 KEY2 test@pc"]
 
     with WriteUserData() as data:
         data["sshKeys"] = new_keys
 
-    assert get_user_by_username(admin_name).ssh_keys == new_keys
+    assert JsonUserRepository.get_user_by_username(admin_name).ssh_keys == new_keys
 
     with WriteUserData() as data:
         del data["sshKeys"]
 
-    assert get_user_by_username(admin_name).ssh_keys == []
+    assert JsonUserRepository.get_user_by_username(admin_name).ssh_keys == []
 
 
 def test_adding_admin_key_writes_json(generic_userdata):
@@ -278,13 +251,13 @@ def test_removing_admin_key_writes_json(generic_userdata):
     # generic userdata has a a single admin key
     admin_name = "tester"
 
-    admin_keys = get_user_by_username(admin_name).ssh_keys
+    admin_keys = JsonUserRepository.get_user_by_username(admin_name).ssh_keys
     assert len(admin_keys) == 1
     key1 = admin_keys[0]
     key2 = "ssh-rsa MYSUPERKEY admin@pc"
 
     create_ssh_key(admin_name, key2)
-    admin_keys = get_user_by_username(admin_name).ssh_keys
+    admin_keys = JsonUserRepository.get_user_by_username(admin_name).ssh_keys
     assert len(admin_keys) == 2
 
     remove_ssh_key(admin_name, key2)
@@ -303,7 +276,7 @@ def test_remove_admin_key_on_undefined(generic_userdata):
     # generic userdata has a a single admin key
     admin_name = "tester"
 
-    admin_keys = get_user_by_username(admin_name).ssh_keys
+    admin_keys = JsonUserRepository.get_user_by_username(admin_name).ssh_keys
     assert len(admin_keys) == 1
     key1 = admin_keys[0]
 
@@ -312,7 +285,7 @@ def test_remove_admin_key_on_undefined(generic_userdata):
 
     with pytest.raises(KeyNotFound):
         remove_ssh_key(admin_name, key1)
-    admin_keys = get_user_by_username(admin_name).ssh_keys
+    admin_keys = JsonUserRepository.get_user_by_username(admin_name).ssh_keys
     assert len(admin_keys) == 0
 
 
@@ -331,20 +304,20 @@ def find_user_index_in_json_users(users: list, username: str) -> Optional[int]:
 @pytest.mark.parametrize("username", regular_users)
 def test_read_user_keys_from_json(generic_userdata, username):
     old_keys = [f"ssh-rsa KEY {username}@pc"]
-    assert get_user_by_username(username).ssh_keys == old_keys
+    assert JsonUserRepository.get_user_by_username(username).ssh_keys == old_keys
     new_keys = ["ssh-rsa KEY test@pc", "ssh-ed25519 KEY2 test@pc"]
 
     with WriteUserData() as data:
         user_index = find_user_index_in_json_users(data["users"], username)
         data["users"][user_index]["sshKeys"] = new_keys
 
-    assert get_user_by_username(username).ssh_keys == new_keys
+    assert JsonUserRepository.get_user_by_username(username).ssh_keys == new_keys
 
     with WriteUserData() as data:
         user_index = find_user_index_in_json_users(data["users"], username)
         del data["users"][user_index]["sshKeys"]
 
-    assert get_user_by_username(username).ssh_keys == []
+    assert JsonUserRepository.get_user_by_username(username).ssh_keys == []
 
     # deeper deletions are for user getter tests, not here
 
@@ -376,13 +349,13 @@ def test_adding_user_key_writes_json(generic_userdata, username):
 def test_removing_user_key_writes_json(generic_userdata, username):
     # generic userdata has a a single user key
 
-    user_keys = get_user_by_username(username).ssh_keys
+    user_keys = JsonUserRepository.get_user_by_username(username).ssh_keys
     assert len(user_keys) == 1
     key1 = user_keys[0]
     key2 = "ssh-rsa MYSUPERKEY admin@pc"
 
     create_ssh_key(username, key2)
-    user_keys = get_user_by_username(username).ssh_keys
+    user_keys = JsonUserRepository.get_user_by_username(username).ssh_keys
     assert len(user_keys) == 2
 
     remove_ssh_key(username, key2)
@@ -402,7 +375,7 @@ def test_removing_user_key_writes_json(generic_userdata, username):
 @pytest.mark.parametrize("username", regular_users)
 def test_remove_user_key_on_undefined(generic_userdata, username):
     # generic userdata has a a single user key
-    user_keys = get_user_by_username(username).ssh_keys
+    user_keys = JsonUserRepository.get_user_by_username(username).ssh_keys
     assert len(user_keys) == 1
     key1 = user_keys[0]
 
@@ -413,7 +386,7 @@ def test_remove_user_key_on_undefined(generic_userdata, username):
     with pytest.raises(KeyNotFound):
         remove_ssh_key(username, key1)
 
-    user_keys = get_user_by_username(username).ssh_keys
+    user_keys = JsonUserRepository.get_user_by_username(username).ssh_keys
     assert len(user_keys) == 0
 
     with WriteUserData() as data:

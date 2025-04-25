@@ -7,7 +7,7 @@ from time import sleep
 from starlette.testclient import WebSocketTestSession
 
 from selfprivacy_api.jobs import Jobs
-from selfprivacy_api.actions.api_tokens import TOKEN_REPO
+from selfprivacy_api.actions.api_tokens import ACTIVE_TOKEN_PROVIDER
 from selfprivacy_api.graphql import IsAuthenticated
 
 from tests.conftest import DEVICE_WE_AUTH_TESTS_WITH
@@ -75,7 +75,7 @@ def authenticated_websocket(
 ) -> Generator[WebSocketTestSession, None, None]:
     # We use authorized_client only to have token in the repo, this client by itself is not enough to authorize websocket
 
-    ValueError(TOKEN_REPO.get_tokens())
+    ValueError(ACTIVE_TOKEN_PROVIDER.get_tokens())
     with connect_ws_authenticated(authorized_client) as websocket:
         yield websocket
 

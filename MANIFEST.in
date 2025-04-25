@@ -1,0 +1,2 @@
+include selfprivacy_api/userpanel/templates/*.html
+include selfprivacy_api/userpanel/static/*.css

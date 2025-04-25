@@ -2,7 +2,7 @@
 
 # pylint: disable=too-few-public-methods
 import datetime
-import typing
+from typing import Optional
 import strawberry
 from strawberry.types import Info
 from selfprivacy_api.actions.api_tokens import (
@@ -27,20 +27,20 @@ from selfprivacy_api.graphql.mutations.mutation_interface import (
 
 @strawberry.type
 class ApiKeyMutationReturn(MutationReturnInterface):
-    key: typing.Optional[str]
+    key: Optional[str]
 
 
 @strawberry.type
 class DeviceApiTokenMutationReturn(MutationReturnInterface):
-    token: typing.Optional[str]
+    token: Optional[str]
 
 
 @strawberry.input
 class RecoveryKeyLimitsInput:
     """Recovery key limits input"""
 
-    expiration_date: typing.Optional[datetime.datetime] = None
-    uses: typing.Optional[int] = None
+    expiration_date: Optional[datetime.datetime] = None
+    uses: Optional[int] = None
 
 
 @strawberry.input
@@ -63,7 +63,7 @@ class UseNewDeviceKeyInput:
 class ApiMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def get_new_recovery_api_key(
-        self, limits: typing.Optional[RecoveryKeyLimitsInput] = None
+        self, limits: Optional[RecoveryKeyLimitsInput] = None
     ) -> ApiKeyMutationReturn:
         """Generate recovery key"""
         if limits is None:

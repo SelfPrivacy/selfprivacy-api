@@ -2,7 +2,7 @@
 
 # pylint: disable=too-few-public-methods
 import datetime
-import typing
+from typing import Optional
 import strawberry
 
 from selfprivacy_api.jobs import Job, Jobs
@@ -17,13 +17,13 @@ class ApiJob:
     name: str
     description: str
     status: str
-    status_text: typing.Optional[str]
-    progress: typing.Optional[int]
+    status_text: Optional[str]
+    progress: Optional[int]
     created_at: datetime.datetime
     updated_at: datetime.datetime
-    finished_at: typing.Optional[datetime.datetime]
-    error: typing.Optional[str]
-    result: typing.Optional[str]
+    finished_at: Optional[datetime.datetime]
+    error: Optional[str]
+    result: Optional[str]
 
 
 def job_to_api_job(job: Job) -> ApiJob:
@@ -44,7 +44,7 @@ def job_to_api_job(job: Job) -> ApiJob:
     )
 
 
-def get_api_job_by_id(job_id: str) -> typing.Optional[ApiJob]:
+def get_api_job_by_id(job_id: str) -> Optional[ApiJob]:
     """Get a job for GraphQL by its ID."""
     job = Jobs.get_job(job_id)
     if job is None:

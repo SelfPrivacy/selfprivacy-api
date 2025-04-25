@@ -27,7 +27,9 @@ class Prometheus(Service):
         return "Prometheus is used for resource monitoring and alerts."
 
     @staticmethod
-    def get_svg_icon() -> str:
+    def get_svg_icon(raw=False) -> str:
+        if raw:
+            return PROMETHEUS_ICON
         return base64.b64encode(PROMETHEUS_ICON.encode("utf-8")).decode("utf-8")
 
     @staticmethod

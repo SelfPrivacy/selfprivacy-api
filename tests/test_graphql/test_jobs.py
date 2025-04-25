@@ -55,7 +55,7 @@ def test_all_jobs_when_some(authorized_client, jobs):
     job = Jobs.add("bogus", "bogus.bogus", "fungus")
     output = api_jobs(authorized_client)
 
-    len(output) == 1
+    assert len(output) == 1
     api_job = output[0]
 
     assert api_job["uid"] == str(job.uid)

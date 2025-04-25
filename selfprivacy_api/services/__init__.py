@@ -6,9 +6,8 @@ import typing
 import subprocess
 import json
 from typing import List
-from os import path
+from os import listdir, path
 from os import makedirs
-from os import listdir
 from os.path import join
 from functools import lru_cache
 
@@ -24,9 +23,14 @@ from selfprivacy_api.utils.cached_call import get_ttl_hash
 import selfprivacy_api.utils.network as network_utils
 
 from selfprivacy_api.services.api_icon import API_ICON
-from selfprivacy_api.utils import USERDATA_FILE, DKIM_DIR, SECRETS_FILE
+from selfprivacy_api.utils import (
+    USERDATA_FILE,
+    DKIM_DIR,
+    SECRETS_FILE,
+    get_domain,
+    read_account_uri,
+)
 from selfprivacy_api.utils.block_devices import BlockDevices
-from selfprivacy_api.utils import read_account_uri
 from selfprivacy_api.services.templated_service import (
     SP_MODULES_DEFENITIONS_PATH,
     SP_SUGGESTED_MODULES_PATH,
@@ -34,6 +38,7 @@ from selfprivacy_api.services.templated_service import (
 )
 
 CONFIG_STASH_DIR = "/etc/selfprivacy/dump"
+KANIDM_A_RECORD = "auth"
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +61,14 @@ class ServiceManager(Service):
     def get_enabled_services() -> list[Service]:
         return [service for service in get_services() if service.is_enabled()]
 
+    @staticmethod
+    def get_enabled_services_with_urls() -> list[Service]:
+        return [
+            service
+            for service in get_services(exclude_remote=True)
+            if service.is_enabled() and service.get_url()
+        ]
+
     # This one is not currently used by any code.
     @staticmethod
     def get_disabled_services() -> list[Service]:
@@ -76,22 +89,28 @@ class ServiceManager(Service):
         ip4 = network_utils.get_ip4()
         ip6 = network_utils.get_ip6()
 
-        dns_records: list[ServiceDnsRecord] = []
+        dns_records: list[ServiceDnsRecord] = [
+            ServiceDnsRecord(
+                type="A",
+                name=KANIDM_A_RECORD,
+                content=ip4,
+                ttl=3600,
+                display_name="Record for Kanidm",
+            ),
+        ]
 
-        # TODO: Reenable with 3.6.0 release when clients are ready.
-        # Do not forget about tests!
-        # try:
-        #     dns_records.append(
-        #         ServiceDnsRecord(
-        #             type="CAA",
-        #             name=get_domain(),
-        #             content=f'128 issue "letsencrypt.org;accounturi={read_account_uri()}"',
-        #             ttl=3600,
-        #             display_name="CAA record",
-        #         )
-        #     )
-        # except Exception as e:
-        #     logging.error(f"Error creating CAA: {e}")
+        try:
+            dns_records.append(
+                ServiceDnsRecord(
+                    type="CAA",
+                    name=get_domain(),
+                    content=f'128 issue "letsencrypt.org;accounturi={read_account_uri()}"',
+                    ttl=3600,
+                    display_name="CAA record",
+                )
+            )
+        except Exception as e:
+            logging.error(f"Error creating CAA: {e}")
 
         for service in ServiceManager.get_enabled_services():
             dns_records += service.get_dns_records(ip4, ip6)
@@ -113,15 +132,17 @@ class ServiceManager(Service):
         return "Enables communication between the SelfPrivacy app and the server."
 
     @staticmethod
-    def get_svg_icon() -> str:
+    def get_svg_icon(raw=False) -> str:
         """Read SVG icon from file and return it as base64 encoded string."""
-        # return ""
+        if raw:
+            return API_ICON
         return base64.b64encode(API_ICON.encode("utf-8")).decode("utf-8")
 
     @staticmethod
     def get_url() -> typing.Optional[str]:
         """Return service url."""
-        return None
+        domain = get_domain()
+        return f"https://api.{domain}"
 
     @staticmethod
     def get_subdomain() -> typing.Optional[str]:
@@ -141,6 +162,10 @@ class ServiceManager(Service):
 
     @staticmethod
     def is_enabled() -> bool:
+        return True
+
+    @staticmethod
+    def is_installed() -> bool:
         return True
 
     @staticmethod

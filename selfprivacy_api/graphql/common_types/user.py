@@ -1,10 +1,19 @@
-import typing
+from typing import Optional
 from enum import Enum
+
 import strawberry
-import selfprivacy_api.actions.users as users_actions
+
+from selfprivacy_api.actions.users import (
+    get_user_by_username as actions_get_user_by_username,
+)
+from selfprivacy_api.actions.users import get_users as actions_get_users
 
 from selfprivacy_api.graphql.mutations.mutation_interface import (
     MutationReturnInterface,
+)
+from selfprivacy_api.graphql.common_types.email_password_metadata import (
+    EmailPasswordMetadata,
+    get_email_credentials_metadata,
 )
 
 
@@ -17,39 +26,65 @@ class UserType(Enum):
 
 @strawberry.type
 class User:
-    user_type: UserType
     username: str
-    # userHomeFolderspace: UserHomeFolderUsage
-    ssh_keys: typing.List[str] = strawberry.field(default_factory=list)
+    user_type: UserType
+
+    ssh_keys: Optional[list[str]] = strawberry.field(default_factory=list)
+    directmemberof: Optional[list[str]] = strawberry.field(default_factory=list)
+    memberof: Optional[list[str]] = strawberry.field(default_factory=list)
+    display_name: Optional[str] = None
+    email: Optional[str] = None
+
+    email_password_metadata: Optional[list[EmailPasswordMetadata]] = strawberry.field(
+        resolver=lambda root, info: get_email_credentials_metadata(
+            username=root.username
+        )  # root == self
+    )
 
 
 @strawberry.type
 class UserMutationReturn(MutationReturnInterface):
     """Return type for user mutation"""
 
-    user: typing.Optional[User] = None
+    user: Optional[User] = None
 
 
-def get_user_by_username(username: str) -> typing.Optional[User]:
-    user = users_actions.get_user_by_username(username)
+@strawberry.type
+class PasswordResetLinkReturn(MutationReturnInterface):
+    """Return password reset link"""
+
+    password_reset_link: Optional[str] = None
+
+
+def get_user_by_username(username: str) -> Optional[User]:
+    # TODO: why isn't there TRY
+    user = actions_get_user_by_username(username=username)
     if user is None:
         return None
 
     return User(
-        user_type=UserType(user.origin.value),
         username=user.username,
-        ssh_keys=user.ssh_keys,
+        user_type=UserType(user.user_type.value),
+        ssh_keys=getattr(user, "ssh_keys", []),
+        directmemberof=getattr(user, "directmemberof", []),
+        memberof=getattr(user, "memberof", []),
+        display_name=getattr(user, "display_name", None),
+        email=getattr(user, "email", None),
     )
 
 
-def get_users() -> typing.List[User]:
+def get_users() -> list[User]:
     """Get users"""
-    users = users_actions.get_users(exclude_root=True)
+    users = actions_get_users(exclude_root=True)
     return [
         User(
-            user_type=UserType(user.origin.value),
             username=user.username,
-            ssh_keys=user.ssh_keys,
+            user_type=UserType(user.user_type.value),
+            ssh_keys=getattr(user, "ssh_keys", []),
+            directmemberof=getattr(user, "directmemberof", []),
+            memberof=getattr(user, "memberof", []),
+            display_name=getattr(user, "display_name", None),
+            email=getattr(user, "email", None),
         )
         for user in users
     ]

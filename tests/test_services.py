@@ -1,5 +1,5 @@
 """
-    Tests for generic service methods
+Tests for generic service methods
 """
 
 import pytest

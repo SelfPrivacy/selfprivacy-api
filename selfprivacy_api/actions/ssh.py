@@ -2,12 +2,42 @@
 
 from typing import Optional
 from pydantic import BaseModel
-from selfprivacy_api.actions.users import (
-    UserNotFound,
-    ensure_ssh_and_users_fields_exist,
-)
 
 from selfprivacy_api.utils import WriteUserData, ReadUserData, validate_ssh_public_key
+from selfprivacy_api.repositories.users.exceptions import UserNotFound
+from selfprivacy_api.utils import ensure_ssh_and_users_fields_exist
+
+
+class UserdataSshSettings(BaseModel):
+    """Settings for the SSH."""
+
+    enable: bool = True
+    passwordAuthentication: bool = False
+    rootKeys: list[str] = []
+
+
+class KeyNotFound(Exception):
+    """Key not found"""
+
+    @staticmethod
+    def get_error_message() -> str:
+        return "Key not found"
+
+
+class KeyAlreadyExists(Exception):
+    """Key already exists"""
+
+    @staticmethod
+    def get_error_message() -> str:
+        return "Key already exists"
+
+
+class InvalidPublicKey(Exception):
+    """Invalid public key"""
+
+    @staticmethod
+    def get_error_message() -> str:
+        return "Invalid key type. Only ssh-ed25519, ssh-rsa and ecdsa are supported"
 
 
 def enable_ssh():
@@ -15,14 +45,6 @@ def enable_ssh():
         if "ssh" not in data:
             data["ssh"] = {}
         data["ssh"]["enable"] = True
-
-
-class UserdataSshSettings(BaseModel):
-    """Settings for the SSH."""
-
-    enable: bool = True
-    passwordAuthentication: bool = True
-    rootKeys: list[str] = []
 
 
 def get_ssh_settings() -> UserdataSshSettings:
@@ -39,27 +61,13 @@ def get_ssh_settings() -> UserdataSshSettings:
 
 
 def set_ssh_settings(
-    enable: Optional[bool] = None, password_authentication: Optional[bool] = None
+    enable: Optional[bool] = None,
 ) -> None:
     with WriteUserData() as data:
         if "ssh" not in data:
             data["ssh"] = {}
         if enable is not None:
             data["ssh"]["enable"] = enable
-        if password_authentication is not None:
-            data["ssh"]["passwordAuthentication"] = password_authentication
-
-
-class KeyAlreadyExists(Exception):
-    """Key already exists"""
-
-    pass
-
-
-class InvalidPublicKey(Exception):
-    """Invalid public key"""
-
-    pass
 
 
 def create_ssh_key(username: str, ssh_key: str):
@@ -98,12 +106,6 @@ def create_ssh_key(username: str, ssh_key: str):
         raise UserNotFound()
 
 
-class KeyNotFound(Exception):
-    """Key not found"""
-
-    pass
-
-
 def remove_ssh_key(username: str, ssh_key: str):
     """Delete a ssh key"""
 
@@ -133,5 +135,26 @@ def remove_ssh_key(username: str, ssh_key: str):
                     return
 
                 raise KeyNotFound()
+
+    raise UserNotFound()
+
+
+def get_ssh_keys(username: str) -> list:
+    """Get all SSH keys for a user"""
+
+    with ReadUserData() as data:
+        ensure_ssh_and_users_fields_exist(data)
+
+        if username == "root":
+            return data["ssh"]["rootKeys"]
+
+        if username == data["username"]:
+            return data["sshKeys"]
+
+        for user in data["users"]:
+            if user["username"] == username:
+                if "sshKeys" in user:
+                    return user["sshKeys"]
+                return []
 
     raise UserNotFound()

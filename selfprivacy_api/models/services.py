@@ -66,8 +66,15 @@ class License(BaseSchema):
     full_name: str
     redistributable: bool
     short_name: str
-    spdx_id: str
-    url: str
+    spdx_id: Optional[str] = None
+    url: Optional[str] = None
+
+
+class SingleSignOnGroups(BaseSchema):
+    """Model representing the groups for Single Sign On."""
+
+    user_group: Optional[str] = None
+    admin_group: Optional[str] = None
 
 
 class ServiceMetaData(BaseSchema):
@@ -93,3 +100,4 @@ class ServiceMetaData(BaseSchema):
     homepage: Optional[str] = None
     source_page: Optional[str] = None
     support_level: SupportLevel = SupportLevel.UNKNOWN
+    sso: Optional[SingleSignOnGroups] = None

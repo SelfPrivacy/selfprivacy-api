@@ -23,9 +23,13 @@ from selfprivacy_api.graphql.mutations.services_mutations import ServicesMutatio
 from selfprivacy_api.graphql.mutations.storage_mutations import StorageMutations
 from selfprivacy_api.graphql.mutations.system_mutations import SystemMutations
 from selfprivacy_api.graphql.mutations.backup_mutations import BackupMutations
+from selfprivacy_api.graphql.mutations.email_passwords_metadata_mutations import (
+    EmailPasswordsMetadataMutations,
+)
 
 from selfprivacy_api.graphql.queries.api_queries import Api
 from selfprivacy_api.graphql.queries.backup import Backup
+from selfprivacy_api.graphql.queries.groups import Groups
 from selfprivacy_api.graphql.queries.jobs import Job
 from selfprivacy_api.graphql.queries.logs import LogEntry, Logs
 from selfprivacy_api.graphql.queries.services import Services
@@ -73,6 +77,11 @@ class Query:
     def users(self) -> Users:
         """Users queries"""
         return Users()
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    def groups(self) -> Groups:
+        """Users queries"""
+        return Groups()
 
     @strawberry.field(permission_classes=[IsAuthenticated])
     def storage(self) -> Storage:
@@ -130,6 +139,11 @@ class Mutation(
     def storage(self) -> StorageMutations:
         """Storage mutations"""
         return StorageMutations()
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    def email_password_metadata_mutations(self) -> EmailPasswordsMetadataMutations:
+        """Storage mutations"""
+        return EmailPasswordsMetadataMutations()
 
     @strawberry.field(permission_classes=[IsAuthenticated])
     def services(self) -> ServicesMutations:

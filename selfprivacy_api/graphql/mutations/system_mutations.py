@@ -1,7 +1,7 @@
 """System management mutations"""
 
 # pylint: disable=too-few-public-methods
-import typing
+from typing import Optional
 import strawberry
 
 from selfprivacy_api.utils import pretty_error
@@ -26,7 +26,7 @@ from selfprivacy_api.actions.system import set_dns_provider
 class TimezoneMutationReturn(MutationReturnInterface):
     """Return type of the timezone mutation, contains timezone"""
 
-    timezone: typing.Optional[str]
+    timezone: Optional[str]
 
 
 @strawberry.type
@@ -50,7 +50,7 @@ class SSHSettingsInput:
     """Input type for SSH settings"""
 
     enable: bool
-    password_authentication: bool
+    password_authentication: Optional[bool] = None
 
 
 @strawberry.input
@@ -65,8 +65,8 @@ class SetDnsProviderInput:
 class AutoUpgradeSettingsInput:
     """Input type for auto upgrade settings"""
 
-    enableAutoUpgrade: typing.Optional[bool] = None
-    allowReboot: typing.Optional[bool] = None
+    enableAutoUpgrade: Optional[bool] = None
+    allowReboot: Optional[bool] = None
 
 
 @strawberry.type
@@ -118,7 +118,6 @@ class SystemMutations:
         """Change ssh settings of the server."""
         ssh_actions.set_ssh_settings(
             enable=settings.enable,
-            password_authentication=settings.password_authentication,
         )
 
         new_settings = ssh_actions.get_ssh_settings()

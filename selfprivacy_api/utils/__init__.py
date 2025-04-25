@@ -6,8 +6,9 @@ import json
 import os
 import subprocess
 import portalocker
-import typing
+from typing import Optional
 import glob
+from contextlib import contextmanager
 
 from traceback import format_tb as format_traceback
 
@@ -90,6 +91,21 @@ class ReadUserData(object):
     def __exit__(self, *args):
         portalocker.unlock(self.userdata_file)
         self.userdata_file.close()
+
+
+def ensure_ssh_and_users_fields_exist(data):
+    if "ssh" not in data:
+        data["ssh"] = {}
+        data["ssh"]["rootKeys"] = []
+
+    elif data["ssh"].get("rootKeys") is None:
+        data["ssh"]["rootKeys"] = []
+
+    if "sshKeys" not in data:
+        data["sshKeys"] = []
+
+    if "users" not in data:
+        data["users"] = []
 
 
 def validate_ssh_public_key(key):
@@ -202,7 +218,7 @@ def parse_dkim(dkim: str) -> str:
     return dkim
 
 
-def get_dkim_key(domain: str, parse: bool = True) -> typing.Optional[str]:
+def get_dkim_key(domain: str, parse: bool = True) -> Optional[str]:
     """Get DKIM key from /var/dkim/<domain>.selector.txt"""
 
     dkim_path = os.path.join(DKIM_DIR, domain + ".selector.txt")
@@ -252,3 +268,21 @@ def read_account_uri() -> str:
     with open(account_file[0], "r") as file:
         account_info = json.load(file)
         return account_info["registration"]["uri"]
+
+
+@contextmanager
+def temporary_env_var(key, value):
+    """
+    A context manager for temporarily setting an environment variable
+    with automatic cleanup after exiting the block, even in case of an error.
+    """
+    old_value = os.environ.get(key)
+
+    os.environ[key] = value
+    try:
+        yield
+    finally:
+        del os.environ[key]
+
+        if old_value is not None:
+            os.environ[key] = old_value
