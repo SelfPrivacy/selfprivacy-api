@@ -130,7 +130,11 @@ def delete_user(username: str) -> None:
             except (UserNotFound, UserIsProtected):
                 pass
 
-    if user and user.user_type == UserDataUserOrigin.PRIMARY:
+    if (
+        user
+        and ACTIVE_USERS_PROVIDER == JsonUserRepository
+        and user.user_type == UserDataUserOrigin.PRIMARY
+    ):
         raise UserIsProtected
 
     delete_all_email_passwords_hashes(username=username)
