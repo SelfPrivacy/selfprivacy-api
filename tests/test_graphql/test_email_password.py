@@ -3,16 +3,13 @@ import pytest
 from tests.test_graphql.common import get_data, assert_ok, assert_empty
 from tests.common import read_json
 from selfprivacy_api.repositories.users.test_user_repository import TestUserRepository
+from selfprivacy_api.actions.email_passwords import delete_all_email_passwords_hashes
 
 
 @pytest.fixture
 def use_test_repository(mocker):
-
     if hasattr(TestUserRepository, "_USERS_DB"):
-        if isinstance(TestUserRepository._USERS_DB, dict):
-            TestUserRepository._USERS_DB.clear()
-        elif isinstance(TestUserRepository._USERS_DB, list):
-            TestUserRepository._USERS_DB[:] = []
+        TestUserRepository._USERS_DB = {}
 
     mocker.patch(
         "selfprivacy_api.actions.users.ACTIVE_USERS_PROVIDER", TestUserRepository
@@ -145,6 +142,7 @@ def test_graphql_api_create_user_unauthorized(client, use_test_repository, some_
 
 def test_add_email_password(authorized_client, use_test_repository, some_users):
     username = "test_user"
+    delete_all_email_passwords_hashes(username)
 
     response = api_create_user(authorized_client, user=username, password="uuuuwwu")
     data = get_data(response)["users"]["createUser"]
@@ -165,6 +163,7 @@ def test_delete_email_password_after_adding(
     authorized_client, use_test_repository, some_users
 ):
     username = "test_user"
+    delete_all_email_passwords_hashes(username)
 
     # ---
 
@@ -196,4 +195,4 @@ def test_delete_email_password_after_adding(
     response = api_get_user(authorized_client, username)
     data = get_data(response)["users"]["getUser"]
     assert data is not None
-    assert data["emailPasswordMetadata"] is []
+    assert data["emailPasswordMetadata"] == []
