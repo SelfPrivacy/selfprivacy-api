@@ -1,4 +1,5 @@
 from selfprivacy_api.migrations.migration import Migration
+from selfprivacy_api.services.flake_service_manager import FlakeServiceManager
 
 FLAKE_PATH = "/etc/nixos/flake.nix"
 
@@ -22,17 +23,17 @@ class ReplaceUrlLiteralsWithStrings(Migration):
         #  -> inputs.sp-modules.url = |path:./sp-modules;|
         # ...
         with open(FLAKE_PATH) as flake:
-            for line in file:
+            for line in flake:
                 if line.strip().startswith("git+https"):
-                    return true
+                    return True
                 if line.strip().endswith("path:./sp-modules;"):
-                    return true
-        return false
+                    return True
+        return False
 
     def migrate(self) -> None:
         content = ""
         with open(FLAKE_PATH) as flake:
-            for line in file:
+            for line in flake:
                 if line.strip().startswith("git+https"):
                     # git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git; ->
                     # ...."git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git";
