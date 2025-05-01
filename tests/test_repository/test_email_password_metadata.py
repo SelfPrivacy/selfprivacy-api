@@ -149,7 +149,6 @@ def test_delete_email_password_hash():
     assert not redis.exists(key)
 
 
-
 def test_delete_all_email_passwords_hashes():
     test_user = get_test_user()
 
