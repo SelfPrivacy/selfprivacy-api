@@ -49,14 +49,26 @@ def run_migrations():
             skipped_migrations = data["api"].get("skippedMigrations", [])
 
     if "DISABLE_ALL" in skipped_migrations:
+        logger.info("Skipping all migrations")
         return
 
     for migration in migrations:
         if migration.get_migration_name() not in skipped_migrations:
             try:
                 if migration.is_migration_needed():
+                    logger.info(
+                        f"Running migration {migration.get_migration_name()}"
+                    )
                     migration.migrate()
+                else:
+                    logger.info(
+                        f"Skipping migration {migration.get_migration_name()} as not needed"
+                    )
             except Exception as err:
                 logging.error(f"Error while migrating {migration.get_migration_name()}")
                 logging.error(err)
                 logging.error("Skipping this migration")
+        else:
+            logger.info(
+                f"Skipping migration {migration.get_migration_name()} as requested"
+            )
