@@ -2,6 +2,7 @@ from json import JSONDecodeError
 from typing import Any, Optional, Union
 import subprocess
 import re
+import os
 import logging
 import requests  # type: ignore
 
@@ -65,20 +66,63 @@ class KanidmAdminToken:
     @staticmethod
     def get() -> str:
         redis = RedisPool().get_connection()
-        kanidm_admin_token: str = redis.get(REDIS_TOKEN_KEY)  # type: ignore
+        kanidm_admin_token: str = redis.get(REDIS_TOKEN_KEY)
 
-        if kanidm_admin_token:
-            if KanidmAdminToken._is_token_valid(kanidm_admin_token):
-                return kanidm_admin_token
+        if kanidm_admin_token and KanidmAdminToken._is_token_valid(kanidm_admin_token):
+            return kanidm_admin_token
 
-        logging.warning("Kanidm admin token is missing or invalid. Regenerating.")
+        logging.warning(
+            "The Kanidm admin token from Redis is missing or invalid. Trying to retrieve it from the environment."
+        )
+
+        new_kanidm_admin_token = KanidmAdminToken._get_admin_token_from_env()
+        if new_kanidm_admin_token and KanidmAdminToken._is_token_valid(
+            new_kanidm_admin_token
+        ):
+            return new_kanidm_admin_token
+
+        logging.warning(
+            "The Kanidm admin token from the environment is missing or invalid. Regenerating."
+        )
 
         kanidm_admin_password = KanidmAdminToken._reset_and_save_idm_admin_password()
-        kanidm_admin_token = KanidmAdminToken._create_and_save_token(
+        return KanidmAdminToken._create_and_save_token(
             kanidm_admin_password=kanidm_admin_password
         )
 
-        return kanidm_admin_token
+    @staticmethod
+    def _get_admin_token_from_env() -> Optional[str]:
+        redis = RedisPool().get_connection()
+        token_path = os.environ.get("KANIDM_ADMIN_TOKEN_FILE")
+        if not token_path:
+            logger.warning(
+                "KANIDM_ADMIN_TOKEN_FILE environment variable is not set. "
+                "The Kanidm admin token will be generated."
+            )
+            return None
+        try:
+            with open(token_path, "r") as file:
+                token = file.read().strip()
+                if not token:
+                    logger.warning(
+                        "KANIDM_ADMIN_TOKEN_FILE is empty. "
+                        "The Kanidm admin token will be generated."
+                    )
+                    return None
+                redis.set("kanidm:token", token)
+                return token
+        except FileNotFoundError:
+            logger.warning(
+                f"KANIDM_ADMIN_TOKEN_FILE '{token_path}' not found. "
+                "The Kanidm admin token will be generated."
+            )
+            return None
+        except Exception as error:
+            logger.warning(
+                f"Error reading KANIDM_ADMIN_TOKEN_FILE '{token_path}': {error}. "
+                "The Kanidm admin token will be generated."
+            )
+            return None
 
     @staticmethod
     def _create_and_save_token(kanidm_admin_password: str) -> str:

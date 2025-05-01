@@ -276,8 +276,13 @@ def temporary_env_var(key, value):
     A context manager for temporarily setting an environment variable
     with automatic cleanup after exiting the block, even in case of an error.
     """
+    old_value = os.environ.get(key)
+
     os.environ[key] = value
     try:
         yield
     finally:
         del os.environ[key]
+
+        if old_value is not None:
+            os.environ[key] = old_value
