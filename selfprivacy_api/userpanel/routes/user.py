@@ -10,7 +10,6 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel, Field, ValidationError
 import qrcode
-from qrcode.image.pil import PilImage
 from qrcode.image.pure import PyPNGImage
 
 from selfprivacy_api.models.user import UserDataUser
@@ -268,7 +267,7 @@ async def create_email_password_post(
             "sp": 587,
         }
         deltachat_uri = f"dclogin://{login}?{urlencode(deltachat_params)}"
-        deltachat_qr: PilImage | PyPNGImage = qrcode.make(deltachat_uri)
+        deltachat_qr: PyPNGImage = qrcode.make(deltachat_uri)  # type: ignore
         buffered = BytesIO()
         deltachat_qr.save(buffered)
         deltachat_qr_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
