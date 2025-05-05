@@ -94,6 +94,7 @@
           nixpkgs-fmt
           rclone
           valkey
+          kanidm
           restic
           bandit
           self.packages.${system}.pytest-vm
@@ -154,6 +155,7 @@
                 # TODO: these can be passed via wrapper script around app
                 rclone
                 restic
+                kanidm
               ];
               environment.variables.TEST_MODE = "true";
               systemd.tmpfiles.settings.src.${vmtest-src-dir}.L.argument =
