@@ -226,7 +226,7 @@ class KanidmUserRepository(AbstractUserRepository):
     """
 
     @staticmethod
-    def _remove_default_groups(groups: list) -> list:
+    def _without_default_groups(groups: list) -> list:
         return [item for item in groups if item not in get_default_grops()]
 
     @staticmethod
@@ -459,13 +459,13 @@ class KanidmUserRepository(AbstractUserRepository):
             if exclude_primary and user_type == UserDataUserOrigin.PRIMARY:
                 continue
 
-            directmemberof = KanidmUserRepository._remove_default_groups(
+            directmemberof = KanidmUserRepository._without_default_groups(
                 groups=[
                     group.rsplit("@")[0]
                     for group in user_attrs.get("directmemberof", [])
                 ]
             )
-            memberof = KanidmUserRepository._remove_default_groups(
+            memberof = KanidmUserRepository._without_default_groups(
                 groups=[
                     group.rsplit("@")[0] for group in user_attrs.get("memberof", [])
                 ]
@@ -583,10 +583,10 @@ class KanidmUserRepository(AbstractUserRepository):
 
         attrs = user_data["attrs"]  # type: ignore
 
-        directmemberof = KanidmUserRepository._remove_default_groups(
+        directmemberof = KanidmUserRepository._without_default_groups(
             groups=[group.rsplit("@")[0] for group in attrs.get("directmemberof", [])]
         )
-        memberof = KanidmUserRepository._remove_default_groups(
+        memberof = KanidmUserRepository._without_default_groups(
             groups=[group.rsplit("@")[0] for group in attrs.get("memberof", [])]
         )
 

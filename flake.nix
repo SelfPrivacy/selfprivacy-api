@@ -156,6 +156,7 @@
                 rclone
                 restic
                 kanidm
+                mkcert
               ];
               environment.variables.TEST_MODE = "true";
               systemd.tmpfiles.settings.src.${vmtest-src-dir}.L.argument =
