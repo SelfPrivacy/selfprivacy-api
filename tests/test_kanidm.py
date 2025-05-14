@@ -53,6 +53,8 @@ def certs(tmpdir, kanidm_environment):
 
 @pytest.fixture()
 def kanidm(certs):
+    assert subprocess.check_output(["kanidmd", "configtest"])
+
     pass
 
 
