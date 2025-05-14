@@ -1,36 +1,54 @@
 import pytest
 import subprocess
+import os
 from os.path import join
 from selfprivacy_api.repositories.users.kanidm_user_repository import (
     KanidmUserRepository,
 )
 
+DOMAIN = "killersofwords.com"
+PORT = 8443
+
 
 class TestCerts:
-    cert: str
-    chain: str
-    key: str
+    tls_cert: str
+    tls_chain: str
+    tls_key: str
 
 
 @pytest.fixture()
-def certs(tmpdir) -> TestCerts:
+def kanidm_environment(tmpdir) -> TestCerts:
     dir = tmpdir
-
-    assert dir is not None
-    assert mkcert("--help")
-
     cert_path = join(dir, "cert.pem")
     key_path = join(dir, "key.pem")
     chain_path = join(dir, "chain.pem")
 
-    assert subprocess.run(["mkcert", "-cert-file", cert_path, "-key-file", key_path])
-    with open(chain_path, "w") as file:
-        file.write(make_chain(cert_path))
+    TestCerts.tls_cert = cert_path
+    TestCerts.tls_chain = chain_path
+    TestCerts.tls_key = key_path
 
-    TestCerts.cert = cert_path
-    TestCerts.chain = chain_path
-    TestCerts.key = key_path
+    os.environ["KANIDM_DOMAIN"] = DOMAIN
+    os.environ["KANIDM_ORIGIN"] = f"https://{DOMAIN}:{PORT}"
+    os.environ["KANIDM_DB_PATH"] = str(dir)
+    os.environ["KANIDM_TLS_CHAIN"] = chain_path
+    os.environ["KANIDM_TLS_KEY"] = key_path
     return TestCerts()
+
+
+@pytest.fixture()
+def certs(tmpdir, kanidm_environment):
+
+    assert dir is not None
+    assert mkcert("--help")
+
+    assert subprocess.check_output(["kanidmd", "cert-generate"])
+
+    # assert subprocess.run(["mkcert", "-cert-file", TestCerts, "-key-file", key_path])
+    # with open(chain_path, "w") as file:
+    #     file.write(make_chain(cert_path))
+
+    for file in [kanidm_environment.tls_chain, kanidm_environment.tls_key]:
+        assert os.path.exists(file)
 
 
 @pytest.fixture()
