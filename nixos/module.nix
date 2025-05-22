@@ -117,7 +117,7 @@ in
             pkgs.iproute2
             pkgs.postgresql_16.out
             sp-fetch-remote-module
-            pkgs.kanidm
+            config.services.kanidm.package
           ];
           after = [ "network-online.target" ];
           wants = [ "network-online.target" ];
@@ -158,7 +158,7 @@ in
             pkgs.iproute2
             pkgs.postgresql_16.out
             sp-fetch-remote-module
-            pkgs.kanidm
+            config.services.kanidm.package
           ];
           after = [ "network-online.target" ];
           wants = [ "network-online.target" ];
