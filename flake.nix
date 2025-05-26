@@ -141,6 +141,9 @@
                 fsType = "ext4";
                 noCheck = true;
               };
+              networking.hosts = {
+                "127.0.0.1" = [ "killersofwords.com" ];
+              };
               boot.consoleLogLevel = lib.mkForce 3;
               documentation.enable = false;
               services.journald.extraConfig = lib.mkForce "";
