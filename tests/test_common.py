@@ -37,3 +37,8 @@ def test_mode():
 
 def test_the_test_mode(test_mode):
     assert test_mode == "true"
+
+
+def inspect_file(path: str):
+    with open(path) as file:
+        raise ValueError(file.read())
