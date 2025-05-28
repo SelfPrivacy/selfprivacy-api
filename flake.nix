@@ -95,8 +95,6 @@
           rclone
           valkey
           kanidm
-          cacert
-          openssl
           restic
           bandit
           self.packages.${system}.pytest-vm
@@ -161,9 +159,7 @@
                 rclone
                 restic
                 kanidm
-                cacert
-                openssl
-                mkcert
+                openssl # for tests
               ];
               environment.variables.TEST_MODE = "true";
               systemd.tmpfiles.settings.src.${vmtest-src-dir}.L.argument =

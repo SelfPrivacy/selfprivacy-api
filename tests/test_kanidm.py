@@ -1,12 +1,14 @@
 import pytest
 import subprocess
-from subprocess import STDOUT, TimeoutExpired, CalledProcessError
+from time import sleep
+from subprocess import STDOUT, TimeoutExpired
 import os
 from os.path import join
 from selfprivacy_api.repositories.users.kanidm_user_repository import (
     KanidmUserRepository,
 )
 
+# Make sure it is the same as in flake.nix
 DOMAIN = "killersofwords.com"
 PORT = 8443
 ENV_KEY = "NIX_SSL_CERT_FILE"
@@ -60,13 +62,7 @@ def certs(tmpdir, kanidm_environment):
     if ENV_KEY in os.environ:
         backup_certfile = os.environ[ENV_KEY]
 
-    assert mkcert("--help")
-
     assert subprocess.check_output(["kanidmd", "cert-generate"])
-
-    # assert subprocess.run(["mkcert", "-cert-file", TestCerts, "-key-file", key_path])
-    # with open(chain_path, "w") as file:
-    #     file.write(make_chain(cert_path))
 
     for file in [kanidm_environment.tls_chain, kanidm_environment.tls_key]:
         assert os.path.exists(file)
@@ -117,9 +113,6 @@ def certs(tmpdir, kanidm_environment):
         os.environ[ENV_KEY] = backup_certfile
 
 
-from time import sleep
-
-
 def inspect_file(path: str):
     with open(path) as file:
         raise ValueError(file.read())
@@ -165,20 +158,3 @@ def kanidm(certs, dns):
 
 def test_kanidm_starts(kanidm):
     pass
-
-
-def mkcert(arg: str) -> str:
-    return subprocess.check_output(["mkcert", arg]).decode("utf-8").strip()
-
-
-def make_chain(cert_file: str) -> str:
-    mkcert("-install")
-    ca_dir = mkcert("-CAROOT")
-    assert ca_dir
-
-    ca = join(ca_dir, "rootCA.pem")
-
-    with open(ca) as file:
-        ca_cert = file.read()
-
-    return ca_cert
