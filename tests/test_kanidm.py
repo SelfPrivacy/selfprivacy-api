@@ -9,6 +9,7 @@ from selfprivacy_api.repositories.users.kanidm_user_repository import (
 
 DOMAIN = "killersofwords.com"
 PORT = 8443
+ENV_KEY = "NIX_SSL_CERT_FILE"
 
 
 class TestCerts:
@@ -56,9 +57,8 @@ def kanidm_environment(tmpdir) -> TestCerts:
 def certs(tmpdir, kanidm_environment):
 
     backup_certfile = None
-    env_key = "NIX_SSL_CERT_FILE"
-    if env_key in os.environ:
-        backup_certfile = os.environ[env_key]
+    if ENV_KEY in os.environ:
+        backup_certfile = os.environ[ENV_KEY]
 
     assert mkcert("--help")
 
@@ -80,47 +80,61 @@ def certs(tmpdir, kanidm_environment):
     assert lines.count(separator) == 2
     assert lines.count(separator2) == 2
 
-    begin = lines.index(separator)
-    rootcert = lines[begin : lines.index(separator, begin + 1)]
+    # we need the second one bc apparently in chain
+    # the first one is the actual cert
+    # and the last one is root
+
+    begin = lines.index(separator, lines.index(separator2))
+    rootcert = lines[begin:]
     assert rootcert.count(separator) == 1
     assert rootcert.count(separator2) == 1
     assert len(rootcert) > 2
 
     cadir = tmpdir
     cafile = join(cadir, "ca-certificates.crt")
-    os.environ[env_key] = cafile
+    os.environ[ENV_KEY] = cafile
 
     assert not os.path.exists(cafile)
 
     with open(cafile, "w") as file:
-        file.writelines(rootcert)
+        file.writelines("\n".join(rootcert))
         file.flush()
     with open(cafile, "r") as file:
         allcerts = file.read()
         for line in rootcert:
             assert line in allcerts
 
+    assert "OK" in subprocess.check_output(["openssl", "verify", cafile]).decode(
+        "utf-8"
+    )
+
     yield
 
     # restoring env
     if not backup_certfile:
-        del os.environ[env_key]
+        del os.environ[ENV_KEY]
     else:
-        os.environ[env_key] = backup_certfile
+        os.environ[ENV_KEY] = backup_certfile
 
 
 from time import sleep
 
 
+def inspect_file(path: str):
+    with open(path) as file:
+        raise ValueError(file.read())
+
+
+def test_kanidm_present():
+    output = subprocess.check_output(["kanidm", "--help"])
+    assert output
+
+
 @pytest.fixture()
 def kanidm(certs, dns):
     assert subprocess.check_output(["kanidmd", "configtest"])
-    # try:
-    #     assert subprocess.check_output(["kanidmd", "server"], stderr=STDOUT)
-    # except CalledProcessError as e:
-    #     raise ValueError(e.output, e.stdout, e.stderr)
-
     command = ["kanidmd", "server"]
+
     # First assert that consumer does not fail by itself
     # Idk yet how to do it more elegantly
     try:
@@ -133,11 +147,16 @@ def kanidm(certs, dns):
 
     sleep(2)
     origin = os.environ["KANIDM_ORIGIN"]
+
     # check that it works
     test_output = subprocess.check_output(
-        ["curl", "-vk", origin + "/status"], stderr=STDOUT
+        ["curl", "-v", origin + "/status"], stderr=STDOUT
     ).decode("utf-8")
-    assert "fail" not in test_output.lower()
+    assert "SSL certificate verify ok" in test_output
+    test_output = subprocess.check_output(
+        ["curl", "-s", origin + "/status"], stderr=STDOUT
+    ).decode("utf-8")
+    assert "true" in test_output
 
     yield handle
 
@@ -163,8 +182,3 @@ def make_chain(cert_file: str) -> str:
         ca_cert = file.read()
 
     return ca_cert
-
-
-def test_kanidm_present():
-    output = subprocess.check_output(["kanidm", "--help"])
-    assert output

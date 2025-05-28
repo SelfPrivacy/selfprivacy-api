@@ -95,6 +95,8 @@
           rclone
           valkey
           kanidm
+          cacert
+          openssl
           restic
           bandit
           self.packages.${system}.pytest-vm
@@ -159,6 +161,8 @@
                 rclone
                 restic
                 kanidm
+                cacert
+                openssl
                 mkcert
               ];
               environment.variables.TEST_MODE = "true";
