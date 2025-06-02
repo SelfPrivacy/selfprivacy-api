@@ -142,7 +142,7 @@
                 noCheck = true;
               };
               networking.hosts = {
-                "127.0.0.1" = [ "killersofwords.com" ];
+                "127.0.0.1" = [ "auth.test-domain.tld" ];
               };
               boot.consoleLogLevel = lib.mkForce 3;
               documentation.enable = false;

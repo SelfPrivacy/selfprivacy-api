@@ -7,9 +7,9 @@ from os.path import join
 from selfprivacy_api.repositories.users.kanidm_user_repository import (
     KanidmUserRepository,
 )
+from selfprivacy_api.utils import get_domain
 
 # Make sure it is the same as in flake.nix
-DOMAIN = "killersofwords.com"
 PORT = 8443
 ENV_KEY = "NIX_SSL_CERT_FILE"
 
@@ -20,17 +20,17 @@ class TestCerts:
     tls_key: str
 
 
-@pytest.fixture()
-def dns():
-    with open("/etc/resolv.conf", "a") as file:
-        file.write(f"\n search {DOMAIN}\n")
-        file.flush()
-    with open("/etc/resolv.conf", "r") as file:
-        assert DOMAIN in file.read()
+# @pytest.fixture()
+# def dns():
+#     with open("/etc/resolv.conf", "a") as file:
+#         file.write(f"\n search {DOMAIN}\n")
+#         file.flush()
+#     with open("/etc/resolv.conf", "r") as file:
+#         assert DOMAIN in file.read()
 
 
 @pytest.fixture()
-def kanidm_environment(tmpdir) -> TestCerts:
+def kanidm_environment(tmpdir, generic_userdata) -> TestCerts:
     dir = tmpdir
     cert_path = join(dir, "cert.pem")
     key_path = join(dir, "key.pem")
@@ -47,11 +47,19 @@ def kanidm_environment(tmpdir) -> TestCerts:
     TestCerts.tls_chain = chain_path
     TestCerts.tls_key = key_path
 
-    os.environ["KANIDM_DOMAIN"] = DOMAIN
-    os.environ["KANIDM_ORIGIN"] = f"https://{DOMAIN}:{PORT}"
+    assert get_domain()
+    kanidm_domain = "auth." + get_domain()
+    os.environ["KANIDM_DOMAIN"] = kanidm_domain
+    os.environ["KANIDM_ORIGIN"] = f"https://{kanidm_domain}:{PORT}"
     os.environ["KANIDM_DB_PATH"] = db_path
     os.environ["KANIDM_TLS_CHAIN"] = chain_path
     os.environ["KANIDM_TLS_KEY"] = key_path
+
+    with open("/etc/hosts", "r") as file:
+        hosts = file.read()
+        # please edit flake.nix if fails
+        assert kanidm_domain in hosts
+
     return TestCerts()
 
 
@@ -124,7 +132,7 @@ def test_kanidm_present():
 
 
 @pytest.fixture()
-def kanidm(certs, dns):
+def kanidm(certs):
     assert subprocess.check_output(["kanidmd", "configtest"])
     command = ["kanidmd", "server"]
 
