@@ -305,6 +305,10 @@ class KanidmUserRepository(AbstractUserRepository):
 
         full_endpoint = f"{get_kanidm_url()}/v1/{endpoint}"
 
+        logging.info(  # TODO: DEBUG
+            f"START Kanidm request to endpoint: {full_endpoint}, with params: {data}"
+        )
+
         try:
             response = request_method(
                 full_endpoint,
@@ -315,6 +319,11 @@ class KanidmUserRepository(AbstractUserRepository):
                 },
                 timeout=1,
             )
+
+            logging.info(  # TODO: DEBUG
+                f"FINISH Kanidm request with duration: {response.elapsed.total_seconds()}"
+            )
+
             response_data = response.json()
 
         except JSONDecodeError as error:

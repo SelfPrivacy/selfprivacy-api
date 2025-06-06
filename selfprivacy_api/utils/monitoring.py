@@ -2,6 +2,7 @@
 
 # pylint: disable=too-few-public-methods
 import requests
+import logging
 
 import strawberry
 
@@ -10,6 +11,8 @@ from typing import Optional, Annotated, Union, List, Tuple
 from datetime import datetime, timedelta
 
 PROMETHEUS_URL = "http://localhost:9001"
+
+logger = logging.getLogger(__name__)
 
 
 @strawberry.type
@@ -58,6 +61,11 @@ class MonitoringQueries:
     def _send_range_query(
         query: str, start: int, end: int, step: int, result_type: Optional[str] = None
     ) -> Union[dict, MonitoringQueryError]:
+
+        logging.info(  # TODO: DEBUG
+            f"START Prometheus request with params: {query, start, end, step, result_type}"
+        )
+
         try:
             response = requests.get(
                 f"{PROMETHEUS_URL}/api/v1/query_range",
@@ -69,6 +77,11 @@ class MonitoringQueries:
                 },
                 timeout=0.8,
             )
+
+            logging.info(  # TODO: DEBUG
+                f"FINISH Prometheus request with duration: {response.elapsed.total_seconds()}"
+            )
+
             if response.status_code != 200:
                 return MonitoringQueryError(
                     error=f"Prometheus returned unexpected HTTP status code. Error: {response.text}. The query was {query}"
@@ -80,6 +93,8 @@ class MonitoringQueries:
                 )
             return json["data"]
         except Exception as error:
+            logging.error(f"Prometheus request failed! Error: {str(error)}")
+
             return MonitoringQueryError(
                 error=f"Prometheus request failed! Error: {str(error)}"
             )
