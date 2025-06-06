@@ -1,3 +1,4 @@
+import logging
 import strawberry
 from typing import Optional
 from datetime import datetime
@@ -10,6 +11,8 @@ from selfprivacy_api.utils.monitoring import (
     MonitoringMetricsResult,
 )
 
+logger = logging.getLogger(__name__)
+
 
 @strawberry.type
 class CpuMonitoring:
@@ -19,10 +22,14 @@ class CpuMonitoring:
 
     @strawberry.field
     def overall_usage(self) -> MonitoringValuesResult:
+        logging.info("CpuMonitoring collecting...")
+
         if Prometheus().get_status() != ServiceStatus.ACTIVE:
             return MonitoringQueryError(error="Prometheus is not running")
 
-        return MonitoringQueries.cpu_usage_overall(self.start, self.end, self.step)
+        data = MonitoringQueries.cpu_usage_overall(self.start, self.end, self.step)
+        logging.info("CpuMonitoring DONE")
+        return data
 
 
 @strawberry.type
@@ -33,31 +40,47 @@ class MemoryMonitoring:
 
     @strawberry.field
     def overall_usage(self) -> MonitoringValuesResult:
+        logging.info("MemoryMonitoring overall_usage collecting...")
+
         if Prometheus().get_status() != ServiceStatus.ACTIVE:
             return MonitoringQueryError(error="Prometheus is not running")
 
-        return MonitoringQueries.memory_usage_overall(self.start, self.end, self.step)
+        data = MonitoringQueries.memory_usage_overall(self.start, self.end, self.step)
+        logging.info("MemoryMonitoring overall_usage DONE")
+        return data
 
     @strawberry.field
     def swap_usage_overall(self) -> MonitoringValuesResult:
+        logging.info("MemoryMonitoring swap_usage_overall collecting...")
+
         if Prometheus().get_status() != ServiceStatus.ACTIVE:
             return MonitoringQueryError(error="Prometheus is not running")
 
-        return MonitoringQueries.swap_usage_overall(self.start, self.end, self.step)
+        data = MonitoringQueries.swap_usage_overall(self.start, self.end, self.step)
+        logging.info("MemoryMonitoring swap_usage_overall DONE")
+        return data
 
     @strawberry.field
     def average_usage_by_service(self) -> MonitoringMetricsResult:
+        logging.info("MemoryMonitoring average_usage_by_service collecting...")
+
         if Prometheus().get_status() != ServiceStatus.ACTIVE:
             return MonitoringQueryError(error="Prometheus is not running")
 
-        return MonitoringQueries.memory_usage_average_by_slice(self.start, self.end)
+        data = MonitoringQueries.memory_usage_average_by_slice(self.start, self.end)
+        logging.info("MemoryMonitoring swap_usage_overall DONE")
+        return data
 
     @strawberry.field
     def max_usage_by_service(self) -> MonitoringMetricsResult:
+        logging.info("MemoryMonitoring max_usage_by_service collecting...")
+
         if Prometheus().get_status() != ServiceStatus.ACTIVE:
             return MonitoringQueryError(error="Prometheus is not running")
 
-        return MonitoringQueries.memory_usage_max_by_slice(self.start, self.end)
+        data = MonitoringQueries.memory_usage_max_by_slice(self.start, self.end)
+        logging.info("MemoryMonitoring swap_usage_overall DONE")
+        return data
 
 
 @strawberry.type
@@ -68,10 +91,14 @@ class DiskMonitoring:
 
     @strawberry.field
     def overall_usage(self) -> MonitoringMetricsResult:
+        logging.info("DiskMonitoring collecting...")
+
         if Prometheus().get_status() != ServiceStatus.ACTIVE:
             return MonitoringQueryError(error="Prometheus is not running")
 
-        return MonitoringQueries.disk_usage_overall(self.start, self.end, self.step)
+        data = MonitoringQueries.disk_usage_overall(self.start, self.end, self.step)
+        logging.info("DiskMonitoring DONE")
+        return data
 
 
 @strawberry.type
@@ -82,10 +109,14 @@ class NetworkMonitoring:
 
     @strawberry.field
     def overall_usage(self) -> MonitoringMetricsResult:
+        logging.info("NetworkMonitoring collecting...")
+
         if Prometheus().get_status() != ServiceStatus.ACTIVE:
             return MonitoringQueryError(error="Prometheus is not running")
 
-        return MonitoringQueries.network_usage_overall(self.start, self.end, self.step)
+        data = MonitoringQueries.network_usage_overall(self.start, self.end, self.step)
+        logging.info("NetworkMonitoring DONE")
+        return data
 
 
 @strawberry.type
