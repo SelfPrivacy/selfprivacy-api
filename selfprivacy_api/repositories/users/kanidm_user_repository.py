@@ -305,7 +305,7 @@ class KanidmUserRepository(AbstractUserRepository):
 
         full_endpoint = f"{get_kanidm_url()}/v1/{endpoint}"
 
-        logging.info(  # TODO: DEBUG
+        logging.debug(
             f"START Kanidm request to endpoint: {full_endpoint}, with params: {data}"
         )
 
@@ -320,7 +320,7 @@ class KanidmUserRepository(AbstractUserRepository):
                 timeout=1,
             )
 
-            logging.info(  # TODO: DEBUG
+            logging.debug(
                 f"FINISH Kanidm request with duration: {response.elapsed.total_seconds()}"
             )
 
