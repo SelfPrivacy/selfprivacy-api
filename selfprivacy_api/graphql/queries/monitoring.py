@@ -22,13 +22,13 @@ class CpuMonitoring:
 
     @strawberry.field
     def overall_usage(self) -> MonitoringValuesResult:
-        logging.info("CpuMonitoring collecting...")
+        logging.error("CpuMonitoring collecting...")
 
         if Prometheus().get_status() != ServiceStatus.ACTIVE:
             return MonitoringQueryError(error="Prometheus is not running")
 
         data = MonitoringQueries.cpu_usage_overall(self.start, self.end, self.step)
-        logging.info("CpuMonitoring DONE")
+        logging.error("CpuMonitoring DONE")
         return data
 
 
@@ -40,46 +40,46 @@ class MemoryMonitoring:
 
     @strawberry.field
     def overall_usage(self) -> MonitoringValuesResult:
-        logging.info("MemoryMonitoring overall_usage collecting...")
+        logging.error("MemoryMonitoring overall_usage collecting...")
 
         if Prometheus().get_status() != ServiceStatus.ACTIVE:
             return MonitoringQueryError(error="Prometheus is not running")
 
         data = MonitoringQueries.memory_usage_overall(self.start, self.end, self.step)
-        logging.info("MemoryMonitoring overall_usage DONE")
+        logging.error("MemoryMonitoring overall_usage DONE")
         return data
 
     @strawberry.field
     def swap_usage_overall(self) -> MonitoringValuesResult:
-        logging.info("MemoryMonitoring swap_usage_overall collecting...")
+        logging.error("MemoryMonitoring swap_usage_overall collecting...")
 
         if Prometheus().get_status() != ServiceStatus.ACTIVE:
             return MonitoringQueryError(error="Prometheus is not running")
 
         data = MonitoringQueries.swap_usage_overall(self.start, self.end, self.step)
-        logging.info("MemoryMonitoring swap_usage_overall DONE")
+        logging.error("MemoryMonitoring swap_usage_overall DONE")
         return data
 
     @strawberry.field
     def average_usage_by_service(self) -> MonitoringMetricsResult:
-        logging.info("MemoryMonitoring average_usage_by_service collecting...")
+        logging.error("MemoryMonitoring average_usage_by_service collecting...")
 
         if Prometheus().get_status() != ServiceStatus.ACTIVE:
             return MonitoringQueryError(error="Prometheus is not running")
 
         data = MonitoringQueries.memory_usage_average_by_slice(self.start, self.end)
-        logging.info("MemoryMonitoring swap_usage_overall DONE")
+        logging.error("MemoryMonitoring swap_usage_overall DONE")
         return data
 
     @strawberry.field
     def max_usage_by_service(self) -> MonitoringMetricsResult:
-        logging.info("MemoryMonitoring max_usage_by_service collecting...")
+        logging.error("MemoryMonitoring max_usage_by_service collecting...")
 
         if Prometheus().get_status() != ServiceStatus.ACTIVE:
             return MonitoringQueryError(error="Prometheus is not running")
 
         data = MonitoringQueries.memory_usage_max_by_slice(self.start, self.end)
-        logging.info("MemoryMonitoring swap_usage_overall DONE")
+        logging.error("MemoryMonitoring swap_usage_overall DONE")
         return data
 
 
@@ -91,13 +91,13 @@ class DiskMonitoring:
 
     @strawberry.field
     def overall_usage(self) -> MonitoringMetricsResult:
-        logging.info("DiskMonitoring collecting...")
+        logging.error("DiskMonitoring collecting...")
 
         if Prometheus().get_status() != ServiceStatus.ACTIVE:
             return MonitoringQueryError(error="Prometheus is not running")
 
         data = MonitoringQueries.disk_usage_overall(self.start, self.end, self.step)
-        logging.info("DiskMonitoring DONE")
+        logging.error("DiskMonitoring DONE")
         return data
 
 
@@ -109,13 +109,13 @@ class NetworkMonitoring:
 
     @strawberry.field
     def overall_usage(self) -> MonitoringMetricsResult:
-        logging.info("NetworkMonitoring collecting...")
+        logging.error("NetworkMonitoring collecting...")
 
         if Prometheus().get_status() != ServiceStatus.ACTIVE:
             return MonitoringQueryError(error="Prometheus is not running")
 
         data = MonitoringQueries.network_usage_overall(self.start, self.end, self.step)
-        logging.info("NetworkMonitoring DONE")
+        logging.error("NetworkMonitoring DONE")
         return data
 
 
