@@ -582,6 +582,10 @@ class Backups:
         Optimized
         """
         ids = [snapshot.id for snapshot in snapshots]
+
+        if len(ids) == 0:
+            return
+
         Backups.provider().backupper.forget_snapshots(ids)
 
         Backups.force_snapshot_cache_reload()

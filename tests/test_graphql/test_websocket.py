@@ -151,8 +151,13 @@ def test_websocket_subscription_minimal_unauthorized(unauthenticated_websocket):
     response = websocket.receive_json()
     assert response == {
         "id": arbitrary_id,
-        "payload": [{"message": IsAuthenticated.message}],
-        "type": "error",
+        "payload": {
+            "data": None,
+            "errors": [
+                {"message": "You must be authenticated to access this resource."}
+            ],
+        },
+        "type": "next",
     }
 
 
