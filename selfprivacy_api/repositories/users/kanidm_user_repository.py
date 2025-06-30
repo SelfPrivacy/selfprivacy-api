@@ -171,6 +171,8 @@ class KanidmAdminToken:
     def _ensure_service_acc() -> None:
         if not SERVICE_ACC_NAME in KanidmAdminToken._list_service_accs():
             KanidmAdminToken._make_service_acc()
+        if not SERVICE_ACC_NAME in KanidmAdminToken._list_service_accs():
+            raise KanidmCliSubprocessError("we couldn't make a selfprivacy user")
 
     @staticmethod
     def _create_and_save_token(kanidm_admin_password: str) -> str:
