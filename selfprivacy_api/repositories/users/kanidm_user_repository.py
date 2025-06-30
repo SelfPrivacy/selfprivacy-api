@@ -128,10 +128,11 @@ class KanidmAdminToken:
     @staticmethod
     def _login_admin(kanidm_admin_password: str):
         with temporary_env_var(key="KANIDM_PASSWORD", value=kanidm_admin_password):
-            try:
-                subprocess.run(["kanidm", "login", "-D", "idm_admin"], check=True)
-            except:
-                pass
+            subprocess.run(["kanidm", "login", "-D", "idm_admin"], check=True)
+
+    @staticmethod
+    def _logout():
+        subprocess.run(["kanidm", "logout", "-D", "idm_admin"], check=True)
 
     @staticmethod
     def _make_service_acc() -> None:

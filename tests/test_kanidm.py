@@ -159,6 +159,12 @@ def kanidm(certs):
         ["curl", "-s", origin + "/status"], stderr=STDOUT
     ).decode("utf-8")
     assert "true" in test_output
+        
+    password = KanidmAdminToken._reset_and_save_idm_admin_password()
+    KanidmAdminToken._login_admin(password)
+    KanidmAdminToken._ensure_service_acc()
+    assert SERVICE_ACC_NAME in KanidmAdminToken._list_service_accs()
+    KanidmAdminToken._logout()
 
     yield handle
 
