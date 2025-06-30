@@ -1,5 +1,5 @@
 from json import JSONDecodeError
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, List
 import subprocess
 import re
 import os
@@ -34,6 +34,7 @@ REDIS_TOKEN_KEY = "kanidm:token"
 
 SP_ADMIN_GROUPS = ["sp.admins"]
 SP_DEFAULT_GROUPS = ["sp.full_users"]
+SERVICE_ACC_NAME = "sp.selfprivacy-api.service-account"
 
 logger = logging.getLogger(__name__)
 
@@ -125,28 +126,87 @@ class KanidmAdminToken:
             return None
 
     @staticmethod
-    def _create_and_save_token(kanidm_admin_password: str) -> str:
-        redis = RedisPool().get_connection()
-
+    def _login_admin(kanidm_admin_password: str):
         with temporary_env_var(key="KANIDM_PASSWORD", value=kanidm_admin_password):
             try:
                 subprocess.run(["kanidm", "login", "-D", "idm_admin"], check=True)
+            except:
+                pass
 
+    @staticmethod
+    def _make_service_acc() -> None:
+        """
+        Requires idm admin login
+        """
+        command = [
+            "kanidm",
+            "service-account",
+            "create",
+            SERVICE_ACC_NAME,
+            "Selfprivacy Service Workers",
+            "idm_admin",  # it is managed by admin
+        ]
+        output = subprocess.check_output(command, shell=False)
+
+    @staticmethod
+    def _list_service_accs() -> List[str]:
+        """
+        Requires idm admin login
+        """
+        command = [
+            "kanidm",
+            "service-account",
+            "list",
+        ]
+        output = subprocess.check_output(command).decode("utf-8")
+        accounts = []
+        for line in output.splitlines():
+            prefix = "name: "
+            if line.startswith(prefix):
+                accounts.append(line[len(prefix) :])
+
+        return accounts
+
+    @staticmethod
+    def _ensure_service_acc() -> None:
+        if not SERVICE_ACC_NAME in KanidmAdminToken._list_service_accs():
+            KanidmAdminToken._make_service_acc()
+
+    @staticmethod
+    def _create_and_save_token(kanidm_admin_password: str) -> str:
+        redis = RedisPool().get_connection()
+        KanidmAdminToken._login_admin(kanidm_admin_password)
+
+        with temporary_env_var(key="KANIDM_PASSWORD", value=kanidm_admin_password):
+            KanidmAdminToken._ensure_service_acc()
+            try:
+                command = [
+                    "kanidm",
+                    "service-account",
+                    "api-token",
+                    "generate",
+                    "--rw",
+                    "sp.selfprivacy-api.service-account",
+                    "kanidm_service_account_token",
+                ]
                 output = subprocess.check_output(
-                    [
-                        "kanidm",
-                        "service-account",
-                        "api-token",
-                        "generate",
-                        "--rw",
-                        "sp.selfprivacy-api.service-account",
-                        "kanidm_service_account_token",
-                    ],
+                    command,
                     text=True,
                 )
             except subprocess.CalledProcessError as error:
                 logger.error(f"Error creating Kanidm token: {str(error.output)}")
                 raise KanidmCliSubprocessError(error=str(error.output))
+
+        if output.splitlines() == []:
+            # try another time and capture stderr this time
+            # because for some reason there was an error but it did not
+            # result in an error exit code
+            output = subprocess.check_output(
+                command, text=True, stderr=subprocess.STDOUT
+            )
+
+            logger.error(f"Error creating Kanidm token: {str(output)}")
+            raise KanidmCliSubprocessError(output)
 
         kanidm_admin_token = output.splitlines()[-1]
 
@@ -228,6 +288,10 @@ class KanidmUserRepository(AbstractUserRepository):
     @staticmethod
     def _without_default_groups(groups: list) -> list:
         return [item for item in groups if item not in get_default_grops()]
+
+    @staticmethod
+    def _origin() -> str:
+        return os.environ["KANIDM_ORIGIN"]
 
     @staticmethod
     def _check_response_type_and_not_empty(data_type: str, response_data: Any) -> None:
@@ -335,11 +399,12 @@ class KanidmUserRepository(AbstractUserRepository):
                 method=method,
             )
 
-        except Exception as error:
-            logger.error(f"Kanidm query error: {str(error)}")
-            raise KanidmQueryError(
-                error_text=error, endpoint=full_endpoint, method=method
-            )
+        # When does this actually happen?
+        # except Exception as error:
+        #     logger.error(f"Kanidm query error: {str(error)}")
+        #     raise KanidmQueryError(
+        #         error_text=str(error), endpoint=full_endpoint, method=method
+        #     )
 
         if response.status_code != 200:
             if isinstance(response_data, dict):

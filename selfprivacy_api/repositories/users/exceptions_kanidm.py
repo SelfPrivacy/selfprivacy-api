@@ -62,6 +62,7 @@ class KanidmCliSubprocessError(Exception):
     def __init__(self, error: Optional[str] = None) -> None:
         self.error = error
 
+    # TODO: this does not work properly with pytest, the error message does not get displayed
     def get_error_message(self) -> str:
         return (
             f"An error occurred when using Kanidm cli. Error: {self.error}"
