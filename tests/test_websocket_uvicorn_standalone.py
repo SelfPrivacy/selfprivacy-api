@@ -6,7 +6,7 @@ import uvicorn
 from multiprocessing import Process
 import asyncio
 from time import sleep
-from websockets import client
+from websockets.asyncio import client
 
 app = FastAPI()
 
@@ -33,7 +33,7 @@ async def test_uvcorn_ws_works_in_prod():
     ws = await client.connect("ws://127.0.0.1:5000")
 
     await ws.send("hohoho")
-    message = await ws.read_message()
+    message = await ws.recv()
     assert message == "You sent: hohoho"
     await ws.close()
     proc.kill()

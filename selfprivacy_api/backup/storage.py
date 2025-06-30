@@ -149,7 +149,7 @@ class Storage:
         )
         store_model_as_hash(redis, REDIS_PROVIDER_KEY, model)
         if Storage.load_provider() != model:
-            raise IOError("could not store the provider model: ", model.dict)
+            raise IOError("could not store the provider model: ", model.model_dump())
 
     @staticmethod
     def load_provider() -> Optional[BackupProviderModel]:

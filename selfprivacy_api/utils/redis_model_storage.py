@@ -6,7 +6,7 @@ from enum import Enum
 
 
 def store_model_as_hash(redis, redis_key, model):
-    model_dict = model.dict()
+    model_dict = model.model_dump()
     for key, value in model_dict.items():
         if isinstance(value, uuid.UUID):
             value = str(value)
