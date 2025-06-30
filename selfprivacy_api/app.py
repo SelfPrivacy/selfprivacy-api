@@ -33,10 +33,12 @@ logging.basicConfig(
     level=getattr(logging, log_level, logging.INFO), format="%(levelname)s: %(message)s"
 )
 
+
 @asynccontextmanager
 async def app_lifespan(app: FastAPI):
     run_migrations()
     yield
+
 
 app = FastAPI(lifespan=app_lifespan)
 
