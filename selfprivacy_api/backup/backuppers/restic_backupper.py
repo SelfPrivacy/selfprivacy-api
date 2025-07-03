@@ -249,7 +249,9 @@ class ResticBackupper(AbstractBackupper):
                 # Some report short_id in this field and some full
                 return message["snapshot_id"][0:SHORT_ID_LEN]
 
-        raise ValueError("no summary message in restic json output")
+        raise ValueError(
+            f"no summary message in restic json output, messages: {messages}"
+        )
 
     @staticmethod
     def parse_message(raw_message_line: str, job: Optional[Job] = None) -> dict:
@@ -339,6 +341,9 @@ class ResticBackupper(AbstractBackupper):
             for line in output_yielder(command):
                 if "indexes" in line:
                     break
+                if "already locked exclusively" in line:
+                    logger.warning("Repository is already locked exclusively")
+                    break
                 if "unable" in line:
                     raise ValueError(line)
         except Exception as error:
@@ -364,6 +369,8 @@ class ResticBackupper(AbstractBackupper):
             output = handle.communicate()[0].decode("utf-8")
             try:
                 parsed_output = ResticBackupper.parse_json_output(output)
+                if "total_size" not in parsed_output:
+                    raise KeyError("Cannot restore a snapshot: " + output)
                 return parsed_output["total_size"]
             except ValueError as error:
                 raise ValueError("Cannot restore a snapshot: " + output) from error
@@ -525,19 +532,27 @@ class ResticBackupper(AbstractBackupper):
 
         for restic_snapshot in self._load_snapshots():
             # Compatibility with previous snaps:
-            if len(restic_snapshot["tags"]) == 1:
-                reason = BackupReason.EXPLICIT
-            else:
-                reason = restic_snapshot["tags"][1]
+            try:
+                if len(restic_snapshot["tags"]) == 1:
+                    reason = BackupReason.EXPLICIT
+                else:
+                    reason = restic_snapshot["tags"][1]
 
-            snapshot = Snapshot(
-                id=restic_snapshot["short_id"],
-                created_at=restic_snapshot["time"],
-                service_name=restic_snapshot["tags"][0],
-                reason=reason,
-            )
+                snapshot = Snapshot(
+                    id=restic_snapshot["short_id"],
+                    created_at=restic_snapshot["time"],
+                    service_name=restic_snapshot["tags"][0],
+                    reason=reason,
+                )
 
-            snapshots.append(snapshot)
+                snapshots.append(snapshot)
+            except TypeError as error:
+                logger.error(
+                    "Cannot parse restic snapshot: %s, error: %s",
+                    restic_snapshot,
+                    error,
+                )
+                continue
         return snapshots
 
     @staticmethod

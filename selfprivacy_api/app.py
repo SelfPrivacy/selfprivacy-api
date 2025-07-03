@@ -9,6 +9,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from strawberry.fastapi import GraphQLRouter
 from strawberry.subscriptions import GRAPHQL_TRANSPORT_WS_PROTOCOL, GRAPHQL_WS_PROTOCOL
+from contextlib import asynccontextmanager
 
 import uvicorn
 
@@ -32,7 +33,14 @@ logging.basicConfig(
     level=getattr(logging, log_level, logging.INFO), format="%(levelname)s: %(message)s"
 )
 
-app = FastAPI()
+
+@asynccontextmanager
+async def app_lifespan(app: FastAPI):
+    run_migrations()
+    yield
+
+
+app = FastAPI(lifespan=app_lifespan)
 
 graphql_app: GraphQLRouter = GraphQLRouter(
     schema,
@@ -70,11 +78,6 @@ async def get_version():
 @app.get("/")
 async def root():
     return RedirectResponse(url="/user")
-
-
-@app.on_event("startup")
-async def startup():
-    run_migrations()
 
 
 if __name__ == "__main__":
