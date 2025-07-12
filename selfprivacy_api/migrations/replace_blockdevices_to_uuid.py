@@ -122,3 +122,5 @@ class ReplaceBlockDevicesToUUID(Migration):
                         extended_disk_uuid_path=extended_disk_uuid_path,
                     )
                 )
+
+            data["bootDisk"] = system_disk_uuid_path
