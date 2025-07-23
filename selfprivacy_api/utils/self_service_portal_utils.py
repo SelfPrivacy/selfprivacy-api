@@ -1,6 +1,12 @@
+import base64
 from datetime import datetime, timezone
+from io import BytesIO
 from typing import Optional
 import logging
+
+import qrcode
+from qrcode.image.pure import PyPNGImage
+import qrcode.image.pure
 
 from selfprivacy_api.repositories.email_password import ACTIVE_EMAIL_PASSWORD_PROVIDER
 from selfprivacy_api.models.email_password_metadata import EmailPasswordData
@@ -64,3 +70,10 @@ def generate_new_email_password(
         expires_at=expires_at,
     )
     return password
+
+
+def generate_qr_code(data: str) -> str:
+    qr: PyPNGImage = qrcode.make(data, image_factory=qrcode.image.pure.PyPNGImage)
+    buffered = BytesIO()
+    qr.save(buffered)
+    return base64.b64encode(buffered.getvalue()).decode("utf-8")
