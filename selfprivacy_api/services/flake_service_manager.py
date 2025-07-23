@@ -3,6 +3,7 @@ from typing import Tuple, Optional
 from selfprivacy_api.utils.nix import evaluate_nix_file, to_nix_expr
 
 FLAKE_CONFIG_PATH = "/etc/nixos/flake.nix"
+SP_MODULE_INPUT_PREFIX = "sp-module-"
 
 
 class FlakeServiceManager:
@@ -12,8 +13,8 @@ class FlakeServiceManager:
         inputs = evaluate_nix_file(FLAKE_CONFIG_PATH, "f: f.inputs")
 
         for key, value in inputs.items():
-            if key.startswith("mod-"):
-                service_name = key.removeprefix("mod-")
+            if key.startswith(SP_MODULE_INPUT_PREFIX):
+                service_name = key.removeprefix(SP_MODULE_INPUT_PREFIX)
                 self.services[service_name] = value["url"]
 
         return self
@@ -30,7 +31,7 @@ class FlakeServiceManager:
             "inputs": {"nixpkgs": {"follows": "selfprivacy-nixos-config/nixpkgs"}},
         }
         for service_name, url in self.services.items():
-            inputs[f"mod-{service_name}"] = {"url": url}
+            inputs[f"{SP_MODULE_INPUT_PREFIX}{service_name}"] = {"url": url}
 
         inputs_expr = to_nix_expr(inputs)
 
@@ -55,7 +56,7 @@ class FlakeServiceManager:
         deployment = ./deployment.nix;
         userdata = builtins.fromJSON (builtins.readFile ./userdata.json);
         top-level-flake = self;
-        sp-modules = lib.mapAttrs' (service: value: { name = lib.removePrefix "mod-" service; inherit value; }) (lib.filterAttrs (k: _: lib.hasPrefix "mod-" k) inputs);
+        sp-modules = lib.mapAttrs' (service: value: { name = lib.removePrefix "sp-module-" service; inherit value; }) (lib.filterAttrs (k: _: lib.hasPrefix "sp-module-" k) inputs);
       };
   };
 }

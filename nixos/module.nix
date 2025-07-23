@@ -115,6 +115,7 @@ in
             pkgs.util-linux
             pkgs.e2fsprogs
             pkgs.iproute2
+            pkgs.nixfmt-rfc-style
             pkgs.postgresql_16.out
             sp-fetch-remote-module
             config.services.kanidm.package

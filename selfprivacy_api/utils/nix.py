@@ -15,6 +15,7 @@ def evaluate_nix_file(file: str, apply: str = "f: f") -> dict:
 
 def to_nix_expr(
     dict_to_convert: dict,
+    format = True
 ):
     str_json = json.dumps(dict_to_convert)
     nix_expr = (
@@ -36,6 +37,14 @@ def to_nix_expr(
     )
 
     assert len(nix_expr) != 0
+
+    if format:
+        nix_expr = subprocess.run(
+            ["nixfmt"],
+            input=nix_expr,
+            encoding='utf-8',
+            capture_output=True
+        ).stdout.decode("utf-8").strip()
 
     # TODO: Run nixfmt-rfc-style on nix_expr to make it look pretty?
 
