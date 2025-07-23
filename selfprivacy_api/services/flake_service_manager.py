@@ -46,7 +46,9 @@ class FlakeServiceManager:
 
             file.write(
                 """
-  outputs = inputs@{ self, selfprivacy-nixos-config, ... }: {
+  outputs = inputs@{ self, selfprivacy-nixos-config, ... }: let
+    lib = selfprivacy-nixos-config.inputs.nixpkgs.lib;
+  in {
     nixosConfigurations =
       selfprivacy-nixos-config.outputs.nixosConfigurations-fun {
         hardware-configuration = ./hardware-configuration.nix;
