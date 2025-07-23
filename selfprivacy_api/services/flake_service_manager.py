@@ -35,7 +35,7 @@ class FlakeServiceManager:
 
         inputs_expr = to_nix_expr(inputs)
 
-        content += """{
+        content = """{
   description = "SelfPrivacy NixOS configuration local flake";
 """
         content += f"\n  inputs = {inputs_expr};\n"
