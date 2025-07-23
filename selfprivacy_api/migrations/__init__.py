@@ -17,8 +17,6 @@ from selfprivacy_api.migrations.write_token_to_redis import WriteTokenToRedis
 from selfprivacy_api.migrations.check_for_system_rebuild_jobs import (
     CheckForSystemRebuildJobs,
 )
-from selfprivacy_api.migrations.add_roundcube import AddRoundcube
-from selfprivacy_api.migrations.add_monitoring import AddMonitoring
 from selfprivacy_api.migrations.migrate_users_from_json import MigrateUsersFromJson
 from selfprivacy_api.migrations.add_postgres_location import AddPostgresLocation
 from selfprivacy_api.migrations.replace_blockdevices_to_uuid import (
@@ -33,13 +31,11 @@ logger = logging.getLogger(__name__)
 migrations = [
     WriteTokenToRedis(),
     CheckForSystemRebuildJobs(),
-    AddMonitoring(),
-    AddRoundcube(),
+    MergeSpModulesFlake(),
     MigrateUsersFromJson(),
     AddPostgresLocation(),
     SwitchToFlakes(),
     ReplaceBlockDevicesToUUID(),
-    MergeSpModulesFlake(),
 ]
 
 
