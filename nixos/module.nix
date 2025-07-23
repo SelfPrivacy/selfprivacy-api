@@ -180,6 +180,7 @@ in
             pkgs.util-linux
             pkgs.e2fsprogs
             pkgs.iproute2
+            pkgs.nixfmt-rfc-style
             pkgs.postgresql_16.out
             sp-fetch-remote-module
             config.services.kanidm.package
@@ -271,11 +272,6 @@ in
           serviceConfig = {
             User = "root";
             WorkingDirectory = "/etc/nixos";
-            # sync top-level flake with sp-modules sub-flake
-            # (https://github.com/NixOS/nix/issues/9339)
-            ExecStartPre = ''
-              ${nix} flake lock --override-input sp-modules path:./sp-modules
-            '';
             ExecStart = ''
               ${nixos-rebuild} switch --flake .#${config-id}
             '';
@@ -311,8 +307,7 @@ in
             WorkingDirectory = "/etc/nixos";
             # TODO get URL from systemd template parameter?
             ExecStartPre = ''
-              ${nix} flake update \
-              --override-input selfprivacy-nixos-config git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes
+              ${nix} flake update
             '';
             ExecStart = ''
               ${nixos-rebuild} switch --flake .#${config-id}
