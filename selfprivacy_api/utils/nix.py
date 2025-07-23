@@ -4,7 +4,7 @@ import subprocess
 import json
 
 
-def evaluate_nix_file(file: str, apply: str = "f: f") -> dict:
+def evaluate_nix_file(file: str, apply: str = "f: f"):
     return json.loads(
         subprocess.run(
             ["nix", "eval", "--file", file, "--apply", apply, "--json"],
@@ -13,15 +13,15 @@ def evaluate_nix_file(file: str, apply: str = "f: f") -> dict:
     )
 
 
-def to_nix_expr(dict_to_convert: dict):
-    str_json = json.dumps(dict_to_convert)
+def to_nix_expr(value):
+    str_json = json.dumps(value)
     nix_expr = (
         subprocess.run(
             [
                 "nix",
                 "eval",
                 "--expr",
-                "{input}: {res =  builtins.fromJSON input;}",
+                "{input}: {res = builtins.fromJSON input;}",
                 "--argstr",
                 "input",
                 str_json,
