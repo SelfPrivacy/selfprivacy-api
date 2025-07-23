@@ -44,7 +44,7 @@ def to_nix_expr(
             input=nix_expr,
             encoding='utf-8',
             capture_output=True
-        ).stdout.decode("utf-8").strip()
+        ).stdout.strip()
 
     # TODO: Run nixfmt-rfc-style on nix_expr to make it look pretty?
 
