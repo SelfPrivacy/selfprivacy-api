@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 async def evaluate_nix_file(file: str | PathLike[str], apply: str = "f: f"):
-    file = str(file)
+    file = str(file)  # we need string, not path object.
     command = [
         "nix",
         "eval",
@@ -61,7 +61,9 @@ async def to_nix_expr(value):
             "Failed to convert JSON object to Nix expression",
         )
 
-    return stdout.decode("utf-8").strip()
+    nix_expr = stdout.decode("utf-8").strip()
+
+    return nix_expr
 
 
 async def format_nix_expr(expr: str):
