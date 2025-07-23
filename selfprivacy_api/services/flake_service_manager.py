@@ -8,6 +8,7 @@ SP_MODULE_INPUT_PREFIX = "sp-module-"
 
 class FlakeServiceManager:
     def __enter__(self) -> "FlakeServiceManager":
+        self.inputs = {}
         self.services = {}
 
         inputs = evaluate_nix_file(FLAKE_CONFIG_PATH, "f: f.inputs")
@@ -16,20 +17,13 @@ class FlakeServiceManager:
             if key.startswith(SP_MODULE_INPUT_PREFIX):
                 service_name = key.removeprefix(SP_MODULE_INPUT_PREFIX)
                 self.services[service_name] = value["url"]
+            else:
+                self.inputs[key] = value
 
         return self
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
-        inputs = {}
-        inputs["selfprivacy-nixos-config"] = {
-            # TODO: make it configurable
-            "url": "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes",
-            "inputs": {"selfprivacy-api": {"follows": "sp-api"}},
-        }
-        inputs["sp-api"] = {
-            "url": "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-rest-api?ref=nhnn/sp-modules-flake-merge",
-            "inputs": {"nixpkgs": {"follows": "selfprivacy-nixos-config/nixpkgs"}},
-        }
+        inputs = self.inputs
         for service_name, url in self.services.items():
             inputs[f"{SP_MODULE_INPUT_PREFIX}{service_name}"] = {"url": url}
 
