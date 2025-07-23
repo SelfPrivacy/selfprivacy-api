@@ -7,6 +7,7 @@ import logging
 import qrcode
 from qrcode.image.pure import PyPNGImage
 import qrcode.image.pure
+import diceware
 
 from selfprivacy_api.repositories.email_password import ACTIVE_EMAIL_PASSWORD_PROVIDER
 from selfprivacy_api.models.email_password_metadata import EmailPasswordData
@@ -62,7 +63,9 @@ def validate_email_password(username: str, password: str) -> bool:
 def generate_new_email_password(
     username: str, display_name: str, expires_at: Optional[datetime]
 ) -> str:
-    password = generate_urlsave_password()
+    password = diceware.get_passphrase(
+        options=diceware.handle_options(args=["-d", "-", "--no-caps"])
+    )
     add_email_password(
         username=username,
         password=password,

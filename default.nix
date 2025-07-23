@@ -31,6 +31,7 @@ pythonPackages.buildPythonPackage {
     python-multipart
     bleach
     argon2-cffi
+    diceware
   ];
   pythonImportsCheck = [ "selfprivacy_api" ];
   doCheck = false;
