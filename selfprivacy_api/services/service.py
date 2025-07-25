@@ -150,7 +150,7 @@ class Service(ABC):
         pass
 
     @classmethod
-    def is_enabled(cls) -> bool:
+    async def is_enabled(cls) -> bool:
         """
         `True` if the service is enabled.
         `False` if it is not enabled or not defined in file
@@ -162,7 +162,7 @@ class Service(ABC):
             return user_data.get("modules", {}).get(name, {}).get("enable", False)
 
     @classmethod
-    def is_installed(cls) -> bool:
+    async def is_installed(cls) -> bool:
         """
         `True` if the service is installed.
         `False` if there is no module data in user data
@@ -237,12 +237,12 @@ class Service(ABC):
             user_data["modules"][name]["enable"] = enable
 
     @classmethod
-    def enable(cls):
+    async def enable(cls):
         """Enable the service. Usually this means enabling systemd unit."""
         cls._set_enable(True)
 
     @classmethod
-    def disable(cls):
+    async def disable(cls):
         """Disable the service. Usually this means disabling systemd unit."""
         cls._set_enable(False)
 

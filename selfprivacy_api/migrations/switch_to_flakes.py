@@ -13,7 +13,7 @@ class SwitchToFlakes(Migration):
         return "Switch back to the stable branch from the SSO branch."
 
     async def is_migration_needed(self) -> bool:
-        with FlakeServiceManager() as manager:
+        async with FlakeServiceManager() as manager:
             for service_url in manager.services.values():
                 if service_url.startswith(
                     "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=sso"
@@ -22,7 +22,7 @@ class SwitchToFlakes(Migration):
         return False
 
     async def migrate(self) -> None:
-        with FlakeServiceManager() as manager:
+        async with FlakeServiceManager() as manager:
             # Go over each service, and if it has `ref=sso`, replace it with `ref=flakes`
             for key, value in manager.services.items():
                 if value.startswith(
