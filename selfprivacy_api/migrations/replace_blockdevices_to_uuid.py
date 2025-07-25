@@ -5,8 +5,6 @@ from selfprivacy_api.migrations.migration import Migration
 from selfprivacy_api.utils import ReadUserData, WriteUserData
 from selfprivacy_api.utils.block_devices import BlockDevices
 
-logger = logging.getLogger(__name__)
-
 
 class ReplaceBlockDevicesToUUID(Migration):
     """Replace block devices to UUID"""
@@ -25,14 +23,18 @@ class ReplaceBlockDevicesToUUID(Migration):
         return False
 
     def migrate(self) -> None:
+        logger = logging.getLogger(__name__)
+
         partitions = BlockDevices().get_block_devices()
 
         with WriteUserData() as user_data:
             if "server" not in user_data:
                 user_data["server"] = {}
 
+            new_volumes = []
+
             for partition in partitions:
-                if partition.is_root:
+                if partition.is_root():
                     user_data["server"][
                         "rootPartition"
                     ] = f"/dev/disk/by-uuid/{partition.uuid}"
@@ -46,7 +48,15 @@ class ReplaceBlockDevicesToUUID(Migration):
                 else:
                     for volume in user_data.get("volumes", []):
                         if volume["device"] == partition.path:
-                            volume["device"] = f"/dev/disk/by-uuid/{partition.uuid}"
+                            new_volumes.append(
+                                {
+                                    "device": f"/dev/disk/by-uuid/{partition.uuid}",
+                                    "mountPoint": volume["mountPoint"],
+                                    "fsType": volume["fsType"],
+                                }
+                            )
                             logger.info(
                                 f"Replaced {partition.canonical_name} ({partition.uuid}) in volumes"
                             )
+
+            user_data["volumes"] = new_volumes
