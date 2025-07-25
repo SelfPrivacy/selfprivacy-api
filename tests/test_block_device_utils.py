@@ -62,7 +62,10 @@ def failed_check_output_mock(mocker):
 @pytest.fixture
 def only_root_in_userdata(mocker, datadir):
     mocker.patch("selfprivacy_api.utils.USERDATA_FILE", new=datadir / "only_root.json")
-    assert read_json(datadir / "only_root.json")["volumes"][0]["device"] == "/dev/sda1"
+    assert (
+        read_json(datadir / "only_root.json")["volumes"][0]["device"]
+        == "/dev/disk/by-uuid/ec80c004-baec-4a2c-851d-0e1807135511"
+    )
     assert (
         read_json(datadir / "only_root.json")["volumes"][0]["mountPoint"]
         == "/volumes/sda1"
@@ -196,7 +199,9 @@ def test_call_resize_from_block_device(
     assert lsblk_singular_mock.call_count == 0
 
 
-def test_get_stats_from_block_device(lsblk_singular_mock, authorized_client):
+def test_get_stats_from_block_device(
+    lsblk_singular_mock, authorized_client, generic_userdata
+):
     block_device = BlockDevice(json.loads(SINGLE_LSBLK_OUTPUT)["blockdevices"][0])
     stats = block_device.stats()
     assert stats == {
@@ -234,10 +239,9 @@ def test_mount_block_device(
     volume = BlockDevice(json.loads(VOLUME_LSBLK_OUTPUT)["blockdevices"][0])
     result = volume.mount()
     assert result is True
-    assert (
-        read_json(only_root_in_userdata / "only_root.json")["volumes"][1]["device"]
-        == "/dev/sdb"
-    )
+    assert read_json(only_root_in_userdata / "only_root.json")["volumes"][1][
+        "device"
+    ].startswith("/dev/disk/by-uuid/")
     assert (
         read_json(only_root_in_userdata / "only_root.json")["volumes"][1]["mountPoint"]
         == "/volumes/sdb"
@@ -254,12 +258,9 @@ def test_mount_block_device_when_undefined(
     block_device = BlockDevice(json.loads(SINGLE_LSBLK_OUTPUT)["blockdevices"][0])
     result = block_device.mount()
     assert result is True
-    assert (
-        read_json(undefined_devices_in_userdata / "undefined.json")["volumes"][0][
-            "device"
-        ]
-        == "/dev/sda1"
-    )
+    assert read_json(undefined_devices_in_userdata / "undefined.json")["volumes"][0][
+        "device"
+    ].startswith("/dev/disk/by-uuid/")
     assert (
         read_json(undefined_devices_in_userdata / "undefined.json")["volumes"][0][
             "mountPoint"
@@ -406,7 +407,7 @@ FULL_LSBLK_OUTPUT = b"""
 
 
 @pytest.fixture
-def lsblk_full_mock(mocker):
+def lsblk_full_mock(mocker, generic_userdata):
     mock = mocker.patch(
         "subprocess.check_output", autospec=True, return_value=FULL_LSBLK_OUTPUT
     )
@@ -414,7 +415,7 @@ def lsblk_full_mock(mocker):
     return mock
 
 
-def test_get_block_devices(lsblk_full_mock, authorized_client):
+def test_get_block_devices(lsblk_full_mock, authorized_client, generic_userdata):
     block_devices = BlockDevices().get_block_devices()
     assert len(block_devices) == 2
     devices_by_name = {device.name: device for device in block_devices}
@@ -450,7 +451,7 @@ def test_get_block_devices(lsblk_full_mock, authorized_client):
     assert sdb.type == "disk"
 
 
-def test_get_block_device(lsblk_full_mock, authorized_client):
+def test_get_block_device(lsblk_full_mock, authorized_client, generic_userdata):
     block_device = BlockDevices().get_block_device("sda1")
     assert block_device is not None
     assert block_device.name == "sda1"
@@ -468,7 +469,9 @@ def test_get_block_device(lsblk_full_mock, authorized_client):
     assert block_device.type == "part"
 
 
-def test_get_block_device_canonical(lsblk_full_mock, authorized_client):
+def test_get_block_device_canonical(
+    lsblk_full_mock, authorized_client, generic_userdata
+):
     block_device = BlockDevices().get_block_device_by_canonical_name("sda1")
     assert block_device is not None
     assert block_device.name == "sda1"
@@ -486,12 +489,16 @@ def test_get_block_device_canonical(lsblk_full_mock, authorized_client):
     assert block_device.type == "part"
 
 
-def test_get_nonexistent_block_device(lsblk_full_mock, authorized_client):
+def test_get_nonexistent_block_device(
+    lsblk_full_mock, authorized_client, generic_userdata
+):
     block_device = BlockDevices().get_block_device("sda2")
     assert block_device is None
 
 
-def test_get_block_devices_by_mountpoint(lsblk_full_mock, authorized_client):
+def test_get_block_devices_by_mountpoint(
+    lsblk_full_mock, authorized_client, generic_userdata
+):
     block_devices = BlockDevices().get_block_devices_by_mountpoint("/nix/store")
     assert len(block_devices) == 1
     assert block_devices[0].name == "sda1"
@@ -509,12 +516,14 @@ def test_get_block_devices_by_mountpoint(lsblk_full_mock, authorized_client):
     assert block_devices[0].type == "part"
 
 
-def test_get_block_devices_by_mountpoint_no_match(lsblk_full_mock, authorized_client):
+def test_get_block_devices_by_mountpoint_no_match(
+    lsblk_full_mock, authorized_client, generic_userdata
+):
     block_devices = BlockDevices().get_block_devices_by_mountpoint("/foo")
     assert len(block_devices) == 0
 
 
-def test_get_root_block_device(lsblk_full_mock, authorized_client):
+def test_get_root_block_device(lsblk_full_mock, authorized_client, generic_userdata):
     block_device = BlockDevices().get_root_block_device()
     assert block_device is not None
     assert block_device.name == "sda1"
@@ -533,7 +542,7 @@ def test_get_root_block_device(lsblk_full_mock, authorized_client):
 
 
 # Unassuming sanity check, yes this did fail
-def test_get_real_devices():
+def test_get_real_devices(generic_userdata):
     block_devices = BlockDevices().get_block_devices()
 
     assert block_devices is not None
@@ -541,7 +550,7 @@ def test_get_real_devices():
 
 
 # Unassuming sanity check
-def test_get_real_root_device():
+def test_get_real_root_device(generic_userdata):
     devices = BlockDevices().get_block_devices()
     try:
         block_device = BlockDevices().get_root_block_device()

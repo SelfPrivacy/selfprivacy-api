@@ -113,6 +113,8 @@ class BlockDevice:
                     return self.name
         else:
             for mountpoint in self.mountpoints:
+                if not isinstance(mountpoint, str):
+                    continue
                 if mountpoint.startswith("/volumes/"):
                     return mountpoint.split("/")[-1]
         return self.name
@@ -172,7 +174,10 @@ class BlockDevice:
                 user_data["volumes"] = []
             # Check if the volume is already mounted
             for volume in user_data["volumes"]:
-                if volume["device"] == self.path:
+                if (
+                    volume["device"] == self.path
+                    or volume["device"] == f"/dev/disk/by-uuid/{self.uuid}"
+                ):
                     return False
             user_data["volumes"].append(
                 {

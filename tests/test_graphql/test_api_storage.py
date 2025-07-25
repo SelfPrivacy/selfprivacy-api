@@ -24,6 +24,9 @@ class BlockDevicesMockReturnTrue:
     def get_block_device(name: str):  # type: ignore
         return BlockDeviceMockReturnTrue()
 
+    def get_block_device_by_canonical_name(canonical_name: str):  # type: ignore
+        return BlockDeviceMockReturnTrue()
+
     def __new__(cls, *args, **kwargs):
         pass
 
@@ -99,7 +102,7 @@ def test_graphql_resize_volume_unauthorized_client(
 
 
 def test_graphql_resize_volume_nonexistent_block_device(
-    authorized_client, mock_block_devices_return_none
+    authorized_client, mock_block_devices_return_none, generic_userdata
 ):
     response = authorized_client.post(
         "/graphql",
@@ -176,7 +179,7 @@ def test_graphql_mount_already_mounted_volume(
 
 
 def test_graphql_mount_not_found_volume(
-    authorized_client, mock_block_devices_return_none
+    authorized_client, mock_block_devices_return_none, generic_userdata
 ):
     response = authorized_client.post(
         "/graphql",
@@ -193,7 +196,9 @@ def test_graphql_mount_not_found_volume(
     assert response.json()["data"]["mountVolume"]["success"] is False
 
 
-def test_graphql_mount_volume(authorized_client, mock_block_devices_return_true):
+def test_graphql_mount_volume(
+    authorized_client, mock_block_devices_return_true, generic_userdata
+):
     response = authorized_client.post(
         "/graphql",
         json={
@@ -235,7 +240,7 @@ def test_graphql_unmount_volume_unauthorized_client(
 
 
 def test_graphql_unmount_not_found_volume(
-    authorized_client, mock_block_devices_return_none
+    authorized_client, mock_block_devices_return_none, generic_userdata
 ):
     response = authorized_client.post(
         "/graphql",
@@ -252,7 +257,9 @@ def test_graphql_unmount_not_found_volume(
     assert response.json()["data"]["unmountVolume"]["success"] is False
 
 
-def test_graphql_unmount_volume(authorized_client, mock_block_devices_return_true):
+def test_graphql_unmount_volume(
+    authorized_client, mock_block_devices_return_true, generic_userdata
+):
     response = authorized_client.post(
         "/graphql",
         json={
