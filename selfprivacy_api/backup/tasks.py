@@ -174,7 +174,7 @@ async def eligible_for_full_restoration(snap: Snapshot):
     service = await ServiceManager.get_service_by_id(snap.service_name)
     if service is None:
         return False
-    if service.is_enabled() is False:
+    if await service.is_enabled() is False:
         return False
     return True
 

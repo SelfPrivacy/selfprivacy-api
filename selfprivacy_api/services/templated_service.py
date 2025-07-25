@@ -216,14 +216,14 @@ class TemplatedService(Service):
     def get_backup_description(self) -> str:
         return self.meta.backup_description
 
-    def is_enabled(self) -> bool:
+    async def is_enabled(self) -> bool:
         name = self.get_id()
         with ReadUserData() as user_data:
             return user_data.get("modules", {}).get(name, {}).get("enable", False)
 
-    def is_installed(self) -> bool:
+    async def is_installed(self) -> bool:
         name = self.get_id()
-        with FlakeServiceManager() as service_manager:
+        async with FlakeServiceManager() as service_manager:
             return name in service_manager.services
 
     def get_license(self) -> List[License]:
@@ -270,7 +270,7 @@ class TemplatedService(Service):
                 user_data["modules"][name] = {}
             user_data["modules"][name]["enable"] = enable
 
-    def enable(self):
+    async def enable(self):
         """Enable the service. Usually this means enabling systemd unit."""
         name = self.get_id()
         if not self.is_installed():
@@ -282,7 +282,7 @@ class TemplatedService(Service):
                     raise ValueError("Service is not a suggested module")
             else:
                 raise FileNotFoundError("Suggested modules file not found")
-            with FlakeServiceManager() as service_manager:
+            async with FlakeServiceManager() as service_manager:
                 service_manager.services[name] = (
                     f"git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/{name}"
                 )
@@ -299,7 +299,7 @@ class TemplatedService(Service):
 
         self._set_enable(True)
 
-    def disable(self):
+    async def disable(self):
         """Disable the service. Usually this means disabling systemd unit."""
         self._set_enable(False)
 
