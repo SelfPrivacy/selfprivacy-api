@@ -20,8 +20,9 @@ def evaluate_nix_file(file: str, apply: str = "f: f"):
         encoding="utf-8",
     )
     if process.returncode != 0:
-        logger.error("evaluate_nix_file Nix call failed with non zero exit code.\n" + process.stderr)
-        raise NixException()
+        msg = "evaluate_nix_file Nix call failed with non zero exit code."
+        logger.error(f"{msg}\n" + process.stderr)
+        raise NixException(msg)
     return json.loads(process.stdout)
 
 
@@ -42,8 +43,9 @@ def to_nix_expr(value):
         encoding="utf-8",
     )
     if process.returncode != 0:
-        logger.error("to_nix_expr Nix call failed with non zero exit code.\n" + process.stderr)
-        raise NixException()
+        msg = "to_nix_expr Nix call failed with non zero exit code."
+        logger.error(f"{msg}\n" + process.stderr)
+        raise NixException(msg)
     nix_expr = process.stdout.strip()
 
     assert len(nix_expr) != 0
@@ -56,6 +58,7 @@ def format_nix_expr(expr: str):
         ["nixfmt"], input=expr, encoding="utf-8", capture_output=True
     )
     if process.returncode != 0:
-        logger.error("format_nix_expr nixfmt-rfc-style call failed with non zero exit code.\n" + process.stderr)
-        raise NixException()
+        msg = "format_nix_expr nixfmt-rfc-style call failed with non zero exit code."
+        logger.error(f"{msg}\n" + process.stderr)
+        raise NixException(msg)
     return process.stdout.strip()
