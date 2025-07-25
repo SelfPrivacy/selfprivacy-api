@@ -154,7 +154,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
     )
     # Get block devices.
     block_devices = BlockDevices().get_block_devices()
-    block_device_names = [device.name for device in block_devices]
+    block_device_names = [device.canonical_name for device in block_devices]
 
     # Get all unique required block devices
     required_block_devices = []
@@ -177,7 +177,9 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
     for block_device_name in required_block_devices:
         if block_device_name == "sda1":
             continue
-        block_device = BlockDevices().get_block_device(block_device_name)
+        block_device = BlockDevices().get_block_device_by_canonical_name(
+            block_device_name
+        )
         if block_device is None:
             Jobs.update(
                 job=job,

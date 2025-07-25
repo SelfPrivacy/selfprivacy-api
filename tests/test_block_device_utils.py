@@ -468,6 +468,24 @@ def test_get_block_device(lsblk_full_mock, authorized_client):
     assert block_device.type == "part"
 
 
+def test_get_block_device_canonical(lsblk_full_mock, authorized_client):
+    block_device = BlockDevices().get_block_device_by_canonical_name("sda1")
+    assert block_device is not None
+    assert block_device.name == "sda1"
+    assert block_device.path == "/dev/sda1"
+    assert block_device.fsavail == "4605702144"
+    assert block_device.fssize == "19814920192"
+    assert block_device.fstype == "ext4"
+    assert block_device.fsused == "14353719296"
+    assert block_device.mountpoints == ["/nix/store", "/"]
+    assert block_device.label is None
+    assert block_device.uuid == "ec80c004-baec-4a2c-851d-0e1807135511"
+    assert block_device.size == "20210236928"
+    assert block_device.model is None
+    assert block_device.serial is None
+    assert block_device.type == "part"
+
+
 def test_get_nonexistent_block_device(lsblk_full_mock, authorized_client):
     block_device = BlockDevices().get_block_device("sda2")
     assert block_device is None

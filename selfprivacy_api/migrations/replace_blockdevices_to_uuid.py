@@ -1,19 +1,11 @@
-from typing import Optional
 import logging
-import subprocess
 
 from selfprivacy_api.migrations.migration import Migration
 
 from selfprivacy_api.utils import ReadUserData, WriteUserData
-from selfprivacy_api.graphql.queries.system import get_system_provider_info
+from selfprivacy_api.utils.block_devices import BlockDevices
 
 logger = logging.getLogger(__name__)
-
-SYSTEM_BLOCK_DISK = "/dev/sda"
-DIGITALOCEAN_EXTENDED_BLOCK_DISK = "/dev/vda1"
-HETZNER_EXTENDED_BLOCK_DISK = "/dev/sdb"
-
-EXTENDED_BLOCK_DISKS = [DIGITALOCEAN_EXTENDED_BLOCK_DISK, HETZNER_EXTENDED_BLOCK_DISK]
 
 
 class ReplaceBlockDevicesToUUID(Migration):
@@ -23,104 +15,38 @@ class ReplaceBlockDevicesToUUID(Migration):
         return "replace_block_devices_to_uuid"
 
     def get_migration_description(self) -> str:
-        return f"Replace {SYSTEM_BLOCK_DISK} and extended {EXTENDED_BLOCK_DISKS} with /dev/disk/by-uuid/<UUID>"
+        return "Replace volume block devices with UUIDs in user data"
 
     def is_migration_needed(self) -> bool:
         with ReadUserData() as data:
-            if "volumes" in data:
-                if "device" in data["volumes"]:
-                    if data["volumes"]["device"] == SYSTEM_BLOCK_DISK:
-                        return True
+            if "server" in data:
+                if "rootPartition" not in data["server"]:
+                    return True
         return False
 
-    @staticmethod
-    def _get_uuid(device: str) -> Optional[str]:
-        """
-        Run blkid and return the raw UUID string,
-        or None on failure.
-        """
-        try:
-            uuid = subprocess.check_output(
-                ["blkid", "-s", "UUID", "-o", "value", device],
-                text=True,
-            )
-            if not uuid:
-                logger.error(
-                    f"ReplaceBlockDevicesToUUID._get_uuid: failed to get UUID for {device}"
-                )
-            return uuid
-        except subprocess.CalledProcessError as error:
-            logger.warning(
-                f"ReplaceBlockDevicesToUUID._get_uuid: failed to get UUID for {device}. {error}"
-            )
-
-    @staticmethod
-    def _match_and_return_correct_uuid(
-        disk: str,
-        system_disk_uuid_path: str,
-        extended_disk_uuid_path: str,
-    ) -> Optional[str]:
-        """
-        Given a disk string (/dev/sda, /dev/vda1, /dev/sdb),
-        return the matching UUID-path or None.
-        """
-        if disk == SYSTEM_BLOCK_DISK:
-            return system_disk_uuid_path
-
-        elif disk in EXTENDED_BLOCK_DISKS:
-            return extended_disk_uuid_path
-
     def migrate(self) -> None:
-        system_provider_info = get_system_provider_info()
+        partitions = BlockDevices().get_block_devices()
 
-        if system_provider_info.provider == "DIGITALOCEAN":
-            extended_disk_uuid = ReplaceBlockDevicesToUUID._get_uuid(
-                device=DIGITALOCEAN_EXTENDED_BLOCK_DISK
-            )
-        elif system_provider_info.provider == "HETZNER":
-            extended_disk_uuid = ReplaceBlockDevicesToUUID._get_uuid(
-                device=HETZNER_EXTENDED_BLOCK_DISK
-            )
-        else:
-            logger.error(
-                "Migration replace_block_devices_to_uuid failed: unknown provider"
-            )
-            return
+        with WriteUserData() as user_data:
+            if "server" not in user_data:
+                user_data["server"] = {}
 
-        system_disk_uuid = ReplaceBlockDevicesToUUID._get_uuid(device=SYSTEM_BLOCK_DISK)
-
-        if system_disk_uuid is None or extended_disk_uuid is None:
-            logger.error(
-                "Migration replace_block_devices_to_uuid failed: system_disk_uuid or extended_disk_uuid is None"
-            )
-            return
-
-        system_disk_uuid_path = f"/dev/disk/by-uuid/{system_disk_uuid}"
-        extended_disk_uuid_path = f"/dev/disk/by-uuid/{extended_disk_uuid}"
-
-        with WriteUserData() as data:
-            if "volumes" in data:
-                if "device" in data["volumes"]:
-                    data["volumes"]["device"] = system_disk_uuid_path
-
-            if "modules" in data:
-                for module in data["modules"]:
-                    if "location" in module:
-                        module["location"] = (
-                            ReplaceBlockDevicesToUUID._match_and_return_correct_uuid(
-                                disk=module["location"],
-                                system_disk_uuid_path=system_disk_uuid_path,
-                                extended_disk_uuid_path=extended_disk_uuid_path,
-                            )
-                        )
-
-            if "postgresql" in data:
-                data["postgresql"]["location"] = (
-                    ReplaceBlockDevicesToUUID._match_and_return_correct_uuid(
-                        disk=data["postgresql"]["location"],
-                        system_disk_uuid_path=system_disk_uuid_path,
-                        extended_disk_uuid_path=extended_disk_uuid_path,
+            for partition in partitions:
+                if partition.is_root:
+                    user_data["server"][
+                        "rootPartition"
+                    ] = f"/dev/disk/by-uuid/{partition.uuid}"
+                    logger.info(
+                        f"Set system partition to {partition.canonical_name} ({partition.uuid})"
                     )
-                )
-
-            data["bootDisk"] = system_disk_uuid_path
+                    user_data["server"]["rootPartitionName"] = partition.canonical_name
+                    logger.info(
+                        f"Set system partition name to {partition.canonical_name}"
+                    )
+                else:
+                    for volume in user_data.get("volumes", []):
+                        if volume["device"] == partition.path:
+                            volume["device"] = f"/dev/disk/by-uuid/{partition.uuid}"
+                            logger.info(
+                                f"Replaced {partition.canonical_name} ({partition.uuid}) in volumes"
+                            )
