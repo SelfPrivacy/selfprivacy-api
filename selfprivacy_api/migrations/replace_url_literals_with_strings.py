@@ -47,5 +47,5 @@ class ReplaceUrlLiteralsWithStrings(Migration):
 
         # FlakeServiceManager will wrap all URLs with "" when called.
 
-        with FlakeServiceManager() as _:
+        async with FlakeServiceManager() as _:
             pass

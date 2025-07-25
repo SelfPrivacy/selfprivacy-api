@@ -270,7 +270,7 @@ async def dummy_service(
     assert huey.immediate is True
 
     assert (await ServiceManager.get_service_by_id(service.get_id())) is not None
-    service.enable()
+    await service.enable()
 
     yield service
 
