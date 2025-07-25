@@ -11,7 +11,9 @@ class FlakeServiceManager:
         self.inputs = {}
         self.services = {}
 
-        inputs = evaluate_nix_file(FLAKE_CONFIG_PATH, "f: f.inputs")
+        inputs = evaluate_nix_file(
+            FLAKE_CONFIG_PATH, 'f: if builtins.hasAttr "inputs" f then f.inputs else {}'
+        )
 
         for key, value in inputs.items():
             if key.startswith(SP_MODULE_INPUT_PREFIX):
