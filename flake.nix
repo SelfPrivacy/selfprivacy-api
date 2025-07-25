@@ -148,7 +148,8 @@
           pkgs = nixpkgs.legacyPackages.${system};
         in
         {
-          default = pkgs.mkShellNoCC {
+          
+      default = pkgs.mkShellNoCC {
             name = "SP API dev shell";
             packages = with pkgs; [
               gettext # msginit, msgfmt
@@ -157,6 +158,7 @@
               valkey
               restic
               bandit
+              nixfmt-rfc-style
               self.packages.${system}.pytest-vm
               # FIXME consider loading this explicitly only after ArchLinux issue is solved
               self.checks.${system}.default.driverInteractive
@@ -247,6 +249,12 @@
                     "bind"
                   ];
                 };
+                nix.settings = {
+                  experimental-features = [
+                    "nix-command"
+                    "flakes"
+                  ];
+                };
                 boot.consoleLogLevel = lib.mkForce 3;
                 documentation.enable = false;
                 services.journald.extraConfig = lib.mkForce "";
@@ -261,6 +269,7 @@
                   # TODO: these can be passed via wrapper script around app
                   rclone
                   restic
+                  nixfmt-rfc-style
                 ];
                 environment.variables.TEST_MODE = "true";
               };
