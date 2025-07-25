@@ -150,7 +150,7 @@ class Service(ABC):
         pass
 
     @classmethod
-    def is_enabled(cls) -> bool:
+    async def is_enabled(cls) -> bool:
         """
         `True` if the service is enabled.
         `False` if it is not enabled or not defined in file
