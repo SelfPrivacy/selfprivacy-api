@@ -6,12 +6,14 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class NixException(Exception):
     """Nix call errors"""
 
     @staticmethod
     def get_error_message() -> str:
         return "Internal nix call failed"
+
 
 def evaluate_nix_file(file: str, apply: str = "f: f"):
     process = subprocess.run(
