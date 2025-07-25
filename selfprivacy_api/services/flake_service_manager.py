@@ -1,5 +1,4 @@
-import re
-from typing import Tuple, Optional
+import copy
 from selfprivacy_api.utils.nix import evaluate_nix_file, to_nix_expr, format_nix_expr
 
 FLAKE_CONFIG_PATH = "/etc/nixos/flake.nix"
@@ -7,29 +6,35 @@ SP_MODULE_INPUT_PREFIX = "sp-module-"
 
 
 class FlakeServiceManager:
-    def __enter__(self) -> "FlakeServiceManager":
-        self.inputs = {}
-        self.services = {}
+    async def __aenter__(self) -> "FlakeServiceManager":
+        self._inputs = {}
+        self._services = {}
 
-        inputs = evaluate_nix_file(
+        inputs = await evaluate_nix_file(
             FLAKE_CONFIG_PATH, 'f: if builtins.hasAttr "inputs" f then f.inputs else {}'
         )
 
         for key, value in inputs.items():
             if key.startswith(SP_MODULE_INPUT_PREFIX):
                 service_name = key.removeprefix(SP_MODULE_INPUT_PREFIX)
-                self.services[service_name] = value["url"]
+                self._services[service_name] = value["url"]
             else:
-                self.inputs[key] = value
+                self._inputs[key] = value
+
+        self.inputs = copy.deepcopy(self._inputs)
+        self.services = copy.deepcopy(self._services)
 
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback) -> None:
+    async def __aexit__(self, exc_type, exc_value, traceback) -> None:
+        if self.inputs == self._inputs and self.services == self._services:
+            return
+        
         inputs = self.inputs
         for service_name, url in self.services.items():
             inputs[f"{SP_MODULE_INPUT_PREFIX}{service_name}"] = {"url": url}
 
-        inputs_expr = to_nix_expr(inputs)
+        inputs_expr = await to_nix_expr(inputs)
 
         content = """{
   description = "SelfPrivacy NixOS configuration local flake";
@@ -56,7 +61,7 @@ class FlakeServiceManager:
 }
 """
 
-        content = format_nix_expr(content)
+        content = await format_nix_expr(content)
 
         with open(FLAKE_CONFIG_PATH, "w") as file:
             file.write(content)
