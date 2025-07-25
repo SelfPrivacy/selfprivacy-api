@@ -2,7 +2,16 @@
 
 import subprocess
 import json
+import logging
 
+logger = logging.getLogger(__name__)
+
+class NixException(Exception):
+    """Nix call errors"""
+
+    @staticmethod
+    def get_error_message() -> str:
+        return "Internal nix call failed"
 
 def evaluate_nix_file(file: str, apply: str = "f: f"):
     process = subprocess.run(
@@ -10,7 +19,9 @@ def evaluate_nix_file(file: str, apply: str = "f: f"):
         capture_output=True,
         encoding="utf-8",
     )
-    process.check_returncode()
+    if process.returncode != 0:
+        logger.error("evaluate_nix_file Nix call failed with non zero exit code.\n" + process.stderr)
+        raise NixException()
     return json.loads(process.stdout)
 
 
@@ -30,7 +41,9 @@ def to_nix_expr(value):
         capture_output=True,
         encoding="utf-8",
     )
-    process.check_returncode()
+    if process.returncode != 0:
+        logger.error("to_nix_expr Nix call failed with non zero exit code.\n" + process.stderr)
+        raise NixException()
     nix_expr = process.stdout.strip()
 
     assert len(nix_expr) != 0
@@ -42,5 +55,7 @@ def format_nix_expr(expr: str):
     process = subprocess.run(
         ["nixfmt"], input=expr, encoding="utf-8", capture_output=True
     )
-    process.check_returncode()
+    if process.returncode != 0:
+        logger.error("format_nix_expr nixfmt-rfc-style call failed with non zero exit code.\n" + process.stderr)
+        raise NixException()
     return process.stdout.strip()
