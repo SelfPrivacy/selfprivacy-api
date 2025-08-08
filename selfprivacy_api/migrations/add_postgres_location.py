@@ -28,7 +28,7 @@ class AddPostgresLocation(Migration):
             )
 
         if pleroma_location is None:
-            pleroma_location = BlockDevices().get_root_block_device().name
+            pleroma_location = BlockDevices().get_root_block_device().canonical_name
 
         if pleroma_location is None:
             raise Exception("Couldn't get location for Postgres")

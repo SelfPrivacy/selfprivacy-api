@@ -48,7 +48,7 @@
   },
   "volumes": [
     {
-      "device": "/dev/sda1",
+      "device": "/dev/disk/by-uuid/ec80c004-baec-4a2c-851d-0e1807135511",
       "mountPoint": "/volumes/sda1",
       "fsType": "ext4"
     }

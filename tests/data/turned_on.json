@@ -4,7 +4,8 @@
     "useStagingACME": false
   },
   "server": {
-    "provider": "HETZNER"
+    "provider": "HETZNER",
+    "rootPartitionName": "sda1"
   },
   "domain": "test-domain.tld",
   "hashedMasterPassword": "HASHED_PASSWORD",
