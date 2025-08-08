@@ -22,7 +22,7 @@ from selfprivacy_api.jobs.upgrade_system import rebuild_system
 from selfprivacy_api.actions.system import add_rebuild_job
 
 
-SNAPSHOT_CACHE_TTL_HOURS = 6
+SNAPSHOT_CACHE_TTL_HOURS = 12
 
 
 def validate_datetime(dt: datetime) -> bool:
@@ -104,7 +104,7 @@ def total_backup(job: Job) -> bool:
     return True
 
 
-@huey.periodic_task(crontab(hour="*/" + str(SNAPSHOT_CACHE_TTL_HOURS)))
+@huey.periodic_task(crontab(hour="*/" + str(SNAPSHOT_CACHE_TTL_HOURS), minute="0"))
 def reload_snapshot_cache():
     Backups.force_snapshot_cache_reload()
 
