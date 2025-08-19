@@ -52,7 +52,7 @@ LSBLK_BLOCKDEVICES_DICTS = [
 
 
 @pytest.fixture()
-def mock_lsblk_devices(mocker):
+def mock_lsblk_devices(mocker, generic_userdata):
     mock = mocker.patch(
         "selfprivacy_api.utils.block_devices.BlockDevices.lsblk_device_dicts",
         autospec=True,

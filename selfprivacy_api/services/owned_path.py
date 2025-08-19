@@ -54,7 +54,7 @@ class Bind:
     # TODO: delete owned path interface from Service
     @staticmethod
     def from_owned_path(path: OwnedPath, drive_name: str) -> Bind:
-        drive = BlockDevices().get_block_device(drive_name)
+        drive = BlockDevices().get_block_device_by_canonical_name(drive_name)
         if drive is None:
             raise BindError(f"No such drive: {drive_name}")
 
@@ -66,7 +66,7 @@ class Bind:
         return self.binding_path.split("/")[-1]
 
     def location_at_volume(self) -> str:
-        return f"{VOLUMES_PATH}/{self.drive.name}/{self.bind_foldername()}"
+        return f"{VOLUMES_PATH}/{self.drive.canonical_name}/{self.bind_foldername()}"
 
     def validate(self) -> None:
         path = pathlib.Path(self.location_at_volume())

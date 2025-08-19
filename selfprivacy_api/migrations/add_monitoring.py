@@ -33,5 +33,5 @@ class AddMonitoring(Migration):
             if "monitoring" not in data["modules"]:
                 data["modules"]["monitoring"] = {
                     "enable": True,
-                    "location": BlockDevices().get_root_block_device().name,
+                    "location": BlockDevices().get_root_block_device().canonical_name,
                 }

@@ -332,7 +332,7 @@ class Service(ABC):
         Get the name of the drive/volume where the service is located.
         Example values are `sda1`, `vda`, `sdb`.
         """
-        root_device: str = BlockDevices().get_root_block_device().name
+        root_device: str = BlockDevices().get_root_block_device().canonical_name
         if not cls.is_movable():
             return root_device
         with utils.ReadUserData() as userdata:
@@ -405,7 +405,7 @@ class Service(ABC):
             Bind.from_owned_path(folder, self.get_drive()) for folder in owned_folders
         ]
 
-    def assert_can_move(self, new_volume):
+    def assert_can_move(self, new_volume: BlockDevice):
         """
         Checks if the service can be moved to new volume
         Raises errors if it cannot
@@ -419,7 +419,7 @@ class Service(ABC):
                 raise MoveError("Server is not using binds.")
 
         current_volume_name = self.get_drive()
-        if current_volume_name == new_volume.name:
+        if current_volume_name == new_volume.canonical_name:
             raise MoveError(f"{service_name} is already on volume {new_volume}")
 
         check_volume(new_volume, space_needed=self.get_storage_usage())

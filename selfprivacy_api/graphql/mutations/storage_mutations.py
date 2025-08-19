@@ -31,7 +31,7 @@ class StorageMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def resize_volume(self, name: str) -> GenericMutationReturn:
         """Resize volume"""
-        volume = BlockDevices().get_block_device(name)
+        volume = BlockDevices().get_block_device_by_canonical_name(name)
         if volume is None:
             return GenericMutationReturn(
                 success=False, code=404, message="Volume not found"
@@ -44,7 +44,7 @@ class StorageMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def mount_volume(self, name: str) -> GenericMutationReturn:
         """Mount volume"""
-        volume = BlockDevices().get_block_device(name)
+        volume = BlockDevices().get_block_device_by_canonical_name(name)
         if volume is None:
             return GenericMutationReturn(
                 success=False, code=404, message="Volume not found"
@@ -63,7 +63,7 @@ class StorageMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def unmount_volume(self, name: str) -> GenericMutationReturn:
         """Unmount volume"""
-        volume = BlockDevices().get_block_device(name)
+        volume = BlockDevices().get_block_device_by_canonical_name(name)
         if volume is None:
             return GenericMutationReturn(
                 success=False, code=404, message="Volume not found"

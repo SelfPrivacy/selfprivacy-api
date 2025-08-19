@@ -281,7 +281,7 @@ def service_to_graphql_service(service: ServiceInterface) -> Service:
 
 def get_volume_by_id(volume_id: str) -> Optional[StorageVolume]:
     """Get volume by id"""
-    volume = BlockDevices().get_block_device(volume_id)
+    volume = BlockDevices().get_block_device_by_canonical_name(volume_id)
     if volume is None:
         return None
     return StorageVolume(
@@ -290,8 +290,8 @@ def get_volume_by_id(volume_id: str) -> Optional[StorageVolume]:
         ),
         free_space=str(volume.fsavail),
         used_space=str(volume.fsused),
-        root=volume.name == "sda1",
-        name=volume.name,
+        root=volume.is_root(),
+        name=volume.canonical_name,
         model=volume.model,
         serial=volume.serial,
         type=volume.type,

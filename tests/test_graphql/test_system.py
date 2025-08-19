@@ -1364,35 +1364,6 @@ def test_graphql_pull_system_configuration(
     )
 
     assert response.status_code == 200
-    assert response.json().get("data") is not None
-    assert response.json()["data"]["system"]["pullRepositoryChanges"]["success"] is True
-    assert (
-        response.json()["data"]["system"]["pullRepositoryChanges"]["message"]
-        is not None
-    )
-    assert response.json()["data"]["system"]["pullRepositoryChanges"]["code"] == 200
-
-    assert mock_subprocess_popen.call_count == 1
-    assert mock_subprocess_popen.call_args[0][0] == ["git", "pull"]
-    assert mock_os_chdir.call_count == 2
-    assert mock_os_chdir.call_args_list[0][0][0] == "/etc/nixos"
-    assert mock_os_chdir.call_args_list[1][0][0] == current_dir
-
-
-def test_graphql_pull_system_broken_repo(
-    authorized_client, mock_broken_service, mock_os_chdir
-):
-    current_dir = os.getcwd()
-
-    response = authorized_client.post(
-        "/graphql",
-        json={
-            "query": API_PULL_SYSTEM_CONFIGURATION_MUTATION,
-        },
-    )
-
-    assert response.status_code == 200
-    assert response.json().get("data") is not None
     assert (
         response.json()["data"]["system"]["pullRepositoryChanges"]["success"] is False
     )
@@ -1400,12 +1371,10 @@ def test_graphql_pull_system_broken_repo(
         response.json()["data"]["system"]["pullRepositoryChanges"]["message"]
         is not None
     )
-    assert response.json()["data"]["system"]["pullRepositoryChanges"]["code"] == 500
+    assert response.json()["data"]["system"]["pullRepositoryChanges"]["code"] == 400
 
-    assert mock_broken_service.call_count == 1
-    assert mock_os_chdir.call_count == 2
-    assert mock_os_chdir.call_args_list[0][0][0] == "/etc/nixos"
-    assert mock_os_chdir.call_args_list[1][0][0] == current_dir
+    assert mock_subprocess_popen.call_count == 0
+    assert mock_os_chdir.call_count == 0
 
 
 API_SET_DNS_PROVIDER_MUTATION = """

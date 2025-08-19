@@ -745,7 +745,7 @@ class Backups:
         else:
             # Look at the block device as it is written in settings
             label = service.get_drive()
-            device = BlockDevices().get_block_device(label)
+            device = BlockDevices().get_block_device_by_canonical_name(label)
             if device is None:
                 raise ValueError("nonexistent drive ", label, " for ", service.get_id())
             usable_bytes = int(device.fsavail)

@@ -18,7 +18,7 @@ def move_service(service_id: str, volume_name: str) -> Job:
     if service is None:
         raise ServiceNotFoundError(f"No such service:{service_id}")
 
-    volume = BlockDevices().get_block_device(volume_name)
+    volume = BlockDevices().get_block_device_by_canonical_name(volume_name)
     if volume is None:
         raise VolumeNotFoundError(f"No such volume:{volume_name}")
 

@@ -3,7 +3,7 @@ from os import mkdir, rmdir
 from os.path import join, exists
 
 
-from tests.conftest import ensure_user_exists
+from tests.conftest import ensure_user_exists, generic_userdata
 from tests.test_graphql.test_services import mock_lsblk_devices
 
 from selfprivacy_api.services.owned_path import Bind, BindError
@@ -43,7 +43,9 @@ def prepare_test_bind(tmpdir, bind_user) -> Bind:
     return bind
 
 
-def test_bind_unbind(volume_folders, tmpdir, bind_user, mock_lsblk_devices):
+def test_bind_unbind(
+    volume_folders, tmpdir, bind_user, mock_lsblk_devices, generic_userdata
+):
     bind = prepare_test_bind(tmpdir, bind_user)
     bind.ensure_ownership()
     bind.validate()
@@ -66,7 +68,9 @@ def test_bind_unbind(volume_folders, tmpdir, bind_user, mock_lsblk_devices):
     assert exists(bind.binding_path)
 
 
-def test_bind_nonexistent_target(volume_folders, tmpdir, bind_user, mock_lsblk_devices):
+def test_bind_nonexistent_target(
+    volume_folders, tmpdir, bind_user, mock_lsblk_devices, generic_userdata
+):
     bind = prepare_test_bind(tmpdir, bind_user)
 
     bind.ensure_ownership()
@@ -78,7 +82,7 @@ def test_bind_nonexistent_target(volume_folders, tmpdir, bind_user, mock_lsblk_d
 
 
 def test_unbind_nonexistent_target(
-    volume_folders, tmpdir, bind_user, mock_lsblk_devices
+    volume_folders, tmpdir, bind_user, mock_lsblk_devices, generic_userdata
 ):
     bind = prepare_test_bind(tmpdir, bind_user)
 

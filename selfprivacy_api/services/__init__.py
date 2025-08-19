@@ -205,7 +205,9 @@ class ServiceManager(Service):
             exclude_remote=True,
         ):
             if service.is_movable():
-                device = BlockDevices().get_block_device(locations[service.get_id()])
+                device = BlockDevices().get_block_device_by_canonical_name(
+                    locations[service.get_id()]
+                )
                 if device is not None:
                     service.set_location(device)
 
@@ -232,7 +234,7 @@ class ServiceManager(Service):
 
     @classmethod
     def get_drive(cls) -> str:
-        return BlockDevices().get_root_block_device().name
+        return BlockDevices().get_root_block_device().canonical_name
 
     @classmethod
     def get_folders(cls) -> List[str]:

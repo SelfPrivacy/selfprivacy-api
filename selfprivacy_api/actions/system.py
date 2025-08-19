@@ -161,34 +161,3 @@ class SystemActionResult(BaseModel):
     status: int
     message: str
     data: str
-
-
-def pull_repository_changes() -> SystemActionResult:
-    """Pull repository changes"""
-    git_pull_command = ["git", "pull"]
-
-    current_working_directory = os.getcwd()
-    os.chdir("/etc/nixos")
-
-    git_pull_process_descriptor = subprocess.Popen(
-        git_pull_command,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        shell=False,
-    )
-
-    data = git_pull_process_descriptor.communicate()[0].decode("utf-8")
-
-    os.chdir(current_working_directory)
-
-    if git_pull_process_descriptor.returncode == 0:
-        return SystemActionResult(
-            status=0,
-            message="Pulled repository changes",
-            data=data,
-        )
-    return SystemActionResult(
-        status=git_pull_process_descriptor.returncode,
-        message="Failed to pull repository changes",
-        data=data,
-    )

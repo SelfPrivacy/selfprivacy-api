@@ -19,7 +19,10 @@ def check_volume(volume: BlockDevice, space_needed: int) -> None:
         raise MoveError("Not enough space on the new volume.")
 
     # Make sure the volume is mounted
-    if not volume.is_root() and f"/volumes/{volume.name}" not in volume.mountpoints:
+    if (
+        not volume.is_root()
+        and f"/volumes/{volume.canonical_name}" not in volume.mountpoints
+    ):
         raise MoveError("Volume is not mounted.")
 
 
