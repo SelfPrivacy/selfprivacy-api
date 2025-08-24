@@ -4,6 +4,8 @@ from selfprivacy_api.userpanel.auth.oauth import get_oauth
 
 from authlib.integrations.starlette_client import OAuth
 
+TEST_CLIENT_SECRET = "tsss-its-a-secret"
+
 
 @pytest.fixture
 def get_domain_mock(mocker):
@@ -20,10 +22,12 @@ def load_oauth_client_secret_mock(mocker):
     mock = mocker.patch(
         "selfprivacy_api.userpanel.auth.oauth.load_oauth_client_secret",
         autospec=True,
-        return_value="tsss-its-a-secret",
+        return_value=TEST_CLIENT_SECRET,
     )
     return mock
 
 
 def test_get_oauth(get_domain_mock, load_oauth_client_secret_mock):
-    assert isinstance(get_oauth(), OAuth)
+    oauth = get_oauth()
+
+    assert isinstance(oauth, OAuth)
