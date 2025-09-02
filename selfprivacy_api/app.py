@@ -29,9 +29,23 @@ from selfprivacy_api.userpanel.static import static_dir
 
 log_level = os.getenv("LOG_LEVEL", "INFO").upper()
 
+# Configure logging with disable_existing_loggers=False to prevent uvicorn from overriding
 logging.basicConfig(
-    level=getattr(logging, log_level, logging.INFO), format="%(levelname)s: %(message)s"
+    level=getattr(logging, log_level, logging.INFO),
+    format="%(levelname)s:%(name)s: %(message)s",
+    force=True  # Force reconfiguration of the root logger
 )
+
+# Ensure all loggers use our configuration
+logging.getLogger().handlers.clear()
+handler = logging.StreamHandler()
+handler.setFormatter(logging.Formatter("%(levelname)s:%(name)s: %(message)s"))
+logging.getLogger().addHandler(handler)
+logging.getLogger().setLevel(getattr(logging, log_level, logging.INFO))
+
+# Test that logging works
+logger = logging.getLogger(__name__)
+logger.info("SelfPrivacy API starting up - logging configured")
 
 
 @asynccontextmanager
