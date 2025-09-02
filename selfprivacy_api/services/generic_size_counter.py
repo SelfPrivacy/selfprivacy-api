@@ -21,5 +21,5 @@ def get_storage_usage(path: str) -> int:
         except FileNotFoundError:
             pass
         except Exception as error:
-            logging.error(error)
+            logger.error(error)
     return storage_usage

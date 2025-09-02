@@ -62,6 +62,6 @@ def run_migrations():
                 if migration.is_migration_needed():
                     migration.migrate()
             except Exception as err:
-                logging.error(f"Error while migrating {migration.get_migration_name()}")
-                logging.error(err)
-                logging.error("Skipping this migration")
+                logger.error(f"Error while migrating {migration.get_migration_name()}")
+                logger.error(err)
+                logger.error("Skipping this migration")

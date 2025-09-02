@@ -86,4 +86,4 @@ class MigrateUsersFromJson(Migration):
                         with_zero_uuid=True,
                     )
             except Exception as error:
-                logging.error(f"Failed to migrate {user.username}. Error: {str(error)}")
+                logger.error(f"Failed to migrate {user.username}. Error: {str(error)}")

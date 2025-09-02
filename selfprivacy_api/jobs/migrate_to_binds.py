@@ -69,7 +69,7 @@ def move_folder(
     try:
         data_path.mkdir(mode=0o750, parents=True, exist_ok=True)
     except Exception as error:
-        logging.error(f"Error creating data path: {error}")
+        logger.error(f"Error creating data path: {error}")
         return
 
     try:
@@ -81,12 +81,12 @@ def move_folder(
     try:
         subprocess.run(["mount", "--bind", str(bind_path), str(data_path)], check=True)
     except subprocess.CalledProcessError as error:
-        logging.error(error)
+        logger.error(error)
 
     try:
         subprocess.run(["chown", "-R", f"{user}:{group}", str(data_path)], check=True)
     except subprocess.CalledProcessError as error:
-        logging.error(error)
+        logger.error(error)
 
 
 @huey.task()
