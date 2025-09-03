@@ -30,7 +30,7 @@ class KanidmCredentialTypeMutationReturn(MutationReturnInterface):
     minimum_credential_type: Optional[KanidmCredentialTypeEnum] = None
 
 
-def get_kanidm_credential_lvl() -> KanidmCredentialType:
+def get_minimum_kanidm_credential_type() -> KanidmCredentialType:
     """Get KanidmCredentialLvl"""
     minimum_credential_type = actions_get_kanidm_minimum_credential_type()
 
