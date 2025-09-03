@@ -28,7 +28,7 @@ def get_kanidm_minimum_credential_type() -> KanidmCredentialType:
     with ReadUserData() as data:
         if "kanidm" in data:
             if "minimum_credential_type" in data["kanidm"]:
-                raw = data["minimum_credential_type"]
+                raw = data["kanidm"]["minimum_credential_type"]
                 try:
                     return KanidmCredentialType(str(raw))
                 except ValueError:
