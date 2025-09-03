@@ -48,5 +48,7 @@ class KanidmMutations:
             success=True,
             message="Success",
             code=200,
-            minimum_credential_type=get_kanidm_minimum_credential_type_action().minimum_credential_type,
+            minimum_credential_type=KanidmCredentialTypeEnum(
+                str(get_kanidm_minimum_credential_type_action())
+            ),
         )
