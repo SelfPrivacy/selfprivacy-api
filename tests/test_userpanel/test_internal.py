@@ -5,7 +5,7 @@ import asyncio
 from passlib.hash import sha512_crypt
 
 from fastapi.responses import JSONResponse
-from fastapi import APIRouter, Request
+from fastapi import Request
 
 from selfprivacy_api.userpanel.routes.internal import (
     check_email_password,
