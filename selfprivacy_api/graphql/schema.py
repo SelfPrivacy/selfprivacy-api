@@ -7,7 +7,7 @@ from typing import AsyncGenerator, List
 import strawberry
 from strawberry.types import Info
 
-from selfprivacy_api.graphql import IsAuthenticated
+from selfprivacy_api.graphql import IsAuthenticated, LocaleExtension
 from selfprivacy_api.graphql.mutations.deprecated_mutations import (
     DeprecatedApiMutations,
     DeprecatedJobMutations,
@@ -216,4 +216,5 @@ schema = strawberry.Schema(
         BoolConfigItem,
         EnumConfigItem,
     ],
+    extensions=[LocaleExtension],
 )
