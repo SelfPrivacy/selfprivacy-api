@@ -101,21 +101,23 @@ uvicorn_log_config["handlers"]["otel"] = {
     # Pass the already configured logger_provider so the handler exports to OTLP
     "logger_provider": logger_provider,
 }
-# Attach the otel handler to uvicorn loggers and root
 for _name in ("uvicorn", "uvicorn.error", "uvicorn.access"):
     if _name in uvicorn_log_config.get("loggers", {}):
-        if "otel" not in uvicorn_log_config["loggers"][_name]["handlers"]:
-            uvicorn_log_config["loggers"][_name]["handlers"].append("otel")
+        _cfg = uvicorn_log_config["loggers"][_name]
+        _handlers = _cfg.setdefault("handlers", [])
+        if "otel" not in _handlers:
+            _handlers.append("otel")
     else:
         uvicorn_log_config.setdefault("loggers", {})[_name] = {
             "handlers": ["otel"],
             "level": "INFO",
             "propagate": False,
         }
-# Also add to root so non-uvicorn logs are exported when propagated
-if "root" in uvicorn_log_config and "handlers" in uvicorn_log_config["root"]:
-    if "otel" not in uvicorn_log_config["root"]["handlers"]:
-        uvicorn_log_config["root"]["handlers"].append("otel")
+if "root" in uvicorn_log_config:
+    _root = uvicorn_log_config["root"]
+    _root_handlers = _root.setdefault("handlers", [])
+    if "otel" not in _root_handlers:
+        _root_handlers.append("otel")
 else:
     uvicorn_log_config["root"] = {"level": "INFO", "handlers": ["otel"]}
 
