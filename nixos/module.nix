@@ -61,6 +61,29 @@ let
       fi
     '';
   };
+
+  # Helper to generate basic auth header
+  basicAuthHeader =
+    if cfg.opentelemetry.basicAuth.username != null then
+      let
+        password =
+          if cfg.opentelemetry.basicAuth.passwordFile != null
+          then "$(cat ${cfg.opentelemetry.basicAuth.passwordFile})"
+          else cfg.opentelemetry.basicAuth.password;
+        credentials = "${cfg.opentelemetry.basicAuth.username}:${password}";
+        encodedCredentials = "$(echo -n '${credentials}' | base64 -w 0)";
+      in
+      "Basic ${encodedCredentials}"
+    else null;
+
+  # Generate OTLP headers including basic auth
+  otlpHeaders = cfg.opentelemetry.headers // (lib.optionalAttrs (basicAuthHeader != null) {
+    authorization = basicAuthHeader;
+  });
+
+  # Convert headers to OTEL format
+  otlpHeadersEnv = lib.concatStringsSep "," (lib.mapAttrsToList (name: value: "${name}=${value}") otlpHeaders);
+
 in
 {
   options.services.selfprivacy-api = {
@@ -70,6 +93,75 @@ in
       description = ''
         Enable SelfPrivacy API service
       '';
+    };
+    opentelemetry = {
+      enable = lib.mkOption {
+        default = false;
+        type = lib.types.bool;
+        description = ''
+          Enable OpenTelemetry instrumentation for SelfPrivacy services
+        '';
+      };
+      endpoint = lib.mkOption {
+        type = lib.types.str;
+        default = "http://localhost:4317";
+        description = ''
+          OTLP gRPC endpoint URL
+        '';
+      };
+      serviceName = lib.mkOption {
+        type = lib.types.str;
+        default = "selfprivacy-api";
+        description = ''
+          Service name for telemetry traces
+        '';
+      };
+      serviceVersion = lib.mkOption {
+        type = lib.types.str;
+        default = "3.6.2";
+        description = ''
+          Service version for telemetry traces
+        '';
+      };
+      basicAuth = {
+        username = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          description = ''
+            Username for basic authentication with OTLP server
+          '';
+        };
+        password = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          description = ''
+            Password for basic authentication with OTLP server
+          '';
+        };
+        passwordFile = lib.mkOption {
+          type = lib.types.nullOr lib.types.path;
+          default = null;
+          description = ''
+            Path to file containing password for basic authentication with OTLP server.
+            Takes precedence over password option.
+          '';
+        };
+      };
+      headers = lib.mkOption {
+        type = lib.types.attrs;
+        default = { };
+        example = { "x-api-key" = "token123"; };
+        description = ''
+          Additional headers to send with OTLP requests
+        '';
+      };
+      sampleRate = lib.mkOption {
+        type = lib.types.float;
+        default = 1.0;
+        description = ''
+          Sampling rate for traces (0.0 to 1.0)
+        '';
+      };
     };
   };
   config = lib.mkIf cfg.enable {
@@ -99,7 +191,20 @@ in
               KANIDM_ADMIN_TOKEN_FILE =
                 sp.passthru.auth.mkServiceAccountTokenFP unix-user;
             }
-            // config.networking.proxy.envVars;
+            // config.networking.proxy.envVars
+            // (lib.optionalAttrs cfg.opentelemetry.enable
+              {
+                OTEL_EXPORTER_OTLP_ENDPOINT = cfg.opentelemetry.endpoint;
+                OTEL_EXPORTER_OTLP_PROTOCOL = "grpc";
+                OTEL_EXPORTER_OTLP_HEADERS = otlpHeadersEnv;
+                OTEL_SERVICE_NAME = cfg.opentelemetry.serviceName;
+                OTEL_SERVICE_VERSION = cfg.opentelemetry.serviceVersion;
+                OTEL_TRACES_SAMPLER = "traceidratio";
+                OTEL_TRACES_SAMPLER_ARG = toString cfg.opentelemetry.sampleRate;
+                OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED = "true";
+                OTEL_PYTHON_LOG_CORRELATION = "true";
+              }
+            );
           path = [
             "/var/"
             "/var/dkim/"
@@ -140,7 +245,20 @@ in
               PYTHONUNBUFFERED = "1";
               PYTHONPATH = pkgs.python312Packages.makePythonPath [ selfprivacy-graphql-api ];
             }
-            // config.networking.proxy.envVars;
+            // config.networking.proxy.envVars
+            // (lib.optionalAttrs cfg.opentelemetry.enable
+              {
+                OTEL_EXPORTER_OTLP_ENDPOINT = cfg.opentelemetry.endpoint;
+                OTEL_EXPORTER_OTLP_PROTOCOL = "grpc";
+                OTEL_EXPORTER_OTLP_HEADERS = otlpHeadersEnv;
+                OTEL_SERVICE_NAME = "${cfg.opentelemetry.serviceName}-worker";
+                OTEL_SERVICE_VERSION = cfg.opentelemetry.serviceVersion;
+                OTEL_TRACES_SAMPLER = "traceidratio";
+                OTEL_TRACES_SAMPLER_ARG = toString cfg.opentelemetry.sampleRate;
+                OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED = "true";
+                OTEL_PYTHON_LOG_CORRELATION = "true";
+              }
+            );
           path = [
             "/var/"
             "/var/dkim/"
