@@ -367,4 +367,6 @@ def get_services(exclude_remote=False) -> List[Service]:
             except Exception as e:
                 logger.error(f"Failed to load service {module}: {e}")
 
+    logger.warning(f"Loaded services: {service_ids}")
+
     return hardcoded_services + templated_services
