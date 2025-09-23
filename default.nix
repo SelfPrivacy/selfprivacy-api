@@ -32,6 +32,7 @@ pythonPackages.buildPythonPackage {
     bleach
     argon2-cffi
     diceware
+    grpcio
     opentelemetry-api
     opentelemetry-sdk
     opentelemetry-exporter-otlp-proto-grpc
