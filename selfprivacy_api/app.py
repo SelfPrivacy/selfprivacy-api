@@ -121,8 +121,6 @@ if "root" in uvicorn_log_config:
 else:
     uvicorn_log_config["root"] = {"level": "INFO", "handlers": ["otel"]}
 
-logging.info("API Starting, OTEL configured.")
-
 
 @asynccontextmanager
 async def app_lifespan(app: FastAPI):

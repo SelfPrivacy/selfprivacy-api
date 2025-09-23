@@ -10,6 +10,7 @@ let
   config-id = "default";
   nixos-rebuild = "${config.system.build.nixos-rebuild}/bin/nixos-rebuild";
   nix = "${config.nix.package.out}/bin/nix";
+  workerPython = pkgs.python312.withPackages (ps: [ selfprivacy-graphql-api ps.huey ]);
   sp-fetch-remote-module = pkgs.writeShellApplication {
     name = "sp-fetch-remote-module";
     runtimeInputs = [ config.nix.package.out ];
@@ -190,7 +191,6 @@ in
             // {
               HOME = "/root";
               PYTHONUNBUFFERED = "1";
-              PYTHONPATH = pkgs.python312Packages.makePythonPath [ selfprivacy-graphql-api ];
             }
             // config.networking.proxy.envVars
             // (lib.optionalAttrs cfg.opentelemetry.enable
@@ -231,7 +231,7 @@ in
           serviceConfig = {
             # Do not forget to edit Postgres identMap if you change the user!
             User = "root";
-            ExecStart = "${pkgs.python312Packages.huey}/bin/huey_consumer.py selfprivacy_api.task_registry.huey";
+            ExecStart = "${workerPython}/bin/python -m huey.bin.huey_consumer selfprivacy_api.task_registry.huey";
             Restart = "always";
             RestartSec = "5";
             Slice = "selfprivacy_api.slice";
