@@ -62,9 +62,6 @@ let
     '';
   };
 
-  # Convert headers to OTEL format
-  otlpHeadersEnv = lib.concatStringsSep "," (lib.mapAttrsToList (name: value: "${name}=${value}") cfg.opentelemetry.headers);
-
 in
 {
   options.services.selfprivacy-api = {
@@ -105,9 +102,9 @@ in
         '';
       };
       headers = lib.mkOption {
-        type = lib.types.attrs;
-        default = { };
-        example = { "x-api-key" = "token123"; };
+        type = lib.types.str;
+        default = "";
+        example = "key1=value1,key2=value2";
         description = ''
           Additional headers to send with OTLP requests
         '';
@@ -153,7 +150,7 @@ in
               {
                 OTEL_EXPORTER_OTLP_ENDPOINT = cfg.opentelemetry.endpoint;
                 OTEL_EXPORTER_OTLP_PROTOCOL = "grpc";
-                OTEL_EXPORTER_OTLP_HEADERS = otlpHeadersEnv;
+                OTEL_EXPORTER_OTLP_HEADERS = cfg.opentelemetry.headers;
                 OTEL_SERVICE_NAME = cfg.opentelemetry.serviceName;
                 OTEL_SERVICE_VERSION = cfg.opentelemetry.serviceVersion;
                 OTEL_TRACES_SAMPLER = "traceidratio";
@@ -207,7 +204,7 @@ in
               {
                 OTEL_EXPORTER_OTLP_ENDPOINT = cfg.opentelemetry.endpoint;
                 OTEL_EXPORTER_OTLP_PROTOCOL = "grpc";
-                OTEL_EXPORTER_OTLP_HEADERS = otlpHeadersEnv;
+                OTEL_EXPORTER_OTLP_HEADERS = cfg.opentelemetry.headers;
                 OTEL_SERVICE_NAME = "${cfg.opentelemetry.serviceName}-worker";
                 OTEL_SERVICE_VERSION = cfg.opentelemetry.serviceVersion;
                 OTEL_TRACES_SAMPLER = "traceidratio";
