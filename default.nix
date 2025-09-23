@@ -4,7 +4,7 @@ pythonPackages.buildPythonPackage {
   pname = "selfprivacy-graphql-api";
   version = rev;
   src = builtins.filterSource (p: t: p != ".git" && t != "symlink") ./.;
-  propagatedBuildInputs = with pythonPackages; [
+  propagatedBuildInputs = with pythonPackages; ([
     fastapi
     gevent
     huey
@@ -32,7 +32,11 @@ pythonPackages.buildPythonPackage {
     bleach
     argon2-cffi
     diceware
-  ];
+    opentelemetry-api
+    opentelemetry-sdk
+    opentelemetry-exporter-otlp-proto-grpc
+    opentelemetry-instrumentation-fastapi
+  ] ++ strawberry-graphql.optional-dependencies.opentelemetry);
   pythonImportsCheck = [ "selfprivacy_api" ];
   doCheck = false;
   meta = {

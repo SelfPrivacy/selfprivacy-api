@@ -11,6 +11,8 @@ from strawberry.fastapi import GraphQLRouter
 from strawberry.subscriptions import GRAPHQL_TRANSPORT_WS_PROTOCOL, GRAPHQL_WS_PROTOCOL
 from contextlib import asynccontextmanager
 
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+
 import uvicorn
 
 from selfprivacy_api.dependencies import get_api_version
@@ -32,6 +34,7 @@ log_level = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
     level=getattr(logging, log_level, logging.INFO), format="%(levelname)s: %(message)s"
 )
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -78,6 +81,9 @@ async def get_version():
 @app.get("/")
 async def root():
     return RedirectResponse(url="/user")
+
+
+FastAPIInstrumentor.instrument_app(app)
 
 
 if __name__ == "__main__":
