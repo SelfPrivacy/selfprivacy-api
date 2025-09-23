@@ -62,27 +62,8 @@ let
     '';
   };
 
-  # Helper to generate basic auth header
-  basicAuthHeader =
-    if cfg.opentelemetry.basicAuth.username != null then
-      let
-        password =
-          if cfg.opentelemetry.basicAuth.passwordFile != null
-          then "$(cat ${cfg.opentelemetry.basicAuth.passwordFile})"
-          else cfg.opentelemetry.basicAuth.password;
-        credentials = "${cfg.opentelemetry.basicAuth.username}:${password}";
-        encodedCredentials = "$(echo -n '${credentials}' | base64 -w 0)";
-      in
-      "Basic ${encodedCredentials}"
-    else null;
-
-  # Generate OTLP headers including basic auth
-  otlpHeaders = cfg.opentelemetry.headers // (lib.optionalAttrs (basicAuthHeader != null) {
-    authorization = basicAuthHeader;
-  });
-
   # Convert headers to OTEL format
-  otlpHeadersEnv = lib.concatStringsSep "," (lib.mapAttrsToList (name: value: "${name}=${value}") otlpHeaders);
+  otlpHeadersEnv = lib.concatStringsSep "," (lib.mapAttrsToList (name: value: "${name}=${value}") cfg.opentelemetry.headers);
 
 in
 {
@@ -122,30 +103,6 @@ in
         description = ''
           Service version for telemetry traces
         '';
-      };
-      basicAuth = {
-        username = lib.mkOption {
-          type = lib.types.nullOr lib.types.str;
-          default = null;
-          description = ''
-            Username for basic authentication with OTLP server
-          '';
-        };
-        password = lib.mkOption {
-          type = lib.types.nullOr lib.types.str;
-          default = null;
-          description = ''
-            Password for basic authentication with OTLP server
-          '';
-        };
-        passwordFile = lib.mkOption {
-          type = lib.types.nullOr lib.types.path;
-          default = null;
-          description = ''
-            Path to file containing password for basic authentication with OTLP server.
-            Takes precedence over password option.
-          '';
-        };
       };
       headers = lib.mkOption {
         type = lib.types.attrs;
