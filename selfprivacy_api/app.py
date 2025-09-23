@@ -101,7 +101,7 @@ uvicorn_log_config["handlers"]["otel"] = {
     # Pass the already configured logger_provider so the handler exports to OTLP
     "logger_provider": logger_provider,
 }
-for _name in ("uvicorn", "uvicorn.error", "uvicorn.access"):
+for _name in ("uvicorn", "uvicorn.error"):
     if _name in uvicorn_log_config.get("loggers", {}):
         _cfg = uvicorn_log_config["loggers"][_name]
         _handlers = _cfg.setdefault("handlers", [])
