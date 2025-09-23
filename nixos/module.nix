@@ -95,11 +95,11 @@ in
           Service name for telemetry traces
         '';
       };
-      serviceVersion = lib.mkOption {
+      instanceId = lib.mkOption {
         type = lib.types.str;
-        default = "3.6.2";
+        default = "unknown-instance";
         description = ''
-          Service version for telemetry traces
+          Service instance ID for telemetry traces
         '';
       };
       headers = lib.mkOption {
@@ -108,13 +108,6 @@ in
         example = "key1=value1,key2=value2";
         description = ''
           Additional headers to send with OTLP requests
-        '';
-      };
-      sampleRate = lib.mkOption {
-        type = lib.types.float;
-        default = 1.0;
-        description = ''
-          Sampling rate for traces (0.0 to 1.0)
         '';
       };
     };
@@ -153,7 +146,7 @@ in
                 OTEL_EXPORTER_OTLP_PROTOCOL = "grpc";
                 OTEL_EXPORTER_OTLP_HEADERS = cfg.opentelemetry.headers;
                 OTEL_SERVICE_NAME = cfg.opentelemetry.serviceName;
-                OTEL_SERVICE_VERSION = cfg.opentelemetry.serviceVersion;
+                OTEL_SERVICE_INSTANCE_ID = cfg.opentelemetry.instanceId;
                 OTEL_TRACES_SAMPLER = "traceidratio";
                 OTEL_TRACES_SAMPLER_ARG = toString cfg.opentelemetry.sampleRate;
                 OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED = "true";
@@ -207,7 +200,7 @@ in
                 OTEL_EXPORTER_OTLP_PROTOCOL = "grpc";
                 OTEL_EXPORTER_OTLP_HEADERS = cfg.opentelemetry.headers;
                 OTEL_SERVICE_NAME = "${cfg.opentelemetry.serviceName}-worker";
-                OTEL_SERVICE_VERSION = cfg.opentelemetry.serviceVersion;
+                OTEL_SERVICE_INSTANCE_ID = cfg.opentelemetry.instanceId;
                 OTEL_TRACES_SAMPLER = "traceidratio";
                 OTEL_TRACES_SAMPLER_ARG = toString cfg.opentelemetry.sampleRate;
                 OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED = "true";
