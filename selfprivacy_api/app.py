@@ -11,7 +11,24 @@ from strawberry.fastapi import GraphQLRouter
 from strawberry.subscriptions import GRAPHQL_TRANSPORT_WS_PROTOCOL, GRAPHQL_WS_PROTOCOL
 from contextlib import asynccontextmanager
 
+from opentelemetry.sdk.resources import SERVICE_NAME, Resource
+
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+
+from opentelemetry import metrics
+from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+
+from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
+from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
+from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
+from opentelemetry._logs import set_logger_provider, get_logger
+
 
 import uvicorn
 
@@ -28,13 +45,43 @@ from selfprivacy_api.userpanel.routes.internal import router as internal_router
 
 from selfprivacy_api.userpanel.static import static_dir
 
+resource = Resource.create(attributes={
+    SERVICE_NAME: os.getenv("OTEL_SERVICE_NAME", "selfprivacy_api")
+})
 
-log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+otlp_endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317")
+otlp_protocol = os.getenv("OTEL_EXPORTER_OTLP_PROTOCOL", "grpc")
+otlp_headers = os.getenv("OTEL_EXPORTER_OTLP_HEADERS", "")
 
-logging.basicConfig(
-    level=getattr(logging, log_level, logging.INFO), format="%(levelname)s: %(message)s"
+tracer_provider = TracerProvider(resource=resource)
+trace_processor = BatchSpanProcessor(OTLPSpanExporter(
+    endpoint=otlp_endpoint,
+    headers=otlp_headers,
+))
+tracer_provider.add_span_processor(trace_processor)
+trace.set_tracer_provider(tracer_provider)
+
+reader = PeriodicExportingMetricReader(
+    OTLPMetricExporter(endpoint=otlp_endpoint, headers=otlp_headers)
 )
-logger = logging.getLogger(__name__)
+meter_provider = MeterProvider(resource=resource, metric_readers=[reader])
+metrics.set_meter_provider(meter_provider)
+
+logger_provider = LoggerProvider()
+logger_processor = BatchLogRecordProcessor(OTLPLogExporter(
+    endpoint=otlp_endpoint,
+    headers=otlp_headers
+))
+logger_provider.add_log_record_processor(logger_processor)
+set_logger_provider(logger_provider)
+
+
+logger = get_logger(__name__)
+
+log_handler = LoggingHandler(level=logging.INFO, logger_provider=logger_provider)
+logging.basicConfig(handlers=[log_handler], level=logging.INFO)
+
+logging.info("API Starting, OTEL configured.")
 
 
 @asynccontextmanager
