@@ -147,7 +147,7 @@ in
                 OTEL_SERVICE_NAME = cfg.opentelemetry.serviceName;
                 OTEL_SERVICE_INSTANCE_ID = cfg.opentelemetry.instanceId;
                 OTEL_TRACES_SAMPLER = "traceidratio";
-                OTEL_TRACES_SAMPLER_ARG = toString cfg.opentelemetry.sampleRate;
+                OTEL_TRACES_SAMPLER_ARG = "1.0";
                 OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED = "true";
                 OTEL_PYTHON_LOG_CORRELATION = "true";
               }
@@ -201,7 +201,7 @@ in
                 OTEL_SERVICE_NAME = "${cfg.opentelemetry.serviceName}-worker";
                 OTEL_SERVICE_INSTANCE_ID = cfg.opentelemetry.instanceId;
                 OTEL_TRACES_SAMPLER = "traceidratio";
-                OTEL_TRACES_SAMPLER_ARG = toString cfg.opentelemetry.sampleRate;
+                OTEL_TRACES_SAMPLER_ARG = "1.0";
                 OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED = "true";
                 OTEL_PYTHON_LOG_CORRELATION = "true";
               }
