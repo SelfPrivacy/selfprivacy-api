@@ -9,6 +9,7 @@ from strawberry.types import Info
 from strawberry.extensions.tracing import OpenTelemetryExtension
 from strawberry.extensions import SchemaExtension
 from opentelemetry import context as otel_context
+import inspect
 
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.mutations.deprecated_mutations import (
@@ -77,11 +78,13 @@ class OTelContextPropagation(SchemaExtension):
             ctx = None
 
         if ctx is None:
-            return await _next(root, info, *args, **kwargs)
+            result = _next(root, info, *args, **kwargs)
+            return await result if inspect.isawaitable(result) else result
 
         token = otel_context.attach(ctx)
         try:
-            return await _next(root, info, *args, **kwargs)
+            result = _next(root, info, *args, **kwargs)
+            return await result if inspect.isawaitable(result) else result
         finally:
             otel_context.detach(token)
 
