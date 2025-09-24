@@ -26,7 +26,7 @@ class Users:
             "Users.get_user", attributes={"username": username}
         ):
             try:
-                return get_user_by_username(username)
+                return await get_user_by_username(username)
             except UserNotFound:
                 return None
 
