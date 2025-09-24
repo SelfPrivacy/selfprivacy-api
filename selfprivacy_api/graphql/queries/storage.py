@@ -15,7 +15,7 @@ class Storage:
     """GraphQL queries to get storage information."""
 
     @strawberry.field
-    def volumes(self) -> typing.List[StorageVolume]:
+    async def volumes(self) -> typing.List[StorageVolume]:
         """Get list of volumes"""
         return [
             StorageVolume(

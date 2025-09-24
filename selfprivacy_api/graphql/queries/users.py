@@ -17,7 +17,7 @@ from selfprivacy_api.repositories.users.exceptions import UserNotFound
 @strawberry.type
 class Users:
     @strawberry.field(permission_classes=[IsAuthenticated])
-    def get_user(self, username: str) -> Optional[User]:
+    async def get_user(self, username: str) -> Optional[User]:
         """Get users"""
 
         try:

@@ -22,9 +22,9 @@ def get_all_jobs() -> List[ApiJob]:
 @strawberry.type
 class Job:
     @strawberry.field
-    def get_jobs(self) -> List[ApiJob]:
+    async def get_jobs(self) -> List[ApiJob]:
         return get_all_jobs()
 
     @strawberry.field
-    def get_job(self, job_id: str) -> Optional[ApiJob]:
+    async def get_job(self, job_id: str) -> Optional[ApiJob]:
         return get_api_job_by_id(job_id)
