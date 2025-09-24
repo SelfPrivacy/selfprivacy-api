@@ -45,26 +45,38 @@ resource = Resource.create(
 otlp_endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317")
 otlp_protocol = os.getenv("OTEL_EXPORTER_OTLP_PROTOCOL", "grpc")
 otlp_headers = os.getenv("OTEL_EXPORTER_OTLP_HEADERS", "")
+otlp_insecure = (
+    True if "localhost" in otlp_endpoint or "127.0.0.1" in otlp_endpoint else False
+)
 
 tracer_provider = TracerProvider(resource=resource)
 trace_processor = BatchSpanProcessor(
     OTLPSpanExporter(
         endpoint=otlp_endpoint,
         headers=otlp_headers,
+        insecure=otlp_insecure,
     )
 )
 tracer_provider.add_span_processor(trace_processor)
 trace.set_tracer_provider(tracer_provider)
 
 reader = PeriodicExportingMetricReader(
-    OTLPMetricExporter(endpoint=otlp_endpoint, headers=otlp_headers)
+    OTLPMetricExporter(
+        endpoint=otlp_endpoint,
+        headers=otlp_headers,
+        insecure=otlp_insecure,
+    )
 )
 meter_provider = MeterProvider(resource=resource, metric_readers=[reader])
 metrics.set_meter_provider(meter_provider)
 
 logger_provider = LoggerProvider(resource=resource)
 logger_processor = BatchLogRecordProcessor(
-    OTLPLogExporter(endpoint=otlp_endpoint, headers=otlp_headers)
+    OTLPLogExporter(
+        endpoint=otlp_endpoint,
+        headers=otlp_headers,
+        insecure=otlp_insecure,
+    )
 )
 logger_provider.add_log_record_processor(logger_processor)
 set_logger_provider(logger_provider)
