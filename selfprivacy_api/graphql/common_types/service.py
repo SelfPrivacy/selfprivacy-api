@@ -218,8 +218,12 @@ class Service:
 
     @strawberry.field
     async def dns_records(self) -> Optional[List[DnsRecord]]:
-        with tracer.start_as_current_span("resolve_service_dns_records", attributes={"service_id": self.id}):
-            service = await anyio.to_thread.run_sync(ServiceManager.get_service_by_id, self.id)
+        with tracer.start_as_current_span(
+            "resolve_service_dns_records", attributes={"service_id": self.id}
+        ):
+            service = await anyio.to_thread.run_sync(
+                ServiceManager.get_service_by_id, self.id
+            )
             if service is None:
                 raise LookupError(f"no service {self.id}. Should be unreachable")
 
@@ -230,14 +234,20 @@ class Service:
     @strawberry.field
     async def storage_usage(self) -> ServiceStorageUsage:
         """Get storage usage for a service"""
-        with tracer.start_as_current_span("get_storage_usage", attributes={"service_id": self.id}):
+        with tracer.start_as_current_span(
+            "get_storage_usage", attributes={"service_id": self.id}
+        ):
             return await get_storage_usage(self)
 
     @strawberry.field
     async def configuration(self) -> Optional[List[ConfigItem]]:
         """Get service configuration"""
-        with tracer.start_as_current_span("resolve_service_configuration", attributes={"service_id": self.id}):
-            service = await anyio.to_thread.run_sync(ServiceManager.get_service_by_id, self.id)
+        with tracer.start_as_current_span(
+            "resolve_service_configuration", attributes={"service_id": self.id}
+        ):
+            service = await anyio.to_thread.run_sync(
+                ServiceManager.get_service_by_id, self.id
+            )
             if service is None:
                 return None
             config_items = service.get_configuration()
@@ -247,7 +257,9 @@ class Service:
             # By the "type" field convert every dict into a ConfigItem. In the future there will be more types.
             unsorted_config_items = [config_items[item] for item in config_items]
             # Sort the items by their weight. If there is no weight, implicitly set it to 50.
-            config_items = sorted(unsorted_config_items, key=lambda x: x.get("weight", 50))
+            config_items = sorted(
+                unsorted_config_items, key=lambda x: x.get("weight", 50)
+            )
             return [config_item_to_graphql(item) for item in config_items]
 
     # TODO: fill this

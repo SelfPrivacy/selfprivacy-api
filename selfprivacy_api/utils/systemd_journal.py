@@ -1,7 +1,11 @@
 import typing
 from systemd import journal
+from opentelemetry import trace
+
+tracer = trace.get_tracer(__name__)
 
 
+@tracer.start_as_current_span("get_events_from_journal")
 def get_events_from_journal(
     j: journal.Reader, limit: int, next: typing.Callable[[journal.Reader], typing.Dict]
 ):
@@ -18,6 +22,7 @@ def get_events_from_journal(
     return events
 
 
+@tracer.start_as_current_span("get_paginated_logs")
 def get_paginated_logs(
     limit: int = 20,
     # All entries returned will be lesser than this cursor. Sets upper bound on results.
