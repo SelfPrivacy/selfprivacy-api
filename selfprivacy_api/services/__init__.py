@@ -10,7 +10,7 @@ from os import listdir, path
 from os import makedirs
 from os.path import join
 from functools import lru_cache
-
+from opentelemetry import trace
 
 from shutil import copyfile, copytree, rmtree
 from selfprivacy_api.jobs import Job, JobStatus, Jobs
@@ -41,27 +41,33 @@ CONFIG_STASH_DIR = "/etc/selfprivacy/dump"
 KANIDM_A_RECORD = "auth"
 
 logger = logging.getLogger(__name__)
+tracer = trace.get_tracer(__name__)
 
 
 class ServiceManager(Service):
     folders: List[str] = [CONFIG_STASH_DIR]
 
     @staticmethod
+    @tracer.start_as_current_span("get_all_services")
     def get_all_services() -> list[Service]:
         return get_services()
 
     @staticmethod
     def get_service_by_id(service_id: str) -> typing.Optional[Service]:
-        for service in get_services():
-            if service.get_id() == service_id:
-                return service
-        return None
+        with tracer.start_as_current_span("get_service_by_id") as span:
+            span.set_attribute("service_id", service_id)
+            for service in get_services():
+                if service.get_id() == service_id:
+                    return service
+            return None
 
     @staticmethod
+    @tracer.start_as_current_span("get_enabled_services")
     def get_enabled_services() -> list[Service]:
         return [service for service in get_services() if service.is_enabled()]
 
     @staticmethod
+    @tracer.start_as_current_span("get_enabled_services_with_urls")
     def get_enabled_services_with_urls() -> list[Service]:
         return [
             service
@@ -69,22 +75,26 @@ class ServiceManager(Service):
             if service.is_enabled() and service.get_url()
         ]
 
-    # This one is not currently used by any code.
+    # This one is not currently used by any code.``
     @staticmethod
+    @tracer.start_as_current_span("get_disabled_services")
     def get_disabled_services() -> list[Service]:
         return [service for service in get_services() if not service.is_enabled()]
 
     @staticmethod
     def get_services_by_location(location: str) -> list[Service]:
-        return [
-            service
-            for service in get_services(
-                exclude_remote=True,
-            )
-            if service.get_drive() == location
-        ]
+        with tracer.start_as_current_span("get_services_by_location") as span:
+            span.set_attribute("location", location)
+            return [
+                service
+                for service in get_services(
+                    exclude_remote=True,
+                )
+                if service.get_drive() == location
+            ]
 
     @staticmethod
+    @tracer.start_as_current_span("get_all_required_dns_records")
     def get_all_required_dns_records() -> list[ServiceDnsRecord]:
         ip4 = network_utils.get_ip4()
         ip6 = network_utils.get_ip6()
@@ -320,6 +330,7 @@ DUMMY_SERVICES = []
 TEST_FLAGS: list[str] = []
 
 
+@tracer.start_as_current_span("get_services")
 def get_services(exclude_remote=False) -> List[Service]:
     if "ONLY_DUMMY_SERVICE" in TEST_FLAGS:
         return DUMMY_SERVICES

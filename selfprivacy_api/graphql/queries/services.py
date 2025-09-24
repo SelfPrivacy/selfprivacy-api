@@ -1,7 +1,9 @@
 """Services status"""
 
 # pylint: disable=too-few-public-methods
+import anyio
 import typing
+from opentelemetry import trace
 
 import strawberry
 
@@ -11,13 +13,18 @@ from selfprivacy_api.graphql.common_types.service import (
 )
 from selfprivacy_api.services import ServiceManager
 
+tracer = trace.get_tracer(__name__)
+
 
 @strawberry.type
 class Services:
     @strawberry.field
     async def all_services(self) -> typing.List[Service]:
-        services = [
-            service_to_graphql_service(service)
-            for service in ServiceManager.get_all_services()
-        ]
-        return sorted(services, key=lambda service: service.display_name)
+        with tracer.start_as_current_span("resolve_all_services") as span:
+            services = await anyio.to_thread.run_sync(ServiceManager.get_all_services)
+            services = [service_to_graphql_service(service) for service in services]
+
+            span.set_attribute("service_count", len(services))
+            span.add_event("fetched all services from service manager")
+
+            return sorted(services, key=lambda service: service.display_name)
