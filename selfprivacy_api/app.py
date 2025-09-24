@@ -55,9 +55,8 @@ from selfprivacy_api.userpanel.static import static_dir
 
 
 # Capture OTel context per request/WS and expose it to Strawberry resolvers
-async def graphql_context_getter(request: Request):
+async def graphql_context_getter():
     return {
-        "request": request,
         "otel_context": otel_context.get_current(),
     }
 
