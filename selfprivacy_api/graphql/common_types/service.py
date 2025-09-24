@@ -2,6 +2,8 @@ from enum import Enum
 from typing import Optional, List
 import datetime
 import strawberry
+from opentelemetry import trace
+import anyio
 
 from selfprivacy_api.graphql.common_types.backup import BackupReason
 from selfprivacy_api.graphql.common_types.dns import DnsRecord
@@ -14,7 +16,10 @@ from selfprivacy_api.services import ServiceDnsRecord
 from selfprivacy_api.utils.block_devices import BlockDevices
 from selfprivacy_api.utils.network import get_ip4, get_ip6
 
+tracer = trace.get_tracer(__name__)
 
+
+@tracer.start_as_current_span("get_usages")
 def get_usages(root: "StorageVolume") -> list["StorageUsageInterface"]:
     """Get usages of a volume"""
     return [
@@ -94,9 +99,10 @@ class LicenseType:
     deprecated: strawberry.auto
 
 
+@tracer.start_as_current_span("get_storage_usage")
 def get_storage_usage(root: "Service") -> ServiceStorageUsage:
     """Get storage usage for a service"""
-    service = ServiceManager.get_service_by_id(root.id)
+    service = await anyio.to_thread.run_sync(ServiceManager.get_service_by_id, root.id)
     if service is None:
         return ServiceStorageUsage(
             service=service,
@@ -154,6 +160,7 @@ class EnumConfigItem(ConfigItem):
     options: list[str]
 
 
+@tracer.start_as_current_span("config_item_to_graphql")
 def config_item_to_graphql(item: dict) -> ConfigItem:
     item_type = item.get("type")
     if item_type == "string":
@@ -211,34 +218,37 @@ class Service:
 
     @strawberry.field
     def dns_records(self) -> Optional[List[DnsRecord]]:
-        service = ServiceManager.get_service_by_id(self.id)
-        if service is None:
-            raise LookupError(f"no service {self.id}. Should be unreachable")
+        with tracer.start_as_current_span("resolve_service_dns_records", attributes={"service_id": self.id}):
+            service = await anyio.io_thread.run_sync(ServiceManager.get_service_by_id, self.id)
+            if service is None:
+                raise LookupError(f"no service {self.id}. Should be unreachable")
 
-        raw_records = service.get_dns_records(get_ip4(), get_ip6())
-        dns_records = [service_dns_to_graphql(record) for record in raw_records]
-        return dns_records
+            raw_records = service.get_dns_records(get_ip4(), get_ip6())
+            dns_records = [service_dns_to_graphql(record) for record in raw_records]
+            return dns_records
 
     @strawberry.field
     def storage_usage(self) -> ServiceStorageUsage:
         """Get storage usage for a service"""
-        return get_storage_usage(self)
+        with tracer.start_as_current_span("get_storage_usage", attributes={"service_id": self.id}):
+            return get_storage_usage(self)
 
     @strawberry.field
     def configuration(self) -> Optional[List[ConfigItem]]:
         """Get service configuration"""
-        service = ServiceManager.get_service_by_id(self.id)
-        if service is None:
-            return None
-        config_items = service.get_configuration()
-        # If it is an empty dict, return none
-        if not config_items:
-            return None
-        # By the "type" field convert every dict into a ConfigItem. In the future there will be more types.
-        unsorted_config_items = [config_items[item] for item in config_items]
-        # Sort the items by their weight. If there is no weight, implicitly set it to 50.
-        config_items = sorted(unsorted_config_items, key=lambda x: x.get("weight", 50))
-        return [config_item_to_graphql(item) for item in config_items]
+        with tracer.start_as_current_span("resolve_service_configuration", attributes={"service_id": self.id}):
+            service = await anyio.io_thread.run_sync(ServiceManager.get_service_by_id, self.id)
+            if service is None:
+                return None
+            config_items = service.get_configuration()
+            # If it is an empty dict, return none
+            if not config_items:
+                return None
+            # By the "type" field convert every dict into a ConfigItem. In the future there will be more types.
+            unsorted_config_items = [config_items[item] for item in config_items]
+            # Sort the items by their weight. If there is no weight, implicitly set it to 50.
+            config_items = sorted(unsorted_config_items, key=lambda x: x.get("weight", 50))
+            return [config_item_to_graphql(item) for item in config_items]
 
     # TODO: fill this
     @strawberry.field
@@ -254,6 +264,7 @@ class SnapshotInfo:
     reason: BackupReason
 
 
+@tracer.start_as_current_span("service_to_graphql_service")
 def service_to_graphql_service(service: ServiceInterface) -> Service:
     """Convert service to graphql service"""
     return Service(
@@ -279,6 +290,7 @@ def service_to_graphql_service(service: ServiceInterface) -> Service:
     )
 
 
+@tracer.start_as_current_span("get_volume_by_id")
 def get_volume_by_id(volume_id: str) -> Optional[StorageVolume]:
     """Get volume by id"""
     volume = BlockDevices().get_block_device_by_canonical_name(volume_id)
