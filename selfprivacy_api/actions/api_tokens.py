@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from typing import Optional
 from pydantic import BaseModel
 from mnemonic import Mnemonic
+from opentelemetry import trace
 
 from selfprivacy_api.utils.timeutils import ensure_tz_aware, ensure_tz_aware_strict
 from selfprivacy_api.repositories.tokens import ACTIVE_TOKEN_PROVIDER
@@ -16,6 +17,8 @@ from selfprivacy_api.repositories.tokens.exceptions import (
     InvalidMnemonic,
     NewDeviceKeyNotFound,
 )
+
+tracer = trace.get_tracer(__name__)
 
 
 class TokenInfoWithIsCaller(BaseModel):
@@ -34,6 +37,7 @@ def _naive(date_time: datetime) -> datetime:
     return date_time.replace(tzinfo=None)
 
 
+@tracer.start_as_current_span("get_api_tokens_with_caller_flag")
 def get_api_tokens_with_caller_flag(caller_token: str) -> list[TokenInfoWithIsCaller]:
     """Get the tokens info"""
     caller_name = ACTIVE_TOKEN_PROVIDER.get_token_by_token_string(
@@ -50,6 +54,7 @@ def get_api_tokens_with_caller_flag(caller_token: str) -> list[TokenInfoWithIsCa
     ]
 
 
+@tracer.start_as_current_span("is_token_valid")
 def is_token_valid(token) -> bool:
     """Check if token is valid"""
     return ACTIVE_TOKEN_PROVIDER.is_token_valid(token)
@@ -63,6 +68,7 @@ class CannotDeleteCallerException(Exception):
     """Cannot delete caller exception"""
 
 
+@tracer.start_as_current_span("create_api_token")
 def delete_api_token(caller_token: str, token_name: str) -> None:
     """Delete the token"""
     if ACTIVE_TOKEN_PROVIDER.is_token_name_pair_valid(token_name, caller_token):
@@ -73,6 +79,7 @@ def delete_api_token(caller_token: str, token_name: str) -> None:
     ACTIVE_TOKEN_PROVIDER.delete_token(token)
 
 
+@tracer.start_as_current_span("create_api_token")
 def refresh_api_token(caller_token: str) -> str:
     """Refresh the token"""
     try:
@@ -93,6 +100,7 @@ class RecoveryTokenStatus(BaseModel):
     uses_left: Optional[int] = None
 
 
+@tracer.start_as_current_span("get_api_recovery_token_status")
 def get_api_recovery_token_status() -> RecoveryTokenStatus:
     """Get the recovery token status, timezone-aware"""
     token = ACTIVE_TOKEN_PROVIDER.get_recovery_key()
@@ -122,6 +130,7 @@ class InvalidUsesLeft(Exception):
     """Invalid uses left exception"""
 
 
+@tracer.start_as_current_span("get_new_api_recovery_key")
 def get_new_api_recovery_key(
     expiration_date: Optional[datetime] = None, uses_left: Optional[int] = None
 ) -> str:
@@ -140,6 +149,7 @@ def get_new_api_recovery_key(
     return mnemonic_phrase
 
 
+@tracer.start_as_current_span("use_mnemonic_recovery_token")
 def use_mnemonic_recovery_token(mnemonic_phrase, name):
     """Use the recovery token by converting the mnemonic word list to a byte array.
     If the recovery token if invalid itself, return None
@@ -156,10 +166,12 @@ def use_mnemonic_recovery_token(mnemonic_phrase, name):
         return None
 
 
+@tracer.start_as_current_span("delete_new_device_auth_token")
 def delete_new_device_auth_token() -> None:
     ACTIVE_TOKEN_PROVIDER.delete_new_device_key()
 
 
+@tracer.start_as_current_span("get_new_device_auth_token")
 def get_new_device_auth_token() -> str:
     """Generate and store a new device auth token which is valid for 10 minutes
     and return a mnemonic phrase representation
@@ -168,6 +180,7 @@ def get_new_device_auth_token() -> str:
     return Mnemonic(language="english").to_mnemonic(bytes.fromhex(key.key))
 
 
+@tracer.start_as_current_span("use_new_device_auth_token")
 def use_new_device_auth_token(mnemonic_phrase, name) -> Optional[str]:
     """Use the new device auth token by converting the mnemonic string to a byte array.
     If the mnemonic phrase is valid then generate a device token and return it.
