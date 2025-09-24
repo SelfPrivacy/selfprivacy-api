@@ -219,7 +219,7 @@ class Service:
     @strawberry.field
     async def dns_records(self) -> Optional[List[DnsRecord]]:
         with tracer.start_as_current_span("resolve_service_dns_records", attributes={"service_id": self.id}):
-            service = await anyio.io_thread.run_sync(ServiceManager.get_service_by_id, self.id)
+            service = await anyio.to_thread.run_sync(ServiceManager.get_service_by_id, self.id)
             if service is None:
                 raise LookupError(f"no service {self.id}. Should be unreachable")
 
@@ -237,7 +237,7 @@ class Service:
     async def configuration(self) -> Optional[List[ConfigItem]]:
         """Get service configuration"""
         with tracer.start_as_current_span("resolve_service_configuration", attributes={"service_id": self.id}):
-            service = await anyio.io_thread.run_sync(ServiceManager.get_service_by_id, self.id)
+            service = await anyio.to_thread.run_sync(ServiceManager.get_service_by_id, self.id)
             if service is None:
                 return None
             config_items = service.get_configuration()
