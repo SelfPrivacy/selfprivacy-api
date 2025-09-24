@@ -100,7 +100,7 @@ class LicenseType:
 
 
 @tracer.start_as_current_span("get_storage_usage")
-def get_storage_usage(root: "Service") -> ServiceStorageUsage:
+async def get_storage_usage(root: "Service") -> ServiceStorageUsage:
     """Get storage usage for a service"""
     service = await anyio.to_thread.run_sync(ServiceManager.get_service_by_id, root.id)
     if service is None:
@@ -217,7 +217,7 @@ class Service:
     support_level: SupportLevelEnum
 
     @strawberry.field
-    def dns_records(self) -> Optional[List[DnsRecord]]:
+    async def dns_records(self) -> Optional[List[DnsRecord]]:
         with tracer.start_as_current_span("resolve_service_dns_records", attributes={"service_id": self.id}):
             service = await anyio.io_thread.run_sync(ServiceManager.get_service_by_id, self.id)
             if service is None:
@@ -228,13 +228,13 @@ class Service:
             return dns_records
 
     @strawberry.field
-    def storage_usage(self) -> ServiceStorageUsage:
+    async def storage_usage(self) -> ServiceStorageUsage:
         """Get storage usage for a service"""
         with tracer.start_as_current_span("get_storage_usage", attributes={"service_id": self.id}):
             return get_storage_usage(self)
 
     @strawberry.field
-    def configuration(self) -> Optional[List[ConfigItem]]:
+    async def configuration(self) -> Optional[List[ConfigItem]]:
         """Get service configuration"""
         with tracer.start_as_current_span("resolve_service_configuration", attributes={"service_id": self.id}):
             service = await anyio.io_thread.run_sync(ServiceManager.get_service_by_id, self.id)
