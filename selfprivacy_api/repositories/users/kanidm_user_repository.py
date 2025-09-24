@@ -5,6 +5,7 @@ import re
 import os
 import logging
 import requests  # type: ignore
+from opentelemetry.instrumentation.requests import RequestsInstrumentor
 
 from selfprivacy_api.models.group import Group, get_default_grops
 from selfprivacy_api.repositories.users.exceptions import (
@@ -36,6 +37,8 @@ SP_ADMIN_GROUPS = ["sp.admins"]
 SP_DEFAULT_GROUPS = ["sp.full_users"]
 
 logger = logging.getLogger(__name__)
+
+RequestsInstrumentor().instrument()
 
 
 def get_kanidm_url():
