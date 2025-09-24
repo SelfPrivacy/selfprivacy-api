@@ -176,7 +176,9 @@ class Mutation(
         return StorageMutations()
 
     @strawberry.field(permission_classes=[IsAuthenticated])
-    async def email_password_metadata_mutations(self) -> EmailPasswordsMetadataMutations:
+    async def email_password_metadata_mutations(
+        self,
+    ) -> EmailPasswordsMetadataMutations:
         """Storage mutations"""
         return EmailPasswordsMetadataMutations()
 

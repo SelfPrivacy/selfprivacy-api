@@ -23,6 +23,7 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.instrumentation.threading import ThreadingInstrumentor
 
 from opentelemetry import metrics
 from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
@@ -129,6 +130,8 @@ if "root" in uvicorn_log_config:
         _root_handlers.append("otel")
 else:
     uvicorn_log_config["root"] = {"level": "INFO", "handlers": ["otel"]}
+
+ThreadingInstrumentor().instrument()
 
 
 @asynccontextmanager

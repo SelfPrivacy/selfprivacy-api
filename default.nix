@@ -37,6 +37,11 @@ pythonPackages.buildPythonPackage {
     opentelemetry-sdk
     opentelemetry-exporter-otlp-proto-grpc
     opentelemetry-instrumentation-fastapi
+    opentelemetry-instrumentation-requests
+    opentelemetry-instrumentation-redis
+    (callPackage ./nixos/packages/opentelemetry-instrumentation-threading {})
+    # opentelemetry-instrumentation-jinja2
+    opentelemetry-instrumentation
   ] ++ strawberry-graphql.optional-dependencies.opentelemetry);
   pythonImportsCheck = [ "selfprivacy_api" ];
   doCheck = false;
