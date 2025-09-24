@@ -7,6 +7,9 @@ from typing import AsyncGenerator, List
 import strawberry
 from strawberry.types import Info
 from strawberry.extensions.tracing import OpenTelemetryExtension
+from strawberry.extensions import SchemaExtension
+from opentelemetry import context as otel_context
+import inspect
 
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.mutations.deprecated_mutations import (
@@ -53,6 +56,37 @@ from selfprivacy_api.graphql.common_types.service import (
 from selfprivacy_api.graphql.mutations.users_mutations import UsersMutations
 from selfprivacy_api.graphql.queries.users import Users
 from selfprivacy_api.jobs.test import test_job
+
+
+class OTelContextPropagation(SchemaExtension):
+    """Propagate FastAPI/ASGI OTel context into resolver execution threads.
+
+    Strawberry may run sync resolvers in a thread pool. This ensures the
+    request's OpenTelemetry context is attached before executing the resolver,
+    so user-created spans are correctly parented to the request span.
+    """
+
+    async def resolve(self, _next, root, info: Info, *args, **kwargs):  # type: ignore[override]
+        ctx = None
+        try:
+            c = info.context
+            if isinstance(c, dict):
+                ctx = c.get("otel_context")
+            else:
+                ctx = getattr(c, "otel_context", None)
+        except Exception:
+            ctx = None
+
+        if ctx is None:
+            result = _next(root, info, *args, **kwargs)
+            return await result if inspect.isawaitable(result) else result
+
+        token = otel_context.attach(ctx)
+        try:
+            result = _next(root, info, *args, **kwargs)
+            return await result if inspect.isawaitable(result) else result
+        finally:
+            otel_context.detach(token)
 
 
 @strawberry.type
@@ -218,6 +252,7 @@ schema = strawberry.Schema(
         EnumConfigItem,
     ],
     extensions=[
+        OTelContextPropagation(),
         OpenTelemetryExtension(),
     ],
 )
