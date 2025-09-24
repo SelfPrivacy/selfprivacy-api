@@ -101,14 +101,13 @@ class Backup:
 
     @strawberry.field
     async def all_snapshots(self) -> typing.List[SnapshotInfo]:
-        with tracer.start_as_current_span("resolve_all_snapshots"):
+        with tracer.start_as_current_span("resolve_all_snapshots") as span:
             if not Backups.is_initted():
                 return []
             snapshots = Backups.get_all_snapshots()
 
-            current_span = trace.get_current_span()
-            current_span.set_attribute("snapshot_count", len(snapshots))
-            current_span.add_event("fetched all snapshots from backup storage")
+            span.set_attribute("snapshot_count", len(snapshots))
+            span.add_event("fetched all snapshots from backup storage")
 
             return [snapshot_to_api(snap) for snap in snapshots]
 
