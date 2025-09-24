@@ -231,7 +231,7 @@ class Service:
     async def storage_usage(self) -> ServiceStorageUsage:
         """Get storage usage for a service"""
         with tracer.start_as_current_span("get_storage_usage", attributes={"service_id": self.id}):
-            return get_storage_usage(self)
+            return await get_storage_usage(self)
 
     @strawberry.field
     async def configuration(self) -> Optional[List[ConfigItem]]:
