@@ -1,8 +1,11 @@
 from typing import Optional
+from opentelemetry import trace
 
 import strawberry
 
 from selfprivacy_api.actions.users import get_groups as actions_get_groups
+
+tracer = trace.get_tracer(__name__)
 
 
 @strawberry.type
@@ -16,6 +19,7 @@ class Group:
     description: Optional[str] = None
 
 
+@tracer.start_as_current_span("resolve_get_groups")
 async def get_groups() -> list[Group]:
     """Get groups"""
     groups = actions_get_groups()

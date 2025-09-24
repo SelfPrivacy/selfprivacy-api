@@ -1,9 +1,12 @@
 """System logs"""
 
+from opentelemetry import trace
 from datetime import datetime
 import typing
 import strawberry
 from selfprivacy_api.utils.systemd_journal import get_paginated_logs
+
+tracer = trace.get_tracer(__name__)
 
 
 @strawberry.type
@@ -53,6 +56,7 @@ class PaginatedEntries:
         self.entries = entries
 
     @staticmethod
+    @tracer.start_as_current_span("PaginatedEntries.from_entries")
     def from_entries(entries: typing.List[LogEntry]):
         if entries == []:
             return PaginatedEntries(LogsPageMeta(None, None), [])
@@ -81,19 +85,36 @@ class Logs:
         # All entries will be from a specific systemd unit
         filterByUnit: str | None = None,
     ) -> PaginatedEntries:
-        if limit > 50:
-            raise Exception("You can't fetch more than 50 entries via single request.")
-        return PaginatedEntries.from_entries(
-            list(
-                map(
-                    lambda x: LogEntry(x),
-                    get_paginated_logs(
-                        limit,
-                        up_cursor,
-                        down_cursor,
-                        filterBySlice,
-                        filterByUnit,
-                    ),
+        with tracer.start_as_current_span(
+            "resolve_get_paginated_logs",
+            attributes={
+                "limit": limit,
+                "up_cursor": up_cursor,
+                "down_cursor": down_cursor,
+                "filterBySlice": filterBySlice,
+                "filterByUnit": filterByUnit,
+            },
+        ) as span:
+            if limit > 50:
+                span.set_status(trace.Status.ERROR)
+                span.set_attribute(
+                    "error.message",
+                    "You can't fetch more than 50 entries via single request.",
+                )
+                raise Exception(
+                    "You can't fetch more than 50 entries via single request."
+                )
+            return PaginatedEntries.from_entries(
+                list(
+                    map(
+                        lambda x: LogEntry(x),
+                        get_paginated_logs(
+                            limit,
+                            up_cursor,
+                            down_cursor,
+                            filterBySlice,
+                            filterByUnit,
+                        ),
+                    )
                 )
             )
-        )

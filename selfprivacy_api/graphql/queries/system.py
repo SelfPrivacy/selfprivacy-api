@@ -4,6 +4,7 @@
 import os
 import typing
 import strawberry
+from opentelemetry import trace
 
 from selfprivacy_api.graphql.common_types.dns import DnsRecord
 
@@ -15,6 +16,8 @@ from selfprivacy_api.services import ServiceManager
 from selfprivacy_api.utils import ReadUserData
 import selfprivacy_api.actions.system as system_actions
 import selfprivacy_api.actions.ssh as ssh_actions
+
+tracer = trace.get_tracer(__name__)
 
 
 @strawberry.type
@@ -28,19 +31,21 @@ class SystemDomainInfo:
     @strawberry.field
     async def required_dns_records(self) -> typing.List[DnsRecord]:
         """Collect all required DNS records for all services"""
-        return [
-            DnsRecord(
-                record_type=record.type,
-                name=record.name,
-                content=record.content,
-                ttl=record.ttl,
-                priority=record.priority,
-                display_name=record.display_name,
-            )
-            for record in ServiceManager.get_all_required_dns_records()
-        ]
+        with tracer.start_as_current_span("SystemDomainInfo.required_dns_records"):
+            return [
+                DnsRecord(
+                    record_type=record.type,
+                    name=record.name,
+                    content=record.content,
+                    ttl=record.ttl,
+                    priority=record.priority,
+                    display_name=record.display_name,
+                )
+                for record in ServiceManager.get_all_required_dns_records()
+            ]
 
 
+@tracer.start_as_current_span("get_system_domain_info")
 async def get_system_domain_info() -> SystemDomainInfo:
     """Get basic system domain info"""
     with ReadUserData() as user_data:
@@ -59,6 +64,7 @@ class AutoUpgradeOptions:
     allow_reboot: bool
 
 
+@tracer.start_as_current_span("get_auto_upgrade_options")
 async def get_auto_upgrade_options() -> AutoUpgradeOptions:
     """Get automatic upgrade options"""
     settings = system_actions.get_auto_upgrade_settings()
@@ -79,6 +85,7 @@ class SshSettings:
     root_ssh_keys: typing.List[str]
 
 
+@tracer.start_as_current_span("get_ssh_settings")
 async def get_ssh_settings() -> SshSettings:
     """Get SSH settings"""
     settings = ssh_actions.get_ssh_settings()
@@ -89,6 +96,7 @@ async def get_ssh_settings() -> SshSettings:
     )
 
 
+@tracer.start_as_current_span("get_system_timezone")
 async def get_system_timezone() -> str:
     """Get system timezone"""
     return system_actions.get_timezone()
@@ -105,11 +113,13 @@ class SystemSettings:
     timezone: str = strawberry.field(resolver=get_system_timezone)
 
 
+@tracer.start_as_current_span("get_system_version")
 async def get_system_version() -> str:
     """Get system version"""
     return system_actions.get_system_version()
 
 
+@tracer.start_as_current_span("get_python_version")
 async def get_python_version() -> str:
     """Get Python version"""
     return system_actions.get_python_version()
@@ -125,7 +135,8 @@ class SystemInfo:
     @strawberry.field
     async def using_binds(self) -> bool:
         """Check if the system is using BINDs"""
-        return is_bind_migrated()
+        with tracer.start_as_current_span("SystemInfo.using_binds"):
+            return is_bind_migrated()
 
 
 @strawberry.type
@@ -136,6 +147,7 @@ class SystemProviderInfo:
     id: str
 
 
+@tracer.start_as_current_span("get_system_provider_info")
 async def get_system_provider_info() -> SystemProviderInfo:
     """Get system provider info"""
     with ReadUserData() as user_data:
@@ -167,9 +179,11 @@ class System:
     @strawberry.field
     async def busy(self) -> bool:
         """Check if the system is busy"""
-        return Jobs.is_busy()
+        with tracer.start_as_current_span("System.busy"):
+            return Jobs.is_busy()
 
     @strawberry.field
     async def working_directory(self) -> str:
         """Get working directory"""
-        return os.getcwd()
+        with tracer.start_as_current_span("System.working_directory"):
+            return os.getcwd()

@@ -1,5 +1,6 @@
 from typing import Optional
 from enum import Enum
+from opentelemetry import trace
 
 import strawberry
 
@@ -15,6 +16,8 @@ from selfprivacy_api.graphql.common_types.email_password_metadata import (
     EmailPasswordMetadata,
     get_email_credentials_metadata,
 )
+
+tracer = trace.get_tracer(__name__)
 
 
 @strawberry.enum
@@ -58,26 +61,14 @@ class PasswordResetLinkReturn(MutationReturnInterface):
 
 async def get_user_by_username(username: str) -> Optional[User]:
     # TODO: why isn't there TRY
-    user = actions_get_user_by_username(username=username)
-    if user is None:
-        return None
+    with tracer.start_as_current_span(
+        "get_user_by_username", attributes={"username": username}
+    ):
+        user = actions_get_user_by_username(username=username)
+        if user is None:
+            return None
 
-    return User(
-        username=user.username,
-        user_type=UserType(user.user_type.value),
-        ssh_keys=getattr(user, "ssh_keys", []),
-        directmemberof=getattr(user, "directmemberof", []),
-        memberof=getattr(user, "memberof", []),
-        display_name=getattr(user, "display_name", None),
-        email=getattr(user, "email", None),
-    )
-
-
-async def get_users() -> list[User]:
-    """Get users"""
-    users = actions_get_users(exclude_root=True)
-    return [
-        User(
+        return User(
             username=user.username,
             user_type=UserType(user.user_type.value),
             ssh_keys=getattr(user, "ssh_keys", []),
@@ -86,5 +77,21 @@ async def get_users() -> list[User]:
             display_name=getattr(user, "display_name", None),
             email=getattr(user, "email", None),
         )
-        for user in users
-    ]
+
+
+async def get_users() -> list[User]:
+    """Get users"""
+    with tracer.start_as_current_span("get_users"):
+        users = actions_get_users(exclude_root=True)
+        return [
+            User(
+                username=user.username,
+                user_type=UserType(user.user_type.value),
+                ssh_keys=getattr(user, "ssh_keys", []),
+                directmemberof=getattr(user, "directmemberof", []),
+                memberof=getattr(user, "memberof", []),
+                display_name=getattr(user, "display_name", None),
+                email=getattr(user, "email", None),
+            )
+            for user in users
+        ]

@@ -4,6 +4,7 @@
 import datetime
 import typing
 import strawberry
+from opentelemetry import trace
 
 from strawberry.types import Info
 from selfprivacy_api.actions.api_tokens import (
@@ -13,8 +14,11 @@ from selfprivacy_api.actions.api_tokens import (
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.dependencies import get_api_version as get_api_version_dependency
 
+tracer = trace.get_tracer(__name__)
 
-def get_api_version() -> str:
+
+@tracer.start_as_current_span("resolve_get_api_version")
+async def get_api_version() -> str:
     """Get API version"""
     return get_api_version_dependency()
 
@@ -39,6 +43,7 @@ class ApiRecoveryKeyStatus:
     uses_left: typing.Optional[int]
 
 
+@tracer.start_as_current_span("resolve_get_recovery_key_status")
 async def get_recovery_key_status() -> ApiRecoveryKeyStatus:
     """Get recovery key status, times are timezone-aware"""
     status = get_api_recovery_token_status()
@@ -67,18 +72,19 @@ class Api:
 
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def devices(self, info: Info) -> typing.List[ApiDevice]:
-        return [
-            ApiDevice(
-                name=device.name,
-                creation_date=device.date,
-                is_caller=device.is_caller,
-            )
-            for device in get_api_tokens_with_caller_flag(
-                info.context["request"]
-                .headers.get("Authorization", "")
-                .replace("Bearer ", "")
-            )
-        ]
+        with tracer.start_as_current_span("resolve_api_devices"):
+            return [
+                ApiDevice(
+                    name=device.name,
+                    creation_date=device.date,
+                    is_caller=device.is_caller,
+                )
+                for device in get_api_tokens_with_caller_flag(
+                    info.context["request"]
+                    .headers.get("Authorization", "")
+                    .replace("Bearer ", "")
+                )
+            ]
 
     recovery_key: ApiRecoveryKeyStatus = strawberry.field(
         resolver=get_recovery_key_status, permission_classes=[IsAuthenticated]
