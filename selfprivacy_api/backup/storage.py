@@ -4,6 +4,7 @@ Module for storing backup related data in redis.
 
 from typing import List, Optional
 from datetime import datetime
+from opentelemetry import trace
 
 from selfprivacy_api.models.backup.snapshot import Snapshot
 from selfprivacy_api.models.backup.provider import BackupProviderModel
@@ -30,6 +31,7 @@ REDIS_AUTOBACKUP_PERIOD_KEY = "backups:autobackup_period"
 
 REDIS_AUTOBACKUP_QUOTAS_KEY = "backups:autobackup_quotas_key"
 
+tracer = trace.get_tracer(__name__)
 redis = RedisPool().get_connection()
 
 
@@ -37,6 +39,7 @@ class Storage:
     """Static class for storing backup related data in redis"""
 
     @staticmethod
+    @tracer.start_as_current_span("reset")
     def reset() -> None:
         """Deletes all backup related data from redis"""
         redis.delete(REDIS_PROVIDER_KEY)
@@ -54,6 +57,7 @@ class Storage:
                 redis.delete(key)
 
     @staticmethod
+    @tracer.start_as_current_span("invalidate_snapshot_storage")
     def invalidate_snapshot_storage() -> None:
         """Deletes all cached snapshots from redis"""
         for key in redis.keys(REDIS_SNAPSHOTS_PREFIX + "*"):
@@ -68,6 +72,7 @@ class Storage:
         return REDIS_SNAPSHOTS_PREFIX + snapshot.id
 
     @staticmethod
+    @tracer.start_as_current_span("get_last_backup_time")
     def get_last_backup_time(service_id: str) -> Optional[datetime]:
         """Returns last backup time for a service or None if it was never backed up"""
         key = Storage.__last_backup_key(service_id)
@@ -80,6 +85,7 @@ class Storage:
         return snapshot.created_at
 
     @staticmethod
+    @tracer.start_as_current_span("store_last_timestamp")
     def store_last_timestamp(service_id: str, snapshot: Snapshot) -> None:
         """Stores last backup time for a service"""
         store_model_as_hash(
@@ -89,18 +95,21 @@ class Storage:
         )
 
     @staticmethod
+    @tracer.start_as_current_span("cache_snapshot")
     def cache_snapshot(snapshot: Snapshot) -> None:
         """Stores snapshot metadata in redis for caching purposes"""
         snapshot_key = Storage.__snapshot_key(snapshot)
         store_model_as_hash(redis, snapshot_key, snapshot)
 
     @staticmethod
+    @tracer.start_as_current_span("delete_cached_snapshot")
     def delete_cached_snapshot(snapshot: Snapshot) -> None:
         """Deletes snapshot metadata from redis"""
         snapshot_key = Storage.__snapshot_key(snapshot)
         redis.delete(snapshot_key)
 
     @staticmethod
+    @tracer.start_as_current_span("get_cached_snapshot_by_id")
     def get_cached_snapshot_by_id(snapshot_id: str) -> Optional[Snapshot]:
         """Returns cached snapshot by id or None if it doesn't exist"""
         key = REDIS_SNAPSHOTS_PREFIX + snapshot_id
@@ -109,6 +118,7 @@ class Storage:
         return hash_as_model(redis, key, Snapshot)
 
     @staticmethod
+    @tracer.start_as_current_span("get_cached_snapshots")
     def get_cached_snapshots() -> List[Snapshot]:
         """Returns all cached snapshots stored in redis"""
         keys: list[str] = redis.keys(REDIS_SNAPSHOTS_PREFIX + "*")  # type: ignore
@@ -121,6 +131,7 @@ class Storage:
         return result
 
     @staticmethod
+    @tracer.start_as_current_span("autobackup_period_minutes")
     def autobackup_period_minutes() -> Optional[int]:
         """None means autobackup is disabled"""
         if not redis.exists(REDIS_AUTOBACKUP_PERIOD_KEY):
@@ -128,16 +139,19 @@ class Storage:
         return int(redis.get(REDIS_AUTOBACKUP_PERIOD_KEY))  # type: ignore
 
     @staticmethod
+    @tracer.start_as_current_span("store_autobackup_period_minutes")
     def store_autobackup_period_minutes(minutes: int) -> None:
         """Set the new autobackup period in minutes"""
         redis.set(REDIS_AUTOBACKUP_PERIOD_KEY, minutes)
 
     @staticmethod
+    @tracer.start_as_current_span("delete_backup_period")
     def delete_backup_period() -> None:
         """Set the autobackup period to none, effectively disabling autobackup"""
         redis.delete(REDIS_AUTOBACKUP_PERIOD_KEY)
 
     @staticmethod
+    @tracer.start_as_current_span("store_provider")
     def store_provider(provider: AbstractBackupProvider) -> None:
         """Stores backup provider auth data in redis"""
         model = BackupProviderModel(
@@ -152,6 +166,7 @@ class Storage:
             raise IOError("could not store the provider model: ", model.model_dump())
 
     @staticmethod
+    @tracer.start_as_current_span("load_provider")
     def load_provider() -> Optional[BackupProviderModel]:
         """Loads backup storage provider auth data from redis"""
         provider_model = hash_as_model(
@@ -162,6 +177,7 @@ class Storage:
         return provider_model
 
     @staticmethod
+    @tracer.start_as_current_span("has_init_mark")
     def has_init_mark() -> bool:
         """Returns True if the repository was initialized"""
         if redis.exists(REDIS_INITTED_CACHE):
@@ -169,20 +185,24 @@ class Storage:
         return False
 
     @staticmethod
+    @tracer.start_as_current_span("mark_as_init")
     def mark_as_init():
         """Marks the repository as initialized"""
         redis.set(REDIS_INITTED_CACHE, 1)
 
     @staticmethod
+    @tracer.start_as_current_span("mark_as_uninitted")
     def mark_as_uninitted():
         """Marks the repository as initialized"""
         redis.delete(REDIS_INITTED_CACHE)
 
     @staticmethod
+    @tracer.start_as_current_span("set_autobackup_quotas")
     def set_autobackup_quotas(quotas: AutobackupQuotas) -> None:
         store_model_as_hash(redis, REDIS_AUTOBACKUP_QUOTAS_KEY, quotas.to_pydantic())
 
     @staticmethod
+    @tracer.start_as_current_span("autobackup_quotas")
     def autobackup_quotas() -> AutobackupQuotas:
         quotas_model = hash_as_model(
             redis, REDIS_AUTOBACKUP_QUOTAS_KEY, _AutobackupQuotas
