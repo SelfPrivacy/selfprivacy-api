@@ -39,7 +39,7 @@ class ApiRecoveryKeyStatus:
     uses_left: typing.Optional[int]
 
 
-def get_recovery_key_status() -> ApiRecoveryKeyStatus:
+async def get_recovery_key_status() -> ApiRecoveryKeyStatus:
     """Get recovery key status, times are timezone-aware"""
     status = get_api_recovery_token_status()
     if status is None or not status.exists:
@@ -66,7 +66,7 @@ class Api:
     version: str = strawberry.field(resolver=get_api_version)
 
     @strawberry.field(permission_classes=[IsAuthenticated])
-    def devices(self, info: Info) -> typing.List[ApiDevice]:
+    async def devices(self, info: Info) -> typing.List[ApiDevice]:
         return [
             ApiDevice(
                 name=device.name,

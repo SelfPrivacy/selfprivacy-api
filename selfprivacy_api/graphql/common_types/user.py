@@ -56,7 +56,7 @@ class PasswordResetLinkReturn(MutationReturnInterface):
     password_reset_link: Optional[str] = None
 
 
-def get_user_by_username(username: str) -> Optional[User]:
+async def get_user_by_username(username: str) -> Optional[User]:
     # TODO: why isn't there TRY
     user = actions_get_user_by_username(username=username)
     if user is None:
@@ -73,7 +73,7 @@ def get_user_by_username(username: str) -> Optional[User]:
     )
 
 
-def get_users() -> list[User]:
+async def get_users() -> list[User]:
     """Get users"""
     users = actions_get_users(exclude_root=True)
     return [

@@ -15,7 +15,7 @@ from selfprivacy_api.services import ServiceManager
 @strawberry.type
 class Services:
     @strawberry.field
-    def all_services(self) -> typing.List[Service]:
+    async def all_services(self) -> typing.List[Service]:
         services = [
             service_to_graphql_service(service)
             for service in ServiceManager.get_all_services()

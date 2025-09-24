@@ -69,7 +69,7 @@ class PaginatedEntries:
 @strawberry.type
 class Logs:
     @strawberry.field()
-    def paginated(
+    async def paginated(
         self,
         limit: int = 20,
         # All entries returned will be lesser than this cursor. Sets upper bound on results.

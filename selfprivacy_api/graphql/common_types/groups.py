@@ -16,7 +16,7 @@ class Group:
     description: Optional[str] = None
 
 
-def get_groups() -> list[Group]:
+async def get_groups() -> list[Group]:
     """Get groups"""
     groups = actions_get_groups()
     return [

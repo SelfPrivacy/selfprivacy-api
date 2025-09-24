@@ -85,7 +85,7 @@ def snapshot_to_api(snap: Snapshot):
 @strawberry.type
 class Backup:
     @strawberry.field
-    def configuration(self) -> BackupConfiguration:
+    async def configuration(self) -> BackupConfiguration:
         return BackupConfiguration(
             provider=Backups.provider().name,
             encryption_key=LocalBackupSecret.get(),
@@ -97,14 +97,14 @@ class Backup:
         )
 
     @strawberry.field
-    def all_snapshots(self) -> typing.List[SnapshotInfo]:
+    async def all_snapshots(self) -> typing.List[SnapshotInfo]:
         if not Backups.is_initted():
             return []
         snapshots = Backups.get_all_snapshots()
         return [snapshot_to_api(snap) for snap in snapshots]
 
     @strawberry.field
-    def last_slice(self) -> typing.List[SnapshotInfo]:
+    async def last_slice(self) -> typing.List[SnapshotInfo]:
         """
         A query for seeing which snapshots will be restored when migrating
         """
