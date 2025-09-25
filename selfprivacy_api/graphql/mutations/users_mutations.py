@@ -4,6 +4,7 @@
 from typing import Optional
 
 import strawberry
+from strawberry.types import Info
 
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.common_types.user import (
@@ -91,7 +92,9 @@ class UsersMutations:
     """Mutations change user settings"""
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def create_user(self, user: UserMutationInput) -> UserMutationReturn:
+    def create_user(self, user: UserMutationInput, info: Info) -> UserMutationReturn:
+        locale = info.context["locale"]
+
         try:
             create_user_action(
                 username=user.username,
@@ -111,17 +114,17 @@ class UsersMutations:
             FailedToGetValidKanidmToken,
         ) as error:
             return return_failed_mutation_return(
-                message=error.get_error_message(),
+                message=error.get_error_message(locale=locale),
             )
         except UsernameForbidden as error:
             return return_failed_mutation_return(
-                message=error.get_error_message(),
+                message=error.get_error_message(locale=locale),
                 code=409,
                 username=user.username,
             )
         except UserAlreadyExists as error:
             return return_failed_mutation_return(
-                message=error.get_error_message(),
+                message=error.get_error_message(locale=locale),
                 code=409,
                 username=user.username,
             )
@@ -148,14 +151,14 @@ class UsersMutations:
         except (UserNotFound, UserOrGroupNotFound) as error:
             return GenericMutationReturn(
                 success=False,
-                message=error.get_error_message(),
+                message=error.get_error_message(locale=locale),
                 code=404,
             )
         except UserIsProtected as error:
             return GenericMutationReturn(
                 success=False,
                 code=400,
-                message=error.get_error_message(),
+                message=error.get_error_message(locale=locale),
             )
         except (
             KanidmDidNotReturnAdminPassword,
@@ -166,7 +169,7 @@ class UsersMutations:
             return GenericMutationReturn(
                 success=False,
                 code=500,
-                message=error.get_error_message(),
+                message=error.get_error_message(locale=locale),
             )
 
         return GenericMutationReturn(
@@ -195,12 +198,12 @@ class UsersMutations:
             ApiUsingWrongUserRepository,
         ) as error:
             return return_failed_mutation_return(
-                message=error.get_error_message(),
+                message=error.get_error_message(locale=locale),
                 username=user.username,
             )
         except (UserNotFound, UserOrGroupNotFound) as error:
             return return_failed_mutation_return(
-                message=error.get_error_message(),
+                message=error.get_error_message(locale=locale),
                 code=404,
                 username=user.username,
             )
@@ -228,16 +231,16 @@ class UsersMutations:
             create_ssh_key_action(ssh_input.username, ssh_input.ssh_key)
         except KeyAlreadyExists as error:
             return return_failed_mutation_return(
-                message=error.get_error_message(),
+                message=error.get_error_message(locale=locale),
                 code=409,
             )
         except InvalidPublicKey as error:
             return return_failed_mutation_return(
-                message=error.get_error_message(),
+                message=error.get_error_message(locale=locale),
             )
         except UserNotFound as error:
             return return_failed_mutation_return(
-                message=error.get_error_message(),
+                message=error.get_error_message(locale=locale),
                 code=404,
             )
         except Exception as error:  # TODO why?
@@ -307,7 +310,7 @@ class UsersMutations:
             return PasswordResetLinkReturn(
                 success=False,
                 code=500,
-                message=error.get_error_message(),
+                message=error.get_error_message(locale=locale),
             )
 
         return PasswordResetLinkReturn(
