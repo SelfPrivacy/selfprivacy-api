@@ -1,4 +1,8 @@
-from gettext import translation
+import gettext
+
+from selfprivacy_api.utils.localization import TranslateSystemMessage as t
+
+_ = gettext.gettext
 
 
 class UserNotFound(Exception):
@@ -6,8 +10,7 @@ class UserNotFound(Exception):
 
     @staticmethod
     def get_error_message(locale: str) -> str:
-        t = translation("messages", localedir="locales", languages=[locale])
-        return t.gettext("User not found")
+        return t.translate(text=_("User not found"), locale=locale)
 
 
 class UserOrGroupNotFound(Exception):
@@ -15,8 +18,7 @@ class UserOrGroupNotFound(Exception):
 
     @staticmethod
     def get_error_message(locale: str) -> str:
-        t = translation("messages", localedir="locales", languages=[locale])
-        return t.gettext("User or group not found")
+        return t.translate(text=_("User or group not found"), locale=locale)
 
 
 class UserIsProtected(Exception):
@@ -24,8 +26,9 @@ class UserIsProtected(Exception):
 
     @staticmethod
     def get_error_message(locale: str) -> str:
-        t = translation("messages", localedir="locales", languages=[locale])
-        return t.gettext("User is protected and cannot be deleted or modified")
+        return t.translate(
+            text=_("User is protected and cannot be deleted or modified"), locale=locale
+        )
 
 
 class UsernameForbidden(Exception):
@@ -33,8 +36,7 @@ class UsernameForbidden(Exception):
 
     @staticmethod
     def get_error_message(locale: str) -> str:
-        t = translation("messages", localedir="locales", languages=[locale])
-        return t.gettext("Username is forbidden")
+        return t.translate(text=_("Username is forbidden"), locale=locale)
 
 
 class UserAlreadyExists(Exception):
@@ -42,8 +44,7 @@ class UserAlreadyExists(Exception):
 
     @staticmethod
     def get_error_message(locale: str) -> str:
-        t = translation("messages", localedir="locales", languages=[locale])
-        return t.gettext("User already exists")
+        return t.translate(text=_("User already exists"), locale=locale)
 
 
 class UsernameNotAlphanumeric(Exception):
@@ -51,8 +52,10 @@ class UsernameNotAlphanumeric(Exception):
 
     @staticmethod
     def get_error_message(locale: str) -> str:
-        t = translation("messages", localedir="locales", languages=[locale])
-        return t.gettext("Username must be alphanumeric and start with a letter")
+        return t.translate(
+            text=_("Username must be alphanumeric and start with a letter"),
+            locale=locale,
+        )
 
 
 class UsernameTooLong(Exception):
@@ -60,8 +63,10 @@ class UsernameTooLong(Exception):
 
     @staticmethod
     def get_error_message(locale: str) -> str:
-        t = translation("messages", localedir="locales", languages=[locale])
-        return t.gettext("Username is too long. Must be less than 32 characters")
+        return t.translate(
+            text=_("Username is too long. Must be less than 32 characters"),
+            locale=locale,
+        )
 
 
 class PasswordIsEmpty(Exception):
@@ -69,8 +74,7 @@ class PasswordIsEmpty(Exception):
 
     @staticmethod
     def get_error_message(locale: str) -> str:
-        t = translation("messages", localedir="locales", languages=[locale])
-        return t.gettext("Password cannot be empty")
+        return t.translate(text=_("Password cannot be empty"), locale=locale)
 
 
 class InvalidConfiguration(Exception):
@@ -78,8 +82,9 @@ class InvalidConfiguration(Exception):
 
     @staticmethod
     def get_error_message(locale: str) -> str:
-        t = translation("messages", localedir="locales", languages=[locale])
-        return t.gettext("Invalid configuration, userdata is broken")
+        return t.translate(
+            text=_("Invalid configuration, userdata is broken"), locale=locale
+        )
 
 
 class NoPasswordResetLinkFoundInResponse(Exception):
@@ -87,8 +92,10 @@ class NoPasswordResetLinkFoundInResponse(Exception):
 
     @staticmethod
     def get_error_message(locale: str) -> str:
-        t = translation("messages", localedir="locales", languages=[locale])
-        return t.gettext("The Kanidm response does not contain a password reset link.")
+        return t.translate(
+            text=_("The Kanidm response does not contain a password reset link."),
+            locale=locale,
+        )
 
 
 class DisplaynameTooLong(Exception):
@@ -96,17 +103,7 @@ class DisplaynameTooLong(Exception):
 
     @staticmethod
     def get_error_message(locale: str) -> str:
-        t = translation("messages", localedir="locales", languages=[locale])
-        return t.gettext("Display name is too long. Must be less than 16 characters")
-
-
-# from selfprivacy_api.utils.strings import PLEASE_UPDATE_APP_TEXT
-
-# class SelfPrivacyAppIsOutdate(Exception):
-#     """
-#     SelfPrivacy app is out of date, please update. Some important functions are not working at the moment.
-#     """
-
-#     @staticmethod
-#     def get_error_message() -> str:
-#         return PLEASE_UPDATE_APP_TEXT
+        return t.translate(
+            text=_("Display name is too long. Must be less than 16 characters"),
+            locale=locale,
+        )

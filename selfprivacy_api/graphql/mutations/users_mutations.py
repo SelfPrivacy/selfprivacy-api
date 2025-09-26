@@ -145,7 +145,9 @@ class UsersMutations:
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def delete_user(self, username: str) -> GenericMutationReturn:
+    def delete_user(self, username: str, info: Info) -> GenericMutationReturn:
+        locale = info.context["locale"]
+
         try:
             delete_user_action(username)
         except (UserNotFound, UserOrGroupNotFound) as error:
@@ -179,8 +181,10 @@ class UsersMutations:
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def update_user(self, user: UserMutationInput) -> UserMutationReturn:
+    def update_user(self, user: UserMutationInput, info: Info) -> UserMutationReturn:
         """Update user mutation"""
+        locale = info.context["locale"]
+
         try:
             update_user_action(
                 username=user.username,
@@ -224,8 +228,11 @@ class UsersMutations:
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def add_ssh_key(self, ssh_input: SshMutationInput) -> UserMutationReturn:
+    def add_ssh_key(
+        self, ssh_input: SshMutationInput, info: Info
+    ) -> UserMutationReturn:
         """Add a new ssh key"""
+        locale = info.context["locale"]
 
         try:
             create_ssh_key_action(ssh_input.username, ssh_input.ssh_key)
@@ -257,14 +264,17 @@ class UsersMutations:
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def remove_ssh_key(self, ssh_input: SshMutationInput) -> UserMutationReturn:
+    def remove_ssh_key(
+        self, ssh_input: SshMutationInput, info: Info
+    ) -> UserMutationReturn:
         """Remove ssh key from user"""
+        locale = info.context["locale"]
 
         try:
             remove_ssh_key_action(ssh_input.username, ssh_input.ssh_key)
         except (KeyNotFound, UserNotFound) as error:
             return return_failed_mutation_return(
-                message=error.get_error_message(),
+                message=error.get_error_message(locale=locale),
                 code=404,
             )
         except Exception as error:  # TODO why?
@@ -282,19 +292,23 @@ class UsersMutations:
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def generate_password_reset_link(self, username: str) -> PasswordResetLinkReturn:
+    def generate_password_reset_link(
+        self, username: str, info: Info
+    ) -> PasswordResetLinkReturn:
+        locale = info.context["locale"]
+
         try:
             password_reset_link = generate_password_reset_link_action(username=username)
         except (UserNotFound, UserOrGroupNotFound) as error:
             return PasswordResetLinkReturn(
                 success=False,
-                message=error.get_error_message(),
+                message=error.get_error_message(locale=locale),
                 code=404,
             )
         except UserIsProtected as error:
             return PasswordResetLinkReturn(
                 success=False,
-                message=error.get_error_message(),
+                message=error.get_error_message(locale=locale),
                 code=400,
             )
         except (

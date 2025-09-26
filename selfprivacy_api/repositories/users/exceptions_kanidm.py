@@ -1,7 +1,11 @@
 from typing import Optional
 from typing import Any
 
-from gettext import translation
+import gettext
+
+from selfprivacy_api.utils.localization import TranslateSystemMessage as t
+
+_ = gettext.gettext
 
 
 class KanidmQueryError(Exception):
@@ -18,17 +22,21 @@ class KanidmQueryError(Exception):
         self.method = method
 
     def get_error_message(self, locale: str) -> str:
-        t = translation("messages", localedir="locales", languages=[locale])
-
-        message = "An error occurred during the Kanidm query."
+        message = t.translate(
+            text=_("An error occurred during the Kanidm query."), locale=locale
+        )
         if self.method:
-            message += t.gettext(" Method: %(method)s") % {"method": self.method}
+            message += t.translate(text=_(" Method: %(method)s"), locale=locale) % {
+                "method": self.method
+            }
         if self.endpoint:
-            message += t.gettext(" Endpoint: %(endpoint)s") % {
+            message += t.translate(text=_(" Endpoint: %(endpoint)s"), locale=locale) % {
                 "endpoint": self.endpoint
             }
         if self.error_text:
-            message += t.gettext(" Error: %(error)s") % {"error": self.error_text}
+            message += t.translate(text=_(" Error: %(error)s"), locale=locale) % {
+                "error": self.error_text
+            }
         return message
 
 
@@ -37,8 +45,7 @@ class KanidmReturnEmptyResponse(Exception):
 
     @staticmethod
     def get_error_message(locale: str) -> str:
-        t = translation("messages", localedir="locales", languages=[locale])
-        return t.gettext("Kanidm returned an empty response.")
+        return t.translate(text=_("Kanidm returned an empty response."), locale=locale)
 
 
 class KanidmReturnUnknownResponseType(Exception):
@@ -48,12 +55,16 @@ class KanidmReturnUnknownResponseType(Exception):
         self.response_data = str(response_data)
 
     def get_error_message(self, locale: str) -> str:
-        t = translation("messages", localedir="locales", languages=[locale])
         return (
-            t.gettext("Kanidm returned unknown type response. Response: %(response)s")
+            t.translate(
+                text=_("Kanidm returned unknown type response. Response: %(response)s"),
+                locale=locale,
+            )
             % {"response": self.response_data}
             if self.response_data
-            else t.gettext("Kanidm returned unknown type response.")
+            else t.translate(
+                text=_("Kanidm returned unknown type response."), locale=locale
+            )
         )
 
 
@@ -62,8 +73,9 @@ class KanidmDidNotReturnAdminPassword(Exception):
 
     @staticmethod
     def get_error_message(locale: str) -> str:
-        t = translation("messages", localedir="locales", languages=[locale])
-        return t.gettext("Kanidm didn't return the admin password.")
+        return t.translate(
+            text=_("Kanidm didn't return the admin password."), locale=locale
+        )
 
 
 class KanidmCliSubprocessError(Exception):
@@ -73,12 +85,15 @@ class KanidmCliSubprocessError(Exception):
         self.error = error
 
     def get_error_message(self, locale: str) -> str:
-        t = translation("messages", localedir="locales", languages=[locale])
-        return (
-            t.gettext("An error occurred when using Kanidm CLI. Error: %(error)s")
-            % {"error": self.error}
-            if self.error
-            else t.gettext("An error occurred when using Kanidm cli")
+        return t.translate(
+            text=_("An error occurred when using Kanidm CLI. Error: %(error)s"),
+            locale=(
+                locale % {"error": self.error}
+                if self.error
+                else t.translate(
+                    text=_("An error occurred when using Kanidm cli"), locale=locale
+                )
+            ),
         )
 
 
@@ -87,5 +102,4 @@ class FailedToGetValidKanidmToken(Exception):
 
     @staticmethod
     def get_error_message(locale: str) -> str:
-        t = translation("messages", localedir="locales", languages=[locale])
-        return t.gettext("Failed to get valid Kanidm token.")
+        return t.translate(text=_("Failed to get valid Kanidm token."), locale=locale)
