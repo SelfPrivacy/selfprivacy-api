@@ -38,6 +38,7 @@ pythonPackages.buildPythonPackage {
     opentelemetry-exporter-otlp-proto-grpc
     opentelemetry-instrumentation-fastapi
     opentelemetry-instrumentation-requests
+    opentelemetry-instrumentation-httpx
     opentelemetry-instrumentation-redis
     (callPackage ./nixos/packages/opentelemetry-instrumentation-threading {})
     # opentelemetry-instrumentation-jinja2
