@@ -1,0 +1,125 @@
+# Russian translations for PACKAGE package
+# Русские переводы для пакета PACKAGE.
+# Copyright (C) 2025 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# ghost <dettlaff@riseup.net>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-09-26 20:10+0400\n"
+"PO-Revision-Date: 2025-10-01 04:39+0400\n"
+"Last-Translator: ghost <dettlaff@riseup.net>\n"
+"Language-Team: Russian <gnu@d07.ru>\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#: selfprivacy_api/repositories/users/exceptions.py:10
+msgid "User not found"
+msgstr "Пользователь не найден"
+
+#: selfprivacy_api/repositories/users/exceptions.py:19
+msgid "User or group not found"
+msgstr "Пользователь или группа не найдены"
+
+#: selfprivacy_api/repositories/users/exceptions.py:28
+msgid "User is protected and cannot be deleted or modified"
+msgstr "Пользователь защищён и не может быть удалён или изменён"
+
+#: selfprivacy_api/repositories/users/exceptions.py:37
+msgid "Username is forbidden"
+msgstr "Имя пользователя запрещено"
+
+#: selfprivacy_api/repositories/users/exceptions.py:46
+msgid "User already exists"
+msgstr "Пользователь уже существует"
+
+#: selfprivacy_api/repositories/users/exceptions.py:55
+msgid "Username must be alphanumeric and start with a letter"
+msgstr "Имя пользователя должно состоять из букв и цифр и начинаться с буквы"
+
+#: selfprivacy_api/repositories/users/exceptions.py:64
+msgid "Username is too long. Must be less than 32 characters"
+msgstr "Слишком длинное имя пользователя. Должно быть короче 32 символов"
+
+#: selfprivacy_api/repositories/users/exceptions.py:73
+msgid "Password cannot be empty"
+msgstr "Пароль не может быть пустым"
+
+#: selfprivacy_api/repositories/users/exceptions.py:82
+msgid "Invalid configuration, userdata is broken"
+msgstr "Неверная конфигурация: пользовательские данные повреждены"
+
+#: selfprivacy_api/repositories/users/exceptions.py:91
+msgid "The Kanidm response does not contain a password reset link."
+msgstr "Ответ Kanidm не содержит ссылки для сброса пароля."
+
+#: selfprivacy_api/repositories/users/exceptions.py:100
+msgid "Display name is too long. Must be less than 16 characters"
+msgstr "Слишком длинное отображаемое имя. Должно быть короче 16 символов"
+
+#: selfprivacy_api/repositories/users/exceptions_kanidm.py:25
+#, python-format
+msgid " Method: %(method)s"
+msgstr " Метод: %(method)s"
+
+#: selfprivacy_api/repositories/users/exceptions_kanidm.py:27
+#, python-format
+msgid " Endpoint: %(endpoint)s"
+msgstr " Эндпоинт: %(endpoint)s"
+
+#: selfprivacy_api/repositories/users/exceptions_kanidm.py:31
+#, python-format
+msgid " Error: %(error)s"
+msgstr " Ошибка: %(error)s"
+
+#: selfprivacy_api/repositories/users/exceptions_kanidm.py:41
+msgid "Kanidm returned an empty response."
+msgstr "Kanidm вернул пустой ответ."
+
+#: selfprivacy_api/repositories/users/exceptions_kanidm.py:53
+#, python-format
+msgid "Kanidm returned unknown type response. Response: %(response)s"
+msgstr "Kanidm вернул ответ неизвестного типа. Ответ: %(response)s"
+
+#: selfprivacy_api/repositories/users/exceptions_kanidm.py:56
+msgid "Kanidm returned unknown type response."
+msgstr "Kanidm вернул ответ неизвестного типа."
+
+#: selfprivacy_api/repositories/users/exceptions_kanidm.py:66
+msgid "Kanidm didn't return the admin password."
+msgstr "Kanidm не вернул пароль администратора."
+
+#: selfprivacy_api/repositories/users/exceptions_kanidm.py:78
+#, python-format
+msgid "An error occurred when using Kanidm CLI. Error: %(error)s"
+msgstr "Произошла ошибка при использовании Kanidm CLI. Ошибка: %(error)s"
+
+#: selfprivacy_api/repositories/users/exceptions_kanidm.py:81
+msgid "An error occurred when using Kanidm cli"
+msgstr "Произошла ошибка при использовании Kanidm CLI"
+
+#: selfprivacy_api/repositories/users/exceptions_kanidm.py:91
+msgid "Failed to get valid Kanidm token."
+msgstr "Не удалось получить действительный токен Kanidm."
+
+#: selfprivacy_api/actions/ssh.py:26
+msgid "Key not found"
+msgstr "Ключ не найден"
+
+#: selfprivacy_api/actions/ssh.py:35
+msgid "Key already exists"
+msgstr "Ключ уже существует"
+
+#: selfprivacy_api/actions/ssh.py:45
+msgid "Invalid key type. Only ssh-ed25519, ssh-rsa and ecdsa are supported"
+msgstr "Недопустимый тип ключа. Поддерживаются только ssh-ed25519, ssh-rsa и ecdsa"
+
+#: selfprivacy_api/actions/users.py:47
+msgid "API is using a too old or unfinished user repository"
+msgstr "API использует слишком старый или незавершённый репозиторий пользователей"

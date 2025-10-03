@@ -10,7 +10,7 @@ class UserNotFound(Exception):
 
     @staticmethod
     def get_error_message(locale: str) -> str:
-        return t.translate(text=_("User not found"), locale=locale)
+        return t.translate(text=_("User not found"), locale="ru")
 
 
 class UserOrGroupNotFound(Exception):
