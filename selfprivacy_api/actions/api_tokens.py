@@ -3,12 +3,15 @@ App tokens actions.
 The only actions on tokens that are accessible from APIs
 """
 
-from datetime import datetime, timezone
+import gettext
 from typing import Optional
+from datetime import datetime, timezone
 from pydantic import BaseModel
 from mnemonic import Mnemonic
 
 from selfprivacy_api.utils.timeutils import ensure_tz_aware, ensure_tz_aware_strict
+from selfprivacy_api.utils.localization import TranslateSystemMessage as t
+
 from selfprivacy_api.repositories.tokens import ACTIVE_TOKEN_PROVIDER
 from selfprivacy_api.repositories.tokens.exceptions import (
     TokenNotFound,
@@ -16,6 +19,8 @@ from selfprivacy_api.repositories.tokens.exceptions import (
     InvalidMnemonic,
     NewDeviceKeyNotFound,
 )
+
+_ = gettext.gettext
 
 
 class TokenInfoWithIsCaller(BaseModel):
@@ -55,20 +60,21 @@ def is_token_valid(token) -> bool:
     return ACTIVE_TOKEN_PROVIDER.is_token_valid(token)
 
 
-class NotFoundException(Exception):
-    """Not found exception"""
-
-
 class CannotDeleteCallerException(Exception):
-    """Cannot delete caller exception"""
+    @staticmethod
+    def get_error_message(locale: str) -> str:
+        return t.translate(
+            text=_("Cannot delete caller's token"),
+            locale=locale,
+        )
 
 
 def delete_api_token(caller_token: str, token_name: str) -> None:
     """Delete the token"""
     if ACTIVE_TOKEN_PROVIDER.is_token_name_pair_valid(token_name, caller_token):
-        raise CannotDeleteCallerException("Cannot delete caller's token")
+        raise CannotDeleteCallerException()
     if not ACTIVE_TOKEN_PROVIDER.is_token_name_exists(token_name):
-        raise NotFoundException("Token not found")
+        raise TokenNotFound()
     token = ACTIVE_TOKEN_PROVIDER.get_token_by_name(token_name)
     ACTIVE_TOKEN_PROVIDER.delete_token(token)
 
@@ -79,7 +85,7 @@ def refresh_api_token(caller_token: str) -> str:
         old_token = ACTIVE_TOKEN_PROVIDER.get_token_by_token_string(caller_token)
         new_token = ACTIVE_TOKEN_PROVIDER.refresh_token(old_token)
     except TokenNotFound:
-        raise NotFoundException("Token not found")
+        raise TokenNotFound()
     return new_token.token
 
 
@@ -115,11 +121,15 @@ def get_api_recovery_token_status() -> RecoveryTokenStatus:
 
 
 class InvalidExpirationDate(Exception):
-    """Invalid expiration date exception"""
+    @staticmethod
+    def get_error_message(locale: str) -> str:
+        return t.translate(text=_("Expiration date is in the past"), locale=locale)
 
 
 class InvalidUsesLeft(Exception):
-    """Invalid uses left exception"""
+    @staticmethod
+    def get_error_message(locale: str) -> str:
+        return t.translate(text=_("Uses must be greater than 0"), locale=locale)
 
 
 def get_new_api_recovery_key(
@@ -130,10 +140,10 @@ def get_new_api_recovery_key(
         expiration_date = ensure_tz_aware(expiration_date)
         current_time = datetime.now(timezone.utc)
         if expiration_date < current_time:
-            raise InvalidExpirationDate("Expiration date is in the past")
+            raise InvalidExpirationDate()
     if uses_left is not None:
         if uses_left <= 0:
-            raise InvalidUsesLeft("Uses must be greater than 0")
+            raise InvalidUsesLeft()
 
     key = ACTIVE_TOKEN_PROVIDER.create_recovery_key(expiration_date, uses_left)
     mnemonic_phrase = Mnemonic(language="english").to_mnemonic(bytes.fromhex(key.key))

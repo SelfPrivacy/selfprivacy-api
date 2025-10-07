@@ -1,7 +1,11 @@
 import typing
+import gettext
+
 import strawberry
+from strawberry.types import Info
 
 from selfprivacy_api.utils.graphql import api_job_mutation_error
+from selfprivacy_api.utils.localization import TranslateSystemMessage as t
 
 from selfprivacy_api.jobs import Jobs
 
@@ -37,6 +41,12 @@ from selfprivacy_api.backup.jobs import (
 )
 from selfprivacy_api.backup.local_secret import LocalBackupSecret
 
+_ = gettext.gettext
+
+RESTORE_JOB_CREATED = _("Restore job created")
+NONEXISTENT_SERVICE = _("Nonexistent service:")
+SNAPSHOT_NOT_FOUND = _("Snapshot not found with id:")
+
 
 @strawberry.input
 class InitializeRepositoryInput:
@@ -68,6 +78,7 @@ class BackupMutations:
         self, repository: InitializeRepositoryInput
     ) -> GenericBackupConfigReturn:
         """Initialize a new repository"""
+
         Backups.set_provider(
             kind=repository.provider,
             login=repository.login,
@@ -92,6 +103,7 @@ class BackupMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def remove_repository(self) -> GenericBackupConfigReturn:
         """Remove repository"""
+
         Backups.reset()
         return GenericBackupConfigReturn(
             success=True,
@@ -105,6 +117,7 @@ class BackupMutations:
         self, period: typing.Optional[int] = None
     ) -> GenericBackupConfigReturn:
         """Set autobackup period. None is to disable autobackup"""
+
         if period is not None:
             Backups.set_autobackup_period_minutes(period)
         else:
@@ -119,7 +132,7 @@ class BackupMutations:
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def set_autobackup_quotas(
-        self, quotas: AutobackupQuotasInput
+        self, quotas: AutobackupQuotasInput, info: Info
     ) -> GenericBackupConfigReturn:
         """
         Set autobackup quotas.
@@ -127,10 +140,16 @@ class BackupMutations:
         To disable autobackup use autobackup period setting, not this mutation.
         """
 
+        locale = info.context["locale"]
         job = Jobs.add(
-            name="Trimming autobackup snapshots",
+            name=t.translate(text=_("Trimming autobackup snapshots"), locale=locale),
             type_id="backups.autobackup_trimming",
-            description="Pruning the excessive snapshots after the new autobackup quotas are set",
+            description=t.translate(
+                text=_(
+                    "Pruning the excessive snapshots after the new autobackup quotas are set"
+                ),
+                locale=locale,
+            ),
         )
 
         try:
@@ -153,15 +172,16 @@ class BackupMutations:
             )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def start_backup(self, service_id: str) -> GenericJobMutationReturn:
+    def start_backup(self, service_id: str, info: Info) -> GenericJobMutationReturn:
         """Start backup"""
 
+        locale = info.context["locale"]
         service = ServiceManager.get_service_by_id(service_id)
         if service is None:
             return GenericJobMutationReturn(
                 success=False,
                 code=300,
-                message=f"nonexistent service: {service_id}",
+                message=f"{t.translate(text=NONEXISTENT_SERVICE, locale=locale)} {service_id}",
                 job=None,
             )
 
@@ -171,16 +191,18 @@ class BackupMutations:
         return GenericJobMutationReturn(
             success=True,
             code=200,
-            message="Backup job queued",
+            message=t.translate(text=_("Backup job queued"), locale=locale),
             job=job_to_api_job(job),
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def total_backup(self) -> GenericJobMutationReturn:
-        """Back up all the enabled services at once
+    def total_backup(self, info: Info) -> GenericJobMutationReturn:
+        """
+        Back up all the enabled services at once
         Useful when migrating
         """
 
+        locale = info.context["locale"]
         try:
             job = add_total_backup_job()
             total_backup(job)
@@ -190,17 +212,18 @@ class BackupMutations:
         return GenericJobMutationReturn(
             success=True,
             code=200,
-            message="Total backup task queued",
+            message=t.translate(text=_("Total backup task queued"), locale=locale),
             job=job_to_api_job(job),
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def restore_all(self) -> GenericJobMutationReturn:
+    def restore_all(self, info: Info) -> GenericJobMutationReturn:
         """
         Restore all restorable and enabled services according to last autobackup snapshots
         This happens in sync with partial merging of old configuration for compatibility
         """
 
+        locale = info.context["locale"]
         try:
             job = add_total_restore_job()
             full_restore(job)
@@ -215,7 +238,7 @@ class BackupMutations:
         return GenericJobMutationReturn(
             success=True,
             code=200,
-            message="restore job created",
+            message=t.translate(text=RESTORE_JOB_CREATED, locale=locale),
             job=job_to_api_job(job),
         )
 
@@ -223,15 +246,18 @@ class BackupMutations:
     def restore_backup(
         self,
         snapshot_id: str,
+        info: Info,
         strategy: RestoreStrategy = RestoreStrategy.DOWNLOAD_VERIFY_OVERWRITE,
     ) -> GenericJobMutationReturn:
         """Restore backup"""
+
+        locale = info.context["locale"]
         snap = Backups.get_snapshot_by_id(snapshot_id)
         if snap is None:
             return GenericJobMutationReturn(
                 success=False,
                 code=404,
-                message=f"No such snapshot: {snapshot_id}",
+                message=f"{t.translate(text=SNAPSHOT_NOT_FOUND, locale=locale)} {snapshot_id}",
                 job=None,
             )
 
@@ -240,7 +266,7 @@ class BackupMutations:
             return GenericJobMutationReturn(
                 success=False,
                 code=404,
-                message=f"nonexistent service: {snap.service_name}",
+                message=f"{t.translate(text=NONEXISTENT_SERVICE, locale=locale)} {snap.service_name}",
                 job=None,
             )
 
@@ -259,23 +285,24 @@ class BackupMutations:
         return GenericJobMutationReturn(
             success=True,
             code=200,
-            message="restore job created",
+            message=t.translate(text=RESTORE_JOB_CREATED, locale=locale),
             job=job_to_api_job(job),
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def forget_snapshot(self, snapshot_id: str) -> GenericMutationReturn:
+    def forget_snapshot(self, snapshot_id: str, info: Info) -> GenericMutationReturn:
         """Forget a snapshot.
         Makes it inaccessible from the server.
         After some time, the data (encrypted) will not be recoverable
         from the backup server too, but not immediately"""
 
+        locale = info.context["locale"]
         snap = Backups.get_snapshot_by_id(snapshot_id)
         if snap is None:
             return GenericMutationReturn(
                 success=False,
                 code=404,
-                message=f"snapshot {snapshot_id} not found",
+                message=f"{t.translate(text=SNAPSHOT_NOT_FOUND, locale=locale)} {snapshot_id}",
             )
 
         try:
@@ -295,6 +322,7 @@ class BackupMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def force_snapshots_reload(self) -> GenericMutationReturn:
         """Force snapshots reload"""
+
         Backups.force_snapshot_cache_reload()
         return GenericMutationReturn(
             success=True,

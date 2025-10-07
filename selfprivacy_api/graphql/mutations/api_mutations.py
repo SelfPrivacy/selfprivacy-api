@@ -1,15 +1,18 @@
 """API access mutations"""
 
 # pylint: disable=too-few-public-methods
+
+import gettext
 import datetime
 from typing import Optional
+
 import strawberry
 from strawberry.types import Info
+
 from selfprivacy_api.actions.api_tokens import (
     CannotDeleteCallerException,
     InvalidExpirationDate,
     InvalidUsesLeft,
-    NotFoundException,
     delete_api_token,
     get_new_api_recovery_key,
     use_mnemonic_recovery_token,
@@ -18,11 +21,18 @@ from selfprivacy_api.actions.api_tokens import (
     get_new_device_auth_token,
     use_new_device_auth_token,
 )
+from selfprivacy_api.repositories.tokens.exceptions import (
+    TokenNotFound,
+    RecoveryKeyNotFound,
+)
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericMutationReturn,
     MutationReturnInterface,
 )
+from selfprivacy_api.utils.localization import TranslateSystemMessage as t
+
+_ = gettext.gettext
 
 
 @strawberry.type
@@ -63,51 +73,57 @@ class UseNewDeviceKeyInput:
 class ApiMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def get_new_recovery_api_key(
-        self, limits: Optional[RecoveryKeyLimitsInput] = None
+        self,
+        info: Info,
+        limits: Optional[RecoveryKeyLimitsInput] = None,
     ) -> ApiKeyMutationReturn:
         """Generate recovery key"""
+
+        locale = info.context["locale"]
         if limits is None:
             limits = RecoveryKeyLimitsInput()
         try:
             key = get_new_api_recovery_key(limits.expiration_date, limits.uses)
-        except InvalidExpirationDate:
+        except InvalidExpirationDate as error:
             return ApiKeyMutationReturn(
                 success=False,
-                message="Expiration date must be in the future",
+                message=error.get_error_message(locale=locale),
                 code=400,
                 key=None,
             )
-        except InvalidUsesLeft:
+        except InvalidUsesLeft as error:
             return ApiKeyMutationReturn(
                 success=False,
-                message="Uses must be greater than 0",
+                message=error.get_error_message(locale=locale),
                 code=400,
                 key=None,
             )
         return ApiKeyMutationReturn(
             success=True,
-            message="Recovery key generated",
+            message=t.translate(text=_("Recovery key generated"), locale=locale),
             code=200,
             key=key,
         )
 
     @strawberry.mutation()
     def use_recovery_api_key(
-        self, input: UseRecoveryKeyInput
+        self, input: UseRecoveryKeyInput, info: Info
     ) -> DeviceApiTokenMutationReturn:
         """Use recovery key"""
+
+        locale = info.context["locale"]
         token = use_mnemonic_recovery_token(input.key, input.deviceName)
         if token is not None:
             return DeviceApiTokenMutationReturn(
                 success=True,
-                message="Recovery key used",
+                message=t.translate(text=_("Recovery key used"), locale=locale),
                 code=200,
                 token=token,
             )
         else:
             return DeviceApiTokenMutationReturn(
                 success=False,
-                message="Recovery key not found",
+                message=RecoveryKeyNotFound.get_error_message(locale=locale),
                 code=404,
                 token=None,
             )
@@ -115,6 +131,8 @@ class ApiMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def refresh_device_api_token(self, info: Info) -> DeviceApiTokenMutationReturn:
         """Refresh device api token"""
+
+        locale = info.context["locale"]
         token_string = (
             info.context["request"]
             .headers.get("Authorization", "")
@@ -123,7 +141,7 @@ class ApiMutations:
         if token_string is None:
             return DeviceApiTokenMutationReturn(
                 success=False,
-                message="Token not found",
+                message=TokenNotFound.get_error_message(locale=locale),
                 code=404,
                 token=None,
             )
@@ -132,14 +150,14 @@ class ApiMutations:
             new_token = refresh_api_token(token_string)
             return DeviceApiTokenMutationReturn(
                 success=True,
-                message="Token refreshed",
+                message=t.translate(text=_("Token refreshed"), locale=locale),
                 code=200,
                 token=new_token,
             )
-        except NotFoundException:
+        except TokenNotFound as error:
             return DeviceApiTokenMutationReturn(
                 success=False,
-                message="Token not found",
+                message=error.get_error_message(locale=locale),
                 code=404,
                 token=None,
             )
@@ -147,6 +165,8 @@ class ApiMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def delete_device_api_token(self, device: str, info: Info) -> GenericMutationReturn:
         """Delete device api token"""
+
+        locale = info.context["locale"]
         self_token = (
             info.context["request"]
             .headers.get("Authorization", "")
@@ -154,16 +174,16 @@ class ApiMutations:
         )
         try:
             delete_api_token(self_token, device)
-        except NotFoundException:
+        except TokenNotFound as error:
             return GenericMutationReturn(
                 success=False,
-                message="Token not found",
+                message=error.get_error_message(locale=locale),
                 code=404,
             )
-        except CannotDeleteCallerException:
+        except CannotDeleteCallerException as error:
             return GenericMutationReturn(
                 success=False,
-                message="Cannot delete caller token",
+                message=error.get_error_message(locale=locale),
                 code=400,
             )
         except Exception as e:
@@ -174,47 +194,53 @@ class ApiMutations:
             )
         return GenericMutationReturn(
             success=True,
-            message="Token deleted",
+            message=t.translate(text=_("Token deleted"), locale=locale),
             code=200,
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def get_new_device_api_key(self) -> ApiKeyMutationReturn:
+    def get_new_device_api_key(self, info: Info) -> ApiKeyMutationReturn:
         """Generate device api key"""
+
+        locale = info.context["locale"]
         key = get_new_device_auth_token()
         return ApiKeyMutationReturn(
             success=True,
-            message="Device api key generated",
+            message=t.translate(text=_("Device api key generated"), locale=locale),
             code=200,
             key=key,
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def invalidate_new_device_api_key(self) -> GenericMutationReturn:
+    def invalidate_new_device_api_key(self, info: Info) -> GenericMutationReturn:
         """Invalidate new device api key"""
+
+        locale = info.context["locale"]
         delete_new_device_auth_token()
         return GenericMutationReturn(
             success=True,
-            message="New device key deleted",
+            message=t.translate(text=_("New device key deleted"), locale=locale),
             code=200,
         )
 
     @strawberry.mutation()
     def authorize_with_new_device_api_key(
-        self, input: UseNewDeviceKeyInput
+        self, input: UseNewDeviceKeyInput, info: Info
     ) -> DeviceApiTokenMutationReturn:
         """Authorize with new device api key"""
+
+        locale = info.context["locale"]
         token = use_new_device_auth_token(input.key, input.deviceName)
         if token is None:
             return DeviceApiTokenMutationReturn(
                 success=False,
-                message="Token not found",
+                message=TokenNotFound.get_error_message(locale=locale),
                 code=404,
                 token=None,
             )
         return DeviceApiTokenMutationReturn(
             success=True,
-            message="Token used",
+            message=t.translate(text=_("Token used"), locale=locale),
             code=200,
             token=token,
         )

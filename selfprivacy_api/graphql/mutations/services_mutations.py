@@ -3,6 +3,7 @@
 # pylint: disable=too-few-public-methods
 from typing import Optional
 import strawberry
+from strawberry.types import Info
 
 from selfprivacy_api.utils import pretty_error
 
@@ -241,9 +242,12 @@ class ServicesMutations:
             )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def move_service(self, input: MoveServiceInput) -> ServiceJobMutationReturn:
+    def move_service(
+        self, input: MoveServiceInput, info: Info
+    ) -> ServiceJobMutationReturn:
         """Move service."""
         # We need a service instance for a reply later
+        locale = info.context["locale"]
         service = ServiceManager.get_service_by_id(input.service_id)
         if service is None:
             return ServiceJobMutationReturn(
@@ -255,10 +259,10 @@ class ServicesMutations:
         try:
             job = move_service(input.service_id, input.location)
 
-        except (ServiceNotFoundError, VolumeNotFoundError) as e:
+        except (ServiceNotFoundError, VolumeNotFoundError) as error:
             return ServiceJobMutationReturn(
                 success=False,
-                message=pretty_error(e),
+                message=error.get_error_message(locale=locale),
                 code=404,
             )
         except Exception as e:

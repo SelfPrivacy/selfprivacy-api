@@ -6,6 +6,7 @@ mutations from and provide them to the root for backwards compatibility.
 """
 
 import strawberry
+
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.common_types.user import UserMutationReturn
 from selfprivacy_api.graphql.mutations.api_mutations import (
