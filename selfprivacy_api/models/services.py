@@ -24,6 +24,10 @@ class ServiceStatus(Enum):
     DEACTIVATING = "DEACTIVATING"
     OFF = "OFF"
 
+    @staticmethod
+    def from_systemd_status(systemd_status: str):
+        return ServiceStatus[systemd_status.upper()]
+
 
 class SupportLevel(Enum):
     """Enum representing the support level of a service."""

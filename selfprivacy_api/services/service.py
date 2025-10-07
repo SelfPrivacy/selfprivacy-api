@@ -11,6 +11,7 @@ from selfprivacy_api.utils.default_subdomains import DEFAULT_SUBDOMAINS
 from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
 from selfprivacy_api.utils.waitloop import wait_until_true
 from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
+from selfprivacy_api.utils.systemd import wait_for_unit_state
 
 from selfprivacy_api.jobs import Job, Jobs, JobStatus, report_progress
 from selfprivacy_api.jobs.upgrade_system import rebuild_system
@@ -216,7 +217,7 @@ class Service(ABC):
 
     @staticmethod
     @abstractmethod
-    def get_status() -> ServiceStatus:
+    async def get_status() -> ServiceStatus:
         """The status of the service, reported by systemd."""
         pass
 
@@ -242,19 +243,19 @@ class Service(ABC):
 
     @staticmethod
     @abstractmethod
-    def stop():
+    async def stop():
         """Stop the service. Usually this means stopping systemd unit."""
         pass
 
     @staticmethod
     @abstractmethod
-    def start():
+    async def start():
         """Start the service. Usually this means starting systemd unit."""
         pass
 
     @staticmethod
     @abstractmethod
-    def restart():
+    async def restart():
         """Restart the service. Usually this means restarting systemd unit."""
         pass
 
@@ -278,7 +279,7 @@ class Service(ABC):
             )
 
     @classmethod
-    def get_storage_usage(cls) -> int:
+    async def get_storage_usage(cls) -> int:
         """
         Calculate the real storage usage of folders occupied by service
         Calculate using pathlib.
@@ -469,7 +470,7 @@ class Service(ABC):
         report_progress(95, job, f"Finishing moving {service_name}...")
         self.set_location(new_volume)
 
-    def move_to_volume(self, volume: BlockDevice, job: Job) -> Job:
+    async def move_to_volume(self, volume: BlockDevice, job: Job) -> Job:
         service_name = self.get_display_name()
 
         report_progress(0, job, "Performing pre-move checks...")
@@ -489,7 +490,7 @@ class Service(ABC):
         report_progress(5, job, f"Stopping {service_name}...")
         if self is None:
             raise AssertionError
-        with StoppedService(self):
+        async with StoppedService(self):
             report_progress(9, job, "Stopped service, starting the move...")
             self.do_move_to_volume(volume, job)
 
@@ -552,7 +553,7 @@ class StoppedService:
     Example:
         ```
             assert service.get_status() == ServiceStatus.ACTIVE
-            with StoppedService(service) [as stopped_service]:
+            async with StoppedService(service) [as stopped_service]:
                 assert service.get_status() == ServiceStatus.INACTIVE
         ```
     """
@@ -561,14 +562,14 @@ class StoppedService:
         self.service = service
         self.original_status = service.get_status()
 
-    def __enter__(self) -> Service:
+    async def __aenter__(self) -> Service:
         self.original_status = self.service.get_status()
         if (
             self.original_status not in [ServiceStatus.INACTIVE, ServiceStatus.FAILED]
             and not self.service.is_always_active()
         ):
             try:
-                self.service.stop()
+                await self.service.stop()
                 wait_until_true(
                     lambda: self.service.get_status()
                     in [ServiceStatus.INACTIVE, ServiceStatus.FAILED],
@@ -580,13 +581,13 @@ class StoppedService:
                 ) from error
         return self.service
 
-    def __exit__(self, type, value, traceback):
+    async def __aexit__(self, type, value, traceback):
         if (
             self.original_status in [ServiceStatus.ACTIVATING, ServiceStatus.ACTIVE]
             and not self.service.is_always_active()
         ):
             try:
-                self.service.start()
+                await self.service.start()
                 wait_until_true(
                     lambda: self.service.get_status() == ServiceStatus.ACTIVE,
                     timeout_sec=DEFAULT_START_STOP_TIMEOUT,

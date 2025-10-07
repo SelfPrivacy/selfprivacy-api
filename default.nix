@@ -15,6 +15,7 @@ pythonPackages.buildPythonPackage {
     pytz
     redis
     systemd
+    sdbus
     setuptools
     strawberry-graphql
     typing-extensions

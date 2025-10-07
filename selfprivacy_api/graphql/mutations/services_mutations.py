@@ -101,7 +101,7 @@ class ServicesMutations:
     """Services mutations."""
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def enable_service(self, service_id: str) -> ServiceMutationReturn:
+    async def enable_service(self, service_id: str) -> ServiceMutationReturn:
         """Enable service."""
         try:
             service = ServiceManager.get_service_by_id(service_id)
@@ -127,7 +127,7 @@ class ServicesMutations:
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def disable_service(self, service_id: str) -> ServiceMutationReturn:
+    async def disable_service(self, service_id: str) -> ServiceMutationReturn:
         """Disable service."""
         try:
             service = ServiceManager.get_service_by_id(service_id)
@@ -152,7 +152,7 @@ class ServicesMutations:
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def stop_service(self, service_id: str) -> ServiceMutationReturn:
+    async def stop_service(self, service_id: str) -> ServiceMutationReturn:
         """Stop service."""
         service = ServiceManager.get_service_by_id(service_id)
         if service is None:
@@ -161,7 +161,7 @@ class ServicesMutations:
                 message="Service not found.",
                 code=404,
             )
-        service.stop()
+        await service.stop()
         return ServiceMutationReturn(
             success=True,
             message="Service stopped.",
@@ -170,7 +170,7 @@ class ServicesMutations:
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def start_service(self, service_id: str) -> ServiceMutationReturn:
+    async def start_service(self, service_id: str) -> ServiceMutationReturn:
         """Start service."""
         service = ServiceManager.get_service_by_id(service_id)
         if service is None:
@@ -179,7 +179,7 @@ class ServicesMutations:
                 message="Service not found.",
                 code=404,
             )
-        service.start()
+        await service.start()
         return ServiceMutationReturn(
             success=True,
             message="Service started.",
@@ -188,7 +188,7 @@ class ServicesMutations:
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def restart_service(self, service_id: str) -> ServiceMutationReturn:
+    async def restart_service(self, service_id: str) -> ServiceMutationReturn:
         """Restart service."""
         service = ServiceManager.get_service_by_id(service_id)
         if service is None:
@@ -197,7 +197,7 @@ class ServicesMutations:
                 message="Service not found.",
                 code=404,
             )
-        service.restart()
+        await service.restart()
         return ServiceMutationReturn(
             success=True,
             message="Service restarted.",

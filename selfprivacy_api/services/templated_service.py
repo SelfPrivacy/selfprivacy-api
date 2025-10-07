@@ -30,7 +30,7 @@ from selfprivacy_api.services.config_item import (
     IntServiceConfigItem,
 )
 from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
-from selfprivacy_api.utils.systemd import get_service_status_from_several_units
+from selfprivacy_api.utils.systemd import get_service_status_from_several_units, start_unit, stop_unit, restart_unit
 
 SP_MODULES_DEFENITIONS_PATH = "/etc/sp-modules"
 SP_SUGGESTED_MODULES_PATH = "/etc/suggested-sp-modules"
@@ -245,10 +245,10 @@ class TemplatedService(Service):
             return None
         return self.meta.sso.admin_group
 
-    def get_status(self) -> ServiceStatus:
+    async def get_status(self) -> ServiceStatus:
         if not self.meta.systemd_services:
             return ServiceStatus.INACTIVE
-        return get_service_status_from_several_units(self.meta.systemd_services)
+        return await get_service_status_from_several_units(self.meta.systemd_services)
 
     def _set_enable(self, enable: bool):
         name = self.get_id()
@@ -292,20 +292,20 @@ class TemplatedService(Service):
         """Disable the service. Usually this means disabling systemd unit."""
         self._set_enable(False)
 
-    def start(self):
+    async def start(self):
         """Start the systemd units"""
         for unit in self.meta.systemd_services:
-            subprocess.run(["systemctl", "start", unit], check=False)
+            await start_unit(unit)
 
-    def stop(self):
+    async def stop(self):
         """Stop the systemd units"""
         for unit in self.meta.systemd_services:
-            subprocess.run(["systemctl", "stop", unit], check=False)
+            await stop_unit(unit)
 
-    def restart(self):
+    async def restart(self):
         """Restart the systemd units"""
         for unit in self.meta.systemd_services:
-            subprocess.run(["systemctl", "restart", unit], check=False)
+            await restart_unit(unit)
 
     def get_configuration(self) -> dict:
         # If there are no options, return an empty dict

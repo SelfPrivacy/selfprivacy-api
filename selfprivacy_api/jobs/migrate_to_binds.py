@@ -1,6 +1,7 @@
 """Function to perform migration of app data to binds."""
 
 import subprocess
+import asyncio
 import pathlib
 import shutil
 import logging
@@ -215,7 +216,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         status_text="Migrating Nextcloud.",
     )
 
-    nextcloud_service.stop()
+    asyncio.run(nextcloud_service.stop())
 
     # If /volumes/sda1/nextcloud or /volumes/sdb/nextcloud exists, skip it.
     if not pathlib.Path("/volumes/sda1/nextcloud").exists():
@@ -230,7 +231,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
             )
 
     # Start Nextcloud
-    nextcloud_service.start()
+    asyncio.run(nextcloud_service.start())
 
     # Perform migration of Bitwarden
 
@@ -241,7 +242,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         status_text="Migrating Bitwarden.",
     )
 
-    bitwarden_service.stop()
+    asyncio.run(bitwarden_service.stop())
 
     if not pathlib.Path("/volumes/sda1/bitwarden").exists():
         if not pathlib.Path("/volumes/sdb/bitwarden").exists():
@@ -266,7 +267,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
             )
 
     # Start Bitwarden
-    bitwarden_service.start()
+    asyncio.run(bitwarden_service.start())
 
     # Perform migration of Gitea
 
@@ -277,7 +278,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         status_text="Migrating Gitea.",
     )
 
-    gitea_service.stop()
+    asyncio.run(gitea_service.stop())
 
     if not pathlib.Path("/volumes/sda1/gitea").exists():
         if not pathlib.Path("/volumes/sdb/gitea").exists():
@@ -288,7 +289,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
                 group="gitea",
             )
 
-    gitea_service.start()
+    asyncio.run(gitea_service.start())
 
     # Perform migration of Mail server
 
@@ -299,7 +300,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         status_text="Migrating Mail server.",
     )
 
-    MailServer().stop()
+    asyncio.run(MailServer().stop())
 
     if not pathlib.Path("/volumes/sda1/vmail").exists():
         if not pathlib.Path("/volumes/sdb/vmail").exists():
@@ -319,7 +320,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
                 group="virtualMail",
             )
 
-    MailServer().start()
+    asyncio.run(MailServer().start())
 
     # Perform migration of Pleroma
 
@@ -330,7 +331,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         status_text="Migrating Pleroma.",
     )
 
-    pleroma_service.stop()
+    asyncio.run(pleroma_service.stop())
 
     if not pathlib.Path("/volumes/sda1/pleroma").exists():
         if not pathlib.Path("/volumes/sdb/pleroma").exists():
@@ -354,7 +355,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
                 group="postgres",
             )
 
-    pleroma_service.start()
+    asyncio.run(pleroma_service.start())
 
     Jobs.update(
         job=job,
