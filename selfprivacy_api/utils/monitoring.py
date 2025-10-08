@@ -1,13 +1,14 @@
 """Prometheus monitoring queries."""
 
 # pylint: disable=too-few-public-methods
-import requests
-
-import strawberry
 
 from dataclasses import dataclass
 from typing import Optional, Annotated, Union, List, Tuple
 from datetime import datetime, timedelta
+import requests
+
+import strawberry
+
 
 PROMETHEUS_URL = "http://localhost:9001"
 

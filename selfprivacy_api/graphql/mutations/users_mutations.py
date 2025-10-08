@@ -1,7 +1,8 @@
-#!/usr/bin/env python3
 """Users management module"""
+
 # pylint: disable=too-few-public-methods
 from typing import Optional
+import gettext
 
 import strawberry
 from strawberry.types import Info
@@ -50,10 +51,14 @@ from selfprivacy_api.repositories.users.exceptions_kanidm import (
     KanidmReturnUnknownResponseType,
     KanidmCliSubprocessError,
 )
+from selfprivacy_api.utils.localization import TranslateSystemMessage as t
 from selfprivacy_api.utils.strings import PLEASE_UPDATE_APP_TEXT
 
+_ = gettext.gettext
 
-FAILED_TO_SETUP_SSO_PASSWORD_TEXT = "New password applied an an email password. To use Single Sign On, please update the SelfPrivacy app."
+FAILED_TO_SETUP_SSO_PASSWORD_TEXT = _(
+    "New password applied an an email password. To use Single Sign On, please update the SelfPrivacy app."
+)
 
 
 def return_failed_mutation_return(
@@ -132,14 +137,14 @@ class UsersMutations:
         if user.password:
             return UserMutationReturn(
                 success=True,
-                message=f"{FAILED_TO_SETUP_SSO_PASSWORD_TEXT} {PLEASE_UPDATE_APP_TEXT}",
+                message=f"{t.translate(text=FAILED_TO_SETUP_SSO_PASSWORD_TEXT, locale=locale)} {t.translate(text=PLEASE_UPDATE_APP_TEXT, locale=locale)}",
                 code=201,
                 user=get_user_by_username(user.username),
             )
 
         return UserMutationReturn(
             success=True,
-            message="User created",
+            message=t.translate(text=_("User created"), locale=locale),
             code=201,
             user=get_user_by_username(user.username),
         )
@@ -176,15 +181,15 @@ class UsersMutations:
 
         return GenericMutationReturn(
             success=True,
-            message="User deleted",
+            message=t.translate(text=_("User deleted"), locale=locale),
             code=200,
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def update_user(self, user: UserMutationInput, info: Info) -> UserMutationReturn:
         """Update user mutation"""
-        locale = info.context["locale"]
 
+        locale = info.context["locale"]
         try:
             update_user_action(
                 username=user.username,
@@ -215,14 +220,14 @@ class UsersMutations:
         if user.password:
             return UserMutationReturn(
                 success=True,
-                message=f"{FAILED_TO_SETUP_SSO_PASSWORD_TEXT} {PLEASE_UPDATE_APP_TEXT}",
+                message=f"{t.translate(text=_(FAILED_TO_SETUP_SSO_PASSWORD_TEXT), locale=locale)} {t.translate(text=_(PLEASE_UPDATE_APP_TEXT), locale=locale)}",
                 code=200,
                 user=get_user_by_username(user.username),
             )
 
         return UserMutationReturn(
             success=True,
-            message="User updated",
+            message=t.translate(text=_("User updated"), locale=locale),
             code=200,
             user=get_user_by_username(user.username),
         )
@@ -232,8 +237,8 @@ class UsersMutations:
         self, ssh_input: SshMutationInput, info: Info
     ) -> UserMutationReturn:
         """Add a new ssh key"""
-        locale = info.context["locale"]
 
+        locale = info.context["locale"]
         try:
             create_ssh_key_action(ssh_input.username, ssh_input.ssh_key)
         except KeyAlreadyExists as error:
@@ -258,7 +263,9 @@ class UsersMutations:
 
         return UserMutationReturn(
             success=True,
-            message="New SSH key successfully written",
+            message=t.translate(
+                text=_("New SSH key successfully written"), locale=locale
+            ),
             code=201,
             user=get_user_by_username(ssh_input.username),
         )
@@ -268,8 +275,8 @@ class UsersMutations:
         self, ssh_input: SshMutationInput, info: Info
     ) -> UserMutationReturn:
         """Remove ssh key from user"""
-        locale = info.context["locale"]
 
+        locale = info.context["locale"]
         try:
             remove_ssh_key_action(ssh_input.username, ssh_input.ssh_key)
         except (KeyNotFound, UserNotFound) as error:
@@ -286,7 +293,7 @@ class UsersMutations:
 
         return UserMutationReturn(
             success=True,
-            message="SSH key successfully removed",
+            message=t.translate(text=_("SSH key successfully removed"), locale=locale),
             code=200,
             user=get_user_by_username(ssh_input.username),
         )
@@ -295,8 +302,8 @@ class UsersMutations:
     def generate_password_reset_link(
         self, username: str, info: Info
     ) -> PasswordResetLinkReturn:
-        locale = info.context["locale"]
 
+        locale = info.context["locale"]
         try:
             password_reset_link = generate_password_reset_link_action(username=username)
         except (UserNotFound, UserOrGroupNotFound) as error:
@@ -329,7 +336,7 @@ class UsersMutations:
 
         return PasswordResetLinkReturn(
             success=True,
-            message="Link successfully created",
+            message=t.translate(text=_("Link successfully created"), locale=locale),
             code=200,
             password_reset_link=password_reset_link,
         )
