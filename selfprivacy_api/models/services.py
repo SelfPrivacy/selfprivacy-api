@@ -1,8 +1,12 @@
+import gettext
 from enum import Enum
 from typing import Optional, List
 from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
+
 from selfprivacy_api.services.owned_path import OwnedPath
+
+_ = gettext.gettext
 
 
 class BaseSchema(BaseModel):
@@ -82,14 +86,14 @@ class ServiceMetaData(BaseSchema):
 
     id: str
     name: str
-    description: str = "No description found!"
+    description: str = _("No description found!")
     svg_icon: str = ""
     showUrl: bool = True
     primary_subdomain: Optional[str] = None
     is_movable: bool = False
     is_required: bool = False
     can_be_backed_up: bool = True
-    backup_description: str = "No backup description found!"
+    backup_description: str = _("No backup description found!")
     systemd_services: List[str]
     user: Optional[str] = None
     group: Optional[str] = None

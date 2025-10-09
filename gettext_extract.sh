@@ -22,3 +22,6 @@ xgettext \
   selfprivacy_api/graphql/mutations/users_mutations.py \
   selfprivacy_api/graphql/mutations/storage_mutations.py \
   selfprivacy_api/graphql/queries/monitoring.py \
+  selfprivacy_api/jobs/upgrade_system.py \
+  selfprivacy_api/jobs/migrate_to_binds.py \
+  selfprivacy_api/models/services.py \

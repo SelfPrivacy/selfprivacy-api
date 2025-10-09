@@ -24,7 +24,7 @@ def translate_job(job: ApiJob, locale: str) -> ApiJob:
         type_id=job.type_id,
         name=t.translate(text=job.name, locale=locale),
         description=t.translate(text=job.description, locale=locale),
-        status=t.translate(text=job.status, locale=locale),
+        status=job.status,
         status_text=_tr_opt(job.status_text, locale),
         progress=job.progress,
         created_at=job.created_at,

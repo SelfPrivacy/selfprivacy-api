@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-08 22:37+0400\n"
+"POT-Creation-Date: 2025-10-10 01:54+0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -341,4 +341,109 @@ msgstr ""
 
 #: selfprivacy_api/graphql/queries/monitoring.py:20
 msgid "Prometheus is not running"
+msgstr ""
+
+#: selfprivacy_api/jobs/upgrade_system.py:47
+msgid "System rebuilt."
+msgstr ""
+
+#: selfprivacy_api/jobs/upgrade_system.py:56
+msgid "System rebuild failed. Last log lines:\n"
+msgstr ""
+
+#: selfprivacy_api/jobs/upgrade_system.py:92
+msgid "Starting the system rebuild..."
+msgstr ""
+
+#: selfprivacy_api/jobs/upgrade_system.py:106
+#: selfprivacy_api/jobs/upgrade_system.py:127
+msgid "System rebuild timed out. Last log lines:\n"
+msgstr ""
+
+#: selfprivacy_api/jobs/upgrade_system.py:113
+msgid "Rebuilding the system..."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:105
+msgid "Migration already done."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:113
+msgid "Checking if services are present."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:125
+msgid "Nextcloud service not found."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:133
+msgid "Bitwarden service not found."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:141
+msgid "Gitea service not found."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:149
+msgid "Pleroma service not found."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:157
+msgid "Checking if all volumes are available."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:175
+#: selfprivacy_api/jobs/migrate_to_binds.py:192
+#, python-format
+msgid "Block device %(block_device_name)s not found."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:200
+#, python-format
+msgid "Block device %(block_device_name)s not mounted."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:212
+msgid "Activating binds in NixOS config."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:222
+msgid "Migrating Nextcloud."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:248
+msgid "Migrating Bitwarden."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:284
+msgid "Migrating Gitea."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:306
+msgid "Migrating Mail server."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:337
+msgid "Migrating Pleroma."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:370
+#: selfprivacy_api/jobs/migrate_to_binds.py:371
+msgid "Migration finished."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:379
+msgid "Migrate to binds"
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:380
+msgid "Migration required to use the new disk space management."
+msgstr ""
+
+#: selfprivacy_api/models/services.py:89
+msgid "No description found!"
+msgstr ""
+
+#: selfprivacy_api/models/services.py:96
+msgid "No backup description found!"
 msgstr ""
