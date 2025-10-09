@@ -290,7 +290,7 @@ async def service_to_graphql_service(service: ServiceInterface) -> Service:
         is_installed=service.is_installed(),
         can_be_backed_up=service.can_be_backed_up(),
         backup_description=service.get_backup_description(),
-        status=ServiceStatusEnum(service.get_status().value),
+        status=ServiceStatusEnum((await service.get_status()).value),
         url=service.get_url(),
         is_system_service=service.is_system_service(),
         license=[
