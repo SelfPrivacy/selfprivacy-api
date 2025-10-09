@@ -3,7 +3,7 @@
 import subprocess
 from typing import List
 
-from sdbus import DbusInterfaceCommonAsync, dbus_method_async, dbus_property_async, to_dbus_string
+from sdbus import DbusInterfaceCommonAsync, dbus_method_async, dbus_property_async, encode_object_path
 from selfprivacy_api.models.services import ServiceStatus
 from selfprivacy_api.utils.dbus import DbusConnection
 
@@ -70,7 +70,7 @@ systemd_proxy = SystemdManagerInterface.new_proxy(
 def get_unit_proxy(unit: str) -> SystemdUnitInterface:
     return SystemdUnitInterface.new_proxy(
         service_name='org.freedesktop.systemd1',
-        object_path=f'/org/freedesktop/systemd1/unit/{to_dbus_string(unit)}',
+        object_path=encode_object_path('/org/freedesktop/systemd1/unit', unit),
         bus=DbusConnection.bus,
     )
 
