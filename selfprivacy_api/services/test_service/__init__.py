@@ -198,7 +198,7 @@ class DummyService(Service):
         return super().set_configuration(config_items)
 
     @staticmethod
-    def get_storage_usage() -> int:
+    async def get_storage_usage() -> int:
         storage_usage = 0
         return storage_usage
 

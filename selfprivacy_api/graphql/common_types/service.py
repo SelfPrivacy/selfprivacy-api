@@ -26,7 +26,7 @@ async def get_usages(root: "StorageVolume") -> list["StorageUsageInterface"]:
         ServiceStorageUsage(
             service=await service_to_graphql_service(service),
             title=service.get_display_name(),
-            used_space=str(service.get_storage_usage()),
+            used_space=str(await service.get_storage_usage()),
             volume=get_volume_by_id(service.get_drive()),
         )
         for service in ServiceManager.get_services_by_location(root.name)
@@ -113,7 +113,7 @@ async def get_storage_usage(root: "Service") -> ServiceStorageUsage:
     return ServiceStorageUsage(
         service=await service_to_graphql_service(service),
         title=service.get_display_name(),
-        used_space=str(service.get_storage_usage()),
+        used_space=str(await service.get_storage_usage()),
         volume=get_volume_by_id(service.get_drive()),
     )
 

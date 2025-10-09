@@ -328,7 +328,7 @@ class TemplatedService(Service):
                 self.get_id(),
             )
 
-    def get_storage_usage(self) -> int:
+    async def get_storage_usage(self) -> int:
         """
         Calculate the real storage usage of folders occupied by service
         Calculate using pathlib.
