@@ -559,8 +559,10 @@ class StoppedService:
     """
 
     def __init__(self, service: Service):
+        raise NotImplementedError()
         self.service = service
-        self.original_status = service.get_status()
+        # TODO: all of this should be async
+        #self.original_status = service.get_status()
 
     async def __aenter__(self) -> Service:
         self.original_status = self.service.get_status()

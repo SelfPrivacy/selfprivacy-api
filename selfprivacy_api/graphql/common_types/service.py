@@ -20,11 +20,11 @@ tracer = trace.get_tracer(__name__)
 
 
 @tracer.start_as_current_span("get_usages")
-def get_usages(root: "StorageVolume") -> list["StorageUsageInterface"]:
+async def get_usages(root: "StorageVolume") -> list["StorageUsageInterface"]:
     """Get usages of a volume"""
     return [
         ServiceStorageUsage(
-            service=service_to_graphql_service(service),
+            service=await service_to_graphql_service(service),
             title=service.get_display_name(),
             used_space=str(service.get_storage_usage()),
             volume=get_volume_by_id(service.get_drive()),
@@ -47,9 +47,9 @@ class StorageVolume:
     type: str
 
     @strawberry.field
-    def usages(self) -> list["StorageUsageInterface"]:
+    async def usages(self) -> list["StorageUsageInterface"]:
         """Get usages of a volume"""
-        return get_usages(self)
+        return await get_usages(self)
 
 
 @strawberry.interface
@@ -111,7 +111,7 @@ async def get_storage_usage(root: "Service") -> ServiceStorageUsage:
             volume=get_volume_by_id("sda1"),
         )
     return ServiceStorageUsage(
-        service=service_to_graphql_service(service),
+        service=await service_to_graphql_service(service),
         title=service.get_display_name(),
         used_space=str(service.get_storage_usage()),
         volume=get_volume_by_id(service.get_drive()),
@@ -277,7 +277,7 @@ class SnapshotInfo:
 
 
 @tracer.start_as_current_span("service_to_graphql_service")
-def service_to_graphql_service(service: ServiceInterface) -> Service:
+async def service_to_graphql_service(service: ServiceInterface) -> Service:
     """Convert service to graphql service"""
     return Service(
         id=service.get_id(),

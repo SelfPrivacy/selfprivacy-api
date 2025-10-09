@@ -187,7 +187,7 @@ class ServiceManager(Service):
         return "General server settings."
 
     @classmethod
-    def get_status(cls) -> ServiceStatus:
+    async def get_status(cls) -> ServiceStatus:
         return ServiceStatus.ACTIVE
 
     @classmethod

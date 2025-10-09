@@ -123,7 +123,7 @@ class ServicesMutations:
             success=True,
             message="Service enabled.",
             code=200,
-            service=service_to_graphql_service(service),
+            service=await service_to_graphql_service(service),
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
@@ -148,7 +148,7 @@ class ServicesMutations:
             success=True,
             message="Service disabled.",
             code=200,
-            service=service_to_graphql_service(service),
+            service=await service_to_graphql_service(service),
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
@@ -166,7 +166,7 @@ class ServicesMutations:
             success=True,
             message="Service stopped.",
             code=200,
-            service=service_to_graphql_service(service),
+            service=await service_to_graphql_service(service),
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
@@ -184,7 +184,7 @@ class ServicesMutations:
             success=True,
             message="Service started.",
             code=200,
-            service=service_to_graphql_service(service),
+            service=await service_to_graphql_service(service),
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
@@ -202,11 +202,11 @@ class ServicesMutations:
             success=True,
             message="Service restarted.",
             code=200,
-            service=service_to_graphql_service(service),
+            service=await service_to_graphql_service(service),
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def set_service_configuration(
+    async def set_service_configuration(
         self, input: SetServiceConfigurationInput
     ) -> ServiceMutationReturn:
         """Set the new configuration values"""
@@ -223,25 +223,25 @@ class ServicesMutations:
                 success=True,
                 message="Service configuration updated.",
                 code=200,
-                service=service_to_graphql_service(service),
+                service=await service_to_graphql_service(service),
             )
         except ValueError as e:
             return ServiceMutationReturn(
                 success=False,
                 message=e.args[0],
                 code=400,
-                service=service_to_graphql_service(service),
+                service=await service_to_graphql_service(service),
             )
         except Exception as e:
             return ServiceMutationReturn(
                 success=False,
                 message=pretty_error(e),
                 code=400,
-                service=service_to_graphql_service(service),
+                service=await service_to_graphql_service(service),
             )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def move_service(self, input: MoveServiceInput) -> ServiceJobMutationReturn:
+    async def move_service(self, input: MoveServiceInput) -> ServiceJobMutationReturn:
         """Move service."""
         # We need a service instance for a reply later
         service = ServiceManager.get_service_by_id(input.service_id)
@@ -266,7 +266,7 @@ class ServicesMutations:
                 success=False,
                 message=pretty_error(e),
                 code=400,
-                service=service_to_graphql_service(service),
+                service=await service_to_graphql_service(service),
             )
 
         if job.status in [JobStatus.CREATED, JobStatus.RUNNING]:
@@ -274,7 +274,7 @@ class ServicesMutations:
                 success=True,
                 message="Started moving the service.",
                 code=200,
-                service=service_to_graphql_service(service),
+                service=await service_to_graphql_service(service),
                 job=job_to_api_job(job),
             )
         elif job.status == JobStatus.FINISHED:
@@ -282,7 +282,7 @@ class ServicesMutations:
                 success=True,
                 message="Service moved.",
                 code=200,
-                service=service_to_graphql_service(service),
+                service=await service_to_graphql_service(service),
                 job=job_to_api_job(job),
             )
         else:
@@ -290,6 +290,6 @@ class ServicesMutations:
                 success=False,
                 message=f"While moving service and performing the step '{job.status_text}', error occured: {job.error}",
                 code=400,
-                service=service_to_graphql_service(service),
+                service=await service_to_graphql_service(service),
                 job=job_to_api_job(job),
             )
