@@ -27,13 +27,14 @@ class Localization(metaclass=SingletonMetaclass):
         self.supported_locales = os.listdir(str(_LOCALE_DIR))
 
     def get_locale(self, locale: Optional[str]) -> str:
-        """Parse the value of Accept-Language header and return the most preferred supported locale."""
-        if locale is None:
+        if not locale:
             return DEFAULT_LOCALE
-        for lang in locale.split(","):
-            lang = lang.split(";")[0]
-            if lang in self.supported_locales:
-                return lang
+        for token in locale.split(","):
+            lang = token.split(";", 1)[0].strip().lower()
+            base = lang.split("-", 1)[0]
+            for candidate in (lang, base):
+                if candidate in self.supported_locales:
+                    return candidate
         return DEFAULT_LOCALE
 
 
