@@ -88,7 +88,7 @@ class SetServiceConfigurationInput:
     """
 
 
-SERVICE_NOT_FOUND = "Service not found"
+SERVICE_NOT_FOUND = _("Service not found")
 
 
 @strawberry.input
@@ -111,14 +111,16 @@ class ServicesMutations:
     """Services mutations."""
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def enable_service(self, service_id: str) -> ServiceMutationReturn:
+    def enable_service(self, service_id: str, info: Info) -> ServiceMutationReturn:
         """Enable service."""
+
+        locale = info.context["locale"]
         try:
             service = ServiceManager.get_service_by_id(service_id)
             if service is None:
                 return ServiceMutationReturn(
                     success=False,
-                    message=SERVICE_NOT_FOUND,
+                    message=t.translate(text=SERVICE_NOT_FOUND, locale=locale),
                     code=404,
                 )
             service.enable()
@@ -137,8 +139,10 @@ class ServicesMutations:
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def disable_service(self, service_id: str) -> ServiceMutationReturn:
+    def disable_service(self, service_id: str, info: Info) -> ServiceMutationReturn:
         """Disable service."""
+
+        locale = info.context["locale"]
         try:
             service = ServiceManager.get_service_by_id(service_id)
             if service is None:
@@ -162,13 +166,15 @@ class ServicesMutations:
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def stop_service(self, service_id: str) -> ServiceMutationReturn:
+    def stop_service(self, service_id: str, info: Info) -> ServiceMutationReturn:
         """Stop service."""
+
+        locale = info.context["locale"]
         service = ServiceManager.get_service_by_id(service_id)
         if service is None:
             return ServiceMutationReturn(
                 success=False,
-                message=SERVICE_NOT_FOUND,
+                message=t.translate(text=SERVICE_NOT_FOUND, locale=locale),
                 code=404,
             )
         service.stop()
@@ -188,7 +194,7 @@ class ServicesMutations:
         if service is None:
             return ServiceMutationReturn(
                 success=False,
-                message=SERVICE_NOT_FOUND,
+                message=t.translate(text=SERVICE_NOT_FOUND, locale=locale),
                 code=404,
             )
         service.start()
@@ -208,7 +214,7 @@ class ServicesMutations:
         if service is None:
             return ServiceMutationReturn(
                 success=False,
-                message=SERVICE_NOT_FOUND,
+                message=t.translate(text=SERVICE_NOT_FOUND, locale=locale),
                 code=404,
             )
         service.restart()
