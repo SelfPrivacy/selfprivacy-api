@@ -1,11 +1,14 @@
 """Services mutations"""
 
 # pylint: disable=too-few-public-methods
+import gettext
 from typing import Optional
+
 import strawberry
 from strawberry.types import Info
 
 from selfprivacy_api.utils import pretty_error
+from selfprivacy_api.utils.localization import TranslateSystemMessage as t
 
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.common_types.jobs import job_to_api_job
@@ -28,6 +31,9 @@ from selfprivacy_api.actions.services import (
 )
 
 from selfprivacy_api.services import ServiceManager
+
+
+_ = gettext.gettext
 
 
 @strawberry.type
@@ -82,6 +88,9 @@ class SetServiceConfigurationInput:
     """
 
 
+SERVICE_NOT_FOUND = "Service not found"
+
+
 @strawberry.input
 class MoveServiceInput:
     """Move service input type."""
@@ -109,7 +118,7 @@ class ServicesMutations:
             if service is None:
                 return ServiceMutationReturn(
                     success=False,
-                    message="Service not found.",
+                    message=SERVICE_NOT_FOUND,
                     code=404,
                 )
             service.enable()
@@ -122,7 +131,7 @@ class ServicesMutations:
 
         return ServiceMutationReturn(
             success=True,
-            message="Service enabled.",
+            message=_("Service enabled."),
             code=200,
             service=service_to_graphql_service(service),
         )
@@ -135,7 +144,7 @@ class ServicesMutations:
             if service is None:
                 return ServiceMutationReturn(
                     success=False,
-                    message="Service not found.",
+                    message=SERVICE_NOT_FOUND,
                     code=404,
                 )
             service.disable()
@@ -147,7 +156,7 @@ class ServicesMutations:
             )
         return ServiceMutationReturn(
             success=True,
-            message="Service disabled.",
+            message=_("Service disabled."),
             code=200,
             service=service_to_graphql_service(service),
         )
@@ -159,70 +168,82 @@ class ServicesMutations:
         if service is None:
             return ServiceMutationReturn(
                 success=False,
-                message="Service not found.",
+                message=SERVICE_NOT_FOUND,
                 code=404,
             )
         service.stop()
         return ServiceMutationReturn(
             success=True,
-            message="Service stopped.",
+            message=_("Service stopped."),
             code=200,
             service=service_to_graphql_service(service),
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def start_service(self, service_id: str) -> ServiceMutationReturn:
+    def start_service(self, service_id: str, info: Info) -> ServiceMutationReturn:
         """Start service."""
+
+        locale = info.context["locale"]
         service = ServiceManager.get_service_by_id(service_id)
         if service is None:
             return ServiceMutationReturn(
                 success=False,
-                message="Service not found.",
+                message=SERVICE_NOT_FOUND,
                 code=404,
             )
         service.start()
         return ServiceMutationReturn(
             success=True,
-            message="Service started.",
+            message=t.translate(text=_("Service started."), locale=locale),
             code=200,
             service=service_to_graphql_service(service),
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def restart_service(self, service_id: str) -> ServiceMutationReturn:
+    def restart_service(self, service_id: str, info: Info) -> ServiceMutationReturn:
         """Restart service."""
+
+        locale = info.context["locale"]
         service = ServiceManager.get_service_by_id(service_id)
         if service is None:
             return ServiceMutationReturn(
                 success=False,
-                message="Service not found.",
+                message=SERVICE_NOT_FOUND,
                 code=404,
             )
         service.restart()
         return ServiceMutationReturn(
             success=True,
-            message="Service restarted.",
+            message=t.translate(text=_("Service restarted."), locale=locale),
             code=200,
             service=service_to_graphql_service(service),
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def set_service_configuration(
-        self, input: SetServiceConfigurationInput
+        self, input: SetServiceConfigurationInput, info: Info
     ) -> ServiceMutationReturn:
         """Set the new configuration values"""
+
+        locale = info.context["locale"]
         service = ServiceManager.get_service_by_id(input.service_id)
         if service is None:
             return ServiceMutationReturn(
                 success=False,
-                message=f"Service does not exist: {input.service_id}",
+                message=t.translate(
+                    text=_("Service does not exist: %(service_id)s"),
+                    locale=locale,
+                )
+                % {"service_id": input.service_id},
                 code=404,
             )
         try:
             service.set_configuration(input.configuration)
             return ServiceMutationReturn(
                 success=True,
-                message="Service configuration updated.",
+                message=t.translate(
+                    text=_("Service configuration updated."), locale=locale
+                ),
                 code=200,
                 service=service_to_graphql_service(service),
             )
@@ -252,7 +273,11 @@ class ServicesMutations:
         if service is None:
             return ServiceJobMutationReturn(
                 success=False,
-                message=f"Service does not exist: {input.service_id}",
+                message=t.translate(
+                    text=_("Service does not exist: %(service_id)s"),
+                    locale=locale,
+                )
+                % {"service_id": input.service_id},
                 code=404,
             )
 
@@ -276,7 +301,9 @@ class ServicesMutations:
         if job.status in [JobStatus.CREATED, JobStatus.RUNNING]:
             return ServiceJobMutationReturn(
                 success=True,
-                message="Started moving the service.",
+                message=t.translate(
+                    text=_("Started moving the service."), locale=locale
+                ),
                 code=200,
                 service=service_to_graphql_service(service),
                 job=job_to_api_job(job),
@@ -284,7 +311,7 @@ class ServicesMutations:
         elif job.status == JobStatus.FINISHED:
             return ServiceJobMutationReturn(
                 success=True,
-                message="Service moved.",
+                message=t.translate(text=_("Service moved."), locale=locale),
                 code=200,
                 service=service_to_graphql_service(service),
                 job=job_to_api_job(job),
@@ -292,7 +319,16 @@ class ServicesMutations:
         else:
             return ServiceJobMutationReturn(
                 success=False,
-                message=f"While moving service and performing the step '{job.status_text}', error occured: {job.error}",
+                message=t.translate(
+                    text=_(
+                        "While moving service and performing the step '%(status_text)s', an error occurred: %(error)s"
+                    ),
+                    locale=locale,
+                )
+                % {
+                    "status_text": job.status_text,
+                    "error": job.error,
+                },
                 code=400,
                 service=service_to_graphql_service(service),
                 job=job_to_api_job(job),
