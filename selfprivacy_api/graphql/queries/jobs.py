@@ -17,7 +17,8 @@ from selfprivacy_api.utils.localization import TranslateSystemMessage as t
 
 def translate_job(job: ApiJob, locale: str) -> ApiJob:
     def _tr_opt(text: Optional[str], locale: str) -> Optional[str]:
-        return t.translate(text=text, locale=locale) if text is not None else None
+        if text:
+            return t.translate(text=text, locale=locale)
 
     return ApiJob(
         uid=job.uid,

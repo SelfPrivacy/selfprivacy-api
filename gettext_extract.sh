@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# For more information, see the README.md section “How to Add Translations”.
+
 xgettext \
   --from-code=UTF-8 \
   --language=Python \
@@ -26,27 +28,3 @@ xgettext \
   selfprivacy_api/jobs/upgrade_system.py \
   selfprivacy_api/jobs/migrate_to_binds.py \
   selfprivacy_api/models/services.py \
-
-
-
-## generate .po
-
-# msginit \
-#   --locale=ru_RU \
-#   --input=locale/messages.pot \
-#   --output-file=locale/ru/LC_MESSAGES/messages.po
-
-
-
-## utf-8 fix
-
-# iconv -f ISO-8859-5 -t UTF-8 \
-#   locale/ru/LC_MESSAGES/messages.po \
-#   -o locale/ru/LC_MESSAGES/messages.utf8.po && \
-# mv locale/ru/LC_MESSAGES/messages.utf8.po locale/ru/LC_MESSAGES/messages.po
-
-
-
-## generate .mo
-
-# msgfmt -o locale/ru/LC_MESSAGES/messages.mo locale/ru/LC_MESSAGES/messages.po
