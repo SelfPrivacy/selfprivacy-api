@@ -1,15 +1,15 @@
-# Russian translations for PACKAGE package
-# Русские переводы для пакета PACKAGE.
+# Russian translations for SelfPrivacy API
+# Русские переводы для пакета SelfPrivacy API.
 # Copyright (C) 2025 THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
 # ghost <dettlaff@riseup.net>, 2025.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: SelfPrivacy API\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-26 20:10+0400\n"
-"PO-Revision-Date: 2025-10-01 04:39+0400\n"
+"POT-Creation-Date: 2025-10-10 01:54+0400\n"
+"PO-Revision-Date: 2025-10-13 17:03+0400\n"
 "Last-Translator: ghost <dettlaff@riseup.net>\n"
 "Language-Team: Russian <gnu@d07.ru>\n"
 "Language: ru\n"
@@ -19,107 +19,433 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
-#: selfprivacy_api/repositories/users/exceptions.py:10
+#: selfprivacy_api/utils/strings.py:6
+msgid ""
+"Your SelfPrivacy app is out of date, please update it to use new features."
+msgstr "Ваше приложение SelfPrivacy устарело; обновите его, чтобы использовать новые функции."
+
+#: selfprivacy_api/repositories/users/exceptions.py:13
 msgid "User not found"
 msgstr "Пользователь не найден"
 
-#: selfprivacy_api/repositories/users/exceptions.py:19
+#: selfprivacy_api/repositories/users/exceptions.py:21
 msgid "User or group not found"
 msgstr "Пользователь или группа не найдены"
 
-#: selfprivacy_api/repositories/users/exceptions.py:28
+#: selfprivacy_api/repositories/users/exceptions.py:30
 msgid "User is protected and cannot be deleted or modified"
 msgstr "Пользователь защищён и не может быть удалён или изменён"
 
-#: selfprivacy_api/repositories/users/exceptions.py:37
+#: selfprivacy_api/repositories/users/exceptions.py:39
 msgid "Username is forbidden"
 msgstr "Имя пользователя запрещено"
 
-#: selfprivacy_api/repositories/users/exceptions.py:46
+#: selfprivacy_api/repositories/users/exceptions.py:47
 msgid "User already exists"
 msgstr "Пользователь уже существует"
 
-#: selfprivacy_api/repositories/users/exceptions.py:55
+#: selfprivacy_api/repositories/users/exceptions.py:56
 msgid "Username must be alphanumeric and start with a letter"
 msgstr "Имя пользователя должно состоять из букв и цифр и начинаться с буквы"
 
-#: selfprivacy_api/repositories/users/exceptions.py:64
+#: selfprivacy_api/repositories/users/exceptions.py:67
 msgid "Username is too long. Must be less than 32 characters"
-msgstr "Слишком длинное имя пользователя. Должно быть короче 32 символов"
+msgstr "Имя пользователя слишком длинное. Должно быть меньше 32 символов"
 
-#: selfprivacy_api/repositories/users/exceptions.py:73
+#: selfprivacy_api/repositories/users/exceptions.py:77
 msgid "Password cannot be empty"
 msgstr "Пароль не может быть пустым"
 
-#: selfprivacy_api/repositories/users/exceptions.py:82
+#: selfprivacy_api/repositories/users/exceptions.py:86
 msgid "Invalid configuration, userdata is broken"
-msgstr "Неверная конфигурация: пользовательские данные повреждены"
+msgstr "Некорректная конфигурация, пользовательские данные повреждены"
 
-#: selfprivacy_api/repositories/users/exceptions.py:91
+#: selfprivacy_api/repositories/users/exceptions.py:96
 msgid "The Kanidm response does not contain a password reset link."
 msgstr "Ответ Kanidm не содержит ссылки для сброса пароля."
 
-#: selfprivacy_api/repositories/users/exceptions.py:100
+#: selfprivacy_api/repositories/users/exceptions.py:107
 msgid "Display name is too long. Must be less than 16 characters"
-msgstr "Слишком длинное отображаемое имя. Должно быть короче 16 символов"
+msgstr "Отображаемое имя слишком длинное. Должно быть меньше 16 символов"
 
-#: selfprivacy_api/repositories/users/exceptions_kanidm.py:25
+#: selfprivacy_api/repositories/users/exceptions_kanidm.py:26
+msgid "An error occurred during the Kanidm query."
+msgstr "Произошла ошибка при запросе к Kanidm."
+
+#: selfprivacy_api/repositories/users/exceptions_kanidm.py:29
 #, python-format
 msgid " Method: %(method)s"
 msgstr " Метод: %(method)s"
 
-#: selfprivacy_api/repositories/users/exceptions_kanidm.py:27
+#: selfprivacy_api/repositories/users/exceptions_kanidm.py:33
 #, python-format
 msgid " Endpoint: %(endpoint)s"
 msgstr " Эндпоинт: %(endpoint)s"
 
-#: selfprivacy_api/repositories/users/exceptions_kanidm.py:31
+#: selfprivacy_api/repositories/users/exceptions_kanidm.py:37
 #, python-format
 msgid " Error: %(error)s"
 msgstr " Ошибка: %(error)s"
 
-#: selfprivacy_api/repositories/users/exceptions_kanidm.py:41
+#: selfprivacy_api/repositories/users/exceptions_kanidm.py:48
 msgid "Kanidm returned an empty response."
 msgstr "Kanidm вернул пустой ответ."
 
-#: selfprivacy_api/repositories/users/exceptions_kanidm.py:53
+#: selfprivacy_api/repositories/users/exceptions_kanidm.py:60
 #, python-format
 msgid "Kanidm returned unknown type response. Response: %(response)s"
 msgstr "Kanidm вернул ответ неизвестного типа. Ответ: %(response)s"
 
-#: selfprivacy_api/repositories/users/exceptions_kanidm.py:56
+#: selfprivacy_api/repositories/users/exceptions_kanidm.py:66
 msgid "Kanidm returned unknown type response."
 msgstr "Kanidm вернул ответ неизвестного типа."
 
-#: selfprivacy_api/repositories/users/exceptions_kanidm.py:66
+#: selfprivacy_api/repositories/users/exceptions_kanidm.py:77
 msgid "Kanidm didn't return the admin password."
-msgstr "Kanidm не вернул пароль администратора."
+msgstr "Kanidm не вернул администраторский пароль."
 
-#: selfprivacy_api/repositories/users/exceptions_kanidm.py:78
+#: selfprivacy_api/repositories/users/exceptions_kanidm.py:89
 #, python-format
 msgid "An error occurred when using Kanidm CLI. Error: %(error)s"
 msgstr "Произошла ошибка при использовании Kanidm CLI. Ошибка: %(error)s"
 
-#: selfprivacy_api/repositories/users/exceptions_kanidm.py:81
+#: selfprivacy_api/repositories/users/exceptions_kanidm.py:94
 msgid "An error occurred when using Kanidm cli"
 msgstr "Произошла ошибка при использовании Kanidm CLI"
 
-#: selfprivacy_api/repositories/users/exceptions_kanidm.py:91
+#: selfprivacy_api/repositories/users/exceptions_kanidm.py:105
 msgid "Failed to get valid Kanidm token."
 msgstr "Не удалось получить действительный токен Kanidm."
 
-#: selfprivacy_api/actions/ssh.py:26
+#: selfprivacy_api/repositories/tokens/exceptions.py:11
+msgid "Token not found"
+msgstr "Токен не найден"
+
+#: selfprivacy_api/repositories/tokens/exceptions.py:17
+msgid "Recovery key not found"
+msgstr "Ключ восстановления не найден"
+
+#: selfprivacy_api/repositories/tokens/exceptions.py:23
+msgid "Phrase is not mnemonic"
+msgstr "Фраза не является мнемонической"
+
+#: selfprivacy_api/repositories/tokens/exceptions.py:29
+msgid "New device key not found"
+msgstr "Ключ нового устройства не найден"
+
+#: selfprivacy_api/actions/ssh.py:30
 msgid "Key not found"
 msgstr "Ключ не найден"
 
-#: selfprivacy_api/actions/ssh.py:35
+#: selfprivacy_api/actions/ssh.py:38
 msgid "Key already exists"
 msgstr "Ключ уже существует"
 
-#: selfprivacy_api/actions/ssh.py:45
+#: selfprivacy_api/actions/ssh.py:48
 msgid "Invalid key type. Only ssh-ed25519, ssh-rsa and ecdsa are supported"
 msgstr "Недопустимый тип ключа. Поддерживаются только ssh-ed25519, ssh-rsa и ecdsa"
 
-#: selfprivacy_api/actions/users.py:47
+#: selfprivacy_api/actions/users.py:50
 msgid "API is using a too old or unfinished user repository"
 msgstr "API использует слишком старый или незавершённый репозиторий пользователей"
+
+#: selfprivacy_api/actions/api_tokens.py:67
+msgid "Cannot delete caller's token"
+msgstr "Нельзя удалить свой токен"
+
+#: selfprivacy_api/actions/api_tokens.py:126
+msgid "Expiration date is in the past"
+msgstr "Дата истечения в прошлом"
+
+#: selfprivacy_api/actions/api_tokens.py:132
+msgid "Uses must be greater than 0"
+msgstr "Число использований должно быть больше 0"
+
+#: selfprivacy_api/actions/services.py:18
+#, python-format
+msgid "No such service: %(service_id)s"
+msgstr "Нет такого сервиса: %(service_id)s"
+
+#: selfprivacy_api/actions/services.py:28
+#, python-format
+msgid "No such volume: %(volume_name)s"
+msgstr "Нет такого тома: %(volume_name)s"
+
+#: selfprivacy_api/graphql/mutations/job_mutations.py:33
+msgid "Job removed"
+msgstr "Задача удалена"
+
+#: selfprivacy_api/graphql/mutations/job_mutations.py:38
+msgid "Job not found"
+msgstr "Задача не найдена"
+
+#: selfprivacy_api/graphql/mutations/api_mutations.py:103
+msgid "Recovery key generated"
+msgstr "Ключ восстановления сгенерирован"
+
+#: selfprivacy_api/graphql/mutations/api_mutations.py:119
+msgid "Recovery key used"
+msgstr "Ключ восстановления использован"
+
+#: selfprivacy_api/graphql/mutations/api_mutations.py:153
+msgid "Token refreshed"
+msgstr "Токен обновлён"
+
+#: selfprivacy_api/graphql/mutations/api_mutations.py:197
+msgid "Token deleted"
+msgstr "Токен удалён"
+
+#: selfprivacy_api/graphql/mutations/api_mutations.py:209
+msgid "Device api key generated"
+msgstr "Сгенерирован API-ключ устройства"
+
+#: selfprivacy_api/graphql/mutations/api_mutations.py:222
+msgid "New device key deleted"
+msgstr "Ключ нового устройства удалён"
+
+#: selfprivacy_api/graphql/mutations/api_mutations.py:243
+msgid "Token used"
+msgstr "Токен использован"
+
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:46
+msgid "Restore job created"
+msgstr "Задача восстановления создана"
+
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:47
+msgid "Nonexistent service:"
+msgstr "Несуществующий сервис:"
+
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:48
+msgid "Snapshot not found with id:"
+msgstr "Снимок с указанным ID не найден:"
+
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:145
+msgid "Trimming autobackup snapshots"
+msgstr "Очистка снимков автокопий"
+
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:149
+msgid "Pruning the excessive snapshots after the new autobackup quotas are set"
+msgstr "Удаление лишних снимков после установки новых квот автокопий"
+
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:194
+msgid "Backup job queued"
+msgstr "Задача резервного копирования поставлена в очередь"
+
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:215
+msgid "Total backup task queued"
+msgstr "Задача полного резервного копирования поставлена в очередь"
+
+#: selfprivacy_api/graphql/mutations/email_passwords_metadata_mutations.py:40
+msgid "Password deleted successfully"
+msgstr "Пароль успешно удалён"
+
+#: selfprivacy_api/graphql/mutations/system_mutations.py:99
+msgid "Timezone changed"
+msgstr "Часовой пояс изменён"
+
+#: selfprivacy_api/graphql/mutations/system_mutations.py:119
+msgid "Auto-upgrade settings changed"
+msgstr "Настройки автообновления изменены"
+
+#: selfprivacy_api/graphql/mutations/system_mutations.py:140
+msgid "SSH settings changed"
+msgstr "Настройки SSH изменены"
+
+#: selfprivacy_api/graphql/mutations/system_mutations.py:153
+msgid "Starting system rebuild"
+msgstr "Запуск пересборки системы"
+
+#: selfprivacy_api/graphql/mutations/system_mutations.py:171
+msgid "Starting system rollback"
+msgstr "Запуск отката системы"
+
+#: selfprivacy_api/graphql/mutations/system_mutations.py:188
+msgid "Starting system upgrade"
+msgstr "Запуск обновления системы"
+
+#: selfprivacy_api/graphql/mutations/system_mutations.py:206
+msgid "System reboot has started"
+msgstr "Перезапуск системы начат"
+
+#: selfprivacy_api/graphql/mutations/system_mutations.py:222
+msgid "There is no repository to pull changes from."
+msgstr "Нет репозитория, из которого можно получить изменения."
+
+#: selfprivacy_api/graphql/mutations/system_mutations.py:235
+msgid "Garbage collector started..."
+msgstr "Сборщик мусора запущен..."
+
+#: selfprivacy_api/graphql/mutations/system_mutations.py:249
+msgid "Provider set"
+msgstr "Провайдер установлен"
+
+#: selfprivacy_api/graphql/mutations/users_mutations.py:60
+msgid ""
+"New password applied an an email password. To use Single Sign On, please "
+"update the SelfPrivacy app."
+msgstr "Новый пароль применён как пароль электронной почты. Чтобы использовать единый вход (SSO), обновите приложение SelfPrivacy."
+
+#: selfprivacy_api/graphql/mutations/users_mutations.py:147
+msgid "User created"
+msgstr "Пользователь создан"
+
+#: selfprivacy_api/graphql/mutations/users_mutations.py:184
+msgid "User deleted"
+msgstr "Пользователь удалён"
+
+#: selfprivacy_api/graphql/mutations/users_mutations.py:230
+msgid "User updated"
+msgstr "Пользователь обновлён"
+
+#: selfprivacy_api/graphql/mutations/users_mutations.py:267
+msgid "New SSH key successfully written"
+msgstr "Новый ключ SSH успешно записан"
+
+#: selfprivacy_api/graphql/mutations/users_mutations.py:296
+msgid "SSH key successfully removed"
+msgstr "Ключ SSH успешно удалён"
+
+#: selfprivacy_api/graphql/mutations/users_mutations.py:339
+msgid "Link successfully created"
+msgstr "Ссылка успешно создана"
+
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:25
+msgid "Volume not found"
+msgstr "Том не найден"
+
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:57
+msgid "Volume resize started"
+msgstr "Изменение размера тома запущено"
+
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:78
+msgid "Volume mounted, rebuild the system to apply changes"
+msgstr "Том смонтирован, пересоберите систему для применения изменений"
+
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:86
+msgid "Volume not mounted (already mounted?)"
+msgstr "Том не смонтирован (уже смонтирован?)"
+
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:108
+msgid "Volume unmounted, rebuild the system to apply changes"
+msgstr "Том размонтирован, пересоберите систему для применения изменений"
+
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:116
+msgid "Volume not unmounted (already unmounted?)"
+msgstr "Том не размонтирован (уже размонтирован?)"
+
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:131
+msgid "Already migrated to binds"
+msgstr "Уже используется новая схема хранения."
+
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:147
+msgid "Migration to binds started, rebuild the system to apply changes"
+msgstr "Начат переход на новую схему хранения. Пересоберите систему, чтобы применить изменения."
+
+#: selfprivacy_api/graphql/queries/monitoring.py:20
+msgid "Prometheus is not running"
+msgstr "Prometheus не запущен"
+
+#: selfprivacy_api/jobs/upgrade_system.py:47
+msgid "System rebuilt."
+msgstr "Система пересобрана."
+
+#: selfprivacy_api/jobs/upgrade_system.py:56
+msgid "System rebuild failed. Last log lines:\n"
+msgstr "Сбой пересборки системы. Последние строки лога:\n"
+
+#: selfprivacy_api/jobs/upgrade_system.py:92
+msgid "Starting the system rebuild..."
+msgstr "Запуск пересборки системы..."
+
+#: selfprivacy_api/jobs/upgrade_system.py:106
+#: selfprivacy_api/jobs/upgrade_system.py:127
+msgid "System rebuild timed out. Last log lines:\n"
+msgstr "Время пересборки системы истекло. Последние строки лога:\n"
+
+#: selfprivacy_api/jobs/upgrade_system.py:113
+msgid "Rebuilding the system..."
+msgstr "Пересборка системы..."
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:105
+msgid "Migration already done."
+msgstr "Миграция уже выполнена."
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:113
+msgid "Checking if services are present."
+msgstr "Проверка наличия сервисов."
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:125
+msgid "Nextcloud service not found."
+msgstr "Сервис Nextcloud не найден."
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:133
+msgid "Bitwarden service not found."
+msgstr "Сервис Bitwarden не найден."
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:141
+msgid "Gitea service not found."
+msgstr "Сервис Gitea не найден."
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:149
+msgid "Pleroma service not found."
+msgstr "Сервис Pleroma не найден."
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:157
+msgid "Checking if all volumes are available."
+msgstr "Проверка доступности всех томов."
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:175
+#: selfprivacy_api/jobs/migrate_to_binds.py:192
+#, python-format
+msgid "Block device %(block_device_name)s not found."
+msgstr "Блочное устройство %(block_device_name)s не найдено."
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:200
+#, python-format
+msgid "Block device %(block_device_name)s not mounted."
+msgstr "Блочное устройство %(block_device_name)s не смонтировано."
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:212
+msgid "Activating binds in NixOS config."
+msgstr "Включаем новую схему хранения в настройках системы."
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:222
+msgid "Migrating Nextcloud."
+msgstr "Миграция Nextcloud."
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:248
+msgid "Migrating Bitwarden."
+msgstr "Миграция Bitwarden."
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:284
+msgid "Migrating Gitea."
+msgstr "Миграция Gitea."
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:306
+msgid "Migrating Mail server."
+msgstr "Миграция почтового сервера."
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:337
+msgid "Migrating Pleroma."
+msgstr "Миграция Pleroma."
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:370
+#: selfprivacy_api/jobs/migrate_to_binds.py:371
+msgid "Migration finished."
+msgstr "Миграция завершена."
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:379
+msgid "Migrate to binds"
+msgstr "Переход на новую схему хранения."
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:380
+msgid "Migration required to use the new disk space management."
+msgstr "Чтобы использовать новое управление местом на диске, нужен переход на новую схему хранения."
+
+#: selfprivacy_api/models/services.py:89
+msgid "No description found!"
+msgstr "Описание не найдено!"
+
+#: selfprivacy_api/models/services.py:96
+msgid "No backup description found!"
+msgstr "Информации о резервной копии не найдено!"
