@@ -1,6 +1,6 @@
 # Russian translations for PACKAGE package
 # Русские переводы для пакета PACKAGE.
-# Copyright (C) 2025 THE PACKAGE'S COPYRIGHT HOLDER
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
 # ghost <dettlaff@riseup.net>, 2025.
 #
@@ -8,16 +8,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-10 01:54+0400\n"
-"PO-Revision-Date: 2025-10-13 22:33+0400\n"
+"POT-Creation-Date: 2025-10-14 00:23+0400\n"
+"PO-Revision-Date: 2025-10-14 16:00+0400\n"
 "Last-Translator: ghost <dettlaff@riseup.net>\n"
 "Language-Team: Russian <gnu@d07.ru>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
-"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: selfprivacy_api/utils/strings.py:6
 msgid ""
@@ -207,31 +205,31 @@ msgstr "Ключ нового устройства удалён"
 msgid "Token used"
 msgstr "Токен использован"
 
-#: selfprivacy_api/graphql/mutations/backup_mutations.py:46
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:47
 msgid "Restore job created"
 msgstr "Задача восстановления создана"
 
-#: selfprivacy_api/graphql/mutations/backup_mutations.py:47
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:48
 msgid "Nonexistent service:"
 msgstr "Несуществующий сервис:"
 
-#: selfprivacy_api/graphql/mutations/backup_mutations.py:48
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:49
 msgid "Snapshot not found with id:"
 msgstr "Снимок с указанным ID не найден:"
 
-#: selfprivacy_api/graphql/mutations/backup_mutations.py:145
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:146
 msgid "Trimming autobackup snapshots"
 msgstr "Очистка снимков автокопий"
 
-#: selfprivacy_api/graphql/mutations/backup_mutations.py:149
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:150
 msgid "Pruning the excessive snapshots after the new autobackup quotas are set"
 msgstr "Удаление лишних снимков после установки новых квот автокопий"
 
-#: selfprivacy_api/graphql/mutations/backup_mutations.py:194
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:195
 msgid "Backup job queued"
 msgstr "Задача резервного копирования поставлена в очередь"
 
-#: selfprivacy_api/graphql/mutations/backup_mutations.py:215
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:216
 msgid "Total backup task queued"
 msgstr "Задача полного резервного копирования поставлена в очередь"
 
@@ -239,43 +237,43 @@ msgstr "Задача полного резервного копирования 
 msgid "Password deleted successfully"
 msgstr "Пароль успешно удалён"
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:99
+#: selfprivacy_api/graphql/mutations/system_mutations.py:100
 msgid "Timezone changed"
 msgstr "Часовой пояс изменён"
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:119
+#: selfprivacy_api/graphql/mutations/system_mutations.py:120
 msgid "Auto-upgrade settings changed"
 msgstr "Настройки автообновления изменены"
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:140
+#: selfprivacy_api/graphql/mutations/system_mutations.py:141
 msgid "SSH settings changed"
 msgstr "Настройки SSH изменены"
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:153
+#: selfprivacy_api/graphql/mutations/system_mutations.py:154
 msgid "Starting system rebuild"
 msgstr "Запуск пересборки системы"
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:171
+#: selfprivacy_api/graphql/mutations/system_mutations.py:172
 msgid "Starting system rollback"
 msgstr "Запуск отката системы"
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:188
+#: selfprivacy_api/graphql/mutations/system_mutations.py:189
 msgid "Starting system upgrade"
 msgstr "Запуск обновления системы"
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:206
+#: selfprivacy_api/graphql/mutations/system_mutations.py:207
 msgid "System reboot has started"
 msgstr "Перезапуск системы начат"
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:222
+#: selfprivacy_api/graphql/mutations/system_mutations.py:223
 msgid "There is no repository to pull changes from."
 msgstr "Нет репозитория, из которого можно получить изменения."
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:235
+#: selfprivacy_api/graphql/mutations/system_mutations.py:236
 msgid "Garbage collector started..."
 msgstr "Сборщик мусора запущен..."
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:249
+#: selfprivacy_api/graphql/mutations/system_mutations.py:250
 msgid "Provider set"
 msgstr "Провайдер установлен"
 
@@ -309,81 +307,81 @@ msgstr "Ключ SSH успешно удалён"
 msgid "Link successfully created"
 msgstr "Ссылка успешно создана"
 
-#: selfprivacy_api/graphql/mutations/storage_mutations.py:25
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:27
 msgid "Volume not found"
 msgstr "Том не найден"
 
-#: selfprivacy_api/graphql/mutations/storage_mutations.py:57
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:59
 msgid "Volume resize started"
 msgstr "Изменение размера тома запущено"
 
-#: selfprivacy_api/graphql/mutations/storage_mutations.py:78
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:80
 msgid "Volume mounted, rebuild the system to apply changes"
 msgstr "Том смонтирован, пересоберите систему для применения изменений"
 
-#: selfprivacy_api/graphql/mutations/storage_mutations.py:86
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:88
 msgid "Volume not mounted (already mounted?)"
 msgstr "Том не смонтирован (возможно, уже смонтирован)"
 
-#: selfprivacy_api/graphql/mutations/storage_mutations.py:108
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:110
 msgid "Volume unmounted, rebuild the system to apply changes"
 msgstr "Том размонтирован, пересоберите систему для применения изменений"
 
-#: selfprivacy_api/graphql/mutations/storage_mutations.py:116
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:118
 msgid "Volume not unmounted (already unmounted?)"
 msgstr "Том не размонтирован (возможно, уже размонтирован)"
 
-#: selfprivacy_api/graphql/mutations/storage_mutations.py:131
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:133
 msgid "Already migrated to binds"
 msgstr "Уже используется новая схема хранения."
 
-#: selfprivacy_api/graphql/mutations/storage_mutations.py:147
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:149
 msgid "Migration to binds started, rebuild the system to apply changes"
 msgstr "Начат переход на новую схему хранения. Пересоберите систему, чтобы применить изменения."
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:38
+#: selfprivacy_api/graphql/mutations/services_mutations.py:39
 msgid "Service not found"
 msgstr "Сервис не найден"
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:135
+#: selfprivacy_api/graphql/mutations/services_mutations.py:136
 msgid "Service enabled."
 msgstr "Сервис включён."
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:162
+#: selfprivacy_api/graphql/mutations/services_mutations.py:163
 msgid "Service disabled."
 msgstr "Сервис выключен."
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:182
+#: selfprivacy_api/graphql/mutations/services_mutations.py:183
 msgid "Service stopped."
 msgstr "Сервис остановлен."
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:202
+#: selfprivacy_api/graphql/mutations/services_mutations.py:203
 msgid "Service started."
 msgstr "Сервис запущен."
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:222
+#: selfprivacy_api/graphql/mutations/services_mutations.py:223
 msgid "Service restarted."
 msgstr "Сервис перезапущен."
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:239
-#: selfprivacy_api/graphql/mutations/services_mutations.py:282
+#: selfprivacy_api/graphql/mutations/services_mutations.py:240
+#: selfprivacy_api/graphql/mutations/services_mutations.py:283
 #, python-format
 msgid "Service does not exist: %(service_id)s"
 msgstr "Сервис не существует: %(service_id)s"
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:250
+#: selfprivacy_api/graphql/mutations/services_mutations.py:251
 msgid "Service configuration updated."
 msgstr "Настройки сервиса обновлены."
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:310
+#: selfprivacy_api/graphql/mutations/services_mutations.py:311
 msgid "Started moving the service."
 msgstr "Начат перенос сервиса."
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:319
+#: selfprivacy_api/graphql/mutations/services_mutations.py:320
 msgid "Service moved."
 msgstr "Сервис перемещён."
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:329
+#: selfprivacy_api/graphql/mutations/services_mutations.py:330
 #, python-format
 msgid ""
 "While moving service and performing the step '%(status_text)s', an error "
@@ -498,3 +496,50 @@ msgstr "Описание не найдено!"
 #: selfprivacy_api/models/services.py:96
 msgid "No backup description found!"
 msgstr "Описание резервной копии не найдено!"
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:24
+msgid "Shell-related error"
+msgstr "Ошибка, связанная с оболочкой"
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:28
+msgid "Error occurred, please report this to the support chat."
+msgstr "Произошла ошибка, пожалуйста, сообщите об этом в чат поддержки."
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:30
+msgid ""
+"We are sorry, garbage collection result was not found. Nix returned "
+"gibberish output, please report this to the support chat."
+msgstr "Извините, результат очистки не найден. Nix вернул некорректный вывод, пожалуйста, сообщите об этом в чат поддержки."
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:33
+msgid "Garbage collection completed."
+msgstr "Очистка завершена."
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:101
+msgid "Cleaning..."
+msgstr "Очистка..."
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:123
+msgid "Calculate the number of dead packages..."
+msgstr "Подсчёт количества неиспользуемых пакетов..."
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:134
+msgid "Nothing to clear"
+msgstr "Нечего очищать"
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:135
+msgid "System is clear"
+msgstr "Система чистая"
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:143
+#, python-format
+msgid "Found %(dead_packages)s packages to remove!"
+msgstr "Найдено %(dead_packages)s пакетов для удаления!"
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:162
+msgid "Collect garbage"
+msgstr "Очистка системы"
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:163
+msgid "Cleaning up unused packages"
+msgstr "Очистка неиспользуемых пакетов"

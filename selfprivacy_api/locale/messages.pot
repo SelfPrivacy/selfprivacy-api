@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-10 01:54+0400\n"
+"POT-Creation-Date: 2025-10-14 00:23+0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -205,31 +205,31 @@ msgstr ""
 msgid "Token used"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/backup_mutations.py:46
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:47
 msgid "Restore job created"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/backup_mutations.py:47
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:48
 msgid "Nonexistent service:"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/backup_mutations.py:48
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:49
 msgid "Snapshot not found with id:"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/backup_mutations.py:145
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:146
 msgid "Trimming autobackup snapshots"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/backup_mutations.py:149
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:150
 msgid "Pruning the excessive snapshots after the new autobackup quotas are set"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/backup_mutations.py:194
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:195
 msgid "Backup job queued"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/backup_mutations.py:215
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:216
 msgid "Total backup task queued"
 msgstr ""
 
@@ -237,43 +237,43 @@ msgstr ""
 msgid "Password deleted successfully"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:99
+#: selfprivacy_api/graphql/mutations/system_mutations.py:100
 msgid "Timezone changed"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:119
+#: selfprivacy_api/graphql/mutations/system_mutations.py:120
 msgid "Auto-upgrade settings changed"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:140
+#: selfprivacy_api/graphql/mutations/system_mutations.py:141
 msgid "SSH settings changed"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:153
+#: selfprivacy_api/graphql/mutations/system_mutations.py:154
 msgid "Starting system rebuild"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:171
+#: selfprivacy_api/graphql/mutations/system_mutations.py:172
 msgid "Starting system rollback"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:188
+#: selfprivacy_api/graphql/mutations/system_mutations.py:189
 msgid "Starting system upgrade"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:206
+#: selfprivacy_api/graphql/mutations/system_mutations.py:207
 msgid "System reboot has started"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:222
+#: selfprivacy_api/graphql/mutations/system_mutations.py:223
 msgid "There is no repository to pull changes from."
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:235
+#: selfprivacy_api/graphql/mutations/system_mutations.py:236
 msgid "Garbage collector started..."
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:249
+#: selfprivacy_api/graphql/mutations/system_mutations.py:250
 msgid "Provider set"
 msgstr ""
 
@@ -307,81 +307,81 @@ msgstr ""
 msgid "Link successfully created"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/storage_mutations.py:25
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:27
 msgid "Volume not found"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/storage_mutations.py:57
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:59
 msgid "Volume resize started"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/storage_mutations.py:78
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:80
 msgid "Volume mounted, rebuild the system to apply changes"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/storage_mutations.py:86
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:88
 msgid "Volume not mounted (already mounted?)"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/storage_mutations.py:108
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:110
 msgid "Volume unmounted, rebuild the system to apply changes"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/storage_mutations.py:116
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:118
 msgid "Volume not unmounted (already unmounted?)"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/storage_mutations.py:131
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:133
 msgid "Already migrated to binds"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/storage_mutations.py:147
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:149
 msgid "Migration to binds started, rebuild the system to apply changes"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:38
+#: selfprivacy_api/graphql/mutations/services_mutations.py:39
 msgid "Service not found"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:135
+#: selfprivacy_api/graphql/mutations/services_mutations.py:136
 msgid "Service enabled."
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:162
+#: selfprivacy_api/graphql/mutations/services_mutations.py:163
 msgid "Service disabled."
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:182
+#: selfprivacy_api/graphql/mutations/services_mutations.py:183
 msgid "Service stopped."
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:202
+#: selfprivacy_api/graphql/mutations/services_mutations.py:203
 msgid "Service started."
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:222
+#: selfprivacy_api/graphql/mutations/services_mutations.py:223
 msgid "Service restarted."
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:239
-#: selfprivacy_api/graphql/mutations/services_mutations.py:282
+#: selfprivacy_api/graphql/mutations/services_mutations.py:240
+#: selfprivacy_api/graphql/mutations/services_mutations.py:283
 #, python-format
 msgid "Service does not exist: %(service_id)s"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:250
+#: selfprivacy_api/graphql/mutations/services_mutations.py:251
 msgid "Service configuration updated."
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:310
+#: selfprivacy_api/graphql/mutations/services_mutations.py:311
 msgid "Started moving the service."
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:319
+#: selfprivacy_api/graphql/mutations/services_mutations.py:320
 msgid "Service moved."
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:329
+#: selfprivacy_api/graphql/mutations/services_mutations.py:330
 #, python-format
 msgid ""
 "While moving service and performing the step '%(status_text)s', an error "
@@ -495,4 +495,51 @@ msgstr ""
 
 #: selfprivacy_api/models/services.py:96
 msgid "No backup description found!"
+msgstr ""
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:24
+msgid "Shell-related error"
+msgstr ""
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:28
+msgid "Error occurred, please report this to the support chat."
+msgstr ""
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:30
+msgid ""
+"We are sorry, garbage collection result was not found. Nix returned "
+"gibberish output, please report this to the support chat."
+msgstr ""
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:33
+msgid "Garbage collection completed."
+msgstr ""
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:101
+msgid "Cleaning..."
+msgstr ""
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:123
+msgid "Calculate the number of dead packages..."
+msgstr ""
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:134
+msgid "Nothing to clear"
+msgstr ""
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:135
+msgid "System is clear"
+msgstr ""
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:143
+#, python-format
+msgid "Found %(dead_packages)s packages to remove!"
+msgstr ""
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:162
+msgid "Collect garbage"
+msgstr ""
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:163
+msgid "Cleaning up unused packages"
 msgstr ""

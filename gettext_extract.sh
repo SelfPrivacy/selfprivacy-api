@@ -28,3 +28,4 @@ xgettext \
   selfprivacy_api/jobs/upgrade_system.py \
   selfprivacy_api/jobs/migrate_to_binds.py \
   selfprivacy_api/models/services.py \
+  selfprivacy_api/jobs/nix_collect_garbage.py \
