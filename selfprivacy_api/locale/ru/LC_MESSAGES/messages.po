@@ -1,15 +1,15 @@
-# Russian translations for SelfPrivacy API
-# Русские переводы для пакета SelfPrivacy API.
+# Russian translations for PACKAGE package
+# Русские переводы для пакета PACKAGE.
 # Copyright (C) 2025 THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
 # ghost <dettlaff@riseup.net>, 2025.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: SelfPrivacy API\n"
+"Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-10-10 01:54+0400\n"
-"PO-Revision-Date: 2025-10-13 17:03+0400\n"
+"PO-Revision-Date: 2025-10-13 22:33+0400\n"
 "Last-Translator: ghost <dettlaff@riseup.net>\n"
 "Language-Team: Russian <gnu@d07.ru>\n"
 "Language: ru\n"
@@ -159,7 +159,7 @@ msgstr "Дата истечения в прошлом"
 
 #: selfprivacy_api/actions/api_tokens.py:132
 msgid "Uses must be greater than 0"
-msgstr "Число использований должно быть больше 0"
+msgstr "Количество использований должно быть больше 0"
 
 #: selfprivacy_api/actions/services.py:18
 #, python-format
@@ -323,7 +323,7 @@ msgstr "Том смонтирован, пересоберите систему �
 
 #: selfprivacy_api/graphql/mutations/storage_mutations.py:86
 msgid "Volume not mounted (already mounted?)"
-msgstr "Том не смонтирован (уже смонтирован?)"
+msgstr "Том не смонтирован (возможно, уже смонтирован)"
 
 #: selfprivacy_api/graphql/mutations/storage_mutations.py:108
 msgid "Volume unmounted, rebuild the system to apply changes"
@@ -331,7 +331,7 @@ msgstr "Том размонтирован, пересоберите систем
 
 #: selfprivacy_api/graphql/mutations/storage_mutations.py:116
 msgid "Volume not unmounted (already unmounted?)"
-msgstr "Том не размонтирован (уже размонтирован?)"
+msgstr "Том не размонтирован (возможно, уже размонтирован)"
 
 #: selfprivacy_api/graphql/mutations/storage_mutations.py:131
 msgid "Already migrated to binds"
@@ -340,6 +340,55 @@ msgstr "Уже используется новая схема хранения."
 #: selfprivacy_api/graphql/mutations/storage_mutations.py:147
 msgid "Migration to binds started, rebuild the system to apply changes"
 msgstr "Начат переход на новую схему хранения. Пересоберите систему, чтобы применить изменения."
+
+#: selfprivacy_api/graphql/mutations/services_mutations.py:38
+msgid "Service not found"
+msgstr "Сервис не найден"
+
+#: selfprivacy_api/graphql/mutations/services_mutations.py:135
+msgid "Service enabled."
+msgstr "Сервис включён."
+
+#: selfprivacy_api/graphql/mutations/services_mutations.py:162
+msgid "Service disabled."
+msgstr "Сервис выключен."
+
+#: selfprivacy_api/graphql/mutations/services_mutations.py:182
+msgid "Service stopped."
+msgstr "Сервис остановлен."
+
+#: selfprivacy_api/graphql/mutations/services_mutations.py:202
+msgid "Service started."
+msgstr "Сервис запущен."
+
+#: selfprivacy_api/graphql/mutations/services_mutations.py:222
+msgid "Service restarted."
+msgstr "Сервис перезапущен."
+
+#: selfprivacy_api/graphql/mutations/services_mutations.py:239
+#: selfprivacy_api/graphql/mutations/services_mutations.py:282
+#, python-format
+msgid "Service does not exist: %(service_id)s"
+msgstr "Сервис не существует: %(service_id)s"
+
+#: selfprivacy_api/graphql/mutations/services_mutations.py:250
+msgid "Service configuration updated."
+msgstr "Настройки сервиса обновлены."
+
+#: selfprivacy_api/graphql/mutations/services_mutations.py:310
+msgid "Started moving the service."
+msgstr "Начат перенос сервиса."
+
+#: selfprivacy_api/graphql/mutations/services_mutations.py:319
+msgid "Service moved."
+msgstr "Сервис перемещён."
+
+#: selfprivacy_api/graphql/mutations/services_mutations.py:329
+#, python-format
+msgid ""
+"While moving service and performing the step '%(status_text)s', an error "
+"occurred: %(error)s"
+msgstr "При переносе сервиса на шаге «%(status_text)s» произошла ошибка: %(error)s"
 
 #: selfprivacy_api/graphql/queries/monitoring.py:20
 msgid "Prometheus is not running"
@@ -407,7 +456,7 @@ msgstr "Блочное устройство %(block_device_name)s не смон�
 
 #: selfprivacy_api/jobs/migrate_to_binds.py:212
 msgid "Activating binds in NixOS config."
-msgstr "Включаем новую схему хранения в настройках системы."
+msgstr "Включаем новую схему хранения в конфигурации NixOS."
 
 #: selfprivacy_api/jobs/migrate_to_binds.py:222
 msgid "Migrating Nextcloud."
@@ -436,7 +485,7 @@ msgstr "Миграция завершена."
 
 #: selfprivacy_api/jobs/migrate_to_binds.py:379
 msgid "Migrate to binds"
-msgstr "Переход на новую схему хранения."
+msgstr "Переход на новую схему хранения"
 
 #: selfprivacy_api/jobs/migrate_to_binds.py:380
 msgid "Migration required to use the new disk space management."
@@ -448,4 +497,4 @@ msgstr "Описание не найдено!"
 
 #: selfprivacy_api/models/services.py:96
 msgid "No backup description found!"
-msgstr "Информации о резервной копии не найдено!"
+msgstr "Описание резервной копии не найдено!"

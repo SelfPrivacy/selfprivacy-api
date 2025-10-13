@@ -18,6 +18,7 @@ from selfprivacy_api.graphql.mutations.mutation_interface import (
 from selfprivacy_api.graphql.queries.backup import BackupConfiguration
 from selfprivacy_api.graphql.queries.backup import Backup
 from selfprivacy_api.graphql.queries.providers import BackupProvider
+from selfprivacy_api.graphql.queries.jobs import translate_job
 from selfprivacy_api.graphql.common_types.jobs import job_to_api_job
 from selfprivacy_api.graphql.common_types.backup import (
     AutobackupQuotasInput,
@@ -192,7 +193,7 @@ class BackupMutations:
             success=True,
             code=200,
             message=t.translate(text=_("Backup job queued"), locale=locale),
-            job=job_to_api_job(job),
+            job=translate_job(job=job_to_api_job(job), locale=locale),
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
@@ -213,7 +214,7 @@ class BackupMutations:
             success=True,
             code=200,
             message=t.translate(text=_("Total backup task queued"), locale=locale),
-            job=job_to_api_job(job),
+            job=translate_job(job=job_to_api_job(job), locale=locale),
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
@@ -239,7 +240,7 @@ class BackupMutations:
             success=True,
             code=200,
             message=t.translate(text=RESTORE_JOB_CREATED, locale=locale),
-            job=job_to_api_job(job),
+            job=translate_job(job=job_to_api_job(job), locale=locale),
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
@@ -286,7 +287,7 @@ class BackupMutations:
             success=True,
             code=200,
             message=t.translate(text=RESTORE_JOB_CREATED, locale=locale),
-            job=job_to_api_job(job),
+            job=translate_job(job=job_to_api_job(job), locale=locale),
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])

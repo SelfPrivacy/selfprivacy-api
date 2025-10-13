@@ -339,6 +339,55 @@ msgstr ""
 msgid "Migration to binds started, rebuild the system to apply changes"
 msgstr ""
 
+#: selfprivacy_api/graphql/mutations/services_mutations.py:38
+msgid "Service not found"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/services_mutations.py:135
+msgid "Service enabled."
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/services_mutations.py:162
+msgid "Service disabled."
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/services_mutations.py:182
+msgid "Service stopped."
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/services_mutations.py:202
+msgid "Service started."
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/services_mutations.py:222
+msgid "Service restarted."
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/services_mutations.py:239
+#: selfprivacy_api/graphql/mutations/services_mutations.py:282
+#, python-format
+msgid "Service does not exist: %(service_id)s"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/services_mutations.py:250
+msgid "Service configuration updated."
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/services_mutations.py:310
+msgid "Started moving the service."
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/services_mutations.py:319
+msgid "Service moved."
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/services_mutations.py:329
+#, python-format
+msgid ""
+"While moving service and performing the step '%(status_text)s', an error "
+"occurred: %(error)s"
+msgstr ""
+
 #: selfprivacy_api/graphql/queries/monitoring.py:20
 msgid "Prometheus is not running"
 msgstr ""

@@ -16,6 +16,7 @@ from selfprivacy_api.jobs.nix_collect_garbage import start_nix_collect_garbage
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.common_types.jobs import job_to_api_job
 from selfprivacy_api.graphql.queries.providers import DnsProvider
+from selfprivacy_api.graphql.queries.jobs import translate_job
 from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericJobMutationReturn,
     GenericMutationReturn,
@@ -152,7 +153,7 @@ class SystemMutations:
                 success=True,
                 message=t.translate(text=_("Starting system rebuild"), locale=locale),
                 code=200,
-                job=job_to_api_job(job),
+                job=translate_job(job=job_to_api_job(job), locale=locale),
             )
         except system_actions.ShellException as e:
             return GenericJobMutationReturn(
@@ -187,7 +188,7 @@ class SystemMutations:
                 success=True,
                 message=t.translate(text=_("Starting system upgrade"), locale=locale),
                 code=200,
-                job=job_to_api_job(job),
+                job=translate_job(job=job_to_api_job(job), locale=locale),
             )
         except system_actions.ShellException as e:
             return GenericJobMutationReturn(
@@ -233,7 +234,7 @@ class SystemMutations:
             success=True,
             code=200,
             message=t.translate(text=_("Garbage collector started..."), locale=locale),
-            job=job_to_api_job(job),
+            job=translate_job(job=job_to_api_job(job), locale=locale),
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])

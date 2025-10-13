@@ -38,7 +38,7 @@ xgettext \
 
 
 
-## utf8 fix
+## utf-8 fix
 
 # iconv -f ISO-8859-5 -t UTF-8 \
 #   locale/ru/LC_MESSAGES/messages.po \

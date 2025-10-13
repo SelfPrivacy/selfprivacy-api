@@ -23,6 +23,7 @@ from selfprivacy_api.graphql.common_types.service import (
     Service,
     service_to_graphql_service,
 )
+from selfprivacy_api.graphql.queries.jobs import translate_job
 
 from selfprivacy_api.actions.services import (
     move_service,
@@ -311,7 +312,7 @@ class ServicesMutations:
                 ),
                 code=200,
                 service=service_to_graphql_service(service),
-                job=job_to_api_job(job),
+                job=translate_job(job=job_to_api_job(job), locale=locale),
             )
         elif job.status == JobStatus.FINISHED:
             return ServiceJobMutationReturn(
@@ -319,7 +320,7 @@ class ServicesMutations:
                 message=t.translate(text=_("Service moved."), locale=locale),
                 code=200,
                 service=service_to_graphql_service(service),
-                job=job_to_api_job(job),
+                job=translate_job(job=job_to_api_job(job), locale=locale),
             )
         else:
             return ServiceJobMutationReturn(
@@ -336,5 +337,5 @@ class ServicesMutations:
                 },
                 code=400,
                 service=service_to_graphql_service(service),
-                job=job_to_api_job(job),
+                job=translate_job(job=job_to_api_job(job), locale=locale),
             )

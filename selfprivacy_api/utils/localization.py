@@ -38,12 +38,6 @@ class Localization(metaclass=SingletonMetaclass):
         return DEFAULT_LOCALE
 
 
-print(
-    "[i18n] .mo exists:",
-    (_LOCALE_DIR / "ru" / "LC_MESSAGES" / "messages.mo").exists(),
-)
-
-
 class Translation(ABC):
     @staticmethod
     @abstractmethod

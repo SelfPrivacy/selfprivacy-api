@@ -14,6 +14,8 @@ from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericJobMutationReturn,
     GenericMutationReturn,
 )
+from selfprivacy_api.graphql.queries.jobs import translate_job
+
 from selfprivacy_api.jobs.migrate_to_binds import (
     BindMigrationConfig,
     is_bind_migrated,
@@ -148,5 +150,5 @@ class StorageMutations:
                 ),
                 locale=locale,
             ),
-            job=job_to_api_job(job),
+            job=translate_job(job=job_to_api_job(job), locale=locale),
         )
