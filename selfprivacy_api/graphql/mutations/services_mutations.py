@@ -35,6 +35,8 @@ from selfprivacy_api.services import ServiceManager
 
 _ = gettext.gettext
 
+SERVICE_NOT_FOUND = _("Service not found")
+
 
 @strawberry.type
 class ServiceMutationReturn(GenericMutationReturn):
@@ -86,9 +88,6 @@ class SetServiceConfigurationInput:
 
     -- Inex, 26.07.2024
     """
-
-
-SERVICE_NOT_FOUND = _("Service not found")
 
 
 @strawberry.input
@@ -148,7 +147,7 @@ class ServicesMutations:
             if service is None:
                 return ServiceMutationReturn(
                     success=False,
-                    message=SERVICE_NOT_FOUND,
+                    message=t.translate(text=SERVICE_NOT_FOUND, locale=locale),
                     code=404,
                 )
             service.disable()
