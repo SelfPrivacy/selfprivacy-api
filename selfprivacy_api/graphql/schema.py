@@ -214,7 +214,6 @@ class Subscription:
     @strawberry.subscription
     async def job_updates(self, info: Info) -> AsyncGenerator[List[ApiJob], None]:
         reject_if_unauthenticated(info)
-        locale = info.context["locale"]
         locale = _locale_from_info(info)
         async for jobs in job_update_generator():
             yield [translate_job(job=j, locale=locale) for j in jobs]
