@@ -51,6 +51,7 @@ from selfprivacy_api.graphql.common_types.service import (
 
 from selfprivacy_api.graphql.mutations.users_mutations import UsersMutations
 from selfprivacy_api.graphql.queries.users import Users
+from selfprivacy_api.graphql.queries.jobs import translate_job
 from selfprivacy_api.jobs.test import test_job
 
 
@@ -191,7 +192,9 @@ class Subscription:
     @strawberry.subscription
     async def job_updates(self, info: Info) -> AsyncGenerator[List[ApiJob], None]:
         reject_if_unauthenticated(info)
-        return job_update_generator()
+        locale = info.context["locale"]
+        async for jobs in job_update_generator():
+            yield [translate_job(job=j, locale=locale) for j in jobs]
 
     @strawberry.subscription
     # Used for testing, consider deletion to shrink attack surface
