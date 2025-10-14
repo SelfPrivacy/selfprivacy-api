@@ -201,8 +201,6 @@ def _locale_from_info(info: Info) -> str:
     if ws is not None and getattr(ws, "headers", None):
         return Localization().get_locale(ws.headers.get("accept-language"))
 
-    return DEFAULT_LOCALE
-
 
 @strawberry.type
 class Subscription:
