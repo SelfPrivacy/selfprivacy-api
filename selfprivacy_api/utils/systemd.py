@@ -19,6 +19,13 @@ class SystemdUnitInterface(
 
 class SystemdManagerInterface(DbusInterfaceCommonAsync, interface_name="org.freedesktop.systemd1.Manager"):
     @dbus_method_async(
+        input_signature='',
+        result_signature=''
+    )
+    async def reboot(self):
+        raise NotImplementedError
+    
+    @dbus_method_async(
         input_signature='s',
         result_signature='o',
     )
@@ -73,6 +80,14 @@ def get_unit_proxy(unit: str) -> SystemdUnitInterface:
         object_path=encode_object_path('/org/freedesktop/systemd1/unit', unit),
         bus=DbusConnection.bus,
     )
+
+async def listen_for_unit_state_changes(units: List[str]):
+    unit_proxies = [get_unit_proxy(unit).properties_changed.__aiter__() for unit in units]
+
+    
+
+    
+    
 
 async def wait_for_unit_state(unit: str, states: List[ServiceStatus]):
     unit_proxy = get_unit_proxy(unit)

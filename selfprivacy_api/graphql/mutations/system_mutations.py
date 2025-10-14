@@ -181,8 +181,8 @@ class SystemMutations:
             )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def reboot_system(self) -> GenericMutationReturn:
-        system_actions.reboot_system()
+    async def reboot_system(self) -> GenericMutationReturn:
+        await system_actions.reboot_system()
         try:
             return GenericMutationReturn(
                 success=True,
