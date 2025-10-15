@@ -72,6 +72,15 @@ class MailServer(Service):
         )
 
     @staticmethod
+    async def wait_for_statuses(self, expected_statuses: List[ServiceStatus]):
+        if (await self.get_status()) in expected_statuses:
+            return
+
+        async for _ in listen_for_unit_state_changes(["dovecot2.service", "postfix.service"]):
+            if (await self.get_status()) in expected_statuses:
+                return
+
+    @staticmethod
     def enable():
         raise NotImplementedError("enable is not implemented for MailServer")
 

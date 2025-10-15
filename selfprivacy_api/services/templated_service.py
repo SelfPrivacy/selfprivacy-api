@@ -30,7 +30,7 @@ from selfprivacy_api.services.config_item import (
     IntServiceConfigItem,
 )
 from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
-from selfprivacy_api.utils.systemd import get_service_status_from_several_units, start_unit, stop_unit, restart_unit
+from selfprivacy_api.utils.systemd import get_service_status_from_several_units, start_unit, stop_unit, restart_unit, listen_for_unit_state_changes
 
 SP_MODULES_DEFENITIONS_PATH = "/etc/sp-modules"
 SP_SUGGESTED_MODULES_PATH = "/etc/suggested-sp-modules"
@@ -249,6 +249,14 @@ class TemplatedService(Service):
         if not self.meta.systemd_services:
             return ServiceStatus.INACTIVE
         return await get_service_status_from_several_units(self.meta.systemd_services)
+
+    async def wait_for_statuses(self, expected_statuses: List[ServiceStatus]):
+        if (await self.get_status()) in expected_statuses:
+            return
+
+        async for _ in listen_for_unit_state_changes(self.meta.systemd_services):
+            if (await self.get_status()) in expected_statuses:
+                return
 
     def _set_enable(self, enable: bool):
         name = self.get_id()

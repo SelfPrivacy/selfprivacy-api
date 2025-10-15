@@ -1,5 +1,6 @@
 """Generic service status fetcher using systemctl"""
 
+import asyncio
 import subprocess
 from typing import List
 
@@ -82,10 +83,26 @@ def get_unit_proxy(unit: str) -> SystemdUnitInterface:
     )
 
 async def listen_for_unit_state_changes(units: List[str]):
-    unit_proxies = [get_unit_proxy(unit).properties_changed.__aiter__() for unit in units]
+    iterators = [get_unit_proxy(unit).properties_changed.__aiter__() for unit in units]
+    pending: dict[int, asyncio.Task] = {}
 
-    
+    for i, it in enumerate(iterators):
+        pending[i] = asyncio.create_task(it.__anext__())
 
+    while pending:
+        done, _ = await asyncio.wait(pending.values(), return_when=asyncio.FIRST_COMPLETED)
+
+        for task in done:
+            for idx, t in list(pending.items()):
+                if t is task:
+                    try:
+                        item = t.result()
+                        yield item
+                        pending[idx] = asyncio.create_task(iterators[idx].__anext__())
+                    except StopAsyncIteration:
+                        del pending[idx]
+
+                    break
     
     
 

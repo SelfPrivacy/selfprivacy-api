@@ -1,6 +1,7 @@
 """Abstract class for a service running on a server"""
 
 from abc import ABC, abstractmethod
+import asyncio
 import logging
 from typing import List, Optional
 from os.path import exists
@@ -11,7 +12,6 @@ from selfprivacy_api.utils.default_subdomains import DEFAULT_SUBDOMAINS
 from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
 from selfprivacy_api.utils.waitloop import wait_until_true
 from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
-from selfprivacy_api.utils.systemd import wait_for_unit_state
 
 from selfprivacy_api.jobs import Job, Jobs, JobStatus, report_progress
 from selfprivacy_api.jobs.upgrade_system import rebuild_system
@@ -219,6 +219,12 @@ class Service(ABC):
     @abstractmethod
     async def get_status() -> ServiceStatus:
         """The status of the service, reported by systemd."""
+        pass
+
+    @staticmethod
+    @abstractmethod
+    async def wait_for_statuses(expected_statuses: List[ServiceStatus]):
+        """Asynchronously wait for active to became one of expected_statuses. Should be cancellable"""
         pass
 
     @classmethod
@@ -559,24 +565,18 @@ class StoppedService:
     """
 
     def __init__(self, service: Service):
-        raise NotImplementedError()
         self.service = service
-        # TODO: all of this should be async
-        #self.original_status = service.get_status()
 
     async def __aenter__(self) -> Service:
-        self.original_status = self.service.get_status()
+        self.original_status = await self.service.get_status()
         if (
             self.original_status not in [ServiceStatus.INACTIVE, ServiceStatus.FAILED]
             and not self.service.is_always_active()
         ):
             try:
                 await self.service.stop()
-                wait_until_true(
-                    lambda: self.service.get_status()
-                    in [ServiceStatus.INACTIVE, ServiceStatus.FAILED],
-                    timeout_sec=DEFAULT_START_STOP_TIMEOUT,
-                )
+                async with asyncio.timeout(DEFAULT_START_STOP_TIMEOUT):
+                    await self.service.wait_for_statuses([ServiceStatus.INACTIVE, ServiceStatus.FAILED])
             except TimeoutError as error:
                 raise TimeoutError(
                     f"timed out waiting for {self.service.get_display_name()} to stop"
@@ -590,10 +590,8 @@ class StoppedService:
         ):
             try:
                 await self.service.start()
-                wait_until_true(
-                    lambda: self.service.get_status() == ServiceStatus.ACTIVE,
-                    timeout_sec=DEFAULT_START_STOP_TIMEOUT,
-                )
+                async with asyncio.timeout(DEFAULT_START_STOP_TIMEOUT):
+                    await self.service.wait_for_statuses([ServiceStatus.ACTIVE])
             except TimeoutError as error:
                 raise TimeoutError(
                     f"timed out waiting for {self.service.get_display_name()} to start"

@@ -5,7 +5,7 @@ import subprocess
 from typing import Optional, List
 
 from selfprivacy_api.services.owned_path import OwnedPath
-from selfprivacy_api.utils.systemd import get_service_status, start_unit, stop_unit, restart_unit
+from selfprivacy_api.utils.systemd import get_service_status, start_unit, stop_unit, restart_unit, wait_for_unit_state
 from selfprivacy_api.services.service import Service, ServiceStatus
 
 from selfprivacy_api.services.prometheus.icon import PROMETHEUS_ICON
@@ -64,6 +64,10 @@ class Prometheus(Service):
     @staticmethod
     async def get_status() -> ServiceStatus:
         return await get_service_status("prometheus.service")
+
+    @staticmethod
+    async def wait_for_statuses(self, expected_statuses: List[ServiceStatus]):
+        await wait_for_unit_state("prometheus.service", expected_statuses)
 
     @staticmethod
     async def stop():
