@@ -412,7 +412,7 @@ class Service(ABC):
             Bind.from_owned_path(folder, self.get_drive()) for folder in owned_folders
         ]
 
-    def assert_can_move(self, new_volume: BlockDevice):
+    async def assert_can_move(self, new_volume: BlockDevice):
         """
         Checks if the service can be moved to new volume
         Raises errors if it cannot
@@ -481,7 +481,7 @@ class Service(ABC):
 
         report_progress(0, job, "Performing pre-move checks...")
 
-        self.assert_can_move(volume)
+        await self.assert_can_move(volume)
         if not self.has_folders():
             self.set_location(volume)
             Jobs.update(
