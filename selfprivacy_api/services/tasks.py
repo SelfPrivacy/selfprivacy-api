@@ -1,3 +1,5 @@
+import asyncio
+
 from selfprivacy_api.services import Service
 from selfprivacy_api.utils.block_devices import BlockDevice
 from selfprivacy_api.utils.huey import huey
@@ -12,7 +14,7 @@ def move_service(service: Service, new_volume: BlockDevice, job: Job) -> bool:
     Reports all errors via job.
     """
     try:
-        service.move_to_volume(new_volume, job)
+        asyncio.run(service.move_to_volume(new_volume, job))
     except Exception as e:
         Jobs.update(
             job=job,

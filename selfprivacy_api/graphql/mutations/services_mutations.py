@@ -253,7 +253,7 @@ class ServicesMutations:
             )
 
         try:
-            job = move_service(input.service_id, input.location)
+            job = await move_service(input.service_id, input.location)
 
         except (ServiceNotFoundError, VolumeNotFoundError) as e:
             return ServiceJobMutationReturn(
