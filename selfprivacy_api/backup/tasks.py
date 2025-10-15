@@ -2,6 +2,7 @@
 The tasks module contains the worker tasks that are used to back up and restore
 """
 
+import asyncio
 from datetime import datetime, timezone
 from typing import List
 
@@ -80,7 +81,7 @@ def restore_snapshot(
     """
     The worker task that starts the restore process.
     """
-    Backups.restore_snapshot(snapshot, strategy)
+    asyncio.run(Backups.restore_snapshot(snapshot, strategy))
     return True
 
 

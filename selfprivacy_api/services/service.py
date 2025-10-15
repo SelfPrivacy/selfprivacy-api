@@ -429,7 +429,7 @@ class Service(ABC):
         if current_volume_name == new_volume.canonical_name:
             raise MoveError(f"{service_name} is already on volume {new_volume}")
 
-        check_volume(new_volume, space_needed=self.get_storage_usage())
+        check_volume(new_volume, space_needed=await self.get_storage_usage())
 
         binds = self.binds()
         if binds == []:
