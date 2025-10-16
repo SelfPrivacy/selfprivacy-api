@@ -6,7 +6,6 @@ from typing import List
 
 from sdbus import DbusInterfaceCommonAsync, dbus_method_async, dbus_property_async, encode_object_path
 from selfprivacy_api.models.services import ServiceStatus
-from selfprivacy_api.utils.dbus import DbusConnection
 
 class SystemdUnitInterface(
     DbusInterfaceCommonAsync,
@@ -71,15 +70,13 @@ class SystemdManagerInterface(DbusInterfaceCommonAsync, interface_name="org.free
 
 systemd_proxy = SystemdManagerInterface.new_proxy(
     service_name="org.freedesktop.systemd1",
-    object_path="/org/freedesktop/systemd1",
-    bus=DbusConnection.bus
+    object_path="/org/freedesktop/systemd1"
 )
 
 def get_unit_proxy(unit: str) -> SystemdUnitInterface:
     return SystemdUnitInterface.new_proxy(
         service_name='org.freedesktop.systemd1',
-        object_path=encode_object_path('/org/freedesktop/systemd1/unit', unit),
-        bus=DbusConnection.bus,
+        object_path=encode_object_path('/org/freedesktop/systemd1/unit', unit)
     )
 
 async def listen_for_unit_state_changes(units: List[str]):
