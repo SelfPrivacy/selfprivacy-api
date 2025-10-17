@@ -576,7 +576,9 @@ class StoppedService:
             try:
                 await self.service.stop()
                 async with asyncio.timeout(DEFAULT_START_STOP_TIMEOUT):
-                    await self.service.wait_for_statuses([ServiceStatus.INACTIVE, ServiceStatus.FAILED])
+                    await self.service.wait_for_statuses(
+                        [ServiceStatus.INACTIVE, ServiceStatus.FAILED]
+                    )
             except TimeoutError as error:
                 raise TimeoutError(
                     f"timed out waiting for {self.service.get_display_name()} to stop"

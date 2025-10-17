@@ -102,7 +102,6 @@ class MonitoringQueries:
                         "query": query,
                     },
                     timeout=0.8,
-
                 )
             if response.status_code != 200:
                 return MonitoringQueryError(

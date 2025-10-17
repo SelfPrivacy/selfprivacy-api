@@ -8,7 +8,7 @@ from selfprivacy_api.utils.systemd import (
     get_service_status_from_several_units,
     start_unit,
     stop_unit,
-    restart_unit
+    restart_unit,
 )
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
 from selfprivacy_api import utils
@@ -76,7 +76,9 @@ class MailServer(Service):
         if (await self.get_status()) in expected_statuses:
             return
 
-        async for _ in listen_for_unit_state_changes(["dovecot2.service", "postfix.service"]):
+        async for _ in listen_for_unit_state_changes(
+            ["dovecot2.service", "postfix.service"]
+        ):
             if (await self.get_status()) in expected_statuses:
                 return
 

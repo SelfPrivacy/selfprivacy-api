@@ -30,7 +30,13 @@ from selfprivacy_api.services.config_item import (
     IntServiceConfigItem,
 )
 from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
-from selfprivacy_api.utils.systemd import get_service_status_from_several_units, start_unit, stop_unit, restart_unit, listen_for_unit_state_changes
+from selfprivacy_api.utils.systemd import (
+    get_service_status_from_several_units,
+    start_unit,
+    stop_unit,
+    restart_unit,
+    listen_for_unit_state_changes,
+)
 
 SP_MODULES_DEFENITIONS_PATH = "/etc/sp-modules"
 SP_SUGGESTED_MODULES_PATH = "/etc/suggested-sp-modules"

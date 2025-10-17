@@ -26,7 +26,9 @@ class CpuMonitoring:
             if await Prometheus().get_status() != ServiceStatus.ACTIVE:
                 return MonitoringQueryError(error="Prometheus is not running")
 
-            return await MonitoringQueries.cpu_usage_overall(self.start, self.end, self.step)
+            return await MonitoringQueries.cpu_usage_overall(
+                self.start, self.end, self.step
+            )
 
 
 @strawberry.type
@@ -51,7 +53,9 @@ class MemoryMonitoring:
             if await Prometheus().get_status() != ServiceStatus.ACTIVE:
                 return MonitoringQueryError(error="Prometheus is not running")
 
-            return await MonitoringQueries.swap_usage_overall(self.start, self.end, self.step)
+            return await MonitoringQueries.swap_usage_overall(
+                self.start, self.end, self.step
+            )
 
     @strawberry.field
     async def average_usage_by_service(self) -> MonitoringMetricsResult:
@@ -59,7 +63,9 @@ class MemoryMonitoring:
             if await Prometheus().get_status() != ServiceStatus.ACTIVE:
                 return MonitoringQueryError(error="Prometheus is not running")
 
-            return await MonitoringQueries.memory_usage_average_by_slice(self.start, self.end)
+            return await MonitoringQueries.memory_usage_average_by_slice(
+                self.start, self.end
+            )
 
     @strawberry.field
     async def max_usage_by_service(self) -> MonitoringMetricsResult:
@@ -67,7 +73,9 @@ class MemoryMonitoring:
             if await Prometheus().get_status() != ServiceStatus.ACTIVE:
                 return MonitoringQueryError(error="Prometheus is not running")
 
-            return await MonitoringQueries.memory_usage_max_by_slice(self.start, self.end)
+            return await MonitoringQueries.memory_usage_max_by_slice(
+                self.start, self.end
+            )
 
 
 @strawberry.type
@@ -82,7 +90,9 @@ class DiskMonitoring:
             if await Prometheus().get_status() != ServiceStatus.ACTIVE:
                 return MonitoringQueryError(error="Prometheus is not running")
 
-            return await MonitoringQueries.disk_usage_overall(self.start, self.end, self.step)
+            return await MonitoringQueries.disk_usage_overall(
+                self.start, self.end, self.step
+            )
 
 
 @strawberry.type

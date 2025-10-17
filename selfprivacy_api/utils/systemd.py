@@ -4,41 +4,47 @@ import asyncio
 import subprocess
 from typing import List
 
-from sdbus import DbusInterfaceCommonAsync, dbus_method_async, dbus_property_async, encode_object_path
+from sdbus import (
+    DbusInterfaceCommonAsync,
+    dbus_method_async,
+    dbus_property_async,
+    encode_object_path,
+)
 from selfprivacy_api.models.services import ServiceStatus
 from selfprivacy_api.utils.dbus import DbusConnection
 
+
 class SystemdUnitInterface(
     DbusInterfaceCommonAsync,
-    interface_name='org.freedesktop.systemd1.Unit',
+    interface_name="org.freedesktop.systemd1.Unit",
 ):
     @dbus_property_async(
-        property_signature='s',
+        property_signature="s",
     )
     def active_state(self) -> str:
         raise NotImplementedError
 
-class SystemdManagerInterface(DbusInterfaceCommonAsync, interface_name="org.freedesktop.systemd1.Manager"):
-    @dbus_method_async(
-        input_signature='',
-        result_signature=''
-    )
+
+class SystemdManagerInterface(
+    DbusInterfaceCommonAsync, interface_name="org.freedesktop.systemd1.Manager"
+):
+    @dbus_method_async(input_signature="", result_signature="")
     async def reboot(self):
         raise NotImplementedError
-    
+
     @dbus_method_async(
-        input_signature='s',
-        result_signature='o',
+        input_signature="s",
+        result_signature="o",
     )
     async def get_unit(
         self,
         name: str,
     ) -> str:
         raise NotImplementedError
-   
+
     @dbus_method_async(
-        input_signature='ss',
-        result_signature='o',
+        input_signature="ss",
+        result_signature="o",
     )
     async def start_unit(
         self,
@@ -46,10 +52,10 @@ class SystemdManagerInterface(DbusInterfaceCommonAsync, interface_name="org.free
         mode: str,
     ) -> str:
         raise NotImplementedError
-    
+
     @dbus_method_async(
-        input_signature='ss',
-        result_signature='o',
+        input_signature="ss",
+        result_signature="o",
     )
     async def restart_unit(
         self,
@@ -57,10 +63,10 @@ class SystemdManagerInterface(DbusInterfaceCommonAsync, interface_name="org.free
         mode: str,
     ) -> str:
         raise NotImplementedError
-    
+
     @dbus_method_async(
-        input_signature='ss',
-        result_signature='o',
+        input_signature="ss",
+        result_signature="o",
     )
     async def stop_unit(
         self,
@@ -69,18 +75,21 @@ class SystemdManagerInterface(DbusInterfaceCommonAsync, interface_name="org.free
     ) -> str:
         raise NotImplementedError
 
+
 systemd_proxy = SystemdManagerInterface.new_proxy(
     service_name="org.freedesktop.systemd1",
     object_path="/org/freedesktop/systemd1",
-    bus=DbusConnection.bus
+    bus=DbusConnection.get_instance().bus,
 )
+
 
 def get_unit_proxy(unit: str) -> SystemdUnitInterface:
     return SystemdUnitInterface.new_proxy(
-        service_name='org.freedesktop.systemd1',
-        object_path=encode_object_path('/org/freedesktop/systemd1/unit', unit),
-        bus=DbusConnection.bus,
+        service_name="org.freedesktop.systemd1",
+        object_path=encode_object_path("/org/freedesktop/systemd1/unit", unit),
+        bus=DbusConnection.get_instance().bus,
     )
+
 
 async def listen_for_unit_state_changes(units: List[str]):
     iterators = [get_unit_proxy(unit).properties_changed.__aiter__() for unit in units]
@@ -90,7 +99,9 @@ async def listen_for_unit_state_changes(units: List[str]):
         pending[i] = asyncio.create_task(it.__anext__())
 
     while pending:
-        done, _ = await asyncio.wait(pending.values(), return_when=asyncio.FIRST_COMPLETED)
+        done, _ = await asyncio.wait(
+            pending.values(), return_when=asyncio.FIRST_COMPLETED
+        )
 
         for task in done:
             for idx, t in list(pending.items()):
@@ -103,14 +114,13 @@ async def listen_for_unit_state_changes(units: List[str]):
                         del pending[idx]
 
                     break
-    
-    
+
 
 async def wait_for_unit_state(unit: str, states: List[ServiceStatus]):
     unit_proxy = get_unit_proxy(unit)
 
     current_state = ServiceStatus.from_systemd_status(await unit_proxy.active_state)
-    
+
     if current_state in states:
         return
 
@@ -119,14 +129,18 @@ async def wait_for_unit_state(unit: str, states: List[ServiceStatus]):
         if current_state in states:
             return
 
+
 async def start_unit(unit: str):
     await systemd_proxy.start_unit(unit, "replace")
+
 
 async def stop_unit(unit: str):
     await systemd_proxy.stop_unit(unit, "replace")
 
+
 async def restart_unit(unit: str):
     await systemd_proxy.restart_unit(unit, "replace")
+
 
 async def get_service_status(unit: str) -> ServiceStatus:
     """
