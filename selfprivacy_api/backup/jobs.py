@@ -1,9 +1,14 @@
 from typing import Optional, List, Iterable
+import gettext
 
 from selfprivacy_api.models.backup.snapshot import Snapshot
 from selfprivacy_api.jobs import Jobs, Job, JobStatus
 from selfprivacy_api.services.service import Service
 from selfprivacy_api.services import ServiceManager
+from selfprivacy_api.utils.localization import TranslateSystemMessage as t
+
+
+_ = gettext.gettext
 
 
 def job_type_prefix(service: Service) -> str:
@@ -45,30 +50,38 @@ def add_autobackup_job(services: List[Service]) -> Job:
     pretty_service_list: str = ", ".join(service_names)
     job = Jobs.add(
         type_id=autobackup_job_type(),
-        name="Automatic backup",
-        description=f"Scheduled backup for services: {pretty_service_list}",
+        name=_("Automatic backup"),
+        description=_("Scheduled backup for services: %(pretty_service_list)s")
+        % {"pretty_service_list": pretty_service_list},
     )
     return job
 
 
 def add_backup_job(service: Service) -> Job:
     if is_something_running_for(service):
-        message = (
-            f"Cannot start a backup of {service.get_id()}, another operation is running: "
-            + get_jobs_by_service(service)[0].type_id
-        )
+        message = _(
+            "Cannot start a backup of %(service_id)s, another operation is running: %(op_type)s"
+        ) % {
+            "service_id": service.get_id(),
+            "op_type": get_jobs_by_service(service)[0].type_id,
+        }
         raise ValueError(message)
     display_name = service.get_display_name()
     job = Jobs.add(
         type_id=backup_job_type(service),
-        name=f"Backup {display_name}",
-        description=f"Backing up {display_name}",
+        name=_("Backup %(display_name)s") % {"display_name": display_name},
+        description=_("Backing up %(display_name)s") % {"display_name": display_name},
     )
     return job
 
 
 def complain_about_service_operation_running(service: Service) -> str:
-    message = f"Cannot start a restore of {service.get_id()}, another operation is running: {get_jobs_by_service(service)[0].type_id}"
+    message = _(
+        "Cannot start a restore of %(service_id)s, another operation is running: %(op_type)s"
+    ) % {
+        "service_id": service.get_id(),
+        "op_type": get_jobs_by_service(service)[0].type_id,
+    }
     raise ValueError(message)
 
 
@@ -78,8 +91,8 @@ def add_total_restore_job() -> Job:
 
     job = Jobs.add(
         type_id="backups.total_restore",
-        name=f"Total restore",
-        description="Restoring all enabled services",
+        name=_("Total restore"),
+        description=_("Restoring all enabled services"),
     )
     return job
 
@@ -99,8 +112,8 @@ def add_total_backup_job() -> Job:
 
     job = Jobs.add(
         type_id="backups.total_backup",
-        name=f"Total backup",
-        description="Backing up all the enabled services",
+        name=_("Total backup"),
+        description=_("Backing up all the enabled services"),
     )
     return job
 
@@ -114,8 +127,12 @@ def add_restore_job(snapshot: Snapshot) -> Job:
     display_name = service.get_display_name()
     job = Jobs.add(
         type_id=restore_job_type(service),
-        name=f"Restore {display_name}",
-        description=f"Restoring {display_name} from {snapshot.id}",
+        name=_("Restore %(display_name)s") % {"display_name": display_name},
+        description=_("Restoring %(display_name)s from %(snapshot_id)s")
+        % {
+            "display_name": display_name,
+            "snapshot_id": snapshot.id,
+        },
     )
     return job
 

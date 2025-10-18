@@ -27,5 +27,7 @@ xgettext \
   selfprivacy_api/graphql/queries/monitoring.py \
   selfprivacy_api/jobs/upgrade_system.py \
   selfprivacy_api/jobs/migrate_to_binds.py \
-  selfprivacy_api/models/services.py \
   selfprivacy_api/jobs/nix_collect_garbage.py \
+  selfprivacy_api/models/services.py \
+  selfprivacy_api/backup/jobs.py \
+  selfprivacy_api/backup/tasks.py \

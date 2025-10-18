@@ -184,24 +184,6 @@ def reject_if_unauthenticated(info: Info):
         raise Exception(IsAuthenticated().message)
 
 
-def _locale_from_info(info: Info) -> str:
-    ctx = getattr(info, "context", {}) or {}
-
-    # 1) If LocaleExtension (or context_getter) already stored it
-    if "locale" in ctx:
-        return ctx["locale"]
-
-    # 2) HTTP Accept-Language (queries/mutations; sometimes present for subs too)
-    req = ctx.get("request")
-    if req is not None:
-        return Localization().get_locale(req.headers.get("Accept-Language"))
-
-    # 3) WebSocket handshake headers (FastAPI/Starlette expose 'websocket')
-    ws = ctx.get("websocket")
-    if ws is not None and getattr(ws, "headers", None):
-        return Localization().get_locale(ws.headers.get("accept-language"))
-
-
 @strawberry.type
 class Subscription:
     """Root schema for subscriptions.
@@ -212,7 +194,7 @@ class Subscription:
     @strawberry.subscription
     async def job_updates(self, info: Info) -> AsyncGenerator[List[ApiJob], None]:
         reject_if_unauthenticated(info)
-        locale = _locale_from_info(info)
+        locale = info.context["locale"]
         async for jobs in job_update_generator():
             yield [translate_job(job=j, locale=locale) for j in jobs]
 
@@ -227,7 +209,8 @@ class Subscription:
     @strawberry.subscription
     async def log_entries(self, info: Info) -> AsyncGenerator[LogEntry, None]:
         reject_if_unauthenticated(info)
-        return log_stream()
+        async for entry in log_stream():
+            yield entry
 
 
 schema = strawberry.Schema(

@@ -32,9 +32,29 @@ class IsAuthenticated(BasePermission):
 class LocaleExtension(Extension):
     """Parse the Accept-Language header and set the locale in the context as one of the supported locales."""
 
+    # def resolve(self, _next, root, info: Info, *args, **kwargs):
+    #     locale = Localization().get_locale(
+    #         info.context["request"].headers.get("Accept-Language")
+    #     )
+    #     info.context["locale"] = locale
+    #     return _next(root, info, *args, **kwargs)
+
     def resolve(self, _next, root, info: Info, *args, **kwargs):
-        locale = Localization().get_locale(
-            info.context["request"].headers.get("Accept-Language")
-        )
-        info.context["locale"] = locale
+        # Prefer already-set value (from context getters)
+        if "locale" not in info.context:
+            # Try HTTP request first
+            req = info.context.get("request")
+            ws = info.context.get("websocket")
+
+            accept_lang = None
+            if req is not None:  # HTTP queries/mutations
+                accept_lang = req.headers.get("Accept-Language")
+            elif ws is not None:  # WebSocket subscriptions
+                # Some servers expose headers; also look at connection_init payload
+                accept_lang = ws.headers.get("accept-language") or (
+                    info.context.get("connection_params") or {}
+                ).get("accept-language")
+
+            info.context["locale"] = Localization().get_locale(accept_lang)
+
         return _next(root, info, *args, **kwargs)
