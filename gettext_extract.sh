@@ -16,6 +16,7 @@ xgettext \
   selfprivacy_api/actions/users.py \
   selfprivacy_api/actions/api_tokens.py \
   selfprivacy_api/actions/services.py \
+  selfprivacy_api/actions/system.py \
   selfprivacy_api/graphql/mutations/job_mutations.py \
   selfprivacy_api/graphql/mutations/api_mutations.py \
   selfprivacy_api/graphql/mutations/backup_mutations.py \

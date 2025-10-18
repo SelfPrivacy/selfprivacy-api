@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-14 00:23+0400\n"
+"POT-Creation-Date: 2025-10-19 00:48+0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -167,6 +167,33 @@ msgstr ""
 #: selfprivacy_api/actions/services.py:28
 #, python-format
 msgid "No such volume: %(volume_name)s"
+msgstr ""
+
+#: selfprivacy_api/actions/services.py:46
+#, python-format
+msgid "Move %(service)s"
+msgstr ""
+
+#: selfprivacy_api/actions/services.py:47
+#, python-format
+msgid "Moving %(service)s data to %(volume)s"
+msgstr ""
+
+#: selfprivacy_api/actions/system.py:114
+msgid "Rebuild system"
+msgstr ""
+
+#: selfprivacy_api/actions/system.py:116
+msgid ""
+"Applying the new system configuration by building the new NixOS generation."
+msgstr ""
+
+#: selfprivacy_api/actions/system.py:139
+msgid "Upgrade system"
+msgstr ""
+
+#: selfprivacy_api/actions/system.py:140
+msgid "Upgrading the system to the latest version."
 msgstr ""
 
 #: selfprivacy_api/graphql/mutations/job_mutations.py:33
@@ -489,14 +516,6 @@ msgstr ""
 msgid "Migration required to use the new disk space management."
 msgstr ""
 
-#: selfprivacy_api/models/services.py:89
-msgid "No description found!"
-msgstr ""
-
-#: selfprivacy_api/models/services.py:96
-msgid "No backup description found!"
-msgstr ""
-
 #: selfprivacy_api/jobs/nix_collect_garbage.py:24
 msgid "Shell-related error"
 msgstr ""
@@ -513,6 +532,11 @@ msgstr ""
 
 #: selfprivacy_api/jobs/nix_collect_garbage.py:33
 msgid "Garbage collection completed."
+msgstr ""
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:80
+#, python-format
+msgid "%(matched)s have been cleared"
 msgstr ""
 
 #: selfprivacy_api/jobs/nix_collect_garbage.py:101
@@ -542,4 +566,84 @@ msgstr ""
 
 #: selfprivacy_api/jobs/nix_collect_garbage.py:163
 msgid "Cleaning up unused packages"
+msgstr ""
+
+#: selfprivacy_api/models/services.py:89
+msgid "No description found!"
+msgstr ""
+
+#: selfprivacy_api/models/services.py:96
+msgid "No backup description found!"
+msgstr ""
+
+#: selfprivacy_api/backup/jobs.py:53
+msgid "Automatic backup"
+msgstr ""
+
+#: selfprivacy_api/backup/jobs.py:54
+#, python-format
+msgid "Scheduled backup for services: %(pretty_service_list)s"
+msgstr ""
+
+#: selfprivacy_api/backup/jobs.py:63
+#, python-format
+msgid ""
+"Cannot start a backup of %(service_id)s, another operation is running: "
+"%(op_type)s"
+msgstr ""
+
+#: selfprivacy_api/backup/jobs.py:72
+#, python-format
+msgid "Backup %(display_name)s"
+msgstr ""
+
+#: selfprivacy_api/backup/jobs.py:73
+#, python-format
+msgid "Backing up %(display_name)s"
+msgstr ""
+
+#: selfprivacy_api/backup/jobs.py:80
+#, python-format
+msgid ""
+"Cannot start a restore of %(service_id)s, another operation is running: "
+"%(op_type)s"
+msgstr ""
+
+#: selfprivacy_api/backup/jobs.py:94
+msgid "Total restore"
+msgstr ""
+
+#: selfprivacy_api/backup/jobs.py:95
+msgid "Restoring all enabled services"
+msgstr ""
+
+#: selfprivacy_api/backup/jobs.py:115
+msgid "Total backup"
+msgstr ""
+
+#: selfprivacy_api/backup/jobs.py:116
+msgid "Backing up all the enabled services"
+msgstr ""
+
+#: selfprivacy_api/backup/jobs.py:130
+#, python-format
+msgid "Restore %(display_name)s"
+msgstr ""
+
+#: selfprivacy_api/backup/jobs.py:131
+#, python-format
+msgid "Restoring %(display_name)s from %(snapshot_id)s"
+msgstr ""
+
+#: selfprivacy_api/backup/tasks.py:212
+msgid "Finding the last autobackup session"
+msgstr ""
+
+#: selfprivacy_api/backup/tasks.py:231
+#, python-format
+msgid "restoring %(service_name)s"
+msgstr ""
+
+#: selfprivacy_api/backup/tasks.py:236
+msgid "rebuilding system"
 msgstr ""

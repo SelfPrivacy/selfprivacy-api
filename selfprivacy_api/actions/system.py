@@ -1,6 +1,6 @@
 """Actions to manage the system."""
 
-import os
+import gettext
 import subprocess
 import pytz
 from typing import Optional, List
@@ -13,6 +13,8 @@ from selfprivacy_api.utils import WriteUserData, ReadUserData
 from selfprivacy_api.utils import UserDataFiles
 
 from selfprivacy_api.graphql.queries.providers import DnsProvider
+
+_ = gettext.gettext
 
 
 def get_timezone() -> str:
@@ -109,8 +111,10 @@ def run_blocking(cmd: List[str], new_session: bool = False) -> str:
 def add_rebuild_job() -> Job:
     return Jobs.add(
         type_id="system.nixos.rebuild",
-        name="Rebuild system",
-        description="Applying the new system configuration by building the new NixOS generation.",
+        name=_("Rebuild system"),
+        description=_(
+            "Applying the new system configuration by building the new NixOS generation."
+        ),
         status=JobStatus.CREATED,
     )
 
@@ -132,8 +136,8 @@ def upgrade_system() -> Job:
     """Upgrade the system"""
     job = Jobs.add(
         type_id="system.nixos.upgrade",
-        name="Upgrade system",
-        description="Upgrading the system to the latest version.",
+        name=_("Upgrade system"),
+        description=_("Upgrading the system to the latest version."),
         status=JobStatus.CREATED,
     )
     rebuild_system_task(job, upgrade=True)

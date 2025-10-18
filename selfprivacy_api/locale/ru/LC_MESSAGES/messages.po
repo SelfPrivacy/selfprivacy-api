@@ -1,21 +1,22 @@
 # Russian translations for PACKAGE package
 # Русские переводы для пакета PACKAGE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# Copyright (C) 2025 THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-# ghost <dettlaff@riseup.net>, 2025.
+# def <dettlaff@riseup.net>, 2025.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-14 00:23+0400\n"
-"PO-Revision-Date: 2025-10-14 16:00+0400\n"
-"Last-Translator: ghost <dettlaff@riseup.net>\n"
+"POT-Creation-Date: 2025-10-19 00:48+0400\n"
+"PO-Revision-Date: 2025-10-19 00:49+0400\n"
+"Last-Translator: def <dettlaff@riseup.net>\n"
 "Language-Team: Russian <gnu@d07.ru>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: selfprivacy_api/utils/strings.py:6
 msgid ""
@@ -168,6 +169,33 @@ msgstr "Нет такого сервиса: %(service_id)s"
 #, python-format
 msgid "No such volume: %(volume_name)s"
 msgstr "Нет такого тома: %(volume_name)s"
+
+#: selfprivacy_api/actions/services.py:46
+#, python-format
+msgid "Move %(service)s"
+msgstr "Перемещение %(service)s"
+
+#: selfprivacy_api/actions/services.py:47
+#, python-format
+msgid "Moving %(service)s data to %(volume)s"
+msgstr "Перемещение данных %(service)s на %(volume)s"
+
+#: selfprivacy_api/actions/system.py:114
+msgid "Rebuild system"
+msgstr "Пересборка системы"
+
+#: selfprivacy_api/actions/system.py:116
+msgid ""
+"Applying the new system configuration by building the new NixOS generation."
+msgstr "Применение новой конфигурации системы путём сборки новой генерации NixOS."
+
+#: selfprivacy_api/actions/system.py:139
+msgid "Upgrade system"
+msgstr "Обновление системы"
+
+#: selfprivacy_api/actions/system.py:140
+msgid "Upgrading the system to the latest version."
+msgstr "Обновление системы до последней версии."
 
 #: selfprivacy_api/graphql/mutations/job_mutations.py:33
 msgid "Job removed"
@@ -489,14 +517,6 @@ msgstr "Переход на новую схему хранения"
 msgid "Migration required to use the new disk space management."
 msgstr "Чтобы использовать новое управление местом на диске, нужен переход на новую схему хранения."
 
-#: selfprivacy_api/models/services.py:89
-msgid "No description found!"
-msgstr "Описание не найдено!"
-
-#: selfprivacy_api/models/services.py:96
-msgid "No backup description found!"
-msgstr "Описание резервной копии не найдено!"
-
 #: selfprivacy_api/jobs/nix_collect_garbage.py:24
 msgid "Shell-related error"
 msgstr "Ошибка, связанная с оболочкой"
@@ -514,6 +534,11 @@ msgstr "Извините, результат очистки не найден. N
 #: selfprivacy_api/jobs/nix_collect_garbage.py:33
 msgid "Garbage collection completed."
 msgstr "Очистка завершена."
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:80
+#, python-format
+msgid "%(matched)s have been cleared"
+msgstr "%(matched)s удалено"
 
 #: selfprivacy_api/jobs/nix_collect_garbage.py:101
 msgid "Cleaning..."
@@ -543,3 +568,83 @@ msgstr "Очистка системы"
 #: selfprivacy_api/jobs/nix_collect_garbage.py:163
 msgid "Cleaning up unused packages"
 msgstr "Очистка неиспользуемых пакетов"
+
+#: selfprivacy_api/models/services.py:89
+msgid "No description found!"
+msgstr "Описание не найдено!"
+
+#: selfprivacy_api/models/services.py:96
+msgid "No backup description found!"
+msgstr "Описание резервной копии не найдено!"
+
+#: selfprivacy_api/backup/jobs.py:53
+msgid "Automatic backup"
+msgstr "Автоматическое резервное копирование"
+
+#: selfprivacy_api/backup/jobs.py:54
+#, python-format
+msgid "Scheduled backup for services: %(pretty_service_list)s"
+msgstr "Запланированное резервное копирование для сервисов: %(pretty_service_list)s"
+
+#: selfprivacy_api/backup/jobs.py:63
+#, python-format
+msgid ""
+"Cannot start a backup of %(service_id)s, another operation is running: "
+"%(op_type)s"
+msgstr "Нельзя запустить резервное копирование %(service_id)s, выполняется другая операция: %(op_type)s"
+
+#: selfprivacy_api/backup/jobs.py:72
+#, python-format
+msgid "Backup %(display_name)s"
+msgstr "Резервное копирование %(display_name)s"
+
+#: selfprivacy_api/backup/jobs.py:73
+#, python-format
+msgid "Backing up %(display_name)s"
+msgstr "Создание резервной копии %(display_name)s"
+
+#: selfprivacy_api/backup/jobs.py:80
+#, python-format
+msgid ""
+"Cannot start a restore of %(service_id)s, another operation is running: "
+"%(op_type)s"
+msgstr "Нельзя запустить восстановление %(service_id)s, выполняется другая операция: %(op_type)s"
+
+#: selfprivacy_api/backup/jobs.py:94
+msgid "Total restore"
+msgstr "Полное восстановление"
+
+#: selfprivacy_api/backup/jobs.py:95
+msgid "Restoring all enabled services"
+msgstr "Восстановление всех включённых сервисов"
+
+#: selfprivacy_api/backup/jobs.py:115
+msgid "Total backup"
+msgstr "Полное резервное копирование"
+
+#: selfprivacy_api/backup/jobs.py:116
+msgid "Backing up all the enabled services"
+msgstr "Резервное копирование всех включённых сервисов"
+
+#: selfprivacy_api/backup/jobs.py:130
+#, python-format
+msgid "Restore %(display_name)s"
+msgstr "Восстановление %(display_name)s"
+
+#: selfprivacy_api/backup/jobs.py:131
+#, python-format
+msgid "Restoring %(display_name)s from %(snapshot_id)s"
+msgstr "Восстановление %(display_name)s из %(snapshot_id)s"
+
+#: selfprivacy_api/backup/tasks.py:212
+msgid "Finding the last autobackup session"
+msgstr "Поиск последней сессии автоматического резервного копирования"
+
+#: selfprivacy_api/backup/tasks.py:231
+#, python-format
+msgid "restoring %(service_name)s"
+msgstr "восстановление %(service_name)s"
+
+#: selfprivacy_api/backup/tasks.py:236
+msgid "rebuilding system"
+msgstr "пересборка системы"

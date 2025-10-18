@@ -124,19 +124,19 @@ Create .po
 ```
 msginit \
   --locale=ru_RU \
-  --input=locale/messages.pot \
-  --output-file=locale/ru/LC_MESSAGES/messages.po
+  --input=selfprivacy_api/locale/messages.pot \
+  --output-file=selfprivacy_api/locale/ru/LC_MESSAGES/messages.po
 ```
 
 Ensure UTF-8 encoding for the .po
 ```
 iconv -f ISO-8859-5 -t UTF-8 \
-  locale/ru/LC_MESSAGES/messages.po \
-  -o locale/ru/LC_MESSAGES/messages.utf8.po && \
-mv locale/ru/LC_MESSAGES/messages.utf8.po locale/ru/LC_MESSAGES/messages.po
+  selfprivacy_api/locale/ru/LC_MESSAGES/messages.po \
+  -o selfprivacy_api/locale/ru/LC_MESSAGES/messages.utf8.po && \
+mv selfprivacy_api/locale/ru/LC_MESSAGES/messages.utf8.po selfprivacy_api/locale/ru/LC_MESSAGES/messages.po
 ```
 
 Compile .mo
 ```
-msgfmt -o locale/ru/LC_MESSAGES/messages.mo locale/ru/LC_MESSAGES/messages.po
+msgfmt -o selfprivacy_api/locale/ru/LC_MESSAGES/messages.mo selfprivacy_api/locale/ru/LC_MESSAGES/messages.po
 ```
