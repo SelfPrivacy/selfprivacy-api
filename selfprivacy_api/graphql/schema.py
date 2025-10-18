@@ -7,6 +7,8 @@ from typing import AsyncGenerator, List
 import strawberry
 from strawberry.types import Info
 
+from selfprivacy_api.utils.localization import Localization, DEFAULT_LOCALE
+
 from selfprivacy_api.graphql import IsAuthenticated, LocaleExtension
 from selfprivacy_api.graphql.mutations.deprecated_mutations import (
     DeprecatedApiMutations,
@@ -192,7 +194,15 @@ class Subscription:
     @strawberry.subscription
     async def job_updates(self, info: Info) -> AsyncGenerator[List[ApiJob], None]:
         reject_if_unauthenticated(info)
-        locale = info.context["locale"]
+
+        connection_params = info.context.get("connection_params")
+        locales_raw = connection_params.get("Accept-Language")
+
+        if locales_raw:
+            locale = Localization().get_locale(locales_raw)
+        else:
+            locale = DEFAULT_LOCALE
+
         async for jobs in job_update_generator():
             yield [translate_job(job=j, locale=locale) for j in jobs]
 

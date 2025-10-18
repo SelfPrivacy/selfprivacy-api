@@ -16,7 +16,8 @@ redis = RedisPool().get_connection()
 class LocalBackupSecret:
     @staticmethod
     def get() -> str:
-        """A secret string which backblaze/other clouds do not know.
+        """
+        A secret string which backblaze/other clouds do not know.
         Serves as encryption key.
         """
         if not LocalBackupSecret.exists():
