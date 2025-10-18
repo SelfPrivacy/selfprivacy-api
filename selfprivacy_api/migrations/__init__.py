@@ -10,6 +10,7 @@ Adding DISABLE_ALL to that array disables the migrations module entirely.
 """
 
 import logging
+import traceback
 
 from selfprivacy_api.utils import ReadUserData, UserDataFiles
 from selfprivacy_api.migrations.write_token_to_redis import WriteTokenToRedis
@@ -61,7 +62,7 @@ def run_migrations():
             try:
                 if migration.is_migration_needed():
                     migration.migrate()
-            except Exception as err:
+            except Exception:
                 logging.error(f"Error while migrating {migration.get_migration_name()}")
-                logging.error(err)
+                logging.error(traceback.format_exc())
                 logging.error("Skipping this migration")
