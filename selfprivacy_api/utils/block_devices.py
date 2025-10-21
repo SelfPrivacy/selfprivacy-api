@@ -5,9 +5,7 @@ import subprocess
 import json
 import typing
 
-from pydantic import BaseModel
-
-from selfprivacy_api.utils import WriteUserData
+from selfprivacy_api.utils import ReadUserData, WriteUserData
 from selfprivacy_api.utils.singleton_metaclass import SingletonMetaclass
 
 
@@ -67,6 +65,7 @@ class BlockDevice:
         self.serial = device_dict["serial"]
         self.type = device_dict["type"]
         self.locked = False
+        self.canonical_name = self.get_canonical_name()
 
         self.children: typing.List[BlockDevice] = []
         if "children" in device_dict.keys():
@@ -99,6 +98,26 @@ class BlockDevice:
             return "Expandable volume"
         else:
             return self.name
+
+    def get_canonical_name(self) -> str:
+        """
+        Sometimes block devices have different names across reboots,
+        but there might be a specific name assigned in the NixOS configuration.
+        Check the mountpoints for a canonical name.
+        """
+        if self.is_root():
+            with ReadUserData() as user_data:
+                if "server" in user_data and "rootPartitionName" in user_data["server"]:
+                    return user_data["server"]["rootPartitionName"]
+                else:
+                    return self.name
+        else:
+            for mountpoint in self.mountpoints:
+                if not isinstance(mountpoint, str):
+                    continue
+                if mountpoint.startswith("/volumes/"):
+                    return mountpoint.split("/")[-1]
+        return self.name
 
     def is_root(self) -> bool:
         """
@@ -155,12 +174,15 @@ class BlockDevice:
                 user_data["volumes"] = []
             # Check if the volume is already mounted
             for volume in user_data["volumes"]:
-                if volume["device"] == self.path:
+                if (
+                    volume["device"] == self.path
+                    or volume["device"] == f"/dev/disk/by-uuid/{self.uuid}"
+                ):
                     return False
             user_data["volumes"].append(
                 {
-                    "device": self.path,
-                    "mountPoint": f"/volumes/{self.name}",
+                    "device": f"/dev/disk/by-uuid/{self.uuid}",
+                    "mountPoint": f"/volumes/{self.canonical_name}",
                     "fsType": self.fstype,
                 }
             )
@@ -175,7 +197,7 @@ class BlockDevice:
                 user_data["volumes"] = []
             # Check if the volume is already mounted
             for volume in user_data["volumes"]:
-                if volume["device"] == self.path:
+                if volume["device"] == f"/dev/disk/by-uuid/{self.uuid}":
                     user_data["volumes"].remove(volume)
                     return True
         return False
@@ -232,6 +254,17 @@ class BlockDevices(metaclass=SingletonMetaclass):
             if mountpoint in block_device.mountpoints:
                 block_devices.append(block_device)
         return block_devices
+
+    def get_block_device_by_canonical_name(
+        self, canonical_name: str
+    ) -> typing.Optional[BlockDevice]:
+        """
+        Return a block device by its canonical name.
+        """
+        for block_device in self.block_devices:
+            if block_device.canonical_name == canonical_name:
+                return block_device
+        return None
 
     def get_root_block_device(self) -> BlockDevice:
         """

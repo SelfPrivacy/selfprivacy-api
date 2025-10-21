@@ -582,6 +582,10 @@ class Backups:
         Optimized
         """
         ids = [snapshot.id for snapshot in snapshots]
+
+        if len(ids) == 0:
+            return
+
         Backups.provider().backupper.forget_snapshots(ids)
 
         Backups.force_snapshot_cache_reload()
@@ -741,7 +745,7 @@ class Backups:
         else:
             # Look at the block device as it is written in settings
             label = service.get_drive()
-            device = BlockDevices().get_block_device(label)
+            device = BlockDevices().get_block_device_by_canonical_name(label)
             if device is None:
                 raise ValueError("nonexistent drive ", label, " for ", service.get_id())
             usable_bytes = int(device.fsavail)

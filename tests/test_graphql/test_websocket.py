@@ -151,8 +151,13 @@ def test_websocket_subscription_minimal_unauthorized(unauthenticated_websocket):
     response = websocket.receive_json()
     assert response == {
         "id": arbitrary_id,
-        "payload": [{"message": IsAuthenticated.message}],
-        "type": "error",
+        "payload": {
+            "data": None,
+            "errors": [
+                {"message": "You must be authenticated to access this resource."}
+            ],
+        },
+        "type": "next",
     }
 
 
@@ -165,7 +170,7 @@ async def read_one_job(websocket):
 
 
 @pytest.mark.asyncio
-async def test_websocket_subscription(authenticated_websocket, event_loop, empty_jobs):
+async def test_websocket_subscription(authenticated_websocket, empty_jobs):
     websocket = authenticated_websocket
     init_graphql(websocket)
     arbitrary_id = "3aaa2445"

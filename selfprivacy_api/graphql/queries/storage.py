@@ -27,7 +27,7 @@ class Storage:
                 free_space=str(volume.fsavail),
                 used_space=str(volume.fsused),
                 root=volume.is_root(),
-                name=volume.name,
+                name=volume.canonical_name,
                 model=volume.model,
                 serial=volume.serial,
                 type=volume.type,

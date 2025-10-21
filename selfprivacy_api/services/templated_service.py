@@ -283,7 +283,7 @@ class TemplatedService(Service):
                     user_data["modules"][name] = {}
                 if "location" not in user_data["modules"][name]:
                     user_data["modules"][name]["location"] = (
-                        BlockDevices().get_root_block_device().name
+                        BlockDevices().get_root_block_device().canonical_name
                     )
 
         self._set_enable(True)
@@ -382,7 +382,7 @@ class TemplatedService(Service):
         Get the name of the drive/volume where the service is located.
         Example values are `sda1`, `vda`, `sdb`.
         """
-        root_device: str = BlockDevices().get_root_block_device().name
+        root_device: str = BlockDevices().get_root_block_device().canonical_name
         if not self.is_movable():
             return root_device
         with ReadUserData() as userdata:

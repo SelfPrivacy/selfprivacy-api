@@ -14,7 +14,7 @@ STOPWORD = "STOP"
 
 
 @pytest.fixture()
-def empty_redis(event_loop):
+async def empty_redis():
     r = RedisPool().get_connection()
     r.flushdb()
     assert r.config_get("notify-keyspace-events")["notify-keyspace-events"] == "AKE"
@@ -29,7 +29,7 @@ async def write_to_test_key():
         assert ok1
         assert ok2
     assert await r.get(TEST_KEY) == "value2"
-    await r.close()
+    await r.aclose()
 
 
 def test_async_connection(empty_redis):
@@ -64,11 +64,11 @@ async def channel_reader_onemessage(channel: redis.client.PubSub) -> dict:
 
 
 @pytest.mark.asyncio
-async def test_pubsub(empty_redis, event_loop):
+async def test_pubsub(empty_redis):
     # Adapted from :
     # https://redis.readthedocs.io/en/stable/examples/asyncio_examples.html
     # Sanity checking because of previous event loop bugs
-    assert event_loop == asyncio.get_event_loop()
+    event_loop = asyncio.get_event_loop()
     assert event_loop == asyncio.events.get_event_loop()
     assert event_loop == asyncio.events.get_running_loop()
 
@@ -103,11 +103,11 @@ async def test_pubsub(empty_redis, event_loop):
         assert "data" in message.keys()
         assert message["data"] == STOPWORD
 
-    await r.close()
+    await r.aclose()
 
 
 @pytest.mark.asyncio
-async def test_keyspace_notifications_simple(empty_redis, event_loop):
+async def test_keyspace_notifications_simple(empty_redis):
     r = RedisPool().get_connection_async()
     await r.set(TEST_KEY, "I am not empty")
     async with r.pubsub() as pubsub:
@@ -127,7 +127,7 @@ async def test_keyspace_notifications_simple(empty_redis, event_loop):
 
 
 @pytest.mark.asyncio
-async def test_keyspace_notifications(empty_redis, event_loop):
+async def test_keyspace_notifications(empty_redis):
     pubsub = await RedisPool().subscribe_to_keys(TEST_KEY)
     async with pubsub:
         future_message = asyncio.create_task(channel_reader_onemessage(pubsub))
@@ -144,7 +144,7 @@ async def test_keyspace_notifications(empty_redis, event_loop):
 
 
 @pytest.mark.asyncio
-async def test_keyspace_notifications_patterns(empty_redis, event_loop):
+async def test_keyspace_notifications_patterns(empty_redis):
     pattern = "test*"
     pubsub = await RedisPool().subscribe_to_keys(pattern)
     async with pubsub:
@@ -162,7 +162,7 @@ async def test_keyspace_notifications_patterns(empty_redis, event_loop):
 
 
 @pytest.mark.asyncio
-async def test_keyspace_notifications_jobs(empty_redis, event_loop):
+async def test_keyspace_notifications_jobs(empty_redis):
     pattern = "jobs:*"
     pubsub = await RedisPool().subscribe_to_keys(pattern)
     async with pubsub:
@@ -187,7 +187,7 @@ async def reader_of_jobs() -> List[dict]:
 
 
 @pytest.mark.asyncio
-async def test_jobs_generator(empty_redis, event_loop):
+async def test_jobs_generator(empty_redis):
     # Will read exactly 3 job messages
     future_messages = asyncio.create_task(reader_of_jobs())
     await asyncio.sleep(1)

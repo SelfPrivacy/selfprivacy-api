@@ -1,17 +1,12 @@
-import base64
 import logging
 from uuid import UUID
 from typing import Annotated, Optional
 from datetime import datetime, timezone
 from urllib.parse import urlencode
-from io import BytesIO
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel, Field, ValidationError
-import qrcode
-from qrcode.image.pil import PilImage
-from qrcode.image.pure import PyPNGImage
 
 from selfprivacy_api.models.user import UserDataUser
 from selfprivacy_api.userpanel.templates import templates
@@ -29,7 +24,10 @@ from selfprivacy_api.actions.email_passwords import (
     get_email_credentials_metadata,
 )
 from selfprivacy_api.actions.system import get_timezone
-from selfprivacy_api.utils.self_service_portal_utils import generate_new_email_password
+from selfprivacy_api.utils.self_service_portal_utils import (
+    generate_new_email_password,
+    generate_qr_code,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -268,10 +266,7 @@ async def create_email_password_post(
             "sp": 587,
         }
         deltachat_uri = f"dclogin://{login}?{urlencode(deltachat_params)}"
-        deltachat_qr: PilImage | PyPNGImage = qrcode.make(deltachat_uri)
-        buffered = BytesIO()
-        deltachat_qr.save(buffered)
-        deltachat_qr_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
+        deltachat_qr_base64 = generate_qr_code(deltachat_uri)
 
     return templates.TemplateResponse(
         "email_password_created.html",

@@ -162,7 +162,7 @@ class RedisTokensRepository(AbstractTokensRepository):
 
     def _store_model_as_hash(self, redis_key, model):
         redis = self.connection
-        for key, value in model.dict().items():
+        for key, value in model.model_dump().items():
             if isinstance(value, datetime):
                 if value.tzinfo is None:
                     value = value.replace(tzinfo=timezone.utc)
