@@ -8,15 +8,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-19 00:48+0400\n"
-"PO-Revision-Date: 2025-10-19 00:49+0400\n"
+"POT-Creation-Date: 2025-10-19 12:41+0400\n"
+"PO-Revision-Date: 2025-10-19 12:44+0400\n"
 "Last-Translator: def <dettlaff@riseup.net>\n"
 "Language-Team: Russian <gnu@d07.ru>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: selfprivacy_api/utils/strings.py:6
 msgid ""
@@ -180,20 +181,34 @@ msgstr "Перемещение %(service)s"
 msgid "Moving %(service)s data to %(volume)s"
 msgstr "Перемещение данных %(service)s на %(volume)s"
 
-#: selfprivacy_api/actions/system.py:114
+#: selfprivacy_api/actions/system.py:91
+msgid "Shell command failed"
+msgstr "Команда оболочки завершилась с ошибкой"
+
+#: selfprivacy_api/actions/system.py:95
+#, python-format
+msgid ", command array: %(cmd)s"
+msgstr ", массив команд: %(cmd)s"
+
+#: selfprivacy_api/actions/system.py:99
+#, python-format
+msgid ", output: %(out)s"
+msgstr ", ответ системы: %(out)s"
+
+#: selfprivacy_api/actions/system.py:130
 msgid "Rebuild system"
 msgstr "Пересборка системы"
 
-#: selfprivacy_api/actions/system.py:116
+#: selfprivacy_api/actions/system.py:132
 msgid ""
 "Applying the new system configuration by building the new NixOS generation."
 msgstr "Применение новой конфигурации системы путём сборки новой генерации NixOS."
 
-#: selfprivacy_api/actions/system.py:139
+#: selfprivacy_api/actions/system.py:155
 msgid "Upgrade system"
 msgstr "Обновление системы"
 
-#: selfprivacy_api/actions/system.py:140
+#: selfprivacy_api/actions/system.py:156
 msgid "Upgrading the system to the latest version."
 msgstr "Обновление системы до последней версии."
 
@@ -577,61 +592,61 @@ msgstr "Описание не найдено!"
 msgid "No backup description found!"
 msgstr "Описание резервной копии не найдено!"
 
-#: selfprivacy_api/backup/jobs.py:53
+#: selfprivacy_api/backup/jobs.py:52
 msgid "Automatic backup"
 msgstr "Автоматическое резервное копирование"
 
-#: selfprivacy_api/backup/jobs.py:54
+#: selfprivacy_api/backup/jobs.py:53
 #, python-format
 msgid "Scheduled backup for services: %(pretty_service_list)s"
 msgstr "Запланированное резервное копирование для сервисов: %(pretty_service_list)s"
 
-#: selfprivacy_api/backup/jobs.py:63
+#: selfprivacy_api/backup/jobs.py:62
 #, python-format
 msgid ""
 "Cannot start a backup of %(service_id)s, another operation is running: "
 "%(op_type)s"
 msgstr "Нельзя запустить резервное копирование %(service_id)s, выполняется другая операция: %(op_type)s"
 
-#: selfprivacy_api/backup/jobs.py:72
+#: selfprivacy_api/backup/jobs.py:71
 #, python-format
 msgid "Backup %(display_name)s"
 msgstr "Резервное копирование %(display_name)s"
 
-#: selfprivacy_api/backup/jobs.py:73
+#: selfprivacy_api/backup/jobs.py:72
 #, python-format
 msgid "Backing up %(display_name)s"
 msgstr "Создание резервной копии %(display_name)s"
 
-#: selfprivacy_api/backup/jobs.py:80
+#: selfprivacy_api/backup/jobs.py:79
 #, python-format
 msgid ""
 "Cannot start a restore of %(service_id)s, another operation is running: "
 "%(op_type)s"
 msgstr "Нельзя запустить восстановление %(service_id)s, выполняется другая операция: %(op_type)s"
 
-#: selfprivacy_api/backup/jobs.py:94
+#: selfprivacy_api/backup/jobs.py:93
 msgid "Total restore"
 msgstr "Полное восстановление"
 
-#: selfprivacy_api/backup/jobs.py:95
+#: selfprivacy_api/backup/jobs.py:94
 msgid "Restoring all enabled services"
 msgstr "Восстановление всех включённых сервисов"
 
-#: selfprivacy_api/backup/jobs.py:115
+#: selfprivacy_api/backup/jobs.py:114
 msgid "Total backup"
 msgstr "Полное резервное копирование"
 
-#: selfprivacy_api/backup/jobs.py:116
+#: selfprivacy_api/backup/jobs.py:115
 msgid "Backing up all the enabled services"
 msgstr "Резервное копирование всех включённых сервисов"
 
-#: selfprivacy_api/backup/jobs.py:130
+#: selfprivacy_api/backup/jobs.py:129
 #, python-format
 msgid "Restore %(display_name)s"
 msgstr "Восстановление %(display_name)s"
 
-#: selfprivacy_api/backup/jobs.py:131
+#: selfprivacy_api/backup/jobs.py:130
 #, python-format
 msgid "Restoring %(display_name)s from %(snapshot_id)s"
 msgstr "Восстановление %(display_name)s из %(snapshot_id)s"

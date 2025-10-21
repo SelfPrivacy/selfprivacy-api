@@ -155,10 +155,10 @@ class SystemMutations:
                 code=200,
                 job=translate_job(job=job_to_api_job(job), locale=locale),
             )
-        except system_actions.ShellException as e:
+        except system_actions.ShellException as error:
             return GenericJobMutationReturn(
                 success=False,
-                message=str(e),
+                message=error.get_error_message(locale=locale),
                 code=500,
             )
 
@@ -172,10 +172,10 @@ class SystemMutations:
                 message=t.translate(text=_("Starting system rollback"), locale=locale),
                 code=200,
             )
-        except system_actions.ShellException as e:
+        except system_actions.ShellException as error:
             return GenericMutationReturn(
                 success=False,
-                message=str(e),
+                message=error.get_error_message(locale=locale),
                 code=500,
             )
 
@@ -190,10 +190,10 @@ class SystemMutations:
                 code=200,
                 job=translate_job(job=job_to_api_job(job), locale=locale),
             )
-        except system_actions.ShellException as e:
+        except system_actions.ShellException as error:
             return GenericJobMutationReturn(
                 success=False,
-                message=str(e),
+                message=error.get_error_message(locale=locale),
                 code=500,
             )
 
@@ -207,10 +207,10 @@ class SystemMutations:
                 message=t.translate(text=_("System reboot has started"), locale=locale),
                 code=200,
             )
-        except system_actions.ShellException as e:
+        except system_actions.ShellException as error:
             return GenericMutationReturn(
                 success=False,
-                message=str(e),
+                message=error.get_error_message(locale=locale),
                 code=500,
             )
 

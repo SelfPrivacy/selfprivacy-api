@@ -5,7 +5,6 @@ from selfprivacy_api.models.backup.snapshot import Snapshot
 from selfprivacy_api.jobs import Jobs, Job, JobStatus
 from selfprivacy_api.services.service import Service
 from selfprivacy_api.services import ServiceManager
-from selfprivacy_api.utils.localization import TranslateSystemMessage as t
 
 
 _ = gettext.gettext

@@ -10,14 +10,15 @@ The locales are loaded into the memory at the api startup and kept in a singleto
 from abc import ABC, abstractmethod
 import gettext
 from typing import Optional
-from pathlib import Path
 import os
+from importlib.resources import files as pkg_files
 
 from selfprivacy_api.utils.singleton_metaclass import SingletonMetaclass
 
 DEFAULT_LOCALE = "en"
 _DOMAIN = "messages"
-_LOCALE_DIR = Path("/var/lib/selfprivacy-api/locale/locale")
+_LOCALE_DIR = pkg_files("selfprivacy_api") / "locale"
+print(_LOCALE_DIR)
 
 
 class Localization(metaclass=SingletonMetaclass):

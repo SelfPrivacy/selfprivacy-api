@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-19 00:48+0400\n"
+"POT-Creation-Date: 2025-10-19 12:41+0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -179,20 +179,34 @@ msgstr ""
 msgid "Moving %(service)s data to %(volume)s"
 msgstr ""
 
-#: selfprivacy_api/actions/system.py:114
+#: selfprivacy_api/actions/system.py:91
+msgid "Shell command failed"
+msgstr ""
+
+#: selfprivacy_api/actions/system.py:95
+#, python-format
+msgid ", command array: %(cmd)s"
+msgstr ""
+
+#: selfprivacy_api/actions/system.py:99
+#, python-format
+msgid ", output: %(out)s"
+msgstr ""
+
+#: selfprivacy_api/actions/system.py:130
 msgid "Rebuild system"
 msgstr ""
 
-#: selfprivacy_api/actions/system.py:116
+#: selfprivacy_api/actions/system.py:132
 msgid ""
 "Applying the new system configuration by building the new NixOS generation."
 msgstr ""
 
-#: selfprivacy_api/actions/system.py:139
+#: selfprivacy_api/actions/system.py:155
 msgid "Upgrade system"
 msgstr ""
 
-#: selfprivacy_api/actions/system.py:140
+#: selfprivacy_api/actions/system.py:156
 msgid "Upgrading the system to the latest version."
 msgstr ""
 
@@ -576,61 +590,61 @@ msgstr ""
 msgid "No backup description found!"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:53
+#: selfprivacy_api/backup/jobs.py:52
 msgid "Automatic backup"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:54
+#: selfprivacy_api/backup/jobs.py:53
 #, python-format
 msgid "Scheduled backup for services: %(pretty_service_list)s"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:63
+#: selfprivacy_api/backup/jobs.py:62
 #, python-format
 msgid ""
 "Cannot start a backup of %(service_id)s, another operation is running: "
 "%(op_type)s"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:72
+#: selfprivacy_api/backup/jobs.py:71
 #, python-format
 msgid "Backup %(display_name)s"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:73
+#: selfprivacy_api/backup/jobs.py:72
 #, python-format
 msgid "Backing up %(display_name)s"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:80
+#: selfprivacy_api/backup/jobs.py:79
 #, python-format
 msgid ""
 "Cannot start a restore of %(service_id)s, another operation is running: "
 "%(op_type)s"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:94
+#: selfprivacy_api/backup/jobs.py:93
 msgid "Total restore"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:95
+#: selfprivacy_api/backup/jobs.py:94
 msgid "Restoring all enabled services"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:115
+#: selfprivacy_api/backup/jobs.py:114
 msgid "Total backup"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:116
+#: selfprivacy_api/backup/jobs.py:115
 msgid "Backing up all the enabled services"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:130
+#: selfprivacy_api/backup/jobs.py:129
 #, python-format
 msgid "Restore %(display_name)s"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:131
+#: selfprivacy_api/backup/jobs.py:130
 #, python-format
 msgid "Restoring %(display_name)s from %(snapshot_id)s"
 msgstr ""

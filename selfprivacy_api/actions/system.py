@@ -3,7 +3,7 @@
 import gettext
 import subprocess
 import pytz
-from typing import Optional, List
+from typing import Optional, List, Any
 from pydantic import BaseModel
 
 from selfprivacy_api.jobs import Job, JobStatus, Jobs
@@ -11,6 +11,7 @@ from selfprivacy_api.jobs.upgrade_system import rebuild_system_task
 
 from selfprivacy_api.utils import WriteUserData, ReadUserData
 from selfprivacy_api.utils import UserDataFiles
+from selfprivacy_api.utils.localization import TranslateSystemMessage as t
 
 from selfprivacy_api.graphql.queries.providers import DnsProvider
 
@@ -80,9 +81,26 @@ def set_auto_upgrade_settings(
 
 
 class ShellException(Exception):
-    """Something went wrong when calling another process"""
+    """Shell command failed"""
 
-    pass
+    def __init__(self, command: Optional[Any] = None, output: Optional[Any] = None):
+        self.command = str(command)
+        self.output = str(output)
+
+    def get_error_message(self, locale: str) -> str:
+        message = t.translate(text=_("Shell command failed"), locale=locale)
+
+        if self.command:
+            message += t.translate(
+                text=_(", command array: %(cmd)s"), locale=locale
+            ) % {"cmd": self.command}
+
+        if self.output:
+            message += t.translate(text=_(", output: %(out)s"), locale=locale) % {
+                "out": self.output
+            }
+
+        return message
 
 
 def run_blocking(cmd: List[str], new_session: bool = False) -> str:
@@ -102,9 +120,7 @@ def run_blocking(cmd: List[str], new_session: bool = False) -> str:
         stderr = ""
     output = stdout + "\n" + stderr
     if process_handle.returncode != 0:
-        raise ShellException(
-            f"Shell command failed, command array: {cmd}, output: {output}"
-        )
+        raise ShellException(command=cmd, output=output)
     return stdout
 
 
