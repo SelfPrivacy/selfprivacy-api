@@ -11,6 +11,7 @@ from selfprivacy_api.jobs.upgrade_system import rebuild_system_task
 
 from selfprivacy_api.utils import WriteUserData, ReadUserData
 from selfprivacy_api.utils import UserDataFiles
+from selfprivacy_api.utils.systemd import systemd_proxy
 
 from selfprivacy_api.graphql.queries.providers import DnsProvider
 
@@ -140,9 +141,9 @@ def upgrade_system() -> Job:
     return job
 
 
-def reboot_system() -> None:
+async def reboot_system() -> None:
     """Reboot the system"""
-    run_blocking(["reboot"], new_session=True)
+    await systemd_proxy().reboot()
 
 
 def get_system_version() -> str:

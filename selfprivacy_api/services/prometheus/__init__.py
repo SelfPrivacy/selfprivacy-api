@@ -5,7 +5,13 @@ import subprocess
 from typing import Optional, List
 
 from selfprivacy_api.services.owned_path import OwnedPath
-from selfprivacy_api.utils.systemd import get_service_status
+from selfprivacy_api.utils.systemd import (
+    get_service_status,
+    start_unit,
+    stop_unit,
+    restart_unit,
+    wait_for_unit_state,
+)
 from selfprivacy_api.services.service import Service, ServiceStatus
 
 from selfprivacy_api.services.prometheus.icon import PROMETHEUS_ICON
@@ -62,20 +68,25 @@ class Prometheus(Service):
         return "Backups are not available for Prometheus."
 
     @staticmethod
-    def get_status() -> ServiceStatus:
-        return get_service_status("prometheus.service")
+    async def get_status() -> ServiceStatus:
+        return await get_service_status("prometheus.service")
 
     @staticmethod
-    def stop():
+    async def wait_for_statuses(self, expected_statuses: List[ServiceStatus]):
+        await wait_for_unit_state("prometheus.service", expected_statuses)
+
+    @staticmethod
+    async def stop():
+        await stop_unit("prometheus.service")
         subprocess.run(["systemctl", "stop", "prometheus.service"])
 
     @staticmethod
-    def start():
-        subprocess.run(["systemctl", "start", "prometheus.service"])
+    async def start():
+        await start_unit("prometheus.service")
 
     @staticmethod
-    def restart():
-        subprocess.run(["systemctl", "restart", "prometheus.service"])
+    async def restart():
+        await restart_unit("prometheus.service")
 
     @staticmethod
     def get_owned_folders() -> List[OwnedPath]:

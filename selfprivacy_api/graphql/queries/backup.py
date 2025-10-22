@@ -72,7 +72,7 @@ async def snapshot_to_api(snap: Snapshot):
     if service is None:
         api_service = tombstone_service(snap.service_name)
     else:
-        api_service = service_to_graphql_service(service)
+        api_service = await service_to_graphql_service(service)
     if api_service is None:
         raise NotImplementedError(
             f"Could not construct API Service record for:{snap.service_name}. This should be unreachable and is a bug if you see it."

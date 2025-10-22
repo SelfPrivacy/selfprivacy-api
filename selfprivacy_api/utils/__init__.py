@@ -2,6 +2,7 @@
 """Various utility functions"""
 import datetime
 from enum import Enum
+from typing import Callable
 import json
 import os
 import subprocess
@@ -286,3 +287,19 @@ def temporary_env_var(key, value):
 
         if old_value is not None:
             os.environ[key] = old_value
+
+
+def lazy_var[T](compute: Callable[[], T]) -> Callable[[], T]:
+    computed = False
+    val = None
+
+    def get_value():
+        nonlocal computed, val
+        if computed:
+            return val
+        else:
+            val = compute()
+            computed = True
+            return val
+
+    return get_value

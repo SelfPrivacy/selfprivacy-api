@@ -73,7 +73,9 @@ resource = Resource.create(
 otlp_endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317")
 otlp_protocol = os.getenv("OTEL_EXPORTER_OTLP_PROTOCOL", "grpc")
 otlp_headers = os.getenv("OTEL_EXPORTER_OTLP_HEADERS", "")
-otlp_insecure = True if "localhost" in otlp_endpoint or "127.0.0.1" in otlp_endpoint else False
+otlp_insecure = (
+    True if "localhost" in otlp_endpoint or "127.0.0.1" in otlp_endpoint else False
+)
 
 tracer_provider = TracerProvider(resource=resource)
 trace_processor = BatchSpanProcessor(

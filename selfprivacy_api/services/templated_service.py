@@ -30,7 +30,13 @@ from selfprivacy_api.services.config_item import (
     IntServiceConfigItem,
 )
 from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
-from selfprivacy_api.utils.systemd import get_service_status_from_several_units
+from selfprivacy_api.utils.systemd import (
+    get_service_status_from_several_units,
+    start_unit,
+    stop_unit,
+    restart_unit,
+    listen_for_unit_state_changes,
+)
 
 SP_MODULES_DEFENITIONS_PATH = "/etc/sp-modules"
 SP_SUGGESTED_MODULES_PATH = "/etc/suggested-sp-modules"
@@ -245,10 +251,18 @@ class TemplatedService(Service):
             return None
         return self.meta.sso.admin_group
 
-    def get_status(self) -> ServiceStatus:
+    async def get_status(self) -> ServiceStatus:
         if not self.meta.systemd_services:
             return ServiceStatus.INACTIVE
-        return get_service_status_from_several_units(self.meta.systemd_services)
+        return await get_service_status_from_several_units(self.meta.systemd_services)
+
+    async def wait_for_statuses(self, expected_statuses: List[ServiceStatus]):
+        if (await self.get_status()) in expected_statuses:
+            return
+
+        async for _ in listen_for_unit_state_changes(self.meta.systemd_services):
+            if (await self.get_status()) in expected_statuses:
+                return
 
     def _set_enable(self, enable: bool):
         name = self.get_id()
@@ -292,20 +306,20 @@ class TemplatedService(Service):
         """Disable the service. Usually this means disabling systemd unit."""
         self._set_enable(False)
 
-    def start(self):
+    async def start(self):
         """Start the systemd units"""
         for unit in self.meta.systemd_services:
-            subprocess.run(["systemctl", "start", unit], check=False)
+            await start_unit(unit)
 
-    def stop(self):
+    async def stop(self):
         """Stop the systemd units"""
         for unit in self.meta.systemd_services:
-            subprocess.run(["systemctl", "stop", unit], check=False)
+            await stop_unit(unit)
 
-    def restart(self):
+    async def restart(self):
         """Restart the systemd units"""
         for unit in self.meta.systemd_services:
-            subprocess.run(["systemctl", "restart", unit], check=False)
+            await restart_unit(unit)
 
     def get_configuration(self) -> dict:
         # If there are no options, return an empty dict
@@ -328,7 +342,7 @@ class TemplatedService(Service):
                 self.get_id(),
             )
 
-    def get_storage_usage(self) -> int:
+    async def get_storage_usage(self) -> int:
         """
         Calculate the real storage usage of folders occupied by service
         Calculate using pathlib.
@@ -336,7 +350,7 @@ class TemplatedService(Service):
         """
         storage_used = 0
         for folder in self.get_folders():
-            storage_used += get_storage_usage(folder)
+            storage_used += await get_storage_usage(folder)
         return storage_used
 
     def has_folders(self) -> int:

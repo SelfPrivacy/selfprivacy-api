@@ -469,7 +469,7 @@ class Backups:
 
     @staticmethod
     @tracer.start_as_current_span("restore_snapshot")
-    def restore_snapshot(
+    async def restore_snapshot(
         snapshot: Snapshot, strategy=RestoreStrategy.DOWNLOAD_VERIFY_OVERWRITE
     ) -> None:
         """Restores a snapshot to its original service using the given strategy"""
@@ -481,13 +481,13 @@ class Backups:
         job = Backups._ensure_queued_restore_job(service, snapshot)
 
         try:
-            Backups._assert_restorable(snapshot)
+            await Backups._assert_restorable(snapshot)
             Jobs.update(
                 job, status=JobStatus.RUNNING, status_text="Stopping the service"
             )
-            with StoppedService(service):
+            async with StoppedService(service):
                 if not service.is_always_active():
-                    Backups.assert_dead(service)
+                    await Backups.assert_dead(service)
                 service.pre_restore(job=job)
                 if strategy == RestoreStrategy.INPLACE:
                     Backups._inplace_restore(service, snapshot, job)
@@ -517,7 +517,7 @@ class Backups:
 
     @staticmethod
     @tracer.start_as_current_span("assert_restorable")
-    def _assert_restorable(
+    async def _assert_restorable(
         snapshot: Snapshot, strategy=RestoreStrategy.DOWNLOAD_VERIFY_OVERWRITE
     ) -> None:
         service = ServiceManager.get_service_by_id(snapshot.service_name)
@@ -531,7 +531,7 @@ class Backups:
         if strategy == RestoreStrategy.DOWNLOAD_VERIFY_OVERWRITE:
             needed_space = restored_snap_size
         elif strategy == RestoreStrategy.INPLACE:
-            needed_space = restored_snap_size - service.get_storage_usage()
+            needed_space = restored_snap_size - (await service.get_storage_usage())
         else:
             raise NotImplementedError(
                 """
@@ -811,11 +811,11 @@ class Backups:
 
     @staticmethod
     @tracer.start_as_current_span("assert_dead")
-    def assert_dead(service: Service):
+    async def assert_dead(service: Service):
         """
         Checks if a service is dead and can be safely restored from a snapshot.
         """
-        if service.get_status() not in [
+        if await service.get_status() not in [
             ServiceStatus.INACTIVE,
             ServiceStatus.FAILED,
         ]:
