@@ -5,6 +5,7 @@ status accordingly.
 """
 
 import subprocess
+import asyncio
 from selfprivacy_api.utils.huey import huey
 from selfprivacy_api.jobs import JobStatus, Jobs, Job
 from selfprivacy_api.utils.waitloop import wait_until_true
@@ -23,7 +24,7 @@ RUN_INTERVAL = 5
 def check_if_started(unit_name: str):
     """Check if the systemd unit has started"""
     try:
-        status = get_service_status(unit_name)
+        status = asyncio.run(get_service_status(unit_name))
         if status == ServiceStatus.ACTIVE:
             return True
         return False
@@ -34,7 +35,7 @@ def check_if_started(unit_name: str):
 def check_running_status(job: Job, unit_name: str):
     """Check if the systemd unit is running"""
     try:
-        status = get_service_status(unit_name)
+        status = asyncio.run(get_service_status(unit_name))
         if status == ServiceStatus.INACTIVE:
             Jobs.update(
                 job=job,

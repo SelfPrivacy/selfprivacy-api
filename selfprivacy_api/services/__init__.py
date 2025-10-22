@@ -187,8 +187,15 @@ class ServiceManager(Service):
         return "General server settings."
 
     @classmethod
-    def get_status(cls) -> ServiceStatus:
+    async def get_status(cls) -> ServiceStatus:
         return ServiceStatus.ACTIVE
+
+    @classmethod
+    async def wait_for_statuses(self, expected_statuses: List[ServiceStatus]):
+        if ServiceStatus.ACTIVE in expected_statuses:
+            return
+
+        raise Exception("Why would API wait for API stopping?")
 
     @classmethod
     def can_be_backed_up(cls) -> bool:

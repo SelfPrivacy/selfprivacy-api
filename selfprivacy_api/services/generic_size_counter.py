@@ -1,12 +1,13 @@
 """Generic size counter using pathlib"""
 
+import asyncio
 import pathlib
 import logging
 
 logger = logging.getLogger(__name__)
 
 
-def get_storage_usage(path: str) -> int:
+def get_storage_usage_blocking(path: str) -> int:
     """
     Calculate the real storage usage of path and all subdirectories.
     Calculate using pathlib.
@@ -23,3 +24,9 @@ def get_storage_usage(path: str) -> int:
         except Exception as error:
             logging.error(error)
     return storage_usage
+
+
+async def get_storage_usage(path: str) -> int:
+    return await asyncio.get_running_loop().run_in_executor(
+        None, get_storage_usage_blocking, path
+    )

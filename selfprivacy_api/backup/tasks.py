@@ -11,7 +11,7 @@ from selfprivacy_api.graphql.common_types.backup import (
 )
 
 from selfprivacy_api.models.backup.snapshot import Snapshot
-from selfprivacy_api.utils.huey import huey
+from selfprivacy_api.utils.huey import huey, huey_async_helper
 from huey import crontab
 
 from selfprivacy_api.services import ServiceManager, Service
@@ -80,13 +80,13 @@ def restore_snapshot(
     """
     The worker task that starts the restore process.
     """
-    Backups.restore_snapshot(snapshot, strategy)
+    huey_async_helper.run_async(Backups.restore_snapshot(snapshot, strategy))
     return True
 
 
 @huey.task()
 def full_restore(job: Job) -> bool:
-    do_full_restore(job)
+    huey_async_helper.run_async(do_full_restore(job))
     return True
 
 
@@ -197,7 +197,7 @@ def which_snapshots_to_full_restore() -> list[Snapshot]:
     return snapshots_to_restore
 
 
-def do_full_restore(job: Job) -> None:
+async def do_full_restore(job: Job) -> None:
     """
     Body full restore task, a part of server migration.
     Broken out to test it independently from task infra
@@ -217,7 +217,7 @@ def do_full_restore(job: Job) -> None:
 
     for snap in snapshots_to_restore:
         try:
-            Backups.restore_snapshot(snap)
+            await Backups.restore_snapshot(snap)
         except Exception as error:
             report_job_error(error, job)
             return

@@ -94,7 +94,7 @@ class DummyService(Service):
             file.write(status.value)
 
     @classmethod
-    def get_status(cls) -> ServiceStatus:
+    async def get_status(cls) -> ServiceStatus:
         filepath = cls.status_file()
         if filepath in [None, ""]:
             raise ValueError("We do not have a path for our test dummy status file!")
@@ -166,7 +166,7 @@ class DummyService(Service):
         cls.fail_to_stop = value
 
     @classmethod
-    def stop(cls):
+    async def stop(cls):
         # simulate a failing service unable to stop
         if not cls.get_status() == ServiceStatus.FAILED:
             cls.set_status(ServiceStatus.DEACTIVATING)
@@ -180,12 +180,12 @@ class DummyService(Service):
                 )
 
     @classmethod
-    def start(cls):
+    async def start(cls):
         cls.set_status(ServiceStatus.ACTIVATING)
         cls.change_status_with_async_delay(ServiceStatus.ACTIVE, cls.startstop_delay)
 
     @classmethod
-    def restart(cls):
+    async def restart(cls):
         cls.set_status(ServiceStatus.RELOADING)  # is a correct one?
         cls.change_status_with_async_delay(ServiceStatus.ACTIVE, cls.startstop_delay)
 
@@ -198,7 +198,7 @@ class DummyService(Service):
         return super().set_configuration(config_items)
 
     @staticmethod
-    def get_storage_usage() -> int:
+    async def get_storage_usage() -> int:
         storage_usage = 0
         return storage_usage
 

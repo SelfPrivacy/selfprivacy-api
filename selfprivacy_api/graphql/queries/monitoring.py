@@ -23,10 +23,12 @@ class CpuMonitoring:
     @strawberry.field
     async def overall_usage(self) -> MonitoringValuesResult:
         with tracer.start_as_current_span("CpuMonitoring.overall_usage"):
-            if Prometheus().get_status() != ServiceStatus.ACTIVE:
+            if await Prometheus().get_status() != ServiceStatus.ACTIVE:
                 return MonitoringQueryError(error="Prometheus is not running")
 
-            return MonitoringQueries.cpu_usage_overall(self.start, self.end, self.step)
+            return await MonitoringQueries.cpu_usage_overall(
+                self.start, self.end, self.step
+            )
 
 
 @strawberry.type
@@ -38,36 +40,42 @@ class MemoryMonitoring:
     @strawberry.field
     async def overall_usage(self) -> MonitoringValuesResult:
         with tracer.start_as_current_span("MemoryMonitoring.overall_usage"):
-            if Prometheus().get_status() != ServiceStatus.ACTIVE:
+            if await Prometheus().get_status() != ServiceStatus.ACTIVE:
                 return MonitoringQueryError(error="Prometheus is not running")
 
-            return MonitoringQueries.memory_usage_overall(
+            return await MonitoringQueries.memory_usage_overall(
                 self.start, self.end, self.step
             )
 
     @strawberry.field
     async def swap_usage_overall(self) -> MonitoringValuesResult:
         with tracer.start_as_current_span("MemoryMonitoring.swap_usage_overall"):
-            if Prometheus().get_status() != ServiceStatus.ACTIVE:
+            if await Prometheus().get_status() != ServiceStatus.ACTIVE:
                 return MonitoringQueryError(error="Prometheus is not running")
 
-            return MonitoringQueries.swap_usage_overall(self.start, self.end, self.step)
+            return await MonitoringQueries.swap_usage_overall(
+                self.start, self.end, self.step
+            )
 
     @strawberry.field
     async def average_usage_by_service(self) -> MonitoringMetricsResult:
         with tracer.start_as_current_span("MemoryMonitoring.average_usage_by_service"):
-            if Prometheus().get_status() != ServiceStatus.ACTIVE:
+            if await Prometheus().get_status() != ServiceStatus.ACTIVE:
                 return MonitoringQueryError(error="Prometheus is not running")
 
-            return MonitoringQueries.memory_usage_average_by_slice(self.start, self.end)
+            return await MonitoringQueries.memory_usage_average_by_slice(
+                self.start, self.end
+            )
 
     @strawberry.field
     async def max_usage_by_service(self) -> MonitoringMetricsResult:
         with tracer.start_as_current_span("MemoryMonitoring.max_usage_by_service"):
-            if Prometheus().get_status() != ServiceStatus.ACTIVE:
+            if await Prometheus().get_status() != ServiceStatus.ACTIVE:
                 return MonitoringQueryError(error="Prometheus is not running")
 
-            return MonitoringQueries.memory_usage_max_by_slice(self.start, self.end)
+            return await MonitoringQueries.memory_usage_max_by_slice(
+                self.start, self.end
+            )
 
 
 @strawberry.type
@@ -79,10 +87,12 @@ class DiskMonitoring:
     @strawberry.field
     async def overall_usage(self) -> MonitoringMetricsResult:
         with tracer.start_as_current_span("DiskMonitoring.overall_usage"):
-            if Prometheus().get_status() != ServiceStatus.ACTIVE:
+            if await Prometheus().get_status() != ServiceStatus.ACTIVE:
                 return MonitoringQueryError(error="Prometheus is not running")
 
-            return MonitoringQueries.disk_usage_overall(self.start, self.end, self.step)
+            return await MonitoringQueries.disk_usage_overall(
+                self.start, self.end, self.step
+            )
 
 
 @strawberry.type
@@ -94,10 +104,10 @@ class NetworkMonitoring:
     @strawberry.field
     async def overall_usage(self) -> MonitoringMetricsResult:
         with tracer.start_as_current_span("NetworkMonitoring.overall_usage"):
-            if Prometheus().get_status() != ServiceStatus.ACTIVE:
+            if await Prometheus().get_status() != ServiceStatus.ACTIVE:
                 return MonitoringQueryError(error="Prometheus is not running")
 
-            return MonitoringQueries.network_usage_overall(
+            return await MonitoringQueries.network_usage_overall(
                 self.start, self.end, self.step
             )
 
