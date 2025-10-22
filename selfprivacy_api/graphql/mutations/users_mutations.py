@@ -4,6 +4,7 @@
 from typing import Optional
 
 import strawberry
+from opentelemetry import trace
 
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.common_types.user import (
@@ -51,6 +52,8 @@ from selfprivacy_api.repositories.users.exceptions_kanidm import (
 )
 from selfprivacy_api.utils.strings import PLEASE_UPDATE_APP_TEXT
 
+tracer = trace.get_tracer(__name__)
+
 
 FAILED_TO_SETUP_SSO_PASSWORD_TEXT = "New password applied an an email password. To use Single Sign On, please update the SelfPrivacy app."
 
@@ -92,227 +95,263 @@ class UsersMutations:
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def create_user(self, user: UserMutationInput) -> UserMutationReturn:
-        try:
-            create_user_action(
-                username=user.username,
-                password=user.password,
-                directmemberof=user.directmemberof,
-                displayname=user.display_name,
-            )
-        except (
-            PasswordIsEmpty,
-            UsernameNotAlphanumeric,
-            UsernameTooLong,
-            InvalidConfiguration,
-            KanidmDidNotReturnAdminPassword,
-            KanidmQueryError,
-            DisplaynameTooLong,
-            KanidmCliSubprocessError,
-            FailedToGetValidKanidmToken,
-        ) as error:
-            return return_failed_mutation_return(
-                message=error.get_error_message(),
-            )
-        except UsernameForbidden as error:
-            return return_failed_mutation_return(
-                message=error.get_error_message(),
-                code=409,
-                username=user.username,
-            )
-        except UserAlreadyExists as error:
-            return return_failed_mutation_return(
-                message=error.get_error_message(),
-                code=409,
-                username=user.username,
-            )
+        with tracer.start_as_current_span(
+            "create_user_mutation",
+            attributes={
+                "username": user.username,
+            },
+        ):
+            try:
+                create_user_action(
+                    username=user.username,
+                    password=user.password,
+                    directmemberof=user.directmemberof,
+                    displayname=user.display_name,
+                )
+            except (
+                PasswordIsEmpty,
+                UsernameNotAlphanumeric,
+                UsernameTooLong,
+                InvalidConfiguration,
+                KanidmDidNotReturnAdminPassword,
+                KanidmQueryError,
+                DisplaynameTooLong,
+                KanidmCliSubprocessError,
+                FailedToGetValidKanidmToken,
+            ) as error:
+                return return_failed_mutation_return(
+                    message=error.get_error_message(),
+                )
+            except UsernameForbidden as error:
+                return return_failed_mutation_return(
+                    message=error.get_error_message(),
+                    code=409,
+                    username=user.username,
+                )
+            except UserAlreadyExists as error:
+                return return_failed_mutation_return(
+                    message=error.get_error_message(),
+                    code=409,
+                    username=user.username,
+                )
 
-        if user.password:
+            if user.password:
+                return UserMutationReturn(
+                    success=True,
+                    message=f"{FAILED_TO_SETUP_SSO_PASSWORD_TEXT} {PLEASE_UPDATE_APP_TEXT}",
+                    code=201,
+                    user=get_user_by_username(user.username),
+                )
+
             return UserMutationReturn(
                 success=True,
-                message=f"{FAILED_TO_SETUP_SSO_PASSWORD_TEXT} {PLEASE_UPDATE_APP_TEXT}",
+                message="User created",
                 code=201,
                 user=get_user_by_username(user.username),
             )
 
-        return UserMutationReturn(
-            success=True,
-            message="User created",
-            code=201,
-            user=get_user_by_username(user.username),
-        )
-
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def delete_user(self, username: str) -> GenericMutationReturn:
-        try:
-            delete_user_action(username)
-        except (UserNotFound, UserOrGroupNotFound) as error:
-            return GenericMutationReturn(
-                success=False,
-                message=error.get_error_message(),
-                code=404,
-            )
-        except UserIsProtected as error:
-            return GenericMutationReturn(
-                success=False,
-                code=400,
-                message=error.get_error_message(),
-            )
-        except (
-            KanidmDidNotReturnAdminPassword,
-            KanidmQueryError,
-            KanidmCliSubprocessError,
-            FailedToGetValidKanidmToken,
-        ) as error:
-            return GenericMutationReturn(
-                success=False,
-                code=500,
-                message=error.get_error_message(),
-            )
+        with tracer.start_as_current_span(
+            "delete_user_mutation",
+            attributes={
+                "username": username,
+            },
+        ):
+            try:
+                delete_user_action(username)
+            except (UserNotFound, UserOrGroupNotFound) as error:
+                return GenericMutationReturn(
+                    success=False,
+                    message=error.get_error_message(),
+                    code=404,
+                )
+            except UserIsProtected as error:
+                return GenericMutationReturn(
+                    success=False,
+                    code=400,
+                    message=error.get_error_message(),
+                )
+            except (
+                KanidmDidNotReturnAdminPassword,
+                KanidmQueryError,
+                KanidmCliSubprocessError,
+                FailedToGetValidKanidmToken,
+            ) as error:
+                return GenericMutationReturn(
+                    success=False,
+                    code=500,
+                    message=error.get_error_message(),
+                )
 
-        return GenericMutationReturn(
-            success=True,
-            message="User deleted",
-            code=200,
-        )
+            return GenericMutationReturn(
+                success=True,
+                message="User deleted",
+                code=200,
+            )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def update_user(self, user: UserMutationInput) -> UserMutationReturn:
         """Update user mutation"""
-        try:
-            update_user_action(
-                username=user.username,
-                password=user.password,
-                directmemberof=user.directmemberof,
-                displayname=user.display_name,
-            )
-        except (
-            PasswordIsEmpty,
-            KanidmDidNotReturnAdminPassword,
-            KanidmQueryError,
-            DisplaynameTooLong,
-            KanidmCliSubprocessError,
-            FailedToGetValidKanidmToken,
-            ApiUsingWrongUserRepository,
-        ) as error:
-            return return_failed_mutation_return(
-                message=error.get_error_message(),
-                username=user.username,
-            )
-        except (UserNotFound, UserOrGroupNotFound) as error:
-            return return_failed_mutation_return(
-                message=error.get_error_message(),
-                code=404,
-                username=user.username,
-            )
+        with tracer.start_as_current_span(
+            "update_user_mutation",
+            attributes={
+                "username": user.username,
+            },
+        ):
+            try:
+                update_user_action(
+                    username=user.username,
+                    password=user.password,
+                    directmemberof=user.directmemberof,
+                    displayname=user.display_name,
+                )
+            except (
+                PasswordIsEmpty,
+                KanidmDidNotReturnAdminPassword,
+                KanidmQueryError,
+                DisplaynameTooLong,
+                KanidmCliSubprocessError,
+                FailedToGetValidKanidmToken,
+                ApiUsingWrongUserRepository,
+            ) as error:
+                return return_failed_mutation_return(
+                    message=error.get_error_message(),
+                    username=user.username,
+                )
+            except (UserNotFound, UserOrGroupNotFound) as error:
+                return return_failed_mutation_return(
+                    message=error.get_error_message(),
+                    code=404,
+                    username=user.username,
+                )
 
-        if user.password:
+            if user.password:
+                return UserMutationReturn(
+                    success=True,
+                    message=f"{FAILED_TO_SETUP_SSO_PASSWORD_TEXT} {PLEASE_UPDATE_APP_TEXT}",
+                    code=200,
+                    user=get_user_by_username(user.username),
+                )
+
             return UserMutationReturn(
                 success=True,
-                message=f"{FAILED_TO_SETUP_SSO_PASSWORD_TEXT} {PLEASE_UPDATE_APP_TEXT}",
+                message="User updated",
                 code=200,
                 user=get_user_by_username(user.username),
             )
 
-        return UserMutationReturn(
-            success=True,
-            message="User updated",
-            code=200,
-            user=get_user_by_username(user.username),
-        )
-
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def add_ssh_key(self, ssh_input: SshMutationInput) -> UserMutationReturn:
         """Add a new ssh key"""
+        with tracer.start_as_current_span(
+            "add_ssh_key_mutation",
+            attributes={
+                "username": ssh_input.username,
+            },
+        ):
+            try:
+                create_ssh_key_action(ssh_input.username, ssh_input.ssh_key)
+            except KeyAlreadyExists as error:
+                return return_failed_mutation_return(
+                    message=error.get_error_message(),
+                    code=409,
+                )
+            except InvalidPublicKey as error:
+                return return_failed_mutation_return(
+                    message=error.get_error_message(),
+                )
+            except UserNotFound as error:
+                return return_failed_mutation_return(
+                    message=error.get_error_message(),
+                    code=404,
+                )
+            except Exception as error:  # TODO why?
+                return return_failed_mutation_return(
+                    message=str(error),
+                    code=500,
+                )
 
-        try:
-            create_ssh_key_action(ssh_input.username, ssh_input.ssh_key)
-        except KeyAlreadyExists as error:
-            return return_failed_mutation_return(
-                message=error.get_error_message(),
-                code=409,
+            return UserMutationReturn(
+                success=True,
+                message="New SSH key successfully written",
+                code=201,
+                user=get_user_by_username(ssh_input.username),
             )
-        except InvalidPublicKey as error:
-            return return_failed_mutation_return(
-                message=error.get_error_message(),
-            )
-        except UserNotFound as error:
-            return return_failed_mutation_return(
-                message=error.get_error_message(),
-                code=404,
-            )
-        except Exception as error:  # TODO why?
-            return return_failed_mutation_return(
-                message=str(error),
-                code=500,
-            )
-
-        return UserMutationReturn(
-            success=True,
-            message="New SSH key successfully written",
-            code=201,
-            user=get_user_by_username(ssh_input.username),
-        )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def remove_ssh_key(self, ssh_input: SshMutationInput) -> UserMutationReturn:
         """Remove ssh key from user"""
+        with tracer.start_as_current_span(
+            "remove_ssh_key_mutation",
+            attributes={
+                "username": ssh_input.username,
+            },
+        ):
+            try:
+                remove_ssh_key_action(ssh_input.username, ssh_input.ssh_key)
+            except (KeyNotFound, UserNotFound) as error:
+                return return_failed_mutation_return(
+                    message=error.get_error_message(),
+                    code=404,
+                )
+            except Exception as error:  # TODO why?
+                return UserMutationReturn(
+                    success=False,
+                    message=str(error),
+                    code=500,
+                )
 
-        try:
-            remove_ssh_key_action(ssh_input.username, ssh_input.ssh_key)
-        except (KeyNotFound, UserNotFound) as error:
-            return return_failed_mutation_return(
-                message=error.get_error_message(),
-                code=404,
-            )
-        except Exception as error:  # TODO why?
             return UserMutationReturn(
-                success=False,
-                message=str(error),
-                code=500,
+                success=True,
+                message="SSH key successfully removed",
+                code=200,
+                user=get_user_by_username(ssh_input.username),
             )
-
-        return UserMutationReturn(
-            success=True,
-            message="SSH key successfully removed",
-            code=200,
-            user=get_user_by_username(ssh_input.username),
-        )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def generate_password_reset_link(self, username: str) -> PasswordResetLinkReturn:
-        try:
-            password_reset_link = generate_password_reset_link_action(username=username)
-        except (UserNotFound, UserOrGroupNotFound) as error:
-            return PasswordResetLinkReturn(
-                success=False,
-                message=error.get_error_message(),
-                code=404,
-            )
-        except UserIsProtected as error:
-            return PasswordResetLinkReturn(
-                success=False,
-                message=error.get_error_message(),
-                code=400,
-            )
-        except (
-            NoPasswordResetLinkFoundInResponse,
-            KanidmDidNotReturnAdminPassword,
-            KanidmReturnUnknownResponseType,
-            KanidmReturnEmptyResponse,
-            KanidmQueryError,
-            KanidmCliSubprocessError,
-            FailedToGetValidKanidmToken,
-            ApiUsingWrongUserRepository,
-        ) as error:
-            return PasswordResetLinkReturn(
-                success=False,
-                code=500,
-                message=error.get_error_message(),
-            )
+        with tracer.start_as_current_span(
+            "generate_password_reset_link_mutation",
+            attributes={
+                "username": username,
+            },
+        ):
+            try:
+                password_reset_link = generate_password_reset_link_action(
+                    username=username
+                )
+            except (UserNotFound, UserOrGroupNotFound) as error:
+                return PasswordResetLinkReturn(
+                    success=False,
+                    message=error.get_error_message(),
+                    code=404,
+                )
+            except UserIsProtected as error:
+                return PasswordResetLinkReturn(
+                    success=False,
+                    message=error.get_error_message(),
+                    code=400,
+                )
+            except (
+                NoPasswordResetLinkFoundInResponse,
+                KanidmDidNotReturnAdminPassword,
+                KanidmReturnUnknownResponseType,
+                KanidmReturnEmptyResponse,
+                KanidmQueryError,
+                KanidmCliSubprocessError,
+                FailedToGetValidKanidmToken,
+                ApiUsingWrongUserRepository,
+            ) as error:
+                return PasswordResetLinkReturn(
+                    success=False,
+                    code=500,
+                    message=error.get_error_message(),
+                )
 
-        return PasswordResetLinkReturn(
-            success=True,
-            message="Link successfully created",
-            code=200,
-            password_reset_link=password_reset_link,
-        )
+            return PasswordResetLinkReturn(
+                success=True,
+                message="Link successfully created",
+                code=200,
+                password_reset_link=password_reset_link,
+            )

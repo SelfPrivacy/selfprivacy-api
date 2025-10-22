@@ -3,6 +3,7 @@
 # pylint: disable=too-few-public-methods
 from typing import Optional
 import strawberry
+from opentelemetry import trace
 
 from selfprivacy_api.utils import pretty_error
 from selfprivacy_api.jobs.nix_collect_garbage import start_nix_collect_garbage
@@ -20,6 +21,8 @@ from selfprivacy_api.graphql.mutations.mutation_interface import (
 import selfprivacy_api.actions.system as system_actions
 import selfprivacy_api.actions.ssh as ssh_actions
 from selfprivacy_api.actions.system import set_dns_provider
+
+tracer = trace.get_tracer(__name__)
 
 
 @strawberry.type
@@ -76,109 +79,132 @@ class SystemMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def change_timezone(self, timezone: str) -> TimezoneMutationReturn:
         """Change the timezone of the server. Timezone is a tzdatabase name."""
-        try:
-            system_actions.change_timezone(timezone)
-        except system_actions.InvalidTimezone as e:
+        with tracer.start_as_current_span(
+            "change_timezone_mutation",
+            attributes={
+                "timezone": timezone,
+            },
+        ):
+            try:
+                system_actions.change_timezone(timezone)
+            except system_actions.InvalidTimezone as e:
+                return TimezoneMutationReturn(
+                    success=False,
+                    message=str(e),
+                    code=400,
+                    timezone=None,
+                )
             return TimezoneMutationReturn(
-                success=False,
-                message=str(e),
-                code=400,
-                timezone=None,
+                success=True,
+                message="Timezone changed",
+                code=200,
+                timezone=timezone,
             )
-        return TimezoneMutationReturn(
-            success=True,
-            message="Timezone changed",
-            code=200,
-            timezone=timezone,
-        )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def change_auto_upgrade_settings(
         self, settings: AutoUpgradeSettingsInput
     ) -> AutoUpgradeSettingsMutationReturn:
         """Change auto upgrade settings of the server."""
-        system_actions.set_auto_upgrade_settings(
-            settings.enableAutoUpgrade, settings.allowReboot
-        )
+        with tracer.start_as_current_span(
+            "change_auto_upgrade_settings_mutation",
+            attributes={
+                "enableAutoUpgrade": str(settings.enableAutoUpgrade),
+                "allowReboot": str(settings.allowReboot),
+            },
+        ):
+            system_actions.set_auto_upgrade_settings(
+                settings.enableAutoUpgrade, settings.allowReboot
+            )
 
-        new_settings = system_actions.get_auto_upgrade_settings()
+            new_settings = system_actions.get_auto_upgrade_settings()
 
-        return AutoUpgradeSettingsMutationReturn(
-            success=True,
-            message="Auto-upgrade settings changed",
-            code=200,
-            enableAutoUpgrade=new_settings.enable,
-            allowReboot=new_settings.allowReboot,
-        )
+            return AutoUpgradeSettingsMutationReturn(
+                success=True,
+                message="Auto-upgrade settings changed",
+                code=200,
+                enableAutoUpgrade=new_settings.enable,
+                allowReboot=new_settings.allowReboot,
+            )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def change_ssh_settings(
         self, settings: SSHSettingsInput
     ) -> SSHSettingsMutationReturn:
         """Change ssh settings of the server."""
-        ssh_actions.set_ssh_settings(
-            enable=settings.enable,
-        )
+        with tracer.start_as_current_span(
+            "change_ssh_settings_mutation",
+            attributes={
+                "enable": str(settings.enable),
+                "password_authentication": str(settings.password_authentication),
+            },
+        ):
+            ssh_actions.set_ssh_settings(
+                enable=settings.enable,
+            )
 
-        new_settings = ssh_actions.get_ssh_settings()
+            new_settings = ssh_actions.get_ssh_settings()
 
-        return SSHSettingsMutationReturn(
-            success=True,
-            message="SSH settings changed",
-            code=200,
-            enable=new_settings.enable,
-            password_authentication=new_settings.passwordAuthentication,
-        )
+            return SSHSettingsMutationReturn(
+                success=True,
+                message="SSH settings changed",
+                code=200,
+                enable=new_settings.enable,
+                password_authentication=new_settings.passwordAuthentication,
+            )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def run_system_rebuild(self) -> GenericJobMutationReturn:
-        try:
-            job = system_actions.rebuild_system()
-            return GenericJobMutationReturn(
-                success=True,
-                message="Starting system rebuild",
-                code=200,
-                job=job_to_api_job(job),
-            )
-        except system_actions.ShellException as e:
-            return GenericJobMutationReturn(
-                success=False,
-                message=str(e),
-                code=500,
-            )
+        with tracer.start_as_current_span("run_system_rebuild"):
+            try:
+                job = system_actions.rebuild_system()
+                return GenericJobMutationReturn(
+                    success=True,
+                    message="Starting system rebuild",
+                    code=200,
+                    job=job_to_api_job(job),
+                )
+            except system_actions.ShellException as e:
+                return GenericJobMutationReturn(
+                    success=False,
+                    message=str(e),
+                    code=500,
+                )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def run_system_rollback(self) -> GenericMutationReturn:
-        system_actions.rollback_system()
-        try:
-            return GenericMutationReturn(
-                success=True,
-                message="Starting system rollback",
-                code=200,
-            )
-        except system_actions.ShellException as e:
-            return GenericMutationReturn(
-                success=False,
-                message=str(e),
-                code=500,
-            )
+        with tracer.start_as_current_span("run_system_rollback"):
+            system_actions.rollback_system()
+            try:
+                return GenericMutationReturn(
+                    success=True,
+                    message="Starting system rollback",
+                    code=200,
+                )
+            except system_actions.ShellException as e:
+                return GenericMutationReturn(
+                    success=False,
+                    message=str(e),
+                    code=500,
+                )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def run_system_upgrade(self) -> GenericJobMutationReturn:
-        try:
-            job = system_actions.upgrade_system()
-            return GenericJobMutationReturn(
-                success=True,
-                message="Starting system upgrade",
-                code=200,
-                job=job_to_api_job(job),
-            )
-        except system_actions.ShellException as e:
-            return GenericJobMutationReturn(
-                success=False,
-                message=str(e),
-                code=500,
-            )
+        with tracer.start_as_current_span("run_system_upgrade"):
+            try:
+                job = system_actions.upgrade_system()
+                return GenericJobMutationReturn(
+                    success=True,
+                    message="Starting system upgrade",
+                    code=200,
+                    job=job_to_api_job(job),
+                )
+            except system_actions.ShellException as e:
+                return GenericJobMutationReturn(
+                    success=False,
+                    message=str(e),
+                    code=500,
+                )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def reboot_system(self) -> GenericMutationReturn:
@@ -206,28 +232,34 @@ class SystemMutations:
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def nix_collect_garbage(self) -> GenericJobMutationReturn:
-        job = start_nix_collect_garbage()
+        with tracer.start_as_current_span("nix_collect_garbage_mutation"):
+            job = start_nix_collect_garbage()
 
-        return GenericJobMutationReturn(
-            success=True,
-            code=200,
-            message="Garbage collector started...",
-            job=job_to_api_job(job),
-        )
+            return GenericJobMutationReturn(
+                success=True,
+                code=200,
+                message="Garbage collector started...",
+                job=job_to_api_job(job),
+            )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def set_dns_provider(self, input: SetDnsProviderInput) -> GenericMutationReturn:
-
-        try:
-            set_dns_provider(input.provider, input.api_token)
-            return GenericMutationReturn(
-                success=True,
-                code=200,
-                message="Provider set",
-            )
-        except Exception as e:
-            return GenericMutationReturn(
-                success=False,
-                code=400,
-                message=pretty_error(e),
-            )
+        with tracer.start_as_current_span(
+            "set_dns_provider_mutation",
+            attributes={
+                "provider": input.provider.value,
+            },
+        ):
+            try:
+                set_dns_provider(input.provider, input.api_token)
+                return GenericMutationReturn(
+                    success=True,
+                    code=200,
+                    message="Provider set",
+                )
+            except Exception as e:
+                return GenericMutationReturn(
+                    success=False,
+                    code=400,
+                    message=pretty_error(e),
+                )

@@ -89,10 +89,10 @@ class Logs:
             "resolve_get_paginated_logs",
             attributes={
                 "limit": limit,
-                "up_cursor": up_cursor,
-                "down_cursor": down_cursor,
-                "filterBySlice": filterBySlice,
-                "filterByUnit": filterByUnit,
+                "up_cursor": up_cursor if up_cursor else "None",
+                "down_cursor": down_cursor if down_cursor else "None",
+                "filterBySlice": filterBySlice if filterBySlice else "None",
+                "filterByUnit": filterByUnit if filterByUnit else "None",
             },
         ) as span:
             if limit > 50:
