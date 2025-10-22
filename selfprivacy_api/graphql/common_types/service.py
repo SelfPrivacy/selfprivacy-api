@@ -1,9 +1,9 @@
+import asyncio
 from enum import Enum
 from typing import Optional, List
 import datetime
 import strawberry
 from opentelemetry import trace
-import anyio
 
 from selfprivacy_api.graphql.common_types.backup import BackupReason
 from selfprivacy_api.graphql.common_types.dns import DnsRecord
@@ -102,7 +102,9 @@ class LicenseType:
 @tracer.start_as_current_span("get_storage_usage")
 async def get_storage_usage(root: "Service") -> ServiceStorageUsage:
     """Get storage usage for a service"""
-    service = await anyio.to_thread.run_sync(ServiceManager.get_service_by_id, root.id)
+    service = await asyncio.get_event_loop().run_in_executor(
+        None, ServiceManager.get_service_by_id, root.id
+    )
     if service is None:
         return ServiceStorageUsage(
             service=service,
@@ -221,8 +223,8 @@ class Service:
         with tracer.start_as_current_span(
             "resolve_service_dns_records", attributes={"service_id": self.id}
         ):
-            service = await anyio.to_thread.run_sync(
-                ServiceManager.get_service_by_id, self.id
+            service = await asyncio.get_event_loop().run_in_executor(
+                None, ServiceManager.get_service_by_id, self.id
             )
             if service is None:
                 raise LookupError(f"no service {self.id}. Should be unreachable")
@@ -245,8 +247,8 @@ class Service:
         with tracer.start_as_current_span(
             "resolve_service_configuration", attributes={"service_id": self.id}
         ):
-            service = await anyio.to_thread.run_sync(
-                ServiceManager.get_service_by_id, self.id
+            service = await asyncio.get_event_loop().run_in_executor(
+                None, ServiceManager.get_service_by_id, self.id
             )
             if service is None:
                 return None
