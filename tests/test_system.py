@@ -34,8 +34,6 @@ def test_uname_new_session():
 
 
 def test_uname_nonexistent_args():
-    with pytest.raises(ShellException) as exception_info:
-        # uname: extra operand ‘sldfkjsljf’
-        # Try 'uname --help' for more information
+    with pytest.raises(ShellException) as exc:
         run_blocking(["uname", "isdyfhishfaisljhkeysmash"], new_session=True)
-    assert "extra operand" in exception_info.value.args[0]
+    assert "extra operand" in (exc.value.output or "").lower()

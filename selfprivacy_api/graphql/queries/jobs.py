@@ -17,8 +17,13 @@ from selfprivacy_api.utils.localization import TranslateSystemMessage as t
 
 def translate_job(job: ApiJob, locale: str) -> ApiJob:
     def _tr_opt(text: Optional[str], locale: str) -> Optional[str]:
-        if text:
-            return t.translate(text=text, locale=locale)
+        if text is None:
+            return None
+        # I did this only to maintain compatibility.
+        # Why do we return empty strings instead of None at all?
+        if text == "":
+            return ""
+        return t.translate(text=text, locale=locale)
 
     return ApiJob(
         uid=job.uid,
