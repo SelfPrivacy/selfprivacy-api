@@ -265,6 +265,11 @@ def read_account_uri() -> str:
             f"No account files found matching: {ACCOUNT_PATH_PATTERN}"
         )
 
+    account_file = list(account_file)
+
+    # Sometimes LEGO creates new ACME account, so API gets confused. Let's always just use last created one.
+    account_file.sort(key=os.path.getctime, reverse=True)
+
     with open(account_file[0], "r") as file:
         account_info = json.load(file)
         return account_info["registration"]["uri"]
