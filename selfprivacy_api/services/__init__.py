@@ -395,7 +395,7 @@ async def get_templated_services(ignored_services: list[str]) -> list[Service]:
                 tasks.append(tg.create_task(get_templated_service(module)))
         for task in tasks:
             try:
-                templated_services.append(await task)
+                templated_services.append(task.result())
             except Exception as e:
                 logger.error(f"Failed to load service: {e}")
 
@@ -424,7 +424,7 @@ async def get_remote_services(ignored_services: list[str]) -> list[Service]:
                 )
         for task in tasks:
             try:
-                services.append(await task)
+                services.append(task.result())
             except Exception as e:
                 logger.error(f"Failed to load remote service: {e}")
     return services
