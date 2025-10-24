@@ -501,7 +501,7 @@ class Backups:
                         service, snapshot.id, verify=True
                     )
 
-                service.post_restore(job=job)
+                await service.post_restore(job=job)
                 Jobs.update(
                     job,
                     status=JobStatus.RUNNING,

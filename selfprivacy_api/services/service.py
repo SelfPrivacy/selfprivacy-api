@@ -547,7 +547,7 @@ class Service(ABC):
     def pre_restore(self, job: Job):
         pass
 
-    def post_restore(self, job: Job):
+    async def post_restore(self, job: Job):
         pass
 
 
