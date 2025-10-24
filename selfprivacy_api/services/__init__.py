@@ -313,35 +313,43 @@ class ServiceManager(Service):
 
 # @redis_cached_call(ttl=30)
 async def get_templated_service(service_id: str) -> TemplatedService:
-    if not exists(path.join(SP_MODULES_DEFENITIONS_PATH, service_id)):
-        raise FileNotFoundError(f"Service definition for {service_id} not found")
-    with open(
-        path.join(SP_MODULES_DEFENITIONS_PATH, service_id), "r", encoding="utf-8"
-    ) as f:
-        service_data = f.read()
+    with tracer.start_as_current_span(
+        "fetch_templated_service", attributes={"service_id": service_id}
+    ) as span:
+        if not exists(path.join(SP_MODULES_DEFENITIONS_PATH, service_id)):
+            raise FileNotFoundError(f"Service definition for {service_id} not found")
+        with open(
+            path.join(SP_MODULES_DEFENITIONS_PATH, service_id), "r", encoding="utf-8"
+        ) as f:
+            service_data = f.read()
     return TemplatedService(service_id, service_data)
 
 
 # @redis_cached_call(ttl=3600)
 async def get_remote_service(id: str, url: str) -> TemplatedService:
-    process = await asyncio.create_subprocess_exec(
-        "sp-fetch-remote-module",
-        url,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-    )
-    stdout, stderr = await process.communicate()
-
-    if process.returncode is None:
-        raise Exception("Process was killed unexpectedly")
-
-    if process.returncode != 0:
-        raise subprocess.CalledProcessError(
-            process.returncode,
-            ["sp-fetch-remote-module", url],
-            stdout,
-            stderr,
+    with tracer.start_as_current_span(
+        "fetch_remote_service", attributes={"service_id": id, "url": url}
+    ) as span:
+        process = await asyncio.create_subprocess_exec(
+            "sp-fetch-remote-module",
+            url,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
         )
+        span.add_event("started sp-fetch-remote-module process")
+        stdout, stderr = await process.communicate()
+        span.add_event("sp-fetch-remote-module process finished")
+
+        if process.returncode is None:
+            raise Exception("Process was killed unexpectedly")
+
+        if process.returncode != 0:
+            raise subprocess.CalledProcessError(
+                process.returncode,
+                ["sp-fetch-remote-module", url],
+                stdout,
+                stderr,
+            )
 
     return TemplatedService(id, stdout.decode("utf-8"))
 
