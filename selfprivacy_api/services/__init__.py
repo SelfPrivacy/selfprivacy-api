@@ -315,7 +315,9 @@ class ServiceManager(Service):
 async def get_templated_service(service_id: str) -> TemplatedService:
     if not exists(path.join(SP_MODULES_DEFENITIONS_PATH, service_id)):
         raise FileNotFoundError(f"Service definition for {service_id} not found")
-    with open(path.join(SP_MODULES_DEFENITIONS_PATH, service_id), "r", encoding="utf-8") as f:
+    with open(
+        path.join(SP_MODULES_DEFENITIONS_PATH, service_id), "r", encoding="utf-8"
+    ) as f:
         service_data = f.read()
     return TemplatedService(service_id, service_data)
 
@@ -364,11 +366,13 @@ async def get_services(exclude_remote=False) -> list[Service]:
         hardcoded_services += DUMMY_SERVICES
     service_ids = [service.get_id() for service in hardcoded_services]
 
-    templated_services, remote_services = asyncio.gather(
+    templated_services, remote_services = await asyncio.gather(
         get_templated_services(ignored_services=service_ids),
-        get_remote_services(ignored_services=service_ids)
-        if not exclude_remote and path.exists(SP_SUGGESTED_MODULES_PATH)
-        else asyncio.sleep(0, result=[]),
+        (
+            get_remote_services(ignored_services=service_ids)
+            if not exclude_remote and path.exists(SP_SUGGESTED_MODULES_PATH)
+            else asyncio.sleep(0, result=[])
+        ),
     )
 
     service_ids += [service.get_id() for service in templated_services]
@@ -388,11 +392,7 @@ async def get_templated_services(ignored_services: list[str]) -> list[Service]:
             for module in listdir(SP_MODULES_DEFENITIONS_PATH):
                 if module in ignored_services:
                     continue
-                tasks.append(
-                    tg.create_task(
-                        get_templated_service(module)
-                    )
-                )
+                tasks.append(tg.create_task(get_templated_service(module)))
         for task in tasks:
             try:
                 templated_services.append(await task)

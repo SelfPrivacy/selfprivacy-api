@@ -110,10 +110,18 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         status_text="Checking if services are present.",
     )
 
-    nextcloud_service = huey_async_helper.run_async(ServiceManager.get_service_by_id("nextcloud"))
-    bitwarden_service = huey_async_helper.run_async(ServiceManager.get_service_by_id("bitwarden"))
-    gitea_service = huey_async_helper.run_async(ServiceManager.get_service_by_id("gitea"))
-    pleroma_service = huey_async_helper.run_async(ServiceManager.get_service_by_id("pleroma"))
+    nextcloud_service = huey_async_helper.run_async(
+        ServiceManager.get_service_by_id("nextcloud")
+    )
+    bitwarden_service = huey_async_helper.run_async(
+        ServiceManager.get_service_by_id("bitwarden")
+    )
+    gitea_service = huey_async_helper.run_async(
+        ServiceManager.get_service_by_id("gitea")
+    )
+    pleroma_service = huey_async_helper.run_async(
+        ServiceManager.get_service_by_id("pleroma")
+    )
 
     if not nextcloud_service:
         Jobs.update(

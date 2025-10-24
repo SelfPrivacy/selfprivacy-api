@@ -121,7 +121,9 @@ class TemplatedService(Service):
                     self.config_items[config_item.id] = config_item
             # If it is movable, check for the location option
             if self.meta.is_movable and "location" not in self.options:
-                raise ValueError("Service is movable but does not have a location option")
+                raise ValueError(
+                    "Service is movable but does not have a location option"
+                )
             # Load all subdomains via options with "subdomain" widget
             self.subdomain_options: List[str] = []
             for option in self.options.values():
