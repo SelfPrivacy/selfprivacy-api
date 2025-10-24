@@ -31,8 +31,8 @@ def validate_datetime(dt: datetime) -> bool:
     Also ensures that the timezone-aware time is used.
     """
     if dt.tzinfo is None:
-        return Backups.is_time_to_backup(dt.replace(tzinfo=timezone.utc))
-    return Backups.is_time_to_backup(dt)
+        return huey_async_helper.run_async(Backups.is_time_to_backup(dt.replace(tzinfo=timezone.utc)))
+    return huey_async_helper.run_async(Backups.is_time_to_backup(dt))
 
 
 def report_job_error(error: Exception, job: Job):
@@ -63,7 +63,7 @@ def prune_autobackup_snapshots(job: Job) -> bool:
     """
     Jobs.update(job, JobStatus.RUNNING)
     try:
-        Backups.prune_all_autosnaps()
+        huey_async_helper.run_async(Backups.prune_all_autosnaps())
     except Exception as e:
         Jobs.update(job, JobStatus.ERROR, error=type(e).__name__ + ":" + str(e))
         return False
@@ -177,8 +177,8 @@ def eligible_for_full_restoration(snap: Snapshot):
     return True
 
 
-def which_snapshots_to_full_restore() -> list[Snapshot]:
-    autoslice = Backups.last_backup_slice()
+async def which_snapshots_to_full_restore() -> list[Snapshot]:
+    autoslice = await Backups.last_backup_slice()
     api_snapshot = None
     for snap in autoslice:
         if snap.service_name == ServiceManager.get_id():
@@ -209,7 +209,7 @@ async def do_full_restore(job: Job) -> None:
         status_text="Finding the last autobackup session",
         progress=0,
     )
-    snapshots_to_restore = which_snapshots_to_full_restore()
+    snapshots_to_restore = await which_snapshots_to_full_restore()
 
     progress_per_service = 99 // len(snapshots_to_restore)
     progress = 0

@@ -21,9 +21,7 @@ class Services:
     @strawberry.field
     async def all_services(self) -> typing.List[Service]:
         with tracer.start_as_current_span("resolve_all_services") as span:
-            services = await asyncio.get_event_loop().run_in_executor(
-                None, ServiceManager.get_all_services
-            )
+            services = await ServiceManager.get_all_services()
             graphql_services = await asyncio.gather(*[
                 service_to_graphql_service(service) for service in services
             ])
