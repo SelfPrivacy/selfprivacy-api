@@ -374,19 +374,16 @@ async def get_services(exclude_remote=False) -> list[Service]:
         hardcoded_services += DUMMY_SERVICES
     service_ids = [service.get_id() for service in hardcoded_services]
 
-    templated_services, remote_services = await asyncio.gather(
-        get_templated_services(ignored_services=service_ids),
-        (
-            get_remote_services(ignored_services=service_ids)
-            if not exclude_remote and path.exists(SP_SUGGESTED_MODULES_PATH)
-            else asyncio.sleep(0, result=[])
-        ),
+    templated_services = await get_templated_services(
+        ignored_services=service_ids,
     )
-
     service_ids += [service.get_id() for service in templated_services]
 
+    if not exclude_remote and path.exists(SP_SUGGESTED_MODULES_PATH):
+        remote_services = await get_remote_services(ignored_services=service_ids)
+        service_ids += [service.get_id() for service in remote_services]
+
     templated_services += remote_services
-    service_ids += [service.get_id() for service in remote_services]
 
     return hardcoded_services + templated_services
 
