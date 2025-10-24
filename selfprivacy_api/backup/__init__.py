@@ -422,10 +422,10 @@ class Backups:
 
     @staticmethod
     @tracer.start_as_current_span("ensure_queued_restore_job")
-    def _ensure_queued_restore_job(service, snapshot) -> Job:
+    async def _ensure_queued_restore_job(service, snapshot) -> Job:
         job = get_restore_job(service)
         if job is None:
-            job = add_restore_job(snapshot)
+            job = await add_restore_job(snapshot)
 
         Jobs.update(job, status=JobStatus.CREATED)
         return job
@@ -478,7 +478,7 @@ class Backups:
             raise ValueError(
                 f"snapshot has a nonexistent service: {snapshot.service_name}"
             )
-        job = Backups._ensure_queued_restore_job(service, snapshot)
+        job = await Backups._ensure_queued_restore_job(service, snapshot)
 
         try:
             await Backups._assert_restorable(snapshot)

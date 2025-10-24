@@ -110,7 +110,7 @@ class ServicesMutations:
             "enable_service_mutation", attributes={"service_id": service_id}
         ):
             try:
-                service = ServiceManager.get_service_by_id(service_id)
+                service = await ServiceManager.get_service_by_id(service_id)
                 if service is None:
                     return ServiceMutationReturn(
                         success=False,
@@ -139,7 +139,7 @@ class ServicesMutations:
             "disable_service_mutation", attributes={"service_id": service_id}
         ):
             try:
-                service = ServiceManager.get_service_by_id(service_id)
+                service = await ServiceManager.get_service_by_id(service_id)
                 if service is None:
                     return ServiceMutationReturn(
                         success=False,
@@ -166,7 +166,7 @@ class ServicesMutations:
         with tracer.start_as_current_span(
             "stop_service_mutation", attributes={"service_id": service_id}
         ):
-            service = ServiceManager.get_service_by_id(service_id)
+            service = await ServiceManager.get_service_by_id(service_id)
             if service is None:
                 return ServiceMutationReturn(
                     success=False,
@@ -187,7 +187,7 @@ class ServicesMutations:
         with tracer.start_as_current_span(
             "start_service_mutation", attributes={"service_id": service_id}
         ):
-            service = ServiceManager.get_service_by_id(service_id)
+            service = await ServiceManager.get_service_by_id(service_id)
             if service is None:
                 return ServiceMutationReturn(
                     success=False,
@@ -208,7 +208,7 @@ class ServicesMutations:
         with tracer.start_as_current_span(
             "restart_service_mutation", attributes={"service_id": service_id}
         ):
-            service = ServiceManager.get_service_by_id(service_id)
+            service = await ServiceManager.get_service_by_id(service_id)
             if service is None:
                 return ServiceMutationReturn(
                     success=False,
@@ -234,7 +234,7 @@ class ServicesMutations:
                 "service_id": input.service_id,
             },
         ):
-            service = ServiceManager.get_service_by_id(input.service_id)
+            service = await ServiceManager.get_service_by_id(input.service_id)
             if service is None:
                 return ServiceMutationReturn(
                     success=False,
@@ -275,7 +275,7 @@ class ServicesMutations:
             },
         ):
             # We need a service instance for a reply later
-            service = ServiceManager.get_service_by_id(input.service_id)
+            service = await ServiceManager.get_service_by_id(input.service_id)
             if service is None:
                 return ServiceJobMutationReturn(
                     success=False,

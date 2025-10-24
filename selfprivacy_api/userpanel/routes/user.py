@@ -53,7 +53,7 @@ async def get_profile(
     except Exception as e:
         logger.error(f"Error getting user by username: {e}")
         raise HTTPException(status_code=500)
-    enabled_services = ServiceManager.get_enabled_services_with_urls()
+    enabled_services = await ServiceManager.get_enabled_services_with_urls()
     if user.memberof is None:
         user_groups = []
     else:

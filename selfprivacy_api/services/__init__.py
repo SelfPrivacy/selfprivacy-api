@@ -63,31 +63,31 @@ class ServiceManager(Service):
 
     @staticmethod
     @tracer.start_as_current_span("get_enabled_services")
-    def get_enabled_services() -> list[Service]:
-        return [service for service in get_services() if service.is_enabled()]
+    async def get_enabled_services() -> list[Service]:
+        return [service for service in await get_services() if service.is_enabled()]
 
     @staticmethod
     @tracer.start_as_current_span("get_enabled_services_with_urls")
-    def get_enabled_services_with_urls() -> list[Service]:
+    async def get_enabled_services_with_urls() -> list[Service]:
         return [
             service
-            for service in get_services(exclude_remote=True)
+            for service in await get_services(exclude_remote=True)
             if service.is_enabled() and service.get_url()
         ]
 
     # This one is not currently used by any code.``
     @staticmethod
     @tracer.start_as_current_span("get_disabled_services")
-    def get_disabled_services() -> list[Service]:
-        return [service for service in get_services() if not service.is_enabled()]
+    async def get_disabled_services() -> list[Service]:
+        return [service for service in await get_services() if not service.is_enabled()]
 
     @staticmethod
-    def get_services_by_location(location: str) -> list[Service]:
+    async def get_services_by_location(location: str) -> list[Service]:
         with tracer.start_as_current_span("get_services_by_location") as span:
             span.set_attribute("location", location)
             return [
                 service
-                for service in get_services(
+                for service in await get_services(
                     exclude_remote=True,
                 )
                 if service.get_drive() == location
@@ -95,7 +95,7 @@ class ServiceManager(Service):
 
     @staticmethod
     @tracer.start_as_current_span("get_all_required_dns_records")
-    def get_all_required_dns_records() -> list[ServiceDnsRecord]:
+    async def get_all_required_dns_records() -> list[ServiceDnsRecord]:
         ip4 = network_utils.get_ip4()
         ip6 = network_utils.get_ip6()
 
@@ -122,7 +122,7 @@ class ServiceManager(Service):
         except Exception as e:
             logging.error(f"Error creating CAA: {e}")
 
-        for service in ServiceManager.get_enabled_services():
+        for service in await ServiceManager.get_enabled_services():
             dns_records += service.get_dns_records(ip4, ip6)
         return dns_records
 

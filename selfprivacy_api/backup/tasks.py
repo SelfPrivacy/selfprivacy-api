@@ -51,10 +51,10 @@ def start_backup(service_id: str, reason: BackupReason = BackupReason.EXPLICIT) 
     """
     The worker task that starts the backup process.
     """
-    service = ServiceManager.get_service_by_id(service_id)
+    service = huey_async_helper.run_async(ServiceManager.get_service_by_id(service_id))
     if service is None:
         raise ValueError(f"No such service: {service_id}")
-    Backups.back_up(service, reason)
+    huey_async_helper.run_async(Backups.back_up(service, reason))
     return True
 
 
@@ -97,12 +97,12 @@ def automatic_backup() -> None:
     """
     The worker periodic task that starts the automatic backup process.
     """
-    do_autobackup()
+    huey_async_helper.run_async(do_autobackup())
 
 
 @huey.task()
 def total_backup(job: Job) -> bool:
-    do_total_backup(job)
+    huey_async_helper.run_async(do_total_backup(job))
     return True
 
 
@@ -111,7 +111,7 @@ def reload_snapshot_cache():
     Backups.force_snapshot_cache_reload()
 
 
-def back_up_multiple(
+async def back_up_multiple(
     job: Job,
     services_to_back_up: List[Service],
     reason: BackupReason = BackupReason.EXPLICIT,
@@ -125,7 +125,7 @@ def back_up_multiple(
 
     for service in services_to_back_up:
         try:
-            Backups.back_up(service, reason)
+            await Backups.back_up(service, reason)
         except Exception as error:
             report_job_error(error, job)
             raise error
@@ -133,16 +133,16 @@ def back_up_multiple(
         Jobs.update(job, JobStatus.RUNNING, progress=progress)
 
 
-def do_total_backup(job: Job) -> None:
+async def do_total_backup(job: Job) -> None:
     """
     Body of total backup task, broken out to test it
     """
-    back_up_multiple(job, ServiceManager.get_enabled_services())
+    await back_up_multiple(job, await ServiceManager.get_enabled_services())
 
     Jobs.update(job, JobStatus.FINISHED)
 
 
-def do_autobackup() -> None:
+async def do_autobackup() -> None:
     """
     Body of autobackup task, broken out to test it
     For some reason, we cannot launch periodic huey tasks
@@ -156,7 +156,7 @@ def do_autobackup() -> None:
         # Temporarily enable autobackup
         Backups.set_autobackup_period_minutes(24 * 60)  # 1 day
 
-    services_to_back_up = Backups.services_to_back_up(time)
+    services_to_back_up = await Backups.services_to_back_up(time)
     if not services_to_back_up:
         return
     job = add_autobackup_job(services_to_back_up)
@@ -170,8 +170,8 @@ def do_autobackup() -> None:
     # this code is called with a delay
 
 
-def eligible_for_full_restoration(snap: Snapshot):
-    service = ServiceManager.get_service_by_id(snap.service_name)
+async def eligible_for_full_restoration(snap: Snapshot):
+    service = await ServiceManager.get_service_by_id(snap.service_name)
     if service is None:
         return False
     if service.is_enabled() is False:
@@ -192,7 +192,7 @@ async def which_snapshots_to_full_restore() -> list[Snapshot]:
         )
 
     snapshots_to_restore = [
-        snap for snap in autoslice if eligible_for_full_restoration(snap)
+        snap for snap in autoslice if await eligible_for_full_restoration(snap)
     ]
     # API should be restored in the very end of the list because it requires rebuild right afterwards
     snapshots_to_restore.append(api_snapshot)
