@@ -31,7 +31,9 @@ def validate_datetime(dt: datetime) -> bool:
     Also ensures that the timezone-aware time is used.
     """
     if dt.tzinfo is None:
-        return huey_async_helper.run_async(Backups.is_time_to_backup(dt.replace(tzinfo=timezone.utc)))
+        return huey_async_helper.run_async(
+            Backups.is_time_to_backup(dt.replace(tzinfo=timezone.utc))
+        )
     return huey_async_helper.run_async(Backups.is_time_to_backup(dt))
 
 
