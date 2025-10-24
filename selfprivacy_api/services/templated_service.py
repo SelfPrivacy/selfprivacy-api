@@ -7,6 +7,7 @@ import subprocess
 from typing import List, Optional
 from os.path import join, exists
 from os import mkdir, remove
+from opentelemetry import trace
 
 from selfprivacy_api.utils.postgres import PostgresDumper
 from selfprivacy_api.jobs import Job, JobStatus, Jobs
@@ -42,6 +43,7 @@ SP_MODULES_DEFENITIONS_PATH = "/etc/sp-modules"
 SP_SUGGESTED_MODULES_PATH = "/etc/suggested-sp-modules"
 
 logger = logging.getLogger(__name__)
+tracer = trace.get_tracer(__name__)
 
 
 def config_item_from_json(json_data: dict) -> Optional[ServiceConfigItem]:
@@ -99,39 +101,32 @@ def config_item_from_json(json_data: dict) -> Optional[ServiceConfigItem]:
 class TemplatedService(Service):
     """Class representing a dynamically loaded service."""
 
-    def __init__(self, service_id: str, source_data: Optional[str] = None) -> None:
-        if source_data:
+    def __init__(self, service_id: str, source_data: str) -> None:
+        with tracer.start_as_current_span("TemplatedService.__init__"):
             self.definition_data = json.loads(source_data)
-        else:
-            # Check if the service exists
-            if not exists(join(SP_MODULES_DEFENITIONS_PATH, service_id)):
-                raise FileNotFoundError(f"Service {service_id} not found")
-            # Load the service
-            with open(join(SP_MODULES_DEFENITIONS_PATH, service_id)) as file:
-                self.definition_data = json.load(file)
-        # Check if required fields are present
-        if "meta" not in self.definition_data:
-            raise ValueError("meta not found in service definition")
-        if "options" not in self.definition_data:
-            raise ValueError("options not found in service definition")
-        # Load the meta data
-        self.meta = ServiceMetaData(**self.definition_data["meta"])
-        # Load the options
-        self.options = self.definition_data["options"]
-        # Load the config items
-        self.config_items = {}
-        for option in self.options.values():
-            config_item = config_item_from_json(option)
-            if config_item:
-                self.config_items[config_item.id] = config_item
-        # If it is movable, check for the location option
-        if self.meta.is_movable and "location" not in self.options:
-            raise ValueError("Service is movable but does not have a location option")
-        # Load all subdomains via options with "subdomain" widget
-        self.subdomain_options: List[str] = []
-        for option in self.options.values():
-            if option.get("meta", {}).get("widget") == "subdomain":
-                self.subdomain_options.append(option["name"])
+            # Check if required fields are present
+            if "meta" not in self.definition_data:
+                raise ValueError("meta not found in service definition")
+            if "options" not in self.definition_data:
+                raise ValueError("options not found in service definition")
+            # Load the meta data
+            self.meta = ServiceMetaData(**self.definition_data["meta"])
+            # Load the options
+            self.options = self.definition_data["options"]
+            # Load the config items
+            self.config_items = {}
+            for option in self.options.values():
+                config_item = config_item_from_json(option)
+                if config_item:
+                    self.config_items[config_item.id] = config_item
+            # If it is movable, check for the location option
+            if self.meta.is_movable and "location" not in self.options:
+                raise ValueError("Service is movable but does not have a location option")
+            # Load all subdomains via options with "subdomain" widget
+            self.subdomain_options: List[str] = []
+            for option in self.options.values():
+                if option.get("meta", {}).get("widget") == "subdomain":
+                    self.subdomain_options.append(option["name"])
 
     def get_id(self) -> str:
         # Check if ID contains elements that might be a part of the path
@@ -524,7 +519,7 @@ class TemplatedService(Service):
             # Remove existing dumps if they exist
             self._clear_db_dumps()
 
-    def post_restore(self, job: Job):
+    async def post_restore(self, job: Job):
         if self.get_postgresql_databases():
             # Recover the databases
             db_dumps_folder = self._get_db_dumps_folder()
