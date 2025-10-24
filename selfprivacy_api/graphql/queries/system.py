@@ -41,7 +41,7 @@ class SystemDomainInfo:
                     priority=record.priority,
                     display_name=record.display_name,
                 )
-                for record in ServiceManager.get_all_required_dns_records()
+                for record in await ServiceManager.get_all_required_dns_records()
             ]
 
 

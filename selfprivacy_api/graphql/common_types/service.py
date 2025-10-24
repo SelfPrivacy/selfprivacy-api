@@ -29,7 +29,7 @@ async def get_usages(root: "StorageVolume") -> list["StorageUsageInterface"]:
             used_space=str(await service.get_storage_usage()),
             volume=get_volume_by_id(service.get_drive()),
         )
-        for service in ServiceManager.get_services_by_location(root.name)
+        for service in await ServiceManager.get_services_by_location(root.name)
     ]
 
 
@@ -102,9 +102,7 @@ class LicenseType:
 @tracer.start_as_current_span("get_storage_usage")
 async def get_storage_usage(root: "Service") -> ServiceStorageUsage:
     """Get storage usage for a service"""
-    service = await asyncio.get_event_loop().run_in_executor(
-        None, ServiceManager.get_service_by_id, root.id
-    )
+    service = await ServiceManager.get_service_by_id(root.id)
     if service is None:
         return ServiceStorageUsage(
             service=service,
@@ -223,9 +221,7 @@ class Service:
         with tracer.start_as_current_span(
             "resolve_service_dns_records", attributes={"service_id": self.id}
         ):
-            service = await asyncio.get_event_loop().run_in_executor(
-                None, ServiceManager.get_service_by_id, self.id
-            )
+            service = await ServiceManager.get_service_by_id(self.id)
             if service is None:
                 raise LookupError(f"no service {self.id}. Should be unreachable")
 
@@ -247,9 +243,7 @@ class Service:
         with tracer.start_as_current_span(
             "resolve_service_configuration", attributes={"service_id": self.id}
         ):
-            service = await asyncio.get_event_loop().run_in_executor(
-                None, ServiceManager.get_service_by_id, self.id
-            )
+            service = await ServiceManager.get_service_by_id(self.id)
             if service is None:
                 return None
             config_items = service.get_configuration()

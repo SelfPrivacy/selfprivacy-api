@@ -183,7 +183,7 @@ class BackupMutations:
                 )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def start_backup(self, service_id: str) -> GenericJobMutationReturn:
+    async def start_backup(self, service_id: str) -> GenericJobMutationReturn:
         """Start backup"""
 
         with tracer.start_as_current_span(
@@ -192,7 +192,7 @@ class BackupMutations:
                 "service_id": service_id,
             },
         ):
-            service = ServiceManager.get_service_by_id(service_id)
+            service = await ServiceManager.get_service_by_id(service_id)
             if service is None:
                 return GenericJobMutationReturn(
                     success=False,
@@ -212,14 +212,14 @@ class BackupMutations:
             )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def total_backup(self) -> GenericJobMutationReturn:
+    async def total_backup(self) -> GenericJobMutationReturn:
         """Back up all the enabled services at once
         Useful when migrating
         """
 
         with tracer.start_as_current_span("total_backup_mutation"):
             try:
-                job = add_total_backup_job()
+                job = await add_total_backup_job()
                 total_backup(job)
             except Exception as error:
                 return api_job_mutation_error(error)
@@ -258,7 +258,7 @@ class BackupMutations:
             )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def restore_backup(
+    async def restore_backup(
         self,
         snapshot_id: str,
         strategy: RestoreStrategy = RestoreStrategy.DOWNLOAD_VERIFY_OVERWRITE,
@@ -280,7 +280,7 @@ class BackupMutations:
                     job=None,
                 )
 
-            service = ServiceManager.get_service_by_id(snap.service_name)
+            service = await ServiceManager.get_service_by_id(snap.service_name)
             if service is None:
                 return GenericJobMutationReturn(
                     success=False,

@@ -67,7 +67,7 @@ def tombstone_service(service_id: str) -> Service:
 @tracer.start_as_current_span("snapshot_to_api")
 async def snapshot_to_api(snap: Snapshot):
     api_service = None
-    service = ServiceManager.get_service_by_id(snap.service_name)
+    service = await ServiceManager.get_service_by_id(snap.service_name)
 
     if service is None:
         api_service = tombstone_service(snap.service_name)
