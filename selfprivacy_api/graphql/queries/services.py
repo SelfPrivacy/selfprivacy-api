@@ -24,11 +24,11 @@ class Services:
             services = await asyncio.get_event_loop().run_in_executor(
                 None, ServiceManager.get_all_services
             )
-            services = [
-                await service_to_graphql_service(service) for service in services
-            ]
+            graphql_services = await asyncio.gather(*[
+                service_to_graphql_service(service) for service in services
+            ])
 
             span.set_attribute("service_count", len(services))
             span.add_event("fetched all services from service manager")
 
-            return sorted(services, key=lambda service: service.display_name)
+            return sorted(graphql_services, key=lambda service: service.display_name)
