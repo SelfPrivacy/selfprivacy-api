@@ -49,14 +49,14 @@ class ServiceManager(Service):
 
     @staticmethod
     @tracer.start_as_current_span("get_all_services")
-    def get_all_services() -> list[Service]:
-        return get_services()
+    async def get_all_services() -> list[Service]:
+        return await get_services()
 
     @staticmethod
-    def get_service_by_id(service_id: str) -> typing.Optional[Service]:
+    async def get_service_by_id(service_id: str) -> typing.Optional[Service]:
         with tracer.start_as_current_span("get_service_by_id") as span:
             span.set_attribute("service_id", service_id)
-            for service in get_services():
+            for service in await get_services():
                 if service.get_id() == service_id:
                     return service
             return None
@@ -338,7 +338,7 @@ TEST_FLAGS: list[str] = []
 
 
 @tracer.start_as_current_span("get_services")
-def get_services(exclude_remote=False) -> List[Service]:
+async def get_services(exclude_remote=False) -> List[Service]:
     if "ONLY_DUMMY_SERVICE" in TEST_FLAGS:
         return DUMMY_SERVICES
     if "DUMMY_SERVICE_AND_API" in TEST_FLAGS:

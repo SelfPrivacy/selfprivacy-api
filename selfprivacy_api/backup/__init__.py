@@ -245,7 +245,7 @@ class Backups:
 
     @staticmethod
     @tracer.start_as_current_span("back_up")
-    def back_up(
+    async def back_up(
         service: Service, reason: BackupReason = BackupReason.EXPLICIT
     ) -> Snapshot:
         """The top-level function to back up a service
@@ -264,7 +264,7 @@ class Backups:
             service_name = service.get_id()
             service.pre_backup(job=job)
             Jobs.update(job, status=JobStatus.RUNNING, status_text="Uploading backup")
-            snapshot = Backups.provider().backupper.start_backup(
+            snapshot = await Backups.provider().backupper.start_backup(
                 folders,
                 service_name,
                 reason=reason,
@@ -414,8 +414,8 @@ class Backups:
 
     @staticmethod
     @tracer.start_as_current_span("prune_all_autosnaps")
-    def prune_all_autosnaps() -> None:
-        for service in ServiceManager.get_all_services():
+    async def prune_all_autosnaps() -> None:
+        for service in await ServiceManager.get_all_services():
             Backups._prune_auto_snaps(service)
 
     # Restoring
@@ -473,7 +473,7 @@ class Backups:
         snapshot: Snapshot, strategy=RestoreStrategy.DOWNLOAD_VERIFY_OVERWRITE
     ) -> None:
         """Restores a snapshot to its original service using the given strategy"""
-        service = ServiceManager.get_service_by_id(snapshot.service_name)
+        service = await ServiceManager.get_service_by_id(snapshot.service_name)
         if service is None:
             raise ValueError(
                 f"snapshot has a nonexistent service: {snapshot.service_name}"
@@ -520,7 +520,7 @@ class Backups:
     async def _assert_restorable(
         snapshot: Snapshot, strategy=RestoreStrategy.DOWNLOAD_VERIFY_OVERWRITE
     ) -> None:
-        service = ServiceManager.get_service_by_id(snapshot.service_name)
+        service = await ServiceManager.get_service_by_id(snapshot.service_name)
         if service is None:
             raise ValueError(
                 f"snapshot has a nonexistent service: {snapshot.service_name}"
@@ -696,21 +696,21 @@ class Backups:
 
     @staticmethod
     @tracer.start_as_current_span("is_time_to_backup")
-    def is_time_to_backup(time: datetime) -> bool:
+    async def is_time_to_backup(time: datetime) -> bool:
         """
         Intended as a time validator for huey cron scheduler
         of automatic backups
         """
 
-        return Backups.services_to_back_up(time) != []
+        return (await Backups.services_to_back_up(time)) != []
 
     @staticmethod
     @tracer.start_as_current_span("services_to_back_up")
-    def services_to_back_up(time: datetime) -> List[Service]:
+    async def services_to_back_up(time: datetime) -> List[Service]:
         """Returns a list of services that should be backed up at a given time"""
         return [
             service
-            for service in ServiceManager.get_all_services()
+            for service in await ServiceManager.get_all_services()
             if Backups.is_time_to_backup_service(service, time)
         ]
 
@@ -842,7 +842,7 @@ class Backups:
 
     @staticmethod
     @tracer.start_as_current_span("last_backup_slice")
-    def last_backup_slice() -> List[Snapshot]:
+    async def last_backup_slice() -> List[Snapshot]:
         """
         Guarantees that the slice is valid, ie, it has an api snapshot too
         Or empty
@@ -859,7 +859,7 @@ class Backups:
         api_snaps.sort(key=lambda x: x.created_at, reverse=True)
         api_snap = api_snaps[0]  # pick the latest one
 
-        for service in ServiceManager.get_all_services():
+        for service in await ServiceManager.get_all_services():
             if isinstance(service, ServiceManager):
                 continue
             snaps = Backups.get_snapshots(service)
@@ -868,6 +868,7 @@ class Backups:
                 if Backups.is_same_slice(snap, api_snap):
                     slice.append(snap)
                 break
+
         slice.append(api_snap)
 
         return slice

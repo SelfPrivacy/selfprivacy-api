@@ -193,15 +193,15 @@ class ResticBackupper(AbstractBackupper):
         return result
 
     @staticmethod
-    def _get_backup_job(service_name: str) -> Optional[Job]:
-        service = ServiceManager.get_service_by_id(service_name)
+    async def _get_backup_job(service_name: str) -> Optional[Job]:
+        service = await ServiceManager.get_service_by_id(service_name)
         if service is None:
             raise ValueError("No service with id ", service_name)
 
         return get_backup_job(service)
 
     @unlocked_repo
-    def start_backup(
+    async def start_backup(
         self,
         folders: List[str],
         service_name: str,
@@ -212,7 +212,7 @@ class ResticBackupper(AbstractBackupper):
         """
         assert len(folders) != 0
 
-        job = ResticBackupper._get_backup_job(service_name)
+        job = await ResticBackupper._get_backup_job(service_name)
 
         tags = [service_name, reason.value]
         backup_command = self.restic_command(
