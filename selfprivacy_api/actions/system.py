@@ -93,9 +93,9 @@ def run_blocking(cmd: List[str], new_session: bool = False) -> str:
         stderr=subprocess.PIPE,
     )
     stdout_raw, stderr_raw = process_handle.communicate()
-    stdout = stdout_raw.decode("utf-8")
+    stdout = stdout_raw.decode("utf-8", "replace")
     if stderr_raw is not None:
-        stderr = stderr_raw.decode("utf-8")
+        stderr = stderr_raw.decode("utf-8", "replace")
     else:
         stderr = ""
     output = stdout + "\n" + stderr
@@ -147,12 +147,12 @@ def reboot_system() -> None:
 
 def get_system_version() -> str:
     """Get system version"""
-    return subprocess.check_output(["uname", "-a"]).decode("utf-8").strip()
+    return subprocess.check_output(["uname", "-a"]).decode("utf-8", "replace").strip()
 
 
 def get_python_version() -> str:
     """Get Python version"""
-    return subprocess.check_output(["python", "-V"]).decode("utf-8").strip()
+    return subprocess.check_output(["python", "-V"]).decode("utf-8", "replace").strip()
 
 
 class SystemActionResult(BaseModel):

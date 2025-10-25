@@ -65,7 +65,7 @@ class DummyService(Service):
         # return ""
         if raw:
             return BITWARDEN_ICON
-        return base64.b64encode(BITWARDEN_ICON.encode("utf-8")).decode("utf-8")
+        return base64.b64encode(BITWARDEN_ICON.encode("utf-8")).decode("utf-8", "replace")
 
     @classmethod
     def is_movable(cls) -> bool:

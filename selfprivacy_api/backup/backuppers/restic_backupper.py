@@ -131,7 +131,7 @@ class ResticBackupper(AbstractBackupper):
             command.extend(backend_args)
 
         with subprocess.Popen(command, stdout=subprocess.PIPE, shell=False) as handle:
-            output = handle.communicate()[0].decode("utf-8")
+            output = handle.communicate()[0].decode("utf-8", "replace")
             if handle.returncode != 0:
                 raise ValueError(
                     "purge exited with errorcode",
@@ -277,7 +277,7 @@ class ResticBackupper(AbstractBackupper):
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         ) as process_handle:
-            output = process_handle.communicate()[0].decode("utf-8")
+            output = process_handle.communicate()[0].decode("utf-8", "replace")
             if "created restic repository" not in output:
                 raise ValueError("cannot init a repo: " + output)
 
@@ -293,7 +293,7 @@ class ResticBackupper(AbstractBackupper):
             shell=False,
             stderr=subprocess.STDOUT,
         ) as handle:
-            output = handle.communicate()[0].decode("utf-8")
+            output = handle.communicate()[0].decode("utf-8", "replace")
             if handle.returncode != 0:
                 if "unable to create lock" in output:
                     raise ValueError("Stale lock detected: ", output)
@@ -313,7 +313,7 @@ class ResticBackupper(AbstractBackupper):
             stderr=subprocess.STDOUT,
         ) as handle:
             # communication forces to complete and for returncode to get defined
-            output = handle.communicate()[0].decode("utf-8")
+            output = handle.communicate()[0].decode("utf-8", "replace")
             if handle.returncode != 0:
                 raise ValueError("cannot unlock the backup repository: ", output)
 
@@ -366,7 +366,7 @@ class ResticBackupper(AbstractBackupper):
             stderr=subprocess.STDOUT,
             shell=False,
         ) as handle:
-            output = handle.communicate()[0].decode("utf-8")
+            output = handle.communicate()[0].decode("utf-8", "replace")
             try:
                 parsed_output = ResticBackupper.parse_json_output(output)
                 if "total_size" not in parsed_output:
@@ -444,7 +444,7 @@ class ResticBackupper(AbstractBackupper):
         ) as handle:
             # for some reason restore does not support
             # nice reporting of progress via json
-            output = handle.communicate()[0].decode("utf-8")
+            output = handle.communicate()[0].decode("utf-8", "replace")
             if "restoring" not in output:
                 raise ValueError("cannot restore a snapshot: " + output)
 
@@ -516,7 +516,7 @@ class ResticBackupper(AbstractBackupper):
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         ) as backup_listing_process_descriptor:
-            output = backup_listing_process_descriptor.communicate()[0].decode("utf-8")
+            output = backup_listing_process_descriptor.communicate()[0].decode("utf-8", "replace")
 
         if "Is there a repository at the following location?" in output:
             raise ValueError("No repository! : " + output)

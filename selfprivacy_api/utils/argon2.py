@@ -7,7 +7,7 @@ from passlib.hash import argon2, sha512_crypt
 
 def generate_urlsave_password() -> str:
     random_bytes = secrets.token_bytes(32)
-    return base64.urlsafe_b64encode(random_bytes).decode("utf-8")
+    return base64.urlsafe_b64encode(random_bytes).decode("utf-8", "replace")
 
 
 def generate_password_hash(password: str) -> str:
