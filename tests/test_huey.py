@@ -44,7 +44,7 @@ def read_all_ready_output(stream: BufferedReader) -> str:
     set_blocking(stream.fileno(), True)
 
     result = b"".join(output)
-    return result.decode("utf-8")
+    return result.decode("utf-8", "replace")
 
 
 @pytest.fixture()

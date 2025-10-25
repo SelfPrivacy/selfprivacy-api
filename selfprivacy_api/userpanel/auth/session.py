@@ -15,7 +15,7 @@ def generate_password() -> str:
 
 def generate_session_token() -> str:
     bytes = secrets.token_bytes(32)
-    token = base64.b32encode(bytes).decode("utf-8").rstrip("=").lower()
+    token = base64.b32encode(bytes).decode("utf-8", "replace").rstrip("=").lower()
     return token
 
 

@@ -36,7 +36,7 @@ class Prometheus(Service):
     def get_svg_icon(raw=False) -> str:
         if raw:
             return PROMETHEUS_ICON
-        return base64.b64encode(PROMETHEUS_ICON.encode("utf-8")).decode("utf-8")
+        return base64.b64encode(PROMETHEUS_ICON.encode("utf-8")).decode("utf-8", "replace")
 
     @staticmethod
     def get_url() -> Optional[str]:

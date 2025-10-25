@@ -167,7 +167,7 @@ class ServiceManager(Service):
         """Read SVG icon from file and return it as base64 encoded string."""
         if raw:
             return API_ICON
-        return base64.b64encode(API_ICON.encode("utf-8")).decode("utf-8")
+        return base64.b64encode(API_ICON.encode("utf-8")).decode("utf-8", "replace")
 
     @staticmethod
     def get_url() -> typing.Optional[str]:

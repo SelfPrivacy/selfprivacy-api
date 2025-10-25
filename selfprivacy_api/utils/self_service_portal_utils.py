@@ -79,4 +79,4 @@ def generate_qr_code(data: str) -> str:
     qr: PyPNGImage = qrcode.make(data, image_factory=qrcode.image.pure.PyPNGImage)
     buffered = BytesIO()
     qr.save(buffered)
-    return base64.b64encode(buffered.getvalue()).decode("utf-8")
+    return base64.b64encode(buffered.getvalue()).decode("utf-8", "replace")

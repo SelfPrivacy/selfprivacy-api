@@ -24,7 +24,7 @@ def get_block_device(device_name):
             f"/dev/{device_name}",
         ]
     )
-    lsblk_output = lsblk_output.decode("utf-8")
+    lsblk_output = lsblk_output.decode("utf-8", "replace")
     lsblk_output = json.loads(lsblk_output)
     return lsblk_output["blockdevices"][0]
 
@@ -286,7 +286,7 @@ class BlockDevices(metaclass=SingletonMetaclass):
                 "NAME,PATH,FSAVAIL,FSSIZE,FSTYPE,FSUSED,MOUNTPOINTS,LABEL,UUID,SIZE,MODEL,SERIAL,TYPE",
             ]
         )
-        lsblk_output = lsblk_output_bytes.decode("utf-8")
+        lsblk_output = lsblk_output_bytes.decode("utf-8", "replace")
         return json.loads(lsblk_output)["blockdevices"]
 
     @staticmethod
