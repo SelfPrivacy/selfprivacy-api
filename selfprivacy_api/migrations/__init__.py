@@ -41,7 +41,7 @@ migrations = [
 ]
 
 
-def run_migrations():
+async def run_migrations():
     """
     Go over all migrations. If they are not skipped in userdata file, run them
     if the migration needed.
@@ -60,8 +60,8 @@ def run_migrations():
     for migration in migrations:
         if migration.get_migration_name() not in skipped_migrations:
             try:
-                if migration.is_migration_needed():
-                    migration.migrate()
+                if await migration.is_migration_needed():
+                    await migration.migrate()
             except Exception:
                 logging.error(f"Error while migrating {migration.get_migration_name()}")
                 logging.error(traceback.format_exc())

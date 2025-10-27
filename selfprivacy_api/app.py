@@ -148,7 +148,7 @@ ThreadingInstrumentor().instrument()
 
 @asynccontextmanager
 async def app_lifespan(app: FastAPI):
-    run_migrations()
+    await run_migrations()
     try:
         yield
     finally:

@@ -20,9 +20,9 @@ class Migration(ABC):
         pass
 
     @abstractmethod
-    def is_migration_needed(self) -> bool:
+    async def is_migration_needed(self) -> bool:
         pass
 
     @abstractmethod
-    def migrate(self) -> None:
+    async def migrate(self) -> None:
         pass

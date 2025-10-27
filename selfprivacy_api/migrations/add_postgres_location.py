@@ -12,7 +12,7 @@ class AddPostgresLocation(Migration):
     def get_migration_description(self) -> str:
         return "Add a location for Postgres, so it doesn't depend on Pleroma module"
 
-    def is_migration_needed(self) -> bool:
+    async def is_migration_needed(self) -> bool:
         with ReadUserData() as data:
             if "postgresql" not in data:
                 return True
@@ -20,7 +20,7 @@ class AddPostgresLocation(Migration):
                 return True
             return False
 
-    def migrate(self) -> None:
+    async def migrate(self) -> None:
         # Try to get Pleroma location
         with ReadUserData() as data:
             pleroma_location = (

@@ -1,7 +1,6 @@
 from selfprivacy_api.migrations.migration import Migration
 
 from selfprivacy_api.services.flake_service_manager import FlakeServiceManager
-from selfprivacy_api.utils import ReadUserData, WriteUserData
 
 
 class AddRoundcube(Migration):
@@ -13,13 +12,13 @@ class AddRoundcube(Migration):
     def get_migration_description(self) -> str:
         return "Adds the Roundcube if it is not present."
 
-    def is_migration_needed(self) -> bool:
+    async def is_migration_needed(self) -> bool:
         with FlakeServiceManager() as manager:
             if "roundcube" not in manager.services:
                 return True
         return False
 
-    def migrate(self) -> None:
+    async def migrate(self) -> None:
         with FlakeServiceManager() as manager:
             if "roundcube" not in manager.services:
                 manager.services["roundcube"] = (

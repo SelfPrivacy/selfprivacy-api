@@ -41,7 +41,7 @@ class WriteTokenToRedis(Migration):
             logging.error(e)
             return None
 
-    def is_migration_needed(self) -> bool:
+    async def is_migration_needed(self) -> bool:
         try:
             if self.get_token_from_json() is not None and self.is_repo_empty(
                 RedisTokensRepository()
@@ -52,7 +52,7 @@ class WriteTokenToRedis(Migration):
             return False
         return False
 
-    def migrate(self) -> None:
+    async def migrate(self) -> None:
         # Write info about providers to userdata.json
         try:
             token = self.get_token_from_json()
