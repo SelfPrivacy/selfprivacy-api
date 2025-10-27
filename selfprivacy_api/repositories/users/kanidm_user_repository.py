@@ -302,28 +302,22 @@ class KanidmUserRepository(AbstractUserRepository):
             FailedToGetValidKanidmToken: If a valid Kanidm token could not be retrieved.
         """
 
-        assert method.upper() in [
-            "POST",
-            "GET",
-            "DELETE",
-            "PATCH"
-        ]
-
-        request_method = getattr(httpx, method.lower())
-
         full_endpoint = f"{get_kanidm_url()}/v1/{endpoint}"
 
         try:
-            response = await request_method(
-                full_endpoint,
-                json=data,
-                headers={
-                    "Authorization": f"Bearer {KanidmAdminToken.get()}",
-                    "Content-Type": "application/json",
-                },
-                timeout=1,
-            )
-            response_data = response.json()
+            async with httpx.AsyncClient() as client:
+                response = await client.request(
+                    method,
+                    full_endpoint,
+                    json=data,
+                    headers={
+                        "Authorization": f"Bearer {KanidmAdminToken.get()}",
+                        "Content-Type": "application/json",
+                    },
+                    timeout=1,
+                )
+
+                response_data = response.json()
 
         except JSONDecodeError as error:
             logger.error(f"Kanidm query error: {str(error)}")
