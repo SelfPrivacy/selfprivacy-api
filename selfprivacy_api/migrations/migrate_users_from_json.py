@@ -1,5 +1,4 @@
 import logging
-import asyncio
 
 from typing import Optional
 from selfprivacy_api.migrations.migration import Migration
@@ -71,7 +70,7 @@ class MigrateUsersFromJson(Migration):
 
             try:
                 if user.user_type == UserDataUserOrigin.PRIMARY:
-                   await KanidmUserRepository.create_user(
+                    await KanidmUserRepository.create_user(
                         username=user.username,
                         directmemberof=SP_ADMIN_GROUPS,
                     )

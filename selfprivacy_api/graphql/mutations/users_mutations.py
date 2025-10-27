@@ -310,7 +310,9 @@ class UsersMutations:
             )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    async def generate_password_reset_link(self, username: str) -> PasswordResetLinkReturn:
+    async def generate_password_reset_link(
+        self, username: str
+    ) -> PasswordResetLinkReturn:
         with tracer.start_as_current_span(
             "generate_password_reset_link_mutation",
             attributes={
