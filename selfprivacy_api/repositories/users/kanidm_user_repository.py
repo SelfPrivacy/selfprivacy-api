@@ -302,7 +302,7 @@ class KanidmUserRepository(AbstractUserRepository):
             FailedToGetValidKanidmToken: If a valid Kanidm token could not be retrieved.
         """
 
-        assert method.lower() in [
+        assert method.upper() in [
             "POST",
             "GET",
             "DELETE",

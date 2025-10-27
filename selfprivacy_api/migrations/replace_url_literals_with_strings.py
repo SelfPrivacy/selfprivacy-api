@@ -13,7 +13,7 @@ class ReplaceUrlLiteralsWithStrings(Migration):
     def get_migration_description(self) -> str:
         return "Wraps path:./ and git+https:// literals in /etc/nixos to strings"
 
-    def is_migration_needed(self) -> bool:
+    async def is_migration_needed(self) -> bool:
         # This code matches following in the flake.nix file:
         #
         # ...
@@ -30,7 +30,7 @@ class ReplaceUrlLiteralsWithStrings(Migration):
                     return True
         return False
 
-    def migrate(self) -> None:
+    async def migrate(self) -> None:
         content = ""
         with open(FLAKE_PATH) as flake:
             for line in flake:

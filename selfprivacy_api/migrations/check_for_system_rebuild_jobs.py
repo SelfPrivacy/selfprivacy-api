@@ -11,7 +11,7 @@ class CheckForSystemRebuildJobs(Migration):
     def get_migration_description(self) -> str:
         return "Check if there are unfinished system rebuild jobs and finish them"
 
-    def is_migration_needed(self) -> bool:
+    async def is_migration_needed(self) -> bool:
         # Check if there are any unfinished system rebuild jobs
         for job in Jobs.get_jobs():
             if (
@@ -27,7 +27,7 @@ class CheckForSystemRebuildJobs(Migration):
                 return True
         return False
 
-    def migrate(self) -> None:
+    async def migrate(self) -> None:
         # As the API is restarted, we assume that the jobs are finished
         for job in Jobs.get_jobs():
             if (

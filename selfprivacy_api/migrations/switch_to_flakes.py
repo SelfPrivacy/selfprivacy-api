@@ -1,7 +1,6 @@
 from selfprivacy_api.migrations.migration import Migration
 
 from selfprivacy_api.services.flake_service_manager import FlakeServiceManager
-from selfprivacy_api.utils import ReadUserData, WriteUserData
 
 
 class SwitchToFlakes(Migration):
@@ -13,7 +12,7 @@ class SwitchToFlakes(Migration):
     def get_migration_description(self) -> str:
         return "Switch back to the stable branch from the SSO branch."
 
-    def is_migration_needed(self) -> bool:
+    async def is_migration_needed(self) -> bool:
         with FlakeServiceManager() as manager:
             for service_url in manager.services.values():
                 if service_url.startswith(
@@ -22,7 +21,7 @@ class SwitchToFlakes(Migration):
                     return True
         return False
 
-    def migrate(self) -> None:
+    async def migrate(self) -> None:
         with FlakeServiceManager() as manager:
             # Go over each service, and if it has `ref=sso`, replace it with `ref=flakes`
             for key, value in manager.services.items():
