@@ -78,7 +78,7 @@ class KanidmAdminToken:
             "The Kanidm admin token from Redis is missing or invalid. Trying to retrieve it from the environment."
         )
 
-        new_kanidm_admin_token = KanidmAdminToken._get_admin_token_from_env()
+        new_kanidm_admin_token = await KanidmAdminToken._get_admin_token_from_env()
         if new_kanidm_admin_token and await KanidmAdminToken._is_token_valid(
             new_kanidm_admin_token
         ):
@@ -94,8 +94,8 @@ class KanidmAdminToken:
         )
 
     @staticmethod
-    def _get_admin_token_from_env() -> Optional[str]:
-        redis = RedisPool().get_connection()
+    async def _get_admin_token_from_env() -> Optional[str]:
+        redis = RedisPool().get_connection_async()
         token_path = os.environ.get("KANIDM_ADMIN_TOKEN_FILE")
         if not token_path:
             logger.warning(
@@ -112,7 +112,7 @@ class KanidmAdminToken:
                         "The Kanidm admin token will be generated."
                     )
                     return None
-                redis.set("kanidm:token", token)
+                await redis.set("kanidm:token", token)
                 return token
         except FileNotFoundError:
             logger.warning(
@@ -311,7 +311,7 @@ class KanidmUserRepository(AbstractUserRepository):
                     full_endpoint,
                     json=data,
                     headers={
-                        "Authorization": f"Bearer {KanidmAdminToken.get()}",
+                        "Authorization": f"Bearer {await KanidmAdminToken.get()}",
                         "Content-Type": "application/json",
                     },
                     timeout=1,
