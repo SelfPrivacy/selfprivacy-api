@@ -71,7 +71,9 @@ class KanidmAdminToken:
         redis = RedisPool().get_connection_async()
         kanidm_admin_token: str | None = await redis.get(REDIS_TOKEN_KEY)
 
-        if kanidm_admin_token and await KanidmAdminToken._is_token_valid(kanidm_admin_token):
+        if kanidm_admin_token and await KanidmAdminToken._is_token_valid(
+            kanidm_admin_token
+        ):
             return kanidm_admin_token
 
         logging.warning(
@@ -89,9 +91,7 @@ class KanidmAdminToken:
         )
 
         kanidm_admin_password = KanidmAdminToken._reset_and_save_idm_admin_password()
-        return await KanidmAdminToken._create_and_save_token(
-            kanidm_admin_password
-        )
+        return await KanidmAdminToken._create_and_save_token(kanidm_admin_password)
 
     @staticmethod
     async def _get_admin_token_from_env() -> Optional[str]:
@@ -278,7 +278,9 @@ class KanidmUserRepository(AbstractUserRepository):
             return UserDataUserOrigin.NORMAL
 
     @staticmethod
-    async def _send_query(endpoint: str, method: str = "GET", data=None) -> Union[dict, list]:
+    async def _send_query(
+        endpoint: str, method: str = "GET", data=None
+    ) -> Union[dict, list]:
         """
         Sends a request to the Kanidm API.
 
@@ -443,7 +445,9 @@ class KanidmUserRepository(AbstractUserRepository):
             FailedToGetValidKanidmToken: If a valid Kanidm token could not be retrieved.
         """
 
-        users_data = await KanidmUserRepository._send_query(endpoint="person", method="GET")
+        users_data = await KanidmUserRepository._send_query(
+            endpoint="person", method="GET"
+        )
 
         KanidmUserRepository._check_response_type_and_not_empty(
             data_type="list", response_data=users_data
@@ -505,7 +509,9 @@ class KanidmUserRepository(AbstractUserRepository):
             FailedToGetValidKanidmToken: If a valid Kanidm token could not be retrieved.
         """
 
-        await KanidmUserRepository._send_query(endpoint=f"person/{username}", method="DELETE")
+        await KanidmUserRepository._send_query(
+            endpoint=f"person/{username}", method="DELETE"
+        )
 
     @staticmethod
     async def update_user(
