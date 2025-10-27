@@ -4,7 +4,7 @@ import subprocess
 import re
 import os
 import logging
-import requests  # type: ignore
+import httpx
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
 
 from selfprivacy_api.models.group import Group, get_default_grops
@@ -67,11 +67,11 @@ class KanidmAdminToken:
     """
 
     @staticmethod
-    def get() -> str:
-        redis = RedisPool().get_connection()
-        kanidm_admin_token: str = redis.get(REDIS_TOKEN_KEY)
+    async def get() -> str:
+        redis = RedisPool().get_connection_async()
+        kanidm_admin_token: str | None = await redis.get(REDIS_TOKEN_KEY)
 
-        if kanidm_admin_token and KanidmAdminToken._is_token_valid(kanidm_admin_token):
+        if kanidm_admin_token and await KanidmAdminToken._is_token_valid(kanidm_admin_token):
             return kanidm_admin_token
 
         logging.warning(
@@ -79,7 +79,7 @@ class KanidmAdminToken:
         )
 
         new_kanidm_admin_token = KanidmAdminToken._get_admin_token_from_env()
-        if new_kanidm_admin_token and KanidmAdminToken._is_token_valid(
+        if new_kanidm_admin_token and await KanidmAdminToken._is_token_valid(
             new_kanidm_admin_token
         ):
             return new_kanidm_admin_token
@@ -89,8 +89,8 @@ class KanidmAdminToken:
         )
 
         kanidm_admin_password = KanidmAdminToken._reset_and_save_idm_admin_password()
-        return KanidmAdminToken._create_and_save_token(
-            kanidm_admin_password=kanidm_admin_password
+        return await KanidmAdminToken._create_and_save_token(
+            kanidm_admin_password
         )
 
     @staticmethod
@@ -128,8 +128,8 @@ class KanidmAdminToken:
             return None
 
     @staticmethod
-    def _create_and_save_token(kanidm_admin_password: str) -> str:
-        redis = RedisPool().get_connection()
+    async def _create_and_save_token(kanidm_admin_password: str) -> str:
+        redis = RedisPool().get_connection_async()
 
         with temporary_env_var(key="KANIDM_PASSWORD", value=kanidm_admin_password):
             try:
@@ -153,7 +153,7 @@ class KanidmAdminToken:
 
         kanidm_admin_token = output.splitlines()[-1]
 
-        redis.set("kanidm:token", kanidm_admin_token)
+        await redis.set("kanidm:token", kanidm_admin_token)
         return kanidm_admin_token
 
     @staticmethod
@@ -182,22 +182,23 @@ class KanidmAdminToken:
         return new_kanidm_admin_password
 
     @staticmethod
-    def _is_token_valid(token: str) -> bool:
+    async def _is_token_valid(token: str) -> bool:
         endpoint = f"{get_kanidm_url()}/v1/person/root"
         try:
-            response = requests.get(
-                endpoint,
-                headers={
-                    "Authorization": f"Bearer {token}",
-                    "Content-Type": "application/json",
-                },
-                timeout=1,
-            )
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    endpoint,
+                    headers={
+                        "Authorization": f"Bearer {token}",
+                        "Content-Type": "application/json",
+                    },
+                    timeout=1,
+                )
 
         except (
-            requests.exceptions.Timeout,
-            requests.exceptions.ConnectionError,
-            requests.exceptions.HTTPError,
+            httpx.TimeoutException,
+            httpx.ConnectError,
+            httpx.RequestError,
         ) as error:
             raise KanidmQueryError(
                 error_text=f"Kanidm is not responding to requests. Error: {str(error)}",
@@ -218,9 +219,9 @@ class KanidmAdminToken:
         return True
 
     @staticmethod
-    def _delete_kanidm_token_from_db() -> None:
-        redis = RedisPool().get_connection()
-        redis.delete("kanidm:token")
+    async def _delete_kanidm_token_from_db() -> None:
+        redis = RedisPool().get_connection_async()
+        await redis.delete(REDIS_TOKEN_KEY)
 
 
 class KanidmUserRepository(AbstractUserRepository):
@@ -277,7 +278,7 @@ class KanidmUserRepository(AbstractUserRepository):
             return UserDataUserOrigin.NORMAL
 
     @staticmethod
-    def _send_query(endpoint: str, method: str = "GET", data=None) -> Union[dict, list]:
+    async def _send_query(endpoint: str, method: str = "GET", data=None) -> Union[dict, list]:
         """
         Sends a request to the Kanidm API.
 
@@ -301,15 +302,19 @@ class KanidmUserRepository(AbstractUserRepository):
             FailedToGetValidKanidmToken: If a valid Kanidm token could not be retrieved.
         """
 
-        request_method = getattr(requests, method.lower(), None)
-        if not request_method:
-            logger.error(f"HTTP method '{method}' is not supported.")
-            raise ValueError(f"Unsupported HTTP method: {method}")
+        assert method.lower() in [
+            "POST",
+            "GET",
+            "DELETE",
+            "PATCH"
+        ]
+
+        request_method = getattr(httpx, method.lower())
 
         full_endpoint = f"{get_kanidm_url()}/v1/{endpoint}"
 
         try:
-            response = request_method(
+            response = await request_method(
                 full_endpoint,
                 json=data,
                 headers={
@@ -328,9 +333,9 @@ class KanidmUserRepository(AbstractUserRepository):
                 method=method,
             )
         except (
-            requests.exceptions.Timeout,
-            requests.exceptions.ConnectionError,
-            requests.exceptions.HTTPError,
+            httpx.TimeoutException,
+            httpx.ConnectError,
+            httpx.RequestError,
         ) as error:
             raise KanidmQueryError(
                 error_text=f"Kanidm is not responding to requests. Error: {str(error)}",
@@ -370,7 +375,7 @@ class KanidmUserRepository(AbstractUserRepository):
         return response_data
 
     @staticmethod
-    def create_user(
+    async def create_user(
         username: str,
         directmemberof: Optional[list[str]] = None,
         displayname: Optional[str] = None,
@@ -404,7 +409,7 @@ class KanidmUserRepository(AbstractUserRepository):
             }
         }
 
-        KanidmUserRepository._send_query(
+        await KanidmUserRepository._send_query(
             endpoint="person",
             method="POST",
             data=data,
@@ -412,13 +417,13 @@ class KanidmUserRepository(AbstractUserRepository):
 
         if directmemberof:
             for group in directmemberof:
-                KanidmUserRepository.add_users_to_group(
+                await KanidmUserRepository.add_users_to_group(
                     users=[username],
                     group_name=group,
                 )
 
     @staticmethod
-    def get_users(
+    async def get_users(
         exclude_primary: bool = False,
         exclude_root: bool = False,  # never return root
     ) -> list[UserDataUser]:
@@ -444,7 +449,7 @@ class KanidmUserRepository(AbstractUserRepository):
             FailedToGetValidKanidmToken: If a valid Kanidm token could not be retrieved.
         """
 
-        users_data = KanidmUserRepository._send_query(endpoint="person", method="GET")
+        users_data = await KanidmUserRepository._send_query(endpoint="person", method="GET")
 
         KanidmUserRepository._check_response_type_and_not_empty(
             data_type="list", response_data=users_data
@@ -488,7 +493,7 @@ class KanidmUserRepository(AbstractUserRepository):
         return users
 
     @staticmethod
-    def delete_user(username: str) -> None:
+    async def delete_user(username: str) -> None:
         """
         Deletes an existing user from Kanidm.
 
@@ -506,10 +511,10 @@ class KanidmUserRepository(AbstractUserRepository):
             FailedToGetValidKanidmToken: If a valid Kanidm token could not be retrieved.
         """
 
-        KanidmUserRepository._send_query(endpoint=f"person/{username}", method="DELETE")
+        await KanidmUserRepository._send_query(endpoint=f"person/{username}", method="DELETE")
 
     @staticmethod
-    def update_user(
+    async def update_user(
         username: str,
         displayname: Optional[str] = None,
         password: Optional[str] = None,
@@ -543,14 +548,14 @@ class KanidmUserRepository(AbstractUserRepository):
         if displayname:
             data["attrs"]["displayname"] = [displayname]
 
-        KanidmUserRepository._send_query(
+        await KanidmUserRepository._send_query(
             endpoint=f"person/{username}",
             method="PATCH",
             data=data,
         )
 
     @staticmethod
-    def get_user_by_username(username: str) -> UserDataUser:
+    async def get_user_by_username(username: str) -> UserDataUser:
         """
         Retrieves user data by username.
 
@@ -572,7 +577,7 @@ class KanidmUserRepository(AbstractUserRepository):
             FailedToGetValidKanidmToken: If a valid Kanidm token could not be retrieved.
         """
 
-        user_data = KanidmUserRepository._send_query(
+        user_data = await KanidmUserRepository._send_query(
             endpoint=f"person/{username}",
             method="GET",
         )
@@ -611,7 +616,7 @@ class KanidmUserRepository(AbstractUserRepository):
     #          \|/              \|/
 
     @staticmethod
-    def generate_password_reset_link(username: str) -> str:
+    async def generate_password_reset_link(username: str) -> str:
         """
         Do not reset the password, just generate a link to reset the password.
         Args:
@@ -632,7 +637,7 @@ class KanidmUserRepository(AbstractUserRepository):
             FailedToGetValidKanidmToken: If a valid Kanidm token could not be retrieved.
         """
 
-        data = KanidmUserRepository._send_query(
+        data = await KanidmUserRepository._send_query(
             endpoint=f"person/{username}/_credential/_update_intent",
             method="GET",
         )
@@ -652,7 +657,7 @@ class KanidmUserRepository(AbstractUserRepository):
         raise NoPasswordResetLinkFoundInResponse
 
     @staticmethod
-    def get_groups() -> list[Group]:
+    async def get_groups() -> list[Group]:
         """
         Return Kanidm groups.
 
@@ -670,7 +675,7 @@ class KanidmUserRepository(AbstractUserRepository):
             FailedToGetValidKanidmToken: If a valid Kanidm token could not be retrieved.
         """
 
-        groups_list_data = KanidmUserRepository._send_query(
+        groups_list_data = await KanidmUserRepository._send_query(
             endpoint="group",
             method="GET",
         )
@@ -705,7 +710,7 @@ class KanidmUserRepository(AbstractUserRepository):
         return groups
 
     @staticmethod
-    def add_users_to_group(users: list[str], group_name: str) -> None:
+    async def add_users_to_group(users: list[str], group_name: str) -> None:
         """
         Add users to a specified group in Kanidm.
 
@@ -722,14 +727,14 @@ class KanidmUserRepository(AbstractUserRepository):
             FailedToGetValidKanidmToken: If a valid Kanidm token could not be retrieved.
         """
 
-        KanidmUserRepository._send_query(
+        await KanidmUserRepository._send_query(
             endpoint=f"group/{group_name}/_attr/member",
             method="POST",
             data=users,
         )
 
     @staticmethod
-    def remove_users_from_group(users: list[str], group_name: str) -> None:
+    async def remove_users_from_group(users: list[str], group_name: str) -> None:
         """
         Remove users from a specified group in Kanidm.
 
@@ -746,7 +751,7 @@ class KanidmUserRepository(AbstractUserRepository):
             FailedToGetValidKanidmToken: If a valid Kanidm token could not be retrieved.
         """
 
-        KanidmUserRepository._send_query(
+        await KanidmUserRepository._send_query(
             endpoint=f"group/{group_name}/_attr/member",
             method="DELETE",
             data=users,

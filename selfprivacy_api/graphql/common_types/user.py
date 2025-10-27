@@ -64,7 +64,7 @@ async def get_user_by_username(username: str) -> Optional[User]:
     with tracer.start_as_current_span(
         "get_user_by_username", attributes={"username": username}
     ):
-        user = actions_get_user_by_username(username=username)
+        user = await actions_get_user_by_username(username=username)
         if user is None:
             return None
 
@@ -82,7 +82,7 @@ async def get_user_by_username(username: str) -> Optional[User]:
 async def get_users() -> list[User]:
     """Get users"""
     with tracer.start_as_current_span("get_users"):
-        users = actions_get_users(exclude_root=True)
+        users = await actions_get_users(exclude_root=True)
         return [
             User(
                 username=user.username,

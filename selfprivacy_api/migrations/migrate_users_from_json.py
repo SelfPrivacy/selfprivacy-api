@@ -1,5 +1,7 @@
-from typing import Optional
 import logging
+import asyncio
+
+from typing import Optional
 from selfprivacy_api.migrations.migration import Migration
 
 from selfprivacy_api.models.user import UserDataUserOrigin
@@ -29,8 +31,8 @@ class MigrateUsersFromJson(Migration):
                     return user.get("hashedPassword", None)
 
     def _get_users_to_migrate(self):
-        json_repo_users = JsonUserRepository.get_users(exclude_root=True)
-        kanidm_repo_users = KanidmUserRepository.get_users(exclude_root=True)
+        json_repo_users = asyncio.run(JsonUserRepository.get_users(exclude_root=True))
+        kanidm_repo_users = asyncio.run(KanidmUserRepository.get_users(exclude_root=True))
 
         logger.info(
             f"Users in json repo: {[user.username for user in json_repo_users]}"
@@ -69,15 +71,15 @@ class MigrateUsersFromJson(Migration):
 
             try:
                 if user.user_type == UserDataUserOrigin.PRIMARY:
-                    KanidmUserRepository.create_user(
+                   asyncio.run(KanidmUserRepository.create_user(
                         username=user.username,
                         directmemberof=SP_ADMIN_GROUPS,
-                    )
+                    ))
 
                 else:
-                    KanidmUserRepository.create_user(
+                    asyncio.run(KanidmUserRepository.create_user(
                         username=user.username, directmemberof=SP_DEFAULT_GROUPS
-                    )
+                    ))
 
                 if password_hash:
                     add_email_password_hash(

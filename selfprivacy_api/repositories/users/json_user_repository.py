@@ -30,7 +30,7 @@ class JsonUserRepository(AbstractUserRepository):
         return hash_password(password)
 
     @staticmethod
-    def get_users(
+    async def get_users(
         exclude_primary: bool = False,
         exclude_root: bool = False,
     ) -> list[UserDataUser]:
@@ -65,7 +65,7 @@ class JsonUserRepository(AbstractUserRepository):
         return users
 
     @staticmethod
-    def create_user(
+    async def create_user(
         username: str,
         directmemberof: Optional[list[str]] = None,
         displayname: Optional[str] = None,
@@ -97,7 +97,7 @@ class JsonUserRepository(AbstractUserRepository):
             )
 
     @staticmethod
-    def delete_user(username: str) -> None:
+    async def delete_user(username: str) -> None:
         """Deletes an existing user"""
 
         with WriteUserData() as user_data:
@@ -113,7 +113,7 @@ class JsonUserRepository(AbstractUserRepository):
                 raise UserNotFound("User did not exist")
 
     @staticmethod
-    def update_user(
+    async def update_user(
         username: str,
         displayname: Optional[str] = None,
         password: Optional[str] = None,
@@ -141,7 +141,7 @@ class JsonUserRepository(AbstractUserRepository):
                     raise UserNotFound("User does not exist")
 
     @staticmethod
-    def get_user_by_username(username: str) -> Optional[UserDataUser]:
+    async def get_user_by_username(username: str) -> Optional[UserDataUser]:
         """Retrieves user data (UserDataUser) by username"""
 
         with ReadUserData() as data:
@@ -175,27 +175,27 @@ class JsonUserRepository(AbstractUserRepository):
             return None
 
     @staticmethod
-    def generate_password_reset_link(username: str) -> str:
+    async def generate_password_reset_link(username: str) -> str:
         """
         ! Not implemented in JsonUserRepository !
         """
         return ""
 
     @staticmethod
-    def get_groups() -> list[Group]:
+    async def get_groups() -> list[Group]:
         """
         ! Not implemented in JsonUserRepository !
         """
         return []
 
     @staticmethod
-    def add_users_to_group(users: list[str], group_name: str) -> None:
+    async def add_users_to_group(users: list[str], group_name: str) -> None:
         """
         ! Not implemented in JsonUserRepository !
         """
 
     @staticmethod
-    def remove_users_from_group(users: list[str], group_name: str) -> None:
+    async def remove_users_from_group(users: list[str], group_name: str) -> None:
         """
         ! Not implemented in JsonUserRepository !
         """

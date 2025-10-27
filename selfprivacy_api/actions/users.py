@@ -45,11 +45,11 @@ class ApiUsingWrongUserRepository(Exception):
         return "API is using a too old or unfinished user repository"
 
 
-def get_users(
+async def get_users(
     exclude_primary: bool = False,
     exclude_root: bool = False,
 ) -> list[UserDataUser]:
-    users = ACTIVE_USERS_PROVIDER.get_users(
+    users = await ACTIVE_USERS_PROVIDER.get_users(
         exclude_primary=exclude_primary, exclude_root=exclude_root
     )
 
@@ -71,7 +71,7 @@ def get_users(
     return users
 
 
-def create_user(
+async def create_user(
     username: str,
     password: Optional[str] = None,
     directmemberof: Optional[list[str]] = None,
@@ -101,13 +101,13 @@ def create_user(
 
     if not ACTIVE_USERS_PROVIDER == JsonUserRepository:
         try:
-            JsonUserRepository.create_user(
+            await JsonUserRepository.create_user(
                 username=username, password=str(uuid.uuid4())
             )  # random password for legacy repo
         except (UserAlreadyExists, InvalidConfiguration):
             pass
 
-    ACTIVE_USERS_PROVIDER.create_user(
+    await ACTIVE_USERS_PROVIDER.create_user(
         username=username,
         directmemberof=directmemberof if directmemberof else SP_DEFAULT_GROUPS,
         displayname=displayname,
@@ -115,18 +115,18 @@ def create_user(
     )
 
 
-def delete_user(username: str) -> None:
+async def delete_user(username: str) -> None:
     if username == "root":
         raise UserIsProtected
 
     try:
-        user = ACTIVE_USERS_PROVIDER.get_user_by_username(username=username)
+        user = await ACTIVE_USERS_PROVIDER.get_user_by_username(username=username)
     except UserNotFound:
         raise UserNotFound
     finally:
         if not ACTIVE_USERS_PROVIDER == JsonUserRepository:
             try:
-                JsonUserRepository.delete_user(username=username)
+                await JsonUserRepository.delete_user(username=username)
             except (UserNotFound, UserIsProtected):
                 pass
 
@@ -139,10 +139,10 @@ def delete_user(username: str) -> None:
 
     delete_all_email_passwords_hashes(username=username)
 
-    ACTIVE_USERS_PROVIDER.delete_user(username=username)
+    await ACTIVE_USERS_PROVIDER.delete_user(username=username)
 
 
-def update_user(
+async def update_user(
     username: str,
     directmemberof: Optional[list[str]] = None,
     displayname: Optional[str] = None,
@@ -167,7 +167,7 @@ def update_user(
         if len(displayname) >= 255:
             raise DisplaynameTooLong
 
-        ACTIVE_USERS_PROVIDER.update_user(
+        await ACTIVE_USERS_PROVIDER.update_user(
             username=username,
             displayname=displayname,
         )
@@ -176,7 +176,7 @@ def update_user(
         if ACTIVE_USERS_PROVIDER == JsonUserRepository:
             raise ApiUsingWrongUserRepository
 
-        user = ACTIVE_USERS_PROVIDER.get_user_by_username(username=username)
+        user = await ACTIVE_USERS_PROVIDER.get_user_by_username(username=username)
 
         groups_to_add = [item for item in directmemberof if item not in user.directmemberof]  # type: ignore
         groups_to_delete = [item for item in user.directmemberof if item not in directmemberof]  # type: ignore
@@ -187,7 +187,7 @@ def update_user(
                 if group in get_default_grops():
                     continue
 
-                ACTIVE_USERS_PROVIDER.add_users_to_group(
+                await ACTIVE_USERS_PROVIDER.add_users_to_group(
                     group_name=group, users=[username]
                 )
 
@@ -197,12 +197,12 @@ def update_user(
                 if group in get_default_grops():
                     continue
 
-                ACTIVE_USERS_PROVIDER.remove_users_from_group(
+                await ACTIVE_USERS_PROVIDER.remove_users_from_group(
                     group_name=group, users=[username]
                 )
 
 
-def get_user_by_username(username: str) -> Optional[UserDataUser]:
+async def get_user_by_username(username: str) -> Optional[UserDataUser]:
     if username == "root":
         return UserDataUser(
             username="root",
@@ -210,7 +210,7 @@ def get_user_by_username(username: str) -> Optional[UserDataUser]:
             ssh_keys=get_ssh_keys(username="root"),
         )
 
-    user = ACTIVE_USERS_PROVIDER.get_user_by_username(username=username)
+    user = await ACTIVE_USERS_PROVIDER.get_user_by_username(username=username)
 
     if user:
         try:
@@ -221,18 +221,18 @@ def get_user_by_username(username: str) -> Optional[UserDataUser]:
     return user
 
 
-def generate_password_reset_link(username: str) -> str:
+async def generate_password_reset_link(username: str) -> str:
     if ACTIVE_USERS_PROVIDER == JsonUserRepository:
         raise ApiUsingWrongUserRepository
 
     if username == "root":
         raise UserIsProtected
 
-    return ACTIVE_USERS_PROVIDER.generate_password_reset_link(username=username)
+    return await ACTIVE_USERS_PROVIDER.generate_password_reset_link(username=username)
 
 
-def get_groups() -> list[Group]:
+async def get_groups() -> list[Group]:
     if ACTIVE_USERS_PROVIDER == JsonUserRepository:
         raise ApiUsingWrongUserRepository
 
-    return ACTIVE_USERS_PROVIDER.get_groups()
+    return await ACTIVE_USERS_PROVIDER.get_groups()
