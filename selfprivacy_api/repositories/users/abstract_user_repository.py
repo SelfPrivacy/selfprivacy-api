@@ -8,7 +8,7 @@ from selfprivacy_api.models.user import UserDataUser
 class AbstractUserRepository(ABC):
     @staticmethod
     @abstractmethod
-    def create_user(
+    async def create_user(
         username: str,
         directmemberof: Optional[list[str]] = None,
         displayname: Optional[str] = None,
@@ -22,7 +22,7 @@ class AbstractUserRepository(ABC):
 
     @staticmethod
     @abstractmethod
-    def get_users(
+    async def get_users(
         exclude_primary: bool = False,
         exclude_root: bool = False,
     ) -> list[UserDataUser]:
@@ -33,14 +33,14 @@ class AbstractUserRepository(ABC):
 
     @staticmethod
     @abstractmethod
-    def delete_user(username: str) -> None:
+    async def delete_user(username: str) -> None:
         """
         Deletes an existing user.
         """
 
     @staticmethod
     @abstractmethod
-    def update_user(
+    async def update_user(
         username: str,
         displayname: Optional[str] = None,
         password: Optional[str] = None,  # Legacy
@@ -54,7 +54,7 @@ class AbstractUserRepository(ABC):
 
     @staticmethod
     @abstractmethod
-    def get_user_by_username(username: str) -> Optional[UserDataUser]:
+    async def get_user_by_username(username: str) -> Optional[UserDataUser]:
         """
         Retrieves user data (UserDataUser) by username.
         """
@@ -66,24 +66,24 @@ class AbstractUserRepository(ABC):
 
     @staticmethod
     @abstractmethod
-    def generate_password_reset_link(username: str) -> str:
+    async def generate_password_reset_link(username: str) -> str:
         """
         Do not reset the password, just generate a link to reset the password.
         """
 
     @staticmethod
     @abstractmethod
-    def get_groups() -> list[Group]:
+    async def get_groups() -> list[Group]:
         """
         Get groups list.
         """
 
     @staticmethod
     @abstractmethod
-    def add_users_to_group(users: list[str], group_name: str) -> None:
+    async def add_users_to_group(users: list[str], group_name: str) -> None:
         """Add users to a specified group."""
 
     @staticmethod
     @abstractmethod
-    def remove_users_from_group(users: list[str], group_name: str) -> None:
+    async def remove_users_from_group(users: list[str], group_name: str) -> None:
         """Remove users from a specified group."""
