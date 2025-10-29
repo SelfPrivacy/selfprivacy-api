@@ -359,7 +359,7 @@ async def get_services(exclude_remote=False) -> list[Service]:
         )
         service_ids += [service.get_id() for service in remote_services]
 
-    templated_services += remote_services
+        templated_services += remote_services
 
     return hardcoded_services + templated_services
 
