@@ -443,7 +443,7 @@ class MonitoringQueries:
             step (int): Interval in seconds for querying network data.
         """
 
-        start, end = await MonitoringQueries._get_time_range(start, end)
+        start, end = MonitoringQueries._get_time_range(start, end)
 
         start_timestamp = int(start.timestamp())
         end_timestamp = int(end.timestamp())
@@ -454,7 +454,7 @@ class MonitoringQueries:
             label_replace(rate(node_network_transmit_bytes_total{device!="lo"}[5m]), "direction", "transmit", "device", ".*")
         """
 
-        data = MonitoringQueries._send_range_query(
+        data = await MonitoringQueries._send_range_query(
             query, start_timestamp, end_timestamp, step, result_type="matrix"
         )
 
