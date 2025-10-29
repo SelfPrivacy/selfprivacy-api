@@ -151,7 +151,7 @@ ThreadingInstrumentor().instrument()
 @asynccontextmanager
 async def app_lifespan(app: FastAPI):
     await run_migrations()
-    asyncio.run(
+    asyncio.create_task(
         SuggestedServices.sync()
     )  # TODO(nhnn): Move it out of app_lifespan to appropriate place and run it on cron timer.
     try:
