@@ -3,7 +3,6 @@
 import logging
 import base64
 import typing
-import subprocess
 import json
 import asyncio
 from typing import List
@@ -56,9 +55,20 @@ class ServiceManager(Service):
     async def get_service_by_id(service_id: str) -> typing.Optional[Service]:
         with tracer.start_as_current_span("get_service_by_id") as span:
             span.set_attribute("service_id", service_id)
-            for service in await get_services():
+
+            for service in HARDCODED_SERVICES:
                 if service.get_id() == service_id:
                     return service
+
+            if exists(join(SP_MODULES_DEFINITIONS_PATH, service_id)):
+                return await get_templated_service(service_id)
+
+            suggested_services = await SuggestedServices.get()
+
+            for service in suggested_services:
+                if service.get_id() == service_id:
+                    return service
+
             return None
 
     @staticmethod
@@ -329,6 +339,12 @@ async def get_templated_service(service_id: str) -> TemplatedService:
 DUMMY_SERVICES = []
 TEST_FLAGS: list[str] = []
 
+HARDCODED_SERVICES: list[Service] = [
+    MailServer(),
+    ServiceManager(),
+    Prometheus(),
+]
+
 
 @tracer.start_as_current_span("get_services")
 async def get_services(exclude_remote=False) -> list[Service]:
@@ -337,11 +353,7 @@ async def get_services(exclude_remote=False) -> list[Service]:
     if "DUMMY_SERVICE_AND_API" in TEST_FLAGS:
         return DUMMY_SERVICES + [ServiceManager()]
 
-    hardcoded_services: list[Service] = [
-        MailServer(),
-        ServiceManager(),
-        Prometheus(),
-    ]
+    hardcoded_services: list[Service] = HARDCODED_SERVICES
     if DUMMY_SERVICES:
         hardcoded_services += DUMMY_SERVICES
     service_ids = [service.get_id() for service in hardcoded_services]
