@@ -28,9 +28,10 @@ from selfprivacy_api.utils import (
     get_domain,
     read_account_uri,
 )
+from selfprivacy_api.utils.suggested_services import SuggestedServices
 from selfprivacy_api.utils.block_devices import BlockDevices
 from selfprivacy_api.services.templated_service import (
-    SP_MODULES_DEFENITIONS_PATH,
+    SP_MODULES_DEFINITIONS_PATH,
     SP_SUGGESTED_MODULES_PATH,
     TemplatedService,
 )
@@ -316,10 +317,10 @@ async def get_templated_service(service_id: str) -> TemplatedService:
     with tracer.start_as_current_span(
         "fetch_templated_service", attributes={"service_id": service_id}
     ) as span:
-        if not exists(path.join(SP_MODULES_DEFENITIONS_PATH, service_id)):
+        if not exists(path.join(SP_MODULES_DEFINITIONS_PATH, service_id)):
             raise FileNotFoundError(f"Service definition for {service_id} not found")
         with open(
-            path.join(SP_MODULES_DEFENITIONS_PATH, service_id), "r", encoding="utf-8"
+            path.join(SP_MODULES_DEFINITIONS_PATH, service_id), "r", encoding="utf-8"
         ) as f:
             service_data = f.read()
     return TemplatedService(service_id, service_data)
@@ -380,7 +381,8 @@ async def get_services(exclude_remote=False) -> list[Service]:
     service_ids += [service.get_id() for service in templated_services]
 
     if not exclude_remote and path.exists(SP_SUGGESTED_MODULES_PATH):
-        remote_services = await get_remote_services(ignored_services=service_ids)
+        #remote_services = await get_remote_services(ignored_services=service_ids)
+        remote_services = filter(lambda service: service.get_id() not in service_ids, await SuggestedServices.get())
         service_ids += [service.get_id() for service in remote_services]
 
     templated_services += remote_services
@@ -391,10 +393,10 @@ async def get_services(exclude_remote=False) -> list[Service]:
 @tracer.start_as_current_span("get_templated_services")
 async def get_templated_services(ignored_services: list[str]) -> list[Service]:
     templated_services = []
-    if path.exists(SP_MODULES_DEFENITIONS_PATH):
+    if path.exists(SP_MODULES_DEFINITIONS_PATH):
         tasks: list[asyncio.Task[TemplatedService]] = []
         async with asyncio.TaskGroup() as tg:
-            for module in listdir(SP_MODULES_DEFENITIONS_PATH):
+            for module in listdir(SP_MODULES_DEFINITIONS_PATH):
                 if module in ignored_services:
                     continue
                 tasks.append(tg.create_task(get_templated_service(module)))
