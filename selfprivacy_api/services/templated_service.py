@@ -3,7 +3,7 @@
 import base64
 import logging
 import json
-import subprocess
+
 from typing import List, Optional
 from os.path import join, exists
 from os import mkdir, remove
@@ -39,7 +39,7 @@ from selfprivacy_api.utils.systemd import (
     listen_for_unit_state_changes,
 )
 
-SP_MODULES_DEFENITIONS_PATH = "/etc/sp-modules"
+SP_MODULES_DEFINITIONS_PATH = "/etc/sp-modules"
 SP_SUGGESTED_MODULES_PATH = "/etc/suggested-sp-modules"
 
 logger = logging.getLogger(__name__)

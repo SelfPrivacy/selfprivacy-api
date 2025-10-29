@@ -3,7 +3,6 @@
 import logging
 import base64
 import typing
-import subprocess
 import json
 import asyncio
 from typing import List
@@ -18,6 +17,8 @@ from selfprivacy_api.services.mailserver import MailServer
 
 from selfprivacy_api.services.service import Service, ServiceDnsRecord
 from selfprivacy_api.services.service import ServiceStatus
+from selfprivacy_api.services.remote import get_remote_service
+from selfprivacy_api.services.suggested import SuggestedServices
 import selfprivacy_api.utils.network as network_utils
 
 from selfprivacy_api.services.api_icon import API_ICON
@@ -30,7 +31,7 @@ from selfprivacy_api.utils import (
 )
 from selfprivacy_api.utils.block_devices import BlockDevices
 from selfprivacy_api.services.templated_service import (
-    SP_MODULES_DEFENITIONS_PATH,
+    SP_MODULES_DEFINITIONS_PATH,
     SP_SUGGESTED_MODULES_PATH,
     TemplatedService,
 )
@@ -54,9 +55,20 @@ class ServiceManager(Service):
     async def get_service_by_id(service_id: str) -> typing.Optional[Service]:
         with tracer.start_as_current_span("get_service_by_id") as span:
             span.set_attribute("service_id", service_id)
-            for service in await get_services():
+
+            for service in HARDCODED_SERVICES:
                 if service.get_id() == service_id:
                     return service
+
+            if exists(join(SP_MODULES_DEFINITIONS_PATH, service_id)):
+                return await get_templated_service(service_id)
+
+            suggested_services = await SuggestedServices.get()
+
+            for service in suggested_services:
+                if service.get_id() == service_id:
+                    return service
+
             return None
 
     @staticmethod
@@ -316,46 +328,22 @@ async def get_templated_service(service_id: str) -> TemplatedService:
     with tracer.start_as_current_span(
         "fetch_templated_service", attributes={"service_id": service_id}
     ) as span:
-        if not exists(path.join(SP_MODULES_DEFENITIONS_PATH, service_id)):
+        if not exists(path.join(SP_MODULES_DEFINITIONS_PATH, service_id)):
             raise FileNotFoundError(f"Service definition for {service_id} not found")
         with open(
-            path.join(SP_MODULES_DEFENITIONS_PATH, service_id), "r", encoding="utf-8"
+            path.join(SP_MODULES_DEFINITIONS_PATH, service_id), "r", encoding="utf-8"
         ) as f:
             service_data = f.read()
     return TemplatedService(service_id, service_data)
 
-
-# @redis_cached_call(ttl=3600)
-async def get_remote_service(id: str, url: str) -> TemplatedService:
-    with tracer.start_as_current_span(
-        "fetch_remote_service", attributes={"service_id": id, "url": url}
-    ) as span:
-        process = await asyncio.create_subprocess_exec(
-            "sp-fetch-remote-module",
-            url,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        span.add_event("started sp-fetch-remote-module process")
-        stdout, stderr = await process.communicate()
-        span.add_event("sp-fetch-remote-module process finished")
-
-        if process.returncode is None:
-            raise Exception("Process was killed unexpectedly")
-
-        if process.returncode != 0:
-            raise subprocess.CalledProcessError(
-                process.returncode,
-                ["sp-fetch-remote-module", url],
-                stdout,
-                stderr,
-            )
-
-    return TemplatedService(id, stdout.decode("utf-8"))
-
-
 DUMMY_SERVICES = []
 TEST_FLAGS: list[str] = []
+
+HARDCODED_SERVICES: list[Service] = [
+    MailServer(),
+    ServiceManager(),
+    Prometheus(),
+]
 
 
 @tracer.start_as_current_span("get_services")
@@ -365,11 +353,7 @@ async def get_services(exclude_remote=False) -> list[Service]:
     if "DUMMY_SERVICE_AND_API" in TEST_FLAGS:
         return DUMMY_SERVICES + [ServiceManager()]
 
-    hardcoded_services: list[Service] = [
-        MailServer(),
-        ServiceManager(),
-        Prometheus(),
-    ]
+    hardcoded_services: list[Service] = HARDCODED_SERVICES
     if DUMMY_SERVICES:
         hardcoded_services += DUMMY_SERVICES
     service_ids = [service.get_id() for service in hardcoded_services]
@@ -380,10 +364,14 @@ async def get_services(exclude_remote=False) -> list[Service]:
     service_ids += [service.get_id() for service in templated_services]
 
     if not exclude_remote and path.exists(SP_SUGGESTED_MODULES_PATH):
-        remote_services = await get_remote_services(ignored_services=service_ids)
+        # remote_services = await get_remote_services(ignored_services=service_ids)
+        remote_services = filter(
+            lambda service: service.get_id() not in service_ids,
+            await SuggestedServices.get(),
+        )
         service_ids += [service.get_id() for service in remote_services]
 
-    templated_services += remote_services
+        templated_services += remote_services
 
     return hardcoded_services + templated_services
 
@@ -391,10 +379,10 @@ async def get_services(exclude_remote=False) -> list[Service]:
 @tracer.start_as_current_span("get_templated_services")
 async def get_templated_services(ignored_services: list[str]) -> list[Service]:
     templated_services = []
-    if path.exists(SP_MODULES_DEFENITIONS_PATH):
+    if path.exists(SP_MODULES_DEFINITIONS_PATH):
         tasks: list[asyncio.Task[TemplatedService]] = []
         async with asyncio.TaskGroup() as tg:
-            for module in listdir(SP_MODULES_DEFENITIONS_PATH):
+            for module in listdir(SP_MODULES_DEFINITIONS_PATH):
                 if module in ignored_services:
                     continue
                 tasks.append(tg.create_task(get_templated_service(module)))

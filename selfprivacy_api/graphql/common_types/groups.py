@@ -22,7 +22,7 @@ class Group:
 @tracer.start_as_current_span("resolve_get_groups")
 async def get_groups() -> list[Group]:
     """Get groups"""
-    groups = actions_get_groups()
+    groups = await actions_get_groups()
     return [
         Group(
             name=group.name,
