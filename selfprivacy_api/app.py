@@ -45,7 +45,7 @@ from uvicorn.config import LOGGING_CONFIG
 from selfprivacy_api.dependencies import get_api_version
 from selfprivacy_api.graphql.schema import schema
 from selfprivacy_api.migrations import run_migrations
-from selfprivacy_api.utils.suggested_services import SuggestedServices
+from selfprivacy_api.services.suggested import SuggestedServices
 
 from starlette.middleware.sessions import SessionMiddleware
 from secrets import token_urlsafe
@@ -151,7 +151,9 @@ ThreadingInstrumentor().instrument()
 @asynccontextmanager
 async def app_lifespan(app: FastAPI):
     await run_migrations()
-    asyncio.run(SuggestedServices.sync()) # TODO(nhnn): Move it out of app_lifespan to appropriate place and run it on cron timer.
+    asyncio.run(
+        SuggestedServices.sync()
+    )  # TODO(nhnn): Move it out of app_lifespan to appropriate place and run it on cron timer.
     try:
         yield
     finally:

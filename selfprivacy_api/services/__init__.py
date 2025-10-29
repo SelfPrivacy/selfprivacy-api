@@ -18,6 +18,8 @@ from selfprivacy_api.services.mailserver import MailServer
 
 from selfprivacy_api.services.service import Service, ServiceDnsRecord
 from selfprivacy_api.services.service import ServiceStatus
+from selfprivacy_api.services.remote import get_remote_service
+from selfprivacy_api.services.suggested import SuggestedServices
 import selfprivacy_api.utils.network as network_utils
 
 from selfprivacy_api.services.api_icon import API_ICON
@@ -28,7 +30,6 @@ from selfprivacy_api.utils import (
     get_domain,
     read_account_uri,
 )
-from selfprivacy_api.utils.suggested_services import SuggestedServices
 from selfprivacy_api.utils.block_devices import BlockDevices
 from selfprivacy_api.services.templated_service import (
     SP_MODULES_DEFINITIONS_PATH,
@@ -325,36 +326,6 @@ async def get_templated_service(service_id: str) -> TemplatedService:
             service_data = f.read()
     return TemplatedService(service_id, service_data)
 
-
-# @redis_cached_call(ttl=3600)
-async def get_remote_service(id: str, url: str) -> TemplatedService:
-    with tracer.start_as_current_span(
-        "fetch_remote_service", attributes={"service_id": id, "url": url}
-    ) as span:
-        process = await asyncio.create_subprocess_exec(
-            "sp-fetch-remote-module",
-            url,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        span.add_event("started sp-fetch-remote-module process")
-        stdout, stderr = await process.communicate()
-        span.add_event("sp-fetch-remote-module process finished")
-
-        if process.returncode is None:
-            raise Exception("Process was killed unexpectedly")
-
-        if process.returncode != 0:
-            raise subprocess.CalledProcessError(
-                process.returncode,
-                ["sp-fetch-remote-module", url],
-                stdout,
-                stderr,
-            )
-
-    return TemplatedService(id, stdout.decode("utf-8"))
-
-
 DUMMY_SERVICES = []
 TEST_FLAGS: list[str] = []
 
@@ -381,8 +352,11 @@ async def get_services(exclude_remote=False) -> list[Service]:
     service_ids += [service.get_id() for service in templated_services]
 
     if not exclude_remote and path.exists(SP_SUGGESTED_MODULES_PATH):
-        #remote_services = await get_remote_services(ignored_services=service_ids)
-        remote_services = filter(lambda service: service.get_id() not in service_ids, await SuggestedServices.get())
+        # remote_services = await get_remote_services(ignored_services=service_ids)
+        remote_services = filter(
+            lambda service: service.get_id() not in service_ids,
+            await SuggestedServices.get(),
+        )
         service_ids += [service.get_id() for service in remote_services]
 
     templated_services += remote_services

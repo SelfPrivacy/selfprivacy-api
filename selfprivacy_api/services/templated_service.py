@@ -3,7 +3,7 @@
 import base64
 import logging
 import json
-import subprocess
+
 from typing import List, Optional
 from os.path import join, exists
 from os import mkdir, remove
