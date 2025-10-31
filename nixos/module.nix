@@ -1,4 +1,4 @@
-selfprivacy-graphql-api:
+selfprivacy-api-packages:
 { config
 , lib
 , pkgs
@@ -10,6 +10,7 @@ let
   config-id = "default";
   nixos-rebuild = "${config.system.build.nixos-rebuild}/bin/nixos-rebuild";
   nix = "${config.nix.package.out}/bin/nix";
+  selfprivacy-graphql-api = selfprivacy-api-packages.${pkgs.system}.default;
   sp-fetch-remote-module = pkgs.writeShellApplication {
     name = "sp-fetch-remote-module";
     runtimeInputs = [ config.nix.package.out ];
