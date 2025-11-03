@@ -315,7 +315,7 @@ class Backups:
     def _auto_snaps(service) -> List[Snapshot]:
         return [
             snap
-            for snap in Backups.get_snapshots(service)
+            for snap in await Backups.get_snapshots(service)
             if snap.reason == BackupReason.AUTO
         ]
 
@@ -440,7 +440,7 @@ class Backups:
         Jobs.update(
             job, status=JobStatus.CREATED, status_text="Waiting for pre-restore backup"
         )
-        failsafe_snapshot = Backups.back_up(service, BackupReason.PRE_RESTORE)
+        failsafe_snapshot = await Backups.back_up(service, BackupReason.PRE_RESTORE)
 
         Jobs.update(
             job, status=JobStatus.RUNNING, status_text=f"Restoring from {snapshot.id}"
@@ -852,7 +852,7 @@ class Backups:
         # We need snapshots that were made around the same time.
         # And we need to be sure that api snap is in there
         # That's why we form the slice around api snap
-        api_snaps = Backups.get_snapshots(ServiceManager())
+        api_snaps = await Backups.get_snapshots(ServiceManager())
         if api_snaps == []:
             return []
 
@@ -862,7 +862,7 @@ class Backups:
         for service in await ServiceManager.get_all_services():
             if isinstance(service, ServiceManager):
                 continue
-            snaps = Backups.get_snapshots(service)
+            snaps = await Backups.get_snapshots(service)
             snaps.sort(key=lambda x: x.created_at, reverse=True)
             for snap in snaps:
                 if Backups.is_same_slice(snap, api_snap):

@@ -214,7 +214,7 @@ def test_backup_service(dummy_service, backups):
     assert_job_finished(f"services.{id}.backup", count=0)
     assert Backups.get_last_backed_up(dummy_service) is None
 
-    Backups.back_up(dummy_service)
+    await Backups.back_up(dummy_service)
 
     now = datetime.now(timezone.utc)
     date = Backups.get_last_backed_up(dummy_service)
@@ -260,7 +260,7 @@ def test_error_censoring_encryptionkey(dummy_service, backups):
 
 def assert_backup_fails(service) -> Job:
     with pytest.raises(ValueError):
-        Backups.back_up(service)
+        await Backups.back_up(service)
 
     job = get_backup_fail(service)
     assert job is not None
@@ -309,7 +309,7 @@ def test_error_censoring_loginkey(dummy_service, backups, fp):
     )
 
     with pytest.raises(ValueError):
-        Backups.back_up(dummy_service)
+        await Backups.back_up(dummy_service)
 
     job = get_backup_fail(dummy_service)
     assert job is not None
@@ -329,9 +329,9 @@ def test_no_repo(memory_backup):
 
 
 def test_one_snapshot(backups, dummy_service):
-    Backups.back_up(dummy_service)
+    await Backups.back_up(dummy_service)
 
-    snaps = Backups.get_snapshots(dummy_service)
+    snaps = await Backups.get_snapshots(dummy_service)
     assert len(snaps) == 1
     snap = snaps[0]
     assert snap.service_name == dummy_service.get_id()
@@ -360,7 +360,7 @@ def test_backup_reasons(backups, dummy_service):
     assert snap.reason == BackupReason.AUTO
 
     Backups.force_snapshot_cache_reload()
-    snaps = Backups.get_snapshots(dummy_service)
+    snaps = await Backups.get_snapshots(dummy_service)
     assert snaps[0].reason == BackupReason.AUTO
 
 
@@ -387,8 +387,8 @@ def test_restore(backups, dummy_service):
         with open(service_file, "r") as file:
             contents.append(file.read())
 
-    Backups.back_up(dummy_service)
-    snap = Backups.get_snapshots(dummy_service)[0]
+    await Backups.back_up(dummy_service)
+    snap = await Backups.get_snapshots(dummy_service)[0]
     assert snap is not None
 
     for p in paths_to_nuke:
@@ -405,8 +405,8 @@ def test_restore(backups, dummy_service):
 
 def test_sizing(backups, dummy_service):
     Backups.back_up(dummy_service)
-    snap = Backups.get_snapshots(dummy_service)[0]
-    size = Backups.snapshot_restored_size(snap.id)
+    snap = await Backups.get_snapshots(dummy_service)[0]
+    size = await Backups.snapshot_restored_size(snap.id)
     assert size is not None
     assert size > 0
 
@@ -458,8 +458,8 @@ def test_snapshots_by_id(backups, dummy_service):
     assert snap2.id is not None
     assert snap2.id != ""
 
-    assert len(Backups.get_snapshots(dummy_service)) == 3
-    assert Backups.get_snapshot_by_id(snap2.id).id == snap2.id
+    assert len(await Backups.get_snapshots(dummy_service)) == 3
+    assert await Backups.get_snapshot_by_id(snap2.id).id == snap2.id
 
 
 @pytest.fixture(params=["instant_server_stop", "delayed_server_stop"])
@@ -476,7 +476,7 @@ def test_backup_service_task(backups, dummy_service, simulated_service_stopping_
     handle = start_backup(dummy_service.get_id())
     handle(blocking=True)
 
-    snaps = Backups.get_snapshots(dummy_service)
+    snaps = await Backups.get_snapshots(dummy_service)
     assert len(snaps) == 1
 
     id = dummy_service.get_id()
@@ -489,17 +489,17 @@ def test_backup_service_task(backups, dummy_service, simulated_service_stopping_
 def test_forget_snapshot(backups, dummy_service):
     snap1 = Backups.back_up(dummy_service)
     snap2 = Backups.back_up(dummy_service)
-    assert len(Backups.get_snapshots(dummy_service)) == 2
+    assert len(await Backups.get_snapshots(dummy_service)) == 2
 
     Backups.forget_snapshot(snap2)
-    assert len(Backups.get_snapshots(dummy_service)) == 1
+    assert len(await Backups.get_snapshots(dummy_service)) == 1
     Backups.force_snapshot_cache_reload()
-    assert len(Backups.get_snapshots(dummy_service)) == 1
+    assert len(await Backups.get_snapshots(dummy_service)) == 1
 
     assert Backups.get_snapshots(dummy_service)[0].id == snap1.id
 
     Backups.forget_snapshot(snap1)
-    assert len(Backups.get_snapshots(dummy_service)) == 0
+    assert len(await Backups.get_snapshots(dummy_service)) == 0
 
 
 def test_forget_nonexistent_snapshot(backups, dummy_service):
@@ -556,8 +556,8 @@ def test_restore_snapshot_task(
     if failed == "fail_to_stop":
         dummy_service.simulate_fail_to_stop(True)
 
-    Backups.back_up(dummy_service)
-    snaps = Backups.get_snapshots(dummy_service)
+    await Backups.back_up(dummy_service)
+    snaps = await Backups.get_snapshots(dummy_service)
     assert len(snaps) == 1
 
     paths_to_nuke = service_files(dummy_service)
@@ -578,7 +578,7 @@ def test_restore_snapshot_task(
         with open(p, "r") as file:
             assert file.read() == content
 
-    snaps = Backups.get_snapshots(dummy_service)
+    snaps = await Backups.get_snapshots(dummy_service)
     if restore_strategy == RestoreStrategy.INPLACE:
         assert len(snaps) == 2
         reasons = [snap.reason for snap in snaps]
@@ -601,7 +601,7 @@ def test_snapshots_caching(backups, dummy_service):
     # we test indirectly that we do redis calls instead of shell calls
     start = datetime.now()
     for i in range(10):
-        snapshots = Backups.get_snapshots(dummy_service)
+        snapshots = await Backups.get_snapshots(dummy_service)
         assert len(snapshots) == 1
     assert datetime.now() - start < timedelta(seconds=0.5)
 
@@ -614,7 +614,7 @@ def test_snapshots_caching(backups, dummy_service):
     assert len(cached_snapshots) == 0
 
     # We do not assume that no snapshots means we need to reload the cache
-    snapshots = Backups.get_snapshots(dummy_service)
+    snapshots = await Backups.get_snapshots(dummy_service)
     assert len(snapshots) == 0
     # No cache reload happened
     cached_snapshots = Storage.get_cached_snapshots()
@@ -782,7 +782,7 @@ def test_move_blocks_backups(backups, dummy_service, restore_strategy):
         Backups.back_up(dummy_service)
 
     with pytest.raises(ValueError):
-        Backups.restore_snapshot(snap, restore_strategy)
+        await Backups.restore_snapshot(snap, restore_strategy)
 
 
 def test_double_lock_unlock(backups, dummy_service):
@@ -820,7 +820,7 @@ def test_operations_while_locked(backups, dummy_service):
     assert Backups.snapshot_restored_size(snap.id) > 0
 
     Backups.provider().backupper.lock()
-    Backups.restore_snapshot(snap)
+    await Backups.restore_snapshot(snap)
 
     Backups.provider().backupper.lock()
     Backups.forget_snapshot(snap)
@@ -874,8 +874,8 @@ def test_service_manager_backs_up_without_crashing(
     manager = ServiceManager.get_service_by_id(ServiceManager.get_id())
     assert manager is not None
 
-    snapshot = Backups.back_up(manager)
-    Backups.restore_snapshot(snapshot)
+    snapshot = await Backups.back_up(manager)
+    await Backups.restore_snapshot(snapshot)
 
 
 def test_backup_all_restore_all(

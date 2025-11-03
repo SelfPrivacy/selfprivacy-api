@@ -54,7 +54,7 @@ def start_backup(service_id: str, reason: BackupReason = BackupReason.EXPLICIT) 
     service = huey_async_helper.run_async(ServiceManager.get_service_by_id(service_id))
     if service is None:
         raise ValueError(f"No such service: {service_id}")
-    huey_async_helper.run_async(Backups.back_up(service, reason))
+    huey_async_helper.run_async(await Backups.back_up(service, reason))
     return True
 
 
@@ -125,7 +125,7 @@ async def back_up_multiple(
 
     for service in services_to_back_up:
         try:
-            await Backups.back_up(service, reason)
+            await await Backups.back_up(service, reason)
         except Exception as error:
             report_job_error(error, job)
             raise error

@@ -45,8 +45,8 @@ def dummy_snapshot(date: datetime):
 
 def test_no_default_autobackup(backups, dummy_service):
     now = datetime.now(timezone.utc)
-    assert not Backups.is_time_to_backup_service(dummy_service, now)
-    assert not Backups.is_time_to_backup(now)
+    assert not await Backups.is_time_to_backup_service(dummy_service, now)
+    assert not await Backups.is_time_to_backup(now)
 
 
 # --------------------- Timing -------------------------
@@ -84,9 +84,9 @@ def test_autobackup_taskbody(backups, only_dummy_service):
     assert Backups.get_all_snapshots() == []
     assert_job_finished(autobackup_job_type(), count=0)
 
-    Backups.set_autobackup_period_minutes(backup_period)
-    assert Backups.is_time_to_backup_service(dummy_service, now)
-    assert Backups.is_time_to_backup(now)
+    await Backups.set_autobackup_period_minutes(backup_period)
+    assert await Backups.is_time_to_backup_service(dummy_service, now)
+    assert await Backups.is_time_to_backup(now)
     assert dummy_service in Backups.services_to_back_up(now)
     assert len(Backups.services_to_back_up(now)) == 1
 
@@ -104,16 +104,16 @@ def test_autobackup_timer_periods(backups, dummy_service):
     now = datetime.now(timezone.utc)
     backup_period = 13  # minutes
 
-    assert not Backups.is_time_to_backup_service(dummy_service, now)
-    assert not Backups.is_time_to_backup(now)
+    assert not await Backups.is_time_to_backup_service(dummy_service, now)
+    assert not await Backups.is_time_to_backup(now)
 
-    Backups.set_autobackup_period_minutes(backup_period)
-    assert Backups.is_time_to_backup_service(dummy_service, now)
-    assert Backups.is_time_to_backup(now)
+    await Backups.set_autobackup_period_minutes(backup_period)
+    assert await Backups.is_time_to_backup_service(dummy_service, now)
+    assert await Backups.is_time_to_backup(now)
 
     Backups.set_autobackup_period_minutes(0)
-    assert not Backups.is_time_to_backup_service(dummy_service, now)
-    assert not Backups.is_time_to_backup(now)
+    assert not await Backups.is_time_to_backup_service(dummy_service, now)
+    assert not await Backups.is_time_to_backup(now)
 
 
 def test_autobackup_timer_enabling(backups, dummy_service):
@@ -134,8 +134,8 @@ def test_autobackup_timer_enabling(backups, dummy_service):
     assert Backups.is_time_to_backup_service(dummy_service, now)
 
     Backups.disable_all_autobackup()
-    assert not Backups.is_time_to_backup_service(dummy_service, now)
-    assert not Backups.is_time_to_backup(now)
+    assert not await Backups.is_time_to_backup_service(dummy_service, now)
+    assert not await Backups.is_time_to_backup(now)
 
 
 def test_autobackup_timing(backups, dummy_service):
@@ -146,7 +146,7 @@ def test_autobackup_timing(backups, dummy_service):
     assert Backups.is_time_to_backup_service(dummy_service, now)
     assert Backups.is_time_to_backup(now)
 
-    Backups.back_up(dummy_service)
+    await Backups.back_up(dummy_service)
 
     now = datetime.now(timezone.utc)
     assert not Backups.is_time_to_backup_service(dummy_service, now)
@@ -204,7 +204,7 @@ def test_failed_autoback_prevents_more_autobackup(backups, dummy_service):
     # artificially making an errored out backup job
     dummy_service.set_backuppable(False)
     with pytest.raises(ValueError):
-        Backups.back_up(dummy_service)
+        await Backups.back_up(dummy_service)
     dummy_service.set_backuppable(True)
 
     assert Backups.get_last_backed_up(dummy_service) is None
@@ -567,23 +567,23 @@ def test_quotas_exceeded_with_too_many_autobackups(backups, dummy_service):
     Backups.set_autobackup_quotas(quota)
     assert Backups.autobackup_quotas().last == 2
 
-    snap = Backups.back_up(dummy_service, BackupReason.AUTO)
-    assert len(Backups.get_snapshots(dummy_service)) == 1
-    snap2 = Backups.back_up(dummy_service, BackupReason.AUTO)
-    assert len(Backups.get_snapshots(dummy_service)) == 2
-    snap3 = Backups.back_up(dummy_service, BackupReason.AUTO)
-    assert len(Backups.get_snapshots(dummy_service)) == 2
+    snap = await Backups.back_up(dummy_service, BackupReason.AUTO)
+    assert len(await Backups.get_snapshots(dummy_service)) == 1
+    snap2 = await Backups.back_up(dummy_service, BackupReason.AUTO)
+    assert len(await Backups.get_snapshots(dummy_service)) == 2
+    snap3 = await Backups.back_up(dummy_service, BackupReason.AUTO)
+    assert len(await Backups.get_snapshots(dummy_service)) == 2
 
-    snaps = Backups.get_snapshots(dummy_service)
+    snaps = await Backups.get_snapshots(dummy_service)
     assert snap2 in snaps
     assert snap3 in snaps
     assert snap not in snaps
 
     quota.last = -1
     Backups.set_autobackup_quotas(quota)
-    snap4 = Backups.back_up(dummy_service, BackupReason.AUTO)
+    snap4 = await Backups.back_up(dummy_service, BackupReason.AUTO)
 
-    snaps = Backups.get_snapshots(dummy_service)
+    snaps = await Backups.get_snapshots(dummy_service)
     assert len(snaps) == 3
     assert snap4 in snaps
 
@@ -593,18 +593,18 @@ def test_quotas_exceeded_with_too_many_autobackups(backups, dummy_service):
     job = Jobs.add("trimming", "test.autobackup_trimming", "trimming the snaps!")
     handle = prune_autobackup_snapshots(job)
     handle(blocking=True)
-    snaps = Backups.get_snapshots(dummy_service)
+    snaps = await Backups.get_snapshots(dummy_service)
     assert len(snaps) == 1
 
-    snap5 = Backups.back_up(dummy_service, BackupReason.AUTO)
-    snaps = Backups.get_snapshots(dummy_service)
+    snap5 = await Backups.back_up(dummy_service, BackupReason.AUTO)
+    snaps = await Backups.get_snapshots(dummy_service)
     assert len(snaps) == 1
     assert snap5 in snaps
 
     # Explicit snaps are not affected
-    snap6 = Backups.back_up(dummy_service, BackupReason.EXPLICIT)
+    snap6 = await Backups.back_up(dummy_service, BackupReason.EXPLICIT)
 
-    snaps = Backups.get_snapshots(dummy_service)
+    snaps = await Backups.get_snapshots(dummy_service)
     assert len(snaps) == 2
     assert snap5 in snaps
     assert snap6 in snaps
