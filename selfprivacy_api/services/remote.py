@@ -8,6 +8,7 @@ from selfprivacy_api.services.templated_service import (
 
 tracer = trace.get_tracer(__name__)
 
+
 async def get_remote_service(id: str, url: str) -> TemplatedService:
     with tracer.start_as_current_span(
         "fetch_remote_service", attributes={"service_id": id, "url": url}

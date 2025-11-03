@@ -8,9 +8,13 @@ from selfprivacy_api.jobs import Job, Jobs, JobStatus
 
 SUGGESTED_SERVICES_SYNC_EVERY_HOURS = 12
 
-@huey.periodic_task(crontab(hour="*/" + str(SUGGESTED_SERVICES_SYNC_EVERY_HOURS), minute="0"))
+
+@huey.periodic_task(
+    crontab(hour="*/" + str(SUGGESTED_SERVICES_SYNC_EVERY_HOURS), minute="0")
+)
 def suggested_services_sync():
     huey_async_helper.run_async(SuggestedServices.sync())
+
 
 @huey.task()
 def move_service(service: Service, new_volume: BlockDevice, job: Job) -> bool:
