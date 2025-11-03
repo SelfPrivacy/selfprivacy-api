@@ -336,6 +336,7 @@ async def get_templated_service(service_id: str) -> TemplatedService:
             service_data = f.read()
     return TemplatedService(service_id, service_data)
 
+
 DUMMY_SERVICES = []
 TEST_FLAGS: list[str] = []
 
