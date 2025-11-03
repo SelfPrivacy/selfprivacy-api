@@ -33,7 +33,8 @@ def test_unimplemented_folders_raises():
     assert owned_folders is not None
 
 
-def test_service_stopper(raw_dummy_service):
+@pytest.mark.asyncio
+async def test_service_stopper(raw_dummy_service):
     dummy: Service = raw_dummy_service
     dummy.set_delay(0.3)
 
@@ -46,7 +47,8 @@ def test_service_stopper(raw_dummy_service):
     assert dummy.get_status() == ServiceStatus.ACTIVE
 
 
-def test_delayed_start_stop(raw_dummy_service):
+@pytest.mark.asyncio
+async def test_delayed_start_stop(raw_dummy_service):
     dummy = raw_dummy_service
     dummy.set_delay(0.3)
 
@@ -79,7 +81,8 @@ def test_delayed_start_stop(raw_dummy_service):
 #     ]
 
 
-def test_enabling_disabling_reads_json(dummy_service: DummyService):
+@pytest.mark.asyncio
+async def test_enabling_disabling_reads_json(dummy_service: DummyService):
     with WriteUserData() as data:
         data["modules"][dummy_service.get_id()]["enable"] = False
     assert dummy_service.is_enabled() is False
@@ -89,7 +92,8 @@ def test_enabling_disabling_reads_json(dummy_service: DummyService):
 
 
 # A helper to test undefined states. Used in fixtures below
-def undefine_service_enabled_status(param, dummy_service):
+@pytest.mark.asyncio
+async def undefine_service_enabled_status(param, dummy_service):
     if param == "deleted_attribute":
         with WriteUserData() as data:
             del data["modules"][dummy_service.get_id()]["enable"]
@@ -127,14 +131,16 @@ def undefined_enabledness_service(dummy_service: DummyService, request) -> Dummy
     return dummy_service
 
 
-def test_undefined_enabledness_in_json_means_False(
+@pytest.mark.asyncio
+async def test_undefined_enabledness_in_json_means_False(
     undefined_enabledness_service: DummyService,
 ):
     dummy_service = undefined_enabledness_service
     assert dummy_service.is_enabled() is False
 
 
-def test_enabling_disabling_writes_json(
+@pytest.mark.asyncio
+async def test_enabling_disabling_writes_json(
     possibly_dubiously_enabled_service: DummyService,
 ):
     dummy_service = possibly_dubiously_enabled_service

@@ -1,3 +1,4 @@
+import pytest
 from selfprivacy_api.utils import ReadUserData
 from selfprivacy_api.repositories.users.json_user_repository import JsonUserRepository
 
@@ -10,7 +11,8 @@ from selfprivacy_api.repositories.users.json_user_repository import JsonUserRepo
 # In the future, user storage tests that are not dependent on actual API (graphql or otherwise) go here.
 
 
-def test_delete_user_writes_json(generic_userdata):
+@pytest.mark.asyncio
+async def test_delete_user_writes_json(generic_userdata):
     JsonUserRepository.delete_user("user2")
     with ReadUserData() as data:
         assert data["users"] == [

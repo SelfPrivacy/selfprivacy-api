@@ -27,7 +27,7 @@ def mock_get_status_active(mocker):
 def mock_send_range_query(request, mocker):
     param = request.param
 
-    def send_query(
+    async def send_query(
         query: str, start: int, end: int, step: int, result_type: Optional[str] = None
     ):
         return {
@@ -55,7 +55,7 @@ def mock_send_range_query(request, mocker):
 def mock_send_query(request, mocker):
     param = request.param
 
-    def send_query(query: str, result_type: Optional[str] = None):
+    async def send_query(query: str, result_type: Optional[str] = None):
         return {
             "resultType": "matrix",
             "result": list(

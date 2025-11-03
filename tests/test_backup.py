@@ -1,7 +1,7 @@
 import pytest
 
 from typing import List
-
+import asyncio
 import os
 import os.path as path
 from os import remove
@@ -858,7 +858,7 @@ def test_service_manager_backup_snapshot_persists(backups, generic_userdata, dki
     manager = ServiceManager.get_service_by_id(ServiceManager.get_id())
     assert manager is not None
 
-    snapshot = Backups.back_up(manager)
+    snapshot = asyncio.get_event_loop().run_until_complete(Backups.back_up(manager))
 
     Backups.force_snapshot_cache_reload()
     ids = [snap.id for snap in Backups.get_all_snapshots()]
