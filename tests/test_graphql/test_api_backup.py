@@ -1,4 +1,5 @@
 from pytest import raises
+import pytest
 
 from os import path
 from os import mkdir
@@ -429,13 +430,14 @@ def test_snapshots_empty(authorized_client, dummy_service, backups):
     assert snaps == []
 
 
-def test_snapshots_orphaned_service(authorized_client, dummy_service, backups):
+@pytest.mark.asyncio
+async def test_snapshots_orphaned_service(authorized_client, dummy_service, backups):
     api_backup(authorized_client, dummy_service)
     snaps = api_snapshots(authorized_client)
     assert len(snaps) == 1
 
     all_services.DUMMY_SERVICES.remove(dummy_service)
-    assert ServiceManager.get_service_by_id(dummy_service.get_id()) is None
+    assert await ServiceManager.get_service_by_id(dummy_service.get_id()) is None
 
     snaps = api_snapshots(authorized_client)
     assert len(snaps) == 1

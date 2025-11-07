@@ -235,5 +235,5 @@ async def do_full_restore(job: Job) -> None:
 
     # Adding a separate job to not confuse the user with jumping progress bar
     rebuild_job = add_rebuild_job()
-    rebuild_system(rebuild_job)
+    await rebuild_system(rebuild_job)
     Jobs.update(job, JobStatus.FINISHED)

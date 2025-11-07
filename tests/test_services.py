@@ -6,16 +6,11 @@ import pytest
 from pytest import raises
 
 from selfprivacy_api.utils import ReadUserData, WriteUserData
-from selfprivacy_api.utils.waitloop import wait_until_true
-
-import selfprivacy_api.services as services_module
+from selfprivacy_api.utils.waitloop import wait_until_true_async
 
 from selfprivacy_api.services.mailserver import MailServer
-from selfprivacy_api.services.owned_path import OwnedPath
-
 from selfprivacy_api.services.test_service import DummyService
 from selfprivacy_api.services.service import Service, ServiceStatus, StoppedService
-from selfprivacy_api.services import ServiceManager
 
 from tests.test_dkim import dkim_file, no_dkim_file
 
@@ -33,32 +28,40 @@ def test_unimplemented_folders_raises():
     assert owned_folders is not None
 
 
-def test_service_stopper(raw_dummy_service):
+@pytest.mark.asyncio
+async def test_service_stopper(raw_dummy_service):
     dummy: Service = raw_dummy_service
     dummy.set_delay(0.3)
 
-    assert dummy.get_status() == ServiceStatus.ACTIVE
+    assert await dummy.get_status() == ServiceStatus.ACTIVE
 
-    with StoppedService(dummy) as stopped_dummy:
-        assert stopped_dummy.get_status() == ServiceStatus.INACTIVE
-        assert dummy.get_status() == ServiceStatus.INACTIVE
+    async with StoppedService(dummy) as stopped_dummy:
+        assert await stopped_dummy.get_status() == ServiceStatus.INACTIVE
+        assert await dummy.get_status() == ServiceStatus.INACTIVE
 
-    assert dummy.get_status() == ServiceStatus.ACTIVE
+    assert await dummy.get_status() == ServiceStatus.ACTIVE
 
 
-def test_delayed_start_stop(raw_dummy_service):
+@pytest.mark.asyncio
+async def test_delayed_start_stop(raw_dummy_service):
     dummy = raw_dummy_service
     dummy.set_delay(0.3)
 
     dummy.stop()
-    assert dummy.get_status() == ServiceStatus.DEACTIVATING
-    wait_until_true(lambda: dummy.get_status() == ServiceStatus.INACTIVE)
-    assert dummy.get_status() == ServiceStatus.INACTIVE
+    await wait_until_true_async(
+        lambda: dummy.get_status_sync() == ServiceStatus.DEACTIVATING
+    )
+    await wait_until_true_async(
+        lambda: dummy.get_status_sync() == ServiceStatus.INACTIVE
+    )
+    assert await dummy.get_status() == ServiceStatus.INACTIVE
 
     dummy.start()
-    assert dummy.get_status() == ServiceStatus.ACTIVATING
-    wait_until_true(lambda: dummy.get_status() == ServiceStatus.ACTIVE)
-    assert dummy.get_status() == ServiceStatus.ACTIVE
+    await wait_until_true_async(
+        lambda: dummy.get_status_sync() == ServiceStatus.ACTIVATING
+    )
+    await wait_until_true_async(lambda: dummy.get_status_sync() == ServiceStatus.ACTIVE)
+    assert await dummy.get_status() == ServiceStatus.ACTIVE
 
 
 # def test_owned_folders_from_not_owned():
