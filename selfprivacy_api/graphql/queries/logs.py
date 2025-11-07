@@ -2,6 +2,7 @@
 
 from opentelemetry import trace
 from datetime import datetime
+import asyncio
 import typing
 import strawberry
 from selfprivacy_api.utils.systemd_journal import get_paginated_logs
@@ -104,17 +105,16 @@ class Logs:
                 raise Exception(
                     "You can't fetch more than 50 entries via single request."
                 )
-            return PaginatedEntries.from_entries(
-                list(
-                    map(
-                        lambda x: LogEntry(x),
-                        get_paginated_logs(
-                            limit,
-                            up_cursor,
-                            down_cursor,
-                            filterBySlice,
-                            filterByUnit,
-                        ),
-                    )
-                )
+
+            # Not sure if it's a good idea, but it might help with speed if server is
+            logs = await asyncio.get_running_loop().run_in_executor(
+                None,
+                get_paginated_logs,
+                limit,
+                up_cursor,
+                down_cursor,
+                filterBySlice,
+                filterByUnit,
             )
+
+            return PaginatedEntries.from_entries(list(map(lambda x: LogEntry(x), logs)))
