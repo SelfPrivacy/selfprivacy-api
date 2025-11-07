@@ -119,7 +119,8 @@ mutation CollectGarbage {
 """
 
 
-def test_graphql_nix_collect_garbage(authorized_client, fp):
+@pytest.mark.asyncio
+async def test_graphql_nix_collect_garbage(authorized_client, fp):
     assert huey.immediate is True
 
     fp.register(
@@ -135,7 +136,7 @@ def test_graphql_nix_collect_garbage(authorized_client, fp):
     fp.register(["nix-store", "--gc", "--print-dead"], stdout=OUTPUT_PRINT_DEAD)
     fp.register(["nix-store", "--gc"], stdout=OUTPUT_COLLECT_GARBAGE)
 
-    response = authorized_client.post(
+    response = await authorized_client.post(
         "/graphql",
         json={
             "query": RUN_NIX_COLLECT_GARBAGE_MUTATION,
@@ -164,7 +165,8 @@ def test_graphql_nix_collect_garbage(authorized_client, fp):
     assert fp.call_count(["nix-store", "--gc"]) == 1
 
 
-def test_graphql_nix_collect_garbage_return_zero_trash(authorized_client, fp):
+@pytest.mark.asyncio
+async def test_graphql_nix_collect_garbage_return_zero_trash(authorized_client, fp):
     assert huey.immediate is True
 
     fp.register(
@@ -180,7 +182,7 @@ def test_graphql_nix_collect_garbage_return_zero_trash(authorized_client, fp):
     fp.register(["nix-store", "--gc", "--print-dead"], stdout=OUTPUT_PRINT_DEAD)
     fp.register(["nix-store", "--gc"], stdout=OUTPUT_COLLECT_GARBAGE_ZERO_TRASH)
 
-    response = authorized_client.post(
+    response = await authorized_client.post(
         "/graphql",
         json={
             "query": RUN_NIX_COLLECT_GARBAGE_MUTATION,
@@ -209,7 +211,8 @@ def test_graphql_nix_collect_garbage_return_zero_trash(authorized_client, fp):
     assert fp.call_count(["nix-store", "--gc"]) == 1
 
 
-def test_graphql_nix_collect_garbage_not_authorized_client(client, fp):
+@pytest.mark.asyncio
+async def test_graphql_nix_collect_garbage_not_authorized_client(client, fp):
     assert huey.immediate is True
 
     fp.register(
@@ -225,7 +228,7 @@ def test_graphql_nix_collect_garbage_not_authorized_client(client, fp):
     fp.register(["nix-store", "--gc", "--print-dead"], stdout=OUTPUT_PRINT_DEAD)
     fp.register(["nix-store", "--gc"], stdout=OUTPUT_COLLECT_GARBAGE)
 
-    response = client.post(
+    response = await client.post(
         "/graphql",
         json={
             "query": RUN_NIX_COLLECT_GARBAGE_MUTATION,
