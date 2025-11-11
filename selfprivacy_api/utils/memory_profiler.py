@@ -2,6 +2,23 @@ import asyncio
 import tracemalloc
 import logging
 
+from opentelemetry import metrics
+
+meter = metrics.get_meter("selfprivacy_memory_profiler")
+
+size_threshold = 1024 * (1024/2) # 0.5Mb
+
+allocation_size_hist = meter.create_histogram(
+    name="sp_allocation_size_by_line",
+    description="Memory allocation sizes attributed to code lines",
+    unit="By"
+)
+allocation_count_hist = meter.create_histogram(
+    name="sp_allocation_count_by_line",
+    description="Number of allocations attributed to code lines",
+    unit="{allocations}"
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -9,8 +26,19 @@ async def memory_profiler_task():
     if tracemalloc.is_tracing():
         while True:
             snapshot = tracemalloc.take_snapshot()
-            top_lines = snapshot.statistics("lineno")
-            logger.info("=== API memory allocations overview ===")
-            for line in top_lines[:20]:
-                logger.info(str(line))
+
+            stats = snapshot.statistics('lineno')[:50]
+
+            for stat in [s for s in stats if s.size > size_threshold]:
+                file = stat.traceback[0].filename if stat.traceback else "unknown"
+                line = stat.traceback[0].lineno if stat.traceback else 0
+                allocation_size_hist.record(
+                    stat.size,
+                    attributes={"file": file, "line": line}
+                )
+                allocation_count_hist.record(
+                    stat.count,
+                    attributes={"file": file, "line": line}
+                )
+    
             await asyncio.sleep(60 * 5)
