@@ -106,7 +106,7 @@ class Logs:
                     "You can't fetch more than 50 entries via single request."
                 )
 
-            # Not sure if it's a good idea, but it might help with speed if server is
+            # Not sure if it's a good idea, but it might help with speed if server is I/O loaded.
             logs = await asyncio.get_running_loop().run_in_executor(
                 None,
                 get_paginated_logs,

@@ -74,6 +74,13 @@ in
         Enable SelfPrivacy API service
       '';
     };
+    traceMemory = lib.mkOption {
+      default = false;
+      type = lib.types.bool;
+      description = ''
+        Enable memory tracing of SelfPrivacy API main process
+      '';
+    };
     opentelemetry = {
       enable = lib.mkOption {
         default = false;
@@ -141,6 +148,9 @@ in
                 sp.passthru.auth.mkServiceAccountTokenFP unix-user;
             }
             // config.networking.proxy.envVars
+            // (lib.optionalAttrs cfg.traceMemory {
+              PYTHONTRACEMALLOC = "1";
+            })
             // (lib.optionalAttrs cfg.opentelemetry.enable
               {
                 OTEL_EXPORTER_OTLP_ENDPOINT = cfg.opentelemetry.endpoint;
