@@ -46,6 +46,7 @@ from selfprivacy_api.dependencies import get_api_version
 from selfprivacy_api.graphql.schema import schema
 from selfprivacy_api.migrations import run_migrations
 from selfprivacy_api.services.suggested import SuggestedServices
+from selfprivacy_api.utils.memory_profiler import memory_profiler_task
 
 from starlette.middleware.sessions import SessionMiddleware
 from secrets import token_urlsafe
@@ -151,6 +152,7 @@ ThreadingInstrumentor().instrument()
 @asynccontextmanager
 async def app_lifespan(app: FastAPI):
     await run_migrations()
+    asyncio.create_task(memory_profiler_task())
     asyncio.create_task(
         SuggestedServices.sync()
     )  # TODO(nhnn): Move it out of app_lifespan to appropriate place.
