@@ -8,12 +8,12 @@ meter = metrics.get_meter("selfprivacy_memory_profiler")
 
 size_threshold = 1024 * (1024 / 2)  # 0.5Mb
 
-allocation_size_hist = meter.create_gauge(
+allocation_size_gauge = meter.create_gauge(
     name="sp_api_allocation_size_by_line",
     description="Memory allocation sizes attributed to code lines",
     unit="By",
 )
-allocation_count_hist = meter.create_gauge(
+allocation_count_gauge = meter.create_gauge(
     name="sp_api_allocation_count_by_line",
     description="Number of allocations attributed to code lines",
     unit="{allocations}",
@@ -32,10 +32,10 @@ async def memory_profiler_task():
             for stat in [s for s in stats if s.size > size_threshold]:
                 file = stat.traceback[0].filename if stat.traceback else "unknown"
                 line = stat.traceback[0].lineno if stat.traceback else 0
-                allocation_size_hist.set(
+                allocation_size_gauge.set(
                     stat.size, attributes={"file": file, "line": line}
                 )
-                allocation_count_hist.record(
+                allocation_count_gauge.set(
                     stat.count, attributes={"file": file, "line": line}
                 )
 
