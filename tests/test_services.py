@@ -12,6 +12,8 @@ from selfprivacy_api.services.mailserver import MailServer
 from selfprivacy_api.services.test_service import DummyService
 from selfprivacy_api.services.service import Service, ServiceStatus, StoppedService
 
+from tests.test_dkim import dkim_file, no_dkim_file
+
 
 def test_unimplemented_folders_raises():
     with raises(NotImplementedError):

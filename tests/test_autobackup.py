@@ -18,13 +18,18 @@ from selfprivacy_api.backup.tasks import (
 )
 from selfprivacy_api.backup.jobs import autobackup_job_type
 
-from tests.test_backup import assert_job_finished
+from tests.test_backup import backups, assert_job_finished
+from tests.test_graphql.test_services import (
+    only_dummy_service,
+    only_dummy_service_and_api,
+    dkim_file,
+)
 
 
-def backuppable_services() -> list[Service]:
+async def backuppable_services() -> list[Service]:
     return [
         service
-        for service in ServiceManager.get_all_services()
+        for service in await ServiceManager.get_all_services()
         if service.can_be_backed_up()
     ]
 
@@ -179,10 +184,10 @@ async def test_services_to_autobackup(backups, dummy_service):
 
     services = await Backups.services_to_back_up(now)
     assert set(service.get_id() for service in services) == set(
-        service.get_id() for service in backuppable_services()
+        service.get_id() for service in await backuppable_services()
     )
     assert dummy_service.get_id() in [
-        service.get_id() for service in backuppable_services()
+        service.get_id() for service in await backuppable_services()
     ]
 
 

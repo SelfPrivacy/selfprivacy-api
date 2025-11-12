@@ -14,7 +14,9 @@ from selfprivacy_api.utils.systemd import (
     wait_for_unit_state,
     get_last_log_lines,
     ServiceStatus,
+    wait_for_unit_state,
 )
+
 
 START_TIMEOUT = 60 * 5
 RUN_TIMEOUT = 60 * 60

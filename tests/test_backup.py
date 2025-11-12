@@ -55,6 +55,11 @@ from tests.conftest import (
     assert_original_files,
     assert_rebuild_was_made,
 )
+from tests.test_graphql.test_services import (
+    only_dummy_service,
+    only_dummy_service_and_api,
+    dkim_file,
+)
 
 
 REPO_NAME = "test_backup"
@@ -305,7 +310,7 @@ async def test_error_censoring_loginkey(dummy_service, backups, fp):
         occurrences=100,
     )
 
-    async with pytest.raises(ValueError):
+    with pytest.raises(ValueError):
         await Backups.back_up(dummy_service)
 
     job = get_backup_fail(dummy_service)
@@ -337,7 +342,7 @@ async def test_one_snapshot(backups, dummy_service):
 
 @pytest.mark.asyncio
 async def test_backup_returns_snapshot(backups, dummy_service):
-    service_folders = await dummy_service.get_folders()
+    service_folders = dummy_service.get_folders()
     provider = Backups.provider()
     name = dummy_service.get_id()
     snapshot = await provider.backupper.start_backup(service_folders, name)
@@ -596,7 +601,7 @@ async def test_restore_snapshot_task(
 async def test_backup_unbackuppable(backups, dummy_service):
     dummy_service.set_backuppable(False)
     assert dummy_service.can_be_backed_up() is False
-    async with pytest.raises(ValueError):
+    with pytest.raises(ValueError):
         await Backups.back_up(dummy_service)
 
 
@@ -852,8 +857,9 @@ def test_tempfile():
 
 
 # Storage
-def test_cache_invalidaton_task(backups, dummy_service):
-    Backups.back_up(dummy_service)
+@pytest.mark.asyncio
+async def test_cache_invalidaton_task(backups, dummy_service):
+    await Backups.back_up(dummy_service)
     assert len(Storage.get_cached_snapshots()) == 1
 
     # Does not trigger resync

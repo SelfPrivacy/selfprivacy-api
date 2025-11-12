@@ -382,7 +382,8 @@ async def test_removing_user_key_writes_json(generic_userdata, username):
 @pytest.mark.asyncio
 async def test_remove_user_key_on_undefined(generic_userdata, username):
     # generic userdata has a a single user key
-    user_keys = await JsonUserRepository.get_user_by_username(username).ssh_keys
+    user_keys = await JsonUserRepository.get_user_by_username(username)
+    user_keys = user_keys.ssh_keys
     assert len(user_keys) == 1
     key1 = user_keys[0]
 
