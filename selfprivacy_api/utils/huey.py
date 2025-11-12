@@ -42,7 +42,7 @@ class HueyAsyncHelper:
 
         self.thread = threading.Thread(target=run_loop, daemon=True)
         self.thread.start()
-        while self.loop is None:
+        while self.loop is None or not self.loop.is_running():
             threading.Event().wait(0.01)
 
     def _stop_loop(self):
@@ -52,8 +52,8 @@ class HueyAsyncHelper:
             self.thread.join(timeout=1.0)
 
     def run_async(self, coro, timeout: Optional[float] = None):
-        if not self.loop or not self.loop.is_running():
-            raise RuntimeError("Huey Async Event Loop is not running")
+        if not self.loop:
+            self._start_loop()
 
         future = asyncio.run_coroutine_threadsafe(coro, self.loop)
         try:
