@@ -49,7 +49,9 @@ async def get_profile(
     request: Request, session: Annotated[Session, Depends(get_current_user)]
 ):
     try:
-        user: UserDataUser = await KanidmUserRepository.get_user_by_username(session.user_id)
+        user: UserDataUser = await KanidmUserRepository.get_user_by_username(
+            session.user_id
+        )
     except Exception as e:
         logger.error(f"Error getting user by username: {e}")
         raise HTTPException(status_code=500)
@@ -98,7 +100,9 @@ async def edit_profile_get(
     request: Request, session: Annotated[Session, Depends(get_current_user)]
 ):
     try:
-        user: UserDataUser = await KanidmUserRepository.get_user_by_username(session.user_id)
+        user: UserDataUser = await KanidmUserRepository.get_user_by_username(
+            session.user_id
+        )
     except Exception as e:
         logger.error(f"Error getting user by username: {e}")
         raise HTTPException(status_code=500)
