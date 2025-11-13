@@ -86,6 +86,7 @@ async def rebuild_system(job: Job, upgrade: bool = False):
         # Wait for the systemd unit to finish
         try:
             log_task = asyncio.create_task(report_active_rebuild_log(job, unit_name))
+
             async with asyncio.timeout(RUN_TIMEOUT):
                 await wait_for_unit_state(
                     unit_name,
@@ -94,7 +95,10 @@ async def rebuild_system(job: Job, upgrade: bool = False):
                         ServiceStatus.INACTIVE,
                     ],
                 )
+
             log_task.cancel()
+            await log_task
+
             status = await get_service_status(unit_name)
 
             if status == ServiceStatus.INACTIVE:
@@ -115,6 +119,8 @@ async def rebuild_system(job: Job, upgrade: bool = False):
 
         except asyncio.TimeoutError:
             log_task.cancel()
+            await log_task
+
             log_lines = get_last_log_lines(unit_name, 10)
             Jobs.update(
                 job=job,
