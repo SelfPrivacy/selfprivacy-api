@@ -97,7 +97,10 @@ async def rebuild_system(job: Job, upgrade: bool = False):
                 )
 
             log_task.cancel()
-            await log_task
+            try:
+                await log_task
+            except asyncio.CancelledError:
+                pass
 
             status = await get_service_status(unit_name)
 
@@ -119,7 +122,10 @@ async def rebuild_system(job: Job, upgrade: bool = False):
 
         except asyncio.TimeoutError:
             log_task.cancel()
-            await log_task
+            try:
+                await log_task
+            except asyncio.CancelledError:
+                pass
 
             log_lines = get_last_log_lines(unit_name, 10)
             Jobs.update(
