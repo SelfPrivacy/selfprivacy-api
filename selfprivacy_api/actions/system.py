@@ -11,7 +11,7 @@ from selfprivacy_api.jobs.upgrade_system import rebuild_system_task
 
 from selfprivacy_api.utils import WriteUserData, ReadUserData
 from selfprivacy_api.utils import UserDataFiles
-from selfprivacy_api.utils.systemd import systemd_proxy
+from selfprivacy_api.utils.systemd import systemd_proxy, start_unit
 
 from selfprivacy_api.graphql.queries.providers import DnsProvider
 
@@ -123,9 +123,9 @@ def rebuild_system() -> Job:
     return job
 
 
-def rollback_system() -> int:
+async def rollback_system() -> int:
     """Rollback the system"""
-    run_blocking(["systemctl", "start", "sp-nixos-rollback.service"], new_session=True)
+    await start_unit("sp-nixos-rollback.service")
     return 0
 
 

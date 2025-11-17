@@ -13,7 +13,7 @@ from selfprivacy_api.services.test_service import DummyService
 
 from tests.common import generate_service_query
 from tests.test_graphql.common import assert_empty, assert_ok, get_data
-from tests.test_graphql.test_system_nixos_tasks import prepare_nixos_rebuild_calls
+from tests.conftest import mock_system_rebuild_flow
 
 from tests.test_dkim import dkim_file
 
@@ -640,7 +640,7 @@ def test_graphql_move_service_without_folders_on_old_volume(
 
 
 def test_move_empty(
-    authorized_client, generic_userdata, mock_check_volume, dummy_service, fp
+    authorized_client, generic_userdata, mock_check_volume, dummy_service, fp, mocker
 ):
     """
     A reregister of uninitialized service with no data.
@@ -657,8 +657,7 @@ def test_move_empty(
     dummy_service.disable()
 
     unit_name = "sp-nixos-rebuild.service"
-    rebuild_command = ["systemctl", "start", unit_name]
-    prepare_nixos_rebuild_calls(fp, unit_name)
+    mock_system_rebuild_flow(mocker, unit_name)
 
     # We will NOT be mounting and remounting folders
     mount_command = ["mount", fp.any()]
@@ -693,7 +692,12 @@ def test_move_empty(
 
 
 def test_graphql_move_service(
-    authorized_client, generic_userdata, mock_check_volume, dummy_service_with_binds, fp
+    authorized_client,
+    generic_userdata,
+    mock_check_volume,
+    dummy_service_with_binds,
+    fp,
+    mocker,
 ):
     dummy_service = dummy_service_with_binds
 
@@ -706,8 +710,7 @@ def test_graphql_move_service(
     dummy_service.set_simulated_moves(False)
 
     unit_name = "sp-nixos-rebuild.service"
-    rebuild_command = ["systemctl", "start", unit_name]
-    prepare_nixos_rebuild_calls(fp, unit_name)
+    mock_system_rebuild_flow(mocker, unit_name)
 
     # We will be mounting and remounting folders
     mount_command = ["mount", fp.any()]

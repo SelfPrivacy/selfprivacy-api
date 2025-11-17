@@ -2,6 +2,7 @@
 
 # pylint: disable=redefined-outer-name
 # pylint: disable=unused-argument
+import asyncio
 import os
 import pytest
 import datetime
@@ -18,7 +19,7 @@ from selfprivacy_api.models.tokens.token import Token
 from selfprivacy_api.utils.huey import huey
 
 import selfprivacy_api.services as services
-from selfprivacy_api.services import Service, ServiceManager
+from selfprivacy_api.services import Service, ServiceStatus, ServiceManager
 from selfprivacy_api.services.test_service import DummyService
 
 from selfprivacy_api.repositories.tokens.redis_tokens_repository import (
@@ -273,46 +274,63 @@ def dummy_service(
         services.DUMMY_SERVICES.remove(service)
 
 
-def prepare_nixos_rebuild_calls(fp, unit_name):
-    # Start the unit
-    fp.register(["systemctl", "start", unit_name])
+def mock_system_rebuild_flow(
+    mocker, rebuild_unit_name, rebuild_status=ServiceStatus.INACTIVE
+):
+    assert rebuild_status in [ServiceStatus.INACTIVE, ServiceStatus.FAILED]
+    state_queue = asyncio.Queue()
 
-    # Wait for it to start
-    fp.register(["systemctl", "show", unit_name], stdout="ActiveState=inactive")
-    fp.register(["systemctl", "show", unit_name], stdout="ActiveState=inactive")
-    fp.register(["systemctl", "show", unit_name], stdout="ActiveState=active")
+    async def simulate_rebuild():
+        await state_queue.put("ACTIVATING")
+        await state_queue.put("ACTIVE")
+        await state_queue.put(rebuild_status.value)
 
-    # Check its exectution
-    fp.register(["systemctl", "show", unit_name], stdout="ActiveState=active")
-    fp.register(
-        ["journalctl", "-u", unit_name, "-n", "1", "-o", "cat"],
-        stdout="Starting rebuild...",
+    class TestSystemdManagerInterface:
+        async def start_unit(self, name: str, method: str) -> str:
+            assert name == rebuild_unit_name
+            assert method == "replace"
+            asyncio.create_task(simulate_rebuild())
+            return ""
+
+    class TestUnitProxy:
+        _active_state = "INACTIVE"
+
+        @property
+        async def active_state(self):
+            return self._active_state
+
+        @property
+        async def properties_changed(self):
+            try:
+                while True:
+                    state = await state_queue.get()
+                    self._active_state = state
+                    yield None
+            except Exception:
+                pass
+
+    test_unit_proxy = TestUnitProxy()
+
+    async def get_unit_proxy(unit: str):
+        assert unit == rebuild_unit_name
+        return test_unit_proxy
+
+    manager_instance = TestSystemdManagerInterface()
+
+    mocker.patch(
+        "selfprivacy_api.utils.systemd.systemd_proxy", lambda: manager_instance
     )
-
-    fp.register(["systemctl", "show", unit_name], stdout="ActiveState=active")
-    fp.register(
-        ["journalctl", "-u", unit_name, "-n", "1", "-o", "cat"], stdout="Rebuilding..."
-    )
-
-    fp.register(["systemctl", "show", unit_name], stdout="ActiveState=inactive")
+    mocker.patch("selfprivacy_api.utils.systemd.get_unit_proxy", get_unit_proxy)
 
 
 # My best-effort attempt at making tests involving rebuild friendlier
 @pytest.fixture()
-def catch_nixos_rebuild_calls(fp):
+def catch_nixos_rebuild_calls(mocker):
     # A helper function to be used in tests of all systems that requires
     # rebuilds
-    prepare_nixos_rebuild_calls(fp, API_REBUILD_SYSTEM_UNIT)
-    return fp
+    mock_system_rebuild_flow(mocker, API_REBUILD_SYSTEM_UNIT)
 
 
 def assert_rebuild_was_made(fp):
-    # You call it after you have done the operation that
-    # calls a rebuild
-    assert_rebuild_or_upgrade_was_made(fp, API_REBUILD_SYSTEM_UNIT)
-
-
-def assert_rebuild_or_upgrade_was_made(fp, unit_name):
-    # assert fp.call_count(["systemctl", "start", unit_name]) == 1
-    # assert fp.call_count(["systemctl", "show", unit_name]) == 6
-    assert True == True
+    # TODO(nhnn): Actually wire it up with mock_system_rebuild_flow
+    pass
