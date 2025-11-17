@@ -719,6 +719,7 @@ def test_last_slice(authorized_client, only_dummy_service_and_api, backups):
 
 
 def test_backup_all_restore_all(
+    fp,
     authorized_client,
     backups,
     generic_userdata,
@@ -727,7 +728,6 @@ def test_backup_all_restore_all(
     catch_nixos_rebuild_calls,
 ):
     dummy_service = only_dummy_service_and_api
-    fp = catch_nixos_rebuild_calls
     fp.pass_command(["restic", fp.any()])
     fp.keep_last_process(True)
     fp.pass_command(["rclone", fp.any()])
