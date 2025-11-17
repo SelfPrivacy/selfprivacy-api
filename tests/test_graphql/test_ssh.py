@@ -102,9 +102,9 @@ async def no_keys(generic_userdata):
         assert user.ssh_keys == []
 
 
-@pytest.fixture
-def no_admin_key(generic_userdata, authorized_client):
-    adm_name = admin_name()
+@pytest_asyncio.fixture
+async def no_admin_key(generic_userdata, authorized_client):
+    adm_name = await admin_name()
 
     if adm_name:
         admin_keys = api_get_user_keys(authorized_client, adm_name)
