@@ -274,11 +274,10 @@ def dummy_service(
         services.DUMMY_SERVICES.remove(service)
 
 
-def mock_system_rebuild_flow(mocker, rebuild_unit_name, rebuild_status=ServiceStatus.INACTIVE):
-    assert rebuild_status in [
-        ServiceStatus.INACTIVE,
-        ServiceStatus.FAILED
-    ]
+def mock_system_rebuild_flow(
+    mocker, rebuild_unit_name, rebuild_status=ServiceStatus.INACTIVE
+):
+    assert rebuild_status in [ServiceStatus.INACTIVE, ServiceStatus.FAILED]
     state_queue = asyncio.Queue()
 
     async def simulate_rebuild():

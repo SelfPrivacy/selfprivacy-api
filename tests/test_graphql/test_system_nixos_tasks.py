@@ -11,7 +11,7 @@ from selfprivacy_api.services import ServiceStatus
 from tests.conftest import (
     API_REBUILD_SYSTEM_UNIT,
     API_UPGRADE_SYSTEM_UNIT,
-    mock_system_rebuild_flow
+    mock_system_rebuild_flow,
 )
 
 
@@ -62,6 +62,7 @@ def test_graphql_system_rebuild_unauthorized(client, action):
         },
     )
     assert_empty(response)
+
 
 @pytest.mark.parametrize("action", ["rebuild", "upgrade"])
 def test_graphql_system_rebuild(authorized_client, mocker, action):
