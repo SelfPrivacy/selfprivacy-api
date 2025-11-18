@@ -2,6 +2,7 @@
 
 import base64
 import subprocess
+import asyncio
 
 from typing import List
 from os import path
@@ -186,8 +187,8 @@ class DummyService(Service):
 
     @classmethod
     async def restart(cls):
-        cls.set_status(ServiceStatus.RELOADING)  # is a correct one?
-        cls.change_status_with_async_delay(ServiceStatus.ACTIVE, cls.startstop_delay)
+        await cls.stop()
+        await cls.start()
 
     @classmethod
     def get_configuration(cls):
