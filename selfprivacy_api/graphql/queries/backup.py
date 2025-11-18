@@ -110,7 +110,7 @@ class Backup:
             span.set_attribute("snapshot_count", len(snapshots))
             span.add_event("fetched all snapshots from backup storage")
 
-            return [snapshot_to_api(snap) for snap in snapshots]
+            return [await snapshot_to_api(snap) for snap in snapshots]
 
     @strawberry.field
     async def last_slice(self) -> typing.List[SnapshotInfo]:
@@ -120,4 +120,4 @@ class Backup:
         with tracer.start_as_current_span("resolve_last_slice"):
             if not Backups.is_initted():
                 return []
-            return [snapshot_to_api(snap) for snap in which_snapshots_to_full_restore()]
+            return [await snapshot_to_api(snap) for snap in await which_snapshots_to_full_restore()]
