@@ -120,4 +120,7 @@ class Backup:
         with tracer.start_as_current_span("resolve_last_slice"):
             if not Backups.is_initted():
                 return []
-            return [await snapshot_to_api(snap) for snap in await which_snapshots_to_full_restore()]
+            return [
+                await snapshot_to_api(snap)
+                for snap in await which_snapshots_to_full_restore()
+            ]
