@@ -219,8 +219,8 @@ async def test_read_admin_keys_from_json(generic_userdata):
         data["sshKeys"] = new_keys
 
     assert (
-        (await JsonUserRepository.get_user_by_username(admin_name)).ssh_keys == new_keys
-    )
+        await JsonUserRepository.get_user_by_username(admin_name)
+    ).ssh_keys == new_keys
 
     with WriteUserData() as data:
         del data["sshKeys"]
@@ -309,14 +309,18 @@ def find_user_index_in_json_users(users: list, username: str) -> Optional[int]:
 @pytest.mark.asyncio
 async def test_read_user_keys_from_json(generic_userdata, username):
     old_keys = [f"ssh-rsa KEY {username}@pc"]
-    assert (await JsonUserRepository.get_user_by_username(username)).ssh_keys == old_keys
+    assert (
+        await JsonUserRepository.get_user_by_username(username)
+    ).ssh_keys == old_keys
     new_keys = ["ssh-rsa KEY test@pc", "ssh-ed25519 KEY2 test@pc"]
 
     with WriteUserData() as data:
         user_index = find_user_index_in_json_users(data["users"], username)
         data["users"][user_index]["sshKeys"] = new_keys
 
-    assert (await JsonUserRepository.get_user_by_username(username)).ssh_keys == new_keys
+    assert (
+        await JsonUserRepository.get_user_by_username(username)
+    ).ssh_keys == new_keys
 
     with WriteUserData() as data:
         user_index = find_user_index_in_json_users(data["users"], username)
