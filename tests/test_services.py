@@ -47,7 +47,7 @@ async def test_delayed_start_stop(raw_dummy_service):
     dummy = raw_dummy_service
     dummy.set_delay(0.3)
 
-    dummy.stop()
+    await dummy.stop()
     await wait_until_true_async(
         lambda: dummy.get_status_sync() == ServiceStatus.DEACTIVATING
     )
@@ -56,7 +56,7 @@ async def test_delayed_start_stop(raw_dummy_service):
     )
     assert await dummy.get_status() == ServiceStatus.INACTIVE
 
-    dummy.start()
+    await dummy.start()
     await wait_until_true_async(
         lambda: dummy.get_status_sync() == ServiceStatus.ACTIVATING
     )
