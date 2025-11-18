@@ -72,13 +72,13 @@ def complain_about_service_operation_running(service: Service) -> str:
     raise ValueError(message)
 
 
-def add_total_restore_job() -> Job:
-    for service in ServiceManager.get_enabled_services():
+async def add_total_restore_job() -> Job:
+    for service in await ServiceManager.get_enabled_services():
         ensure_nothing_runs_for(service)
 
     job = Jobs.add(
         type_id="backups.total_restore",
-        name=f"Total restore",
+        name="Total restore",
         description="Restoring all enabled services",
     )
     return job

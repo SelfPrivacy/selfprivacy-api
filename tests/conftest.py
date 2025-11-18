@@ -326,10 +326,12 @@ def mock_system_rebuild_flow(
 
 # My best-effort attempt at making tests involving rebuild friendlier
 @pytest.fixture()
-def catch_nixos_rebuild_calls(mocker):
+def catch_nixos_rebuild_calls(mocker, fp):
     # A helper function to be used in tests of all systems that requires
     # rebuilds
     mock_system_rebuild_flow(mocker, API_REBUILD_SYSTEM_UNIT)
+    # NOTE(nhnn): Due to black magic, for some reason we need fp returned by pytest.fixture for restic subprocess mock to work.
+    return fp
 
 
 def assert_rebuild_was_made(fp):

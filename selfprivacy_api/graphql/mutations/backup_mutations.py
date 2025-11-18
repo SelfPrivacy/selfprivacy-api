@@ -232,7 +232,7 @@ class BackupMutations:
             )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def restore_all(self) -> GenericJobMutationReturn:
+    async def restore_all(self) -> GenericJobMutationReturn:
         """
         Restore all restorable and enabled services according to last autobackup snapshots
         This happens in sync with partial merging of old configuration for compatibility
@@ -240,7 +240,7 @@ class BackupMutations:
 
         with tracer.start_as_current_span("restore_all_mutation"):
             try:
-                job = add_total_restore_job()
+                job = await add_total_restore_job()
                 full_restore(job)
             except Exception as error:
                 return GenericJobMutationReturn(
