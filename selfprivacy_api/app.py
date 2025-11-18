@@ -46,6 +46,7 @@ from selfprivacy_api.dependencies import get_api_version
 from selfprivacy_api.graphql.schema import schema
 from selfprivacy_api.migrations import run_migrations
 from selfprivacy_api.services.suggested import SuggestedServices
+from selfprivacy_api.utils.otel import OTEL_ENABLED
 from selfprivacy_api.utils.memory_profiler import memory_profiler_task
 
 from starlette.middleware.sessions import SessionMiddleware
@@ -64,89 +65,88 @@ async def graphql_context_getter():
         "otel_context": otel_context.get_current(),
     }
 
+if OTEL_ENABLED:
+    resource = Resource.create(
+        attributes={
+            SERVICE_NAME: os.getenv("OTEL_SERVICE_NAME", "selfprivacy_api"),
+            SERVICE_VERSION: get_api_version(),
+            SERVICE_INSTANCE_ID: os.getenv("OTEL_SERVICE_INSTANCE_ID", "unknown-instance"),
+        }
+    )
 
-resource = Resource.create(
-    attributes={
-        SERVICE_NAME: os.getenv("OTEL_SERVICE_NAME", "selfprivacy_api"),
-        SERVICE_VERSION: get_api_version(),
-        SERVICE_INSTANCE_ID: os.getenv("OTEL_SERVICE_INSTANCE_ID", "unknown-instance"),
+    otlp_endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317")
+    otlp_protocol = os.getenv("OTEL_EXPORTER_OTLP_PROTOCOL", "grpc")
+    otlp_headers = os.getenv("OTEL_EXPORTER_OTLP_HEADERS", "")
+    otlp_insecure = (
+        True if "localhost" in otlp_endpoint or "127.0.0.1" in otlp_endpoint else False
+    )
+
+    tracer_provider = TracerProvider(resource=resource)
+    trace_processor = BatchSpanProcessor(
+        OTLPSpanExporter(
+            endpoint=otlp_endpoint,
+            headers=otlp_headers,
+            insecure=otlp_insecure,
+        )
+    )
+    tracer_provider.add_span_processor(trace_processor)
+    trace.set_tracer_provider(tracer_provider)
+
+    reader = PeriodicExportingMetricReader(
+        OTLPMetricExporter(
+            endpoint=otlp_endpoint,
+            headers=otlp_headers,
+            insecure=otlp_insecure,
+        )
+    )
+    meter_provider = MeterProvider(resource=resource, metric_readers=[reader])
+    metrics.set_meter_provider(meter_provider)
+
+    logger_provider = LoggerProvider(resource=resource)
+    logger_processor = BatchLogRecordProcessor(
+        OTLPLogExporter(
+            endpoint=otlp_endpoint,
+            headers=otlp_headers,
+            insecure=otlp_insecure,
+        )
+    )
+    logger_provider.add_log_record_processor(logger_processor)
+    set_logger_provider(logger_provider)
+
+    log_handler = LoggingHandler(level=logging.INFO, logger_provider=logger_provider)
+    logging.basicConfig(handlers=[log_handler], level=logging.INFO)
+
+    # Ensure Uvicorn loggers also emit via OpenTelemetry by supplying a custom log_config
+    uvicorn_log_config = deepcopy(LOGGING_CONFIG)
+    uvicorn_log_config["handlers"]["otel"] = {
+        "class": "opentelemetry.sdk._logs.LoggingHandler",
+        "level": "INFO",
+        # Pass the already configured logger_provider so the handler exports to OTLP
+        "logger_provider": logger_provider,
     }
-)
+    for _name in ("uvicorn", "uvicorn.error"):
+        if _name in uvicorn_log_config.get("loggers", {}):
+            _cfg = uvicorn_log_config["loggers"][_name]
+            _handlers = _cfg.setdefault("handlers", [])
+            if "otel" not in _handlers:
+                _handlers.append("otel")
+        else:
+            uvicorn_log_config.setdefault("loggers", {})[_name] = {
+                "handlers": ["otel"],
+                "level": "INFO",
+                "propagate": False,
+            }
+    if "root" in uvicorn_log_config:
+        _root = uvicorn_log_config["root"]
+        _root_handlers = _root.setdefault("handlers", [])
+        if "otel" not in _root_handlers:
+            _root_handlers.append("otel")
+    else:
+        uvicorn_log_config["root"] = {"level": "INFO", "handlers": ["otel"]}
 
-otlp_endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317")
-otlp_protocol = os.getenv("OTEL_EXPORTER_OTLP_PROTOCOL", "grpc")
-otlp_headers = os.getenv("OTEL_EXPORTER_OTLP_HEADERS", "")
-otlp_insecure = (
-    True if "localhost" in otlp_endpoint or "127.0.0.1" in otlp_endpoint else False
-)
-
-tracer_provider = TracerProvider(resource=resource)
-trace_processor = BatchSpanProcessor(
-    OTLPSpanExporter(
-        endpoint=otlp_endpoint,
-        headers=otlp_headers,
-        insecure=otlp_insecure,
-    )
-)
-tracer_provider.add_span_processor(trace_processor)
-trace.set_tracer_provider(tracer_provider)
-
-reader = PeriodicExportingMetricReader(
-    OTLPMetricExporter(
-        endpoint=otlp_endpoint,
-        headers=otlp_headers,
-        insecure=otlp_insecure,
-    )
-)
-meter_provider = MeterProvider(resource=resource, metric_readers=[reader])
-metrics.set_meter_provider(meter_provider)
-
-logger_provider = LoggerProvider(resource=resource)
-logger_processor = BatchLogRecordProcessor(
-    OTLPLogExporter(
-        endpoint=otlp_endpoint,
-        headers=otlp_headers,
-        insecure=otlp_insecure,
-    )
-)
-logger_provider.add_log_record_processor(logger_processor)
-set_logger_provider(logger_provider)
-
+    ThreadingInstrumentor().instrument()
 
 logger = get_logger(__name__)
-
-log_handler = LoggingHandler(level=logging.INFO, logger_provider=logger_provider)
-logging.basicConfig(handlers=[log_handler], level=logging.INFO)
-
-# Ensure Uvicorn loggers also emit via OpenTelemetry by supplying a custom log_config
-uvicorn_log_config = deepcopy(LOGGING_CONFIG)
-uvicorn_log_config["handlers"]["otel"] = {
-    "class": "opentelemetry.sdk._logs.LoggingHandler",
-    "level": "INFO",
-    # Pass the already configured logger_provider so the handler exports to OTLP
-    "logger_provider": logger_provider,
-}
-for _name in ("uvicorn", "uvicorn.error"):
-    if _name in uvicorn_log_config.get("loggers", {}):
-        _cfg = uvicorn_log_config["loggers"][_name]
-        _handlers = _cfg.setdefault("handlers", [])
-        if "otel" not in _handlers:
-            _handlers.append("otel")
-    else:
-        uvicorn_log_config.setdefault("loggers", {})[_name] = {
-            "handlers": ["otel"],
-            "level": "INFO",
-            "propagate": False,
-        }
-if "root" in uvicorn_log_config:
-    _root = uvicorn_log_config["root"]
-    _root_handlers = _root.setdefault("handlers", [])
-    if "otel" not in _root_handlers:
-        _root_handlers.append("otel")
-else:
-    uvicorn_log_config["root"] = {"level": "INFO", "handlers": ["otel"]}
-
-ThreadingInstrumentor().instrument()
 
 
 @asynccontextmanager
@@ -211,7 +211,8 @@ async def root():
     return RedirectResponse(url="/user")
 
 
-FastAPIInstrumentor.instrument_app(app)
+if OTEL_ENABLED:
+    FastAPIInstrumentor.instrument_app(app)
 
 
 if __name__ == "__main__":
