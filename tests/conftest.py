@@ -5,12 +5,13 @@
 import asyncio
 import os
 import pytest
+import pytest_asyncio
 import datetime
 import subprocess
 
 from os import path
 from os import makedirs
-from typing import Generator
+from typing import AsyncGenerator
 from fastapi.testclient import TestClient
 from shutil import copyfile
 
@@ -245,10 +246,10 @@ def ensure_user_exists(user: str):
     raise ValueError("could not create user", user)
 
 
-@pytest.fixture()
-def dummy_service(
+@pytest_asyncio.fixture
+async def dummy_service(
     tmpdir, raw_dummy_service, generic_userdata
-) -> Generator[Service, None, None]:
+) -> AsyncGenerator[Service, None]:
     service = raw_dummy_service
     user = service.get_user()
 
@@ -264,7 +265,7 @@ def dummy_service(
     huey.immediate = True
     assert huey.immediate is True
 
-    assert ServiceManager.get_service_by_id(service.get_id()) is not None
+    assert (await ServiceManager.get_service_by_id(service.get_id())) is not None
     service.enable()
     yield service
 

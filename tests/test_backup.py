@@ -206,7 +206,7 @@ def test_reinit_after_purge(backups):
     assert len(Backups.get_all_snapshots()) == 0
 
 
-@pytest.mark.asynio
+@pytest.mark.asyncio
 async def test_backup_service(dummy_service, backups):
     id = dummy_service.get_id()
     assert_job_finished(f"services.{id}.backup", count=0)
@@ -793,10 +793,10 @@ async def test_move_blocks_backups(backups, dummy_service, restore_strategy):
         status=JobStatus.RUNNING,
     )
 
-    async with pytest.raises(ValueError):
+    with pytest.raises(ValueError):
         await Backups.back_up(dummy_service)
 
-    async with pytest.raises(ValueError):
+    with pytest.raises(ValueError):
         await Backups.restore_snapshot(snap, restore_strategy)
 
 
@@ -892,7 +892,7 @@ async def test_service_manager_backs_up_without_crashing(
     """
     Service manager is special and needs testing.
     """
-    manager = ServiceManager.get_service_by_id(ServiceManager.get_id())
+    manager = await ServiceManager.get_service_by_id(ServiceManager.get_id())
     assert manager is not None
 
     snapshot = await Backups.back_up(manager)
