@@ -901,7 +901,6 @@ async def test_service_manager_backs_up_without_crashing(
 
 @pytest.mark.asyncio
 async def test_backup_all_restore_all(
-    fp,
     backups,
     generic_userdata,
     dkim_file,
@@ -909,6 +908,7 @@ async def test_backup_all_restore_all(
     catch_nixos_rebuild_calls,
 ):
     dummy_service = only_dummy_service_and_api
+    fp = catch_nixos_rebuild_calls
     fp.pass_command(["restic", fp.any()])
     fp.keep_last_process(True)
     fp.pass_command(["rclone", fp.any()])
@@ -918,7 +918,7 @@ async def test_backup_all_restore_all(
 
     assert len(Backups.get_all_snapshots()) == 0
 
-    backup_job = add_total_backup_job()
+    backup_job = await add_total_backup_job()
     total_backup(backup_job)
     assert len(Backups.get_all_snapshots()) == 2
 
