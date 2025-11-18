@@ -67,7 +67,7 @@ class GenericBackupConfigReturn(MutationReturnInterface):
 @strawberry.type
 class BackupMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def initialize_repository(
+    async def initialize_repository(
         self, repository: InitializeRepositoryInput
     ) -> GenericBackupConfigReturn:
         """Initialize a new repository"""
@@ -99,7 +99,7 @@ class BackupMutations:
                 success=True,
                 message="",
                 code=200,
-                configuration=Backup().configuration(),
+                configuration=await Backup().configuration(),
             )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
@@ -115,7 +115,7 @@ class BackupMutations:
             )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def set_autobackup_period(
+    async def set_autobackup_period(
         self, period: typing.Optional[int] = None
     ) -> GenericBackupConfigReturn:
         """Set autobackup period. None is to disable autobackup"""
@@ -134,11 +134,11 @@ class BackupMutations:
                 success=True,
                 message="",
                 code=200,
-                configuration=Backup().configuration(),
+                configuration=await Backup().configuration(),
             )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def set_autobackup_quotas(
+    async def set_autobackup_quotas(
         self, quotas: AutobackupQuotasInput
     ) -> GenericBackupConfigReturn:
         """
@@ -171,7 +171,7 @@ class BackupMutations:
                     success=True,
                     message="",
                     code=200,
-                    configuration=Backup().configuration(),
+                    configuration=await Backup().configuration(),
                 )
 
             except Exception as e:
@@ -290,7 +290,7 @@ class BackupMutations:
                 )
 
             try:
-                job = add_restore_job(snap)
+                job = await add_restore_job(snap)
             except ValueError as error:
                 return GenericJobMutationReturn(
                     success=False,
