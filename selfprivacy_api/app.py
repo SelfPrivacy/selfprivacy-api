@@ -221,5 +221,5 @@ if __name__ == "__main__":
         host="127.0.0.1",
         port=5050,
         log_level="info",
-        log_config=uvicorn_log_config,
+        log_config=uvicorn_log_config if OTEL_ENABLED else None,
     )
