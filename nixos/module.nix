@@ -202,6 +202,7 @@ in
             // {
               HOME = "/root";
               PYTHONUNBUFFERED = "1";
+              SP_API_OTEL_ENABLED = builtins.toString cfg.opentelemetry.enable;
             }
             // config.networking.proxy.envVars
             // (lib.optionalAttrs cfg.opentelemetry.enable
