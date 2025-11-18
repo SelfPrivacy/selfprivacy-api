@@ -217,6 +217,6 @@ class DummyService(Service):
             self.set_drive(volume.name)
             return job
 
-    @staticmethod
-    async def wait_for_statuses(self, expected_statuses: List[ServiceStatus]):
+    @classmethod
+    async def wait_for_statuses(cls, expected_statuses: List[ServiceStatus]):
         pass
