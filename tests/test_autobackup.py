@@ -210,7 +210,7 @@ async def test_failed_autoback_prevents_more_autobackup(backups, dummy_service):
 
     # artificially making an errored out backup job
     dummy_service.set_backuppable(False)
-    async with pytest.raises(ValueError):
+    with pytest.raises(ValueError):
         await Backups.back_up(dummy_service)
     dummy_service.set_backuppable(True)
 
@@ -241,8 +241,8 @@ async def test_slices_minimal(backups, only_dummy_service_and_api):
     assert Backups.is_time_to_backup_service(dummy_service, now)
     assert Backups.is_time_to_backup_service(ServiceManager(), now)
 
-    assert len(ServiceManager.get_all_services()) == 2
-    assert len(Backups.services_to_back_up(now)) == 2
+    assert len(await ServiceManager.get_all_services()) == 2
+    assert len(await Backups.services_to_back_up(now)) == 2
 
     await do_autobackup()
 
@@ -568,18 +568,19 @@ def test_autobackup_snapshots_pruning_big_gap(backups):
     ]
 
 
-def test_quotas_exceeded_with_too_many_autobackups(backups, dummy_service):
+@pytest.mark.asyncio
+async def test_quotas_exceeded_with_too_many_autobackups(backups, dummy_service):
     assert Backups.autobackup_quotas()
     quota = copy(zero_quotas)
     quota.last = 2
     Backups.set_autobackup_quotas(quota)
     assert Backups.autobackup_quotas().last == 2
 
-    snap = Backups.back_up(dummy_service, BackupReason.AUTO)
+    snap = await Backups.back_up(dummy_service, BackupReason.AUTO)
     assert len(Backups.get_snapshots(dummy_service)) == 1
-    snap2 = Backups.back_up(dummy_service, BackupReason.AUTO)
+    snap2 = await Backups.back_up(dummy_service, BackupReason.AUTO)
     assert len(Backups.get_snapshots(dummy_service)) == 2
-    snap3 = Backups.back_up(dummy_service, BackupReason.AUTO)
+    snap3 = await Backups.back_up(dummy_service, BackupReason.AUTO)
     assert len(Backups.get_snapshots(dummy_service)) == 2
 
     snaps = Backups.get_snapshots(dummy_service)
@@ -589,7 +590,7 @@ def test_quotas_exceeded_with_too_many_autobackups(backups, dummy_service):
 
     quota.last = -1
     Backups.set_autobackup_quotas(quota)
-    snap4 = Backups.back_up(dummy_service, BackupReason.AUTO)
+    snap4 = await Backups.back_up(dummy_service, BackupReason.AUTO)
 
     snaps = Backups.get_snapshots(dummy_service)
     assert len(snaps) == 3
@@ -604,13 +605,13 @@ def test_quotas_exceeded_with_too_many_autobackups(backups, dummy_service):
     snaps = Backups.get_snapshots(dummy_service)
     assert len(snaps) == 1
 
-    snap5 = Backups.back_up(dummy_service, BackupReason.AUTO)
+    snap5 = await Backups.back_up(dummy_service, BackupReason.AUTO)
     snaps = Backups.get_snapshots(dummy_service)
     assert len(snaps) == 1
     assert snap5 in snaps
 
     # Explicit snaps are not affected
-    snap6 = Backups.back_up(dummy_service, BackupReason.EXPLICIT)
+    snap6 = await Backups.back_up(dummy_service, BackupReason.EXPLICIT)
 
     snaps = Backups.get_snapshots(dummy_service)
     assert len(snaps) == 2

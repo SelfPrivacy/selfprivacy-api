@@ -161,7 +161,7 @@ async def do_autobackup() -> None:
         return
     job = add_autobackup_job(services_to_back_up)
 
-    back_up_multiple(job, services_to_back_up, BackupReason.AUTO)
+    await back_up_multiple(job, services_to_back_up, BackupReason.AUTO)
 
     if backups_were_disabled:
         Backups.set_autobackup_period_minutes(0)
