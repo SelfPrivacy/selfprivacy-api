@@ -81,7 +81,7 @@ def test_parse_line_with_blank_line():
     )
 
     with pytest.raises(ShellException):
-        output = parse_line(job, txt)
+        parse_line(job, txt)
 
 
 def test_get_dead_packages():
@@ -149,20 +149,20 @@ async def test_graphql_nix_collect_garbage(authorized_client, fp):
     assert output["job"]["status"] == "FINISHED"
     assert output["job"]["error"] is None
 
-    # assert (
-    #     fp.call_count(
-    #         [
-    #             "nix-env",
-    #             "-p",
-    #             "/nix/var/nix/profiles/system",
-    #             "--delete-generations",
-    #             "old",
-    #         ]
-    #     )
-    #     == 1
-    # )
-    # assert fp.call_count(["nix-store", "--gc", "--print-dead"]) == 1
-    # assert fp.call_count(["nix-store", "--gc"]) == 1
+    assert (
+        fp.call_count(
+            [
+                "nix-env",
+                "-p",
+                "/nix/var/nix/profiles/system",
+                "--delete-generations",
+                "old",
+            ]
+        )
+        == 1
+    )
+    assert fp.call_count(["nix-store", "--gc", "--print-dead"]) == 1
+    assert fp.call_count(["nix-store", "--gc"]) == 1
 
 
 @pytest.mark.asyncio
@@ -195,20 +195,20 @@ async def test_graphql_nix_collect_garbage_return_zero_trash(authorized_client, 
     assert output["job"]["status"] == "FINISHED"
     assert output["job"]["error"] is None
 
-    # assert (
-    #     fp.call_count(
-    #         [
-    #             "nix-env",
-    #             "-p",
-    #             "/nix/var/nix/profiles/system",
-    #             "--delete-generations",
-    #             "old",
-    #         ]
-    #     )
-    #     == 1
-    # )
-    # assert fp.call_count(["nix-store", "--gc", "--print-dead"]) == 1
-    # assert fp.call_count(["nix-store", "--gc"]) == 1
+    assert (
+        fp.call_count(
+            [
+                "nix-env",
+                "-p",
+                "/nix/var/nix/profiles/system",
+                "--delete-generations",
+                "old",
+            ]
+        )
+        == 1
+    )
+    assert fp.call_count(["nix-store", "--gc", "--print-dead"]) == 1
+    assert fp.call_count(["nix-store", "--gc"]) == 1
 
 
 @pytest.mark.asyncio
@@ -237,17 +237,17 @@ async def test_graphql_nix_collect_garbage_not_authorized_client(client, fp):
 
     assert_empty(response)
 
-    # assert (
-    #     fp.call_count(
-    #         [
-    #             "nix-env",
-    #             "-p",
-    #             "/nix/var/nix/profiles/system",
-    #             "--delete-generations",
-    #             "old",
-    #         ]
-    #     )
-    #     == 0
-    # )
-    # assert fp.call_count(["nix-store", "--gc", "--print-dead"]) == 0
-    # assert fp.call_count(["nix-store", "--gc"]) == 0
+    assert (
+        fp.call_count(
+            [
+                "nix-env",
+                "-p",
+                "/nix/var/nix/profiles/system",
+                "--delete-generations",
+                "old",
+            ]
+        )
+        == 0
+    )
+    assert fp.call_count(["nix-store", "--gc", "--print-dead"]) == 0
+    assert fp.call_count(["nix-store", "--gc"]) == 0
