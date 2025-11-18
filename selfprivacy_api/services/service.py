@@ -500,7 +500,7 @@ class Service(ABC):
             self.do_move_to_volume(volume, job)
 
             report_progress(98, job, "Move complete, rebuilding...")
-            rebuild_system(job, upgrade=False)
+            await rebuild_system(job, upgrade=False)
 
             Jobs.update(
                 job=job,

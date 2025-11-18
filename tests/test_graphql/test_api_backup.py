@@ -420,8 +420,9 @@ def api_settings(authorized_client):
     return result
 
 
-def test_dummy_service_convertible_to_gql(dummy_service):
-    gql_service = service_to_graphql_service(dummy_service)
+@pytest.mark.asyncio
+async def test_dummy_service_convertible_to_gql(dummy_service):
+    gql_service = await service_to_graphql_service(dummy_service)
     assert gql_service is not None
 
 
