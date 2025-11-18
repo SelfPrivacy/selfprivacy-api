@@ -928,7 +928,7 @@ async def test_backup_all_restore_all(
 
     write_testfile_bodies(dummy_service, ["bogus", "bleeegh corruption ><"])
 
-    restore_job = add_total_restore_job()
+    restore_job = await add_total_restore_job()
 
     await do_full_restore(restore_job)
     assert_job_ok(restore_job)
