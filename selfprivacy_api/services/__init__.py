@@ -56,6 +56,17 @@ class ServiceManager(Service):
         with tracer.start_as_current_span("get_service_by_id") as span:
             span.set_attribute("service_id", service_id)
 
+            for service in DUMMY_SERVICES:
+                if service.get_id() == service_id:
+                    return service
+
+            if "ONLY_DUMMY_SERVICE" in TEST_FLAGS:
+                return None
+            elif "DUMMY_SERVICE_AND_API" in TEST_FLAGS:
+                if service_id == ServiceManager.get_id():
+                    return ServiceManager()
+                return None
+
             for service in HARDCODED_SERVICES:
                 if service.get_id() == service_id:
                     return service

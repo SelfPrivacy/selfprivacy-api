@@ -432,7 +432,7 @@ class Backups:
 
     @staticmethod
     @tracer.start_as_current_span("inplace_restore")
-    def _inplace_restore(
+    async def _inplace_restore(
         service: Service,
         snapshot: Snapshot,
         job: Job,
@@ -440,7 +440,7 @@ class Backups:
         Jobs.update(
             job, status=JobStatus.CREATED, status_text="Waiting for pre-restore backup"
         )
-        failsafe_snapshot = Backups.back_up(service, BackupReason.PRE_RESTORE)
+        failsafe_snapshot = await Backups.back_up(service, BackupReason.PRE_RESTORE)
 
         Jobs.update(
             job, status=JobStatus.RUNNING, status_text=f"Restoring from {snapshot.id}"
@@ -490,7 +490,7 @@ class Backups:
                     await Backups.assert_dead(service)
                 service.pre_restore(job=job)
                 if strategy == RestoreStrategy.INPLACE:
-                    Backups._inplace_restore(service, snapshot, job)
+                    await Backups._inplace_restore(service, snapshot, job)
                 else:  # verify_before_download is our default
                     Jobs.update(
                         job,

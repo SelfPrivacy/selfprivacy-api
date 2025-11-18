@@ -168,7 +168,7 @@ class DummyService(Service):
     @classmethod
     async def stop(cls):
         # simulate a failing service unable to stop
-        if not cls.get_status() == ServiceStatus.FAILED:
+        if not await cls.get_status() == ServiceStatus.FAILED:
             cls.set_status(ServiceStatus.DEACTIVATING)
             if cls.fail_to_stop:
                 cls.change_status_with_async_delay(
