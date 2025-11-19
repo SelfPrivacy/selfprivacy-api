@@ -1,14 +1,7 @@
 """Class representing Bitwarden service"""
 
 import base64
-import subprocess
 import asyncio
-
-from typing import List
-from os import path
-from pathlib import Path
-
-# from enum import Enum
 
 from selfprivacy_api.jobs import Job
 from selfprivacy_api.services.service import Service, ServiceStatus
@@ -19,10 +12,55 @@ from selfprivacy_api.services.test_service.icon import BITWARDEN_ICON
 DEFAULT_DELAY = 0
 
 
+class ServiceState:
+    def __init__(self, queue: [ServiceStatus] = []):
+        self._observers = []
+        self.queue = queue
+        self.state: ServiceStatus | None = None
+
+    def change_state_from_queu(self):
+        next_state = self.queue.pop(0)
+        self.state = next_state
+        self.notify(state=next_state)
+
+    def change_state(self, new_state: ServiceStatus):
+        self.state = new_state
+        self.notify(state=new_state)
+
+    def add_state_to_queue(self, state: ServiceStatus):
+        self.queue.append(state)
+
+    def attach(self, observer):
+        self._observers.append(observer)
+
+    def detach(self, observer):
+        self._observers.remove(observer)
+
+    def notify(self, state: ServiceStatus):
+        for observer in self._observers:
+            observer.update(state=state)
+
+
+class Waiter:
+    def __init__(self, service: ServiceState, desired: ServiceStatus):
+        self.desired = desired
+        self.future = asyncio.get_running_loop().create_future()
+
+        service.attach(self)
+
+        if service.state == desired:
+            if not self.future.done():
+                self.future.set_result(True)
+
+    def update(self, state: ServiceStatus):
+        if state == self.desired and not self.future.done():
+            self.future.set_result(True)
+
+
 class DummyService(Service):
     """A test service"""
 
-    folders: List[str] = []
+    folders: list[str] = []
     startstop_delay = 0.0
     backuppable = True
     movable = True
@@ -31,19 +69,14 @@ class DummyService(Service):
     simulate_moving = True
     drive = "sda1"
 
-    def __init_subclass__(cls, folders: List[str]):
+    state = ServiceState()
+
+    def __init_subclass__(cls, folders: list[str]):
         cls.folders = folders
 
     def __init__(self):
-        # Maybe init it with some dummy files right here
-        # currently it is done in a fixture but if we do it here
-        # then we can do some convenience methods of writing and reading
-        # from test files so that
-        # we can easily check integrity in numerous restore tests
-
         super().__init__()
-        with open(self.status_file(), "w") as file:
-            file.write(ServiceStatus.ACTIVE.value)
+        self.state.change_state(state=ServiceStatus.ACTIVE.value)
 
     @staticmethod
     def get_id() -> str:
@@ -81,55 +114,14 @@ class DummyService(Service):
         return "How did we get here?"
 
     @classmethod
-    def status_file(cls) -> str:
-        dir = cls.folders[0]
-        # We do not want to store our state in our declared folders
-        # Because they are moved and tossed in tests wildly
-        parent = Path(dir).parent
-
-        return path.join(parent, "service_status")
-
-    @classmethod
     def set_status(cls, status: ServiceStatus):
-        with open(cls.status_file(), "w") as file:
-            file.write(status.value)
+        cls.state.change_state = status
 
     @classmethod
     async def get_status(cls) -> ServiceStatus:
-        filepath = cls.status_file()
-        if filepath in [None, ""]:
-            raise ValueError("We do not have a path for our test dummy status file!")
-        if not path.exists(filepath):
-            raise FileNotFoundError(filepath)
-
-        with open(cls.status_file(), "r") as file:
-            status_string = file.read().strip()
-        if status_string in [None, ""]:
-            raise NotImplementedError(
-                f"It appears our test service no longer has any status in the statusfile. Filename = {cls.status_file}, status string inside is '{status_string}' (quoted) "
-            )
-        return ServiceStatus[status_string]
-
-    @classmethod
-    def change_status_with_async_delay(
-        cls, new_status: ServiceStatus, delay_sec: float
-    ):
-        """simulating a delay on systemd side"""
-        if not isinstance(new_status, ServiceStatus):
-            raise ValueError(
-                f"received an invalid new status for test service. new status: {str(new_status)}"
-            )
-        if delay_sec == 0:
-            cls.set_status(new_status)
-            return
-
-        status_file = cls.status_file()
-        command = [
-            "bash",
-            "-c",
-            f" sleep {delay_sec} && echo {new_status.value} > {status_file}",
-        ]
-        subprocess.Popen(command)
+        if cls.state.state is None:
+            raise ValueError("DummyService status is not initialized!")
+        return cls.state.state
 
     @classmethod
     def set_backuppable(cls, new_value: bool) -> None:
@@ -149,16 +141,12 @@ class DummyService(Service):
         return cls.backuppable
 
     @classmethod
-    def set_delay(cls, new_delay_sec: float) -> None:
-        cls.startstop_delay = new_delay_sec
-
-    @classmethod
     def set_drive(cls, new_drive: str) -> None:
         cls.drive = new_drive
 
     @classmethod
     def set_simulated_moves(cls, enabled: bool) -> None:
-        """If True, this service will not actually call moving code
+        """If True, th is service will not actually call moving code
         when moved"""
         cls.simulate_moving = enabled
 
@@ -172,18 +160,14 @@ class DummyService(Service):
         if not await cls.get_status() == ServiceStatus.FAILED:
             cls.set_status(ServiceStatus.DEACTIVATING)
             if cls.fail_to_stop:
-                cls.change_status_with_async_delay(
-                    ServiceStatus.FAILED, cls.startstop_delay
-                )
+                cls.set_status(ServiceStatus.FAILED)
             else:
-                cls.change_status_with_async_delay(
-                    ServiceStatus.INACTIVE, cls.startstop_delay
-                )
+                cls.set_status(ServiceStatus.INACTIVE)
 
     @classmethod
     async def start(cls):
         cls.set_status(ServiceStatus.ACTIVATING)
-        cls.change_status_with_async_delay(ServiceStatus.ACTIVE, cls.startstop_delay)
+        cls.set_status(ServiceStatus.ACTIVE)
 
     @classmethod
     async def restart(cls):
@@ -208,7 +192,7 @@ class DummyService(Service):
         return cls.drive
 
     @classmethod
-    def get_folders(cls) -> List[str]:
+    def get_folders(cls) -> list[str]:
         return cls.folders
 
     def do_move_to_volume(self, volume: BlockDevice, job: Job) -> Job:
@@ -219,5 +203,20 @@ class DummyService(Service):
             return job
 
     @classmethod
-    async def wait_for_statuses(cls, expected_statuses: List[ServiceStatus]):
-        pass
+    async def wait_for_statuses(cls, expected_statuses: list[ServiceStatus]):
+        if cls.state in expected_statuses:
+            return
+
+        waiters = [Waiter(cls.state, status) for status in expected_statuses]
+
+        futures = [w.future for w in waiters]
+
+        done, pending = await asyncio.wait(
+            futures,
+            return_when=asyncio.FIRST_COMPLETED,
+        )
+
+        for fut in pending:
+            fut.cancel()
+
+        return
