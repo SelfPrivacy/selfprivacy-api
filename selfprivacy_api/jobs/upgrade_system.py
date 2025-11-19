@@ -21,6 +21,7 @@ RUN_TIMEOUT = 60 * 60
 
 
 async def report_active_rebuild_log(job: Job, unit_name: str):
+    loop = asyncio.get_event_loop()
     j = journal.Reader()
 
     j.add_match(_SYSTEMD_UNIT=unit_name)
@@ -35,7 +36,7 @@ async def report_active_rebuild_log(job: Job, unit_name: str):
         for entry in j:
             await log_queue.put(entry)
 
-    asyncio.get_event_loop().add_reader(j, lambda: asyncio.ensure_future(callback()))
+    loop.add_reader(j, lambda: asyncio.ensure_future(callback()))
 
     try:
         while True:
@@ -45,8 +46,10 @@ async def report_active_rebuild_log(job: Job, unit_name: str):
                 status=JobStatus.RUNNING,
                 status_text=log_entry["MESSAGE"],
             )
-    except asyncio.CancelledError:
-        asyncio.get_event_loop().remove_reader(j)
+    except (asyncio.CancelledError, GeneratorExit):
+        pass
+    finally:
+        loop.remove_reader(j)
         j.close()
 
 

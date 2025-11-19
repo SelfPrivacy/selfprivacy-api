@@ -101,6 +101,8 @@ def test_graphql_get_logs_with_up_border(authorized_client):
     for api_entry, journal_entry in zip(returned_entries, expected_entries):
         assert_log_entry_equals_to_journal_entry(api_entry, journal_entry)
 
+    j.close()
+
 
 def test_graphql_get_logs_with_down_border(authorized_client):
     j = journal.Reader()
