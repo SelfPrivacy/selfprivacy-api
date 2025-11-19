@@ -479,7 +479,6 @@ def simulated_service_stopping_delay(request) -> float:
 
 
 def test_backup_service_task(backups, dummy_service, simulated_service_stopping_delay):
-    dummy_service.set_delay(simulated_service_stopping_delay)
 
     handle = start_backup(dummy_service.get_id())
     handle(blocking=True)
@@ -559,7 +558,6 @@ def failed(request) -> str:
 async def test_restore_snapshot_task(
     backups, dummy_service, restore_strategy, simulated_service_stopping_delay, failed
 ):
-    dummy_service.set_delay(simulated_service_stopping_delay)
     if failed == "failed":
         dummy_service.set_status(ServiceStatus.FAILED)
 
