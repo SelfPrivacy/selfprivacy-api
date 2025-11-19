@@ -76,7 +76,7 @@ class DummyService(Service):
 
     def __init__(self):
         super().__init__()
-        self.state.change_state(state=ServiceStatus.ACTIVE.value)
+        self.state.change_state(new_state=ServiceStatus.ACTIVE)
 
     @staticmethod
     def get_id() -> str:
@@ -115,7 +115,7 @@ class DummyService(Service):
 
     @classmethod
     def set_status(cls, status: ServiceStatus):
-        cls.state.change_state = status
+        cls.state.change_state(new_state=status)
 
     @classmethod
     async def get_status(cls) -> ServiceStatus:

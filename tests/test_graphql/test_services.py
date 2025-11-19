@@ -399,7 +399,6 @@ def test_start_return_value(authorized_client, only_dummy_service):
 
 def test_restart(authorized_client, only_dummy_service):
     dummy_service = only_dummy_service
-    dummy_service.set_delay(0.3)
     mutation_response = api_restart(authorized_client, dummy_service)
     data = get_data(mutation_response)["services"]["restartService"]
     assert_ok(data)
