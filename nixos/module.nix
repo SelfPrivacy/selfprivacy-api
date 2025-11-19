@@ -144,6 +144,7 @@ in
             // {
               HOME = "/root";
               PYTHONUNBUFFERED = "1";
+              SP_API_OTEL_ENABLED = builtins.toString cfg.opentelemetry.enable;
               KANIDM_ADMIN_TOKEN_FILE =
                 sp.passthru.auth.mkServiceAccountTokenFP unix-user;
             }
