@@ -404,7 +404,7 @@ def test_restart(authorized_client, only_dummy_service):
     assert_ok(data)
     service = data["service"]
     assert service["id"] == dummy_service.get_id()
-    assert service["status"] == ServiceStatus.RELOADING.value
+    assert service["status"] == ServiceStatus.ACTIVE.value
 
 
 def test_stop_return_value(authorized_client, only_dummy_service):
