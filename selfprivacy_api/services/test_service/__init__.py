@@ -6,77 +6,44 @@ import asyncio
 from selfprivacy_api.jobs import Job
 from selfprivacy_api.services.service import Service, ServiceStatus
 from selfprivacy_api.utils.block_devices import BlockDevice
+from selfprivacy_api.utils.observable import Observable
 
 from selfprivacy_api.services.test_service.icon import BITWARDEN_ICON
 
-DEFAULT_DELAY = 0
+
+def async_deferred(fn):
+    async def inner(*args, **kwargs):
+        asyncio.create_task(fn(*args, **kwargs))
+
+    return inner
 
 
-class ServiceState:
-    def __init__(self, queue: [ServiceStatus] = []):
-        self._observers = []
-        self.queue = queue
-        self.state: ServiceStatus | None = None
-
-    def change_state_from_queu(self):
-        next_state = self.queue.pop(0)
-        self.state = next_state
-        self.notify(state=next_state)
-
-    def change_state(self, new_state: ServiceStatus):
-        self.state = new_state
-        self.notify(state=new_state)
-
-    def add_state_to_queue(self, state: ServiceStatus):
-        self.queue.append(state)
-
-    def attach(self, observer):
-        self._observers.append(observer)
-
-    def detach(self, observer):
-        self._observers.remove(observer)
-
-    def notify(self, state: ServiceStatus):
-        for observer in self._observers:
-            observer.update(state=state)
-
-
-class Waiter:
-    def __init__(self, service: ServiceState, desired: ServiceStatus):
-        self.desired = desired
-        self.future = asyncio.get_running_loop().create_future()
-
-        service.attach(self)
-
-        if service.state == desired:
-            if not self.future.done():
-                self.future.set_result(True)
-
-    def update(self, state: ServiceStatus):
-        if state == self.desired and not self.future.done():
-            self.future.set_result(True)
+def not_in_intermediate_state(state: ServiceStatus):
+    return state not in [
+        ServiceStatus.ACTIVATING,
+        ServiceStatus.DEACTIVATING,
+        ServiceStatus.RELOADING,
+    ]
 
 
 class DummyService(Service):
     """A test service"""
 
     folders: list[str] = []
-    startstop_delay = 0.0
     backuppable = True
     movable = True
-    fail_to_stop = False
+    fail_on_stop = False
     # if False, we try to actually move
     simulate_moving = True
     drive = "sda1"
 
-    state = ServiceState()
+    state_observable = Observable(ServiceStatus.ACTIVE)
 
     def __init_subclass__(cls, folders: list[str]):
         cls.folders = folders
 
     def __init__(self):
         super().__init__()
-        self.state.change_state(new_state=ServiceStatus.ACTIVE)
 
     @staticmethod
     def get_id() -> str:
@@ -96,7 +63,6 @@ class DummyService(Service):
     @staticmethod
     def get_svg_icon(raw=False) -> str:
         """Read SVG icon from file and return it as base64 encoded string."""
-        # return ""
         if raw:
             return BITWARDEN_ICON
         return base64.b64encode(BITWARDEN_ICON.encode("utf-8")).decode("utf-8")
@@ -114,14 +80,12 @@ class DummyService(Service):
         return "How did we get here?"
 
     @classmethod
-    def set_status(cls, status: ServiceStatus):
-        cls.state.change_state(new_state=status)
+    async def set_status(cls, status: ServiceStatus):
+        await cls.state_observable.put(status)
 
     @classmethod
     async def get_status(cls) -> ServiceStatus:
-        if cls.state.state is None:
-            raise ValueError("DummyService status is not initialized!")
-        return cls.state.state
+        return cls.state_observable.get()
 
     @classmethod
     def set_backuppable(cls, new_value: bool) -> None:
@@ -151,28 +115,40 @@ class DummyService(Service):
         cls.simulate_moving = enabled
 
     @classmethod
-    def simulate_fail_to_stop(cls, value: bool):
-        cls.fail_to_stop = value
+    def simulate_fail_on_stop(cls, value: bool):
+        cls.fail_on_stop = value
 
     @classmethod
+    @async_deferred
     async def stop(cls):
-        # simulate a failing service unable to stop
-        if not await cls.get_status() == ServiceStatus.FAILED:
-            cls.set_status(ServiceStatus.DEACTIVATING)
-            if cls.fail_to_stop:
-                cls.set_status(ServiceStatus.FAILED)
-            else:
-                cls.set_status(ServiceStatus.INACTIVE)
+        assert not_in_intermediate_state(await cls.get_status())
+
+        await cls.set_status(ServiceStatus.DEACTIVATING)
+
+        if cls.fail_on_stop:
+            await cls.set_status(ServiceStatus.FAILED)
+        else:
+            await cls.set_status(ServiceStatus.INACTIVE)
 
     @classmethod
+    @async_deferred
     async def start(cls):
-        cls.set_status(ServiceStatus.ACTIVATING)
-        cls.set_status(ServiceStatus.ACTIVE)
+        assert not_in_intermediate_state(await cls.get_status())
+
+        await cls.set_status(ServiceStatus.ACTIVATING)
+        await cls.set_status(ServiceStatus.ACTIVE)
 
     @classmethod
+    @async_deferred
     async def restart(cls):
-        await cls.stop()
-        await cls.start()
+        assert not_in_intermediate_state(await cls.get_status())
+
+        if await cls.get_status() is ServiceStatus.ACTIVE:
+            await cls.set_status(ServiceStatus.DEACTIVATING)
+            await cls.set_status(ServiceStatus.INACTIVE)
+
+        await cls.set_status(ServiceStatus.ACTIVATING)
+        await cls.set_status(ServiceStatus.ACTIVE)
 
     @classmethod
     def get_configuration(cls):
@@ -184,8 +160,7 @@ class DummyService(Service):
 
     @staticmethod
     async def get_storage_usage() -> int:
-        storage_usage = 0
-        return storage_usage
+        return 0
 
     @classmethod
     def get_drive(cls) -> str:
@@ -204,19 +179,7 @@ class DummyService(Service):
 
     @classmethod
     async def wait_for_statuses(cls, expected_statuses: list[ServiceStatus]):
-        if cls.state in expected_statuses:
-            return
-
-        waiters = [Waiter(cls.state, status) for status in expected_statuses]
-
-        futures = [w.future for w in waiters]
-
-        done, pending = await asyncio.wait(
-            futures,
-            return_when=asyncio.FIRST_COMPLETED,
-        )
-
-        for fut in pending:
-            fut.cancel()
-
-        return
+        async for state in cls.state_observable.subscribe():
+            print(state)
+            if state in expected_statuses:
+                return
