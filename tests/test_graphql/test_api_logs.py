@@ -96,6 +96,7 @@ async def test_graphql_get_logs_with_up_border(authorized_client):
 
     expected_entries = expected_entries[1:-1]
     returned_entries = response.json()["data"]["logs"]["paginated"]["entries"]
+
     assert len(returned_entries) == len(expected_entries)
 
     for api_entry, journal_entry in zip(returned_entries, expected_entries):

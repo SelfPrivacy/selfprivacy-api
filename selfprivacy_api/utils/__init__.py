@@ -293,7 +293,9 @@ def temporary_env_var(key, value):
         if old_value is not None:
             os.environ[key] = old_value
 
-T = TypeVar('T')
+
+T = TypeVar("T")
+
 
 def lazy_var(compute: Callable[[], T]) -> Callable[[], T]:
     computed = False

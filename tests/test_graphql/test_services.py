@@ -705,10 +705,9 @@ def test_move_empty(
     assert_ok(data)
     assert data["service"] is not None
 
-    # assert fp.call_count(rebuild_command) == 0
-    # assert fp.call_count(mount_command) == 0
-    # assert fp.call_count(unmount_command) == 0
-    # assert fp.call_count(chown_command) == 0
+    assert fp.call_count(mount_command) == 0
+    assert fp.call_count(unmount_command) == 0
+    assert fp.call_count(chown_command) == 0
 
 
 def test_graphql_move_service(
@@ -748,10 +747,9 @@ def test_graphql_move_service(
     assert_ok(data)
     assert data["service"] is not None
 
-    # assert fp.call_count(rebuild_command) == 1
-    # assert fp.call_count(mount_command) == 2
-    # assert fp.call_count(unmount_command) == 2
-    # assert fp.call_count(chown_command) == 2
+    assert fp.call_count(mount_command) == 2
+    assert fp.call_count(unmount_command) == 2
+    assert fp.call_count(chown_command) == 2
 
 
 @pytest.mark.asyncio

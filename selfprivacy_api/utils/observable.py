@@ -2,7 +2,8 @@ import asyncio
 
 from typing import AsyncGenerator, Generic, TypeVar
 
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 class Observable(Generic[T]):
     val: T

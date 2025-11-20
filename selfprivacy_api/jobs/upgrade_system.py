@@ -14,7 +14,6 @@ from selfprivacy_api.utils.systemd import (
     wait_for_unit_state,
     get_last_log_lines,
     ServiceStatus,
-    wait_for_unit_state,
 )
 
 
