@@ -432,7 +432,9 @@ def test_snapshots_empty(authorized_client, dummy_service, backups):
 
 
 @pytest.mark.asyncio
-async def test_snapshots_orphaned_service(authorized_client, only_dummy_service, backups):
+async def test_snapshots_orphaned_service(
+    authorized_client, only_dummy_service, backups
+):
     dummy_service = only_dummy_service
 
     api_backup(authorized_client, dummy_service)
