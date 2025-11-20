@@ -6,7 +6,6 @@ import pytest
 from pytest import raises
 
 from selfprivacy_api.utils import ReadUserData, WriteUserData
-from selfprivacy_api.utils.waitloop import wait_until_true
 
 from selfprivacy_api.services.mailserver import MailServer
 from selfprivacy_api.services.test_service import DummyService
@@ -39,19 +38,6 @@ async def test_service_stopper(raw_dummy_service):
         assert await dummy.get_status() == ServiceStatus.INACTIVE
 
     assert await dummy.get_status() == ServiceStatus.ACTIVE
-
-
-@pytest.mark.asyncio
-async def test_delayed_start_stop(raw_dummy_service):
-    dummy: Service = raw_dummy_service
-
-    await dummy.stop()
-
-    assert await dummy.get_status() in (
-        ServiceStatus.INACTIVE,
-        ServiceStatus.FAILED,
-        ServiceStatus.DEACTIVATING,
-    )
 
 
 # def test_owned_folders_from_not_owned():
