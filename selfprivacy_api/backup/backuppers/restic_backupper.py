@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+from functools import wraps
 import subprocess
 import json
 import datetime
 import tempfile
 import logging
 import os
+import inspect
+
 
 from typing import List, Optional, TypeVar, Callable
 from collections.abc import Iterable
@@ -33,20 +36,31 @@ logger = logging.getLogger(__name__)
 
 
 def unlocked_repo(func: T) -> T:
-    """unlock repo and retry if it appears to be locked"""
+    if inspect.iscoroutinefunction(func):
 
-    def inner(self: ResticBackupper, *args, **kwargs):
+        @wraps(func)
+        async def async_inner(self: "ResticBackupper", *args, **kwargs):
+            try:
+                return await func(self, *args, **kwargs)
+            except Exception as error:
+                if "unable to create lock" in str(error):
+                    self.unlock()
+                    return await func(self, *args, **kwargs)
+                raise
+
+        return async_inner
+
+    @wraps(func)
+    def sync_inner(self: "ResticBackupper", *args, **kwargs):
         try:
             return func(self, *args, **kwargs)
         except Exception as error:
             if "unable to create lock" in str(error):
                 self.unlock()
                 return func(self, *args, **kwargs)
-            else:
-                raise error
+            raise
 
-    # Above, we manually guarantee that the type returned is compatible.
-    return inner  # type: ignore
+    return sync_inner
 
 
 class ResticBackupper(AbstractBackupper):
