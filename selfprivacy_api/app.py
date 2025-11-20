@@ -65,12 +65,15 @@ async def graphql_context_getter():
         "otel_context": otel_context.get_current(),
     }
 
+
 if OTEL_ENABLED:
     resource = Resource.create(
         attributes={
             SERVICE_NAME: os.getenv("OTEL_SERVICE_NAME", "selfprivacy_api"),
             SERVICE_VERSION: get_api_version(),
-            SERVICE_INSTANCE_ID: os.getenv("OTEL_SERVICE_INSTANCE_ID", "unknown-instance"),
+            SERVICE_INSTANCE_ID: os.getenv(
+                "OTEL_SERVICE_INSTANCE_ID", "unknown-instance"
+            ),
         }
     )
 

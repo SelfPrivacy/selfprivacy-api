@@ -562,7 +562,7 @@ async def test_restore_snapshot_task(
         dummy_service.set_status(ServiceStatus.FAILED)
 
     if failed == "fail_to_stop":
-        dummy_service.simulate_fail_to_stop(True)
+        dummy_service.simulate_fail_on_stop(True)
 
     await Backups.back_up(dummy_service)
     snaps = Backups.get_snapshots(dummy_service)
