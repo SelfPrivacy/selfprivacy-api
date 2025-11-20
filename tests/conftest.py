@@ -18,6 +18,7 @@ from shutil import copyfile
 from selfprivacy_api.models.tokens.token import Token
 
 from selfprivacy_api.utils.huey import huey
+from selfprivacy_api.utils.observable import Observable
 
 import selfprivacy_api.services as services
 from selfprivacy_api.services import Service, ServiceStatus, ServiceManager
@@ -217,6 +218,9 @@ def raw_dummy_service(tmpdir) -> DummyService:
 
     class TestDummyService(DummyService, folders=service_dirs):
         pass
+
+    # NOTE(nhnn): We don't want to infer original object as we want separate state for each test.
+    TestDummyService.state_observable = Observable(ServiceStatus.ACTIVE)
 
     service = TestDummyService()
     write_testfile_bodies(service, bodies)

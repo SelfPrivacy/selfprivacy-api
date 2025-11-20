@@ -1,3 +1,4 @@
+import asyncio
 import pytest
 import shutil
 
@@ -397,22 +398,35 @@ def test_start_return_value(authorized_client, only_dummy_service):
     assert service["status"] == ServiceStatus.ACTIVE.value
 
 
-def test_restart(authorized_client, only_dummy_service):
+@pytest.mark.asyncio
+async def test_restart(authorized_client, only_dummy_service):
     dummy_service = only_dummy_service
     mutation_response = api_restart(authorized_client, dummy_service)
     data = get_data(mutation_response)["services"]["restartService"]
     assert_ok(data)
-    service = data["service"]
+
+    async with asyncio.timeout(1):
+        await dummy_service.wait_for_statuses([ServiceStatus.INACTIVE])
+
+    async with asyncio.timeout(1):
+        await dummy_service.wait_for_statuses([ServiceStatus.ACTIVE])
+
+    service = api_all_services(authorized_client)[0]
     assert service["id"] == dummy_service.get_id()
     assert service["status"] == ServiceStatus.ACTIVE.value
 
 
-def test_stop_return_value(authorized_client, only_dummy_service):
+@pytest.mark.asyncio
+async def test_stop_return_value(authorized_client, only_dummy_service):
     dummy_service = only_dummy_service
     mutation_response = api_stop(authorized_client, dummy_service)
     data = get_data(mutation_response)["services"]["stopService"]
     assert_ok(data)
-    service = data["service"]
+
+    async with asyncio.timeout(1):
+        await dummy_service.wait_for_statuses([ServiceStatus.INACTIVE])
+
+    service = api_all_services(authorized_client)[0]
     assert service["id"] == dummy_service.get_id()
     assert service["status"] == ServiceStatus.INACTIVE.value
 
@@ -506,7 +520,8 @@ def test_disable_nonexistent(authorized_client, only_dummy_service):
     assert data["service"] is None
 
 
-def test_stop_start(authorized_client, only_dummy_service):
+@pytest.mark.asyncio
+async def test_stop_start(authorized_client, only_dummy_service):
     dummy_service = only_dummy_service
 
     api_dummy_service = api_all_services(authorized_client)[0]
@@ -514,10 +529,14 @@ def test_stop_start(authorized_client, only_dummy_service):
 
     # attempting to start an already started service
     api_start(authorized_client, dummy_service)
+    async with asyncio.timeout(1):
+        await dummy_service.wait_for_statuses([ServiceStatus.ACTIVE])
     api_dummy_service = api_all_services(authorized_client)[0]
     assert api_dummy_service["status"] == ServiceStatus.ACTIVE.value
 
     api_stop(authorized_client, dummy_service)
+    async with asyncio.timeout(1):
+        await dummy_service.wait_for_statuses([ServiceStatus.INACTIVE])
     api_dummy_service = api_all_services(authorized_client)[0]
     assert api_dummy_service["status"] == ServiceStatus.INACTIVE.value
 
@@ -527,6 +546,8 @@ def test_stop_start(authorized_client, only_dummy_service):
     assert api_dummy_service["status"] == ServiceStatus.INACTIVE.value
 
     api_start(authorized_client, dummy_service)
+    async with asyncio.timeout(1):
+        await dummy_service.wait_for_statuses([ServiceStatus.ACTIVE])
     api_dummy_service = api_all_services(authorized_client)[0]
     assert api_dummy_service["status"] == ServiceStatus.ACTIVE.value
 
