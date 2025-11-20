@@ -2,7 +2,7 @@
 """Various utility functions"""
 import datetime
 from enum import Enum
-from typing import Callable
+from typing import Callable, TypeVar
 import json
 import os
 import subprocess
@@ -293,8 +293,9 @@ def temporary_env_var(key, value):
         if old_value is not None:
             os.environ[key] = old_value
 
+T = TypeVar('T')
 
-def lazy_var[T](compute: Callable[[], T]) -> Callable[[], T]:
+def lazy_var(compute: Callable[[], T]) -> Callable[[], T]:
     computed = False
     val = None
 
