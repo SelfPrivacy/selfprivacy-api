@@ -110,7 +110,7 @@ class DummyService(Service):
 
     @classmethod
     def set_simulated_moves(cls, enabled: bool) -> None:
-        """If True, th is service will not actually call moving code
+        """If True, this service will not actually call moving code
         when moved"""
         cls.simulate_moving = enabled
 
@@ -180,6 +180,5 @@ class DummyService(Service):
     @classmethod
     async def wait_for_statuses(cls, expected_statuses: list[ServiceStatus]):
         async for state in cls.state_observable.subscribe():
-            print(state)
             if state in expected_statuses:
                 return
