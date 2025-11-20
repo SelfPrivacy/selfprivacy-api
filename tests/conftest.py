@@ -271,6 +271,7 @@ async def dummy_service(
 
     assert (await ServiceManager.get_service_by_id(service.get_id())) is not None
     service.enable()
+
     yield service
 
     # Cleanup because apparently it matters wrt tasks
