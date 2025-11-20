@@ -1,9 +1,10 @@
 import asyncio
 
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Generic, TypeVar
 
+T = TypeVar('T')
 
-class Observable[T]:
+class Observable(Generic[T]):
     val: T
     listeners: list[asyncio.Queue[T]]
 
