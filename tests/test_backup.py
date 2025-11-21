@@ -559,7 +559,7 @@ async def test_restore_snapshot_task(
     backups, dummy_service, restore_strategy, simulated_service_stopping_delay, failed
 ):
     if failed == "failed":
-        dummy_service.set_status(ServiceStatus.FAILED)
+        await dummy_service.set_status(ServiceStatus.FAILED)
 
     if failed == "fail_to_stop":
         dummy_service.simulate_fail_on_stop(True)
