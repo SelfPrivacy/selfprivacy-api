@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  lint-test:
+  lint-format:
     runs-on:
       - x64
     steps:
@@ -18,6 +18,15 @@ jobs:
       - name: Run code formatting checks
         run: nix develop -L .#ci-black --command black --check .
 
+  tests-and-sonar:
+    runs-on:
+      - kvm
+    needs:
+      - lint-format
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Run tests and coverage
         run: nix flake check -L
 
@@ -28,5 +37,5 @@ jobs:
           sonar-scanner
           -Dsonar.projectKey=SelfPrivacy-REST-API
           -Dsonar.sources=.
-          -Dsonar.host.url=http://analyzer.lan:9000
+          -Dsonar.host.url=https://analyzer.selfprivacy.org
           -Dsonar.login="$SONARQUBE_TOKEN"
