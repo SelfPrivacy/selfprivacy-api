@@ -1,9 +1,8 @@
 """Actions to manage the system."""
 
-import os
 import subprocess
 import pytz
-from typing import Optional, List
+from typing import Optional
 from pydantic import BaseModel
 
 from selfprivacy_api.jobs import Job, JobStatus, Jobs
@@ -82,29 +81,6 @@ class ShellException(Exception):
     """Something went wrong when calling another process"""
 
     pass
-
-
-def run_blocking(cmd: List[str], new_session: bool = False) -> str:
-    """Run a process, block until done, return output, complain if failed"""
-    process_handle = subprocess.Popen(
-        cmd,
-        shell=False,
-        start_new_session=new_session,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    stdout_raw, stderr_raw = process_handle.communicate()
-    stdout = stdout_raw.decode("utf-8")
-    if stderr_raw is not None:
-        stderr = stderr_raw.decode("utf-8")
-    else:
-        stderr = ""
-    output = stdout + "\n" + stderr
-    if process_handle.returncode != 0:
-        raise ShellException(
-            f"Shell command failed, command array: {cmd}, output: {output}"
-        )
-    return stdout
 
 
 def add_rebuild_job() -> Job:
