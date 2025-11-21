@@ -298,6 +298,13 @@ T = TypeVar("T")
 
 
 def lazy_var(compute: Callable[[], T]) -> Callable[[], T]:
+    """
+    A function that allows to create lazily-computed value.
+    Useful for initialization of values that depend on
+    global context (for example asyncio event loop) and
+    cannot be initialized as plain global variables.
+    """
+
     computed = False
     val = None
 

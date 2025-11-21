@@ -6,6 +6,12 @@ T = TypeVar("T")
 
 
 class Observable(Generic[T]):
+    """
+    Container that holds one value at a time
+    and allows subscribing to new values as
+    they arrive in the future.
+    """
+
     val: T
     listeners: list[asyncio.Queue[T]]
 

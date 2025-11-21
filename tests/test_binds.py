@@ -8,7 +8,6 @@ from tests.test_graphql.test_services import mock_lsblk_devices
 
 from selfprivacy_api.services.owned_path import Bind, BindError
 from selfprivacy_api.utils.block_devices import BlockDevices
-from selfprivacy_api.utils.waitloop import wait_until_true
 
 
 BINDTESTS_USER = "binduser"

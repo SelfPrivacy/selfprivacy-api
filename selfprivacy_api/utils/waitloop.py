@@ -1,7 +1,5 @@
-import asyncio
-import time
 from time import sleep
-from typing import Callable, Awaitable, Any, Optional
+from typing import Callable, Any, Optional
 
 MAX_TIMEOUT = 10e16
 DEFAULT_INTERVAL_SEC = 0.1
