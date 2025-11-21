@@ -146,7 +146,7 @@
             name = "SP API dev shell";
             packages = with pkgs; [
               bandit
-              python-env
+              (mkPythonEnv system)
             ];
             shellHook = ''
               export TEST_MODE="true"
@@ -156,7 +156,7 @@
             name = "SP API dev shell";
             packages = with pkgs; [
               black
-              python-env
+              (mkPythonEnv system)
             ];
             shellHook = ''
               export TEST_MODE="true"
@@ -171,9 +171,10 @@
           pkgs = nixpkgs.legacyPackages.${system};
         in
         {
-          fmt-check = pkgs.runCommandLocal "sp-api-fmt-check" {
-            nativeBuildInputs = [ pkgs.black ];
-          } "black --check ${self.outPath} > $out";
+          fmt-check = pkgs.runCommandLocal "sp-api-fmt-check"
+            {
+              nativeBuildInputs = [ pkgs.black ];
+            } "black --check ${self.outPath} > $out";
           default = pkgs.testers.runNixOSTest {
             name = "default";
             nodes.machine =

@@ -41,7 +41,7 @@ pythonPackages.buildPythonPackage {
     opentelemetry-instrumentation-requests
     opentelemetry-instrumentation-httpx
     opentelemetry-instrumentation-redis
-    (callPackage ./nixos/packages/opentelemetry-instrumentation-threading {})
+    (callPackage ./nixos/packages/opentelemetry-instrumentation-threading { })
     # opentelemetry-instrumentation-jinja2
     opentelemetry-instrumentation
   ] ++ strawberry-graphql.optional-dependencies.opentelemetry);

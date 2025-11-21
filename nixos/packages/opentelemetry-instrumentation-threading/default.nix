@@ -1,18 +1,15 @@
-{
-  buildPythonPackage,
-  pythonOlder,
-
-  # build-system
-  hatchling,
-
-  # dependencies
-  opentelemetry-api,
-  opentelemetry-instrumentation,
-  wrapt,
-
-  # tests
-  opentelemetry-test-utils,
-  pytestCheckHook,
+{ buildPythonPackage
+, pythonOlder
+, # build-system
+  hatchling
+, # dependencies
+  opentelemetry-api
+, opentelemetry-instrumentation
+, wrapt
+, # tests
+  opentelemetry-test-utils
+, pytestCheckHook
+,
 }:
 
 buildPythonPackage {
