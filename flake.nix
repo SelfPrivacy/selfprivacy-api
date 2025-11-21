@@ -142,6 +142,26 @@
               printf "%s" "${shellMOTD}"
             '';
           };
+          ci-bandit = pkgs.mkShellNoCC {
+            name = "SP API dev shell";
+            packages = with pkgs; [
+              bandit
+              python-env
+            ];
+            shellHook = ''
+              export TEST_MODE="true"
+            '';
+          };
+          ci-black = pkgs.mkShellNoCC {
+            name = "SP API dev shell";
+            packages = with pkgs; [
+              black
+              python-env
+            ];
+            shellHook = ''
+              export TEST_MODE="true"
+            '';
+          };
         }
       );
 

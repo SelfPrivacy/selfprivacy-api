@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lint-test:
+    runs-on:
+      - x64
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Bandit checks
+        run: nix develop -L .#ci-bandit --command bandit -ll -r selfprivacy_api
+
+      - name: Run code formatting checks
+        run: nix develop -L .#ci-black --command black --check .
+
+      - name: Run tests and coverage
+        run: nix flake check -L
+
+      - name: Upload results to SonarQube
+        env:
+          SONARQUBE_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
+        run: >-
+          sonar-scanner
+          -Dsonar.projectKey=SelfPrivacy-REST-API
+          -Dsonar.sources=.
+          -Dsonar.host.url=http://analyzer.lan:9000
+          -Dsonar.login="$SONARQUBE_TOKEN"

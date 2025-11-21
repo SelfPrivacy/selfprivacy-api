@@ -3,14 +3,6 @@ type: exec
 name: default
 
 steps:
-- name: Run Tests and Generate Coverage Report
-  commands:
-  - nix flake check -L
-  - sonar-scanner -Dsonar.projectKey=SelfPrivacy-REST-API -Dsonar.sources=. -Dsonar.host.url=http://analyzer.lan:9000 -Dsonar.login="$SONARQUBE_TOKEN"
-  environment:
-    SONARQUBE_TOKEN:
-      from_secret: SONARQUBE_TOKEN
-
 
 - name: Run Bandit Checks
   commands:
@@ -19,6 +11,14 @@ steps:
 - name: Run Code Formatting Checks
   commands:
   - black --check .
+
+- name: Run Tests and Generate Coverage Report
+  commands:
+  - nix flake check -L
+  - sonar-scanner -Dsonar.projectKey=SelfPrivacy-REST-API -Dsonar.sources=. -Dsonar.host.url=http://analyzer.lan:9000 -Dsonar.login="$SONARQUBE_TOKEN"
+  environment:
+    SONARQUBE_TOKEN:
+      from_secret: SONARQUBE_TOKEN
 
 node:
   server: builder
