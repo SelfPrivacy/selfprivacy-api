@@ -34,12 +34,12 @@ jobs:
 
       - name: Upload results to SonarQube
         env:
-          SONARQUBE_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
         run: >-
-          sonar-scanner
+          nix develop -L .#ci-sonar --command sonar-scanner
           -Dsonar.projectKey=SelfPrivacy-REST-API
           -Dsonar.sources=.
           -Dsonar.host.url=https://analyzer.selfprivacy.org
-          -Dsonar.login="$SONARQUBE_TOKEN"
+          -Dsonar.token="$SONAR_TOKEN"
           -Dsonar.python.coverage.reportPaths=coverage.xml
           -Dsonar.python.version="3.12, 3.13"

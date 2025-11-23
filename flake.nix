@@ -162,6 +162,16 @@
               export TEST_MODE="true"
             '';
           };
+          ci-sonar = pkgs.mkShellNoCC {
+            name = "SP API sonar shell";
+            packages = with pkgs; [
+              sonar-scanner-cli
+              jdk17
+            ];
+            shellHook = ''
+              export SONAR_SCANNER_JAVA_PATH="${pkgs.jdk17}/bin/java"
+            '';
+          };
         }
       );
 
