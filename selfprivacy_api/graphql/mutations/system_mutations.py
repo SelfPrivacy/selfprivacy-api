@@ -174,8 +174,8 @@ class SystemMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def run_system_rollback(self) -> GenericMutationReturn:
         with tracer.start_as_current_span("run_system_rollback"):
-            await system_actions.rollback_system()
             try:
+                await system_actions.rollback_system()
                 return GenericMutationReturn(
                     success=True,
                     message="Starting system rollback",
