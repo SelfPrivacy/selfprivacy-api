@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  lint-test:
+  lint-format:
     runs-on:
       - x64
     steps:
@@ -18,15 +18,28 @@ jobs:
       - name: Run code formatting checks
         run: nix develop -L .#ci-black --command black --check .
 
+  tests-and-sonar:
+    runs-on:
+      - kvm
+    needs:
+      - lint-format
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Run tests and coverage
-        run: nix flake check -L
+        run: |
+          nix build -L .#checks.x86_64-linux.default
+          cp result/coverage.xml/coverage.xml coverage.xml
 
       - name: Upload results to SonarQube
         env:
-          SONARQUBE_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
         run: >-
-          sonar-scanner
+          nix develop -L .#ci-sonar --command sonar-scanner
           -Dsonar.projectKey=SelfPrivacy-REST-API
           -Dsonar.sources=.
-          -Dsonar.host.url=http://analyzer.lan:9000
-          -Dsonar.login="$SONARQUBE_TOKEN"
+          -Dsonar.host.url=https://analyzer.selfprivacy.org
+          -Dsonar.token="$SONAR_TOKEN"
+          -Dsonar.python.coverage.reportPaths=coverage.xml
+          -Dsonar.python.version="3.12, 3.13"

@@ -1,2 +1,7 @@
 [run]
 source = selfprivacy_api
+relative_files = True
+
+[paths]
+source =
+	selfprivacy_api
