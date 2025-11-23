@@ -166,11 +166,7 @@
             name = "SP API sonar shell";
             packages = with pkgs; [
               sonar-scanner-cli
-              jre17_minimal
             ];
-            shellHook = ''
-              export SONAR_SCANNER_JAVA_PATH="${pkgs.jre17_minimal}/bin/java"
-            '';
           };
         }
       );
