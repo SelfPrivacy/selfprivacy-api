@@ -17,3 +17,20 @@ def test_set_dns(generic_userdata):
     set_dns_provider(provider, token)
 
     assert_provider(provider.value, token)
+
+
+# uname is just an arbitrary command expected to be everywhere we care
+def test_uname():
+    output = run_blocking(["uname"])
+    assert output is not None
+
+
+def test_uname_new_session():
+    output = run_blocking(["uname"], new_session=True)
+    assert output is not None
+
+
+def test_uname_nonexistent_args():
+    with pytest.raises(ShellException) as exc:
+        run_blocking(["uname", "isdyfhishfaisljhkeysmash"], new_session=True)
+    assert "extra operand" in (exc.value.output or "").lower()

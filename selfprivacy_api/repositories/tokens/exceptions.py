@@ -1,14 +1,29 @@
+import gettext
+
+from selfprivacy_api.utils.localization import TranslateSystemMessage as t
+
+_ = gettext.gettext
+
+
 class TokenNotFound(Exception):
-    """Token not found!"""
+    @staticmethod
+    def get_error_message(locale: str) -> str:
+        return t.translate(text=_("Token not found"), locale=locale)
 
 
 class RecoveryKeyNotFound(Exception):
-    """Recovery key not found!"""
+    @staticmethod
+    def get_error_message(locale: str) -> str:
+        return t.translate(text=_("Recovery key not found"), locale=locale)
 
 
 class InvalidMnemonic(Exception):
-    """Phrase is not mnemonic!"""
+    @staticmethod
+    def get_error_message(locale: str) -> str:
+        return t.translate(text=_("Phrase is not mnemonic"), locale=locale)
 
 
 class NewDeviceKeyNotFound(Exception):
-    """New device key not found!"""
+    @staticmethod
+    def get_error_message(locale: str) -> str:
+        return t.translate(text=_("New device key not found"), locale=locale)

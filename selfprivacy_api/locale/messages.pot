@@ -1,0 +1,663 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-10-19 12:41+0400\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: selfprivacy_api/utils/strings.py:6
+msgid ""
+"Your SelfPrivacy app is out of date, please update it to use new features."
+msgstr ""
+
+#: selfprivacy_api/repositories/users/exceptions.py:13
+msgid "User not found"
+msgstr ""
+
+#: selfprivacy_api/repositories/users/exceptions.py:21
+msgid "User or group not found"
+msgstr ""
+
+#: selfprivacy_api/repositories/users/exceptions.py:30
+msgid "User is protected and cannot be deleted or modified"
+msgstr ""
+
+#: selfprivacy_api/repositories/users/exceptions.py:39
+msgid "Username is forbidden"
+msgstr ""
+
+#: selfprivacy_api/repositories/users/exceptions.py:47
+msgid "User already exists"
+msgstr ""
+
+#: selfprivacy_api/repositories/users/exceptions.py:56
+msgid "Username must be alphanumeric and start with a letter"
+msgstr ""
+
+#: selfprivacy_api/repositories/users/exceptions.py:67
+msgid "Username is too long. Must be less than 32 characters"
+msgstr ""
+
+#: selfprivacy_api/repositories/users/exceptions.py:77
+msgid "Password cannot be empty"
+msgstr ""
+
+#: selfprivacy_api/repositories/users/exceptions.py:86
+msgid "Invalid configuration, userdata is broken"
+msgstr ""
+
+#: selfprivacy_api/repositories/users/exceptions.py:96
+msgid "The Kanidm response does not contain a password reset link."
+msgstr ""
+
+#: selfprivacy_api/repositories/users/exceptions.py:107
+msgid "Display name is too long. Must be less than 16 characters"
+msgstr ""
+
+#: selfprivacy_api/repositories/users/exceptions_kanidm.py:26
+msgid "An error occurred during the Kanidm query."
+msgstr ""
+
+#: selfprivacy_api/repositories/users/exceptions_kanidm.py:29
+#, python-format
+msgid " Method: %(method)s"
+msgstr ""
+
+#: selfprivacy_api/repositories/users/exceptions_kanidm.py:33
+#, python-format
+msgid " Endpoint: %(endpoint)s"
+msgstr ""
+
+#: selfprivacy_api/repositories/users/exceptions_kanidm.py:37
+#, python-format
+msgid " Error: %(error)s"
+msgstr ""
+
+#: selfprivacy_api/repositories/users/exceptions_kanidm.py:48
+msgid "Kanidm returned an empty response."
+msgstr ""
+
+#: selfprivacy_api/repositories/users/exceptions_kanidm.py:60
+#, python-format
+msgid "Kanidm returned unknown type response. Response: %(response)s"
+msgstr ""
+
+#: selfprivacy_api/repositories/users/exceptions_kanidm.py:66
+msgid "Kanidm returned unknown type response."
+msgstr ""
+
+#: selfprivacy_api/repositories/users/exceptions_kanidm.py:77
+msgid "Kanidm didn't return the admin password."
+msgstr ""
+
+#: selfprivacy_api/repositories/users/exceptions_kanidm.py:89
+#, python-format
+msgid "An error occurred when using Kanidm CLI. Error: %(error)s"
+msgstr ""
+
+#: selfprivacy_api/repositories/users/exceptions_kanidm.py:94
+msgid "An error occurred when using Kanidm cli"
+msgstr ""
+
+#: selfprivacy_api/repositories/users/exceptions_kanidm.py:105
+msgid "Failed to get valid Kanidm token."
+msgstr ""
+
+#: selfprivacy_api/repositories/tokens/exceptions.py:11
+msgid "Token not found"
+msgstr ""
+
+#: selfprivacy_api/repositories/tokens/exceptions.py:17
+msgid "Recovery key not found"
+msgstr ""
+
+#: selfprivacy_api/repositories/tokens/exceptions.py:23
+msgid "Phrase is not mnemonic"
+msgstr ""
+
+#: selfprivacy_api/repositories/tokens/exceptions.py:29
+msgid "New device key not found"
+msgstr ""
+
+#: selfprivacy_api/actions/ssh.py:30
+msgid "Key not found"
+msgstr ""
+
+#: selfprivacy_api/actions/ssh.py:38
+msgid "Key already exists"
+msgstr ""
+
+#: selfprivacy_api/actions/ssh.py:48
+msgid "Invalid key type. Only ssh-ed25519, ssh-rsa and ecdsa are supported"
+msgstr ""
+
+#: selfprivacy_api/actions/users.py:50
+msgid "API is using a too old or unfinished user repository"
+msgstr ""
+
+#: selfprivacy_api/actions/api_tokens.py:67
+msgid "Cannot delete caller's token"
+msgstr ""
+
+#: selfprivacy_api/actions/api_tokens.py:126
+msgid "Expiration date is in the past"
+msgstr ""
+
+#: selfprivacy_api/actions/api_tokens.py:132
+msgid "Uses must be greater than 0"
+msgstr ""
+
+#: selfprivacy_api/actions/services.py:18
+#, python-format
+msgid "No such service: %(service_id)s"
+msgstr ""
+
+#: selfprivacy_api/actions/services.py:28
+#, python-format
+msgid "No such volume: %(volume_name)s"
+msgstr ""
+
+#: selfprivacy_api/actions/services.py:46
+#, python-format
+msgid "Move %(service)s"
+msgstr ""
+
+#: selfprivacy_api/actions/services.py:47
+#, python-format
+msgid "Moving %(service)s data to %(volume)s"
+msgstr ""
+
+#: selfprivacy_api/actions/system.py:91
+msgid "Shell command failed"
+msgstr ""
+
+#: selfprivacy_api/actions/system.py:95
+#, python-format
+msgid ", command array: %(cmd)s"
+msgstr ""
+
+#: selfprivacy_api/actions/system.py:99
+#, python-format
+msgid ", output: %(out)s"
+msgstr ""
+
+#: selfprivacy_api/actions/system.py:130
+msgid "Rebuild system"
+msgstr ""
+
+#: selfprivacy_api/actions/system.py:132
+msgid ""
+"Applying the new system configuration by building the new NixOS generation."
+msgstr ""
+
+#: selfprivacy_api/actions/system.py:155
+msgid "Upgrade system"
+msgstr ""
+
+#: selfprivacy_api/actions/system.py:156
+msgid "Upgrading the system to the latest version."
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/job_mutations.py:33
+msgid "Job removed"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/job_mutations.py:38
+msgid "Job not found"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/api_mutations.py:103
+msgid "Recovery key generated"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/api_mutations.py:119
+msgid "Recovery key used"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/api_mutations.py:153
+msgid "Token refreshed"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/api_mutations.py:197
+msgid "Token deleted"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/api_mutations.py:209
+msgid "Device api key generated"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/api_mutations.py:222
+msgid "New device key deleted"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/api_mutations.py:243
+msgid "Token used"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:47
+msgid "Restore job created"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:48
+msgid "Nonexistent service:"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:49
+msgid "Snapshot not found with id:"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:146
+msgid "Trimming autobackup snapshots"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:150
+msgid "Pruning the excessive snapshots after the new autobackup quotas are set"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:195
+msgid "Backup job queued"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:216
+msgid "Total backup task queued"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/email_passwords_metadata_mutations.py:40
+msgid "Password deleted successfully"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/system_mutations.py:100
+msgid "Timezone changed"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/system_mutations.py:120
+msgid "Auto-upgrade settings changed"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/system_mutations.py:141
+msgid "SSH settings changed"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/system_mutations.py:154
+msgid "Starting system rebuild"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/system_mutations.py:172
+msgid "Starting system rollback"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/system_mutations.py:189
+msgid "Starting system upgrade"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/system_mutations.py:207
+msgid "System reboot has started"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/system_mutations.py:223
+msgid "There is no repository to pull changes from."
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/system_mutations.py:236
+msgid "Garbage collector started..."
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/system_mutations.py:250
+msgid "Provider set"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/users_mutations.py:60
+msgid ""
+"New password applied an an email password. To use Single Sign On, please "
+"update the SelfPrivacy app."
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/users_mutations.py:147
+msgid "User created"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/users_mutations.py:184
+msgid "User deleted"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/users_mutations.py:230
+msgid "User updated"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/users_mutations.py:267
+msgid "New SSH key successfully written"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/users_mutations.py:296
+msgid "SSH key successfully removed"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/users_mutations.py:339
+msgid "Link successfully created"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:27
+msgid "Volume not found"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:59
+msgid "Volume resize started"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:80
+msgid "Volume mounted, rebuild the system to apply changes"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:88
+msgid "Volume not mounted (already mounted?)"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:110
+msgid "Volume unmounted, rebuild the system to apply changes"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:118
+msgid "Volume not unmounted (already unmounted?)"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:133
+msgid "Already migrated to binds"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:149
+msgid "Migration to binds started, rebuild the system to apply changes"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/services_mutations.py:39
+msgid "Service not found"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/services_mutations.py:136
+msgid "Service enabled."
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/services_mutations.py:163
+msgid "Service disabled."
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/services_mutations.py:183
+msgid "Service stopped."
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/services_mutations.py:203
+msgid "Service started."
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/services_mutations.py:223
+msgid "Service restarted."
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/services_mutations.py:240
+#: selfprivacy_api/graphql/mutations/services_mutations.py:283
+#, python-format
+msgid "Service does not exist: %(service_id)s"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/services_mutations.py:251
+msgid "Service configuration updated."
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/services_mutations.py:311
+msgid "Started moving the service."
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/services_mutations.py:320
+msgid "Service moved."
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/services_mutations.py:330
+#, python-format
+msgid ""
+"While moving service and performing the step '%(status_text)s', an error "
+"occurred: %(error)s"
+msgstr ""
+
+#: selfprivacy_api/graphql/queries/monitoring.py:20
+msgid "Prometheus is not running"
+msgstr ""
+
+#: selfprivacy_api/jobs/upgrade_system.py:47
+msgid "System rebuilt."
+msgstr ""
+
+#: selfprivacy_api/jobs/upgrade_system.py:56
+msgid "System rebuild failed. Last log lines:\n"
+msgstr ""
+
+#: selfprivacy_api/jobs/upgrade_system.py:92
+msgid "Starting the system rebuild..."
+msgstr ""
+
+#: selfprivacy_api/jobs/upgrade_system.py:106
+#: selfprivacy_api/jobs/upgrade_system.py:127
+msgid "System rebuild timed out. Last log lines:\n"
+msgstr ""
+
+#: selfprivacy_api/jobs/upgrade_system.py:113
+msgid "Rebuilding the system..."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:105
+msgid "Migration already done."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:113
+msgid "Checking if services are present."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:125
+msgid "Nextcloud service not found."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:133
+msgid "Bitwarden service not found."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:141
+msgid "Gitea service not found."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:149
+msgid "Pleroma service not found."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:157
+msgid "Checking if all volumes are available."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:175
+#: selfprivacy_api/jobs/migrate_to_binds.py:192
+#, python-format
+msgid "Block device %(block_device_name)s not found."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:200
+#, python-format
+msgid "Block device %(block_device_name)s not mounted."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:212
+msgid "Activating binds in NixOS config."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:222
+msgid "Migrating Nextcloud."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:248
+msgid "Migrating Bitwarden."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:284
+msgid "Migrating Gitea."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:306
+msgid "Migrating Mail server."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:337
+msgid "Migrating Pleroma."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:370
+#: selfprivacy_api/jobs/migrate_to_binds.py:371
+msgid "Migration finished."
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:379
+msgid "Migrate to binds"
+msgstr ""
+
+#: selfprivacy_api/jobs/migrate_to_binds.py:380
+msgid "Migration required to use the new disk space management."
+msgstr ""
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:24
+msgid "Shell-related error"
+msgstr ""
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:28
+msgid "Error occurred, please report this to the support chat."
+msgstr ""
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:30
+msgid ""
+"We are sorry, garbage collection result was not found. Nix returned "
+"gibberish output, please report this to the support chat."
+msgstr ""
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:33
+msgid "Garbage collection completed."
+msgstr ""
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:80
+#, python-format
+msgid "%(matched)s have been cleared"
+msgstr ""
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:101
+msgid "Cleaning..."
+msgstr ""
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:123
+msgid "Calculate the number of dead packages..."
+msgstr ""
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:134
+msgid "Nothing to clear"
+msgstr ""
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:135
+msgid "System is clear"
+msgstr ""
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:143
+#, python-format
+msgid "Found %(dead_packages)s packages to remove!"
+msgstr ""
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:162
+msgid "Collect garbage"
+msgstr ""
+
+#: selfprivacy_api/jobs/nix_collect_garbage.py:163
+msgid "Cleaning up unused packages"
+msgstr ""
+
+#: selfprivacy_api/models/services.py:89
+msgid "No description found!"
+msgstr ""
+
+#: selfprivacy_api/models/services.py:96
+msgid "No backup description found!"
+msgstr ""
+
+#: selfprivacy_api/backup/jobs.py:52
+msgid "Automatic backup"
+msgstr ""
+
+#: selfprivacy_api/backup/jobs.py:53
+#, python-format
+msgid "Scheduled backup for services: %(pretty_service_list)s"
+msgstr ""
+
+#: selfprivacy_api/backup/jobs.py:62
+#, python-format
+msgid ""
+"Cannot start a backup of %(service_id)s, another operation is running: "
+"%(op_type)s"
+msgstr ""
+
+#: selfprivacy_api/backup/jobs.py:71
+#, python-format
+msgid "Backup %(display_name)s"
+msgstr ""
+
+#: selfprivacy_api/backup/jobs.py:72
+#, python-format
+msgid "Backing up %(display_name)s"
+msgstr ""
+
+#: selfprivacy_api/backup/jobs.py:79
+#, python-format
+msgid ""
+"Cannot start a restore of %(service_id)s, another operation is running: "
+"%(op_type)s"
+msgstr ""
+
+#: selfprivacy_api/backup/jobs.py:93
+msgid "Total restore"
+msgstr ""
+
+#: selfprivacy_api/backup/jobs.py:94
+msgid "Restoring all enabled services"
+msgstr ""
+
+#: selfprivacy_api/backup/jobs.py:114
+msgid "Total backup"
+msgstr ""
+
+#: selfprivacy_api/backup/jobs.py:115
+msgid "Backing up all the enabled services"
+msgstr ""
+
+#: selfprivacy_api/backup/jobs.py:129
+#, python-format
+msgid "Restore %(display_name)s"
+msgstr ""
+
+#: selfprivacy_api/backup/jobs.py:130
+#, python-format
+msgid "Restoring %(display_name)s from %(snapshot_id)s"
+msgstr ""
+
+#: selfprivacy_api/backup/tasks.py:212
+msgid "Finding the last autobackup session"
+msgstr ""
+
+#: selfprivacy_api/backup/tasks.py:231
+#, python-format
+msgid "restoring %(service_name)s"
+msgstr ""
+
+#: selfprivacy_api/backup/tasks.py:236
+msgid "rebuilding system"
+msgstr ""

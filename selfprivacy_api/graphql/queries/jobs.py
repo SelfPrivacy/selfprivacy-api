@@ -2,6 +2,8 @@
 
 # pylint: disable=too-few-public-methods
 import strawberry
+from strawberry.types import Info
+
 from typing import List, Optional
 from opentelemetry import trace
 
@@ -11,6 +13,34 @@ from selfprivacy_api.graphql.common_types.jobs import (
     get_api_job_by_id,
     job_to_api_job,
 )
+from selfprivacy_api.utils.localization import TranslateSystemMessage as t
+
+
+def translate_job(job: ApiJob, locale: str) -> ApiJob:
+    def _tr_opt(text: Optional[str], locale: str) -> Optional[str]:
+        if text is None:
+            return None
+        # I did this only to maintain compatibility.
+        # Why do we return empty strings instead of None at all?
+        if text == "":
+            return ""
+        return t.translate(text=text, locale=locale)
+
+    return ApiJob(
+        uid=job.uid,
+        type_id=job.type_id,
+        name=t.translate(text=job.name, locale=locale),
+        description=t.translate(text=job.description, locale=locale),
+        status=job.status,
+        status_text=_tr_opt(job.status_text, locale),
+        progress=job.progress,
+        created_at=job.created_at,
+        updated_at=job.updated_at,
+        finished_at=job.finished_at,
+        error=_tr_opt(job.error, locale),
+        result=_tr_opt(job.result, locale),
+    )
+
 
 tracer = trace.get_tracer(__name__)
 
@@ -25,10 +55,19 @@ async def get_all_jobs() -> List[ApiJob]:
 
 @strawberry.type
 class Job:
-    @strawberry.field
-    async def get_jobs(self) -> List[ApiJob]:
-        return await get_all_jobs()
+    async def get_jobs(self, info: Info) -> List[ApiJob]:
+        locale = info.context["locale"]
+
+        all_jobs = await get_all_jobs()
+        translated_jobs = []
+        for job in all_jobs:
+            translated_jobs.append(translate_job(job=job, locale=locale))
+        return translated_jobs
 
     @strawberry.field
-    async def get_job(self, job_id: str) -> Optional[ApiJob]:
-        return await get_api_job_by_id(job_id)
+    async def get_job(self, job_id: str, info: Info) -> Optional[ApiJob]:
+        locale = info.context["locale"]
+
+        job = await get_api_job_by_id(job_id)
+        if job:
+            return translate_job(job=job, locale=locale)

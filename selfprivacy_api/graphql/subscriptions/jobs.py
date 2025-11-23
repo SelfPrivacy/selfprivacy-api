@@ -7,8 +7,11 @@ from selfprivacy_api.jobs import job_notifications
 from selfprivacy_api.graphql.common_types.jobs import ApiJob
 from selfprivacy_api.graphql.queries.jobs import get_all_jobs
 
+from selfprivacy_api.graphql.queries.jobs import translate_job
 
-async def job_updates() -> AsyncGenerator[List[ApiJob], None]:
+
+async def job_updates(locale: str) -> AsyncGenerator[List[ApiJob], None]:
     # Send the complete list of jobs every time anything gets updated
-    async for notification in job_notifications():
-        yield await get_all_jobs()
+    async for _ in job_notifications():
+        jobs = await get_all_jobs()
+        yield [translate_job(job=j, locale=locale) for j in jobs]

@@ -26,7 +26,7 @@ class AbstractTokensRepository(ABC):
             if token.token == token_string:
                 return token
 
-        raise TokenNotFound("Token not found!")
+        raise TokenNotFound()
 
     def get_token_by_name(self, token_name: str) -> Token:
         """Get the token by name"""
@@ -35,7 +35,7 @@ class AbstractTokensRepository(ABC):
             if token.device_name == token_name:
                 return token
 
-        raise TokenNotFound("Token not found!")
+        raise TokenNotFound()
 
     @abstractmethod
     def get_tokens(self) -> list[Token]:
@@ -64,7 +64,7 @@ class AbstractTokensRepository(ABC):
             self._store_token(new_token)
             return new_token
 
-        raise TokenNotFound("Token not found!")
+        raise TokenNotFound()
 
     def is_token_valid(self, token_string: str) -> bool:
         """Check if the token is valid"""
@@ -103,16 +103,16 @@ class AbstractTokensRepository(ABC):
     ) -> Token:
         """Use the mnemonic recovery key and create a new token with the given name"""
         if not self.is_recovery_key_valid():
-            raise RecoveryKeyNotFound("Recovery key not found")
+            raise RecoveryKeyNotFound()
 
         recovery_key = self.get_recovery_key()
 
         if recovery_key is None:
-            raise RecoveryKeyNotFound("Recovery key not found")
+            raise RecoveryKeyNotFound()
 
         recovery_hex_key = recovery_key.key
         if not self._assert_mnemonic(recovery_hex_key, mnemonic_phrase):
-            raise RecoveryKeyNotFound("Recovery key not found")
+            raise RecoveryKeyNotFound()
 
         new_token = self.create_token(device_name=device_name)
 
@@ -161,7 +161,7 @@ class AbstractTokensRepository(ABC):
             raise NewDeviceKeyNotFound
 
         if not self._assert_mnemonic(new_device_key.key, mnemonic_phrase):
-            raise NewDeviceKeyNotFound("Phrase is not token!")
+            raise InvalidMnemonic()
 
         new_token = self.create_token(device_name=device_name)
         self.delete_new_device_key()
@@ -219,7 +219,7 @@ class AbstractTokensRepository(ABC):
         Raise an InvalidMnemonic error if not mnemonic"""
         recovery_token = bytes.fromhex(hex_key)
         if not Mnemonic(language="english").check(mnemonic_phrase):
-            raise InvalidMnemonic("Phrase is not mnemonic!")
+            raise InvalidMnemonic()
 
         phrase_bytes = Mnemonic(language="english").to_entropy(mnemonic_phrase)
         return phrase_bytes == recovery_token

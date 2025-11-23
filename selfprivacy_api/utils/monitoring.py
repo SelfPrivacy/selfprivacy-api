@@ -4,7 +4,6 @@
 import httpx
 from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 
-
 import strawberry
 
 from dataclasses import dataclass

@@ -90,3 +90,53 @@ Nix code for NixOS service module for API is located in NixOS configuration repo
 ## Troubleshooting
 
 Sometimes commands inside `nix develop` refuse to work properly if the calling shell lacks `LANG` environment variable. Try to set it before entering `nix develop`.
+
+## How to add translations
+
+## Mark strings for translation
+
+```
+import gettext
+
+_ = gettext.gettext
+
+text = _("Service not found")
+
+```
+
+## Translate at runtime
+
+```
+from selfprivacy_api.utils.localization import TranslateSystemMessage as t
+
+print(t.translate(text=text, locale="au"))
+```
+
+## Extract strings into a .pot file
+
+1. Add your files to gettext_extract.sh
+
+2. Run gettext_extract.sh
+
+## Create or update a language (.po .mo)
+
+Create .po
+```
+msginit \
+  --locale=ru_RU \
+  --input=selfprivacy_api/locale/messages.pot \
+  --output-file=selfprivacy_api/locale/ru/LC_MESSAGES/messages.po
+```
+
+Ensure UTF-8 encoding for the .po
+```
+iconv -f ISO-8859-5 -t UTF-8 \
+  selfprivacy_api/locale/ru/LC_MESSAGES/messages.po \
+  -o selfprivacy_api/locale/ru/LC_MESSAGES/messages.utf8.po && \
+mv selfprivacy_api/locale/ru/LC_MESSAGES/messages.utf8.po selfprivacy_api/locale/ru/LC_MESSAGES/messages.po
+```
+
+Compile .mo
+```
+msgfmt -o selfprivacy_api/locale/ru/LC_MESSAGES/messages.mo selfprivacy_api/locale/ru/LC_MESSAGES/messages.po
+```

@@ -5,9 +5,12 @@ status accordingly.
 """
 
 import asyncio
+import gettext
+
 from systemd import journal
-from selfprivacy_api.utils.huey import huey, huey_async_helper
+
 from selfprivacy_api.jobs import JobStatus, Jobs, Job
+from selfprivacy_api.utils.huey import huey, huey_async_helper
 from selfprivacy_api.utils.systemd import (
     start_unit,
     get_service_status,
@@ -16,6 +19,7 @@ from selfprivacy_api.utils.systemd import (
     ServiceStatus,
 )
 
+_ = gettext.gettext
 
 START_TIMEOUT = 60 * 5
 RUN_TIMEOUT = 60 * 60
@@ -67,7 +71,7 @@ async def rebuild_system(job: Job, upgrade: bool = False):
         Jobs.update(
             job=job,
             status=JobStatus.RUNNING,
-            status_text="Starting the system rebuild...",
+            status_text=_("Starting the system rebuild..."),
         )
         # Wait for the systemd unit to start
         try:
@@ -78,14 +82,14 @@ async def rebuild_system(job: Job, upgrade: bool = False):
             Jobs.update(
                 job=job,
                 status=JobStatus.ERROR,
-                error="System rebuild timed out. Last log lines:\n"
+                error=_("System rebuild timed out. Last log lines:\n")
                 + "\n".join(log_lines),
             )
             return
         Jobs.update(
             job=job,
             status=JobStatus.RUNNING,
-            status_text="Rebuilding the system...",
+            status_text=_("Rebuilding the system..."),
         )
         # Wait for the systemd unit to finish
         try:
@@ -112,7 +116,7 @@ async def rebuild_system(job: Job, upgrade: bool = False):
                 Jobs.update(
                     job=job,
                     status=JobStatus.FINISHED,
-                    result="System rebuilt.",
+                    result=_("System rebuilt."),
                     progress=100,
                 )
             if status == ServiceStatus.FAILED:
@@ -120,7 +124,7 @@ async def rebuild_system(job: Job, upgrade: bool = False):
                 Jobs.update(
                     job=job,
                     status=JobStatus.ERROR,
-                    error="System rebuild failed. Last log lines:\n"
+                    error=_("System rebuild failed. Last log lines:\n")
                     + "\n".join(log_lines),
                 )
 
@@ -135,7 +139,7 @@ async def rebuild_system(job: Job, upgrade: bool = False):
             Jobs.update(
                 job=job,
                 status=JobStatus.ERROR,
-                error="System rebuild timed out. Last log lines:\n"
+                error=_("System rebuild timed out. Last log lines:\n")
                 + "\n".join(log_lines),
             )
             return

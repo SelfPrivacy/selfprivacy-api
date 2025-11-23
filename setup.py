@@ -8,4 +8,11 @@ setup(
         "selfprivacy_api/app.py",
     ],
     include_package_data=True,
+    package_data={
+        "selfprivacy_api": [
+            "locale/**/LC_MESSAGES/*.mo",
+            "locale/**/LC_MESSAGES/*.po",
+            "locale/*.pot",
+        ],
+    },
 )

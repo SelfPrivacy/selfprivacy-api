@@ -11,7 +11,9 @@ from strawberry.extensions import SchemaExtension
 from opentelemetry import context as otel_context
 import inspect
 
-from selfprivacy_api.graphql import IsAuthenticated
+from selfprivacy_api.utils.localization import Localization, DEFAULT_LOCALE
+
+from selfprivacy_api.graphql import IsAuthenticated, LocaleExtension
 from selfprivacy_api.graphql.mutations.deprecated_mutations import (
     DeprecatedApiMutations,
     DeprecatedJobMutations,
@@ -228,7 +230,16 @@ class Subscription:
     @strawberry.subscription
     async def job_updates(self, info: Info) -> AsyncGenerator[List[ApiJob], None]:
         reject_if_unauthenticated(info)
-        return job_update_generator()
+
+        connection_params = info.context.get("connection_params")
+        locales_raw = connection_params.get("Accept-Language")
+
+        if locales_raw:
+            locale = Localization().get_locale(locales_raw)
+        else:
+            locale = DEFAULT_LOCALE
+
+        return job_update_generator(locale=locale)
 
     @strawberry.subscription
     # Used for testing, consider deletion to shrink attack surface
