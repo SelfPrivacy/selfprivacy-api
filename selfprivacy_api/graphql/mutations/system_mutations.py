@@ -195,8 +195,8 @@ class SystemMutations:
         locale = info.context["locale"]
 
         with tracer.start_as_current_span("run_system_rollback"):
-            await system_actions.rollback_system()
             try:
+                await system_actions.rollback_system()
                 return GenericMutationReturn(
                     success=True,
                     message="Starting system rollback",
