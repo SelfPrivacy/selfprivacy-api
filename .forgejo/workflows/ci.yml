@@ -30,7 +30,7 @@ jobs:
       - name: Run tests and coverage
         run: |
           nix build -L .#checks.x86_64-linux.default
-          cp result/coverage.xml coverage.xml
+          cp result/coverage.xml/coverage.xml coverage.xml
 
       - name: Upload results to SonarQube
         env:
