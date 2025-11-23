@@ -218,9 +218,9 @@
             testScript = ''
               start_all()
               machine.succeed("cd ${vmtest-src-dir} && coverage run --data-file=/tmp/.coverage -m pytest -p no:cacheprovider -v >&2")
-              machine.succeed("coverage xml --rcfile=${vmtest-src-dir}/.coveragerc --data-file=/tmp/.coverage >&2")
-              machine.copy_from_vm("coverage.xml", ".")
-              machine.succeed("coverage report >&2")
+              machine.succeed("cd ${vmtest-src-dir} && coverage xml --rcfile=${vmtest-src-dir}/.coveragerc --data-file=/tmp/.coverage -o /tmp/coverage.xml >&2")
+              machine.copy_from_vm("/tmp/coverage.xml", "coverage.xml")
+              machine.succeed("cd ${vmtest-src-dir} && coverage report --data-file=/tmp/.coverage >&2")
             '';
           };
         }

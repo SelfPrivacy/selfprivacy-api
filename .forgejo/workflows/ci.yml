@@ -28,7 +28,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run tests and coverage
-        run: nix flake check -L
+        run: |
+          nix build -L .#checks.x86_64-linux.default
+          cp result/coverage.xml coverage.xml
 
       - name: Upload results to SonarQube
         env:
@@ -39,3 +41,5 @@ jobs:
           -Dsonar.sources=.
           -Dsonar.host.url=https://analyzer.selfprivacy.org
           -Dsonar.login="$SONARQUBE_TOKEN"
+          -Dsonar.python.coverage.reportPaths=coverage.xml
+          -Dsonar.python.version="3.12, 3.13"
