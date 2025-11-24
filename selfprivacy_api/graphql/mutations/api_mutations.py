@@ -236,7 +236,6 @@ class ApiMutations:
             return ApiKeyMutationReturn(
                 success=True,
                 message=t.translate(text=_("Device api key generated"), locale=locale),
-                message="Device api key generated",
                 code=200,
                 key=key,
             )
