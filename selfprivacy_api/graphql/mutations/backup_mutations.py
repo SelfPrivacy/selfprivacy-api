@@ -353,7 +353,6 @@ class BackupMutations:
                 return GenericMutationReturn(
                     success=False,
                     code=404,
-                    message=f"snapshot {snapshot_id} not found",
                     message=f"{t.translate(text=SNAPSHOT_NOT_FOUND, locale=locale)} {snapshot_id}",
                 )
 

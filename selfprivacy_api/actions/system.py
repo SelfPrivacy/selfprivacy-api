@@ -3,7 +3,7 @@
 import gettext
 import subprocess
 import pytz
-from typing import Optional, List, Any
+from typing import Optional, Any
 from pydantic import BaseModel
 
 from selfprivacy_api.jobs import Job, JobStatus, Jobs
