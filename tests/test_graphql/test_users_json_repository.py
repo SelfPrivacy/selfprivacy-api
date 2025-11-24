@@ -120,7 +120,7 @@ class ProcessMock:
         self.args = args
         self.kwargs = kwargs
 
-    def communicate():  # pylint: disable=no-method-argument
+    def communicate(self):  # pylint: disable=no-method-argument
         return (b"NEW_HASHED", None)
 
     returncode = 0

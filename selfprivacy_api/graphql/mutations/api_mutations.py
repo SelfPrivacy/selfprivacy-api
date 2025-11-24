@@ -141,7 +141,7 @@ class ApiMutations:
                 .headers.get("Authorization", "")
                 .replace("Bearer ", "")
             )
-            if token_string is None:
+            if not token_string:
                 return DeviceApiTokenMutationReturn(
                     success=False,
                     message="Token not found",

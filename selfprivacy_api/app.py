@@ -4,7 +4,7 @@ import asyncio
 import logging
 import os
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -175,7 +175,7 @@ async def app_lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=app_lifespan)
 
-graphql_app: GraphQLRouter = GraphQLRouter(
+graphql_app: GraphQLRouter[dict[str, otel_context.Context], None] = GraphQLRouter(
     schema,
     subscription_protocols=[
         GRAPHQL_TRANSPORT_WS_PROTOCOL,
