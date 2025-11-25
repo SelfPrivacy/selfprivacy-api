@@ -7,18 +7,23 @@ import json
 from collections import Counter
 
 from selfprivacy_api.graphql.queries.providers import DnsProvider
+from selfprivacy_api.utils import ReadUserData, UserDataFiles
 
 from tests.common import generate_system_query, read_json
 from tests.test_graphql.common import (
     assert_empty,
     assert_ok,
-    assert_errorcode,
     get_data,
 )
 from tests.test_dkim import no_dkim_file, dkim_file
-from tests.test_system import assert_provider
-
 from unittest.mock import mock_open
+
+
+def assert_provider(provider_str: str, key: str):
+    with ReadUserData() as user_data:
+        assert user_data["dns"]["provider"] == provider_str
+    with ReadUserData(file_type=UserDataFiles.SECRETS) as secrets:
+        assert secrets["dns"]["apiKey"] == key
 
 
 @pytest.fixture
