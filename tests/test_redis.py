@@ -1,6 +1,5 @@
 import asyncio
 import pytest
-import pytest_asyncio
 from asyncio import streams
 import redis
 from typing import List
@@ -14,7 +13,7 @@ STOPWORD = "STOP"
 
 
 @pytest.fixture()
-async def empty_redis():
+def empty_redis():
     r = RedisPool().get_connection()
     r.flushdb()
     assert r.config_get("notify-keyspace-events")["notify-keyspace-events"] == "AKE"
@@ -31,14 +30,14 @@ async def write_to_test_key():
     assert await r.get(TEST_KEY) == "value2"
     await r.aclose()
 
-
-def test_async_connection(empty_redis):
-    r = RedisPool().get_connection()
-    assert not r.exists(TEST_KEY)
+@pytest.mark.asyncio
+async def test_async_connection(empty_redis):
+    r = RedisPool().get_connection_async()
+    assert not await r.exists(TEST_KEY)
     # It _will_ report an error if it arises
-    asyncio.run(write_to_test_key())
+    await write_to_test_key()
     # Confirming that we can read result from sync connection too
-    assert r.get(TEST_KEY) == "value2"
+    assert await r.get(TEST_KEY) == "value2"
 
 
 async def channel_reader(channel: redis.client.PubSub) -> List[dict]:
