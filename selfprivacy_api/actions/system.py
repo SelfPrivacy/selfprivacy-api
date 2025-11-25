@@ -99,10 +99,9 @@ def rebuild_system() -> Job:
     return job
 
 
-async def rollback_system() -> int:
+async def rollback_system():
     """Rollback the system"""
     await start_unit("sp-nixos-rollback.service")
-    return 0
 
 
 def upgrade_system() -> Job:
