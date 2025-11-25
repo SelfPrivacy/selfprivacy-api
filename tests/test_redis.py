@@ -30,6 +30,7 @@ async def write_to_test_key():
     assert await r.get(TEST_KEY) == "value2"
     await r.aclose()
 
+
 @pytest.mark.asyncio
 async def test_async_connection(empty_redis):
     r = RedisPool().get_connection_async()
