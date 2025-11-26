@@ -95,13 +95,8 @@ class Logs:
                 "filterBySlice": filterBySlice if filterBySlice else "None",
                 "filterByUnit": filterByUnit if filterByUnit else "None",
             },
-        ) as span:
+        ):
             if limit > 50:
-                span.set_status(trace.Status.ERROR)
-                span.set_attribute(
-                    "error.message",
-                    "You can't fetch more than 50 entries via single request.",
-                )
                 raise Exception(
                     "You can't fetch more than 50 entries via single request."
                 )
