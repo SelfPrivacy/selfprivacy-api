@@ -260,7 +260,7 @@ class Service:
 
     # TODO: fill this
     @strawberry.field
-    def backup_snapshots(self) -> Optional[List["SnapshotInfo"]]:
+    async def backup_snapshots(self) -> Optional[List["SnapshotInfo"]]:
         return None
 
 
