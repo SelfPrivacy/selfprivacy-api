@@ -2,7 +2,6 @@
 
 # pylint: disable=too-few-public-methods
 import httpx
-from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 
 
 import strawberry
@@ -12,8 +11,6 @@ from typing import Optional, Annotated, Union, List, Tuple
 from datetime import datetime, timedelta
 
 PROMETHEUS_URL = "http://localhost:9001"
-
-HTTPXClientInstrumentor().instrument()
 
 
 @strawberry.type

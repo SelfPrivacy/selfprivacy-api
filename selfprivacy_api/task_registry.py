@@ -19,7 +19,7 @@ from opentelemetry.sdk.resources import (
     Resource,
 )
 
-from selfprivacy_api.utils.otel import OTEL_ENABLED
+from selfprivacy_api.utils.otel import OTEL_ENABLED, setup_instrumentation
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
@@ -34,6 +34,9 @@ from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
 from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry._logs import set_logger_provider, get_logger
+
+
+setup_instrumentation()
 
 resource = Resource.create(
     attributes={

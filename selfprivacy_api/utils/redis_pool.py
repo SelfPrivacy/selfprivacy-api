@@ -2,15 +2,12 @@
 Redis pool module for selfprivacy_api
 """
 
-from opentelemetry.instrumentation.redis import RedisInstrumentor
 import redis
 import redis.asyncio as redis_async
 from redis.asyncio.client import PubSub
 
 
 REDIS_SOCKET = "/run/redis-sp-api/redis.sock"
-
-RedisInstrumentor().instrument()
 
 
 class RedisPool:
