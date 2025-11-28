@@ -11,7 +11,7 @@ from strawberry.types import Info
 from selfprivacy_api.utils import pretty_error
 from selfprivacy_api.utils.localization import (
     TranslateSystemMessage as t,
-    DEFAULT_LOCALE,
+    get_locale,
 )
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.common_types.jobs import job_to_api_job
@@ -120,9 +120,7 @@ class ServicesMutations:
         self, info: Info, service_id: str
     ) -> ServiceMutationReturn:
         """Enable service."""
-        locale = (
-            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
-        )
+        locale = get_locale(info=info)
 
         with tracer.start_as_current_span(
             "enable_service_mutation", attributes={"service_id": service_id}
@@ -155,9 +153,7 @@ class ServicesMutations:
         self, info: Info, service_id: str
     ) -> ServiceMutationReturn:
         """Disable service."""
-        locale = (
-            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
-        )
+        locale = get_locale(info=info)
 
         with tracer.start_as_current_span(
             "disable_service_mutation", attributes={"service_id": service_id}
@@ -186,9 +182,7 @@ class ServicesMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def stop_service(self, info: Info, service_id: str) -> ServiceMutationReturn:
         """Stop service."""
-        locale = (
-            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
-        )
+        locale = get_locale(info=info)
 
         with tracer.start_as_current_span(
             "stop_service_mutation", attributes={"service_id": service_id}
@@ -211,9 +205,7 @@ class ServicesMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def start_service(self, info: Info, service_id: str) -> ServiceMutationReturn:
         """Start service."""
-        locale = (
-            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
-        )
+        locale = get_locale(info=info)
 
         with tracer.start_as_current_span(
             "start_service_mutation", attributes={"service_id": service_id}
@@ -267,9 +259,7 @@ class ServicesMutations:
         self, info: Info, input: SetServiceConfigurationInput
     ) -> ServiceMutationReturn:
         """Set the new configuration values"""
-        locale = (
-            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
-        )
+        locale = get_locale(info=info)
 
         with tracer.start_as_current_span(
             "set_service_configuration_mutation",
@@ -318,9 +308,7 @@ class ServicesMutations:
         self, info: Info, input: MoveServiceInput
     ) -> ServiceJobMutationReturn:
         """Move service."""
-        locale = (
-            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
-        )
+        locale = get_locale(info=info)
 
         with tracer.start_as_current_span(
             "move_service_mutation",

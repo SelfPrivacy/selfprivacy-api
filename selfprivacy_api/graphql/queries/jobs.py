@@ -15,7 +15,7 @@ from selfprivacy_api.graphql.common_types.jobs import (
 )
 from selfprivacy_api.utils.localization import (
     TranslateSystemMessage as t,
-    DEFAULT_LOCALE,
+    get_locale,
 )
 
 
@@ -59,9 +59,7 @@ async def get_all_jobs() -> List[ApiJob]:
 @strawberry.type
 class Job:
     async def get_jobs(self, info: Info) -> List[ApiJob]:
-        locale = (
-            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
-        )
+        locale = get_locale(info=info)
 
         all_jobs = await get_all_jobs()
         translated_jobs = []
@@ -71,9 +69,7 @@ class Job:
 
     @strawberry.field
     async def get_job(self, job_id: str, info: Info) -> Optional[ApiJob]:
-        locale = (
-            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
-        )
+        locale = get_locale(info=info)
 
         job = await get_api_job_by_id(job_id)
         if job:

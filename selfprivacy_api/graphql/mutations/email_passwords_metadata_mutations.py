@@ -15,7 +15,7 @@ from selfprivacy_api.actions.email_passwords import (
 )
 from selfprivacy_api.utils.localization import (
     TranslateSystemMessage as t,
-    DEFAULT_LOCALE,
+    get_locale,
 )
 
 _ = gettext.gettext
@@ -31,9 +31,7 @@ class EmailPasswordsMetadataMutations:
     def delete_email_password(
         self, info: Info, username: str, uuid: str
     ) -> GenericMutationReturn:
-        locale = (
-            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
-        )
+        locale = get_locale(info=info)
 
         with tracer.start_as_current_span(
             "delete_email_password_mutation",

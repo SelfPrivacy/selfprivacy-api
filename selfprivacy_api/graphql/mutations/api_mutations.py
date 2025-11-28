@@ -33,7 +33,7 @@ from selfprivacy_api.graphql.mutations.mutation_interface import (
 )
 from selfprivacy_api.utils.localization import (
     TranslateSystemMessage as t,
-    DEFAULT_LOCALE,
+    get_locale,
 )
 
 _ = gettext.gettext
@@ -84,9 +84,7 @@ class ApiMutations:
         limits: Optional[RecoveryKeyLimitsInput] = None,
     ) -> ApiKeyMutationReturn:
         """Generate recovery key"""
-        locale = (
-            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
-        )
+        locale = get_locale(info=info)
 
         with tracer.start_as_current_span(
             "get_new_recovery_api_key",
@@ -130,9 +128,7 @@ class ApiMutations:
         self, input: UseRecoveryKeyInput, info: Info
     ) -> DeviceApiTokenMutationReturn:
         """Use recovery key"""
-        locale = (
-            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
-        )
+        locale = get_locale(info=info)
 
         with tracer.start_as_current_span(
             "use_recovery_api_key",
@@ -159,9 +155,7 @@ class ApiMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def refresh_device_api_token(self, info: Info) -> DeviceApiTokenMutationReturn:
         """Refresh device api token"""
-        locale = (
-            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
-        )
+        locale = get_locale(info=info)
 
         with tracer.start_as_current_span("refresh_device_api_token"):
             token_string = (
@@ -196,9 +190,7 @@ class ApiMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def delete_device_api_token(self, device: str, info: Info) -> GenericMutationReturn:
         """Delete device api token"""
-        locale = (
-            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
-        )
+        locale = get_locale(info=info)
 
         with tracer.start_as_current_span(
             "delete_device_api_token",
@@ -240,9 +232,7 @@ class ApiMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def get_new_device_api_key(self, info: Info) -> ApiKeyMutationReturn:
         """Generate device api key"""
-        locale = (
-            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
-        )
+        locale = get_locale(info=info)
 
         with tracer.start_as_current_span("get_new_device_api_key"):
             key = get_new_device_auth_token()
@@ -256,9 +246,7 @@ class ApiMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def invalidate_new_device_api_key(self, info: Info) -> GenericMutationReturn:
         """Invalidate new device api key"""
-        locale = (
-            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
-        )
+        locale = get_locale(info=info)
 
         with tracer.start_as_current_span("invalidate_new_device_api_key"):
             delete_new_device_auth_token()
@@ -273,9 +261,7 @@ class ApiMutations:
         self, input: UseNewDeviceKeyInput, info: Info
     ) -> DeviceApiTokenMutationReturn:
         """Authorize with new device api key"""
-        locale = (
-            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
-        )
+        locale = get_locale(info=info)
 
         with tracer.start_as_current_span(
             "authorize_with_new_device_api_key",

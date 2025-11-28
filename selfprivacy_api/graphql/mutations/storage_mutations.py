@@ -9,7 +9,7 @@ from strawberry.types import Info
 from selfprivacy_api.utils.block_devices import BlockDevices
 from selfprivacy_api.utils.localization import (
     TranslateSystemMessage as t,
-    DEFAULT_LOCALE,
+    get_locale,
 )
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.common_types.jobs import job_to_api_job
@@ -47,9 +47,7 @@ class StorageMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def resize_volume(self, name: str, info: Info) -> GenericMutationReturn:
         """Resize volume"""
-        locale = (
-            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
-        )
+        locale = get_locale(info=info)
 
         with tracer.start_as_current_span(
             "resize_volume_mutation",
@@ -74,9 +72,7 @@ class StorageMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def mount_volume(self, name: str, info: Info) -> GenericMutationReturn:
         """Mount volume"""
-        locale = (
-            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
-        )
+        locale = get_locale(info=info)
 
         with tracer.start_as_current_span(
             "mount_volume_mutation",
@@ -112,9 +108,7 @@ class StorageMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def unmount_volume(self, name: str, info: Info) -> GenericMutationReturn:
         """Unmount volume"""
-        locale = (
-            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
-        )
+        locale = get_locale(info=info)
 
         with tracer.start_as_current_span(
             "unmount_volume_mutation",
@@ -152,9 +146,7 @@ class StorageMutations:
         self, input: MigrateToBindsInput, info: Info
     ) -> GenericJobMutationReturn:
         """Migrate to binds"""
-        locale = (
-            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
-        )
+        locale = get_locale(info=info)
 
         with tracer.start_as_current_span("migrate_to_binds_mutation"):
             if is_bind_migrated():

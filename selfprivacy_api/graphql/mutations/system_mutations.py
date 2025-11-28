@@ -12,7 +12,7 @@ from strawberry.types import Info
 from selfprivacy_api.utils import pretty_error
 from selfprivacy_api.utils.localization import (
     TranslateSystemMessage as t,
-    DEFAULT_LOCALE,
+    get_locale,
 )
 from selfprivacy_api.jobs.nix_collect_garbage import start_nix_collect_garbage
 
@@ -88,9 +88,7 @@ class SystemMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def change_timezone(self, timezone: str, info: Info) -> TimezoneMutationReturn:
         """Change the timezone of the server. Timezone is a tzdatabase name."""
-        locale = (
-            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
-        )
+        locale = get_locale(info=info)
 
         with tracer.start_as_current_span(
             "change_timezone_mutation",
@@ -119,9 +117,7 @@ class SystemMutations:
         self, settings: AutoUpgradeSettingsInput, info: Info
     ) -> AutoUpgradeSettingsMutationReturn:
         """Change auto upgrade settings of the server."""
-        locale = (
-            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
-        )
+        locale = get_locale(info=info)
 
         with tracer.start_as_current_span(
             "change_auto_upgrade_settings_mutation",
@@ -151,9 +147,7 @@ class SystemMutations:
         self, settings: SSHSettingsInput, info: Info
     ) -> SSHSettingsMutationReturn:
         """Change ssh settings of the server."""
-        locale = (
-            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
-        )
+        locale = get_locale(info=info)
 
         with tracer.start_as_current_span(
             "change_ssh_settings_mutation",
@@ -178,9 +172,7 @@ class SystemMutations:
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def run_system_rebuild(self, info: Info) -> GenericJobMutationReturn:
-        locale = (
-            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
-        )
+        locale = get_locale(info=info)
 
         with tracer.start_as_current_span("run_system_rebuild"):
             try:
@@ -202,9 +194,7 @@ class SystemMutations:
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def run_system_rollback(self, info: Info) -> GenericMutationReturn:
-        locale = (
-            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
-        )
+        locale = get_locale(info=info)
 
         with tracer.start_as_current_span("run_system_rollback"):
             try:
@@ -223,9 +213,7 @@ class SystemMutations:
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def run_system_upgrade(self, info: Info) -> GenericJobMutationReturn:
-        locale = (
-            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
-        )
+        locale = get_locale(info=info)
 
         with tracer.start_as_current_span("run_system_upgrade"):
             try:
@@ -247,9 +235,7 @@ class SystemMutations:
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def reboot_system(self, info: Info) -> GenericMutationReturn:
-        locale = (
-            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
-        )
+        locale = get_locale(info=info)
 
         await system_actions.reboot_system()
         try:
@@ -267,9 +253,7 @@ class SystemMutations:
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def pull_repository_changes(self, info: Info) -> GenericMutationReturn:
-        locale = (
-            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
-        )
+        locale = get_locale(info=info)
         return GenericMutationReturn(
             success=False,
             message=t.translate(
@@ -280,9 +264,7 @@ class SystemMutations:
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def nix_collect_garbage(self, info: Info) -> GenericJobMutationReturn:
-        locale = (
-            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
-        )
+        locale = get_locale(info=info)
 
         with tracer.start_as_current_span("nix_collect_garbage_mutation"):
             job = start_nix_collect_garbage()
@@ -300,9 +282,7 @@ class SystemMutations:
     def set_dns_provider(
         self, input: SetDnsProviderInput, info: Info
     ) -> GenericMutationReturn:
-        locale = (
-            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
-        )
+        locale = get_locale(info=info)
 
         with tracer.start_as_current_span(
             "set_dns_provider_mutation",

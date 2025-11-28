@@ -54,3 +54,7 @@ class TranslateSystemMessage(Translation):
             _DOMAIN, localedir=str(_LOCALE_DIR), languages=[locale], fallback=True
         )
         return t.gettext(text)
+
+
+def get_locale(info):
+    return info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
