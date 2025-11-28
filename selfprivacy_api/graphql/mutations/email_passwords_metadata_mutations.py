@@ -13,7 +13,10 @@ from selfprivacy_api.graphql.mutations.mutation_interface import (
 from selfprivacy_api.actions.email_passwords import (
     delete_email_password_hash as action_delete_email_password,
 )
-from selfprivacy_api.utils.localization import TranslateSystemMessage as t
+from selfprivacy_api.utils.localization import (
+    TranslateSystemMessage as t,
+    DEFAULT_LOCALE,
+)
 
 _ = gettext.gettext
 
@@ -28,7 +31,9 @@ class EmailPasswordsMetadataMutations:
     def delete_email_password(
         self, info: Info, username: str, uuid: str
     ) -> GenericMutationReturn:
-        locale = info.context["locale"]
+        locale = (
+            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
+        )
 
         with tracer.start_as_current_span(
             "delete_email_password_mutation",

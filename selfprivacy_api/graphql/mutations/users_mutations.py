@@ -52,7 +52,10 @@ from selfprivacy_api.repositories.users.exceptions_kanidm import (
     KanidmReturnUnknownResponseType,
     KanidmCliSubprocessError,
 )
-from selfprivacy_api.utils.localization import TranslateSystemMessage as t
+from selfprivacy_api.utils.localization import (
+    TranslateSystemMessage as t,
+    DEFAULT_LOCALE,
+)
 from selfprivacy_api.utils.strings import PLEASE_UPDATE_APP_TEXT
 
 tracer = trace.get_tracer(__name__)
@@ -103,7 +106,9 @@ class UsersMutations:
     async def create_user(
         self, user: UserMutationInput, info: Info
     ) -> UserMutationReturn:
-        locale = info.context["locale"]
+        locale = (
+            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
+        )
 
         with tracer.start_as_current_span(
             "create_user_mutation",
@@ -162,7 +167,9 @@ class UsersMutations:
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def delete_user(self, username: str, info: Info) -> GenericMutationReturn:
-        locale = info.context["locale"]
+        locale = (
+            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
+        )
 
         with tracer.start_as_current_span(
             "delete_user_mutation",
@@ -207,7 +214,9 @@ class UsersMutations:
         self, user: UserMutationInput, info: Info
     ) -> UserMutationReturn:
         """Update user mutation"""
-        locale = info.context["locale"]
+        locale = (
+            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
+        )
 
         with tracer.start_as_current_span(
             "update_user_mutation",
@@ -262,7 +271,9 @@ class UsersMutations:
         self, ssh_input: SshMutationInput, info: Info
     ) -> UserMutationReturn:
         """Add a new ssh key"""
-        locale = info.context["locale"]
+        locale = (
+            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
+        )
 
         with tracer.start_as_current_span(
             "add_ssh_key_mutation",
@@ -306,7 +317,9 @@ class UsersMutations:
         self, ssh_input: SshMutationInput, info: Info
     ) -> UserMutationReturn:
         """Remove ssh key from user"""
-        locale = info.context["locale"]
+        locale = (
+            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
+        )
 
         with tracer.start_as_current_span(
             "remove_ssh_key_mutation",
@@ -341,7 +354,9 @@ class UsersMutations:
     async def generate_password_reset_link(
         self, username: str, info: Info
     ) -> PasswordResetLinkReturn:
-        locale = info.context["locale"]
+        locale = (
+            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
+        )
 
         with tracer.start_as_current_span(
             "generate_password_reset_link_mutation",

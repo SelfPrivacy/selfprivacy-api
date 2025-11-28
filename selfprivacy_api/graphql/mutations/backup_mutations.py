@@ -6,8 +6,10 @@ from opentelemetry import trace
 from strawberry.types import Info
 
 from selfprivacy_api.utils.graphql import api_job_mutation_error
-from selfprivacy_api.utils.localization import TranslateSystemMessage as t
-
+from selfprivacy_api.utils.localization import (
+    TranslateSystemMessage as t,
+    DEFAULT_LOCALE,
+)
 from selfprivacy_api.jobs import Jobs
 
 from selfprivacy_api.graphql import IsAuthenticated
@@ -157,7 +159,9 @@ class BackupMutations:
         Values <=0 for any timeframe mean no limits for that timeframe.
         To disable autobackup use autobackup period setting, not this mutation.
         """
-        locale = info.context["locale"]
+        locale = (
+            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
+        )
 
         with tracer.start_as_current_span(
             "set_autobackup_quotas",
@@ -205,7 +209,9 @@ class BackupMutations:
         self, info: Info, service_id: str
     ) -> GenericJobMutationReturn:
         """Start backup"""
-        locale = info.context["locale"]
+        locale = (
+            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
+        )
 
         with tracer.start_as_current_span(
             "start_backup_mutation",
@@ -237,7 +243,9 @@ class BackupMutations:
         """Back up all the enabled services at once
         Useful when migrating
         """
-        locale = info.context["locale"]
+        locale = (
+            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
+        )
 
         with tracer.start_as_current_span("total_backup_mutation"):
             try:
@@ -259,7 +267,9 @@ class BackupMutations:
         Restore all restorable and enabled services according to last autobackup snapshots
         This happens in sync with partial merging of old configuration for compatibility
         """
-        locale = info.context["locale"]
+        locale = (
+            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
+        )
 
         with tracer.start_as_current_span("restore_all_mutation"):
             try:
@@ -288,7 +298,9 @@ class BackupMutations:
         strategy: RestoreStrategy = RestoreStrategy.DOWNLOAD_VERIFY_OVERWRITE,
     ) -> GenericJobMutationReturn:
         """Restore backup"""
-        locale = info.context["locale"]
+        locale = (
+            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
+        )
 
         with tracer.start_as_current_span(
             "restore_backup_mutation",
@@ -340,7 +352,9 @@ class BackupMutations:
         Makes it inaccessible from the server.
         After some time, the data (encrypted) will not be recoverable
         from the backup server too, but not immediately"""
-        locale = info.context["locale"]
+        locale = (
+            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
+        )
 
         with tracer.start_as_current_span(
             "forget_snapshot_mutation",

@@ -14,7 +14,10 @@ from selfprivacy_api.utils.monitoring import (
     MonitoringValuesResult,
     MonitoringMetricsResult,
 )
-from selfprivacy_api.utils.localization import TranslateSystemMessage as t
+from selfprivacy_api.utils.localization import (
+    TranslateSystemMessage as t,
+    DEFAULT_LOCALE,
+)
 
 _ = gettext.gettext
 
@@ -31,7 +34,9 @@ class CpuMonitoring:
 
     @strawberry.field
     async def overall_usage(self, info: Info) -> MonitoringValuesResult:
-        locale = info.context["locale"]
+        locale = (
+            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
+        )
 
         with tracer.start_as_current_span("CpuMonitoring.overall_usage"):
             if await Prometheus().get_status() != ServiceStatus.ACTIVE:
@@ -52,7 +57,9 @@ class MemoryMonitoring:
 
     @strawberry.field
     async def overall_usage(self, info: Info) -> MonitoringValuesResult:
-        locale = info.context["locale"]
+        locale = (
+            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
+        )
 
         with tracer.start_as_current_span("MemoryMonitoring.overall_usage"):
             if await Prometheus().get_status() != ServiceStatus.ACTIVE:
@@ -65,7 +72,9 @@ class MemoryMonitoring:
 
     @strawberry.field
     async def swap_usage_overall(self, info: Info) -> MonitoringValuesResult:
-        locale = info.context["locale"]
+        locale = (
+            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
+        )
         with tracer.start_as_current_span("MemoryMonitoring.swap_usage_overall"):
             if await Prometheus().get_status() != ServiceStatus.ACTIVE:
                 return MonitoringQueryError(
@@ -78,7 +87,9 @@ class MemoryMonitoring:
 
     @strawberry.field
     async def average_usage_by_service(self, info: Info) -> MonitoringMetricsResult:
-        locale = info.context["locale"]
+        locale = (
+            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
+        )
 
         with tracer.start_as_current_span("MemoryMonitoring.average_usage_by_service"):
             if await Prometheus().get_status() != ServiceStatus.ACTIVE:
@@ -92,7 +103,9 @@ class MemoryMonitoring:
 
     @strawberry.field
     async def max_usage_by_service(self, info: Info) -> MonitoringMetricsResult:
-        locale = info.context["locale"]
+        locale = (
+            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
+        )
 
         with tracer.start_as_current_span("MemoryMonitoring.max_usage_by_service"):
             if await Prometheus().get_status() != ServiceStatus.ACTIVE:
@@ -113,7 +126,9 @@ class DiskMonitoring:
 
     @strawberry.field
     async def overall_usage(self, info: Info) -> MonitoringMetricsResult:
-        locale = info.context["locale"]
+        locale = (
+            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
+        )
 
         with tracer.start_as_current_span("DiskMonitoring.overall_usage"):
             if await Prometheus().get_status() != ServiceStatus.ACTIVE:
@@ -133,7 +148,9 @@ class NetworkMonitoring:
 
     @strawberry.field
     async def overall_usage(self, info: Info) -> MonitoringMetricsResult:
-        locale = info.context["locale"]
+        locale = (
+            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
+        )
 
         with tracer.start_as_current_span("NetworkMonitoring.overall_usage"):
             if await Prometheus().get_status() != ServiceStatus.ACTIVE:

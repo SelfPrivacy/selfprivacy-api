@@ -11,8 +11,10 @@ from opentelemetry import trace
 from selfprivacy_api.graphql.mutations.mutation_interface import GenericMutationReturn
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.jobs import Jobs
-from selfprivacy_api.utils.localization import TranslateSystemMessage as t
-
+from selfprivacy_api.utils.localization import (
+    TranslateSystemMessage as t,
+    DEFAULT_LOCALE,
+)
 
 _ = gettext.gettext
 
@@ -26,7 +28,9 @@ class JobMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def remove_job(self, job_id: str, info: Info) -> GenericMutationReturn:
         """Remove a job from the queue"""
-        locale = info.context["locale"]
+        locale = (
+            info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
+        )
 
         with tracer.start_as_current_span(
             "remove_job_mutation",
