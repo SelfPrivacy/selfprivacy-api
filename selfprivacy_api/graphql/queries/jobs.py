@@ -58,6 +58,7 @@ async def get_all_jobs() -> List[ApiJob]:
 
 @strawberry.type
 class Job:
+    @strawberry.field
     async def get_jobs(self, info: Info) -> List[ApiJob]:
         locale = get_locale(info=info)
 

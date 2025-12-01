@@ -174,6 +174,7 @@ class ServicesMutations:
                     code=400,
                 )
             return ServiceMutationReturn(
+                success=True,
                 message=t.translate(text=_("Service disabled."), locale=locale),
                 code=200,
                 service=await service_to_graphql_service(service),
@@ -233,11 +234,7 @@ class ServicesMutations:
         with tracer.start_as_current_span(
             "restart_service_mutation", attributes={"service_id": service_id}
         ):
-            locale = (
-                info.context.get("locale")
-                if info.context.get("locale")
-                else DEFAULT_LOCALE
-            )
+            locale = get_locale(info=info)
 
             service = await ServiceManager.get_service_by_id(service_id)
             if service is None:
