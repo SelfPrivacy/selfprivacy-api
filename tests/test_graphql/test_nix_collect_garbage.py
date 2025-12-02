@@ -81,7 +81,7 @@ def test_parse_line_with_blank_line():
     )
 
     with pytest.raises(ShellException):
-        output = parse_line(job, txt)
+        parse_line(job, txt)
 
 
 def test_get_dead_packages():
@@ -119,7 +119,8 @@ mutation CollectGarbage {
 """
 
 
-def test_graphql_nix_collect_garbage(authorized_client, fp):
+@pytest.mark.asyncio
+async def test_graphql_nix_collect_garbage(authorized_client, fp):
     assert huey.immediate is True
 
     fp.register(
@@ -164,7 +165,8 @@ def test_graphql_nix_collect_garbage(authorized_client, fp):
     assert fp.call_count(["nix-store", "--gc"]) == 1
 
 
-def test_graphql_nix_collect_garbage_return_zero_trash(authorized_client, fp):
+@pytest.mark.asyncio
+async def test_graphql_nix_collect_garbage_return_zero_trash(authorized_client, fp):
     assert huey.immediate is True
 
     fp.register(
@@ -209,7 +211,8 @@ def test_graphql_nix_collect_garbage_return_zero_trash(authorized_client, fp):
     assert fp.call_count(["nix-store", "--gc"]) == 1
 
 
-def test_graphql_nix_collect_garbage_not_authorized_client(client, fp):
+@pytest.mark.asyncio
+async def test_graphql_nix_collect_garbage_not_authorized_client(client, fp):
     assert huey.immediate is True
 
     fp.register(

@@ -1,6 +1,7 @@
 # pylint: disable=redefined-outer-name
 # pylint: disable=unused-argument
 import pytest
+import pytest_asyncio
 from typing import Optional
 
 # only allowed in fixtures and utils
@@ -88,22 +89,22 @@ def no_rootkeys(generic_userdata):
     assert get_ssh_settings().rootKeys == []
 
 
-@pytest.fixture
-def no_keys(generic_userdata):
+@pytest_asyncio.fixture
+async def no_keys(generic_userdata):
     # this removes root and admin keys too
 
-    users = get_users()
+    users = await get_users()
     for user in users:
         for key in user.ssh_keys:
             remove_ssh_key(user.username, key)
-    users = get_users()
+    users = await get_users()
     for user in users:
         assert user.ssh_keys == []
 
 
-@pytest.fixture
-def no_admin_key(generic_userdata, authorized_client):
-    adm_name = admin_name()
+@pytest_asyncio.fixture
+async def no_admin_key(generic_userdata, authorized_client):
+    adm_name = await admin_name()
 
     if adm_name:
         admin_keys = api_get_user_keys(authorized_client, adm_name)
@@ -114,8 +115,8 @@ def no_admin_key(generic_userdata, authorized_client):
         assert api_get_user_keys(authorized_client, adm_name) == []
 
 
-def admin_name() -> Optional[str]:
-    users = get_users()
+async def admin_name() -> Optional[str]:
+    users = await get_users()
     for user in users:
         if user.user_type == UserDataUserOrigin.PRIMARY:
             return user.username
@@ -418,8 +419,11 @@ def test_graphql_get_root_key_when_none(
 # Getting admin keys when they are present is tested in test_users.py
 
 
-def test_get_admin_key_when_none(authorized_client, use_test_repository, no_admin_key):
-    adm_name = admin_name()
+@pytest.mark.asyncio
+async def test_get_admin_key_when_none(
+    authorized_client, use_test_repository, no_admin_key
+):
+    adm_name = await admin_name()
     if adm_name:
         assert api_get_user_keys(authorized_client, adm_name) == []
 

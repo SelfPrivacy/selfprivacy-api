@@ -11,6 +11,7 @@ let
   nixos-rebuild = "${config.system.build.nixos-rebuild}/bin/nixos-rebuild";
   nix = "${config.nix.package.out}/bin/nix";
   selfprivacy-graphql-api = selfprivacy-api-packages.${pkgs.system}.default;
+  workerPython = pkgs.python312.withPackages (ps: [ selfprivacy-graphql-api ps.huey ]);
   sp-fetch-remote-module = pkgs.writeShellApplication {
     name = "sp-fetch-remote-module";
     runtimeInputs = [ config.nix.package.out ];
@@ -62,6 +63,7 @@ let
       fi
     '';
   };
+
 in
 {
   options.services.selfprivacy-api = {
@@ -71,6 +73,51 @@ in
       description = ''
         Enable SelfPrivacy API service
       '';
+    };
+    traceMemory = lib.mkOption {
+      default = false;
+      type = lib.types.bool;
+      description = ''
+        Enable memory tracing of SelfPrivacy API main process
+      '';
+    };
+    opentelemetry = {
+      enable = lib.mkOption {
+        default = false;
+        type = lib.types.bool;
+        description = ''
+          Enable OpenTelemetry instrumentation for SelfPrivacy services
+        '';
+      };
+      endpoint = lib.mkOption {
+        type = lib.types.str;
+        default = "http://localhost:4317";
+        description = ''
+          OTLP gRPC endpoint URL
+        '';
+      };
+      serviceName = lib.mkOption {
+        type = lib.types.str;
+        default = "selfprivacy-api";
+        description = ''
+          Service name for telemetry traces
+        '';
+      };
+      instanceId = lib.mkOption {
+        type = lib.types.str;
+        default = "unknown-instance";
+        description = ''
+          Service instance ID for telemetry traces
+        '';
+      };
+      headers = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        example = "key1=value1,key2=value2";
+        description = ''
+          Additional headers to send with OTLP requests
+        '';
+      };
     };
   };
   config = lib.mkIf cfg.enable {
@@ -97,10 +144,27 @@ in
             // {
               HOME = "/root";
               PYTHONUNBUFFERED = "1";
+              SP_API_OTEL_ENABLED = builtins.toString cfg.opentelemetry.enable;
               KANIDM_ADMIN_TOKEN_FILE =
                 sp.passthru.auth.mkServiceAccountTokenFP unix-user;
             }
-            // config.networking.proxy.envVars;
+            // config.networking.proxy.envVars
+            // (lib.optionalAttrs cfg.traceMemory {
+              PYTHONTRACEMALLOC = "1";
+            })
+            // (lib.optionalAttrs cfg.opentelemetry.enable
+              {
+                OTEL_EXPORTER_OTLP_ENDPOINT = cfg.opentelemetry.endpoint;
+                OTEL_EXPORTER_OTLP_PROTOCOL = "grpc";
+                OTEL_EXPORTER_OTLP_HEADERS = cfg.opentelemetry.headers;
+                OTEL_SERVICE_NAME = cfg.opentelemetry.serviceName;
+                OTEL_SERVICE_INSTANCE_ID = cfg.opentelemetry.instanceId;
+                OTEL_TRACES_SAMPLER = "traceidratio";
+                OTEL_TRACES_SAMPLER_ARG = "1.0";
+                OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED = "true";
+                OTEL_PYTHON_LOG_CORRELATION = "true";
+              }
+            );
           path = [
             "/var/"
             "/var/dkim/"
@@ -139,9 +203,22 @@ in
             // {
               HOME = "/root";
               PYTHONUNBUFFERED = "1";
-              PYTHONPATH = pkgs.python312Packages.makePythonPath [ selfprivacy-graphql-api ];
+              SP_API_OTEL_ENABLED = builtins.toString cfg.opentelemetry.enable;
             }
-            // config.networking.proxy.envVars;
+            // config.networking.proxy.envVars
+            // (lib.optionalAttrs cfg.opentelemetry.enable
+              {
+                OTEL_EXPORTER_OTLP_ENDPOINT = cfg.opentelemetry.endpoint;
+                OTEL_EXPORTER_OTLP_PROTOCOL = "grpc";
+                OTEL_EXPORTER_OTLP_HEADERS = cfg.opentelemetry.headers;
+                OTEL_SERVICE_NAME = "${cfg.opentelemetry.serviceName}-worker";
+                OTEL_SERVICE_INSTANCE_ID = cfg.opentelemetry.instanceId;
+                OTEL_TRACES_SAMPLER = "traceidratio";
+                OTEL_TRACES_SAMPLER_ARG = "1.0";
+                OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED = "true";
+                OTEL_PYTHON_LOG_CORRELATION = "true";
+              }
+            );
           path = [
             "/var/"
             "/var/dkim/"
@@ -167,7 +244,7 @@ in
           serviceConfig = {
             # Do not forget to edit Postgres identMap if you change the user!
             User = "root";
-            ExecStart = "${pkgs.python312Packages.huey}/bin/huey_consumer.py selfprivacy_api.task_registry.huey";
+            ExecStart = "${workerPython}/bin/python -m huey.bin.huey_consumer selfprivacy_api.task_registry.huey";
             Restart = "always";
             RestartSec = "5";
             Slice = "selfprivacy_api.slice";

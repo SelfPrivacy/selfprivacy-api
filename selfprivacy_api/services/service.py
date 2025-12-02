@@ -1,6 +1,7 @@
 """Abstract class for a service running on a server"""
 
 from abc import ABC, abstractmethod
+import asyncio
 import logging
 from typing import List, Optional
 from os.path import exists
@@ -9,7 +10,6 @@ from selfprivacy_api import utils
 from selfprivacy_api.services.config_item import ServiceConfigItem
 from selfprivacy_api.utils.default_subdomains import DEFAULT_SUBDOMAINS
 from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
-from selfprivacy_api.utils.waitloop import wait_until_true
 from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
 
 from selfprivacy_api.jobs import Job, Jobs, JobStatus, report_progress
@@ -216,8 +216,14 @@ class Service(ABC):
 
     @staticmethod
     @abstractmethod
-    def get_status() -> ServiceStatus:
+    async def get_status() -> ServiceStatus:
         """The status of the service, reported by systemd."""
+        pass
+
+    @staticmethod
+    @abstractmethod
+    async def wait_for_statuses(expected_statuses: List[ServiceStatus]):
+        """Asynchronously wait for active to became one of expected_statuses. Should be cancellable"""
         pass
 
     @classmethod
@@ -242,19 +248,19 @@ class Service(ABC):
 
     @staticmethod
     @abstractmethod
-    def stop():
+    async def stop():
         """Stop the service. Usually this means stopping systemd unit."""
         pass
 
     @staticmethod
     @abstractmethod
-    def start():
+    async def start():
         """Start the service. Usually this means starting systemd unit."""
         pass
 
     @staticmethod
     @abstractmethod
-    def restart():
+    async def restart():
         """Restart the service. Usually this means restarting systemd unit."""
         pass
 
@@ -278,7 +284,7 @@ class Service(ABC):
             )
 
     @classmethod
-    def get_storage_usage(cls) -> int:
+    async def get_storage_usage(cls) -> int:
         """
         Calculate the real storage usage of folders occupied by service
         Calculate using pathlib.
@@ -286,7 +292,7 @@ class Service(ABC):
         """
         storage_used = 0
         for folder in cls.get_folders():
-            storage_used += get_storage_usage(folder)
+            storage_used += await get_storage_usage(folder)
         return storage_used
 
     @classmethod
@@ -405,7 +411,7 @@ class Service(ABC):
             Bind.from_owned_path(folder, self.get_drive()) for folder in owned_folders
         ]
 
-    def assert_can_move(self, new_volume: BlockDevice):
+    async def assert_can_move(self, new_volume: BlockDevice):
         """
         Checks if the service can be moved to new volume
         Raises errors if it cannot
@@ -422,7 +428,7 @@ class Service(ABC):
         if current_volume_name == new_volume.canonical_name:
             raise MoveError(f"{service_name} is already on volume {new_volume}")
 
-        check_volume(new_volume, space_needed=self.get_storage_usage())
+        check_volume(new_volume, space_needed=await self.get_storage_usage())
 
         binds = self.binds()
         if binds == []:
@@ -469,12 +475,12 @@ class Service(ABC):
         report_progress(95, job, f"Finishing moving {service_name}...")
         self.set_location(new_volume)
 
-    def move_to_volume(self, volume: BlockDevice, job: Job) -> Job:
+    async def move_to_volume(self, volume: BlockDevice, job: Job) -> Job:
         service_name = self.get_display_name()
 
         report_progress(0, job, "Performing pre-move checks...")
 
-        self.assert_can_move(volume)
+        await self.assert_can_move(volume)
         if not self.has_folders():
             self.set_location(volume)
             Jobs.update(
@@ -489,12 +495,12 @@ class Service(ABC):
         report_progress(5, job, f"Stopping {service_name}...")
         if self is None:
             raise AssertionError
-        with StoppedService(self):
+        async with StoppedService(self):
             report_progress(9, job, "Stopped service, starting the move...")
             self.do_move_to_volume(volume, job)
 
             report_progress(98, job, "Move complete, rebuilding...")
-            rebuild_system(job, upgrade=False)
+            await rebuild_system(job, upgrade=False)
 
             Jobs.update(
                 job=job,
@@ -540,7 +546,7 @@ class Service(ABC):
     def pre_restore(self, job: Job):
         pass
 
-    def post_restore(self, job: Job):
+    async def post_restore(self, job: Job):
         pass
 
 
@@ -552,45 +558,41 @@ class StoppedService:
     Example:
         ```
             assert service.get_status() == ServiceStatus.ACTIVE
-            with StoppedService(service) [as stopped_service]:
+            async with StoppedService(service) [as stopped_service]:
                 assert service.get_status() == ServiceStatus.INACTIVE
         ```
     """
 
     def __init__(self, service: Service):
         self.service = service
-        self.original_status = service.get_status()
 
-    def __enter__(self) -> Service:
-        self.original_status = self.service.get_status()
+    async def __aenter__(self) -> Service:
+        self.original_status = await self.service.get_status()
         if (
             self.original_status not in [ServiceStatus.INACTIVE, ServiceStatus.FAILED]
             and not self.service.is_always_active()
         ):
             try:
-                self.service.stop()
-                wait_until_true(
-                    lambda: self.service.get_status()
-                    in [ServiceStatus.INACTIVE, ServiceStatus.FAILED],
-                    timeout_sec=DEFAULT_START_STOP_TIMEOUT,
-                )
+                await self.service.stop()
+                async with asyncio.timeout(DEFAULT_START_STOP_TIMEOUT):
+                    await self.service.wait_for_statuses(
+                        [ServiceStatus.INACTIVE, ServiceStatus.FAILED]
+                    )
             except TimeoutError as error:
                 raise TimeoutError(
                     f"timed out waiting for {self.service.get_display_name()} to stop"
                 ) from error
         return self.service
 
-    def __exit__(self, type, value, traceback):
+    async def __aexit__(self, type, value, traceback):
         if (
             self.original_status in [ServiceStatus.ACTIVATING, ServiceStatus.ACTIVE]
             and not self.service.is_always_active()
         ):
             try:
-                self.service.start()
-                wait_until_true(
-                    lambda: self.service.get_status() == ServiceStatus.ACTIVE,
-                    timeout_sec=DEFAULT_START_STOP_TIMEOUT,
-                )
+                await self.service.start()
+                async with asyncio.timeout(DEFAULT_START_STOP_TIMEOUT):
+                    await self.service.wait_for_statuses([ServiceStatus.ACTIVE])
             except TimeoutError as error:
                 raise TimeoutError(
                     f"timed out waiting for {self.service.get_display_name()} to start"

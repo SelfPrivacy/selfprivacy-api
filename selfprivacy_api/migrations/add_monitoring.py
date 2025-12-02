@@ -14,7 +14,7 @@ class AddMonitoring(Migration):
     def get_migration_description(self) -> str:
         return "Adds the Monitoring if it is not present."
 
-    def is_migration_needed(self) -> bool:
+    async def is_migration_needed(self) -> bool:
         with FlakeServiceManager() as manager:
             if "monitoring" not in manager.services:
                 return True
@@ -23,7 +23,7 @@ class AddMonitoring(Migration):
                 return True
         return False
 
-    def migrate(self) -> None:
+    async def migrate(self) -> None:
         with FlakeServiceManager() as manager:
             if "monitoring" not in manager.services:
                 manager.services["monitoring"] = (

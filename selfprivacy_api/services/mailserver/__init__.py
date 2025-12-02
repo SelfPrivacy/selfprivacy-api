@@ -6,6 +6,9 @@ from typing import Optional, List
 
 from selfprivacy_api.utils.systemd import (
     get_service_status_from_several_units,
+    start_unit,
+    stop_unit,
+    restart_unit,
 )
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
 from selfprivacy_api import utils
@@ -63,10 +66,21 @@ class MailServer(Service):
         return True
 
     @staticmethod
-    def get_status() -> ServiceStatus:
-        return get_service_status_from_several_units(
+    async def get_status() -> ServiceStatus:
+        return await get_service_status_from_several_units(
             ["dovecot2.service", "postfix.service"]
         )
+
+    @staticmethod
+    async def wait_for_statuses(self, expected_statuses: List[ServiceStatus]):
+        if (await self.get_status()) in expected_statuses:
+            return
+
+        async for _ in listen_for_unit_state_changes(
+            ["dovecot2.service", "postfix.service"]
+        ):
+            if (await self.get_status()) in expected_statuses:
+                return
 
     @staticmethod
     def enable():
@@ -77,19 +91,19 @@ class MailServer(Service):
         raise NotImplementedError("disable is not implemented for MailServer")
 
     @staticmethod
-    def stop():
-        subprocess.run(["systemctl", "stop", "dovecot2.service"], check=False)
-        subprocess.run(["systemctl", "stop", "postfix.service"], check=False)
+    async def stop():
+        await stop_unit("dovecot2.service")
+        await stop_unit("postfix.service")
 
     @staticmethod
-    def start():
-        subprocess.run(["systemctl", "start", "dovecot2.service"], check=False)
-        subprocess.run(["systemctl", "start", "postfix.service"], check=False)
+    async def start():
+        await start_unit("dovecot2.service")
+        await start_unit("postfix.service")
 
     @staticmethod
-    def restart():
-        subprocess.run(["systemctl", "restart", "dovecot2.service"], check=False)
-        subprocess.run(["systemctl", "restart", "postfix.service"], check=False)
+    async def restart():
+        await restart_unit("dovecot2.service")
+        await restart_unit("postfix.service")
 
     @staticmethod
     def get_folders() -> List[str]:

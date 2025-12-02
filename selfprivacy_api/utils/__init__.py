@@ -2,6 +2,7 @@
 """Various utility functions"""
 import datetime
 from enum import Enum
+from typing import Callable, TypeVar
 import json
 import os
 import subprocess
@@ -291,3 +292,29 @@ def temporary_env_var(key, value):
 
         if old_value is not None:
             os.environ[key] = old_value
+
+
+T = TypeVar("T")
+
+
+def lazy_var(compute: Callable[[], T]) -> Callable[[], T]:
+    """
+    A function that allows to create lazily-computed value.
+    Useful for initialization of values that depend on
+    global context (for example asyncio event loop) and
+    cannot be initialized as plain global variables.
+    """
+
+    computed = False
+    val = None
+
+    def get_value():
+        nonlocal computed, val
+        if computed:
+            return val
+        else:
+            val = compute()
+            computed = True
+            return val
+
+    return get_value

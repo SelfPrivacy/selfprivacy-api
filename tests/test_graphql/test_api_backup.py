@@ -1,4 +1,5 @@
 from pytest import raises
+import pytest
 
 from os import path
 from os import mkdir
@@ -419,8 +420,9 @@ def api_settings(authorized_client):
     return result
 
 
-def test_dummy_service_convertible_to_gql(dummy_service):
-    gql_service = service_to_graphql_service(dummy_service)
+@pytest.mark.asyncio
+async def test_dummy_service_convertible_to_gql(dummy_service):
+    gql_service = await service_to_graphql_service(dummy_service)
     assert gql_service is not None
 
 
@@ -429,13 +431,18 @@ def test_snapshots_empty(authorized_client, dummy_service, backups):
     assert snaps == []
 
 
-def test_snapshots_orphaned_service(authorized_client, dummy_service, backups):
+@pytest.mark.asyncio
+async def test_snapshots_orphaned_service(
+    authorized_client, only_dummy_service, backups
+):
+    dummy_service = only_dummy_service
+
     api_backup(authorized_client, dummy_service)
     snaps = api_snapshots(authorized_client)
     assert len(snaps) == 1
 
     all_services.DUMMY_SERVICES.remove(dummy_service)
-    assert ServiceManager.get_service_by_id(dummy_service.get_id()) is None
+    assert await ServiceManager.get_service_by_id(dummy_service.get_id()) is None
 
     snaps = api_snapshots(authorized_client)
     assert len(snaps) == 1

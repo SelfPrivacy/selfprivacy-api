@@ -1,7 +1,8 @@
 """Prometheus monitoring queries."""
 
 # pylint: disable=too-few-public-methods
-import requests
+import httpx
+
 
 import strawberry
 
@@ -55,20 +56,22 @@ MonitoringMetricsResult = Annotated[
 
 class MonitoringQueries:
     @staticmethod
-    def _send_range_query(
+    async def _send_range_query(
         query: str, start: int, end: int, step: int, result_type: Optional[str] = None
     ) -> Union[dict, MonitoringQueryError]:
         try:
-            response = requests.get(
-                f"{PROMETHEUS_URL}/api/v1/query_range",
-                params={
-                    "query": query,
-                    "start": start,
-                    "end": end,
-                    "step": step,
-                },
-                timeout=0.8,
-            )
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"{PROMETHEUS_URL}/api/v1/query_range",
+                    params={
+                        "query": query,
+                        "start": start,
+                        "end": end,
+                        "step": step,
+                    },
+                    timeout=0.8,
+                )
+
             if response.status_code != 200:
                 return MonitoringQueryError(
                     error=f"Prometheus returned unexpected HTTP status code. Error: {response.text}. The query was {query}"
@@ -85,17 +88,18 @@ class MonitoringQueries:
             )
 
     @staticmethod
-    def _send_query(
+    async def _send_query(
         query: str, result_type: Optional[str] = None
     ) -> Union[dict, MonitoringQueryError]:
         try:
-            response = requests.get(
-                f"{PROMETHEUS_URL}/api/v1/query",
-                params={
-                    "query": query,
-                },
-                timeout=0.8,
-            )
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"{PROMETHEUS_URL}/api/v1/query",
+                    params={
+                        "query": query,
+                    },
+                    timeout=0.8,
+                )
             if response.status_code != 200:
                 return MonitoringQueryError(
                     error=f"Prometheus returned unexpected HTTP status code. Error: {response.text}. The query was {query}"
@@ -191,7 +195,7 @@ class MonitoringQueries:
         return offset, duration
 
     @staticmethod
-    def cpu_usage_overall(
+    async def cpu_usage_overall(
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
         step: int = 60,  # seconds
@@ -214,7 +218,7 @@ class MonitoringQueries:
 
         query = '100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)'
 
-        data = MonitoringQueries._send_range_query(
+        data = await MonitoringQueries._send_range_query(
             query, start_timestamp, end_timestamp, step, result_type="matrix"
         )
 
@@ -231,7 +235,7 @@ class MonitoringQueries:
         )
 
     @staticmethod
-    def memory_usage_overall(
+    async def memory_usage_overall(
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
         step: int = 60,  # seconds
@@ -254,7 +258,7 @@ class MonitoringQueries:
 
         query = "100 - (100 * (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))"
 
-        data = MonitoringQueries._send_range_query(
+        data = await MonitoringQueries._send_range_query(
             query, start_timestamp, end_timestamp, step, result_type="matrix"
         )
 
@@ -271,7 +275,7 @@ class MonitoringQueries:
         )
 
     @staticmethod
-    def swap_usage_overall(
+    async def swap_usage_overall(
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
         step: int = 60,  # seconds
@@ -296,7 +300,7 @@ class MonitoringQueries:
             "100 - (100 * (node_memory_SwapFree_bytes / node_memory_SwapTotal_bytes))"
         )
 
-        data = MonitoringQueries._send_range_query(
+        data = await MonitoringQueries._send_range_query(
             query, start_timestamp, end_timestamp, step, result_type="matrix"
         )
 
@@ -313,7 +317,7 @@ class MonitoringQueries:
         )
 
     @staticmethod
-    def memory_usage_max_by_slice(
+    async def memory_usage_max_by_slice(
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
     ) -> MonitoringMetricsResult:
@@ -336,7 +340,7 @@ class MonitoringQueries:
         else:
             query = f'max_over_time((container_memory_rss{{id!~".*slice.*slice", id=~".*slice"}}+container_memory_swap{{id!~".*slice.*slice", id=~".*slice"}})[{duration}s:] offset {offset}s)'
 
-        data = MonitoringQueries._send_query(query, result_type="vector")
+        data = await MonitoringQueries._send_query(query, result_type="vector")
 
         if isinstance(data, MonitoringQueryError):
             return data
@@ -348,7 +352,7 @@ class MonitoringQueries:
         )
 
     @staticmethod
-    def memory_usage_average_by_slice(
+    async def memory_usage_average_by_slice(
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
     ) -> MonitoringMetricsResult:
@@ -371,7 +375,7 @@ class MonitoringQueries:
         else:
             query = f'avg_over_time((container_memory_rss{{id!~".*slice.*slice", id=~".*slice"}}+container_memory_swap{{id!~".*slice.*slice", id=~".*slice"}})[{duration}s:] offset {offset}s)'
 
-        data = MonitoringQueries._send_query(query, result_type="vector")
+        data = await MonitoringQueries._send_query(query, result_type="vector")
 
         if isinstance(data, MonitoringQueryError):
             return data
@@ -383,7 +387,7 @@ class MonitoringQueries:
         )
 
     @staticmethod
-    def disk_usage_overall(
+    async def disk_usage_overall(
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
         step: int = 60,  # seconds
@@ -406,7 +410,7 @@ class MonitoringQueries:
 
         query = """100 - (100 * sum by (device) (node_filesystem_avail_bytes{fstype!="rootfs",fstype!="ramfs",fstype!="tmpfs",mountpoint!="/efi"}) / sum by (device) (node_filesystem_size_bytes{fstype!="rootfs",fstype!="ramfs",fstype!="tmpfs",mountpoint!="/efi"}))"""
 
-        data = MonitoringQueries._send_range_query(
+        data = await MonitoringQueries._send_range_query(
             query, start_timestamp, end_timestamp, step, result_type="matrix"
         )
 
@@ -420,7 +424,7 @@ class MonitoringQueries:
         )
 
     @staticmethod
-    def network_usage_overall(
+    async def network_usage_overall(
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
         step: int = 60,  # seconds
@@ -447,7 +451,7 @@ class MonitoringQueries:
             label_replace(rate(node_network_transmit_bytes_total{device!="lo"}[5m]), "direction", "transmit", "device", ".*")
         """
 
-        data = MonitoringQueries._send_range_query(
+        data = await MonitoringQueries._send_range_query(
             query, start_timestamp, end_timestamp, step, result_type="matrix"
         )
 

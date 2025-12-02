@@ -13,8 +13,8 @@ class VolumeNotFoundError(Exception):
     pass
 
 
-def move_service(service_id: str, volume_name: str) -> Job:
-    service = ServiceManager.get_service_by_id(service_id)
+async def move_service(service_id: str, volume_name: str) -> Job:
+    service = await ServiceManager.get_service_by_id(service_id)
     if service is None:
         raise ServiceNotFoundError(f"No such service:{service_id}")
 
@@ -22,7 +22,7 @@ def move_service(service_id: str, volume_name: str) -> Job:
     if volume is None:
         raise VolumeNotFoundError(f"No such volume:{volume_name}")
 
-    service.assert_can_move(volume)
+    await service.assert_can_move(volume)
 
     job = Jobs.add(
         type_id=f"services.{service.get_id()}.move",

@@ -16,9 +16,12 @@ from tests.test_graphql.common import (
 
 @pytest.fixture
 def mock_get_status_active(mocker):
+    async def _fake_get_status(*args, **kwargs):
+        return ServiceStatus.ACTIVE
+
     mock = mocker.patch(
         "selfprivacy_api.graphql.queries.monitoring.Prometheus.get_status",
-        return_value=ServiceStatus.ACTIVE,
+        _fake_get_status,
     )
     return mock
 
@@ -27,20 +30,18 @@ def mock_get_status_active(mocker):
 def mock_send_range_query(request, mocker):
     param = request.param
 
-    def send_query(
+    async def send_query(
         query: str, start: int, end: int, step: int, result_type: Optional[str] = None
     ):
         return {
             "resultType": "matrix",
-            "result": list(
-                map(
-                    lambda x: {
-                        "metric": {param[0]: f"metric-{x}"},
-                        "values": [[0, "zero"]],
-                    },
-                    range(0, param[1]),
-                )
-            ),
+            "result": [
+                {
+                    "metric": {param[0]: f"metric-{x}"},
+                    "values": [[0, "zero"]],
+                }
+                for x in range(0, param[1])
+            ],
         }
 
     mock = mocker.patch(
@@ -55,18 +56,16 @@ def mock_send_range_query(request, mocker):
 def mock_send_query(request, mocker):
     param = request.param
 
-    def send_query(query: str, result_type: Optional[str] = None):
+    async def send_query(query: str, result_type: Optional[str] = None):
         return {
             "resultType": "matrix",
-            "result": list(
-                map(
-                    lambda x: {
-                        "metric": {param[0]: f"metric-{x}"},
-                        "values": [[0, f"/slice_name_{x}.slice"]],
-                    },
-                    range(0, param[1]),
-                )
-            ),
+            "result": [
+                {
+                    "metric": {param[0]: f"metric-{x}"},
+                    "values": [[0, f"/slice_name_{x}.slice"]],
+                }
+                for x in range(0, param[1])
+            ],
         }
 
     mock = mocker.patch(

@@ -15,14 +15,14 @@ class ReplaceBlockDevicesToUUID(Migration):
     def get_migration_description(self) -> str:
         return "Replace volume block devices with UUIDs in user data"
 
-    def is_migration_needed(self) -> bool:
+    async def is_migration_needed(self) -> bool:
         with ReadUserData() as data:
             if "server" in data:
                 if "rootPartition" not in data["server"]:
                     return True
         return False
 
-    def migrate(self) -> None:
+    async def migrate(self) -> None:
         logger = logging.getLogger(__name__)
 
         partitions = BlockDevices().get_block_devices()

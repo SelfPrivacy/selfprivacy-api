@@ -57,7 +57,7 @@ class TestUserRepository(AbstractUserRepository):
                         group.member.append(username)
 
     @staticmethod
-    def create_user(
+    async def create_user(
         username: str,
         directmemberof: Optional[list[str]] = None,
         displayname: Optional[str] = None,
@@ -84,7 +84,7 @@ class TestUserRepository(AbstractUserRepository):
         TestUserRepository._sync_group_membership(username, directmemberof)
 
     @staticmethod
-    def get_users(
+    async def get_users(
         exclude_primary: bool = False,
         exclude_root: bool = False,
     ) -> list[UserDataUser]:
@@ -98,7 +98,7 @@ class TestUserRepository(AbstractUserRepository):
         return all_users
 
     @staticmethod
-    def delete_user(username: str) -> None:
+    async def delete_user(username: str) -> None:
         if username not in TestUserRepository._USERS_DB:
             raise UserNotFound
 
@@ -109,7 +109,7 @@ class TestUserRepository(AbstractUserRepository):
                 group.member.remove(username)
 
     @staticmethod
-    def update_user(
+    async def update_user(
         username: str,
         displayname: Optional[str] = None,
         password: Optional[str] = None,
@@ -124,13 +124,13 @@ class TestUserRepository(AbstractUserRepository):
         TestUserRepository._USERS_DB[username] = user
 
     @staticmethod
-    def get_user_by_username(username: str) -> UserDataUser:
+    async def get_user_by_username(username: str) -> UserDataUser:
         if username not in TestUserRepository._USERS_DB:
             raise UserNotFound
         return TestUserRepository._USERS_DB[username]
 
     @staticmethod
-    def generate_password_reset_link(username: str) -> str:
+    async def generate_password_reset_link(username: str) -> str:
         if username not in TestUserRepository._USERS_DB:
             raise UserNotFound
 
@@ -141,11 +141,11 @@ class TestUserRepository(AbstractUserRepository):
         return f"https://auth.{get_domain()}/ui/reset?token={random_token}"
 
     @staticmethod
-    def get_groups() -> list[Group]:
+    async def get_groups() -> list[Group]:
         return list(TestUserRepository._GROUPS_DB.values())
 
     @staticmethod
-    def add_users_to_group(users: list[str], group_name: str) -> None:
+    async def add_users_to_group(users: list[str], group_name: str) -> None:
         if group_name not in TestUserRepository._GROUPS_DB:
             TestUserRepository._GROUPS_DB[group_name] = Group(
                 name=group_name, member=[]
@@ -177,7 +177,7 @@ class TestUserRepository(AbstractUserRepository):
         TestUserRepository._GROUPS_DB[group_name] = group
 
     @staticmethod
-    def remove_users_from_group(users: list[str], group_name: str) -> None:
+    async def remove_users_from_group(users: list[str], group_name: str) -> None:
         if group_name not in TestUserRepository._GROUPS_DB:
             raise UserOrGroupNotFound
 

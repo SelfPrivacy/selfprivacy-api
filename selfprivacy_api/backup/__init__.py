@@ -8,6 +8,7 @@ import os
 from os import statvfs
 from typing import Callable, List, Optional
 from os.path import exists
+from opentelemetry import trace
 
 from selfprivacy_api.services import ServiceManager
 
@@ -43,6 +44,8 @@ from selfprivacy_api.backup.jobs import (
     add_restore_job,
     get_backup_fails,
 )
+
+tracer = trace.get_tracer(__name__)
 
 
 BACKUP_PROVIDER_ENVS = {
@@ -104,6 +107,7 @@ class Backups:
         return Backups._lookup_provider()
 
     @staticmethod
+    @tracer.start_as_current_span("set_provider")
     def set_provider(
         kind: BackupProviderEnum,
         login: str,
@@ -128,6 +132,7 @@ class Backups:
         Storage.store_provider(provider)
 
     @staticmethod
+    @tracer.start_as_current_span("reset_provider")
     def reset() -> None:
         """
         Deletes all the data about the backup storage provider.
@@ -135,6 +140,7 @@ class Backups:
         Storage.reset()
 
     @staticmethod
+    @tracer.start_as_current_span("lookup_provider")
     def _lookup_provider() -> AbstractBackupProvider:
         redis_provider = Backups._load_provider_redis()
         if redis_provider is not None:
@@ -147,6 +153,7 @@ class Backups:
         return none_provider
 
     @staticmethod
+    @tracer.start_as_current_span("set_provider_from_envs")
     def set_provider_from_envs():
         for env in BACKUP_PROVIDER_ENVS.values():
             if env not in os.environ.keys():
@@ -165,6 +172,7 @@ class Backups:
         Storage.store_provider(provider)
 
     @staticmethod
+    @tracer.start_as_current_span("construct_provider")
     def _construct_provider(
         kind: BackupProviderEnum,
         login: str,
@@ -182,6 +190,7 @@ class Backups:
         )
 
     @staticmethod
+    @tracer.start_as_current_span("load_provider_redis")
     def _load_provider_redis() -> Optional[AbstractBackupProvider]:
         provider_model = Storage.load_provider()
         if provider_model is None:
@@ -197,6 +206,7 @@ class Backups:
     # Init
 
     @staticmethod
+    @tracer.start_as_current_span("init_repo")
     def init_repo() -> None:
         """
         Initializes the backup repository. This is required once per repo.
@@ -205,6 +215,7 @@ class Backups:
         Storage.mark_as_init()
 
     @staticmethod
+    @tracer.start_as_current_span("erase_repo")
     def erase_repo() -> None:
         """
         Completely empties the remote
@@ -213,6 +224,7 @@ class Backups:
         Storage.mark_as_uninitted()
 
     @staticmethod
+    @tracer.start_as_current_span("is_initted")
     def is_initted() -> bool:
         """
         Returns whether the backup repository is initialized or not.
@@ -232,7 +244,8 @@ class Backups:
     # Backup
 
     @staticmethod
-    def back_up(
+    @tracer.start_as_current_span("back_up")
+    async def back_up(
         service: Service, reason: BackupReason = BackupReason.EXPLICIT
     ) -> Snapshot:
         """The top-level function to back up a service
@@ -251,7 +264,7 @@ class Backups:
             service_name = service.get_id()
             service.pre_backup(job=job)
             Jobs.update(job, status=JobStatus.RUNNING, status_text="Uploading backup")
-            snapshot = Backups.provider().backupper.start_backup(
+            snapshot = await Backups.provider().backupper.start_backup(
                 folders,
                 service_name,
                 reason=reason,
@@ -276,12 +289,14 @@ class Backups:
         return Backups.sync_date_from_cache(snapshot)
 
     @staticmethod
+    @tracer.start_as_current_span("clear_failed_backups")
     def clear_failed_backups(service: Service):
         jobs_to_clear = get_backup_fails(service)
         for job in jobs_to_clear:
             Jobs.remove(job)
 
     @staticmethod
+    @tracer.start_as_current_span("sync_date_from_cache")
     def sync_date_from_cache(snapshot: Snapshot) -> Snapshot:
         """
         Our snapshot creation dates are different from those on server by a tiny amount.
@@ -305,6 +320,7 @@ class Backups:
         ]
 
     @staticmethod
+    @tracer.start_as_current_span("prune_snaps_with_quotas")
     def _prune_snaps_with_quotas(snapshots: List[Snapshot]) -> List[Snapshot]:
         # Function broken out for testability
         # Sorting newest first
@@ -356,6 +372,7 @@ class Backups:
         return new_snaplist
 
     @staticmethod
+    @tracer.start_as_current_span("prune_auto_snaps")
     def _prune_auto_snaps(service) -> None:
         # Not very testable by itself, so most testing is going on Backups._prune_snaps_with_quotas
         # We can still test total limits and, say, daily limits
@@ -373,12 +390,14 @@ class Backups:
         return i
 
     @staticmethod
+    @tracer.start_as_current_span("get_autobackup_quotas")
     def autobackup_quotas() -> AutobackupQuotas:
         """0 means do not keep, -1 means unlimited"""
 
         return Storage.autobackup_quotas()
 
     @staticmethod
+    @tracer.start_as_current_span("set_autobackup_quotas")
     def set_autobackup_quotas(quotas: AutobackupQuotas) -> None:
         """0 means do not keep, -1 means unlimited"""
 
@@ -394,23 +413,26 @@ class Backups:
         # do not prune all autosnaps right away, this will be done by an async task
 
     @staticmethod
-    def prune_all_autosnaps() -> None:
-        for service in ServiceManager.get_all_services():
+    @tracer.start_as_current_span("prune_all_autosnaps")
+    async def prune_all_autosnaps() -> None:
+        for service in await ServiceManager.get_all_services():
             Backups._prune_auto_snaps(service)
 
     # Restoring
 
     @staticmethod
-    def _ensure_queued_restore_job(service, snapshot) -> Job:
+    @tracer.start_as_current_span("ensure_queued_restore_job")
+    async def _ensure_queued_restore_job(service, snapshot) -> Job:
         job = get_restore_job(service)
         if job is None:
-            job = add_restore_job(snapshot)
+            job = await add_restore_job(snapshot)
 
         Jobs.update(job, status=JobStatus.CREATED)
         return job
 
     @staticmethod
-    def _inplace_restore(
+    @tracer.start_as_current_span("inplace_restore")
+    async def _inplace_restore(
         service: Service,
         snapshot: Snapshot,
         job: Job,
@@ -418,7 +440,7 @@ class Backups:
         Jobs.update(
             job, status=JobStatus.CREATED, status_text="Waiting for pre-restore backup"
         )
-        failsafe_snapshot = Backups.back_up(service, BackupReason.PRE_RESTORE)
+        failsafe_snapshot = await Backups.back_up(service, BackupReason.PRE_RESTORE)
 
         Jobs.update(
             job, status=JobStatus.RUNNING, status_text=f"Restoring from {snapshot.id}"
@@ -446,28 +468,29 @@ class Backups:
             raise error
 
     @staticmethod
-    def restore_snapshot(
+    @tracer.start_as_current_span("restore_snapshot")
+    async def restore_snapshot(
         snapshot: Snapshot, strategy=RestoreStrategy.DOWNLOAD_VERIFY_OVERWRITE
     ) -> None:
         """Restores a snapshot to its original service using the given strategy"""
-        service = ServiceManager.get_service_by_id(snapshot.service_name)
+        service = await ServiceManager.get_service_by_id(snapshot.service_name)
         if service is None:
             raise ValueError(
                 f"snapshot has a nonexistent service: {snapshot.service_name}"
             )
-        job = Backups._ensure_queued_restore_job(service, snapshot)
+        job = await Backups._ensure_queued_restore_job(service, snapshot)
 
         try:
-            Backups._assert_restorable(snapshot)
+            await Backups._assert_restorable(snapshot)
             Jobs.update(
                 job, status=JobStatus.RUNNING, status_text="Stopping the service"
             )
-            with StoppedService(service):
+            async with StoppedService(service):
                 if not service.is_always_active():
-                    Backups.assert_dead(service)
+                    await Backups.assert_dead(service)
                 service.pre_restore(job=job)
                 if strategy == RestoreStrategy.INPLACE:
-                    Backups._inplace_restore(service, snapshot, job)
+                    await Backups._inplace_restore(service, snapshot, job)
                 else:  # verify_before_download is our default
                     Jobs.update(
                         job,
@@ -478,7 +501,7 @@ class Backups:
                         service, snapshot.id, verify=True
                     )
 
-                service.post_restore(job=job)
+                await service.post_restore(job=job)
                 Jobs.update(
                     job,
                     status=JobStatus.RUNNING,
@@ -493,10 +516,11 @@ class Backups:
         Jobs.update(job, status=JobStatus.FINISHED)
 
     @staticmethod
-    def _assert_restorable(
+    @tracer.start_as_current_span("assert_restorable")
+    async def _assert_restorable(
         snapshot: Snapshot, strategy=RestoreStrategy.DOWNLOAD_VERIFY_OVERWRITE
     ) -> None:
-        service = ServiceManager.get_service_by_id(snapshot.service_name)
+        service = await ServiceManager.get_service_by_id(snapshot.service_name)
         if service is None:
             raise ValueError(
                 f"snapshot has a nonexistent service: {snapshot.service_name}"
@@ -507,7 +531,7 @@ class Backups:
         if strategy == RestoreStrategy.DOWNLOAD_VERIFY_OVERWRITE:
             needed_space = restored_snap_size
         elif strategy == RestoreStrategy.INPLACE:
-            needed_space = restored_snap_size - service.get_storage_usage()
+            needed_space = restored_snap_size - (await service.get_storage_usage())
         else:
             raise NotImplementedError(
                 """
@@ -524,6 +548,7 @@ class Backups:
             )
 
     @staticmethod
+    @tracer.start_as_current_span("restore_service_from_snapshot")
     def _restore_service_from_snapshot(
         service: Service,
         snapshot_id: str,
@@ -540,6 +565,7 @@ class Backups:
     # Snapshots
 
     @staticmethod
+    @tracer.start_as_current_span("get_snapshots")
     def get_snapshots(service: Service) -> List[Snapshot]:
         """Returns all snapshots for a given service"""
         snapshots = Backups.get_all_snapshots()
@@ -552,6 +578,7 @@ class Backups:
         )
 
     @staticmethod
+    @tracer.start_as_current_span("get_all_snapshots")
     def get_all_snapshots() -> List[Snapshot]:
         """Returns all snapshots"""
         # When we refresh our cache:
@@ -563,6 +590,7 @@ class Backups:
         return Storage.get_cached_snapshots()
 
     @staticmethod
+    @tracer.start_as_current_span("get_snapshot_by_id")
     def get_snapshot_by_id(snapshot_id: str) -> Optional[Snapshot]:
         """Returns a backup snapshot by its id"""
         snap = Storage.get_cached_snapshot_by_id(snapshot_id)
@@ -576,6 +604,7 @@ class Backups:
         return snap
 
     @staticmethod
+    @tracer.start_as_current_span("forget_snapshots")
     def forget_snapshots(snapshots: List[Snapshot]) -> None:
         """
         Deletes a batch of snapshots from the repo and syncs cache
@@ -591,11 +620,13 @@ class Backups:
         Backups.force_snapshot_cache_reload()
 
     @staticmethod
+    @tracer.start_as_current_span("forget_snapshot")
     def forget_snapshot(snapshot: Snapshot) -> None:
         """Deletes a snapshot from the repo and from cache"""
         Backups.forget_snapshots([snapshot])
 
     @staticmethod
+    @tracer.start_as_current_span("forget_all_snapshots")
     def forget_all_snapshots():
         """
         Mark all snapshots we have made for deletion and make them inaccessible
@@ -604,6 +635,7 @@ class Backups:
         Backups.forget_snapshots(Backups.get_all_snapshots())
 
     @staticmethod
+    @tracer.start_as_current_span("force_snapshot_cache_reload")
     def force_snapshot_cache_reload() -> None:
         """
         Forces a reload of the snapshot cache.
@@ -617,6 +649,7 @@ class Backups:
             Storage.cache_snapshot(snapshot)
 
     @staticmethod
+    @tracer.start_as_current_span("snapshot_restored_size")
     def snapshot_restored_size(snapshot_id: str) -> int:
         """Returns the size of the snapshot"""
         return Backups.provider().backupper.restored_size(
@@ -624,6 +657,7 @@ class Backups:
         )
 
     @staticmethod
+    @tracer.start_as_current_span("on_new_snapshot_created")
     def _on_new_snapshot_created(service_id: str, snapshot: Snapshot) -> None:
         """What do we do with a snapshot that is just made?"""
         # non-expiring timestamp of the last
@@ -633,11 +667,13 @@ class Backups:
     # Autobackup
 
     @staticmethod
+    @tracer.start_as_current_span("autobackup_period_minutes")
     def autobackup_period_minutes() -> Optional[int]:
         """None means autobackup is disabled"""
         return Storage.autobackup_period_minutes()
 
     @staticmethod
+    @tracer.start_as_current_span("set_autobackup_period_minutes")
     def set_autobackup_period_minutes(minutes: int) -> None:
         """
         0 and negative numbers are equivalent to disable.
@@ -650,6 +686,7 @@ class Backups:
         Storage.store_autobackup_period_minutes(minutes)
 
     @staticmethod
+    @tracer.start_as_current_span("disable_all_autobackup")
     def disable_all_autobackup() -> None:
         """
         Disables all automatic backing up,
@@ -658,29 +695,33 @@ class Backups:
         Storage.delete_backup_period()
 
     @staticmethod
-    def is_time_to_backup(time: datetime) -> bool:
+    @tracer.start_as_current_span("is_time_to_backup")
+    async def is_time_to_backup(time: datetime) -> bool:
         """
         Intended as a time validator for huey cron scheduler
         of automatic backups
         """
 
-        return Backups.services_to_back_up(time) != []
+        return (await Backups.services_to_back_up(time)) != []
 
     @staticmethod
-    def services_to_back_up(time: datetime) -> List[Service]:
+    @tracer.start_as_current_span("services_to_back_up")
+    async def services_to_back_up(time: datetime) -> List[Service]:
         """Returns a list of services that should be backed up at a given time"""
         return [
             service
-            for service in ServiceManager.get_all_services()
+            for service in await ServiceManager.get_all_services()
             if Backups.is_time_to_backup_service(service, time)
         ]
 
     @staticmethod
+    @tracer.start_as_current_span("get_last_backed_up")
     def get_last_backed_up(service: Service) -> Optional[datetime]:
         """Get a timezone-aware time of the last backup of a service"""
         return Storage.get_last_backup_time(service.get_id())
 
     @staticmethod
+    @tracer.start_as_current_span("get_last_backup_error_time")
     def get_last_backup_error_time(service: Service) -> Optional[datetime]:
         """Get a timezone-aware time of the last backup of a service"""
         job = get_backup_fail(service)
@@ -697,6 +738,7 @@ class Backups:
         return None
 
     @staticmethod
+    @tracer.start_as_current_span("is_time_to_backup_service")
     def is_time_to_backup_service(service: Service, time: datetime):
         """Returns True if it is time to back up a service"""
         period = Backups.autobackup_period_minutes()
@@ -728,6 +770,7 @@ class Backups:
     # Helpers
 
     @staticmethod
+    @tracer.start_as_current_span("space_usable_for_service")
     def space_usable_for_service(service: Service) -> int:
         """
         Returns the amount of space available on the volume the given
@@ -753,6 +796,7 @@ class Backups:
         return usable_bytes
 
     @staticmethod
+    @tracer.start_as_current_span("set_localfile_repo")
     def set_localfile_repo(file_path: str):
         """Used by tests to set a local folder as a backup repo"""
         # pylint: disable-next=invalid-name
@@ -766,17 +810,19 @@ class Backups:
         Storage.store_provider(provider)
 
     @staticmethod
-    def assert_dead(service: Service):
+    @tracer.start_as_current_span("assert_dead")
+    async def assert_dead(service: Service):
         """
         Checks if a service is dead and can be safely restored from a snapshot.
         """
-        if service.get_status() not in [
+        if await service.get_status() not in [
             ServiceStatus.INACTIVE,
             ServiceStatus.FAILED,
         ]:
             raise NotDeadError(service)
 
     @staticmethod
+    @tracer.start_as_current_span("is_same_slice")
     def is_same_slice(snap1: Snapshot, snap2: Snapshot) -> bool:
         # Determines if the snaps were made roughly in the same time period
 
@@ -795,7 +841,8 @@ class Backups:
         return True
 
     @staticmethod
-    def last_backup_slice() -> List[Snapshot]:
+    @tracer.start_as_current_span("last_backup_slice")
+    async def last_backup_slice() -> List[Snapshot]:
         """
         Guarantees that the slice is valid, ie, it has an api snapshot too
         Or empty
@@ -812,7 +859,7 @@ class Backups:
         api_snaps.sort(key=lambda x: x.created_at, reverse=True)
         api_snap = api_snaps[0]  # pick the latest one
 
-        for service in ServiceManager.get_all_services():
+        for service in await ServiceManager.get_all_services():
             if isinstance(service, ServiceManager):
                 continue
             snaps = Backups.get_snapshots(service)
@@ -821,6 +868,7 @@ class Backups:
                 if Backups.is_same_slice(snap, api_snap):
                     slice.append(snap)
                 break
+
         slice.append(api_snap)
 
         return slice

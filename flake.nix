@@ -142,6 +142,32 @@
               printf "%s" "${shellMOTD}"
             '';
           };
+          ci-bandit = pkgs.mkShellNoCC {
+            name = "SP API dev shell";
+            packages = with pkgs; [
+              bandit
+              (mkPythonEnv system)
+            ];
+            shellHook = ''
+              export TEST_MODE="true"
+            '';
+          };
+          ci-black = pkgs.mkShellNoCC {
+            name = "SP API dev shell";
+            packages = with pkgs; [
+              black
+              (mkPythonEnv system)
+            ];
+            shellHook = ''
+              export TEST_MODE="true"
+            '';
+          };
+          ci-sonar = pkgs.mkShellNoCC {
+            name = "SP API sonar shell";
+            packages = with pkgs; [
+              sonar-scanner-cli
+            ];
+          };
         }
       );
 
@@ -151,9 +177,10 @@
           pkgs = nixpkgs.legacyPackages.${system};
         in
         {
-          fmt-check = pkgs.runCommandLocal "sp-api-fmt-check" {
-            nativeBuildInputs = [ pkgs.black ];
-          } "black --check ${self.outPath} > $out";
+          fmt-check = pkgs.runCommandLocal "sp-api-fmt-check"
+            {
+              nativeBuildInputs = [ pkgs.black ];
+            } "black --check ${self.outPath} > $out";
           default = pkgs.testers.runNixOSTest {
             name = "default";
             nodes.machine =
@@ -197,9 +224,9 @@
             testScript = ''
               start_all()
               machine.succeed("cd ${vmtest-src-dir} && coverage run --data-file=/tmp/.coverage -m pytest -p no:cacheprovider -v >&2")
-              machine.succeed("coverage xml --rcfile=${vmtest-src-dir}/.coveragerc --data-file=/tmp/.coverage >&2")
-              machine.copy_from_vm("coverage.xml", ".")
-              machine.succeed("coverage report >&2")
+              machine.succeed("cd ${vmtest-src-dir} && coverage xml --rcfile=${vmtest-src-dir}/.coveragerc --data-file=/tmp/.coverage -o /tmp/coverage.xml >&2")
+              machine.copy_from_vm("/tmp/coverage.xml", "coverage.xml")
+              machine.succeed("cd ${vmtest-src-dir} && coverage report --data-file=/tmp/.coverage >&2")
             '';
           };
         }

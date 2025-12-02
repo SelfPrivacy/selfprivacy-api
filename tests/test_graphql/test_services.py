@@ -1,3 +1,4 @@
+import asyncio
 import pytest
 import shutil
 
@@ -13,7 +14,7 @@ from selfprivacy_api.services.test_service import DummyService
 
 from tests.common import generate_service_query
 from tests.test_graphql.common import assert_empty, assert_ok, get_data
-from tests.test_graphql.test_system_nixos_tasks import prepare_nixos_rebuild_calls
+from tests.conftest import mock_system_rebuild_flow
 
 from tests.test_dkim import dkim_file
 
@@ -397,23 +398,35 @@ def test_start_return_value(authorized_client, only_dummy_service):
     assert service["status"] == ServiceStatus.ACTIVE.value
 
 
-def test_restart(authorized_client, only_dummy_service):
+@pytest.mark.asyncio
+async def test_restart(authorized_client, only_dummy_service):
     dummy_service = only_dummy_service
-    dummy_service.set_delay(0.3)
     mutation_response = api_restart(authorized_client, dummy_service)
     data = get_data(mutation_response)["services"]["restartService"]
     assert_ok(data)
-    service = data["service"]
+
+    async with asyncio.timeout(1):
+        await dummy_service.wait_for_statuses([ServiceStatus.INACTIVE])
+
+    async with asyncio.timeout(1):
+        await dummy_service.wait_for_statuses([ServiceStatus.ACTIVE])
+
+    service = api_all_services(authorized_client)[0]
     assert service["id"] == dummy_service.get_id()
-    assert service["status"] == ServiceStatus.RELOADING.value
+    assert service["status"] == ServiceStatus.ACTIVE.value
 
 
-def test_stop_return_value(authorized_client, only_dummy_service):
+@pytest.mark.asyncio
+async def test_stop_return_value(authorized_client, only_dummy_service):
     dummy_service = only_dummy_service
     mutation_response = api_stop(authorized_client, dummy_service)
     data = get_data(mutation_response)["services"]["stopService"]
     assert_ok(data)
-    service = data["service"]
+
+    async with asyncio.timeout(1):
+        await dummy_service.wait_for_statuses([ServiceStatus.INACTIVE])
+
+    service = api_all_services(authorized_client)[0]
     assert service["id"] == dummy_service.get_id()
     assert service["status"] == ServiceStatus.INACTIVE.value
 
@@ -507,7 +520,8 @@ def test_disable_nonexistent(authorized_client, only_dummy_service):
     assert data["service"] is None
 
 
-def test_stop_start(authorized_client, only_dummy_service):
+@pytest.mark.asyncio
+async def test_stop_start(authorized_client, only_dummy_service):
     dummy_service = only_dummy_service
 
     api_dummy_service = api_all_services(authorized_client)[0]
@@ -515,10 +529,14 @@ def test_stop_start(authorized_client, only_dummy_service):
 
     # attempting to start an already started service
     api_start(authorized_client, dummy_service)
+    async with asyncio.timeout(1):
+        await dummy_service.wait_for_statuses([ServiceStatus.ACTIVE])
     api_dummy_service = api_all_services(authorized_client)[0]
     assert api_dummy_service["status"] == ServiceStatus.ACTIVE.value
 
     api_stop(authorized_client, dummy_service)
+    async with asyncio.timeout(1):
+        await dummy_service.wait_for_statuses([ServiceStatus.INACTIVE])
     api_dummy_service = api_all_services(authorized_client)[0]
     assert api_dummy_service["status"] == ServiceStatus.INACTIVE.value
 
@@ -528,6 +546,8 @@ def test_stop_start(authorized_client, only_dummy_service):
     assert api_dummy_service["status"] == ServiceStatus.INACTIVE.value
 
     api_start(authorized_client, dummy_service)
+    async with asyncio.timeout(1):
+        await dummy_service.wait_for_statuses([ServiceStatus.ACTIVE])
     api_dummy_service = api_all_services(authorized_client)[0]
     assert api_dummy_service["status"] == ServiceStatus.ACTIVE.value
 
@@ -640,7 +660,7 @@ def test_graphql_move_service_without_folders_on_old_volume(
 
 
 def test_move_empty(
-    authorized_client, generic_userdata, mock_check_volume, dummy_service, fp
+    authorized_client, generic_userdata, mock_check_volume, dummy_service, fp, mocker
 ):
     """
     A reregister of uninitialized service with no data.
@@ -657,8 +677,7 @@ def test_move_empty(
     dummy_service.disable()
 
     unit_name = "sp-nixos-rebuild.service"
-    rebuild_command = ["systemctl", "start", unit_name]
-    prepare_nixos_rebuild_calls(fp, unit_name)
+    mock_system_rebuild_flow(mocker, unit_name)
 
     # We will NOT be mounting and remounting folders
     mount_command = ["mount", fp.any()]
@@ -686,14 +705,18 @@ def test_move_empty(
     assert_ok(data)
     assert data["service"] is not None
 
-    assert fp.call_count(rebuild_command) == 0
     assert fp.call_count(mount_command) == 0
     assert fp.call_count(unmount_command) == 0
     assert fp.call_count(chown_command) == 0
 
 
 def test_graphql_move_service(
-    authorized_client, generic_userdata, mock_check_volume, dummy_service_with_binds, fp
+    authorized_client,
+    generic_userdata,
+    mock_check_volume,
+    dummy_service_with_binds,
+    fp,
+    mocker,
 ):
     dummy_service = dummy_service_with_binds
 
@@ -706,8 +729,7 @@ def test_graphql_move_service(
     dummy_service.set_simulated_moves(False)
 
     unit_name = "sp-nixos-rebuild.service"
-    rebuild_command = ["systemctl", "start", unit_name]
-    prepare_nixos_rebuild_calls(fp, unit_name)
+    mock_system_rebuild_flow(mocker, unit_name)
 
     # We will be mounting and remounting folders
     mount_command = ["mount", fp.any()]
@@ -725,14 +747,14 @@ def test_graphql_move_service(
     assert_ok(data)
     assert data["service"] is not None
 
-    assert fp.call_count(rebuild_command) == 1
     assert fp.call_count(mount_command) == 2
     assert fp.call_count(unmount_command) == 2
     assert fp.call_count(chown_command) == 2
 
 
-def test_mailservice_cannot_enable_disable(authorized_client):
-    mailservice = ServiceManager.get_service_by_id("simple-nixos-mailserver")
+@pytest.mark.asyncio
+async def test_mailservice_cannot_enable_disable(authorized_client):
+    mailservice = await ServiceManager.get_service_by_id("simple-nixos-mailserver")
     assert mailservice is not None
 
     mutation_response = api_enable(authorized_client, mailservice)

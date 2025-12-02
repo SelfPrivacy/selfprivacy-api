@@ -6,6 +6,7 @@ import asyncio
 from typing import AsyncGenerator, List
 import strawberry
 from strawberry.types import Info
+from strawberry.extensions.tracing import OpenTelemetryExtension
 
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.mutations.deprecated_mutations import (
@@ -59,52 +60,52 @@ class Query:
     """Root schema for queries"""
 
     @strawberry.field
-    def api(self) -> Api:
+    async def api(self) -> Api:
         """API access status"""
         return Api()
 
     @strawberry.field(permission_classes=[IsAuthenticated])
-    def system(self) -> System:
+    async def system(self) -> System:
         """System queries"""
         return System()
 
     @strawberry.field(permission_classes=[IsAuthenticated])
-    def logs(self) -> Logs:
+    async def logs(self) -> Logs:
         """Log queries"""
         return Logs()
 
     @strawberry.field(permission_classes=[IsAuthenticated])
-    def users(self) -> Users:
+    async def users(self) -> Users:
         """Users queries"""
         return Users()
 
     @strawberry.field(permission_classes=[IsAuthenticated])
-    def groups(self) -> Groups:
+    async def groups(self) -> Groups:
         """Users queries"""
         return Groups()
 
     @strawberry.field(permission_classes=[IsAuthenticated])
-    def storage(self) -> Storage:
+    async def storage(self) -> Storage:
         """Storage queries"""
         return Storage()
 
     @strawberry.field(permission_classes=[IsAuthenticated])
-    def jobs(self) -> Job:
+    async def jobs(self) -> Job:
         """Jobs queries"""
         return Job()
 
     @strawberry.field(permission_classes=[IsAuthenticated])
-    def services(self) -> Services:
+    async def services(self) -> Services:
         """Services queries"""
         return Services()
 
     @strawberry.field(permission_classes=[IsAuthenticated])
-    def backup(self) -> Backup:
+    async def backup(self) -> Backup:
         """Backup queries"""
         return Backup()
 
     @strawberry.field(permission_classes=[IsAuthenticated])
-    def monitoring(self) -> Monitoring:
+    async def monitoring(self) -> Monitoring:
         """Monitoring queries"""
         return Monitoring()
 
@@ -121,47 +122,49 @@ class Mutation(
     """Root schema for mutations"""
 
     @strawberry.field
-    def api(self) -> ApiMutations:
+    async def api(self) -> ApiMutations:
         """API mutations"""
         return ApiMutations()
 
     @strawberry.field(permission_classes=[IsAuthenticated])
-    def system(self) -> SystemMutations:
+    async def system(self) -> SystemMutations:
         """System mutations"""
         return SystemMutations()
 
     @strawberry.field(permission_classes=[IsAuthenticated])
-    def users(self) -> UsersMutations:
+    async def users(self) -> UsersMutations:
         """Users mutations"""
         return UsersMutations()
 
     @strawberry.field(permission_classes=[IsAuthenticated])
-    def storage(self) -> StorageMutations:
+    async def storage(self) -> StorageMutations:
         """Storage mutations"""
         return StorageMutations()
 
     @strawberry.field(permission_classes=[IsAuthenticated])
-    def email_password_metadata_mutations(self) -> EmailPasswordsMetadataMutations:
+    async def email_password_metadata_mutations(
+        self,
+    ) -> EmailPasswordsMetadataMutations:
         """Storage mutations"""
         return EmailPasswordsMetadataMutations()
 
     @strawberry.field(permission_classes=[IsAuthenticated])
-    def services(self) -> ServicesMutations:
+    async def services(self) -> ServicesMutations:
         """Services mutations"""
         return ServicesMutations()
 
     @strawberry.field(permission_classes=[IsAuthenticated])
-    def jobs(self) -> JobMutations:
+    async def jobs(self) -> JobMutations:
         """Jobs mutations"""
         return JobMutations()
 
     @strawberry.field(permission_classes=[IsAuthenticated])
-    def backup(self) -> BackupMutations:
+    async def backup(self) -> BackupMutations:
         """Backup mutations"""
         return BackupMutations()
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def test_mutation(self) -> GenericMutationReturn:
+    async def test_mutation(self) -> GenericMutationReturn:
         """Test mutation"""
         test_job()
         return GenericMutationReturn(
@@ -215,5 +218,8 @@ schema = strawberry.Schema(
         StringConfigItem,
         BoolConfigItem,
         EnumConfigItem,
+    ],
+    extensions=[
+        OpenTelemetryExtension(),
     ],
 )

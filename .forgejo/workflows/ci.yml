@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  lint-format:
+    runs-on:
+      - x64
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Bandit checks
+        run: nix develop -L .#ci-bandit --command bandit -ll -r selfprivacy_api
+
+      - name: Run code formatting checks
+        run: nix develop -L .#ci-black --command black --check .
+
+  tests-and-sonar:
+    runs-on:
+      - kvm
+    needs:
+      - lint-format
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run tests and coverage
+        run: |
+          nix build -L .#checks.x86_64-linux.default
+          cp result/coverage.xml/coverage.xml coverage.xml
+
+      - name: Upload results to SonarQube
+        env:
+          SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
+        run: >-
+          nix develop -L .#ci-sonar --command sonar-scanner
+          -Dsonar.projectKey=SelfPrivacy-REST-API
+          -Dsonar.sources=.
+          -Dsonar.host.url=https://analyzer.selfprivacy.org
+          -Dsonar.token="$SONAR_TOKEN"
+          -Dsonar.python.coverage.reportPaths=coverage.xml
+          -Dsonar.python.version="3.12, 3.13"

@@ -1,5 +1,6 @@
-from typing import Optional
 import logging
+
+from typing import Optional
 from selfprivacy_api.migrations.migration import Migration
 
 from selfprivacy_api.models.user import UserDataUserOrigin
@@ -28,9 +29,9 @@ class MigrateUsersFromJson(Migration):
                 if user.get("username") == username:
                     return user.get("hashedPassword", None)
 
-    def _get_users_to_migrate(self):
-        json_repo_users = JsonUserRepository.get_users(exclude_root=True)
-        kanidm_repo_users = KanidmUserRepository.get_users(exclude_root=True)
+    async def _get_users_to_migrate(self):
+        json_repo_users = await JsonUserRepository.get_users(exclude_root=True)
+        kanidm_repo_users = await KanidmUserRepository.get_users(exclude_root=True)
 
         logger.info(
             f"Users in json repo: {[user.username for user in json_repo_users]}"
@@ -56,26 +57,26 @@ class MigrateUsersFromJson(Migration):
     def get_migration_description(self) -> str:
         return "Migrate users to kanidm, passwords to redis."
 
-    def is_migration_needed(self) -> bool:
-        if self._get_users_to_migrate():
+    async def is_migration_needed(self) -> bool:
+        if await self._get_users_to_migrate():
             return True
         return False
 
-    def migrate(self) -> None:
-        users_to_migrate = self._get_users_to_migrate()
+    async def migrate(self) -> None:
+        users_to_migrate = await self._get_users_to_migrate()
 
         for user in users_to_migrate:
             password_hash = self._get_password_hash(username=user.username)
 
             try:
                 if user.user_type == UserDataUserOrigin.PRIMARY:
-                    KanidmUserRepository.create_user(
+                    await KanidmUserRepository.create_user(
                         username=user.username,
                         directmemberof=SP_ADMIN_GROUPS,
                     )
 
                 else:
-                    KanidmUserRepository.create_user(
+                    await KanidmUserRepository.create_user(
                         username=user.username, directmemberof=SP_DEFAULT_GROUPS
                     )
 

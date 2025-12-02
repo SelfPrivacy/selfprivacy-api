@@ -5,6 +5,7 @@ Token repository using Redis as backend.
 from typing import Any, Optional
 from datetime import datetime, timezone
 from hashlib import md5
+from opentelemetry import trace
 
 from selfprivacy_api.utils.redis_pool import RedisPool
 
@@ -20,6 +21,8 @@ from selfprivacy_api.repositories.tokens.abstract_tokens_repository import (
 TOKENS_PREFIX = "token_repo:tokens:"
 NEW_DEVICE_KEY_REDIS_KEY = "token_repo:new_device_key"
 RECOVERY_KEY_REDIS_KEY = "token_repo:recovery_key"
+
+tracer = trace.get_tracer(__name__)
 
 
 class RedisTokensRepository(AbstractTokensRepository):
@@ -37,6 +40,7 @@ class RedisTokensRepository(AbstractTokensRepository):
         digest = md5_hash.hexdigest()
         return TOKENS_PREFIX + digest
 
+    @tracer.start_as_current_span("get_tokens")
     def get_tokens(self) -> list[Token]:
         """Get the tokens"""
         redis = self.connection

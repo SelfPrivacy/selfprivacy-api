@@ -1,5 +1,6 @@
 import typing
 import strawberry
+from opentelemetry import trace
 
 from selfprivacy_api.utils.graphql import api_job_mutation_error
 
@@ -37,6 +38,8 @@ from selfprivacy_api.backup.jobs import (
 )
 from selfprivacy_api.backup.local_secret import LocalBackupSecret
 
+tracer = trace.get_tracer(__name__)
+
 
 @strawberry.input
 class InitializeRepositoryInput:
@@ -64,61 +67,78 @@ class GenericBackupConfigReturn(MutationReturnInterface):
 @strawberry.type
 class BackupMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def initialize_repository(
+    async def initialize_repository(
         self, repository: InitializeRepositoryInput
     ) -> GenericBackupConfigReturn:
         """Initialize a new repository"""
-        Backups.set_provider(
-            kind=repository.provider,
-            login=repository.login,
-            key=repository.password,
-            location=repository.location_name,
-            repo_id=repository.location_id,
-        )
+        with tracer.start_as_current_span(
+            "initialize_repository",
+            attributes={
+                "provider": repository.provider.value,
+                "location_id": repository.location_id,
+                "location_name": repository.location_name,
+                "login": repository.login,
+                # do not log password or local_secret
+            },
+        ):
+            Backups.set_provider(
+                kind=repository.provider,
+                login=repository.login,
+                key=repository.password,
+                location=repository.location_name,
+                repo_id=repository.location_id,
+            )
 
-        secret = repository.local_secret
-        if secret is not None:
-            LocalBackupSecret.set(secret)
-            Backups.force_snapshot_cache_reload()
-        else:
-            Backups.init_repo()
-        return GenericBackupConfigReturn(
-            success=True,
-            message="",
-            code=200,
-            configuration=Backup().configuration(),
-        )
+            secret = repository.local_secret
+            if secret is not None:
+                LocalBackupSecret.set(secret)
+                Backups.force_snapshot_cache_reload()
+            else:
+                Backups.init_repo()
+            return GenericBackupConfigReturn(
+                success=True,
+                message="",
+                code=200,
+                configuration=await Backup().configuration(),
+            )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def remove_repository(self) -> GenericBackupConfigReturn:
+    async def remove_repository(self) -> GenericBackupConfigReturn:
         """Remove repository"""
-        Backups.reset()
-        return GenericBackupConfigReturn(
-            success=True,
-            message="",
-            code=200,
-            configuration=Backup().configuration(),
-        )
+        with tracer.start_as_current_span("remove_repository"):
+            Backups.reset()
+            return GenericBackupConfigReturn(
+                success=True,
+                message="",
+                code=200,
+                configuration=await Backup().configuration(),
+            )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def set_autobackup_period(
+    async def set_autobackup_period(
         self, period: typing.Optional[int] = None
     ) -> GenericBackupConfigReturn:
         """Set autobackup period. None is to disable autobackup"""
-        if period is not None:
-            Backups.set_autobackup_period_minutes(period)
-        else:
-            Backups.set_autobackup_period_minutes(0)
+        with tracer.start_as_current_span(
+            "set_autobackup_period",
+            attributes={
+                "period": period if period is not None else "None",
+            },
+        ):
+            if period is not None:
+                Backups.set_autobackup_period_minutes(period)
+            else:
+                Backups.set_autobackup_period_minutes(0)
 
-        return GenericBackupConfigReturn(
-            success=True,
-            message="",
-            code=200,
-            configuration=Backup().configuration(),
-        )
+            return GenericBackupConfigReturn(
+                success=True,
+                message="",
+                code=200,
+                configuration=await Backup().configuration(),
+            )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def set_autobackup_quotas(
+    async def set_autobackup_quotas(
         self, quotas: AutobackupQuotasInput
     ) -> GenericBackupConfigReturn:
         """
@@ -127,141 +147,166 @@ class BackupMutations:
         To disable autobackup use autobackup period setting, not this mutation.
         """
 
-        job = Jobs.add(
-            name="Trimming autobackup snapshots",
-            type_id="backups.autobackup_trimming",
-            description="Pruning the excessive snapshots after the new autobackup quotas are set",
-        )
+        with tracer.start_as_current_span(
+            "set_autobackup_quotas",
+            attributes={
+                "daily": quotas.daily,
+                "weekly": quotas.weekly,
+                "monthly": quotas.monthly,
+                "yearly": quotas.yearly,
+            },
+        ):
 
-        try:
-            Backups.set_autobackup_quotas(quotas)
-            # this task is async and can fail with only a job to report the error
-            prune_autobackup_snapshots(job)
-            return GenericBackupConfigReturn(
-                success=True,
-                message="",
-                code=200,
-                configuration=Backup().configuration(),
+            job = Jobs.add(
+                name="Trimming autobackup snapshots",
+                type_id="backups.autobackup_trimming",
+                description="Pruning the excessive snapshots after the new autobackup quotas are set",
             )
 
-        except Exception as e:
-            return GenericBackupConfigReturn(
-                success=False,
-                message=type(e).__name__ + ":" + str(e),
-                code=400,
-                configuration=Backup().configuration(),
-            )
+            try:
+                Backups.set_autobackup_quotas(quotas)
+                # this task is async and can fail with only a job to report the error
+                prune_autobackup_snapshots(job)
+                return GenericBackupConfigReturn(
+                    success=True,
+                    message="",
+                    code=200,
+                    configuration=await Backup().configuration(),
+                )
+
+            except Exception as e:
+                return GenericBackupConfigReturn(
+                    success=False,
+                    message=type(e).__name__ + ":" + str(e),
+                    code=400,
+                    configuration=await Backup().configuration(),
+                )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def start_backup(self, service_id: str) -> GenericJobMutationReturn:
+    async def start_backup(self, service_id: str) -> GenericJobMutationReturn:
         """Start backup"""
 
-        service = ServiceManager.get_service_by_id(service_id)
-        if service is None:
+        with tracer.start_as_current_span(
+            "start_backup_mutation",
+            attributes={
+                "service_id": service_id,
+            },
+        ):
+            service = await ServiceManager.get_service_by_id(service_id)
+            if service is None:
+                return GenericJobMutationReturn(
+                    success=False,
+                    code=300,
+                    message=f"nonexistent service: {service_id}",
+                    job=None,
+                )
+
+            job = add_backup_job(service)
+            start_backup(service_id)
+
             return GenericJobMutationReturn(
-                success=False,
-                code=300,
-                message=f"nonexistent service: {service_id}",
-                job=None,
+                success=True,
+                code=200,
+                message="Backup job queued",
+                job=job_to_api_job(job),
             )
 
-        job = add_backup_job(service)
-        start_backup(service_id)
-
-        return GenericJobMutationReturn(
-            success=True,
-            code=200,
-            message="Backup job queued",
-            job=job_to_api_job(job),
-        )
-
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def total_backup(self) -> GenericJobMutationReturn:
+    async def total_backup(self) -> GenericJobMutationReturn:
         """Back up all the enabled services at once
         Useful when migrating
         """
 
-        try:
-            job = add_total_backup_job()
-            total_backup(job)
-        except Exception as error:
-            return api_job_mutation_error(error)
+        with tracer.start_as_current_span("total_backup_mutation"):
+            try:
+                job = await add_total_backup_job()
+                total_backup(job)
+            except Exception as error:
+                return api_job_mutation_error(error)
 
-        return GenericJobMutationReturn(
-            success=True,
-            code=200,
-            message="Total backup task queued",
-            job=job_to_api_job(job),
-        )
+            return GenericJobMutationReturn(
+                success=True,
+                code=200,
+                message="Total backup task queued",
+                job=job_to_api_job(job),
+            )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def restore_all(self) -> GenericJobMutationReturn:
+    async def restore_all(self) -> GenericJobMutationReturn:
         """
         Restore all restorable and enabled services according to last autobackup snapshots
         This happens in sync with partial merging of old configuration for compatibility
         """
 
-        try:
-            job = add_total_restore_job()
-            full_restore(job)
-        except Exception as error:
+        with tracer.start_as_current_span("restore_all_mutation"):
+            try:
+                job = await add_total_restore_job()
+                full_restore(job)
+            except Exception as error:
+                return GenericJobMutationReturn(
+                    success=False,
+                    code=400,
+                    message=str(error),
+                    job=None,
+                )
+
             return GenericJobMutationReturn(
-                success=False,
-                code=400,
-                message=str(error),
-                job=None,
+                success=True,
+                code=200,
+                message="restore job created",
+                job=job_to_api_job(job),
             )
 
-        return GenericJobMutationReturn(
-            success=True,
-            code=200,
-            message="restore job created",
-            job=job_to_api_job(job),
-        )
-
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def restore_backup(
+    async def restore_backup(
         self,
         snapshot_id: str,
         strategy: RestoreStrategy = RestoreStrategy.DOWNLOAD_VERIFY_OVERWRITE,
     ) -> GenericJobMutationReturn:
         """Restore backup"""
-        snap = Backups.get_snapshot_by_id(snapshot_id)
-        if snap is None:
+        with tracer.start_as_current_span(
+            "restore_backup_mutation",
+            attributes={
+                "snapshot_id": snapshot_id,
+                "strategy": strategy.value,
+            },
+        ):
+            snap = Backups.get_snapshot_by_id(snapshot_id)
+            if snap is None:
+                return GenericJobMutationReturn(
+                    success=False,
+                    code=404,
+                    message=f"No such snapshot: {snapshot_id}",
+                    job=None,
+                )
+
+            service = await ServiceManager.get_service_by_id(snap.service_name)
+            if service is None:
+                return GenericJobMutationReturn(
+                    success=False,
+                    code=404,
+                    message=f"nonexistent service: {snap.service_name}",
+                    job=None,
+                )
+
+            try:
+                job = await add_restore_job(snap)
+            except ValueError as error:
+                return GenericJobMutationReturn(
+                    success=False,
+                    code=400,
+                    message=str(error),
+                    job=None,
+                )
+
+            restore_snapshot(snap, strategy)
+
             return GenericJobMutationReturn(
-                success=False,
-                code=404,
-                message=f"No such snapshot: {snapshot_id}",
-                job=None,
+                success=True,
+                code=200,
+                message="restore job created",
+                job=job_to_api_job(job),
             )
-
-        service = ServiceManager.get_service_by_id(snap.service_name)
-        if service is None:
-            return GenericJobMutationReturn(
-                success=False,
-                code=404,
-                message=f"nonexistent service: {snap.service_name}",
-                job=None,
-            )
-
-        try:
-            job = add_restore_job(snap)
-        except ValueError as error:
-            return GenericJobMutationReturn(
-                success=False,
-                code=400,
-                message=str(error),
-                job=None,
-            )
-
-        restore_snapshot(snap, strategy)
-
-        return GenericJobMutationReturn(
-            success=True,
-            code=200,
-            message="restore job created",
-            job=job_to_api_job(job),
-        )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def forget_snapshot(self, snapshot_id: str) -> GenericMutationReturn:
@@ -270,34 +315,41 @@ class BackupMutations:
         After some time, the data (encrypted) will not be recoverable
         from the backup server too, but not immediately"""
 
-        snap = Backups.get_snapshot_by_id(snapshot_id)
-        if snap is None:
-            return GenericMutationReturn(
-                success=False,
-                code=404,
-                message=f"snapshot {snapshot_id} not found",
-            )
+        with tracer.start_as_current_span(
+            "forget_snapshot_mutation",
+            attributes={
+                "snapshot_id": snapshot_id,
+            },
+        ):
+            snap = Backups.get_snapshot_by_id(snapshot_id)
+            if snap is None:
+                return GenericMutationReturn(
+                    success=False,
+                    code=404,
+                    message=f"snapshot {snapshot_id} not found",
+                )
 
-        try:
-            Backups.forget_snapshot(snap)
+            try:
+                Backups.forget_snapshot(snap)
+                return GenericMutationReturn(
+                    success=True,
+                    code=200,
+                    message="",
+                )
+            except Exception as error:
+                return GenericMutationReturn(
+                    success=False,
+                    code=400,
+                    message=str(error),
+                )
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    def force_snapshots_reload(self) -> GenericMutationReturn:
+        """Force snapshots reload"""
+        with tracer.start_as_current_span("force_snapshots_reload_mutation"):
+            Backups.force_snapshot_cache_reload()
             return GenericMutationReturn(
                 success=True,
                 code=200,
                 message="",
             )
-        except Exception as error:
-            return GenericMutationReturn(
-                success=False,
-                code=400,
-                message=str(error),
-            )
-
-    @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def force_snapshots_reload(self) -> GenericMutationReturn:
-        """Force snapshots reload"""
-        Backups.force_snapshot_cache_reload()
-        return GenericMutationReturn(
-            success=True,
-            code=200,
-            message="",
-        )

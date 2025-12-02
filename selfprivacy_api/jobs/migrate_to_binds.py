@@ -1,6 +1,7 @@
 """Function to perform migration of app data to binds."""
 
 import subprocess
+import asyncio
 import pathlib
 import shutil
 import logging
@@ -10,7 +11,7 @@ from selfprivacy_api.jobs import Job, JobStatus, Jobs
 from selfprivacy_api.services import ServiceManager
 from selfprivacy_api.services.mailserver import MailServer
 from selfprivacy_api.utils import ReadUserData, WriteUserData
-from selfprivacy_api.utils.huey import huey
+from selfprivacy_api.utils.huey import huey, huey_async_helper
 from selfprivacy_api.utils.block_devices import BlockDevices
 
 logger = logging.getLogger(__name__)
@@ -109,10 +110,18 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         status_text="Checking if services are present.",
     )
 
-    nextcloud_service = ServiceManager.get_service_by_id("nextcloud")
-    bitwarden_service = ServiceManager.get_service_by_id("bitwarden")
-    gitea_service = ServiceManager.get_service_by_id("gitea")
-    pleroma_service = ServiceManager.get_service_by_id("pleroma")
+    nextcloud_service = huey_async_helper.run_async(
+        ServiceManager.get_service_by_id("nextcloud")
+    )
+    bitwarden_service = huey_async_helper.run_async(
+        ServiceManager.get_service_by_id("bitwarden")
+    )
+    gitea_service = huey_async_helper.run_async(
+        ServiceManager.get_service_by_id("gitea")
+    )
+    pleroma_service = huey_async_helper.run_async(
+        ServiceManager.get_service_by_id("pleroma")
+    )
 
     if not nextcloud_service:
         Jobs.update(
@@ -215,7 +224,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         status_text="Migrating Nextcloud.",
     )
 
-    nextcloud_service.stop()
+    huey_async_helper.run_async(nextcloud_service.stop())
 
     # If /volumes/sda1/nextcloud or /volumes/sdb/nextcloud exists, skip it.
     if not pathlib.Path("/volumes/sda1/nextcloud").exists():
@@ -230,7 +239,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
             )
 
     # Start Nextcloud
-    nextcloud_service.start()
+    huey_async_helper.run_async(nextcloud_service.start())
 
     # Perform migration of Bitwarden
 
@@ -241,7 +250,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         status_text="Migrating Bitwarden.",
     )
 
-    bitwarden_service.stop()
+    huey_async_helper.run_async(bitwarden_service.stop())
 
     if not pathlib.Path("/volumes/sda1/bitwarden").exists():
         if not pathlib.Path("/volumes/sdb/bitwarden").exists():
@@ -266,7 +275,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
             )
 
     # Start Bitwarden
-    bitwarden_service.start()
+    huey_async_helper.run_async(bitwarden_service.start())
 
     # Perform migration of Gitea
 
@@ -277,7 +286,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         status_text="Migrating Gitea.",
     )
 
-    gitea_service.stop()
+    huey_async_helper.run_async(gitea_service.stop())
 
     if not pathlib.Path("/volumes/sda1/gitea").exists():
         if not pathlib.Path("/volumes/sdb/gitea").exists():
@@ -288,7 +297,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
                 group="gitea",
             )
 
-    gitea_service.start()
+    huey_async_helper.run_async(gitea_service.start())
 
     # Perform migration of Mail server
 
@@ -299,7 +308,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         status_text="Migrating Mail server.",
     )
 
-    MailServer().stop()
+    huey_async_helper.run_async(MailServer().stop())
 
     if not pathlib.Path("/volumes/sda1/vmail").exists():
         if not pathlib.Path("/volumes/sdb/vmail").exists():
@@ -319,7 +328,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
                 group="virtualMail",
             )
 
-    MailServer().start()
+    huey_async_helper.run_async(MailServer().start())
 
     # Perform migration of Pleroma
 
@@ -330,7 +339,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         status_text="Migrating Pleroma.",
     )
 
-    pleroma_service.stop()
+    huey_async_helper.run_async(pleroma_service.stop())
 
     if not pathlib.Path("/volumes/sda1/pleroma").exists():
         if not pathlib.Path("/volumes/sdb/pleroma").exists():
@@ -354,7 +363,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
                 group="postgres",
             )
 
-    pleroma_service.start()
+    huey_async_helper.run_async(pleroma_service.start())
 
     Jobs.update(
         job=job,

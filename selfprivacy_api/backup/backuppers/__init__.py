@@ -23,7 +23,7 @@ class AbstractBackupper(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def start_backup(
+    async def start_backup(
         self,
         folders: List[str],
         service_name: str,

@@ -3,7 +3,7 @@
 # pylint: disable=too-few-public-methods
 import typing
 import strawberry
-
+from opentelemetry import trace
 
 from selfprivacy_api.backup import Backups
 from selfprivacy_api.backup.local_secret import LocalBackupSecret
@@ -19,6 +19,8 @@ from selfprivacy_api.graphql.common_types.service import (
 from selfprivacy_api.graphql.common_types.backup import AutobackupQuotas
 from selfprivacy_api.services import ServiceManager
 from selfprivacy_api.models.backup.snapshot import Snapshot
+
+tracer = trace.get_tracer(__name__)
 
 
 @strawberry.type
@@ -62,14 +64,15 @@ def tombstone_service(service_id: str) -> Service:
     )
 
 
-def snapshot_to_api(snap: Snapshot):
+@tracer.start_as_current_span("snapshot_to_api")
+async def snapshot_to_api(snap: Snapshot):
     api_service = None
-    service = ServiceManager.get_service_by_id(snap.service_name)
+    service = await ServiceManager.get_service_by_id(snap.service_name)
 
     if service is None:
         api_service = tombstone_service(snap.service_name)
     else:
-        api_service = service_to_graphql_service(service)
+        api_service = await service_to_graphql_service(service)
     if api_service is None:
         raise NotImplementedError(
             f"Could not construct API Service record for:{snap.service_name}. This should be unreachable and is a bug if you see it."
@@ -85,30 +88,39 @@ def snapshot_to_api(snap: Snapshot):
 @strawberry.type
 class Backup:
     @strawberry.field
-    def configuration(self) -> BackupConfiguration:
-        return BackupConfiguration(
-            provider=Backups.provider().name,
-            encryption_key=LocalBackupSecret.get(),
-            is_initialized=Backups.is_initted(),
-            autobackup_period=Backups.autobackup_period_minutes(),
-            location_name=Backups.provider().location,
-            location_id=Backups.provider().repo_id,
-            autobackup_quotas=Backups.autobackup_quotas(),
-        )
+    async def configuration(self) -> BackupConfiguration:
+        with tracer.start_as_current_span("resolve_backup_configuration"):
+            return BackupConfiguration(
+                provider=Backups.provider().name,
+                encryption_key=LocalBackupSecret.get(),
+                is_initialized=Backups.is_initted(),
+                autobackup_period=Backups.autobackup_period_minutes(),
+                location_name=Backups.provider().location,
+                location_id=Backups.provider().repo_id,
+                autobackup_quotas=Backups.autobackup_quotas(),
+            )
 
     @strawberry.field
-    def all_snapshots(self) -> typing.List[SnapshotInfo]:
-        if not Backups.is_initted():
-            return []
-        snapshots = Backups.get_all_snapshots()
-        return [snapshot_to_api(snap) for snap in snapshots]
+    async def all_snapshots(self) -> typing.List[SnapshotInfo]:
+        with tracer.start_as_current_span("resolve_all_snapshots") as span:
+            if not Backups.is_initted():
+                return []
+            snapshots = Backups.get_all_snapshots()
+
+            span.set_attribute("snapshot_count", len(snapshots))
+            span.add_event("fetched all snapshots from backup storage")
+
+            return [await snapshot_to_api(snap) for snap in snapshots]
 
     @strawberry.field
-    def last_slice(self) -> typing.List[SnapshotInfo]:
+    async def last_slice(self) -> typing.List[SnapshotInfo]:
         """
         A query for seeing which snapshots will be restored when migrating
         """
-
-        if not Backups.is_initted():
-            return []
-        return [snapshot_to_api(snap) for snap in which_snapshots_to_full_restore()]
+        with tracer.start_as_current_span("resolve_last_slice"):
+            if not Backups.is_initted():
+                return []
+            return [
+                await snapshot_to_api(snap)
+                for snap in await which_snapshots_to_full_restore()
+            ]

@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+from functools import wraps
 import subprocess
 import json
 import datetime
 import tempfile
 import logging
 import os
+import inspect
+
 
 from typing import List, Optional, TypeVar, Callable
 from collections.abc import Iterable
@@ -33,20 +36,31 @@ logger = logging.getLogger(__name__)
 
 
 def unlocked_repo(func: T) -> T:
-    """unlock repo and retry if it appears to be locked"""
+    if inspect.iscoroutinefunction(func):
 
-    def inner(self: ResticBackupper, *args, **kwargs):
+        @wraps(func)
+        async def async_inner(self: "ResticBackupper", *args, **kwargs):
+            try:
+                return await func(self, *args, **kwargs)
+            except Exception as error:
+                if "unable to create lock" in str(error):
+                    self.unlock()
+                    return await func(self, *args, **kwargs)
+                raise
+
+        return async_inner
+
+    @wraps(func)
+    def sync_inner(self: "ResticBackupper", *args, **kwargs):
         try:
             return func(self, *args, **kwargs)
         except Exception as error:
             if "unable to create lock" in str(error):
                 self.unlock()
                 return func(self, *args, **kwargs)
-            else:
-                raise error
+            raise
 
-    # Above, we manually guarantee that the type returned is compatible.
-    return inner  # type: ignore
+    return sync_inner
 
 
 class ResticBackupper(AbstractBackupper):
@@ -193,15 +207,15 @@ class ResticBackupper(AbstractBackupper):
         return result
 
     @staticmethod
-    def _get_backup_job(service_name: str) -> Optional[Job]:
-        service = ServiceManager.get_service_by_id(service_name)
+    async def _get_backup_job(service_name: str) -> Optional[Job]:
+        service = await ServiceManager.get_service_by_id(service_name)
         if service is None:
             raise ValueError("No service with id ", service_name)
 
         return get_backup_job(service)
 
     @unlocked_repo
-    def start_backup(
+    async def start_backup(
         self,
         folders: List[str],
         service_name: str,
@@ -212,7 +226,7 @@ class ResticBackupper(AbstractBackupper):
         """
         assert len(folders) != 0
 
-        job = ResticBackupper._get_backup_job(service_name)
+        job = await ResticBackupper._get_backup_job(service_name)
 
         tags = [service_name, reason.value]
         backup_command = self.restic_command(

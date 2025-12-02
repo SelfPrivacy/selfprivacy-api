@@ -7,7 +7,6 @@ import pytest
 from typing import Optional
 
 from selfprivacy_api.actions.ssh import (
-    set_ssh_settings,
     get_ssh_settings,
     create_ssh_key,
     remove_ssh_key,
@@ -208,9 +207,10 @@ def test_adding_root_key_writes_json(generic_userdata):
 ############### ADMIN KEYS
 
 
-def test_read_admin_keys_from_json(generic_userdata):
+@pytest.mark.asyncio
+async def test_read_admin_keys_from_json(generic_userdata):
     admin_name = "tester"
-    assert JsonUserRepository.get_user_by_username(admin_name).ssh_keys == [
+    assert (await JsonUserRepository.get_user_by_username(admin_name)).ssh_keys == [
         "ssh-rsa KEY test@pc"
     ]
     new_keys = ["ssh-rsa KEY test@pc", "ssh-ed25519 KEY2 test@pc"]
@@ -218,12 +218,14 @@ def test_read_admin_keys_from_json(generic_userdata):
     with WriteUserData() as data:
         data["sshKeys"] = new_keys
 
-    assert JsonUserRepository.get_user_by_username(admin_name).ssh_keys == new_keys
+    assert (
+        await JsonUserRepository.get_user_by_username(admin_name)
+    ).ssh_keys == new_keys
 
     with WriteUserData() as data:
         del data["sshKeys"]
 
-    assert JsonUserRepository.get_user_by_username(admin_name).ssh_keys == []
+    assert (await JsonUserRepository.get_user_by_username(admin_name)).ssh_keys == []
 
 
 def test_adding_admin_key_writes_json(generic_userdata):
@@ -247,17 +249,18 @@ def test_adding_admin_key_writes_json(generic_userdata):
         assert set(data["sshKeys"]) == set([key1, key2])
 
 
-def test_removing_admin_key_writes_json(generic_userdata):
+@pytest.mark.asyncio
+async def test_removing_admin_key_writes_json(generic_userdata):
     # generic userdata has a a single admin key
     admin_name = "tester"
 
-    admin_keys = JsonUserRepository.get_user_by_username(admin_name).ssh_keys
+    admin_keys = (await JsonUserRepository.get_user_by_username(admin_name)).ssh_keys
     assert len(admin_keys) == 1
     key1 = admin_keys[0]
     key2 = "ssh-rsa MYSUPERKEY admin@pc"
 
     create_ssh_key(admin_name, key2)
-    admin_keys = JsonUserRepository.get_user_by_username(admin_name).ssh_keys
+    admin_keys = (await JsonUserRepository.get_user_by_username(admin_name)).ssh_keys
     assert len(admin_keys) == 2
 
     remove_ssh_key(admin_name, key2)
@@ -272,11 +275,12 @@ def test_removing_admin_key_writes_json(generic_userdata):
         assert data["sshKeys"] == []
 
 
-def test_remove_admin_key_on_undefined(generic_userdata):
+@pytest.mark.asyncio
+async def test_remove_admin_key_on_undefined(generic_userdata):
     # generic userdata has a a single admin key
     admin_name = "tester"
 
-    admin_keys = JsonUserRepository.get_user_by_username(admin_name).ssh_keys
+    admin_keys = (await JsonUserRepository.get_user_by_username(admin_name)).ssh_keys
     assert len(admin_keys) == 1
     key1 = admin_keys[0]
 
@@ -285,7 +289,7 @@ def test_remove_admin_key_on_undefined(generic_userdata):
 
     with pytest.raises(KeyNotFound):
         remove_ssh_key(admin_name, key1)
-    admin_keys = JsonUserRepository.get_user_by_username(admin_name).ssh_keys
+    admin_keys = (await JsonUserRepository.get_user_by_username(admin_name)).ssh_keys
     assert len(admin_keys) == 0
 
 
@@ -302,22 +306,27 @@ def find_user_index_in_json_users(users: list, username: str) -> Optional[int]:
 
 
 @pytest.mark.parametrize("username", regular_users)
-def test_read_user_keys_from_json(generic_userdata, username):
+@pytest.mark.asyncio
+async def test_read_user_keys_from_json(generic_userdata, username):
     old_keys = [f"ssh-rsa KEY {username}@pc"]
-    assert JsonUserRepository.get_user_by_username(username).ssh_keys == old_keys
+    assert (
+        await JsonUserRepository.get_user_by_username(username)
+    ).ssh_keys == old_keys
     new_keys = ["ssh-rsa KEY test@pc", "ssh-ed25519 KEY2 test@pc"]
 
     with WriteUserData() as data:
         user_index = find_user_index_in_json_users(data["users"], username)
         data["users"][user_index]["sshKeys"] = new_keys
 
-    assert JsonUserRepository.get_user_by_username(username).ssh_keys == new_keys
+    assert (
+        await JsonUserRepository.get_user_by_username(username)
+    ).ssh_keys == new_keys
 
     with WriteUserData() as data:
         user_index = find_user_index_in_json_users(data["users"], username)
         del data["users"][user_index]["sshKeys"]
 
-    assert JsonUserRepository.get_user_by_username(username).ssh_keys == []
+    assert (await JsonUserRepository.get_user_by_username(username)).ssh_keys == []
 
     # deeper deletions are for user getter tests, not here
 
@@ -346,16 +355,17 @@ def test_adding_user_key_writes_json(generic_userdata, username):
 
 
 @pytest.mark.parametrize("username", regular_users)
-def test_removing_user_key_writes_json(generic_userdata, username):
+@pytest.mark.asyncio
+async def test_removing_user_key_writes_json(generic_userdata, username):
     # generic userdata has a a single user key
 
-    user_keys = JsonUserRepository.get_user_by_username(username).ssh_keys
+    user_keys = (await JsonUserRepository.get_user_by_username(username)).ssh_keys
     assert len(user_keys) == 1
     key1 = user_keys[0]
     key2 = "ssh-rsa MYSUPERKEY admin@pc"
 
     create_ssh_key(username, key2)
-    user_keys = JsonUserRepository.get_user_by_username(username).ssh_keys
+    user_keys = (await JsonUserRepository.get_user_by_username(username)).ssh_keys
     assert len(user_keys) == 2
 
     remove_ssh_key(username, key2)
@@ -373,9 +383,11 @@ def test_removing_user_key_writes_json(generic_userdata, username):
 
 
 @pytest.mark.parametrize("username", regular_users)
-def test_remove_user_key_on_undefined(generic_userdata, username):
+@pytest.mark.asyncio
+async def test_remove_user_key_on_undefined(generic_userdata, username):
     # generic userdata has a a single user key
-    user_keys = JsonUserRepository.get_user_by_username(username).ssh_keys
+    user_keys = await JsonUserRepository.get_user_by_username(username)
+    user_keys = user_keys.ssh_keys
     assert len(user_keys) == 1
     key1 = user_keys[0]
 
@@ -386,7 +398,7 @@ def test_remove_user_key_on_undefined(generic_userdata, username):
     with pytest.raises(KeyNotFound):
         remove_ssh_key(username, key1)
 
-    user_keys = JsonUserRepository.get_user_by_username(username).ssh_keys
+    user_keys = (await JsonUserRepository.get_user_by_username(username)).ssh_keys
     assert len(user_keys) == 0
 
     with WriteUserData() as data:

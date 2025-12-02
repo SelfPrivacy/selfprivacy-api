@@ -11,7 +11,7 @@ from selfprivacy_api.graphql.common_types.backup import (
 )
 
 from selfprivacy_api.models.backup.snapshot import Snapshot
-from selfprivacy_api.utils.huey import huey
+from selfprivacy_api.utils.huey import huey, huey_async_helper
 from huey import crontab
 
 from selfprivacy_api.services import ServiceManager, Service
@@ -31,8 +31,10 @@ def validate_datetime(dt: datetime) -> bool:
     Also ensures that the timezone-aware time is used.
     """
     if dt.tzinfo is None:
-        return Backups.is_time_to_backup(dt.replace(tzinfo=timezone.utc))
-    return Backups.is_time_to_backup(dt)
+        return huey_async_helper.run_async(
+            Backups.is_time_to_backup(dt.replace(tzinfo=timezone.utc))
+        )
+    return huey_async_helper.run_async(Backups.is_time_to_backup(dt))
 
 
 def report_job_error(error: Exception, job: Job):
@@ -49,10 +51,10 @@ def start_backup(service_id: str, reason: BackupReason = BackupReason.EXPLICIT) 
     """
     The worker task that starts the backup process.
     """
-    service = ServiceManager.get_service_by_id(service_id)
+    service = huey_async_helper.run_async(ServiceManager.get_service_by_id(service_id))
     if service is None:
         raise ValueError(f"No such service: {service_id}")
-    Backups.back_up(service, reason)
+    huey_async_helper.run_async(Backups.back_up(service, reason))
     return True
 
 
@@ -63,7 +65,7 @@ def prune_autobackup_snapshots(job: Job) -> bool:
     """
     Jobs.update(job, JobStatus.RUNNING)
     try:
-        Backups.prune_all_autosnaps()
+        huey_async_helper.run_async(Backups.prune_all_autosnaps())
     except Exception as e:
         Jobs.update(job, JobStatus.ERROR, error=type(e).__name__ + ":" + str(e))
         return False
@@ -80,13 +82,13 @@ def restore_snapshot(
     """
     The worker task that starts the restore process.
     """
-    Backups.restore_snapshot(snapshot, strategy)
+    huey_async_helper.run_async(Backups.restore_snapshot(snapshot, strategy))
     return True
 
 
 @huey.task()
 def full_restore(job: Job) -> bool:
-    do_full_restore(job)
+    huey_async_helper.run_async(do_full_restore(job))
     return True
 
 
@@ -95,12 +97,12 @@ def automatic_backup() -> None:
     """
     The worker periodic task that starts the automatic backup process.
     """
-    do_autobackup()
+    huey_async_helper.run_async(do_autobackup())
 
 
 @huey.task()
 def total_backup(job: Job) -> bool:
-    do_total_backup(job)
+    huey_async_helper.run_async(do_total_backup(job))
     return True
 
 
@@ -109,7 +111,7 @@ def reload_snapshot_cache():
     Backups.force_snapshot_cache_reload()
 
 
-def back_up_multiple(
+async def back_up_multiple(
     job: Job,
     services_to_back_up: List[Service],
     reason: BackupReason = BackupReason.EXPLICIT,
@@ -123,7 +125,7 @@ def back_up_multiple(
 
     for service in services_to_back_up:
         try:
-            Backups.back_up(service, reason)
+            await Backups.back_up(service, reason)
         except Exception as error:
             report_job_error(error, job)
             raise error
@@ -131,16 +133,16 @@ def back_up_multiple(
         Jobs.update(job, JobStatus.RUNNING, progress=progress)
 
 
-def do_total_backup(job: Job) -> None:
+async def do_total_backup(job: Job) -> None:
     """
     Body of total backup task, broken out to test it
     """
-    back_up_multiple(job, ServiceManager.get_enabled_services())
+    await back_up_multiple(job, await ServiceManager.get_enabled_services())
 
     Jobs.update(job, JobStatus.FINISHED)
 
 
-def do_autobackup() -> None:
+async def do_autobackup() -> None:
     """
     Body of autobackup task, broken out to test it
     For some reason, we cannot launch periodic huey tasks
@@ -154,12 +156,12 @@ def do_autobackup() -> None:
         # Temporarily enable autobackup
         Backups.set_autobackup_period_minutes(24 * 60)  # 1 day
 
-    services_to_back_up = Backups.services_to_back_up(time)
+    services_to_back_up = await Backups.services_to_back_up(time)
     if not services_to_back_up:
         return
     job = add_autobackup_job(services_to_back_up)
 
-    back_up_multiple(job, services_to_back_up, BackupReason.AUTO)
+    await back_up_multiple(job, services_to_back_up, BackupReason.AUTO)
 
     if backups_were_disabled:
         Backups.set_autobackup_period_minutes(0)
@@ -168,8 +170,8 @@ def do_autobackup() -> None:
     # this code is called with a delay
 
 
-def eligible_for_full_restoration(snap: Snapshot):
-    service = ServiceManager.get_service_by_id(snap.service_name)
+async def eligible_for_full_restoration(snap: Snapshot):
+    service = await ServiceManager.get_service_by_id(snap.service_name)
     if service is None:
         return False
     if service.is_enabled() is False:
@@ -177,8 +179,8 @@ def eligible_for_full_restoration(snap: Snapshot):
     return True
 
 
-def which_snapshots_to_full_restore() -> list[Snapshot]:
-    autoslice = Backups.last_backup_slice()
+async def which_snapshots_to_full_restore() -> list[Snapshot]:
+    autoslice = await Backups.last_backup_slice()
     api_snapshot = None
     for snap in autoslice:
         if snap.service_name == ServiceManager.get_id():
@@ -190,14 +192,14 @@ def which_snapshots_to_full_restore() -> list[Snapshot]:
         )
 
     snapshots_to_restore = [
-        snap for snap in autoslice if eligible_for_full_restoration(snap)
+        snap for snap in autoslice if await eligible_for_full_restoration(snap)
     ]
     # API should be restored in the very end of the list because it requires rebuild right afterwards
     snapshots_to_restore.append(api_snapshot)
     return snapshots_to_restore
 
 
-def do_full_restore(job: Job) -> None:
+async def do_full_restore(job: Job) -> None:
     """
     Body full restore task, a part of server migration.
     Broken out to test it independently from task infra
@@ -209,7 +211,7 @@ def do_full_restore(job: Job) -> None:
         status_text="Finding the last autobackup session",
         progress=0,
     )
-    snapshots_to_restore = which_snapshots_to_full_restore()
+    snapshots_to_restore = await which_snapshots_to_full_restore()
 
     progress_per_service = 99 // len(snapshots_to_restore)
     progress = 0
@@ -217,7 +219,7 @@ def do_full_restore(job: Job) -> None:
 
     for snap in snapshots_to_restore:
         try:
-            Backups.restore_snapshot(snap)
+            await Backups.restore_snapshot(snap)
         except Exception as error:
             report_job_error(error, job)
             return
@@ -233,5 +235,5 @@ def do_full_restore(job: Job) -> None:
 
     # Adding a separate job to not confuse the user with jumping progress bar
     rebuild_job = add_rebuild_job()
-    rebuild_system(rebuild_job)
+    await rebuild_system(rebuild_job)
     Jobs.update(job, JobStatus.FINISHED)

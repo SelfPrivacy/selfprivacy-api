@@ -3,14 +3,12 @@
 import logging
 import base64
 import typing
-import subprocess
 import json
+import asyncio
 from typing import List
-from os import listdir, path
-from os import makedirs
-from os.path import join
-from functools import lru_cache
-
+from os import listdir, path, makedirs
+from os.path import join, exists
+from opentelemetry import trace
 
 from shutil import copyfile, copytree, rmtree
 from selfprivacy_api.jobs import Job, JobStatus, Jobs
@@ -19,7 +17,8 @@ from selfprivacy_api.services.mailserver import MailServer
 
 from selfprivacy_api.services.service import Service, ServiceDnsRecord
 from selfprivacy_api.services.service import ServiceStatus
-from selfprivacy_api.utils.cached_call import get_ttl_hash
+from selfprivacy_api.services.remote import get_remote_service
+from selfprivacy_api.services.suggested import SuggestedServices
 import selfprivacy_api.utils.network as network_utils
 
 from selfprivacy_api.services.api_icon import API_ICON
@@ -32,7 +31,7 @@ from selfprivacy_api.utils import (
 )
 from selfprivacy_api.utils.block_devices import BlockDevices
 from selfprivacy_api.services.templated_service import (
-    SP_MODULES_DEFENITIONS_PATH,
+    SP_MODULES_DEFINITIONS_PATH,
     SP_SUGGESTED_MODULES_PATH,
     TemplatedService,
 )
@@ -41,51 +40,83 @@ CONFIG_STASH_DIR = "/etc/selfprivacy/dump"
 KANIDM_A_RECORD = "auth"
 
 logger = logging.getLogger(__name__)
+tracer = trace.get_tracer(__name__)
 
 
 class ServiceManager(Service):
     folders: List[str] = [CONFIG_STASH_DIR]
 
     @staticmethod
-    def get_all_services() -> list[Service]:
-        return get_services()
+    @tracer.start_as_current_span("get_all_services")
+    async def get_all_services() -> list[Service]:
+        return await get_services()
 
     @staticmethod
-    def get_service_by_id(service_id: str) -> typing.Optional[Service]:
-        for service in get_services():
-            if service.get_id() == service_id:
-                return service
-        return None
+    async def get_service_by_id(service_id: str) -> typing.Optional[Service]:
+        with tracer.start_as_current_span("get_service_by_id") as span:
+            span.set_attribute("service_id", service_id)
+
+            for service in DUMMY_SERVICES:
+                if service.get_id() == service_id:
+                    return service
+
+            if "ONLY_DUMMY_SERVICE" in TEST_FLAGS:
+                return None
+            elif "DUMMY_SERVICE_AND_API" in TEST_FLAGS:
+                if service_id == ServiceManager.get_id():
+                    return ServiceManager()
+                return None
+
+            for service in HARDCODED_SERVICES:
+                if service.get_id() == service_id:
+                    return service
+
+            if exists(join(SP_MODULES_DEFINITIONS_PATH, service_id)):
+                return await get_templated_service(service_id)
+
+            suggested_services = await SuggestedServices.get()
+
+            for service in suggested_services:
+                if service.get_id() == service_id:
+                    return service
+
+            return None
 
     @staticmethod
-    def get_enabled_services() -> list[Service]:
-        return [service for service in get_services() if service.is_enabled()]
+    @tracer.start_as_current_span("get_enabled_services")
+    async def get_enabled_services() -> list[Service]:
+        return [service for service in await get_services() if service.is_enabled()]
 
     @staticmethod
-    def get_enabled_services_with_urls() -> list[Service]:
+    @tracer.start_as_current_span("get_enabled_services_with_urls")
+    async def get_enabled_services_with_urls() -> list[Service]:
         return [
             service
-            for service in get_services(exclude_remote=True)
+            for service in await get_services(exclude_remote=True)
             if service.is_enabled() and service.get_url()
         ]
 
-    # This one is not currently used by any code.
+    # This one is not currently used by any code.``
     @staticmethod
-    def get_disabled_services() -> list[Service]:
-        return [service for service in get_services() if not service.is_enabled()]
+    @tracer.start_as_current_span("get_disabled_services")
+    async def get_disabled_services() -> list[Service]:
+        return [service for service in await get_services() if not service.is_enabled()]
 
     @staticmethod
-    def get_services_by_location(location: str) -> list[Service]:
-        return [
-            service
-            for service in get_services(
-                exclude_remote=True,
-            )
-            if service.get_drive() == location
-        ]
+    async def get_services_by_location(location: str) -> list[Service]:
+        with tracer.start_as_current_span("get_services_by_location") as span:
+            span.set_attribute("location", location)
+            return [
+                service
+                for service in await get_services(
+                    exclude_remote=True,
+                )
+                if service.get_drive() == location
+            ]
 
     @staticmethod
-    def get_all_required_dns_records() -> list[ServiceDnsRecord]:
+    @tracer.start_as_current_span("get_all_required_dns_records")
+    async def get_all_required_dns_records() -> list[ServiceDnsRecord]:
         ip4 = network_utils.get_ip4()
         ip6 = network_utils.get_ip6()
 
@@ -112,7 +143,7 @@ class ServiceManager(Service):
         except Exception as e:
             logging.error(f"Error creating CAA: {e}")
 
-        for service in ServiceManager.get_enabled_services():
+        for service in await ServiceManager.get_enabled_services():
             dns_records += service.get_dns_records(ip4, ip6)
         return dns_records
 
@@ -177,8 +208,15 @@ class ServiceManager(Service):
         return "General server settings."
 
     @classmethod
-    def get_status(cls) -> ServiceStatus:
+    async def get_status(cls) -> ServiceStatus:
         return ServiceStatus.ACTIVE
+
+    @classmethod
+    async def wait_for_statuses(self, expected_statuses: List[ServiceStatus]):
+        if ServiceStatus.ACTIVE in expected_statuses:
+            return
+
+        raise Exception("Why would API wait for API stopping?")
 
     @classmethod
     def can_be_backed_up(cls) -> bool:
@@ -186,11 +224,11 @@ class ServiceManager(Service):
         return True
 
     @classmethod
-    def merge_settings(cls):
+    async def merge_settings(cls):
         # For now we will just copy settings EXCEPT the locations of services
         # Stash locations as they are set by user right now
         locations = {}
-        for service in get_services(
+        for service in await get_services(
             exclude_remote=True,
         ):
             if service.is_movable():
@@ -201,7 +239,7 @@ class ServiceManager(Service):
             cls.retrieve_stashed_path(p)
 
         # Pop location
-        for service in get_services(
+        for service in await get_services(
             exclude_remote=True,
         ):
             if service.is_movable():
@@ -291,80 +329,107 @@ class ServiceManager(Service):
         return cls.folders[0]
 
     @classmethod
-    def post_restore(cls, job: Job):
-        cls.merge_settings()
+    async def post_restore(cls, job: Job):
+        await cls.merge_settings()
         rmtree(cls.dump_dir(), ignore_errors=True)
 
 
 # @redis_cached_call(ttl=30)
-@lru_cache()
-def get_templated_service(service_id: str, ttl_hash=None) -> TemplatedService:
-    del ttl_hash
-    return TemplatedService(service_id)
-
-
-# @redis_cached_call(ttl=3600)
-@lru_cache()
-def get_remote_service(id: str, url: str, ttl_hash=None) -> TemplatedService:
-    del ttl_hash
-    response = subprocess.run(
-        ["sp-fetch-remote-module", url],
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    return TemplatedService(id, response.stdout)
+async def get_templated_service(service_id: str) -> TemplatedService:
+    with tracer.start_as_current_span(
+        "fetch_templated_service", attributes={"service_id": service_id}
+    ) as span:
+        if not exists(path.join(SP_MODULES_DEFINITIONS_PATH, service_id)):
+            raise FileNotFoundError(f"Service definition for {service_id} not found")
+        with open(
+            path.join(SP_MODULES_DEFINITIONS_PATH, service_id), "r", encoding="utf-8"
+        ) as f:
+            service_data = f.read()
+    return TemplatedService(service_id, service_data)
 
 
 DUMMY_SERVICES = []
 TEST_FLAGS: list[str] = []
 
+HARDCODED_SERVICES: list[Service] = [
+    MailServer(),
+    ServiceManager(),
+    Prometheus(),
+]
 
-def get_services(exclude_remote=False) -> List[Service]:
+
+@tracer.start_as_current_span("get_services")
+async def get_services(exclude_remote=False) -> list[Service]:
     if "ONLY_DUMMY_SERVICE" in TEST_FLAGS:
         return DUMMY_SERVICES
     if "DUMMY_SERVICE_AND_API" in TEST_FLAGS:
         return DUMMY_SERVICES + [ServiceManager()]
 
-    hardcoded_services: list[Service] = [
-        MailServer(),
-        ServiceManager(),
-        Prometheus(),
-    ]
+    hardcoded_services: list[Service] = HARDCODED_SERVICES
     if DUMMY_SERVICES:
         hardcoded_services += DUMMY_SERVICES
     service_ids = [service.get_id() for service in hardcoded_services]
 
-    templated_services: List[Service] = []
-    if path.exists(SP_MODULES_DEFENITIONS_PATH):
-        for module in listdir(SP_MODULES_DEFENITIONS_PATH):
-            if module in service_ids:
-                continue
-            try:
-                templated_services.append(
-                    get_templated_service(module, ttl_hash=get_ttl_hash(30))
-                )
-                service_ids.append(module)
-            except Exception as e:
-                logger.error(f"Failed to load service {module}: {e}")
+    templated_services = await get_templated_services(
+        ignored_services=service_ids,
+    )
+    service_ids += [service.get_id() for service in templated_services]
 
     if not exclude_remote and path.exists(SP_SUGGESTED_MODULES_PATH):
+        # remote_services = await get_remote_services(ignored_services=service_ids)
+        remote_services = filter(
+            lambda service: service.get_id() not in service_ids,
+            await SuggestedServices.get(),
+        )
+        service_ids += [service.get_id() for service in remote_services]
+
+        templated_services += remote_services
+
+    return hardcoded_services + templated_services
+
+
+@tracer.start_as_current_span("get_templated_services")
+async def get_templated_services(ignored_services: list[str]) -> list[Service]:
+    templated_services = []
+    if path.exists(SP_MODULES_DEFINITIONS_PATH):
+        tasks: list[asyncio.Task[TemplatedService]] = []
+        async with asyncio.TaskGroup() as tg:
+            for module in listdir(SP_MODULES_DEFINITIONS_PATH):
+                if module in ignored_services:
+                    continue
+                tasks.append(tg.create_task(get_templated_service(module)))
+        for task in tasks:
+            try:
+                templated_services.append(task.result())
+            except Exception as e:
+                logger.error(f"Failed to load service: {e}")
+
+    return templated_services
+
+
+@tracer.start_as_current_span("get_remote_services")
+async def get_remote_services(ignored_services: list[str]) -> list[Service]:
+    services: list[Service] = []
+    if path.exists(SP_SUGGESTED_MODULES_PATH):
         # It is a file with a JSON array
         with open(SP_SUGGESTED_MODULES_PATH) as f:
             suggested_modules = json.load(f)
-        for module in suggested_modules:
-            if module in service_ids:
-                continue
-            try:
-                templated_services.append(
-                    get_remote_service(
-                        module,
-                        f"git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/{module}",
-                        ttl_hash=get_ttl_hash(3600),
+        async with asyncio.TaskGroup() as tg:
+            tasks: list[asyncio.Task[TemplatedService]] = []
+            for module in suggested_modules:
+                if module in ignored_services:
+                    continue
+                tasks.append(
+                    tg.create_task(
+                        get_remote_service(
+                            module,
+                            f"git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/{module}",
+                        )
                     )
                 )
-                service_ids.append(module)
+        for task in tasks:
+            try:
+                services.append(task.result())
             except Exception as e:
-                logger.error(f"Failed to load service {module}: {e}")
-
-    return hardcoded_services + templated_services
+                logger.error(f"Failed to load remote service: {e}")
+    return services

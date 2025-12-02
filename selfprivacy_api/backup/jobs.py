@@ -72,13 +72,13 @@ def complain_about_service_operation_running(service: Service) -> str:
     raise ValueError(message)
 
 
-def add_total_restore_job() -> Job:
-    for service in ServiceManager.get_enabled_services():
+async def add_total_restore_job() -> Job:
+    for service in await ServiceManager.get_enabled_services():
         ensure_nothing_runs_for(service)
 
     job = Jobs.add(
         type_id="backups.total_restore",
-        name=f"Total restore",
+        name="Total restore",
         description="Restoring all enabled services",
     )
     return job
@@ -93,8 +93,8 @@ def ensure_nothing_runs_for(service: Service):
         complain_about_service_operation_running(service)
 
 
-def add_total_backup_job() -> Job:
-    for service in ServiceManager.get_enabled_services():
+async def add_total_backup_job() -> Job:
+    for service in await ServiceManager.get_enabled_services():
         ensure_nothing_runs_for(service)
 
     job = Jobs.add(
@@ -105,8 +105,8 @@ def add_total_backup_job() -> Job:
     return job
 
 
-def add_restore_job(snapshot: Snapshot) -> Job:
-    service = ServiceManager.get_service_by_id(snapshot.service_name)
+async def add_restore_job(snapshot: Snapshot) -> Job:
+    service = await ServiceManager.get_service_by_id(snapshot.service_name)
     if service is None:
         raise ValueError(f"no such service: {snapshot.service_name}")
     if is_something_running_for(service):

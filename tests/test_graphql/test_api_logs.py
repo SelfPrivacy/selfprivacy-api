@@ -67,7 +67,8 @@ query TestQuery($downCursor: String) {
 """
 
 
-def test_graphql_get_logs_with_up_border(authorized_client):
+@pytest.mark.asyncio
+async def test_graphql_get_logs_with_up_border(authorized_client):
     j = journal.Reader()
     j.seek_tail()
 
@@ -101,8 +102,11 @@ def test_graphql_get_logs_with_up_border(authorized_client):
     for api_entry, journal_entry in zip(returned_entries, expected_entries):
         assert_log_entry_equals_to_journal_entry(api_entry, journal_entry)
 
+    j.close()
 
-def test_graphql_get_logs_with_down_border(authorized_client):
+
+@pytest.mark.asyncio
+async def test_graphql_get_logs_with_down_border(authorized_client):
     j = journal.Reader()
     j.seek_head()
     j.get_next()
@@ -130,7 +134,6 @@ def test_graphql_get_logs_with_down_border(authorized_client):
 
     expected_entries = expected_entries[:-1]
     returned_entries = response.json()["data"]["logs"]["paginated"]["entries"]
-
     assert len(returned_entries) == len(expected_entries)
 
     for api_entry, journal_entry in zip(returned_entries, expected_entries):
@@ -162,9 +165,7 @@ async def test_websocket_subscription_for_logs(authorized_client):
                 ]
                 if msg == message:
                     return
-                else:
-                    i += 1
-                    continue
+                i += 1
             raise Exception("Failed to read websocket data, timeout")
 
         for i in range(0, 10):

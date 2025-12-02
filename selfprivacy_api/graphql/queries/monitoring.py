@@ -1,4 +1,5 @@
 import strawberry
+from opentelemetry import trace
 from typing import Optional
 from datetime import datetime
 from selfprivacy_api.models.services import ServiceStatus
@@ -10,6 +11,8 @@ from selfprivacy_api.utils.monitoring import (
     MonitoringMetricsResult,
 )
 
+tracer = trace.get_tracer(__name__)
+
 
 @strawberry.type
 class CpuMonitoring:
@@ -18,11 +21,14 @@ class CpuMonitoring:
     step: int
 
     @strawberry.field
-    def overall_usage(self) -> MonitoringValuesResult:
-        if Prometheus().get_status() != ServiceStatus.ACTIVE:
-            return MonitoringQueryError(error="Prometheus is not running")
+    async def overall_usage(self) -> MonitoringValuesResult:
+        with tracer.start_as_current_span("CpuMonitoring.overall_usage"):
+            if await Prometheus().get_status() != ServiceStatus.ACTIVE:
+                return MonitoringQueryError(error="Prometheus is not running")
 
-        return MonitoringQueries.cpu_usage_overall(self.start, self.end, self.step)
+            return await MonitoringQueries.cpu_usage_overall(
+                self.start, self.end, self.step
+            )
 
 
 @strawberry.type
@@ -32,32 +38,44 @@ class MemoryMonitoring:
     step: int
 
     @strawberry.field
-    def overall_usage(self) -> MonitoringValuesResult:
-        if Prometheus().get_status() != ServiceStatus.ACTIVE:
-            return MonitoringQueryError(error="Prometheus is not running")
+    async def overall_usage(self) -> MonitoringValuesResult:
+        with tracer.start_as_current_span("MemoryMonitoring.overall_usage"):
+            if await Prometheus().get_status() != ServiceStatus.ACTIVE:
+                return MonitoringQueryError(error="Prometheus is not running")
 
-        return MonitoringQueries.memory_usage_overall(self.start, self.end, self.step)
-
-    @strawberry.field
-    def swap_usage_overall(self) -> MonitoringValuesResult:
-        if Prometheus().get_status() != ServiceStatus.ACTIVE:
-            return MonitoringQueryError(error="Prometheus is not running")
-
-        return MonitoringQueries.swap_usage_overall(self.start, self.end, self.step)
+            return await MonitoringQueries.memory_usage_overall(
+                self.start, self.end, self.step
+            )
 
     @strawberry.field
-    def average_usage_by_service(self) -> MonitoringMetricsResult:
-        if Prometheus().get_status() != ServiceStatus.ACTIVE:
-            return MonitoringQueryError(error="Prometheus is not running")
+    async def swap_usage_overall(self) -> MonitoringValuesResult:
+        with tracer.start_as_current_span("MemoryMonitoring.swap_usage_overall"):
+            if await Prometheus().get_status() != ServiceStatus.ACTIVE:
+                return MonitoringQueryError(error="Prometheus is not running")
 
-        return MonitoringQueries.memory_usage_average_by_slice(self.start, self.end)
+            return await MonitoringQueries.swap_usage_overall(
+                self.start, self.end, self.step
+            )
 
     @strawberry.field
-    def max_usage_by_service(self) -> MonitoringMetricsResult:
-        if Prometheus().get_status() != ServiceStatus.ACTIVE:
-            return MonitoringQueryError(error="Prometheus is not running")
+    async def average_usage_by_service(self) -> MonitoringMetricsResult:
+        with tracer.start_as_current_span("MemoryMonitoring.average_usage_by_service"):
+            if await Prometheus().get_status() != ServiceStatus.ACTIVE:
+                return MonitoringQueryError(error="Prometheus is not running")
 
-        return MonitoringQueries.memory_usage_max_by_slice(self.start, self.end)
+            return await MonitoringQueries.memory_usage_average_by_slice(
+                self.start, self.end
+            )
+
+    @strawberry.field
+    async def max_usage_by_service(self) -> MonitoringMetricsResult:
+        with tracer.start_as_current_span("MemoryMonitoring.max_usage_by_service"):
+            if await Prometheus().get_status() != ServiceStatus.ACTIVE:
+                return MonitoringQueryError(error="Prometheus is not running")
+
+            return await MonitoringQueries.memory_usage_max_by_slice(
+                self.start, self.end
+            )
 
 
 @strawberry.type
@@ -67,11 +85,14 @@ class DiskMonitoring:
     step: int
 
     @strawberry.field
-    def overall_usage(self) -> MonitoringMetricsResult:
-        if Prometheus().get_status() != ServiceStatus.ACTIVE:
-            return MonitoringQueryError(error="Prometheus is not running")
+    async def overall_usage(self) -> MonitoringMetricsResult:
+        with tracer.start_as_current_span("DiskMonitoring.overall_usage"):
+            if await Prometheus().get_status() != ServiceStatus.ACTIVE:
+                return MonitoringQueryError(error="Prometheus is not running")
 
-        return MonitoringQueries.disk_usage_overall(self.start, self.end, self.step)
+            return await MonitoringQueries.disk_usage_overall(
+                self.start, self.end, self.step
+            )
 
 
 @strawberry.type
@@ -81,17 +102,20 @@ class NetworkMonitoring:
     step: int
 
     @strawberry.field
-    def overall_usage(self) -> MonitoringMetricsResult:
-        if Prometheus().get_status() != ServiceStatus.ACTIVE:
-            return MonitoringQueryError(error="Prometheus is not running")
+    async def overall_usage(self) -> MonitoringMetricsResult:
+        with tracer.start_as_current_span("NetworkMonitoring.overall_usage"):
+            if await Prometheus().get_status() != ServiceStatus.ACTIVE:
+                return MonitoringQueryError(error="Prometheus is not running")
 
-        return MonitoringQueries.network_usage_overall(self.start, self.end, self.step)
+            return await MonitoringQueries.network_usage_overall(
+                self.start, self.end, self.step
+            )
 
 
 @strawberry.type
 class Monitoring:
     @strawberry.field
-    def cpu_usage(
+    async def cpu_usage(
         self,
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
@@ -100,7 +124,7 @@ class Monitoring:
         return CpuMonitoring(start=start, end=end, step=step)
 
     @strawberry.field
-    def memory_usage(
+    async def memory_usage(
         self,
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
@@ -109,7 +133,7 @@ class Monitoring:
         return MemoryMonitoring(start=start, end=end, step=step)
 
     @strawberry.field
-    def disk_usage(
+    async def disk_usage(
         self,
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
@@ -118,7 +142,7 @@ class Monitoring:
         return DiskMonitoring(start=start, end=end, step=step)
 
     @strawberry.field
-    def network_usage(
+    async def network_usage(
         self,
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,

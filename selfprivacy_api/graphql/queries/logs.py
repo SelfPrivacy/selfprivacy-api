@@ -1,9 +1,13 @@
 """System logs"""
 
+from opentelemetry import trace
 from datetime import datetime
+import asyncio
 import typing
 import strawberry
 from selfprivacy_api.utils.systemd_journal import get_paginated_logs
+
+tracer = trace.get_tracer(__name__)
 
 
 @strawberry.type
@@ -53,6 +57,7 @@ class PaginatedEntries:
         self.entries = entries
 
     @staticmethod
+    @tracer.start_as_current_span("PaginatedEntries.from_entries")
     def from_entries(entries: typing.List[LogEntry]):
         if entries == []:
             return PaginatedEntries(LogsPageMeta(None, None), [])
@@ -69,7 +74,7 @@ class PaginatedEntries:
 @strawberry.type
 class Logs:
     @strawberry.field()
-    def paginated(
+    async def paginated(
         self,
         limit: int = 20,
         # All entries returned will be lesser than this cursor. Sets upper bound on results.
@@ -81,19 +86,30 @@ class Logs:
         # All entries will be from a specific systemd unit
         filterByUnit: str | None = None,
     ) -> PaginatedEntries:
-        if limit > 50:
-            raise Exception("You can't fetch more than 50 entries via single request.")
-        return PaginatedEntries.from_entries(
-            list(
-                map(
-                    lambda x: LogEntry(x),
-                    get_paginated_logs(
-                        limit,
-                        up_cursor,
-                        down_cursor,
-                        filterBySlice,
-                        filterByUnit,
-                    ),
+        with tracer.start_as_current_span(
+            "resolve_get_paginated_logs",
+            attributes={
+                "limit": limit,
+                "up_cursor": up_cursor if up_cursor else "None",
+                "down_cursor": down_cursor if down_cursor else "None",
+                "filterBySlice": filterBySlice if filterBySlice else "None",
+                "filterByUnit": filterByUnit if filterByUnit else "None",
+            },
+        ):
+            if limit > 50:
+                raise Exception(
+                    "You can't fetch more than 50 entries via single request."
                 )
+
+            # Not sure if it's a good idea, but it might help with speed if server is I/O loaded.
+            logs = await asyncio.get_running_loop().run_in_executor(
+                None,
+                get_paginated_logs,
+                limit,
+                up_cursor,
+                down_cursor,
+                filterBySlice,
+                filterByUnit,
             )
-        )
+
+            return PaginatedEntries.from_entries(list(map(lambda x: LogEntry(x), logs)))

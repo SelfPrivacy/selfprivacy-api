@@ -3,6 +3,7 @@
 # pylint: disable=too-few-public-methods
 from typing import Optional
 import strawberry
+from opentelemetry import trace
 
 from selfprivacy_api.utils import pretty_error
 
@@ -27,6 +28,8 @@ from selfprivacy_api.actions.services import (
 )
 
 from selfprivacy_api.services import ServiceManager
+
+tracer = trace.get_tracer(__name__)
 
 
 @strawberry.type
@@ -101,195 +104,223 @@ class ServicesMutations:
     """Services mutations."""
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def enable_service(self, service_id: str) -> ServiceMutationReturn:
+    async def enable_service(self, service_id: str) -> ServiceMutationReturn:
         """Enable service."""
-        try:
-            service = ServiceManager.get_service_by_id(service_id)
-            if service is None:
+        with tracer.start_as_current_span(
+            "enable_service_mutation", attributes={"service_id": service_id}
+        ):
+            try:
+                service = await ServiceManager.get_service_by_id(service_id)
+                if service is None:
+                    return ServiceMutationReturn(
+                        success=False,
+                        message="Service not found.",
+                        code=404,
+                    )
+                service.enable()
+            except Exception as e:
                 return ServiceMutationReturn(
                     success=False,
-                    message="Service not found.",
-                    code=404,
+                    message=pretty_error(e),
+                    code=400,
                 )
-            service.enable()
-        except Exception as e:
+
             return ServiceMutationReturn(
-                success=False,
-                message=pretty_error(e),
-                code=400,
+                success=True,
+                message="Service enabled.",
+                code=200,
+                service=await service_to_graphql_service(service),
             )
 
-        return ServiceMutationReturn(
-            success=True,
-            message="Service enabled.",
-            code=200,
-            service=service_to_graphql_service(service),
-        )
-
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def disable_service(self, service_id: str) -> ServiceMutationReturn:
+    async def disable_service(self, service_id: str) -> ServiceMutationReturn:
         """Disable service."""
-        try:
-            service = ServiceManager.get_service_by_id(service_id)
+        with tracer.start_as_current_span(
+            "disable_service_mutation", attributes={"service_id": service_id}
+        ):
+            try:
+                service = await ServiceManager.get_service_by_id(service_id)
+                if service is None:
+                    return ServiceMutationReturn(
+                        success=False,
+                        message="Service not found.",
+                        code=404,
+                    )
+                service.disable()
+            except Exception as e:
+                return ServiceMutationReturn(
+                    success=False,
+                    message=pretty_error(e),
+                    code=400,
+                )
+            return ServiceMutationReturn(
+                success=True,
+                message="Service disabled.",
+                code=200,
+                service=await service_to_graphql_service(service),
+            )
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    async def stop_service(self, service_id: str) -> ServiceMutationReturn:
+        """Stop service."""
+        with tracer.start_as_current_span(
+            "stop_service_mutation", attributes={"service_id": service_id}
+        ):
+            service = await ServiceManager.get_service_by_id(service_id)
             if service is None:
                 return ServiceMutationReturn(
                     success=False,
                     message="Service not found.",
                     code=404,
                 )
-            service.disable()
-        except Exception as e:
+            await service.stop()
             return ServiceMutationReturn(
-                success=False,
-                message=pretty_error(e),
-                code=400,
+                success=True,
+                message="Service stopped.",
+                code=200,
+                service=await service_to_graphql_service(service),
             )
-        return ServiceMutationReturn(
-            success=True,
-            message="Service disabled.",
-            code=200,
-            service=service_to_graphql_service(service),
-        )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def stop_service(self, service_id: str) -> ServiceMutationReturn:
-        """Stop service."""
-        service = ServiceManager.get_service_by_id(service_id)
-        if service is None:
-            return ServiceMutationReturn(
-                success=False,
-                message="Service not found.",
-                code=404,
-            )
-        service.stop()
-        return ServiceMutationReturn(
-            success=True,
-            message="Service stopped.",
-            code=200,
-            service=service_to_graphql_service(service),
-        )
-
-    @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def start_service(self, service_id: str) -> ServiceMutationReturn:
+    async def start_service(self, service_id: str) -> ServiceMutationReturn:
         """Start service."""
-        service = ServiceManager.get_service_by_id(service_id)
-        if service is None:
+        with tracer.start_as_current_span(
+            "start_service_mutation", attributes={"service_id": service_id}
+        ):
+            service = await ServiceManager.get_service_by_id(service_id)
+            if service is None:
+                return ServiceMutationReturn(
+                    success=False,
+                    message="Service not found.",
+                    code=404,
+                )
+            await service.start()
             return ServiceMutationReturn(
-                success=False,
-                message="Service not found.",
-                code=404,
+                success=True,
+                message="Service started.",
+                code=200,
+                service=await service_to_graphql_service(service),
             )
-        service.start()
-        return ServiceMutationReturn(
-            success=True,
-            message="Service started.",
-            code=200,
-            service=service_to_graphql_service(service),
-        )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def restart_service(self, service_id: str) -> ServiceMutationReturn:
+    async def restart_service(self, service_id: str) -> ServiceMutationReturn:
         """Restart service."""
-        service = ServiceManager.get_service_by_id(service_id)
-        if service is None:
+        with tracer.start_as_current_span(
+            "restart_service_mutation", attributes={"service_id": service_id}
+        ):
+            service = await ServiceManager.get_service_by_id(service_id)
+            if service is None:
+                return ServiceMutationReturn(
+                    success=False,
+                    message="Service not found.",
+                    code=404,
+                )
+            await service.restart()
             return ServiceMutationReturn(
-                success=False,
-                message="Service not found.",
-                code=404,
+                success=True,
+                message="Service restarted.",
+                code=200,
+                service=await service_to_graphql_service(service),
             )
-        service.restart()
-        return ServiceMutationReturn(
-            success=True,
-            message="Service restarted.",
-            code=200,
-            service=service_to_graphql_service(service),
-        )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def set_service_configuration(
+    async def set_service_configuration(
         self, input: SetServiceConfigurationInput
     ) -> ServiceMutationReturn:
         """Set the new configuration values"""
-        service = ServiceManager.get_service_by_id(input.service_id)
-        if service is None:
-            return ServiceMutationReturn(
-                success=False,
-                message=f"Service does not exist: {input.service_id}",
-                code=404,
-            )
-        try:
-            service.set_configuration(input.configuration)
-            return ServiceMutationReturn(
-                success=True,
-                message="Service configuration updated.",
-                code=200,
-                service=service_to_graphql_service(service),
-            )
-        except ValueError as e:
-            return ServiceMutationReturn(
-                success=False,
-                message=e.args[0],
-                code=400,
-                service=service_to_graphql_service(service),
-            )
-        except Exception as e:
-            return ServiceMutationReturn(
-                success=False,
-                message=pretty_error(e),
-                code=400,
-                service=service_to_graphql_service(service),
-            )
+        with tracer.start_as_current_span(
+            "set_service_configuration_mutation",
+            attributes={
+                "service_id": input.service_id,
+            },
+        ):
+            service = await ServiceManager.get_service_by_id(input.service_id)
+            if service is None:
+                return ServiceMutationReturn(
+                    success=False,
+                    message=f"Service does not exist: {input.service_id}",
+                    code=404,
+                )
+            try:
+                service.set_configuration(input.configuration)
+                return ServiceMutationReturn(
+                    success=True,
+                    message="Service configuration updated.",
+                    code=200,
+                    service=await service_to_graphql_service(service),
+                )
+            except ValueError as e:
+                return ServiceMutationReturn(
+                    success=False,
+                    message=e.args[0],
+                    code=400,
+                    service=await service_to_graphql_service(service),
+                )
+            except Exception as e:
+                return ServiceMutationReturn(
+                    success=False,
+                    message=pretty_error(e),
+                    code=400,
+                    service=await service_to_graphql_service(service),
+                )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def move_service(self, input: MoveServiceInput) -> ServiceJobMutationReturn:
+    async def move_service(self, input: MoveServiceInput) -> ServiceJobMutationReturn:
         """Move service."""
-        # We need a service instance for a reply later
-        service = ServiceManager.get_service_by_id(input.service_id)
-        if service is None:
-            return ServiceJobMutationReturn(
-                success=False,
-                message=f"Service does not exist: {input.service_id}",
-                code=404,
-            )
+        with tracer.start_as_current_span(
+            "move_service_mutation",
+            attributes={
+                "service_id": input.service_id,
+                "location": input.location,
+            },
+        ):
+            # We need a service instance for a reply later
+            service = await ServiceManager.get_service_by_id(input.service_id)
+            if service is None:
+                return ServiceJobMutationReturn(
+                    success=False,
+                    message=f"Service does not exist: {input.service_id}",
+                    code=404,
+                )
 
-        try:
-            job = move_service(input.service_id, input.location)
+            try:
+                job = await move_service(input.service_id, input.location)
 
-        except (ServiceNotFoundError, VolumeNotFoundError) as e:
-            return ServiceJobMutationReturn(
-                success=False,
-                message=pretty_error(e),
-                code=404,
-            )
-        except Exception as e:
-            return ServiceJobMutationReturn(
-                success=False,
-                message=pretty_error(e),
-                code=400,
-                service=service_to_graphql_service(service),
-            )
+            except (ServiceNotFoundError, VolumeNotFoundError) as e:
+                return ServiceJobMutationReturn(
+                    success=False,
+                    message=pretty_error(e),
+                    code=404,
+                )
+            except Exception as e:
+                return ServiceJobMutationReturn(
+                    success=False,
+                    message=pretty_error(e),
+                    code=400,
+                    service=await service_to_graphql_service(service),
+                )
 
-        if job.status in [JobStatus.CREATED, JobStatus.RUNNING]:
-            return ServiceJobMutationReturn(
-                success=True,
-                message="Started moving the service.",
-                code=200,
-                service=service_to_graphql_service(service),
-                job=job_to_api_job(job),
-            )
-        elif job.status == JobStatus.FINISHED:
-            return ServiceJobMutationReturn(
-                success=True,
-                message="Service moved.",
-                code=200,
-                service=service_to_graphql_service(service),
-                job=job_to_api_job(job),
-            )
-        else:
-            return ServiceJobMutationReturn(
-                success=False,
-                message=f"While moving service and performing the step '{job.status_text}', error occured: {job.error}",
-                code=400,
-                service=service_to_graphql_service(service),
-                job=job_to_api_job(job),
-            )
+            if job.status in [JobStatus.CREATED, JobStatus.RUNNING]:
+                return ServiceJobMutationReturn(
+                    success=True,
+                    message="Started moving the service.",
+                    code=200,
+                    service=await service_to_graphql_service(service),
+                    job=job_to_api_job(job),
+                )
+            elif job.status == JobStatus.FINISHED:
+                return ServiceJobMutationReturn(
+                    success=True,
+                    message="Service moved.",
+                    code=200,
+                    service=await service_to_graphql_service(service),
+                    job=job_to_api_job(job),
+                )
+            else:
+                return ServiceJobMutationReturn(
+                    success=False,
+                    message=f"While moving service and performing the step '{job.status_text}', error occured: {job.error}",
+                    code=400,
+                    service=await service_to_graphql_service(service),
+                    job=job_to_api_job(job),
+                )

@@ -2,10 +2,13 @@
 
 # pylint: disable=too-few-public-methods
 import datetime
+from opentelemetry import trace
 from typing import Optional
 import strawberry
 
 from selfprivacy_api.jobs import Job, Jobs
+
+tracer = trace.get_tracer(__name__)
 
 
 @strawberry.type
@@ -44,9 +47,12 @@ def job_to_api_job(job: Job) -> ApiJob:
     )
 
 
-def get_api_job_by_id(job_id: str) -> Optional[ApiJob]:
+async def get_api_job_by_id(job_id: str) -> Optional[ApiJob]:
     """Get a job for GraphQL by its ID."""
-    job = Jobs.get_job(job_id)
-    if job is None:
-        return None
-    return job_to_api_job(job)
+    with tracer.start_as_current_span(
+        "get_api_job_by_id", attributes={"job_id": job_id}
+    ):
+        job = Jobs.get_job(job_id)
+        if job is None:
+            return None
+        return job_to_api_job(job)
