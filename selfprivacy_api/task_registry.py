@@ -19,6 +19,7 @@ from opentelemetry.sdk.resources import (
     Resource,
 )
 
+from selfprivacy_api.utils.otel import OTEL_ENABLED, setup_instrumentation
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
@@ -34,6 +35,9 @@ from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry._logs import set_logger_provider, get_logger
 
+
+setup_instrumentation()
+
 resource = Resource.create(
     attributes={
         SERVICE_NAME: os.getenv("OTEL_SERVICE_NAME", "selfprivacy_api_worker"),
@@ -42,50 +46,50 @@ resource = Resource.create(
     }
 )
 
-otlp_endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317")
-otlp_protocol = os.getenv("OTEL_EXPORTER_OTLP_PROTOCOL", "grpc")
-otlp_headers = os.getenv("OTEL_EXPORTER_OTLP_HEADERS", "")
-otlp_insecure = (
-    True if "localhost" in otlp_endpoint or "127.0.0.1" in otlp_endpoint else False
-)
-
-tracer_provider = TracerProvider(resource=resource)
-trace_processor = BatchSpanProcessor(
-    OTLPSpanExporter(
-        endpoint=otlp_endpoint,
-        headers=otlp_headers,
-        insecure=otlp_insecure,
+if OTEL_ENABLED:
+    otlp_endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317")
+    otlp_protocol = os.getenv("OTEL_EXPORTER_OTLP_PROTOCOL", "grpc")
+    otlp_headers = os.getenv("OTEL_EXPORTER_OTLP_HEADERS", "")
+    otlp_insecure = (
+        True if "localhost" in otlp_endpoint or "127.0.0.1" in otlp_endpoint else False
     )
-)
-tracer_provider.add_span_processor(trace_processor)
-trace.set_tracer_provider(tracer_provider)
 
-reader = PeriodicExportingMetricReader(
-    OTLPMetricExporter(
-        endpoint=otlp_endpoint,
-        headers=otlp_headers,
-        insecure=otlp_insecure,
+    tracer_provider = TracerProvider(resource=resource)
+    trace_processor = BatchSpanProcessor(
+        OTLPSpanExporter(
+            endpoint=otlp_endpoint,
+            headers=otlp_headers,
+            insecure=otlp_insecure,
+        )
     )
-)
-meter_provider = MeterProvider(resource=resource, metric_readers=[reader])
-metrics.set_meter_provider(meter_provider)
+    tracer_provider.add_span_processor(trace_processor)
+    trace.set_tracer_provider(tracer_provider)
 
-logger_provider = LoggerProvider(resource=resource)
-logger_processor = BatchLogRecordProcessor(
-    OTLPLogExporter(
-        endpoint=otlp_endpoint,
-        headers=otlp_headers,
-        insecure=otlp_insecure,
+    reader = PeriodicExportingMetricReader(
+        OTLPMetricExporter(
+            endpoint=otlp_endpoint,
+            headers=otlp_headers,
+            insecure=otlp_insecure,
+        )
     )
-)
-logger_provider.add_log_record_processor(logger_processor)
-set_logger_provider(logger_provider)
+    meter_provider = MeterProvider(resource=resource, metric_readers=[reader])
+    metrics.set_meter_provider(meter_provider)
 
+    logger_provider = LoggerProvider(resource=resource)
+    logger_processor = BatchLogRecordProcessor(
+        OTLPLogExporter(
+            endpoint=otlp_endpoint,
+            headers=otlp_headers,
+            insecure=otlp_insecure,
+        )
+    )
+    logger_provider.add_log_record_processor(logger_processor)
+    set_logger_provider(logger_provider)
 
-logger = get_logger(__name__)
+    logger = get_logger(__name__)
 
-log_handler = LoggingHandler(level=logging.INFO, logger_provider=logger_provider)
-logging.basicConfig(handlers=[log_handler], level=logging.INFO)
+    log_handler = LoggingHandler(level=logging.INFO, logger_provider=logger_provider)
+    logging.basicConfig(handlers=[log_handler], level=logging.INFO)
 
 
 if environ.get("TEST_MODE"):

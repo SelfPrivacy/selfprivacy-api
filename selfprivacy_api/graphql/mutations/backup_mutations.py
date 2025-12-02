@@ -116,7 +116,7 @@ class BackupMutations:
             )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def remove_repository(self) -> GenericBackupConfigReturn:
+    async def remove_repository(self) -> GenericBackupConfigReturn:
         """Remove repository"""
         with tracer.start_as_current_span("remove_repository"):
             Backups.reset()
@@ -124,7 +124,7 @@ class BackupMutations:
                 success=True,
                 message="",
                 code=200,
-                configuration=Backup().configuration(),
+                configuration=await Backup().configuration(),
             )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
@@ -199,7 +199,7 @@ class BackupMutations:
                     success=False,
                     message=type(e).__name__ + ":" + str(e),
                     code=400,
-                    configuration=Backup().configuration(),
+                    configuration=await Backup().configuration(),
                 )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])

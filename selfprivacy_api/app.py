@@ -4,7 +4,7 @@ import asyncio
 import logging
 import os
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -24,7 +24,6 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from opentelemetry.instrumentation.threading import ThreadingInstrumentor
 
 from opentelemetry import metrics
 from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
@@ -46,7 +45,7 @@ from selfprivacy_api.dependencies import get_api_version
 from selfprivacy_api.graphql.schema import schema
 from selfprivacy_api.migrations import run_migrations
 from selfprivacy_api.services.suggested import SuggestedServices
-from selfprivacy_api.utils.otel import OTEL_ENABLED
+from selfprivacy_api.utils.otel import OTEL_ENABLED, setup_instrumentation
 from selfprivacy_api.utils.memory_profiler import memory_profiler_task
 
 from starlette.middleware.sessions import SessionMiddleware
@@ -64,6 +63,9 @@ async def graphql_context_getter():
     return {
         "otel_context": otel_context.get_current(),
     }
+
+
+setup_instrumentation()
 
 
 if OTEL_ENABLED:
@@ -147,7 +149,6 @@ if OTEL_ENABLED:
     else:
         uvicorn_log_config["root"] = {"level": "INFO", "handlers": ["otel"]}
 
-    ThreadingInstrumentor().instrument()
 
 logger = get_logger(__name__)
 
@@ -175,7 +176,7 @@ async def app_lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=app_lifespan)
 
-graphql_app: GraphQLRouter = GraphQLRouter(
+graphql_app: GraphQLRouter[dict[str, otel_context.Context], None] = GraphQLRouter(
     schema,
     subscription_protocols=[
         GRAPHQL_TRANSPORT_WS_PROTOCOL,
