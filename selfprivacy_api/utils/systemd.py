@@ -10,6 +10,7 @@ from sdbus import (
     dbus_method_async,
     dbus_property_async,
 )
+from sdbus.exceptions import SdBusUnmappedMessageError
 from selfprivacy_api.models.services import ServiceStatus
 from selfprivacy_api.utils import lazy_var
 from selfprivacy_api.utils.dbus import DbusConnection
@@ -39,7 +40,7 @@ class SystemdManagerInterface(
         input_signature="s",
         result_signature="o",
     )
-    async def get_unit(
+    async def load_unit(
         self,
         name: str,
     ) -> str:
@@ -89,7 +90,8 @@ systemd_proxy = lazy_var(
 
 
 async def get_unit_proxy(unit: str) -> SystemdUnitInterface:
-    object_path = await systemd_proxy().get_unit(unit)
+    # We use LoadUnit as GetUnit might return stale information.
+    object_path = await systemd_proxy().load_unit(unit)
     return SystemdUnitInterface.new_proxy(
         service_name="org.freedesktop.systemd1",
         object_path=object_path,
@@ -187,7 +189,11 @@ async def get_service_status_from_several_units(services: list[str]) -> ServiceS
     """
     service_statuses = []
     for service in services:
-        service_statuses.append(await get_service_status(service))
+        try:
+            service_statuses.append(await get_service_status(service))
+        except SdBusUnmappedMessageError:
+            # If we failed to get status of a service via DBus, likely reason is that it doesn't exist.
+            return ServiceStatus.OFF
     if ServiceStatus.OFF in service_statuses:
         return ServiceStatus.OFF
     if ServiceStatus.FAILED in service_statuses:
