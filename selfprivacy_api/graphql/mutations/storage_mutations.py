@@ -17,7 +17,7 @@ from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericJobMutationReturn,
     GenericMutationReturn,
 )
-from selfprivacy_api.graphql.queries.jobs import translate_job
+from selfprivacy_api.utils.localization import translate_job
 
 from selfprivacy_api.jobs.migrate_to_binds import (
     BindMigrationConfig,

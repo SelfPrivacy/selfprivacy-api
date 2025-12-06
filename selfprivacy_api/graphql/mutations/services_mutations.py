@@ -26,7 +26,7 @@ from selfprivacy_api.graphql.common_types.service import (
     Service,
     service_to_graphql_service,
 )
-from selfprivacy_api.graphql.queries.jobs import translate_job
+from selfprivacy_api.utils.localization import translate_job
 
 from selfprivacy_api.actions.services import (
     move_service,
