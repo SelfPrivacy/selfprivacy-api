@@ -2,6 +2,10 @@ name: CI
 
 on:
   push:
+    branches:
+      - master
+  pull_request:
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
 
 jobs:
@@ -9,8 +13,10 @@ jobs:
     runs-on:
       - x64
     steps:
-      - name: Checkout repository
+      - name: Checkout repository (full clone)
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Run Bandit checks
         run: nix develop -L .#ci-bandit --command bandit -ll -r selfprivacy_api
@@ -35,11 +41,151 @@ jobs:
       - name: Upload results to SonarQube
         env:
           SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
-        run: >-
-          nix develop -L .#ci-sonar --command sonar-scanner
-          -Dsonar.projectKey=SelfPrivacy-REST-API
-          -Dsonar.sources=.
-          -Dsonar.host.url=https://analyzer.selfprivacy.org
-          -Dsonar.token="$SONAR_TOKEN"
-          -Dsonar.python.coverage.reportPaths=coverage.xml
-          -Dsonar.python.version="3.12, 3.13"
+        run: |
+          # Base SonarQube parameters
+          SONAR_PARAMS="-Dsonar.projectKey=SelfPrivacy-REST-API"
+          SONAR_PARAMS="$SONAR_PARAMS -Dsonar.sources=."
+          SONAR_PARAMS="$SONAR_PARAMS -Dsonar.host.url=https://analyzer.selfprivacy.org"
+          SONAR_PARAMS="$SONAR_PARAMS -Dsonar.token=$SONAR_TOKEN"
+          SONAR_PARAMS="$SONAR_PARAMS -Dsonar.python.coverage.reportPaths=coverage.xml"
+          SONAR_PARAMS="$SONAR_PARAMS -Dsonar.python.version=3.12"
+
+          # Check if this is a pull request
+          if [ -n "${{ github.event.pull_request.number }}" ]; then
+            echo "Detected PR #${{ github.event.pull_request.number }}"
+            SONAR_PARAMS="$SONAR_PARAMS -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}"
+            SONAR_PARAMS="$SONAR_PARAMS -Dsonar.pullrequest.branch=${{ github.head_ref }}"
+            SONAR_PARAMS="$SONAR_PARAMS -Dsonar.pullrequest.base=${{ github.base_ref }}"
+          elif [ "${{ github.ref_name }}" != "master" ] && [ "${{ github.ref_name }}" != "main" ]; then
+            echo "Detected branch: ${{ github.ref_name }}"
+            SONAR_PARAMS="$SONAR_PARAMS -Dsonar.branch.name=${{ github.ref_name }}"
+          else
+            echo "Analyzing main branch"
+          fi
+
+          # Run SonarQube scanner
+          nix develop -L .#ci-sonar --command sonar-scanner $SONAR_PARAMS
+
+  sonar-quality-gate:
+    runs-on:
+      - x64
+    needs:
+      - tests-and-sonar
+    if: ${{ github.event_name == 'pull_request' }}
+    steps:
+      - name: Wait for SonarQube analysis
+        run: sleep 10
+
+      - name: Check Quality Gate and report issues
+        env:
+          SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          SONAR_URL="https://analyzer.selfprivacy.org"
+          PROJECT_KEY="SelfPrivacy-REST-API"
+          PR_KEY="${PR_NUMBER}"
+
+          echo "Checking quality gate for PR #${PR_NUMBER}..."
+
+
+          QG_DETAILS=$(curl -s -u "$SONAR_TOKEN:" "$SONAR_URL/api/qualitygates/project_status?projectKey=$PROJECT_KEY&pullRequest=$PR_KEY")
+          QG_STATUS=$(echo "$QG_DETAILS" | jq -r '.projectStatus.status // "UNKNOWN"')
+          echo "[DEBUG] Quality Gate Status: $QG_STATUS" >&2
+
+          echo "[DEBUG] Fetching issues for PR..." >&2
+          ISSUES=$(curl -s -u "$SONAR_TOKEN:" "$SONAR_URL/api/issues/search?components=$PROJECT_KEY&pullRequest=$PR_KEY&resolved=false&ps=100")
+          BLOCKER_COUNT=$(echo "$ISSUES" | jq '[.issues[] | select(.severity == "BLOCKER")] | length')
+          CRITICAL_COUNT=$(echo "$ISSUES" | jq '[.issues[] | select(.severity == "CRITICAL")] | length')
+          MAJOR_COUNT=$(echo "$ISSUES" | jq '[.issues[] | select(.severity == "MAJOR")] | length')
+          MINOR_COUNT=$(echo "$ISSUES" | jq '[.issues[] | select(.severity == "MINOR")] | length')
+          echo "[DEBUG] Issue counts: Blocker=$BLOCKER_COUNT, Critical=$CRITICAL_COUNT, Major=$MAJOR_COUNT, Minor=$MINOR_COUNT" >&2
+
+          echo "[DEBUG] Fetching measures for PR..." >&2
+          MEASURES=$(curl -s -u "$SONAR_TOKEN:" "$SONAR_URL/api/measures/component?component=$PROJECT_KEY&pullRequest=$PR_KEY&metricKeys=new_coverage,new_duplicated_lines_density,new_lines,new_security_hotspots,new_vulnerabilities,new_bugs,new_code_smells")
+          get_measure() {
+            echo "$MEASURES" | jq -r --arg key "$1" '.component.measures[]? | select(.metric == $key) | .period.value // empty'
+          }
+          NEW_COVERAGE=$(get_measure "new_coverage")
+          NEW_DUPLICATIONS=$(get_measure "new_duplicated_lines_density")
+          NEW_LINES=$(get_measure "new_lines")
+          NEW_VULNERABILITIES=$(get_measure "new_vulnerabilities")
+          NEW_BUGS=$(get_measure "new_bugs")
+          NEW_CODE_SMELLS=$(get_measure "new_code_smells")
+          NEW_HOTSPOTS=$(get_measure "new_security_hotspots")
+          echo "[DEBUG] Extracted measures: Coverage=$NEW_COVERAGE, Duplications=$NEW_DUPLICATIONS, Lines=$NEW_LINES, Vulnerabilities=$NEW_VULNERABILITIES, Bugs=$NEW_BUGS, CodeSmells=$NEW_CODE_SMELLS, Hotspots=$NEW_HOTSPOTS" >&2
+
+          # Set defaults if empty
+          NEW_COVERAGE=${NEW_COVERAGE:-"N/A"}
+          NEW_DUPLICATIONS=${NEW_DUPLICATIONS:-"0.0"}
+          NEW_LINES=${NEW_LINES:-"0"}
+          NEW_VULNERABILITIES=${NEW_VULNERABILITIES:-"0"}
+          NEW_BUGS=${NEW_BUGS:-"0"}
+          NEW_CODE_SMELLS=${NEW_CODE_SMELLS:-"0"}
+          NEW_HOTSPOTS=${NEW_HOTSPOTS:-"0"}
+
+          # Create comment body with a unique identifier
+          COMMENT='<!-- sonarqube-analysis-bot -->\n'
+          COMMENT="${COMMENT}## SonarQube Analysis Results\n\n"
+          COMMENT="${COMMENT}**Quality Gate:** "
+
+          if [ "$QG_STATUS" = "OK" ]; then
+            COMMENT="${COMMENT}✅ Passed\n\n"
+          else
+            COMMENT="${COMMENT}❌ Failed\n\n"
+          fi
+
+          COMMENT="${COMMENT}### New Code Metrics\n\n"
+          COMMENT="${COMMENT}| Metric | Value |\n"
+          COMMENT="${COMMENT}|--------|-------|\n"
+          COMMENT="${COMMENT}| 📊 Coverage on New Code | ${NEW_COVERAGE}% |\n"
+          COMMENT="${COMMENT}| 📏 New Lines | ${NEW_LINES} |\n"
+          COMMENT="${COMMENT}| 🔄 Duplications | ${NEW_DUPLICATIONS}% |\n"
+          COMMENT="${COMMENT}| 🐛 New Bugs | ${NEW_BUGS} |\n"
+          COMMENT="${COMMENT}| 🔐 New Vulnerabilities | ${NEW_VULNERABILITIES} |\n"
+          COMMENT="${COMMENT}| 🔥 New Security Hotspots | ${NEW_HOTSPOTS} |\n"
+          COMMENT="${COMMENT}| 💡 New Code Smells | ${NEW_CODE_SMELLS} |\n\n"
+
+          COMMENT="${COMMENT}### All Issues by Severity\n\n"
+          COMMENT="${COMMENT}- 🔴 Blocker: $BLOCKER_COUNT\n"
+          COMMENT="${COMMENT}- 🟠 Critical: $CRITICAL_COUNT\n"
+          COMMENT="${COMMENT}- 🟡 Major: $MAJOR_COUNT\n"
+          COMMENT="${COMMENT}- 🔵 Minor: $MINOR_COUNT\n\n"
+          COMMENT="${COMMENT}[View detailed report]($SONAR_URL/dashboard?id=$PROJECT_KEY&pullRequest=$PR_KEY)"
+
+
+          printf "%s\n" "$COMMENT" > /tmp/sonar-comment.txt
+
+          # Check if a comment from this bot already exists
+          echo "[DEBUG] Fetching existing PR comments from Forgejo..." >&2
+          EXISTING_COMMENTS=$(curl -s \
+            -H "Authorization: token ${{ secrets.FORGEJO_TOKEN }}" \
+            "${{ github.api_url }}/repos/${{ github.repository }}/issues/$PR_NUMBER/comments")
+
+
+          # Look for existing comment with our identifier using jq
+          COMMENT_ID=$(echo "$EXISTING_COMMENTS" | jq -r '.[] | select(.body | contains("sonarqube-analysis-bot")) | .id' | head -1)
+          echo "[DEBUG] Existing SonarQube comment ID: $COMMENT_ID" >&2
+
+          if [ -n "$COMMENT_ID" ]; then
+            echo "[DEBUG] Updating existing comment (ID: $COMMENT_ID)..." >&2
+            RESPONSE=$(curl -s -w "\n[DEBUG] Forgejo PATCH HTTP status: %{http_code}\n" -X PATCH \
+              -H "Authorization: token ${{ secrets.FORGEJO_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              -d "{\"body\":\"$(cat /tmp/sonar-comment.txt)\"}" \
+              "${{ github.api_url }}/repos/${{ github.repository }}/issues/comments/$COMMENT_ID")
+            echo "$RESPONSE" >&2
+          else
+            echo "[DEBUG] Creating new comment..." >&2
+            RESPONSE=$(curl -s -w "\n[DEBUG] Forgejo POST HTTP status: %{http_code}\n" -X POST \
+              -H "Authorization: token ${{ secrets.FORGEJO_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              -d "{\"body\":\"$(cat /tmp/sonar-comment.txt)\"}" \
+              "${{ github.api_url }}/repos/${{ github.repository }}/issues/$PR_NUMBER/comments")
+            echo "$RESPONSE" >&2
+          fi
+
+          # Fail the job if quality gate failed
+          if [ "$QG_STATUS" != "OK" ]; then
+            echo "Quality gate failed!"
+            exit 1
+          fi
