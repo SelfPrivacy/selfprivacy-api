@@ -13,6 +13,8 @@ from typing import Optional
 import os
 from importlib.resources import files as pkg_files
 
+from opentelemetry import trace
+
 from selfprivacy_api.utils.singleton_metaclass import SingletonMetaclass
 from selfprivacy_api.utils.localization import TranslateSystemMessage as t
 from selfprivacy_api.graphql.common_types.jobs import ApiJob
@@ -21,6 +23,8 @@ DEFAULT_LOCALE = "en"
 _DOMAIN = "messages"
 _LOCALE_DIR = pkg_files("selfprivacy_api") / "locale"
 print(_LOCALE_DIR)
+
+tracer = trace.get_tracer(__name__)
 
 
 class Localization(metaclass=SingletonMetaclass):
@@ -62,6 +66,7 @@ def get_locale(info):
     return info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
 
 
+@tracer.start_as_current_span("translate_job")
 def translate_job(job: ApiJob, locale: str) -> ApiJob:
     def _tr_opt(text: Optional[str], locale: str) -> Optional[str]:
         if text is None:
