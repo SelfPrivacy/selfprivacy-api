@@ -77,7 +77,8 @@ def parse_line(job: Job, line: str) -> Job:
             job=job,
             status=JobStatus.FINISHED,
             status_text=CLEAR_COMPLETED,
-            result=_("%(matched)s have been cleared") % {"matched": match.group(0)},
+            result=_("%(size_in_megabytes)s have been cleared")
+            % {"size_in_megabytes": match.group(0)},
         )
     return job
 

@@ -80,7 +80,7 @@ class SshSettings:
 
     enable: bool
     password_authentication: bool = strawberry.field(
-        deprecation_reason="For security reasons, password authentication is no longer supported. Please use SSH keys."  # TODO: translation?
+        deprecation_reason="For security reasons, password authentication is no longer supported. Please use SSH keys."
     )
     root_ssh_keys: typing.List[str]
 

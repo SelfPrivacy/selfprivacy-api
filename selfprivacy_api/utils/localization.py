@@ -14,6 +14,8 @@ import os
 from importlib.resources import files as pkg_files
 
 from selfprivacy_api.utils.singleton_metaclass import SingletonMetaclass
+from selfprivacy_api.utils.localization import TranslateSystemMessage as t
+from selfprivacy_api.graphql.common_types.jobs import ApiJob
 
 DEFAULT_LOCALE = "en"
 _DOMAIN = "messages"
@@ -58,3 +60,29 @@ class TranslateSystemMessage(Translation):
 
 def get_locale(info):
     return info.context.get("locale") if info.context.get("locale") else DEFAULT_LOCALE
+
+
+def translate_job(job: ApiJob, locale: str) -> ApiJob:
+    def _tr_opt(text: Optional[str], locale: str) -> Optional[str]:
+        if text is None:
+            return None
+        # I did this only to maintain compatibility.
+        # Why do we return empty strings instead of None at all?
+        if text == "":
+            return ""
+        return t.translate(text=text, locale=locale)
+
+    return ApiJob(
+        uid=job.uid,
+        type_id=job.type_id,
+        name=t.translate(text=job.name, locale=locale),
+        description=t.translate(text=job.description, locale=locale),
+        status=job.status,
+        status_text=_tr_opt(job.status_text, locale),
+        progress=job.progress,
+        created_at=job.created_at,
+        updated_at=job.updated_at,
+        finished_at=job.finished_at,
+        error=_tr_opt(job.error, locale),
+        result=_tr_opt(job.result, locale),
+    )

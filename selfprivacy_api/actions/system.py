@@ -89,16 +89,16 @@ class ShellException(Exception):
         self.output = str(output)
 
     def get_error_message(self, locale: str) -> str:
-        message = t.translate(text=_("Shell command failed"), locale=locale)
+        message = t.translate(text=_("Shell command failed."), locale=locale)
 
         if self.command:
             message += t.translate(
-                text=_(", command array: %(cmd)s"), locale=locale
-            ) % {"cmd": self.command}
+                text=_(" Executed command array: %(commands)s."), locale=locale
+            ) % {"commands": self.command}
 
         if self.output:
-            message += t.translate(text=_(", output: %(out)s"), locale=locale) % {
-                "out": self.output
+            message += t.translate(text=_(" Output: %(output)s"), locale=locale) % {
+                "output": self.output
             }
 
         return message
