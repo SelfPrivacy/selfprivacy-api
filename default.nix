@@ -4,6 +4,7 @@ pythonPackages.buildPythonPackage {
   pname = "selfprivacy-graphql-api";
   version = rev;
   src = builtins.filterSource (p: t: p != ".git" && t != "symlink") ./.;
+  pyproject = true;
   propagatedBuildInputs = with pythonPackages; ([
     fastapi
     gevent
@@ -14,7 +15,7 @@ pythonPackages.buildPythonPackage {
     pydantic
     pytz
     redis
-    systemd
+    systemd-python
     sdbus
     setuptools
     strawberry-graphql
