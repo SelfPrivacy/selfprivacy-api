@@ -138,7 +138,7 @@ class KanidmAdminToken:
                         "service-account",
                         "api-token",
                         "generate",
-                        "--rw",
+                        "--readwrite",
                         "sp.selfprivacy-api.service-account",
                         "kanidm_service_account_token",
                     ],
