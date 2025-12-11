@@ -13,10 +13,8 @@ from selfprivacy_api.graphql.common_types.jobs import (
     get_api_job_by_id,
     job_to_api_job,
 )
-from selfprivacy_api.utils.localization import (
-    get_locale,
-    translate_job,
-)
+from selfprivacy_api.utils.localization import get_locale
+from selfprivacy_api.graphql.common_types.jobs import translate_job
 
 
 tracer = trace.get_tracer(__name__)
