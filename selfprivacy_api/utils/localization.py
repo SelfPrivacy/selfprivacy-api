@@ -1,5 +1,6 @@
 """
 A localization module that loads strings from JSONs in the locale directory.
+
 It provides a function to get a localized string by its ID.
 If the string is not found in the current locale, it will try to find it in the default locale.
 If the string is not found in the default locale, it will return the ID.
