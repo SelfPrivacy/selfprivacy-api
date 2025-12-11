@@ -21,7 +21,7 @@ from selfprivacy_api.graphql.mutations.mutation_interface import (
 from selfprivacy_api.graphql.queries.backup import BackupConfiguration
 from selfprivacy_api.graphql.queries.backup import Backup
 from selfprivacy_api.graphql.queries.providers import BackupProvider
-from selfprivacy_api.utils.localization import translate_job
+from selfprivacy_api.graphql.common_types.jobs import translate_job
 from selfprivacy_api.graphql.common_types.jobs import job_to_api_job
 from selfprivacy_api.graphql.common_types.backup import (
     AutobackupQuotasInput,

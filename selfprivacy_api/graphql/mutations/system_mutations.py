@@ -19,7 +19,7 @@ from selfprivacy_api.jobs.nix_collect_garbage import start_nix_collect_garbage
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.common_types.jobs import job_to_api_job
 from selfprivacy_api.graphql.queries.providers import DnsProvider
-from selfprivacy_api.utils.localization import translate_job
+from selfprivacy_api.graphql.common_types.jobs import translate_job
 from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericJobMutationReturn,
     GenericMutationReturn,
