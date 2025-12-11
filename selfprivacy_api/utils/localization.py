@@ -16,7 +16,6 @@ from importlib.resources import files as pkg_files
 from opentelemetry import trace
 
 from selfprivacy_api.utils.singleton_metaclass import SingletonMetaclass
-from selfprivacy_api.utils.localization import TranslateSystemMessage as t
 from selfprivacy_api.graphql.common_types.jobs import ApiJob
 
 DEFAULT_LOCALE = "en"
@@ -75,13 +74,15 @@ def translate_job(job: ApiJob, locale: str) -> ApiJob:
         # Why do we return empty strings instead of None at all?
         if text == "":
             return ""
-        return t.translate(text=text, locale=locale)
+        return TranslateSystemMessage.translate(text=text, locale=locale)
 
     return ApiJob(
         uid=job.uid,
         type_id=job.type_id,
-        name=t.translate(text=job.name, locale=locale),
-        description=t.translate(text=job.description, locale=locale),
+        name=TranslateSystemMessage.translate(text=job.name, locale=locale),
+        description=TranslateSystemMessage.translate(
+            text=job.description, locale=locale
+        ),
         status=job.status,
         status_text=_tr_opt(job.status_text, locale),
         progress=job.progress,
