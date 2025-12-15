@@ -12,11 +12,13 @@ from selfprivacy_api.repositories.users.abstract_user_repository import (
     AbstractUserRepository,
 )
 from selfprivacy_api.repositories.users.exceptions import (
-    InvalidConfiguration,
     UserAlreadyExists,
     UserIsProtected,
     UserNotFound,
     PasswordIsEmpty,
+)
+from selfprivacy_api.repositories.users.exceptions.exceptions_json import (
+    PrimaryUserNotFoundInJsonUserData,
 )
 from selfprivacy_api.models.group import Group
 
@@ -81,13 +83,11 @@ class JsonUserRepository(AbstractUserRepository):
         with ReadUserData() as user_data:
             ensure_ssh_and_users_fields_exist(user_data)
             if "username" not in user_data.keys():
-                raise InvalidConfiguration(
-                    "Broken config: Admin name is not defined. Consider recovery or add it manually"
-                )
+                raise PrimaryUserNotFoundInJsonUserData
             if username == user_data["username"]:
-                raise UserAlreadyExists("User already exists")
+                raise UserAlreadyExists
             if username in [user["username"] for user in user_data["users"]]:
-                raise UserAlreadyExists("User already exists")
+                raise UserAlreadyExists
 
         with WriteUserData() as user_data:
             ensure_ssh_and_users_fields_exist(user_data)
@@ -102,8 +102,10 @@ class JsonUserRepository(AbstractUserRepository):
 
         with WriteUserData() as user_data:
             ensure_ssh_and_users_fields_exist(user_data)
-            if username == user_data["username"] or username == "root":
-                raise UserIsProtected("Cannot delete main or root user")
+            if username == user_data["username"]:
+                raise UserIsProtected(account_type="primary")
+            if username == "root":
+                raise UserIsProtected(account_type="root")
 
             for data_user in user_data["users"]:
                 if data_user["username"] == username:

@@ -9,9 +9,14 @@ from datetime import datetime, timezone
 from pydantic import BaseModel
 from mnemonic import Mnemonic
 from opentelemetry import trace
+from textwrap import dedent
+import logging
 
 from selfprivacy_api.utils.timeutils import ensure_tz_aware, ensure_tz_aware_strict
-from selfprivacy_api.utils.localization import TranslateSystemMessage as t
+from selfprivacy_api.utils.localization import (
+    DEFAULT_LOCALE,
+    TranslateSystemMessage as t,
+)
 
 from selfprivacy_api.repositories.tokens import ACTIVE_TOKEN_PROVIDER
 from selfprivacy_api.repositories.tokens.exceptions import (
@@ -23,6 +28,7 @@ from selfprivacy_api.repositories.tokens.exceptions import (
 
 _ = gettext.gettext
 
+logger = logging.getLogger(__name__)
 tracer = trace.get_tracer(__name__)
 
 
@@ -66,10 +72,19 @@ def is_token_valid(token) -> bool:
 
 
 class CannotDeleteCallerException(Exception):
-    @staticmethod
-    def get_error_message(locale: str) -> str:
+    def __init__(self):
+        logger.error(self.get_error_message())
+
+    def get_error_message(self, locale: str) -> str:
         return t.translate(
-            text=_("Cannot delete caller's token"),
+            text=_(
+                dedent(
+                    """
+                    It looks like you're trying to remove access for the device you're currently using.
+                    The access token you're trying to delete is active and is being used for this request, so it can't be removed.
+                    """
+                )
+            ),
             locale=locale,
         )
 
@@ -128,16 +143,29 @@ def get_api_recovery_token_status() -> RecoveryTokenStatus:
     )
 
 
-class InvalidExpirationDate(Exception):
+class ExpirationDateInThePast(Exception):
     @staticmethod
-    def get_error_message(locale: str) -> str:
-        return t.translate(text=_("Expiration date is in the past"), locale=locale)
+    def get_error_message(locale: str = DEFAULT_LOCALE) -> str:
+        return t.translate(
+            text=_(
+                dedent(
+                    """
+                    Specified expiration date is in the past. Please provide a future date.
+                    Validation rule: expiration_date must be greater than the current time.
+                    If you believe this is a mistake, there may be a problem with the server's date/time settings.
+                    """
+                )
+            ),
+            locale=locale,
+        )
 
 
 class InvalidUsesLeft(Exception):
-    @staticmethod
-    def get_error_message(locale: str) -> str:
-        return t.translate(text=_("Uses must be greater than 0"), locale=locale)
+    def __init__(self):
+        logger.error(self.get_error_message())
+
+    def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
+        return t.translate(text=_("Uses left must be greater than 0."), locale=locale)
 
 
 @tracer.start_as_current_span("get_new_api_recovery_key")
@@ -149,7 +177,7 @@ def get_new_api_recovery_key(
         expiration_date = ensure_tz_aware(expiration_date)
         current_time = datetime.now(timezone.utc)
         if expiration_date < current_time:
-            raise InvalidExpirationDate()
+            raise ExpirationDateInThePast()
     if uses_left is not None:
         if uses_left <= 0:
             raise InvalidUsesLeft()
@@ -161,7 +189,8 @@ def get_new_api_recovery_key(
 
 @tracer.start_as_current_span("use_mnemonic_recovery_token")
 def use_mnemonic_recovery_token(mnemonic_phrase, name):
-    """Use the recovery token by converting the mnemonic word list to a byte array.
+    """
+    Use the recovery token by converting the mnemonic word list to a byte array.
     If the recovery token if invalid itself, return None
     If the binary representation of phrase not matches
     the byte array of the recovery token, return None.
@@ -183,7 +212,8 @@ def delete_new_device_auth_token() -> None:
 
 @tracer.start_as_current_span("get_new_device_auth_token")
 def get_new_device_auth_token() -> str:
-    """Generate and store a new device auth token which is valid for 10 minutes
+    """
+    Generate and store a new device auth token which is valid for 10 minutes
     and return a mnemonic phrase representation
     """
     key = ACTIVE_TOKEN_PROVIDER.get_new_device_key()
@@ -192,7 +222,8 @@ def get_new_device_auth_token() -> str:
 
 @tracer.start_as_current_span("use_new_device_auth_token")
 def use_new_device_auth_token(mnemonic_phrase, name) -> Optional[str]:
-    """Use the new device auth token by converting the mnemonic string to a byte array.
+    """
+    Use the new device auth token by converting the mnemonic string to a byte array.
     If the mnemonic phrase is valid then generate a device token and return it.
     New device auth token must be deleted.
     """

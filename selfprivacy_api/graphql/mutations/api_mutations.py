@@ -12,7 +12,7 @@ from strawberry.types import Info
 
 from selfprivacy_api.actions.api_tokens import (
     CannotDeleteCallerException,
-    InvalidExpirationDate,
+    ExpirationDateInThePast,
     InvalidUsesLeft,
     delete_api_token,
     get_new_api_recovery_key,
@@ -102,7 +102,7 @@ class ApiMutations:
             try:
                 key = get_new_api_recovery_key(limits.expiration_date, limits.uses)
 
-            except InvalidExpirationDate as error:
+            except ExpirationDateInThePast as error:
                 return ApiKeyMutationReturn(
                     success=False,
                     message=error.get_error_message(locale=locale),

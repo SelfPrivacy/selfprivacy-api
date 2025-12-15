@@ -8,18 +8,18 @@ import httpx
 
 from selfprivacy_api.models.group import Group, get_default_grops
 from selfprivacy_api.repositories.users.exceptions import (
-    NoPasswordResetLinkFoundInResponse,
     UserAlreadyExists,
     UserNotFound,
     UserOrGroupNotFound,
 )
-from selfprivacy_api.repositories.users.exceptions_kanidm import (
+from selfprivacy_api.repositories.users.exceptions.exceptions_kanidm import (
     FailedToGetValidKanidmToken,
     KanidmCliSubprocessError,
     KanidmDidNotReturnAdminPassword,
     KanidmQueryError,
     KanidmReturnEmptyResponse,
     KanidmReturnUnknownResponseType,
+    NoPasswordResetLinkFoundInResponse,
 )
 from selfprivacy_api.services import KANIDM_A_RECORD
 from selfprivacy_api.utils import get_domain, temporary_env_var
@@ -129,24 +129,29 @@ class KanidmAdminToken:
         redis = RedisPool().get_connection_async()
 
         with temporary_env_var(key="KANIDM_PASSWORD", value=kanidm_admin_password):
+            command = ["kanidm", "login", "-D", "idm_admin"]
             try:
-                subprocess.run(["kanidm", "login", "-D", "idm_admin"], check=True)
+                subprocess.run(command, check=True)
 
+                command = [
+                    "kanidm",
+                    "service-account",
+                    "api-token",
+                    "generate",
+                    "--rw",
+                    "sp.selfprivacy-api.service-account",
+                    "kanidm_service_account_token",
+                ]
                 output = subprocess.check_output(
-                    [
-                        "kanidm",
-                        "service-account",
-                        "api-token",
-                        "generate",
-                        "--rw",
-                        "sp.selfprivacy-api.service-account",
-                        "kanidm_service_account_token",
-                    ],
+                    command,
                     text=True,
                 )
             except subprocess.CalledProcessError as error:
-                logger.error(f"Error creating Kanidm token: {str(error.output)}")
-                raise KanidmCliSubprocessError(error=str(error.output))
+                raise KanidmCliSubprocessError(
+                    command=" ".join(command),
+                    description="Error creating Kanidm token.",
+                    error=str(error.output),
+                )
 
         kanidm_admin_token = output.splitlines()[-1]
 
@@ -155,32 +160,40 @@ class KanidmAdminToken:
 
     @staticmethod
     def _reset_and_save_idm_admin_password() -> str:
+        command = [
+            "kanidmd",
+            "recover-account",
+            "-c",
+            "/etc/kanidm/server.toml",
+            "idm_admin",
+            "-o",
+            "json",
+        ]
+
         output = subprocess.check_output(
-            [
-                "kanidmd",
-                "recover-account",
-                "-c",
-                "/etc/kanidm/server.toml",
-                "idm_admin",
-                "-o",
-                "json",
-            ],
+            command,
             text=True,
         )
 
-        match = re.search(r'"password":"([^"]+)"', output)
+        regex_pattern = r'"password":"([^"]+)"'
+        match = re.search(regex_pattern, output)
         if match:
             new_kanidm_admin_password = match.group(
                 1
             )  # we have many non-JSON strings in output
         else:
-            raise KanidmDidNotReturnAdminPassword
+            raise KanidmDidNotReturnAdminPassword(
+                command=" ".join(command),
+                regex_pattern=regex_pattern,
+                output=output,
+            )
 
         return new_kanidm_admin_password
 
     @staticmethod
     async def _is_token_valid(token: str) -> bool:
         endpoint = f"{get_kanidm_url()}/v1/person/root"
+        method = "GET"
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.get(
@@ -198,13 +211,18 @@ class KanidmAdminToken:
             httpx.RequestError,
         ) as error:
             raise KanidmQueryError(
-                error_text=f"Kanidm is not responding to requests. Error: {str(error)}",
                 endpoint=endpoint,
-                method="GET",
+                method=method,
+                error_text=error,
+                description="Kanidm is not responding to requests.",
             )
 
         except Exception as error:
-            raise KanidmQueryError(error_text=error, endpoint=endpoint)
+            raise KanidmQueryError(
+                endpoint=endpoint,
+                method=method,
+                error_text=error,
+            )
 
         response_data = response.json()
 
@@ -231,7 +249,12 @@ class KanidmUserRepository(AbstractUserRepository):
         return [item for item in groups if item not in get_default_grops()]
 
     @staticmethod
-    def _check_response_type_and_not_empty(data_type: str, response_data: Any) -> None:
+    def _check_response_type_and_not_empty(
+        data_type: str,
+        response_data: Any,
+        endpoint: str,
+        method: str,
+    ) -> None:
         """
         Validates the type and that content of the response data is not empty.
 
@@ -249,11 +272,19 @@ class KanidmUserRepository(AbstractUserRepository):
 
         if data_type == "list":
             if not isinstance(response_data, list):
-                raise KanidmReturnUnknownResponseType(response_data=response_data)
+                raise KanidmReturnUnknownResponseType(
+                    response_data=response_data,
+                    endpoint=endpoint,
+                    method=method,
+                )
 
         elif data_type == "dict":
             if not isinstance(response_data, dict):
-                raise KanidmReturnUnknownResponseType(response_data=response_data)
+                raise KanidmReturnUnknownResponseType(
+                    response_data=response_data,
+                    endpoint=endpoint,
+                    method=method,
+                )
 
     @staticmethod
     def _check_user_origin_by_memberof(
@@ -319,11 +350,11 @@ class KanidmUserRepository(AbstractUserRepository):
                 response_data = response.json()
 
         except JSONDecodeError as error:
-            logger.error(f"Kanidm query error: {str(error)}")
             raise KanidmQueryError(
-                error_text=f"No JSON found in Kanidm response. Error: {str(error)}",
                 endpoint=full_endpoint,
                 method=method,
+                description="No JSON found in Kanidm response.",
+                error_text=error,
             )
         except (
             httpx.TimeoutException,
@@ -331,15 +362,17 @@ class KanidmUserRepository(AbstractUserRepository):
             httpx.RequestError,
         ) as error:
             raise KanidmQueryError(
-                error_text=f"Kanidm is not responding to requests. Error: {str(error)}",
                 endpoint=endpoint,
                 method=method,
+                error_text=error,
+                description="Kanidm is not responding to requests.",
             )
 
         except Exception as error:
-            logger.error(f"Kanidm query error: {str(error)}")
             raise KanidmQueryError(
-                error_text=error, endpoint=full_endpoint, method=method
+                endpoint=full_endpoint,
+                method=method,
+                error_text=error,
             )
 
         if response.status_code != 200:
@@ -353,14 +386,13 @@ class KanidmUserRepository(AbstractUserRepository):
                     raise UserOrGroupNotFound  # does it work only for user? - NO
                 elif response_data == "accessdenied":
                     raise KanidmQueryError(
-                        error_text="Kanidm access issue",
                         endpoint=full_endpoint,
                         method=method,
+                        error_text="Kanidm access issue",
                     )
                 elif response_data == "notauthenticated":
                     raise FailedToGetValidKanidmToken
 
-            logger.error(f"Kanidm query error: {response.text}")
             raise KanidmQueryError(
                 error_text=response.text, endpoint=full_endpoint, method=method
             )
@@ -442,12 +474,17 @@ class KanidmUserRepository(AbstractUserRepository):
             FailedToGetValidKanidmToken: If a valid Kanidm token could not be retrieved.
         """
 
+        endpoint = "person"
+        method = "GET"
         users_data = await KanidmUserRepository._send_query(
-            endpoint="person", method="GET"
+            endpoint=endpoint, method=method
         )
 
         KanidmUserRepository._check_response_type_and_not_empty(
-            data_type="list", response_data=users_data
+            data_type="list",
+            response_data=users_data,
+            endpoint=endpoint,
+            method=method,
         )
 
         users = []
@@ -574,14 +611,19 @@ class KanidmUserRepository(AbstractUserRepository):
             FailedToGetValidKanidmToken: If a valid Kanidm token could not be retrieved.
         """
 
+        endpoint = f"person/{username}"
+        method = "GET"
         user_data = await KanidmUserRepository._send_query(
-            endpoint=f"person/{username}",
-            method="GET",
+            endpoint=endpoint,
+            method=method,
         )
 
         try:
             KanidmUserRepository._check_response_type_and_not_empty(
-                data_type="dict", response_data=user_data
+                data_type="dict",
+                endpoint=endpoint,
+                method=method,
+                response_data=user_data,
             )
         except KanidmReturnEmptyResponse:
             raise UserNotFound
@@ -624,7 +666,6 @@ class KanidmUserRepository(AbstractUserRepository):
 
         Raises:
             NoPasswordResetLinkFoundInResponse: If no token is found in the response.
-            KanidmReturnEmptyResponse: If the response from Kanidm is empty.
             KanidmQueryError: If an error occurs while generating the link.
             KanidmReturnUnknownResponseType: If response type is unknown.
 
@@ -634,24 +675,28 @@ class KanidmUserRepository(AbstractUserRepository):
             FailedToGetValidKanidmToken: If a valid Kanidm token could not be retrieved.
         """
 
+        method = "GET"
+        endpoint = f"person/{username}/_credential/_update_intent"
         data = await KanidmUserRepository._send_query(
-            endpoint=f"person/{username}/_credential/_update_intent",
-            method="GET",
+            endpoint=endpoint,
+            method=method,
         )
 
         KanidmUserRepository._check_response_type_and_not_empty(
-            data_type="dict", response_data=data
+            endpoint=endpoint,
+            method=method,
+            data_type="dict",
+            response_data=data,
         )
 
         token = data.get("token", None)  # type: ignore
 
-        if not token:
-            raise KanidmReturnEmptyResponse
-
         if token:
             return f"https://{KANIDM_A_RECORD}.{get_domain()}/ui/reset?token={token}"
 
-        raise NoPasswordResetLinkFoundInResponse
+        raise NoPasswordResetLinkFoundInResponse(
+            endpoint=endpoint, method=method, data=data
+        )
 
     @staticmethod
     async def get_groups() -> list[Group]:
@@ -672,13 +717,18 @@ class KanidmUserRepository(AbstractUserRepository):
             FailedToGetValidKanidmToken: If a valid Kanidm token could not be retrieved.
         """
 
+        endpoint = "group"
+        method = "GET"
         groups_list_data = await KanidmUserRepository._send_query(
-            endpoint="group",
-            method="GET",
+            endpoint=endpoint,
+            method=method,
         )
 
         KanidmUserRepository._check_response_type_and_not_empty(
-            data_type="list", response_data=groups_list_data
+            endpoint=endpoint,
+            method=method,
+            data_type="list",
+            response_data=groups_list_data,
         )
 
         groups = []

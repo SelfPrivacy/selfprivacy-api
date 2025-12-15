@@ -3,11 +3,14 @@ import uuid
 from typing import Optional
 
 from selfprivacy_api.repositories.users.exceptions import (
-    NoPasswordResetLinkFoundInResponse,
     UserAlreadyExists,
     UserNotFound,
     UserOrGroupNotFound,
 )
+from selfprivacy_api.repositories.users.kanidm_user_repository import (
+    NoPasswordResetLinkFoundInResponse,
+)
+
 from selfprivacy_api.repositories.users.abstract_user_repository import (
     AbstractUserRepository,
 )

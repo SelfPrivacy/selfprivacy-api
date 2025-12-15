@@ -6,7 +6,11 @@ import uuid
 import logging
 from typing import Optional
 
-from selfprivacy_api.utils import is_username_forbidden
+from selfprivacy_api.utils import (
+    is_username_forbidden,
+    FORBIDDEN_USERNAMES,
+    FORBIDDEN_PREFIXES,
+)
 from selfprivacy_api.utils.strings import PLEASE_UPDATE_APP_TEXT
 from selfprivacy_api.utils.localization import TranslateSystemMessage as t
 
@@ -26,7 +30,9 @@ from selfprivacy_api.repositories.users.exceptions import (
     UsernameTooLong,
     UserNotFound,
     UserAlreadyExists,
-    InvalidConfiguration,
+)
+from selfprivacy_api.repositories.users.exceptions.exceptions_json import (
+    PrimaryUserNotFoundInJsonUserData,
 )
 from selfprivacy_api.actions.email_passwords import (
     add_email_password,
@@ -86,10 +92,14 @@ async def create_user(
 ) -> None:
 
     if is_username_forbidden(username):
-        raise UsernameForbidden
+        raise UsernameForbidden(
+            forbudden_usernames=FORBIDDEN_USERNAMES,
+            forbudden_prefixes=FORBIDDEN_PREFIXES,
+        )
 
-    if not re.match(r"^[a-z_][a-z0-9_]+$", username):
-        raise UsernameNotAlphanumeric
+    regex_pattern = r"^[a-z_][a-z0-9_]+$"
+    if not re.match(regex_pattern, username):
+        raise UsernameNotAlphanumeric(regex_pattern=regex_pattern)
 
     if len(username) >= 32:
         raise UsernameTooLong
@@ -111,7 +121,7 @@ async def create_user(
             await JsonUserRepository.create_user(
                 username=username, password=str(uuid.uuid4())
             )  # random password for legacy repo
-        except (UserAlreadyExists, InvalidConfiguration):
+        except (UserAlreadyExists, PrimaryUserNotFoundInJsonUserData):
             pass
 
     await ACTIVE_USERS_PROVIDER.create_user(
@@ -124,7 +134,7 @@ async def create_user(
 
 async def delete_user(username: str) -> None:
     if username == "root":
-        raise UserIsProtected
+        raise UserIsProtected(account_type="root")
 
     try:
         user = await ACTIVE_USERS_PROVIDER.get_user_by_username(username=username)
@@ -142,7 +152,7 @@ async def delete_user(username: str) -> None:
         and ACTIVE_USERS_PROVIDER == JsonUserRepository
         and user.user_type == UserDataUserOrigin.PRIMARY
     ):
-        raise UserIsProtected
+        raise UserIsProtected(account_type="primary")
 
     delete_all_email_passwords_hashes(username=username)
 
@@ -166,7 +176,7 @@ async def update_user(
         )
 
     if username == "root":
-        raise UserIsProtected
+        raise UserIsProtected(account_type="root")
 
     if displayname:
         if ACTIVE_USERS_PROVIDER == JsonUserRepository:
@@ -233,7 +243,7 @@ async def generate_password_reset_link(username: str) -> str:
         raise ApiUsingWrongUserRepository
 
     if username == "root":
-        raise UserIsProtected
+        raise UserIsProtected(account_type="root")
 
     return await ACTIVE_USERS_PROVIDER.generate_password_reset_link(username=username)
 

@@ -33,24 +33,27 @@ from selfprivacy_api.actions.users import (
 )
 from selfprivacy_api.repositories.users.exceptions import (
     DisplaynameTooLong,
-    NoPasswordResetLinkFoundInResponse,
     PasswordIsEmpty,
     UserOrGroupNotFound,
     UsernameForbidden,
-    InvalidConfiguration,
     UserAlreadyExists,
     UserIsProtected,
     UsernameNotAlphanumeric,
     UsernameTooLong,
     UserNotFound,
 )
-from selfprivacy_api.repositories.users.exceptions_kanidm import (
+from selfprivacy_api.repositories.users.exceptions.exceptions_json import (
+    PrimaryUserNotFoundInJsonUserData,
+)
+
+from selfprivacy_api.repositories.users.exceptions.exceptions_kanidm import (
     FailedToGetValidKanidmToken,
     KanidmDidNotReturnAdminPassword,
     KanidmQueryError,
     KanidmReturnEmptyResponse,
     KanidmReturnUnknownResponseType,
     KanidmCliSubprocessError,
+    NoPasswordResetLinkFoundInResponse,
 )
 from selfprivacy_api.utils.localization import (
     TranslateSystemMessage as t,
@@ -125,7 +128,7 @@ class UsersMutations:
                 PasswordIsEmpty,
                 UsernameNotAlphanumeric,
                 UsernameTooLong,
-                InvalidConfiguration,
+                PrimaryUserNotFoundInJsonUserData,
                 KanidmDidNotReturnAdminPassword,
                 KanidmQueryError,
                 DisplaynameTooLong,

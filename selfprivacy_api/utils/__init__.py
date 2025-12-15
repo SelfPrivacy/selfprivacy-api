@@ -27,6 +27,36 @@ ACCOUNT_PATH_PATTERN = (
     "/var/lib/acme/.lego/accounts/*/acme-v02.api.letsencrypt.org/*/account.json"
 )
 
+FORBIDDEN_PREFIXES = ["systemd", "nixbld"]
+FORBIDDEN_USERNAMES = [
+    "root",
+    "messagebus",
+    "postfix",
+    "polkituser",
+    "dovecot2",
+    "dovenull",
+    "nginx",
+    "postgres",
+    "prosody",
+    "opendkim",
+    "rspamd",
+    "sshd",
+    "selfprivacy-api",
+    "restic",
+    "redis",
+    "pleroma",
+    "ocserv",
+    "nextcloud",
+    "memcached",
+    "knot-resolver",
+    "gitea",
+    "bitwarden_rs",
+    "vaultwarden",
+    "acme",
+    "virtualMail",
+    "nobody",
+]
+
 
 class UserDataFiles(Enum):
     """Enum for userdata files"""
@@ -120,42 +150,11 @@ def validate_ssh_public_key(key):
 
 
 def is_username_forbidden(username):
-    forbidden_prefixes = ["systemd", "nixbld"]
-
-    forbidden_usernames = [
-        "root",
-        "messagebus",
-        "postfix",
-        "polkituser",
-        "dovecot2",
-        "dovenull",
-        "nginx",
-        "postgres",
-        "prosody",
-        "opendkim",
-        "rspamd",
-        "sshd",
-        "selfprivacy-api",
-        "restic",
-        "redis",
-        "pleroma",
-        "ocserv",
-        "nextcloud",
-        "memcached",
-        "knot-resolver",
-        "gitea",
-        "bitwarden_rs",
-        "vaultwarden",
-        "acme",
-        "virtualMail",
-        "nobody",
-    ]
-
-    for prefix in forbidden_prefixes:
+    for prefix in FORBIDDEN_PREFIXES:
         if username.startswith(prefix):
             return True
 
-    for forbidden_username in forbidden_usernames:
+    for forbidden_username in FORBIDDEN_USERNAMES:
         if username == forbidden_username:
             return True
 
