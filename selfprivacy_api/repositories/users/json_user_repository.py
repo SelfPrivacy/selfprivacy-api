@@ -112,7 +112,7 @@ class JsonUserRepository(AbstractUserRepository):
                     user_data["users"].remove(data_user)
                     break
             else:
-                raise UserNotFound("User did not exist")
+                raise UserNotFound
 
     @staticmethod
     async def update_user(
