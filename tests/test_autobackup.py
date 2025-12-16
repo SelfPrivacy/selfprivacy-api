@@ -191,12 +191,13 @@ async def test_services_to_autobackup(backups, dummy_service):
     ]
 
 
-def test_do_not_autobackup_disabled_services(backups, dummy_service):
+@pytest.mark.asyncio
+async def test_do_not_autobackup_disabled_services(backups, dummy_service):
     now = datetime.now(timezone.utc)
     Backups.set_autobackup_period_minutes(3)
     assert await Backups.is_time_to_backup_service(dummy_service, now) is True
 
-    dummy_service.disable()
+    await dummy_service.disable()
     assert await Backups.is_time_to_backup_service(dummy_service, now) is False
 
 

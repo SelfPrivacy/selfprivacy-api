@@ -151,8 +151,7 @@
           pkgs = nixpkgs.legacyPackages.${system};
         in
         {
-          
-      default = pkgs.mkShellNoCC {
+          default = pkgs.mkShellNoCC {
             name = "SP API dev shell";
             packages = with pkgs; [
               nixpkgs-fmt

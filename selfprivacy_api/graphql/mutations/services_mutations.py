@@ -117,7 +117,7 @@ class ServicesMutations:
                         message="Service not found.",
                         code=404,
                     )
-                service.enable()
+                await service.enable()
             except Exception as e:
                 return ServiceMutationReturn(
                     success=False,
@@ -146,7 +146,7 @@ class ServicesMutations:
                         message="Service not found.",
                         code=404,
                     )
-                service.disable()
+                await service.disable()
             except Exception as e:
                 return ServiceMutationReturn(
                     success=False,
