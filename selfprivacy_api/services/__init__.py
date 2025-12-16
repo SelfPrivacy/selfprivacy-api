@@ -85,7 +85,9 @@ class ServiceManager(Service):
     @staticmethod
     @tracer.start_as_current_span("get_enabled_services")
     async def get_enabled_services() -> list[Service]:
-        return [service for service in await get_services() if await service.is_enabled()]
+        return [
+            service for service in await get_services() if await service.is_enabled()
+        ]
 
     @staticmethod
     @tracer.start_as_current_span("get_enabled_services_with_urls")
