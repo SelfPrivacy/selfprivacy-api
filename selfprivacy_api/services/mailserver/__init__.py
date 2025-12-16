@@ -62,7 +62,7 @@ class MailServer(Service):
         return "Mail boxes and filters."
 
     @staticmethod
-    def is_enabled() -> bool:
+    async def is_enabled() -> bool:
         return True
 
     @staticmethod
