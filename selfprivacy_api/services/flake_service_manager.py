@@ -1,12 +1,18 @@
 import copy
+
+from opentelemetry import trace
 from selfprivacy_api.utils.nix import evaluate_nix_file, to_nix_expr, format_nix_expr
 
 FLAKE_CONFIG_PATH = "/etc/nixos/flake.nix"
 SP_MODULE_INPUT_PREFIX = "sp-module-"
 
 
+tracer = trace.get_tracer(__name__)
+
+
 class FlakeServiceManager:
     async def __aenter__(self) -> "FlakeServiceManager":
+        self._span = tracer.start_span("FlakeServiceManager context")
         self._inputs = {}
         self._services = {}
 
@@ -26,7 +32,7 @@ class FlakeServiceManager:
 
         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback) -> None:
+    async def __aexit__(self, exc_type, exc, traceback) -> None:
         if self.inputs == self._inputs and self.services == self._services:
             return
 
@@ -65,3 +71,11 @@ class FlakeServiceManager:
 
         with open(FLAKE_CONFIG_PATH, "w") as file:
             file.write(content)
+
+        if exc:
+            self._span.set_status(trace.Status(trace.StatusCode.ERROR))
+            self._span.record_exception(exc)
+        else:
+            self._span.set_status(trace.Status(trace.StatusCode.OK))
+
+        self._span.end()
