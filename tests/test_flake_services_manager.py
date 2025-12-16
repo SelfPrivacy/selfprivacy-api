@@ -118,8 +118,9 @@ def no_services_flake_mock(mocker, datadir):
 # ---
 
 
-def test_read_services_list(some_services_flake_mock):
-    with FlakeServiceManager() as manager:
+@pytest.mark.asyncio
+async def test_read_services_list(some_services_flake_mock):
+    async with FlakeServiceManager() as manager:
         services = {
             "gitea": "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/gitea",
             "jitsi-meet": "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/jitsi-meet",
@@ -128,7 +129,8 @@ def test_read_services_list(some_services_flake_mock):
         assert manager.services == services
 
 
-def test_change_services_list(some_services_flake_mock):
+@pytest.mark.asyncio
+async def test_change_services_list(some_services_flake_mock):
     services = {
         "bitwarden": "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/bitwarden",
         "gitea": "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/gitea",
@@ -140,10 +142,10 @@ def test_change_services_list(some_services_flake_mock):
         "vikunja": "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/vikunja",
     }
 
-    with FlakeServiceManager() as manager:
+    async with FlakeServiceManager() as manager:
         manager.services = services
 
-    with FlakeServiceManager() as manager:
+    async with FlakeServiceManager() as manager:
         assert manager.services == services
 
     with open(some_services_flake_mock, "r", encoding="utf-8") as file:
@@ -152,13 +154,15 @@ def test_change_services_list(some_services_flake_mock):
     assert all_services_file.strip() == file_content
 
 
-def test_read_empty_services_list(no_services_flake_mock):
-    with FlakeServiceManager() as manager:
+@pytest.mark.asyncio
+async def test_read_empty_services_list(no_services_flake_mock):
+    async with FlakeServiceManager() as manager:
         services = {}
         assert manager.services == services
 
 
-def test_change_empty_services_list(no_services_flake_mock):
+@pytest.mark.asyncio
+async def test_change_empty_services_list(no_services_flake_mock):
     services = {
         "bitwarden": "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/bitwarden",
         "gitea": "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/gitea",
@@ -170,10 +174,10 @@ def test_change_empty_services_list(no_services_flake_mock):
         "vikunja": "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/vikunja",
     }
 
-    with FlakeServiceManager() as manager:
+    async with FlakeServiceManager() as manager:
         manager.services = services
 
-    with FlakeServiceManager() as manager:
+    async with FlakeServiceManager() as manager:
         assert manager.services == services
 
     with open(no_services_flake_mock, "r", encoding="utf-8") as file:

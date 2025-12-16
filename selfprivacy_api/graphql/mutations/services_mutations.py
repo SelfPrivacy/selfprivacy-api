@@ -133,7 +133,7 @@ class ServicesMutations:
                         message=t.translate(text=SERVICE_NOT_FOUND, locale=locale),
                         code=404,
                     )
-                service.enable()
+                await service.enable()
             except Exception as e:
                 return ServiceMutationReturn(
                     success=False,
@@ -166,7 +166,7 @@ class ServicesMutations:
                         message=t.translate(text=SERVICE_NOT_FOUND, locale=locale),
                         code=404,
                     )
-                service.disable()
+                await service.disable()
             except Exception as e:
                 return ServiceMutationReturn(
                     success=False,
