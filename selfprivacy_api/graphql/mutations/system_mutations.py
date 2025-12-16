@@ -334,7 +334,7 @@ class SystemMutations:
                 return GenericMutationReturn(
                     success=True,
                     code=200,
-                    message="Config url updated",
+                    message="NixOS config URL updated",
                 )
             except Exception as e:
                 return GenericMutationReturn(
