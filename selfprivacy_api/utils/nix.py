@@ -17,15 +17,15 @@ class NixException(Exception):
 
 async def evaluate_nix_file(file: str, apply: str = "f: f"):
     process = await asyncio.create_subprocess_exec(
-            "nix",
-            "eval",
-            "--file",
-            file,
-            "--apply",
-            apply,
-            "--json",
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
+        "nix",
+        "eval",
+        "--file",
+        file,
+        "--apply",
+        apply,
+        "--json",
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
     )
     stdout, stderr = await process.communicate()
     if process.returncode is None:
@@ -40,16 +40,16 @@ async def evaluate_nix_file(file: str, apply: str = "f: f"):
 async def to_nix_expr(value):
     str_json = json.dumps(value)
     process = await asyncio.create_subprocess_exec(
-            "nix",
-            "eval",
-            "--expr",
-            "{input}: {res = builtins.fromJSON input;}",
-            "--argstr",
-            "input",
-            str_json,
-            "res",
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
+        "nix",
+        "eval",
+        "--expr",
+        "{input}: {res = builtins.fromJSON input;}",
+        "--argstr",
+        "input",
+        str_json,
+        "res",
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
     )
     stdout, stderr = await process.communicate()
     if process.returncode != 0:
@@ -67,8 +67,8 @@ async def format_nix_expr(expr: str):
     process = await asyncio.create_subprocess_exec(
         "nixfmt",
         stdin=asyncio.subprocess.PIPE,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
     )
     stdout, stderr = await process.communicate(expr.encode("utf-8"))
     if process.returncode != 0:

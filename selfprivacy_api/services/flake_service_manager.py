@@ -29,7 +29,7 @@ class FlakeServiceManager:
     async def __aexit__(self, exc_type, exc_value, traceback) -> None:
         if self.inputs == self._inputs and self.services == self._services:
             return
-        
+
         inputs = self.inputs
         for service_name, url in self.services.items():
             inputs[f"{SP_MODULE_INPUT_PREFIX}{service_name}"] = {"url": url}
