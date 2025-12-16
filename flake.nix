@@ -75,54 +75,57 @@
             pythonPackages = pkgs.python312Packages;
             rev = self.shortRev or self.dirtyShortRev or "dirty";
           };
-          pytest-vm = let
-            check = self.checks.${system}.default.extend {
-              modules = [
-                ({config, lib, ...}: {
-                  nodes.machine = {
-                    virtualisation.sharedDirectories.src = {
-                      source = "$API_SOURCES";
-                      target = vmtest-src-dir;
-                    };
-                    virtualisation.fileSystems.${vmtest-src-dir} = lib.mkForce {
-                      neededForBoot = true;
-                      device = "src";
-                      fsType = "9p";
-                      options = [
-                        "trans=virtio"
-                        "version=9p2000.L"
-                        "msize=${toString config.nodes.machine.virtualisation.msize}"
-                        "x-systemd.requires=modprobe@9pnet_virtio.service"
-                      ];
-                    };
-                  };
-                })
-              ];
-            };
-          in pkgs.writeShellScriptBin "pytest-vm" ''
-            set -o errexit
-            set -o nounset
-            set -o xtrace
+          pytest-vm =
+            let
+              check = self.checks.${system}.default.extend {
+                modules = [
+                  (
+                    { config, lib, ... }:
+                    {
+                      nodes.machine = {
+                        virtualisation.sharedDirectories.src = {
+                          source = "$API_SOURCES";
+                          target = vmtest-src-dir;
+                        };
+                        virtualisation.fileSystems.${vmtest-src-dir} = lib.mkForce {
+                          neededForBoot = true;
+                          device = "src";
+                          fsType = "9p";
+                          options = [
+                            "trans=virtio"
+                            "version=9p2000.L"
+                            "msize=${toString config.nodes.machine.virtualisation.msize}"
+                            "x-systemd.requires=modprobe@9pnet_virtio.service"
+                          ];
+                        };
+                      };
+                    }
+                  )
+                ];
+              };
+            in
+            pkgs.writeShellScriptBin "pytest-vm" ''
+              set -o errexit
+              set -o nounset
+              set -o xtrace
 
-            # see https://github.com/NixOS/nixpkgs/blob/66a9817cec77098cfdcbb9ad82dbb92651987a84/nixos/lib/test-driver/test_driver/machine.py#L359
-            export TMPDIR=''${TMPDIR:=/tmp}/nixos-vm-tmp-dir
-            export API_SOURCES=$PWD
+              # see https://github.com/NixOS/nixpkgs/blob/66a9817cec77098cfdcbb9ad82dbb92651987a84/nixos/lib/test-driver/test_driver/machine.py#L359
+              export TMPDIR=''${TMPDIR:=/tmp}/nixos-vm-tmp-dir
+              export API_SOURCES=$PWD
 
-            SCRIPT=$(cat <<EOF
-            start_all()
-            machine.succeed("cd ${vmtest-src-dir} && coverage run -m pytest $@ >&2")
-            machine.succeed("cd ${vmtest-src-dir} && coverage report >&2")
-            EOF
-            )
+              SCRIPT=$(cat <<EOF
+              start_all()
+              machine.succeed("cd ${vmtest-src-dir} && coverage run -m pytest $@ >&2")
+              machine.succeed("cd ${vmtest-src-dir} && coverage report >&2")
+              EOF
+              )
 
-            if [ -f "/etc/arch-release" ]; then
-                ${
-                  check.driverInteractive
-                }/bin/nixos-test-driver --no-interactive <(printf "%s" "$SCRIPT")
-            else
-                ${check.driver}/bin/nixos-test-driver -- <(printf "%s" "$SCRIPT")
-            fi
-        '';
+              if [ -f "/etc/arch-release" ]; then
+                  ${check.driverInteractive}/bin/nixos-test-driver --no-interactive <(printf "%s" "$SCRIPT")
+              else
+                  ${check.driver}/bin/nixos-test-driver -- <(printf "%s" "$SCRIPT")
+              fi
+            '';
           dependencies-json = pkgs.writeTextFile {
             name = "dependencies-versions.json";
             text =
@@ -213,10 +216,9 @@
           pkgs = nixpkgs.legacyPackages.${system};
         in
         {
-          fmt-check = pkgs.runCommandLocal "sp-api-fmt-check"
-            {
-              nativeBuildInputs = [ pkgs.black ];
-            } "black --check ${self.outPath} > $out";
+          fmt-check = pkgs.runCommandLocal "sp-api-fmt-check" {
+            nativeBuildInputs = [ pkgs.black ];
+          } "black --check ${self.outPath} > $out";
           default = pkgs.testers.runNixOSTest {
             name = "default";
             nodes.machine =
