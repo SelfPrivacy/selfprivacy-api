@@ -14,6 +14,8 @@ from selfprivacy_api.utils import UserDataFiles
 from selfprivacy_api.utils.localization import TranslateSystemMessage as t
 from selfprivacy_api.utils.systemd import systemd_proxy, start_unit
 
+from selfprivacy_api.services.flake_service_manager import FlakeServiceManager
+
 from selfprivacy_api.graphql.queries.providers import DnsProvider
 
 _ = gettext.gettext
@@ -152,6 +154,11 @@ def get_system_version() -> str:
 def get_python_version() -> str:
     """Get Python version"""
     return subprocess.check_output(["python", "-V"]).decode("utf-8").strip()
+
+
+async def set_nixos_config_url(url: str):
+    async with FlakeServiceManager() as manager:
+        manager.inputs["selfprivacy-nixos-config"]["url"] = url
 
 
 class SystemActionResult(BaseModel):
