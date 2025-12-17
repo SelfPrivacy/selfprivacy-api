@@ -1,10 +1,10 @@
 """Class representing Dovecot and Postfix services"""
 
 import base64
-import subprocess
 from typing import Optional, List
 
 from selfprivacy_api.utils.systemd import (
+    listen_for_unit_state_changes,
     get_service_status_from_several_units,
     start_unit,
     stop_unit,

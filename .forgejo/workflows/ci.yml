@@ -32,6 +32,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Run tests and coverage
         run: |
@@ -189,3 +191,161 @@ jobs:
             echo "Quality gate failed!"
             exit 1
           fi
+
+  dependency-changes:
+    runs-on:
+      - x64
+    if: ${{ github.event_name == 'pull_request' }}
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: head
+
+      - name: Checkout PR base
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+
+      - name: Compare flake.lock and report dependency changes
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set +e  # Don't exit on diff failure
+
+          echo "[DEBUG] Comparing flake.lock files..." >&2
+          diff -q base/flake.lock head/flake.lock
+          DIFF_EXIT=$?
+
+          if [ $DIFF_EXIT -eq 0 ]; then
+            echo "[DEBUG] No changes in flake.lock, skipping dependency comparison" >&2
+            exit 0
+          fi
+
+          echo "[DEBUG] flake.lock has changed, generating dependency reports..." >&2
+
+          # Build dependency JSON for base
+          cd base
+          nix build -L .#dependencies-json
+          cp result base-deps.json
+          cd ..
+
+          # Build dependency JSON for head
+          cd head
+          nix build -L .#dependencies-json
+          cp result head-deps.json
+          cd ..
+
+          # Generate comparison report
+          cat > /tmp/compare-deps.py << 'PYEOF'
+          import json
+          import sys
+
+          with open("base/base-deps.json") as f:
+              base_data = json.load(f)
+
+          with open("head/head-deps.json") as f:
+              head_data = json.load(f)
+
+          # Create dictionaries with full metadata
+          base_deps = {dep["name"]: dep for dep in base_data["dependencies"]}
+          head_deps = {dep["name"]: dep for dep in head_data["dependencies"]}
+
+          changes = []
+
+          # Check for version changes and removals
+          for name, base_dep in base_deps.items():
+              if name not in head_deps:
+                  changes.append(("removed", name, base_dep, None))
+              elif base_dep["version"] != head_deps[name]["version"]:
+                  changes.append(("changed", name, base_dep, head_deps[name]))
+
+          # Check for additions
+          for name, head_dep in head_deps.items():
+              if name not in base_deps:
+                  changes.append(("added", name, None, head_dep))
+
+          if not changes:
+              print("NO_CHANGES")
+              sys.exit(0)
+
+          def get_link_url(dep):
+              """Get the best URL for a dependency, prioritizing changelog over homepage."""
+              if dep is None:
+                  return None
+              # Priority: changelog first, then homepage
+              return dep.get("changelog") or dep.get("homepage")
+
+          def format_package_name(name, dep):
+              """Format package name as a link if URL is available."""
+              url = get_link_url(dep)
+              if url:
+                  return f"[`{name}`]({url})"
+              return f"`{name}`"
+
+          # Generate markdown table
+          print("<!-- dependency-changes-bot -->")
+          print("## 📦 Dependency Changes")
+          print()
+          print("| Package | Base Version | Head Version | Change |")
+          print("|---------|--------------|--------------|--------|")
+
+          for change_type, name, base_dep, head_dep in sorted(changes, key=lambda x: (x[0], x[1])):
+              if change_type == "added":
+                  pkg_name = format_package_name(name, head_dep)
+                  head_ver = head_dep["version"]
+                  print(f"| {pkg_name} | - | `{head_ver}` | ➕ Added |")
+              elif change_type == "removed":
+                  pkg_name = format_package_name(name, base_dep)
+                  base_ver = base_dep["version"]
+                  print(f"| {pkg_name} | `{base_ver}` | - | ➖ Removed |")
+              elif change_type == "changed":
+                  # For changed packages, prefer head metadata
+                  pkg_name = format_package_name(name, head_dep)
+                  base_ver = base_dep["version"]
+                  head_ver = head_dep["version"]
+                  print(f"| {pkg_name} | `{base_ver}` | `{head_ver}` | 🔄 Updated |")
+          PYEOF
+
+          # Run comparison script
+          python3 /tmp/compare-deps.py > /tmp/deps-comment.txt
+          COMPARISON_EXIT=$?
+
+          if [ $COMPARISON_EXIT -ne 0 ] || grep -q "NO_CHANGES" /tmp/deps-comment.txt; then
+            echo "[DEBUG] No dependency version changes detected" >&2
+            exit 0
+          fi
+
+          echo "[DEBUG] Dependency changes detected, posting comment..." >&2
+          cat /tmp/deps-comment.txt >&2
+
+          # Check if a comment from this bot already exists
+          EXISTING_COMMENTS=$(curl -s \
+            -H "Authorization: token ${{ secrets.FORGEJO_TOKEN }}" \
+            "${{ github.api_url }}/repos/${{ github.repository }}/issues/$PR_NUMBER/comments")
+
+          COMMENT_ID=$(echo "$EXISTING_COMMENTS" | jq -r '.[] | select(.body | contains("dependency-changes-bot")) | .id' | head -1)
+          echo "[DEBUG] Existing dependency comment ID: $COMMENT_ID" >&2
+
+          # Build JSON payload using jq to properly escape content
+          COMMENT_JSON=$(jq -n --rawfile body /tmp/deps-comment.txt '{body: $body}')
+
+          if [ -n "$COMMENT_ID" ]; then
+            echo "[DEBUG] Updating existing comment (ID: $COMMENT_ID)..." >&2
+            curl -s -X PATCH \
+              -H "Authorization: token ${{ secrets.FORGEJO_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              -d "$COMMENT_JSON" \
+              "${{ github.api_url }}/repos/${{ github.repository }}/issues/comments/$COMMENT_ID"
+          else
+            echo "[DEBUG] Creating new comment..." >&2
+            curl -s -X POST \
+              -H "Authorization: token ${{ secrets.FORGEJO_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              -d "$COMMENT_JSON" \
+              "${{ github.api_url }}/repos/${{ github.repository }}/issues/$PR_NUMBER/comments"
+          fi
+
+          echo "[DEBUG] Dependency changes comment posted successfully" >&2

@@ -104,6 +104,23 @@
                 ${self.checks.${system}.default.driver}/bin/nixos-test-driver -- <(printf "%s" "$SCRIPT")
             fi
           '';
+          dependencies-json = pkgs.writeTextFile {
+            name = "dependencies-versions.json";
+            text =
+              let
+                pkg = self.packages.${system}.default;
+                # Extract package information from propagatedBuildInputs
+                packageInfo = builtins.map (dep: {
+                  name = dep.pname or (builtins.parseDrvName dep.name).name;
+                  version = dep.version or (builtins.parseDrvName dep.name).version;
+                  changelog = dep.meta.changelog or null;
+                  homepage = dep.meta.homepage or null;
+                }) pkg.propagatedBuildInputs;
+              in
+              builtins.toJSON {
+                dependencies = packageInfo;
+              };
+          };
         }
       );
       devShells = nixpkgs.lib.genAttrs systems (
