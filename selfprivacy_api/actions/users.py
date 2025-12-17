@@ -1,5 +1,6 @@
 """Actions to manage the users."""
 
+import gettext
 import re
 import uuid
 import logging
@@ -7,6 +8,7 @@ from typing import Optional
 
 from selfprivacy_api.utils import is_username_forbidden
 from selfprivacy_api.utils.strings import PLEASE_UPDATE_APP_TEXT
+from selfprivacy_api.utils.localization import TranslateSystemMessage as t
 
 from selfprivacy_api.models.group import Group, get_default_grops
 from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
@@ -34,6 +36,8 @@ from selfprivacy_api.actions.email_passwords import (
 
 logger = logging.getLogger(__name__)
 
+_ = gettext.gettext
+
 
 class ApiUsingWrongUserRepository(Exception):
     """
@@ -41,8 +45,11 @@ class ApiUsingWrongUserRepository(Exception):
     """
 
     @staticmethod
-    def get_error_message() -> str:
-        return "API is using a too old or unfinished user repository"
+    def get_error_message(locale: str) -> str:
+        return t.translate(
+            text=_("API is using a too old or unfinished user repository"),
+            locale=locale,
+        )
 
 
 async def get_users(

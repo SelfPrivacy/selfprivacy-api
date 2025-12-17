@@ -1,8 +1,9 @@
 """Actions to manage the system."""
 
+import gettext
 import subprocess
 import pytz
-from typing import Optional
+from typing import Optional, Any
 from pydantic import BaseModel
 
 from selfprivacy_api.jobs import Job, JobStatus, Jobs
@@ -10,9 +11,12 @@ from selfprivacy_api.jobs.upgrade_system import rebuild_system_task
 
 from selfprivacy_api.utils import WriteUserData, ReadUserData
 from selfprivacy_api.utils import UserDataFiles
+from selfprivacy_api.utils.localization import TranslateSystemMessage as t
 from selfprivacy_api.utils.systemd import systemd_proxy, start_unit
 
 from selfprivacy_api.graphql.queries.providers import DnsProvider
+
+_ = gettext.gettext
 
 
 def get_timezone() -> str:
@@ -78,16 +82,35 @@ def set_auto_upgrade_settings(
 
 
 class ShellException(Exception):
-    """Something went wrong when calling another process"""
+    """Shell command failed"""
 
-    pass
+    def __init__(self, command: Optional[Any] = None, output: Optional[Any] = None):
+        self.command = str(command)
+        self.output = str(output)
+
+    def get_error_message(self, locale: str) -> str:
+        message = t.translate(text=_("Shell command failed."), locale=locale)
+
+        if self.command:
+            message += t.translate(
+                text=_(" Executed command array: %(commands)s."), locale=locale
+            ) % {"commands": self.command}
+
+        if self.output:
+            message += t.translate(text=_(" Output: %(output)s"), locale=locale) % {
+                "output": self.output
+            }
+
+        return message
 
 
 def add_rebuild_job() -> Job:
     return Jobs.add(
         type_id="system.nixos.rebuild",
-        name="Rebuild system",
-        description="Applying the new system configuration by building the new NixOS generation.",
+        name=_("Rebuild system"),
+        description=_(
+            "Applying the new system configuration by building the new NixOS generation."
+        ),
         status=JobStatus.CREATED,
     )
 
@@ -108,8 +131,8 @@ def upgrade_system() -> Job:
     """Upgrade the system"""
     job = Jobs.add(
         type_id="system.nixos.upgrade",
-        name="Upgrade system",
-        description="Upgrading the system to the latest version.",
+        name=_("Upgrade system"),
+        description=_("Upgrading the system to the latest version."),
         status=JobStatus.CREATED,
     )
     rebuild_system_task(job, upgrade=True)

@@ -1,11 +1,17 @@
 """Actions to manage the SSH."""
 
+import gettext
 from typing import Optional
+
 from pydantic import BaseModel
 
 from selfprivacy_api.utils import WriteUserData, ReadUserData, validate_ssh_public_key
-from selfprivacy_api.repositories.users.exceptions import UserNotFound
 from selfprivacy_api.utils import ensure_ssh_and_users_fields_exist
+from selfprivacy_api.utils.localization import TranslateSystemMessage as t
+
+from selfprivacy_api.repositories.users.exceptions import UserNotFound
+
+_ = gettext.gettext
 
 
 class UserdataSshSettings(BaseModel):
@@ -20,24 +26,29 @@ class KeyNotFound(Exception):
     """Key not found"""
 
     @staticmethod
-    def get_error_message() -> str:
-        return "Key not found"
+    def get_error_message(locale: str) -> str:
+        return t.translate(text=_("Key not found"), locale=locale)
 
 
 class KeyAlreadyExists(Exception):
     """Key already exists"""
 
     @staticmethod
-    def get_error_message() -> str:
-        return "Key already exists"
+    def get_error_message(locale: str) -> str:
+        return t.translate(text=_("Key already exists"), locale=locale)
 
 
 class InvalidPublicKey(Exception):
     """Invalid public key"""
 
     @staticmethod
-    def get_error_message() -> str:
-        return "Invalid key type. Only ssh-ed25519, ssh-rsa and ecdsa are supported"
+    def get_error_message(locale: str) -> str:
+        return t.translate(
+            text=_(
+                "Invalid key type. Only ssh-ed25519, ssh-rsa and ecdsa are supported"
+            ),
+            locale=locale,
+        )
 
 
 def enable_ssh():

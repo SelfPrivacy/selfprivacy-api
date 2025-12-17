@@ -1,12 +1,18 @@
 """Services mutations"""
 
 # pylint: disable=too-few-public-methods
+import gettext
 from typing import Optional
+
 import strawberry
 from opentelemetry import trace
+from strawberry.types import Info
 
 from selfprivacy_api.utils import pretty_error
-
+from selfprivacy_api.utils.localization import (
+    TranslateSystemMessage as t,
+    get_locale,
+)
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.common_types.jobs import job_to_api_job
 from selfprivacy_api.jobs import JobStatus
@@ -20,6 +26,7 @@ from selfprivacy_api.graphql.common_types.service import (
     Service,
     service_to_graphql_service,
 )
+from selfprivacy_api.graphql.common_types.jobs import translate_job
 
 from selfprivacy_api.actions.services import (
     move_service,
@@ -30,6 +37,11 @@ from selfprivacy_api.actions.services import (
 from selfprivacy_api.services import ServiceManager
 
 tracer = trace.get_tracer(__name__)
+
+
+_ = gettext.gettext
+
+SERVICE_NOT_FOUND = _("Service not found")
 
 
 @strawberry.type
@@ -104,8 +116,12 @@ class ServicesMutations:
     """Services mutations."""
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    async def enable_service(self, service_id: str) -> ServiceMutationReturn:
+    async def enable_service(
+        self, info: Info, service_id: str
+    ) -> ServiceMutationReturn:
         """Enable service."""
+        locale = get_locale(info=info)
+
         with tracer.start_as_current_span(
             "enable_service_mutation", attributes={"service_id": service_id}
         ):
@@ -114,7 +130,7 @@ class ServicesMutations:
                 if service is None:
                     return ServiceMutationReturn(
                         success=False,
-                        message="Service not found.",
+                        message=t.translate(text=SERVICE_NOT_FOUND, locale=locale),
                         code=404,
                     )
                 service.enable()
@@ -127,14 +143,18 @@ class ServicesMutations:
 
             return ServiceMutationReturn(
                 success=True,
-                message="Service enabled.",
+                message=t.translate(text=_("Service enabled."), locale=locale),
                 code=200,
                 service=await service_to_graphql_service(service),
             )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    async def disable_service(self, service_id: str) -> ServiceMutationReturn:
+    async def disable_service(
+        self, info: Info, service_id: str
+    ) -> ServiceMutationReturn:
         """Disable service."""
+        locale = get_locale(info=info)
+
         with tracer.start_as_current_span(
             "disable_service_mutation", attributes={"service_id": service_id}
         ):
@@ -143,7 +163,7 @@ class ServicesMutations:
                 if service is None:
                     return ServiceMutationReturn(
                         success=False,
-                        message="Service not found.",
+                        message=t.translate(text=SERVICE_NOT_FOUND, locale=locale),
                         code=404,
                     )
                 service.disable()
@@ -155,14 +175,16 @@ class ServicesMutations:
                 )
             return ServiceMutationReturn(
                 success=True,
-                message="Service disabled.",
+                message=t.translate(text=_("Service disabled."), locale=locale),
                 code=200,
                 service=await service_to_graphql_service(service),
             )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    async def stop_service(self, service_id: str) -> ServiceMutationReturn:
+    async def stop_service(self, info: Info, service_id: str) -> ServiceMutationReturn:
         """Stop service."""
+        locale = get_locale(info=info)
+
         with tracer.start_as_current_span(
             "stop_service_mutation", attributes={"service_id": service_id}
         ):
@@ -170,20 +192,22 @@ class ServicesMutations:
             if service is None:
                 return ServiceMutationReturn(
                     success=False,
-                    message="Service not found.",
+                    message=t.translate(text=SERVICE_NOT_FOUND, locale=locale),
                     code=404,
                 )
             await service.stop()
             return ServiceMutationReturn(
                 success=True,
-                message="Service stopped.",
+                message=t.translate(text=_("Service stopped."), locale=locale),
                 code=200,
                 service=await service_to_graphql_service(service),
             )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    async def start_service(self, service_id: str) -> ServiceMutationReturn:
+    async def start_service(self, info: Info, service_id: str) -> ServiceMutationReturn:
         """Start service."""
+        locale = get_locale(info=info)
+
         with tracer.start_as_current_span(
             "start_service_mutation", attributes={"service_id": service_id}
         ):
@@ -191,43 +215,49 @@ class ServicesMutations:
             if service is None:
                 return ServiceMutationReturn(
                     success=False,
-                    message="Service not found.",
+                    message=t.translate(text=SERVICE_NOT_FOUND, locale=locale),
                     code=404,
                 )
             await service.start()
             return ServiceMutationReturn(
                 success=True,
-                message="Service started.",
+                message=t.translate(text=_("Service started."), locale=locale),
                 code=200,
                 service=await service_to_graphql_service(service),
             )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    async def restart_service(self, service_id: str) -> ServiceMutationReturn:
+    async def restart_service(
+        self, info: Info, service_id: str
+    ) -> ServiceMutationReturn:
         """Restart service."""
         with tracer.start_as_current_span(
             "restart_service_mutation", attributes={"service_id": service_id}
         ):
+            locale = get_locale(info=info)
+
             service = await ServiceManager.get_service_by_id(service_id)
             if service is None:
                 return ServiceMutationReturn(
                     success=False,
-                    message="Service not found.",
+                    message=t.translate(text=SERVICE_NOT_FOUND, locale=locale),
                     code=404,
                 )
             await service.restart()
             return ServiceMutationReturn(
                 success=True,
-                message="Service restarted.",
+                message=t.translate(text=_("Service restarted."), locale=locale),
                 code=200,
                 service=await service_to_graphql_service(service),
             )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def set_service_configuration(
-        self, input: SetServiceConfigurationInput
+        self, info: Info, input: SetServiceConfigurationInput
     ) -> ServiceMutationReturn:
         """Set the new configuration values"""
+        locale = get_locale(info=info)
+
         with tracer.start_as_current_span(
             "set_service_configuration_mutation",
             attributes={
@@ -238,14 +268,20 @@ class ServicesMutations:
             if service is None:
                 return ServiceMutationReturn(
                     success=False,
-                    message=f"Service does not exist: {input.service_id}",
+                    message=t.translate(
+                        text=_("Service does not exist: %(service_id)s"),
+                        locale=locale,
+                    )
+                    % {"service_id": input.service_id},
                     code=404,
                 )
             try:
                 service.set_configuration(input.configuration)
                 return ServiceMutationReturn(
                     success=True,
-                    message="Service configuration updated.",
+                    message=t.translate(
+                        text=_("Service configuration updated."), locale=locale
+                    ),
                     code=200,
                     service=await service_to_graphql_service(service),
                 )
@@ -265,8 +301,12 @@ class ServicesMutations:
                 )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    async def move_service(self, input: MoveServiceInput) -> ServiceJobMutationReturn:
+    async def move_service(
+        self, info: Info, input: MoveServiceInput
+    ) -> ServiceJobMutationReturn:
         """Move service."""
+        locale = get_locale(info=info)
+
         with tracer.start_as_current_span(
             "move_service_mutation",
             attributes={
@@ -279,17 +319,21 @@ class ServicesMutations:
             if service is None:
                 return ServiceJobMutationReturn(
                     success=False,
-                    message=f"Service does not exist: {input.service_id}",
+                    message=t.translate(
+                        text=_("Service does not exist: %(service_id)s"),
+                        locale=locale,
+                    )
+                    % {"service_id": input.service_id},
                     code=404,
                 )
 
             try:
                 job = await move_service(input.service_id, input.location)
 
-            except (ServiceNotFoundError, VolumeNotFoundError) as e:
+            except (ServiceNotFoundError, VolumeNotFoundError) as error:
                 return ServiceJobMutationReturn(
                     success=False,
-                    message=pretty_error(e),
+                    message=error.get_error_message(locale=locale),
                     code=404,
                 )
             except Exception as e:
@@ -303,24 +347,35 @@ class ServicesMutations:
             if job.status in [JobStatus.CREATED, JobStatus.RUNNING]:
                 return ServiceJobMutationReturn(
                     success=True,
-                    message="Started moving the service.",
+                    message=t.translate(
+                        text=_("Started moving the service."), locale=locale
+                    ),
                     code=200,
                     service=await service_to_graphql_service(service),
-                    job=job_to_api_job(job),
+                    job=translate_job(job=job_to_api_job(job), locale=locale),
                 )
             elif job.status == JobStatus.FINISHED:
                 return ServiceJobMutationReturn(
                     success=True,
-                    message="Service moved.",
+                    message=t.translate(text=_("Service moved."), locale=locale),
                     code=200,
                     service=await service_to_graphql_service(service),
-                    job=job_to_api_job(job),
+                    job=translate_job(job=job_to_api_job(job), locale=locale),
                 )
             else:
                 return ServiceJobMutationReturn(
                     success=False,
-                    message=f"While moving service and performing the step '{job.status_text}', error occured: {job.error}",
+                    message=t.translate(
+                        text=_(
+                            "While moving service and performing the step '%(status_text)s', an error occurred: %(error)s"
+                        ),
+                        locale=locale,
+                    )
+                    % {
+                        "status_text": job.status_text,
+                        "error": job.error,
+                    },
                     code=400,
                     service=await service_to_graphql_service(service),
-                    job=job_to_api_job(job),
+                    job=translate_job(job=job_to_api_job(job), locale=locale),
                 )

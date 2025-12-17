@@ -1,10 +1,12 @@
-#!/usr/bin/env python3
 """Users management module"""
+
 # pylint: disable=too-few-public-methods
 from typing import Optional
+import gettext
 
 import strawberry
 from opentelemetry import trace
+from strawberry.types import Info
 
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.common_types.user import (
@@ -50,12 +52,19 @@ from selfprivacy_api.repositories.users.exceptions_kanidm import (
     KanidmReturnUnknownResponseType,
     KanidmCliSubprocessError,
 )
+from selfprivacy_api.utils.localization import (
+    TranslateSystemMessage as t,
+    get_locale,
+)
 from selfprivacy_api.utils.strings import PLEASE_UPDATE_APP_TEXT
 
 tracer = trace.get_tracer(__name__)
 
+_ = gettext.gettext
 
-FAILED_TO_SETUP_SSO_PASSWORD_TEXT = "New password applied an an email password. To use Single Sign On, please update the SelfPrivacy app."
+FAILED_TO_SETUP_SSO_PASSWORD_TEXT = _(
+    "New password applied an an email password. To use Single Sign On, please update the SelfPrivacy app."
+)
 
 
 async def return_failed_mutation_return(
@@ -94,7 +103,11 @@ class UsersMutations:
     """Mutations change user settings"""
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    async def create_user(self, user: UserMutationInput) -> UserMutationReturn:
+    async def create_user(
+        self, user: UserMutationInput, info: Info
+    ) -> UserMutationReturn:
+        locale = get_locale(info=info)
+
         with tracer.start_as_current_span(
             "create_user_mutation",
             attributes={
@@ -120,17 +133,17 @@ class UsersMutations:
                 FailedToGetValidKanidmToken,
             ) as error:
                 return await return_failed_mutation_return(
-                    message=error.get_error_message(),
+                    message=error.get_error_message(locale=locale),
                 )
             except UsernameForbidden as error:
                 return await return_failed_mutation_return(
-                    message=error.get_error_message(),
+                    message=error.get_error_message(locale=locale),
                     code=409,
                     username=user.username,
                 )
             except UserAlreadyExists as error:
                 return await return_failed_mutation_return(
-                    message=error.get_error_message(),
+                    message=error.get_error_message(locale=locale),
                     code=409,
                     username=user.username,
                 )
@@ -138,20 +151,22 @@ class UsersMutations:
             if user.password:
                 return UserMutationReturn(
                     success=True,
-                    message=f"{FAILED_TO_SETUP_SSO_PASSWORD_TEXT} {PLEASE_UPDATE_APP_TEXT}",
+                    message=f"{t.translate(text=FAILED_TO_SETUP_SSO_PASSWORD_TEXT, locale=locale)} {t.translate(text=PLEASE_UPDATE_APP_TEXT, locale=locale)}",
                     code=201,
                     user=await get_user_by_username(user.username),
                 )
 
             return UserMutationReturn(
                 success=True,
-                message="User created",
+                message=t.translate(text=_("User created"), locale=locale),
                 code=201,
                 user=await get_user_by_username(user.username),
             )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    async def delete_user(self, username: str) -> GenericMutationReturn:
+    async def delete_user(self, username: str, info: Info) -> GenericMutationReturn:
+        locale = get_locale(info=info)
+
         with tracer.start_as_current_span(
             "delete_user_mutation",
             attributes={
@@ -163,14 +178,14 @@ class UsersMutations:
             except (UserNotFound, UserOrGroupNotFound) as error:
                 return GenericMutationReturn(
                     success=False,
-                    message=error.get_error_message(),
+                    message=error.get_error_message(locale=locale),
                     code=404,
                 )
             except UserIsProtected as error:
                 return GenericMutationReturn(
                     success=False,
                     code=400,
-                    message=error.get_error_message(),
+                    message=error.get_error_message(locale=locale),
                 )
             except (
                 KanidmDidNotReturnAdminPassword,
@@ -181,18 +196,22 @@ class UsersMutations:
                 return GenericMutationReturn(
                     success=False,
                     code=500,
-                    message=error.get_error_message(),
+                    message=error.get_error_message(locale=locale),
                 )
 
             return GenericMutationReturn(
                 success=True,
-                message="User deleted",
+                message=t.translate(text=_("User deleted"), locale=locale),
                 code=200,
             )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    async def update_user(self, user: UserMutationInput) -> UserMutationReturn:
+    async def update_user(
+        self, user: UserMutationInput, info: Info
+    ) -> UserMutationReturn:
         """Update user mutation"""
+        locale = get_locale(info=info)
+
         with tracer.start_as_current_span(
             "update_user_mutation",
             attributes={
@@ -216,12 +235,12 @@ class UsersMutations:
                 ApiUsingWrongUserRepository,
             ) as error:
                 return await return_failed_mutation_return(
-                    message=error.get_error_message(),
+                    message=error.get_error_message(locale=locale),
                     username=user.username,
                 )
             except (UserNotFound, UserOrGroupNotFound) as error:
                 return await return_failed_mutation_return(
-                    message=error.get_error_message(),
+                    message=error.get_error_message(locale=locale),
                     code=404,
                     username=user.username,
                 )
@@ -229,21 +248,25 @@ class UsersMutations:
             if user.password:
                 return UserMutationReturn(
                     success=True,
-                    message=f"{FAILED_TO_SETUP_SSO_PASSWORD_TEXT} {PLEASE_UPDATE_APP_TEXT}",
+                    message=f"{t.translate(text=_(FAILED_TO_SETUP_SSO_PASSWORD_TEXT), locale=locale)} {t.translate(text=_(PLEASE_UPDATE_APP_TEXT), locale=locale)}",
                     code=200,
                     user=await get_user_by_username(user.username),
                 )
 
             return UserMutationReturn(
                 success=True,
-                message="User updated",
+                message=t.translate(text=_("User updated"), locale=locale),
                 code=200,
                 user=await get_user_by_username(user.username),
             )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    async def add_ssh_key(self, ssh_input: SshMutationInput) -> UserMutationReturn:
+    async def add_ssh_key(
+        self, ssh_input: SshMutationInput, info: Info
+    ) -> UserMutationReturn:
         """Add a new ssh key"""
+        locale = get_locale(info=info)
+
         with tracer.start_as_current_span(
             "add_ssh_key_mutation",
             attributes={
@@ -254,16 +277,16 @@ class UsersMutations:
                 create_ssh_key_action(ssh_input.username, ssh_input.ssh_key)
             except KeyAlreadyExists as error:
                 return await return_failed_mutation_return(
-                    message=error.get_error_message(),
+                    message=error.get_error_message(locale=locale),
                     code=409,
                 )
             except InvalidPublicKey as error:
                 return await return_failed_mutation_return(
-                    message=error.get_error_message(),
+                    message=error.get_error_message(locale=locale),
                 )
             except UserNotFound as error:
                 return await return_failed_mutation_return(
-                    message=error.get_error_message(),
+                    message=error.get_error_message(locale=locale),
                     code=404,
                 )
             except Exception as error:  # TODO why?
@@ -274,14 +297,20 @@ class UsersMutations:
 
             return UserMutationReturn(
                 success=True,
-                message="New SSH key successfully written",
+                message=t.translate(
+                    text=_("New SSH key successfully written"), locale=locale
+                ),
                 code=201,
                 user=await get_user_by_username(ssh_input.username),
             )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    async def remove_ssh_key(self, ssh_input: SshMutationInput) -> UserMutationReturn:
+    async def remove_ssh_key(
+        self, ssh_input: SshMutationInput, info: Info
+    ) -> UserMutationReturn:
         """Remove ssh key from user"""
+        locale = get_locale(info=info)
+
         with tracer.start_as_current_span(
             "remove_ssh_key_mutation",
             attributes={
@@ -292,7 +321,7 @@ class UsersMutations:
                 remove_ssh_key_action(ssh_input.username, ssh_input.ssh_key)
             except (KeyNotFound, UserNotFound) as error:
                 return await return_failed_mutation_return(
-                    message=error.get_error_message(),
+                    message=error.get_error_message(locale=locale),
                     code=404,
                 )
             except Exception as error:  # TODO why?
@@ -304,15 +333,19 @@ class UsersMutations:
 
             return UserMutationReturn(
                 success=True,
-                message="SSH key successfully removed",
+                message=t.translate(
+                    text=_("SSH key successfully removed"), locale=locale
+                ),
                 code=200,
                 user=await get_user_by_username(ssh_input.username),
             )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def generate_password_reset_link(
-        self, username: str
+        self, username: str, info: Info
     ) -> PasswordResetLinkReturn:
+        locale = get_locale(info=info)
+
         with tracer.start_as_current_span(
             "generate_password_reset_link_mutation",
             attributes={
@@ -326,13 +359,13 @@ class UsersMutations:
             except (UserNotFound, UserOrGroupNotFound) as error:
                 return PasswordResetLinkReturn(
                     success=False,
-                    message=error.get_error_message(),
+                    message=error.get_error_message(locale=locale),
                     code=404,
                 )
             except UserIsProtected as error:
                 return PasswordResetLinkReturn(
                     success=False,
-                    message=error.get_error_message(),
+                    message=error.get_error_message(locale=locale),
                     code=400,
                 )
             except (
@@ -348,12 +381,12 @@ class UsersMutations:
                 return PasswordResetLinkReturn(
                     success=False,
                     code=500,
-                    message=error.get_error_message(),
+                    message=error.get_error_message(locale=locale),
                 )
 
             return PasswordResetLinkReturn(
                 success=True,
-                message="Link successfully created",
+                message=t.translate(text=_("Link successfully created"), locale=locale),
                 code=200,
                 password_reset_link=password_reset_link,
             )

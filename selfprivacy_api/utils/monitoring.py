@@ -3,7 +3,6 @@
 # pylint: disable=too-few-public-methods
 import httpx
 
-
 import strawberry
 
 from dataclasses import dataclass

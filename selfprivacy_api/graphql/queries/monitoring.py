@@ -1,5 +1,9 @@
+import gettext
+
 import strawberry
 from opentelemetry import trace
+from strawberry.types import Info
+
 from typing import Optional
 from datetime import datetime
 from selfprivacy_api.models.services import ServiceStatus
@@ -10,6 +14,14 @@ from selfprivacy_api.utils.monitoring import (
     MonitoringValuesResult,
     MonitoringMetricsResult,
 )
+from selfprivacy_api.utils.localization import (
+    TranslateSystemMessage as t,
+    get_locale,
+)
+
+_ = gettext.gettext
+
+PROMETHEUS_IS_NOT_RUNNING = _("Prometheus is not running")
 
 tracer = trace.get_tracer(__name__)
 
@@ -21,10 +33,14 @@ class CpuMonitoring:
     step: int
 
     @strawberry.field
-    async def overall_usage(self) -> MonitoringValuesResult:
+    async def overall_usage(self, info: Info) -> MonitoringValuesResult:
+        locale = get_locale(info=info)
+
         with tracer.start_as_current_span("CpuMonitoring.overall_usage"):
             if await Prometheus().get_status() != ServiceStatus.ACTIVE:
-                return MonitoringQueryError(error="Prometheus is not running")
+                return MonitoringQueryError(
+                    error=t.translate(text=PROMETHEUS_IS_NOT_RUNNING, locale=locale)
+                )
 
             return await MonitoringQueries.cpu_usage_overall(
                 self.start, self.end, self.step
@@ -38,40 +54,54 @@ class MemoryMonitoring:
     step: int
 
     @strawberry.field
-    async def overall_usage(self) -> MonitoringValuesResult:
+    async def overall_usage(self, info: Info) -> MonitoringValuesResult:
+        locale = get_locale(info=info)
+
         with tracer.start_as_current_span("MemoryMonitoring.overall_usage"):
             if await Prometheus().get_status() != ServiceStatus.ACTIVE:
-                return MonitoringQueryError(error="Prometheus is not running")
-
+                return MonitoringQueryError(
+                    error=t.translate(text=PROMETHEUS_IS_NOT_RUNNING, locale=locale)
+                )
             return await MonitoringQueries.memory_usage_overall(
                 self.start, self.end, self.step
             )
 
     @strawberry.field
-    async def swap_usage_overall(self) -> MonitoringValuesResult:
+    async def swap_usage_overall(self, info: Info) -> MonitoringValuesResult:
+        locale = get_locale(info=info)
         with tracer.start_as_current_span("MemoryMonitoring.swap_usage_overall"):
             if await Prometheus().get_status() != ServiceStatus.ACTIVE:
-                return MonitoringQueryError(error="Prometheus is not running")
+                return MonitoringQueryError(
+                    error=t.translate(text=PROMETHEUS_IS_NOT_RUNNING, locale=locale)
+                )
 
             return await MonitoringQueries.swap_usage_overall(
                 self.start, self.end, self.step
             )
 
     @strawberry.field
-    async def average_usage_by_service(self) -> MonitoringMetricsResult:
+    async def average_usage_by_service(self, info: Info) -> MonitoringMetricsResult:
+        locale = get_locale(info=info)
+
         with tracer.start_as_current_span("MemoryMonitoring.average_usage_by_service"):
             if await Prometheus().get_status() != ServiceStatus.ACTIVE:
-                return MonitoringQueryError(error="Prometheus is not running")
+                return MonitoringQueryError(
+                    error=t.translate(text=PROMETHEUS_IS_NOT_RUNNING, locale=locale)
+                )
 
             return await MonitoringQueries.memory_usage_average_by_slice(
                 self.start, self.end
             )
 
     @strawberry.field
-    async def max_usage_by_service(self) -> MonitoringMetricsResult:
+    async def max_usage_by_service(self, info: Info) -> MonitoringMetricsResult:
+        locale = get_locale(info=info)
+
         with tracer.start_as_current_span("MemoryMonitoring.max_usage_by_service"):
             if await Prometheus().get_status() != ServiceStatus.ACTIVE:
-                return MonitoringQueryError(error="Prometheus is not running")
+                return MonitoringQueryError(
+                    error=t.translate(text=PROMETHEUS_IS_NOT_RUNNING, locale=locale)
+                )
 
             return await MonitoringQueries.memory_usage_max_by_slice(
                 self.start, self.end
@@ -85,11 +115,14 @@ class DiskMonitoring:
     step: int
 
     @strawberry.field
-    async def overall_usage(self) -> MonitoringMetricsResult:
+    async def overall_usage(self, info: Info) -> MonitoringMetricsResult:
+        locale = get_locale(info=info)
+
         with tracer.start_as_current_span("DiskMonitoring.overall_usage"):
             if await Prometheus().get_status() != ServiceStatus.ACTIVE:
-                return MonitoringQueryError(error="Prometheus is not running")
-
+                return MonitoringQueryError(
+                    error=t.translate(text=PROMETHEUS_IS_NOT_RUNNING, locale=locale)
+                )
             return await MonitoringQueries.disk_usage_overall(
                 self.start, self.end, self.step
             )
@@ -102,10 +135,14 @@ class NetworkMonitoring:
     step: int
 
     @strawberry.field
-    async def overall_usage(self) -> MonitoringMetricsResult:
+    async def overall_usage(self, info: Info) -> MonitoringMetricsResult:
+        locale = get_locale(info=info)
+
         with tracer.start_as_current_span("NetworkMonitoring.overall_usage"):
             if await Prometheus().get_status() != ServiceStatus.ACTIVE:
-                return MonitoringQueryError(error="Prometheus is not running")
+                return MonitoringQueryError(
+                    error=t.translate(text=PROMETHEUS_IS_NOT_RUNNING, locale=locale)
+                )
 
             return await MonitoringQueries.network_usage_overall(
                 self.start, self.end, self.step

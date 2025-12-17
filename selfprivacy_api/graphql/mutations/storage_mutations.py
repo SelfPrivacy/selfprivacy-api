@@ -1,14 +1,24 @@
 """Storage devices mutations"""
 
+import gettext
+
 import strawberry
 from opentelemetry import trace
+from strawberry.types import Info
+
+from selfprivacy_api.utils.block_devices import BlockDevices
+from selfprivacy_api.utils.localization import (
+    TranslateSystemMessage as t,
+    get_locale,
+)
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.common_types.jobs import job_to_api_job
-from selfprivacy_api.utils.block_devices import BlockDevices
 from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericJobMutationReturn,
     GenericMutationReturn,
 )
+from selfprivacy_api.graphql.common_types.jobs import translate_job
+
 from selfprivacy_api.jobs.migrate_to_binds import (
     BindMigrationConfig,
     is_bind_migrated,
@@ -16,6 +26,9 @@ from selfprivacy_api.jobs.migrate_to_binds import (
 )
 
 tracer = trace.get_tracer(__name__)
+_ = gettext.gettext
+
+VOLUME_NOT_FOUND = _("Volume not found")
 
 
 @strawberry.input
@@ -32,8 +45,10 @@ class MigrateToBindsInput:
 @strawberry.type
 class StorageMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def resize_volume(self, name: str) -> GenericMutationReturn:
+    def resize_volume(self, name: str, info: Info) -> GenericMutationReturn:
         """Resize volume"""
+        locale = get_locale(info=info)
+
         with tracer.start_as_current_span(
             "resize_volume_mutation",
             attributes={
@@ -43,16 +58,22 @@ class StorageMutations:
             volume = BlockDevices().get_block_device_by_canonical_name(name)
             if volume is None:
                 return GenericMutationReturn(
-                    success=False, code=404, message="Volume not found"
+                    success=False,
+                    code=404,
+                    message=t.translate(text=VOLUME_NOT_FOUND, locale=locale),
                 )
             volume.resize()
             return GenericMutationReturn(
-                success=True, code=200, message="Volume resize started"
+                success=True,
+                code=200,
+                message=t.translate(text=_("Volume resize started"), locale=locale),
             )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def mount_volume(self, name: str) -> GenericMutationReturn:
+    def mount_volume(self, name: str, info: Info) -> GenericMutationReturn:
         """Mount volume"""
+        locale = get_locale(info=info)
+
         with tracer.start_as_current_span(
             "mount_volume_mutation",
             attributes={
@@ -62,22 +83,33 @@ class StorageMutations:
             volume = BlockDevices().get_block_device_by_canonical_name(name)
             if volume is None:
                 return GenericMutationReturn(
-                    success=False, code=404, message="Volume not found"
+                    success=False,
+                    code=404,
+                    message=t.translate(text=VOLUME_NOT_FOUND, locale=locale),
                 )
             is_success = volume.mount()
             if is_success:
                 return GenericMutationReturn(
                     success=True,
                     code=200,
-                    message="Volume mounted, rebuild the system to apply changes",
+                    message=t.translate(
+                        text=_("Volume mounted, rebuild the system to apply changes"),
+                        locale=locale,
+                    ),
                 )
             return GenericMutationReturn(
-                success=False, code=409, message="Volume not mounted (already mounted?)"
+                success=False,
+                code=409,
+                message=t.translate(
+                    text=_("Volume not mounted (already mounted?)"), locale=locale
+                ),
             )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def unmount_volume(self, name: str) -> GenericMutationReturn:
+    def unmount_volume(self, name: str, info: Info) -> GenericMutationReturn:
         """Unmount volume"""
+        locale = get_locale(info=info)
+
         with tracer.start_as_current_span(
             "unmount_volume_mutation",
             attributes={
@@ -87,28 +119,43 @@ class StorageMutations:
             volume = BlockDevices().get_block_device_by_canonical_name(name)
             if volume is None:
                 return GenericMutationReturn(
-                    success=False, code=404, message="Volume not found"
+                    success=False,
+                    code=404,
+                    message=t.translate(text=VOLUME_NOT_FOUND, locale=locale),
                 )
             is_success = volume.unmount()
             if is_success:
                 return GenericMutationReturn(
                     success=True,
                     code=200,
-                    message="Volume unmounted, rebuild the system to apply changes",
+                    message=t.translate(
+                        text=_("Volume unmounted, rebuild the system to apply changes"),
+                        locale=locale,
+                    ),
                 )
             return GenericMutationReturn(
                 success=False,
                 code=409,
-                message="Volume not unmounted (already unmounted?)",
+                message=t.translate(
+                    text=_("Volume not unmounted (already unmounted?)"), locale=locale
+                ),
             )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def migrate_to_binds(self, input: MigrateToBindsInput) -> GenericJobMutationReturn:
+    def migrate_to_binds(
+        self, input: MigrateToBindsInput, info: Info
+    ) -> GenericJobMutationReturn:
         """Migrate to binds"""
+        locale = get_locale(info=info)
+
         with tracer.start_as_current_span("migrate_to_binds_mutation"):
             if is_bind_migrated():
                 return GenericJobMutationReturn(
-                    success=False, code=409, message="Already migrated to binds"
+                    success=False,
+                    code=409,
+                    message=t.translate(
+                        text=_("Already migrated to binds"), locale=locale
+                    ),
                 )
             job = start_bind_migration(
                 BindMigrationConfig(
@@ -122,6 +169,11 @@ class StorageMutations:
             return GenericJobMutationReturn(
                 success=True,
                 code=200,
-                message="Migration to binds started, rebuild the system to apply changes",
-                job=job_to_api_job(job),
+                message=t.translate(
+                    text=_(
+                        "Migration to binds started, rebuild the system to apply changes"
+                    ),
+                    locale=locale,
+                ),
+                job=translate_job(job=job_to_api_job(job), locale=locale),
             )

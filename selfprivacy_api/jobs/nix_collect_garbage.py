@@ -1,22 +1,36 @@
 import re
 import subprocess
-from typing import Tuple, Iterable
+from typing import Tuple, Iterable, Optional
+import gettext
 
 from selfprivacy_api.utils.huey import huey
+from selfprivacy_api.utils.localization import TranslateSystemMessage as t
 
 from selfprivacy_api.jobs import JobStatus, Jobs, Job
+
+_ = gettext.gettext
 
 
 class ShellException(Exception):
     """Shell-related errors"""
 
+    def __init__(self, error: Optional[str] = None) -> None:
+        self.error = error
 
-COMPLETED_WITH_ERROR = "Error occurred, please report this to the support chat."
-RESULT_WAS_NOT_FOUND_ERROR = (
+    def get_error_message(self, locale: str) -> str:
+        return (
+            t.translate(text=self.error, locale=locale)
+            if self.error
+            else t.translate(text=_("Shell-related error"), locale=locale)
+        )
+
+
+COMPLETED_WITH_ERROR = _("Error occurred, please report this to the support chat.")
+RESULT_WAS_NOT_FOUND_ERROR = _(
     "We are sorry, garbage collection result was not found. "
-    "Something went wrong, please report this to the support chat."
+    "Nix returned gibberish output, please report this to the support chat."
 )
-CLEAR_COMPLETED = "Garbage collection completed."
+CLEAR_COMPLETED = _("Garbage collection completed.")
 
 
 def delete_old_gens_and_return_dead_report() -> str:
@@ -56,14 +70,15 @@ def parse_line(job: Job, line: str) -> Job:
     match = re.search(pattern, line)
 
     if match is None:
-        raise ShellException("nix returned gibberish output")
+        raise ShellException(error=RESULT_WAS_NOT_FOUND_ERROR)
 
     else:
         Jobs.update(
             job=job,
             status=JobStatus.FINISHED,
             status_text=CLEAR_COMPLETED,
-            result=f"{match.group(0)} have been cleared",
+            result=_("%(size_in_megabytes)s have been cleared")
+            % {"size_in_megabytes": match.group(0)},
         )
     return job
 
@@ -84,7 +99,7 @@ def process_stream(job: Job, stream: Iterable[bytes], total_dead_packages: int) 
                     job=job,
                     status=JobStatus.RUNNING,
                     progress=percent,
-                    status_text="Cleaning...",
+                    status_text=_("Cleaning..."),
                 )
                 prev_progress = percent
 
@@ -106,7 +121,7 @@ def calculate_and_clear_dead_paths(job: Job):
         job=job,
         status=JobStatus.RUNNING,
         progress=0,
-        status_text="Calculate the number of dead packages...",
+        status_text=_("Calculate the number of dead packages..."),
     )
 
     dead_packages, package_equal_to_percent = get_dead_packages(
@@ -117,8 +132,8 @@ def calculate_and_clear_dead_paths(job: Job):
         Jobs.update(
             job=job,
             status=JobStatus.FINISHED,
-            status_text="Nothing to clear",
-            result="System is clear",
+            status_text=_("Nothing to clear"),
+            result=_("System is clear"),
         )
         return True
 
@@ -126,13 +141,14 @@ def calculate_and_clear_dead_paths(job: Job):
         job=job,
         status=JobStatus.RUNNING,
         progress=0,
-        status_text=f"Found {dead_packages} packages to remove!",
+        status_text=_("Found %(dead_packages)s packages to remove!")
+        % {"dead_packages": dead_packages},
     )
 
     stream = run_nix_collect_garbage()
     try:
         process_stream(job, stream, dead_packages)
-    except ShellException as error:
+    except ShellException:
         Jobs.update(
             job=job,
             status=JobStatus.ERROR,
@@ -144,8 +160,8 @@ def calculate_and_clear_dead_paths(job: Job):
 def start_nix_collect_garbage() -> Job:
     job = Jobs.add(
         type_id="maintenance.collect_nix_garbage",
-        name="Collect garbage",
-        description="Cleaning up unused packages",
+        name=_("Collect garbage"),
+        description=_("Cleaning up unused packages"),
     )
 
     calculate_and_clear_dead_paths(job=job)

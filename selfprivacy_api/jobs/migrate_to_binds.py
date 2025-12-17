@@ -1,5 +1,6 @@
 """Function to perform migration of app data to binds."""
 
+import gettext
 import subprocess
 import asyncio
 import pathlib
@@ -7,6 +8,7 @@ import shutil
 import logging
 
 from pydantic import BaseModel
+
 from selfprivacy_api.jobs import Job, JobStatus, Jobs
 from selfprivacy_api.services import ServiceManager
 from selfprivacy_api.services.mailserver import MailServer
@@ -15,6 +17,8 @@ from selfprivacy_api.utils.huey import huey, huey_async_helper
 from selfprivacy_api.utils.block_devices import BlockDevices
 
 logger = logging.getLogger(__name__)
+
+_ = gettext.gettext
 
 
 class BindMigrationConfig(BaseModel):
@@ -99,7 +103,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         Jobs.update(
             job=job,
             status=JobStatus.ERROR,
-            error="Migration already done.",
+            error=_("Migration already done."),
         )
         return
 
@@ -107,7 +111,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         job=job,
         status=JobStatus.RUNNING,
         progress=0,
-        status_text="Checking if services are present.",
+        status_text=_("Checking if services are present."),
     )
 
     nextcloud_service = huey_async_helper.run_async(
@@ -127,7 +131,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         Jobs.update(
             job=job,
             status=JobStatus.ERROR,
-            error="Nextcloud service not found.",
+            error=_("Nextcloud service not found."),
         )
         return
 
@@ -135,7 +139,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         Jobs.update(
             job=job,
             status=JobStatus.ERROR,
-            error="Bitwarden service not found.",
+            error=_("Bitwarden service not found."),
         )
         return
 
@@ -143,7 +147,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         Jobs.update(
             job=job,
             status=JobStatus.ERROR,
-            error="Gitea service not found.",
+            error=_("Gitea service not found."),
         )
         return
 
@@ -151,7 +155,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         Jobs.update(
             job=job,
             status=JobStatus.ERROR,
-            error="Pleroma service not found.",
+            error=_("Pleroma service not found."),
         )
         return
 
@@ -159,7 +163,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         job=job,
         status=JobStatus.RUNNING,
         progress=0,
-        status_text="Checking if all volumes are available.",
+        status_text=_("Checking if all volumes are available."),
     )
     # Get block devices.
     block_devices = BlockDevices().get_block_devices()
@@ -177,7 +181,8 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
             Jobs.update(
                 job=job,
                 status=JobStatus.ERROR,
-                error=f"Block device {block_device_name} not found.",
+                error=_("Block device %(block_device_name)s not found.")
+                % {"block_device_name": block_device_name},
             )
             return
 
@@ -193,14 +198,16 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
             Jobs.update(
                 job=job,
                 status=JobStatus.ERROR,
-                error=f"Block device {block_device_name} not found.",
+                error=_("Block device %(block_device_name)s not found.")
+                % {"block_device_name": block_device_name},
             )
             return
         if f"/volumes/{block_device_name}" not in block_device.mountpoints:
             Jobs.update(
                 job=job,
                 status=JobStatus.ERROR,
-                error=f"Block device {block_device_name} not mounted.",
+                error=_("Block device %(block_device_name)s not mounted.")
+                % {"block_device_name": block_device_name},
             )
             return
 
@@ -211,7 +218,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         job=job,
         status=JobStatus.RUNNING,
         progress=5,
-        status_text="Activating binds in NixOS config.",
+        status_text=_("Activating binds in NixOS config."),
     )
 
     activate_binds(config)
@@ -221,7 +228,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         job=job,
         status=JobStatus.RUNNING,
         progress=10,
-        status_text="Migrating Nextcloud.",
+        status_text=_("Migrating Nextcloud."),
     )
 
     huey_async_helper.run_async(nextcloud_service.stop())
@@ -247,7 +254,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         job=job,
         status=JobStatus.RUNNING,
         progress=28,
-        status_text="Migrating Bitwarden.",
+        status_text=_("Migrating Bitwarden."),
     )
 
     huey_async_helper.run_async(bitwarden_service.stop())
@@ -283,7 +290,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         job=job,
         status=JobStatus.RUNNING,
         progress=46,
-        status_text="Migrating Gitea.",
+        status_text=_("Migrating Gitea."),
     )
 
     huey_async_helper.run_async(gitea_service.stop())
@@ -305,7 +312,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         job=job,
         status=JobStatus.RUNNING,
         progress=64,
-        status_text="Migrating Mail server.",
+        status_text=_("Migrating Mail server."),
     )
 
     huey_async_helper.run_async(MailServer().stop())
@@ -336,7 +343,7 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         job=job,
         status=JobStatus.RUNNING,
         progress=82,
-        status_text="Migrating Pleroma.",
+        status_text=_("Migrating Pleroma."),
     )
 
     huey_async_helper.run_async(pleroma_service.stop())
@@ -369,8 +376,8 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
         job=job,
         status=JobStatus.FINISHED,
         progress=100,
-        status_text="Migration finished.",
-        result="Migration finished.",
+        status_text=_("Migration finished."),
+        result=_("Migration finished."),
     )
 
 
@@ -378,8 +385,8 @@ def start_bind_migration(config: BindMigrationConfig) -> Job:
     """Start migration."""
     job = Jobs.add(
         type_id="migrations.migrate_to_binds",
-        name="Migrate to binds",
-        description="Migration required to use the new disk space management.",
+        name=_("Migrate to binds"),
+        description=_("Migration required to use the new disk space management."),
     )
     migrate_to_binds(config, job)
     return job

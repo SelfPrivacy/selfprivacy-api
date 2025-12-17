@@ -4,6 +4,7 @@ The tasks module contains the worker tasks that are used to back up and restore
 
 from datetime import datetime, timezone
 from typing import List
+import gettext
 
 from selfprivacy_api.graphql.common_types.backup import (
     RestoreStrategy,
@@ -21,6 +22,8 @@ from selfprivacy_api.jobs import Jobs, JobStatus, Job
 from selfprivacy_api.jobs.upgrade_system import rebuild_system
 from selfprivacy_api.actions.system import add_rebuild_job
 
+
+_ = gettext.gettext
 
 SNAPSHOT_CACHE_TTL_HOURS = 12
 
@@ -208,7 +211,7 @@ async def do_full_restore(job: Job) -> None:
     Jobs.update(
         job,
         JobStatus.RUNNING,
-        status_text="Finding the last autobackup session",
+        status_text=_("Finding the last autobackup session"),
         progress=0,
     )
     snapshots_to_restore = await which_snapshots_to_full_restore()
@@ -227,11 +230,12 @@ async def do_full_restore(job: Job) -> None:
         Jobs.update(
             job,
             JobStatus.RUNNING,
-            status_text=f"restoring {snap.service_name}",
+            status_text=_("restoring %(service_name)s")
+            % {"service_name": snap.service_name},
             progress=progress,
         )
 
-    Jobs.update(job, JobStatus.RUNNING, status_text="rebuilding system", progress=99)
+    Jobs.update(job, JobStatus.RUNNING, status_text=_("rebuilding system"), progress=99)
 
     # Adding a separate job to not confuse the user with jumping progress bar
     rebuild_job = add_rebuild_job()
