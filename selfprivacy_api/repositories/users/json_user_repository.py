@@ -27,7 +27,7 @@ class JsonUserRepository(AbstractUserRepository):
     @staticmethod
     def _check_and_hash_password(password: str):
         if password == "":
-            raise PasswordIsEmpty("Password is empty")
+            raise PasswordIsEmpty
 
         return hash_password(password)
 
@@ -140,7 +140,7 @@ class JsonUserRepository(AbstractUserRepository):
                         data_user["hashedPassword"] = hashed_password
                         break
                 else:
-                    raise UserNotFound("User does not exist")
+                    raise UserNotFound
 
     @staticmethod
     async def get_user_by_username(username: str) -> Optional[UserDataUser]:

@@ -1,7 +1,9 @@
 """Actions to manage the system."""
 
 import gettext
+import logging
 import subprocess
+from textwrap import dedent
 import pytz
 from typing import Optional, Any
 from pydantic import BaseModel
@@ -9,12 +11,18 @@ from pydantic import BaseModel
 from selfprivacy_api.jobs import Job, JobStatus, Jobs
 from selfprivacy_api.jobs.upgrade_system import rebuild_system_task
 
+from selfprivacy_api.utils.strings import REPORT_IT_TO_SUPPORT_CHATS
+from selfprivacy_api.utils.systemd import systemd_proxy, start_unit
 from selfprivacy_api.utils import WriteUserData, ReadUserData
 from selfprivacy_api.utils import UserDataFiles
-from selfprivacy_api.utils.localization import TranslateSystemMessage as t
-from selfprivacy_api.utils.systemd import systemd_proxy, start_unit
+from selfprivacy_api.utils.localization import (
+    DEFAULT_LOCALE,
+    TranslateSystemMessage as t,
+)
 
 from selfprivacy_api.graphql.queries.providers import DnsProvider
+
+logger = logging.getLogger(__name__)
 
 _ = gettext.gettext
 
@@ -84,24 +92,34 @@ def set_auto_upgrade_settings(
 class ShellException(Exception):
     """Shell command failed"""
 
-    def __init__(self, command: Optional[Any] = None, output: Optional[Any] = None):
-        self.command = str(command)
+    def __init__(self, command: str, output: Any, description: str):
+        self.command = command
+        self.description = description
         self.output = str(output)
 
-    def get_error_message(self, locale: str) -> str:
-        message = t.translate(text=_("Shell command failed."), locale=locale)
+        logging.error(self.get_error_message())
 
-        if self.command:
-            message += t.translate(
-                text=_(" Executed command array: %(commands)s."), locale=locale
-            ) % {"commands": self.command}
-
-        if self.output:
-            message += t.translate(text=_(" Output: %(output)s"), locale=locale) % {
-                "output": self.output
-            }
-
-        return message
+    def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
+        return t.translate(
+            text=_(
+                dedent(
+                    """
+                    Shell command failed.
+                    %(description)s
+                    %(REPORT_IT_TO_SUPPORT_CHATS)s
+                    Executed command: %(command)s
+                    Output: %(output)s
+                    """
+                )
+            )
+            % {
+                "command": self.command,
+                "description": self.description,
+                "output": self.output,
+                "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
+            },
+            locale=locale,
+        )
 
 
 def add_rebuild_job() -> Job:

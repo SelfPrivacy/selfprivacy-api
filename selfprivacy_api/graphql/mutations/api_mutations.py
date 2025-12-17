@@ -145,9 +145,10 @@ class ApiMutations:
                     token=token,
                 )
             else:
+                error = RecoveryKeyNotFound
                 return DeviceApiTokenMutationReturn(
                     success=False,
-                    message=RecoveryKeyNotFound.get_error_message(locale=locale),
+                    message=error.get_error_message(locale=locale),
                     code=404,
                     token=None,
                 )

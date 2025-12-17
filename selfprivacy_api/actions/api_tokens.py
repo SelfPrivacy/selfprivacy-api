@@ -75,16 +75,19 @@ class CannotDeleteCallerException(Exception):
     def __init__(self):
         logger.error(self.get_error_message())
 
-    def get_error_message(self, locale: str) -> str:
+    def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
         return t.translate(
             text=_(
                 dedent(
                     """
                     It looks like you're trying to remove access for the device you're currently using.
-                    The access token you're trying to delete is active and is being used for this request, so it can't be removed.
+                    The access token you're trying to delete is active and is being used for this request,
+                    so it cannot be removed.
+                    %(REPORT_IT_TO_SUPPORT_CHATS)s
                     """
                 )
-            ),
+            )
+            % {"REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS},
             locale=locale,
         )
 

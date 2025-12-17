@@ -1,36 +1,88 @@
+import logging
+import gettext
+from typing import Any, Tuple, Iterable
 import re
 import subprocess
-from typing import Tuple, Iterable, Optional
-import gettext
+from textwrap import dedent
 
 from selfprivacy_api.utils.huey import huey
-from selfprivacy_api.utils.localization import TranslateSystemMessage as t
+from selfprivacy_api.utils.localization import (
+    DEFAULT_LOCALE,
+    TranslateSystemMessage as t,
+)
 
 from selfprivacy_api.jobs import JobStatus, Jobs, Job
+from selfprivacy_api.utils.strings import REPORT_IT_TO_SUPPORT_CHATS
+
+logger = logging.getLogger(__name__)
 
 _ = gettext.gettext
 
+CLEAR_NIX_STORAGE_COMMAND = ["nix-store", "--gc"]
 
-class ShellException(Exception):
-    """Shell-related errors"""
 
-    def __init__(self, error: Optional[str] = None) -> None:
-        self.error = error
+class FailedToFindResult(Exception):
+    def __init__(self, regex_pattern: str, command: str, data: str):
+        self.regex_pattern = regex_pattern
+        self.command = command
+        self.data = data
 
-    def get_error_message(self, locale: str) -> str:
-        return (
-            t.translate(text=self.error, locale=locale)
-            if self.error
-            else t.translate(text=_("Shell-related error"), locale=locale)
+        logger.error(self.get_error_message())
+
+    def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
+        return t.translate(
+            text=_(
+                dedent(
+                    """
+                    Garbage collection result was not found.
+                    The code analyzes the last line in the command output using a regular expression.
+                    Simply put, we're just looking for a similar string: "1537 store paths deleted, 339.84 MiB freed".
+                    %(REPORT_IT_TO_SUPPORT_CHATS)s
+                    Command: %(command)s
+                    Used regex pattern: %(regex_pattern)s
+                    Last line: %(last_line)s
+                    """
+                )
+            )
+            % {
+                "command": self.command,
+                "regex_pattern": self.regex_pattern,
+                "last_line": self.data,
+                "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
+            },
+            locale=locale,
         )
 
 
-COMPLETED_WITH_ERROR = _("Error occurred, please report this to the support chat.")
-RESULT_WAS_NOT_FOUND_ERROR = _(
-    "We are sorry, garbage collection result was not found. "
-    "Nix returned gibberish output, please report this to the support chat."
-)
-CLEAR_COMPLETED = _("Garbage collection completed.")
+class ShellException(Exception):
+    """Shell command failed"""
+
+    def __init__(self, command: str, output: Any, description: str):
+        self.command = command
+        self.description = description
+        self.output = str(output)
+
+    def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
+        return t.translate(
+            text=_(
+                dedent(
+                    """
+                    Shell command failed.
+                    %(description)s
+                    %(REPORT_IT_TO_SUPPORT_CHATS)s
+                    Executed command: %(command)s
+                    Output: %(output)s
+                    """
+                )
+            )
+            % {
+                "command": self.command,
+                "description": self.description,
+                "output": self.output,
+                "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
+            },
+            locale=locale,
+        )
 
 
 def delete_old_gens_and_return_dead_report() -> str:
@@ -54,29 +106,33 @@ def delete_old_gens_and_return_dead_report() -> str:
 
 def run_nix_collect_garbage() -> Iterable[bytes]:
     process = subprocess.Popen(
-        ["nix-store", "--gc"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+        CLEAR_NIX_STORAGE_COMMAND, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
     )
     return process.stdout if process.stdout else iter([])
 
 
 def parse_line(job: Job, line: str) -> Job:
     """
-    We parse the string for the presence of a final line,
-    with the final amount of space cleared.
+    The code analyzes the last line in the command output using a regular expression.
     Simply put, we're just looking for a similar string:
     "1537 store paths deleted, 339.84 MiB freed".
     """
-    pattern = re.compile(r"[+-]?\d+\.\d+ \w+(?= freed)")
-    match = re.search(pattern, line)
+
+    regex_pattern = r"[+-]?\d+\.\d+ \w+(?= freed)"
+    match = re.search(re.compile(regex_pattern), line)
 
     if match is None:
-        raise ShellException(error=RESULT_WAS_NOT_FOUND_ERROR)
+        raise FailedToFindResult(
+            regex_pattern=regex_pattern,
+            data=line,
+            command=" ".join(CLEAR_NIX_STORAGE_COMMAND),
+        )
 
     else:
         Jobs.update(
             job=job,
             status=JobStatus.FINISHED,
-            status_text=CLEAR_COMPLETED,
+            status_text=_("Garbage collection completed."),
             result=_("%(size_in_megabytes)s have been cleared")
             % {"size_in_megabytes": match.group(0)},
         )
@@ -116,7 +172,7 @@ def get_dead_packages(output) -> Tuple[int, float]:
 
 
 @huey.task()
-def calculate_and_clear_dead_paths(job: Job):
+def run_task(job: Job):
     Jobs.update(
         job=job,
         status=JobStatus.RUNNING,
@@ -146,24 +202,30 @@ def calculate_and_clear_dead_paths(job: Job):
     )
 
     stream = run_nix_collect_garbage()
-    try:
-        process_stream(job, stream, dead_packages)
-    except ShellException:
-        Jobs.update(
-            job=job,
-            status=JobStatus.ERROR,
-            status_text=COMPLETED_WITH_ERROR,
-            error=RESULT_WAS_NOT_FOUND_ERROR,
-        )
+    process_stream(job, stream, dead_packages)
 
 
-def start_nix_collect_garbage() -> Job:
+def nix_collect_garbage() -> Job:
     job = Jobs.add(
         type_id="maintenance.collect_nix_garbage",
         name=_("Collect garbage"),
         description=_("Cleaning up unused packages"),
     )
 
-    calculate_and_clear_dead_paths(job=job)
+    try:
+        run_task(job=job)
+    except ShellException as error:
+        error_message = (
+            error.get_error_message()
+            if getattr(error, "get_error_message", None)
+            else str(error)
+        )
+
+        Jobs.update(
+            job=job,
+            status=JobStatus.ERROR,
+            status_text=_("Garbage collection failed"),
+            error=error_message,  # need to translate
+        )
 
     return job

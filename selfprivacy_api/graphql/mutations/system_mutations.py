@@ -14,7 +14,7 @@ from selfprivacy_api.utils.localization import (
     TranslateSystemMessage as t,
     get_locale,
 )
-from selfprivacy_api.jobs.nix_collect_garbage import start_nix_collect_garbage
+from selfprivacy_api.jobs.nix_collect_garbage import nix_collect_garbage
 
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.common_types.jobs import job_to_api_job
@@ -267,7 +267,7 @@ class SystemMutations:
         locale = get_locale(info=info)
 
         with tracer.start_as_current_span("nix_collect_garbage_mutation"):
-            job = start_nix_collect_garbage()
+            job = nix_collect_garbage()
 
             return GenericJobMutationReturn(
                 success=True,

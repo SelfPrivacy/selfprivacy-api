@@ -2,6 +2,7 @@ import gettext
 import logging
 from textwrap import dedent
 
+from selfprivacy_api.utils.strings import REPORT_IT_TO_SUPPORT_CHATS
 from selfprivacy_api.utils import USERDATA_FILE
 from selfprivacy_api.utils.localization import (
     DEFAULT_LOCALE,
@@ -26,9 +27,13 @@ class PrimaryUserNotFoundInJsonUserData(Exception):
                     """
                     Invalid UserData configuration.
                     Failed to find "username" in %(path_to_file)s.
+                    %(REPORT_IT_TO_SUPPORT_CHATS)s
                     """
                 )
-                % {"path_to_file": USERDATA_FILE}
-            ),
+            )
+            % {
+                "path_to_file": USERDATA_FILE,
+                "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
+            },
             locale=locale,
         )

@@ -7,6 +7,7 @@ from selfprivacy_api.utils.localization import (
     DEFAULT_LOCALE,
     TranslateSystemMessage as t,
 )
+from selfprivacy_api.utils.strings import REPORT_IT_TO_SUPPORT_CHATS
 
 _ = gettext.gettext
 
@@ -42,6 +43,7 @@ class KanidmQueryError(Exception):
                         """
                         Something went wrong while querying the Kanidm user management program.
                         %(description)s
+                        %(REPORT_IT_TO_SUPPORT_CHATS)s
                         Commands to debug:
                           "systemctl status kanidm.service"
                           "journalctl -u kanidm.service -f"
@@ -58,6 +60,7 @@ class KanidmQueryError(Exception):
                 "method": self.method,
                 "error": self.error_text,
                 "description": self.description,
+                "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
             }
         )
 
@@ -69,7 +72,12 @@ class KanidmReturnEmptyResponse(Exception):
         logger.error(self.get_error_message())
 
     def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
-        return t.translate(text=_("Kanidm returned an empty response."), locale=locale)
+        return t.translate(
+            text=_("Kanidm returned an empty response. %(REPORT_IT_TO_SUPPORT_CHATS)s"),
+            locale=locale,
+        ) % {
+            "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
+        }
 
 
 class KanidmReturnUnknownResponseType(Exception):
@@ -91,8 +99,9 @@ class KanidmReturnUnknownResponseType(Exception):
                         Something is wrong with the user management program Kanidm.
                         Kanidm returned unknown type response.
                         There may have been a Kanidm update that broke compatibility.
-                        Endpoint %(endpoint)s.
-                        Method: %(method)s.
+                        %(REPORT_IT_TO_SUPPORT_CHATS)s
+                        Endpoint %(endpoint)s
+                        Method: %(method)s
                         Response: %(response)s.
                         """
                     )
@@ -103,6 +112,7 @@ class KanidmReturnUnknownResponseType(Exception):
                 "endpoint": self.endpoint,
                 "method": self.method,
                 "response": self.response_data,
+                "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
             }
         )
 
@@ -125,6 +135,7 @@ class KanidmDidNotReturnAdminPassword(Exception):
                     Something is wrong with the user management program Kanidm.
                     Kanidm CLI did not return the admin password.
                     %(maybe_kanidm_broke_compatibility)s
+                    %(REPORT_IT_TO_SUPPORT_CHATS)s
                     Used command: %(command)s
                     Used regex pattern: %(regex_pattern)s
                     Kanidm's CLI output: %(output)s
@@ -136,6 +147,7 @@ class KanidmDidNotReturnAdminPassword(Exception):
                 "regex_pattern": self.regex_pattern,
                 "output": self.output,
                 "maybe_kanidm_broke_compatibility": KANIDM_BROKE_COMPATIBILITY,
+                "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
             },
             locale=locale,
         )
@@ -160,6 +172,7 @@ class KanidmCliSubprocessError(Exception):
                     Something is wrong with the user management program Kanidm.
                     Kanidm CLI return error.
                     %(maybe_kanidm_broke_compatibility)s
+                    %(REPORT_IT_TO_SUPPORT_CHATS)s
                     Used command: %(command)s
                     Error: %(error)s
                     """
@@ -170,6 +183,7 @@ class KanidmCliSubprocessError(Exception):
                 "description": self.description,
                 "error": self.error,
                 "maybe_kanidm_broke_compatibility": KANIDM_BROKE_COMPATIBILITY,
+                "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
             },
             locale=locale,
         )
@@ -182,7 +196,14 @@ class FailedToGetValidKanidmToken(Exception):
         logger.error(self.get_error_message())
 
     def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
-        return t.translate(text=_("Failed to get valid Kanidm token."), locale=locale)
+        return t.translate(
+            text=_(
+                "Failed to get a valid Kanidm token. %(REPORT_IT_TO_SUPPORT_CHATS)s"
+            ),
+            locale=locale,
+        ) % {
+            "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
+        }
 
 
 class NoPasswordResetLinkFoundInResponse(Exception):
@@ -202,6 +223,7 @@ class NoPasswordResetLinkFoundInResponse(Exception):
                     """
                     The Kanidm response does not contain a password reset link.
                     Failed to find "token" in data.
+                    %(REPORT_IT_TO_SUPPORT_CHATS)s
                     Endpoint: %(endpoint)s
                     Method: %(method)s
                     Data: %(data)s
@@ -211,6 +233,7 @@ class NoPasswordResetLinkFoundInResponse(Exception):
                     "endpoint": self.endpoint,
                     "method": self.method,
                     "data": self.data,
+                    "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
                 }
             ),
             locale=locale,

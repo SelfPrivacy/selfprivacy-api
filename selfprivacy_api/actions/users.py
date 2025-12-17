@@ -12,7 +12,10 @@ from selfprivacy_api.utils import (
     FORBIDDEN_PREFIXES,
 )
 from selfprivacy_api.utils.strings import PLEASE_UPDATE_APP_TEXT
-from selfprivacy_api.utils.localization import TranslateSystemMessage as t
+from selfprivacy_api.utils.localization import (
+    DEFAULT_LOCALE,
+    TranslateSystemMessage as t,
+)
 
 from selfprivacy_api.models.group import Group, get_default_grops
 from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
@@ -50,8 +53,10 @@ class ApiUsingWrongUserRepository(Exception):
     API is using a too old or unfinished user repository. Are you debugging?
     """
 
-    @staticmethod
-    def get_error_message(locale: str) -> str:
+    def __init__(self):
+        logger.error(self.get_error_message())
+
+    def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
         return t.translate(
             text=_("API is using a too old or unfinished user repository"),
             locale=locale,
