@@ -113,6 +113,18 @@ def no_users_no_admin_nobody(undefined_settings):
     return datadir
 
 
+@pytest.fixture
+def no_primary_user(mocker, datadir):
+    mocker.patch(
+        "selfprivacy_api.utils.USERDATA_FILE", new=datadir / "no_primary_user.json"
+    )
+    data = read_json(datadir / "no_primary_user.json")
+    assert "username" not in data
+    assert "hashedMasterPassword" not in data
+    assert len(data["users"]) == 2
+    return datadir
+
+
 class ProcessMock:
     """Mock subprocess.Popen"""
 
@@ -718,3 +730,129 @@ def test_graphql_update_nonexistent_user(
     assert response.json()["data"]["users"]["updateUser"]["success"] is True
 
     assert response.json()["data"]["users"]["updateUser"]["user"] is None
+
+
+def test_graphql_get_users_no_primary_user(
+    authorized_client, no_primary_user, mock_subprocess_popen, use_json_repository
+):
+    """Test that API works correctly when username and hashedMasterPassword are missing"""
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": generate_users_query([API_USERS_INFO]),
+        },
+    )
+    assert response.status_code == 200
+    assert response.json().get("data") is not None
+
+    # Should return only regular users + root (no primary user)
+    users = response.json()["data"]["users"]["allUsers"]
+    assert len(users) == 2  # user1, user2
+
+    usernames = [user["username"] for user in users]
+    assert "user1" in usernames
+    assert "user2" in usernames
+    assert "tester" not in usernames  # primary user should not be present
+
+
+def test_graphql_get_specific_user_no_primary_user(
+    authorized_client, no_primary_user, mock_subprocess_popen, use_json_repository
+):
+    """Test getting a specific regular user when primary user fields are missing"""
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_GET_USER,
+            "variables": {
+                "username": "user1",
+            },
+        },
+    )
+    assert response.status_code == 200
+    assert response.json().get("data") is not None
+
+    user = response.json()["data"]["users"]["getUser"]
+    assert user is not None
+    assert user["username"] == "user1"
+    assert user["sshKeys"] == ["ssh-rsa KEY user1@pc"]
+
+
+def test_graphql_get_root_user_no_primary_user(
+    authorized_client, no_primary_user, mock_subprocess_popen, use_json_repository
+):
+    """Test that root user is still accessible when primary user fields are missing"""
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_GET_USER,
+            "variables": {
+                "username": "root",
+            },
+        },
+    )
+    assert response.status_code == 200
+    assert response.json().get("data") is not None
+
+    user = response.json()["data"]["users"]["getUser"]
+    assert user is not None
+    assert user["username"] == "root"
+    assert user["sshKeys"] == ["ssh-ed25519 KEY test@pc"]
+
+
+def test_graphql_add_user_no_primary_user(
+    authorized_client, no_primary_user, mock_subprocess_popen, use_json_repository
+):
+    """Test that creating a user fails gracefully when primary user is not defined"""
+    output = api_add_user(authorized_client, "user3", password="12345678")
+
+    # Should fail because admin is not configured
+    assert_errorcode(output, code=400)
+    assert output["user"] is None
+
+
+def test_graphql_delete_user_no_primary_user(
+    authorized_client, no_primary_user, mock_subprocess_popen, use_json_repository
+):
+    """Test that deleting a user still works when primary user fields are missing"""
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_DELETE_USER_MUTATION,
+            "variables": {"username": "user1"},
+        },
+    )
+    assert response.status_code == 200
+    assert response.json().get("data") is not None
+
+    assert response.json()["data"]["users"]["deleteUser"]["code"] == 200
+    assert response.json()["data"]["users"]["deleteUser"]["success"] is True
+
+    # Verify user was deleted
+    new_users = api_all_users(authorized_client)
+    usernames = [user["username"] for user in new_users]
+    assert "user1" not in usernames
+    assert "user2" in usernames
+
+
+def test_graphql_update_user_no_primary_user(
+    authorized_client, no_primary_user, mock_subprocess_popen, use_json_repository
+):
+    """Test that updating a user still works when primary user fields are missing"""
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_UPDATE_USER_MUTATION,
+            "variables": {
+                "user": {
+                    "username": "user1",
+                    "password": "newpassword123",
+                },
+            },
+        },
+    )
+    assert response.status_code == 200
+    assert response.json().get("data") is not None
+
+    assert response.json()["data"]["users"]["updateUser"]["code"] == 200
+    assert response.json()["data"]["users"]["updateUser"]["success"] is True
+    assert response.json()["data"]["users"]["updateUser"]["user"]["username"] == "user1"

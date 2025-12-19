@@ -90,8 +90,8 @@ def create_ssh_key(username: str, ssh_key: str):
     with WriteUserData() as data:
         ensure_ssh_and_users_fields_exist(data)
 
-        if username == data["username"]:
-            if ssh_key in data["sshKeys"]:
+        if username == data.get("username", None):
+            if ssh_key in data.get("sshKeys", []):
                 raise KeyAlreadyExists()
 
             data["sshKeys"].append(ssh_key)
@@ -130,8 +130,8 @@ def remove_ssh_key(username: str, ssh_key: str):
 
             raise KeyNotFound()
 
-        if username == data["username"]:
-            if ssh_key in data["sshKeys"]:
+        if username == data.get("username", None):
+            if ssh_key in data.get("sshKeys", []):
                 data["sshKeys"].remove(ssh_key)
                 return
 
@@ -159,8 +159,8 @@ def get_ssh_keys(username: str) -> list:
         if username == "root":
             return data["ssh"]["rootKeys"]
 
-        if username == data["username"]:
-            return data["sshKeys"]
+        if username == data.get("username", None):
+            return data.get("sshKeys", [])
 
         for user in data["users"]:
             if user["username"] == username:
