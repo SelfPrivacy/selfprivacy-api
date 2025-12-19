@@ -12,7 +12,7 @@
   "timezone": "Etc/UTC",
   "username": "tester",
   "useBinds": true,
-  "sshKeys": ["ssh-rsa KEY test@pc"],
+  "sshKeys": ["ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHptiXtnh0b57aK6B117g+CkINlbx8JSTl03Ry0/a2BB dummykey"],
   "users": [],
   "autoUpgrade": {
     "enable": true,
@@ -49,6 +49,6 @@
   "ssh": {
     "enable": true,
     "passwordAuthentication": false,
-    "rootKeys": ["ssh-ed25519 KEY test@pc"]
+    "rootKeys": ["ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIElWG9GbP2g8Jsy/N01w1wjRvBxsNLWxr9NasN694kYw testkey"]
   }
 }

@@ -5,7 +5,8 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from selfprivacy_api.utils import WriteUserData, ReadUserData, validate_ssh_public_key
+from selfprivacy_api.utils import WriteUserData, ReadUserData
+from selfprivacy_api.utils.ssh import validate_ssh_public_key
 from selfprivacy_api.utils import ensure_ssh_and_users_fields_exist
 from selfprivacy_api.utils.localization import TranslateSystemMessage as t
 
@@ -45,7 +46,7 @@ class InvalidPublicKey(Exception):
     def get_error_message(locale: str) -> str:
         return t.translate(
             text=_(
-                "Invalid key type. Only ssh-ed25519, ssh-rsa and ecdsa are supported"
+                "Invalid key type. Only ssh-ed25519, ssh-rsa (2048 bits or more) and ecdsa are supported"
             ),
             locale=locale,
         )

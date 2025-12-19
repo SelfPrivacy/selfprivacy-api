@@ -109,16 +109,6 @@ def ensure_ssh_and_users_fields_exist(data):
         data["users"] = []
 
 
-def validate_ssh_public_key(key):
-    """Validate SSH public key.
-    It may be ssh-ed25519, ssh-rsa or ecdsa-sha2-nistp256."""
-    if not key.startswith("ssh-ed25519"):
-        if not key.startswith("ssh-rsa"):
-            if not key.startswith("ecdsa-sha2-nistp256"):
-                return False
-    return True
-
-
 def is_username_forbidden(username):
     forbidden_prefixes = ["systemd", "nixbld"]
 

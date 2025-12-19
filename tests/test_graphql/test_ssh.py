@@ -56,7 +56,9 @@ def some_users(mocker, datadir):
         {
             "username": "user1",
             "hashedPassword": "HASHED_PASSWORD_1",
-            "sshKeys": ["ssh-rsa KEY user1@pc"],
+            "sshKeys": [
+                "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGouijZuaO6EKh1wZypWvCgQOxSnjnZ52z5hITM2R9MR user1"
+            ],
         },
         {"username": "user2", "hashedPassword": "HASHED_PASSWORD_2", "sshKeys": []},
         {"username": "user3", "hashedPassword": "HASHED_PASSWORD_3"},
@@ -395,7 +397,7 @@ def test_graphql_add_ssh_key_unauthorized(
             "variables": {
                 "sshInput": {
                     "username": "user1",
-                    "sshKey": "ssh-rsa KEY test_key@pc",
+                    "sshKey": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHptiXtnh0b57aK6B117g+CkINlbx8JSTl03Ry0/a2BB dummykey",
                 },
             },
         },
@@ -407,7 +409,9 @@ def test_graphql_add_ssh_key_unauthorized(
 
 
 def test_graphql_get_root_key(authorized_client, use_test_repository, some_users):
-    assert api_rootkeys(authorized_client) == ["ssh-ed25519 KEY test@pc"]
+    assert api_rootkeys(authorized_client) == [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIElWG9GbP2g8Jsy/N01w1wjRvBxsNLWxr9NasN694kYw testkey"
+    ]
 
 
 def test_graphql_get_root_key_when_none(
@@ -434,7 +438,7 @@ def test_graphql_add_ssh_key_when_none(
 ):
     api_create_user(authorized_client, user)
 
-    key1 = "ssh-rsa KEY test_key@pc"
+    key1 = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHptiXtnh0b57aK6B117g+CkINlbx8JSTl03Ry0/a2BB dummykey"
     if user == "root":
         assert api_rootkeys(authorized_client) == []
     else:
@@ -457,8 +461,8 @@ def test_graphql_add_ssh_key_one_more(
     authorized_client, use_test_repository, no_keys, user
 ):
     keys = [
-        "ssh-rsa KEY test_key@pc",
-        "ssh-rsa KEY2 test_key@pc",
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHptiXtnh0b57aK6B117g+CkINlbx8JSTl03Ry0/a2BB dummykey",
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPDdzNSlOoWSIFFWIlUe3u9dQpQIPRRNYQMcl+L9s361 dummykey2",
     ]
     output = api_add_ssh_key(authorized_client, user, keys[0])
     assert output["user"]["sshKeys"] == [keys[0]]
@@ -480,7 +484,7 @@ def test_graphql_add_ssh_key_one_more(
 def test_graphql_add_ssh_key_same(
     authorized_client, use_test_repository, no_keys, user
 ):
-    key = "ssh-rsa KEY test_key@pc"
+    key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHptiXtnh0b57aK6B117g+CkINlbx8JSTl03Ry0/a2BB dummykey"
     output = api_add_ssh_key(authorized_client, user, key)
     assert output["user"]["sshKeys"] == [key]
 
@@ -506,7 +510,7 @@ def test_graphql_add_ssh_key_nonexistent_user(
             "variables": {
                 "sshInput": {
                     "username": "user666",
-                    "sshKey": "ssh-rsa KEY test_key@pc",
+                    "sshKey": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHptiXtnh0b57aK6B117g+CkINlbx8JSTl03Ry0/a2BB dummykey",
                 },
             },
         },
@@ -546,7 +550,7 @@ def test_graphql_remove_ssh_key_unauthorized(
             "variables": {
                 "sshInput": {
                     "username": "user1",
-                    "sshKey": "ssh-rsa KEY test_key@pc",
+                    "sshKey": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHptiXtnh0b57aK6B117g+CkINlbx8JSTl03Ry0/a2BB dummykey",
                 },
             },
         },
@@ -557,8 +561,8 @@ def test_graphql_remove_ssh_key_unauthorized(
 @pytest.mark.parametrize("user", key_users)
 def test_graphql_remove_ssh_key(authorized_client, use_test_repository, no_keys, user):
     keys = [
-        "ssh-rsa KEY test_key@pc",
-        "ssh-rsa KEY2 test_key@pc",
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHptiXtnh0b57aK6B117g+CkINlbx8JSTl03Ry0/a2BB dummykey",
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPDdzNSlOoWSIFFWIlUe3u9dQpQIPRRNYQMcl+L9s361 dummykey2",
     ]
     output = api_add_ssh_key(authorized_client, user, keys[0])
     output = api_add_ssh_key(authorized_client, user, keys[1])
@@ -586,5 +590,9 @@ def test_graphql_remove_nonexistent_ssh_key(
 def test_graphql_remove_ssh_key_nonexistent_user(
     authorized_client, some_users, mock_subprocess_popen
 ):
-    output = api_remove_ssh_key(authorized_client, "user666", "ssh-rsa KEY test_key@pc")
+    output = api_remove_ssh_key(
+        authorized_client,
+        "user666",
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHptiXtnh0b57aK6B117g+CkINlbx8JSTl03Ry0/a2BB dummykey",
+    )
     assert_errorcode(output, 404)
