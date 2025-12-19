@@ -1,47 +1,41 @@
 """Actions to manage the users."""
 
 import gettext
+import logging
 import re
 import uuid
-import logging
 from typing import Optional
 
-from selfprivacy_api.utils import (
-    is_username_forbidden,
-    FORBIDDEN_USERNAMES,
-    FORBIDDEN_PREFIXES,
+from selfprivacy_api.actions.email_passwords import (
+    add_email_password,
+    delete_all_email_passwords_hashes,
+    update_legacy_email_password_hash,
 )
-from selfprivacy_api.utils.strings import PLEASE_UPDATE_APP_TEXT
-from selfprivacy_api.utils.localization import (
-    DEFAULT_LOCALE,
-    TranslateSystemMessage as t,
-)
-
+from selfprivacy_api.actions.ssh import get_ssh_keys
 from selfprivacy_api.models.group import Group, get_default_grops
 from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
-
-from selfprivacy_api.actions.ssh import get_ssh_keys
-
-from selfprivacy_api.repositories.users.json_user_repository import JsonUserRepository
 from selfprivacy_api.repositories.users import ACTIVE_USERS_PROVIDER
-from selfprivacy_api.repositories.users.kanidm_user_repository import SP_DEFAULT_GROUPS
 from selfprivacy_api.repositories.users.exceptions import (
     DisplaynameTooLong,
+    UserAlreadyExists,
     UserIsProtected,
     UsernameForbidden,
     UsernameNotAlphanumeric,
     UsernameTooLong,
     UserNotFound,
-    UserAlreadyExists,
 )
-from selfprivacy_api.repositories.users.exceptions.exceptions_json import (
-    PrimaryUserNotFoundInJsonUserData,
+from selfprivacy_api.repositories.users.json_user_repository import JsonUserRepository
+from selfprivacy_api.repositories.users.kanidm_user_repository import SP_DEFAULT_GROUPS
+from selfprivacy_api.utils import (
+    FORBIDDEN_PREFIXES,
+    FORBIDDEN_USERNAMES,
+    is_username_forbidden,
 )
-from selfprivacy_api.actions.email_passwords import (
-    add_email_password,
-    update_legacy_email_password_hash,
-    delete_all_email_passwords_hashes,
+from selfprivacy_api.utils.localization import (
+    DEFAULT_LOCALE,
+    TranslateSystemMessage as t,
 )
+from selfprivacy_api.utils.strings import PLEASE_UPDATE_APP_TEXT
 
 logger = logging.getLogger(__name__)
 
@@ -126,7 +120,7 @@ async def create_user(
             await JsonUserRepository.create_user(
                 username=username, password=str(uuid.uuid4())
             )  # random password for legacy repo
-        except (UserAlreadyExists, PrimaryUserNotFoundInJsonUserData):
+        except UserAlreadyExists:
             pass
 
     await ACTIVE_USERS_PROVIDER.create_user(

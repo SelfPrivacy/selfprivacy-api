@@ -1,26 +1,23 @@
 from typing import Optional
 from uuid import uuid4
 
+from selfprivacy_api.models.group import Group
 from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
+from selfprivacy_api.repositories.users.abstract_user_repository import (
+    AbstractUserRepository,
+)
+from selfprivacy_api.repositories.users.exceptions import (
+    PasswordIsEmpty,
+    UserAlreadyExists,
+    UserIsProtected,
+    UserNotFound,
+)
 from selfprivacy_api.utils import (
     ReadUserData,
     WriteUserData,
     ensure_ssh_and_users_fields_exist,
     hash_password,
 )
-from selfprivacy_api.repositories.users.abstract_user_repository import (
-    AbstractUserRepository,
-)
-from selfprivacy_api.repositories.users.exceptions import (
-    UserAlreadyExists,
-    UserIsProtected,
-    UserNotFound,
-    PasswordIsEmpty,
-)
-from selfprivacy_api.repositories.users.exceptions.exceptions_json import (
-    PrimaryUserNotFoundInJsonUserData,
-)
-from selfprivacy_api.models.group import Group
 
 
 class JsonUserRepository(AbstractUserRepository):
@@ -82,9 +79,7 @@ class JsonUserRepository(AbstractUserRepository):
 
         with ReadUserData() as user_data:
             ensure_ssh_and_users_fields_exist(user_data)
-            if "username" not in user_data.keys():
-                raise PrimaryUserNotFoundInJsonUserData
-            if username == user_data["username"]:
+            if username == user_data.get("username", None):
                 raise UserAlreadyExists
             if username in [user["username"] for user in user_data["users"]]:
                 raise UserAlreadyExists
@@ -102,7 +97,7 @@ class JsonUserRepository(AbstractUserRepository):
 
         with WriteUserData() as user_data:
             ensure_ssh_and_users_fields_exist(user_data)
-            if username == user_data["username"]:
+            if username == user_data.get("username", None):
                 raise UserIsProtected(account_type="primary")
             if username == "root":
                 raise UserIsProtected(account_type="root")
@@ -130,7 +125,7 @@ class JsonUserRepository(AbstractUserRepository):
         with WriteUserData() as data:
             ensure_ssh_and_users_fields_exist(data)
 
-            if username == data["username"]:
+            if username == data.get("username", None):
                 data["hashedMasterPassword"] = hashed_password
 
             # Return 404 if user does not exist
@@ -156,11 +151,11 @@ class JsonUserRepository(AbstractUserRepository):
                     ssh_keys=data["ssh"]["rootKeys"],
                 )
 
-            if username == data["username"]:
+            if username == data.get("username", None):
                 return UserDataUser(
                     user_type=UserDataUserOrigin.PRIMARY,
                     username=username,
-                    ssh_keys=data["sshKeys"],
+                    ssh_keys=data.get("sshKeys", []),
                 )
 
             for user in data["users"]:

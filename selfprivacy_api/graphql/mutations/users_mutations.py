@@ -1,19 +1,13 @@
 """Users management module"""
 
 # pylint: disable=too-few-public-methods
-from typing import Optional
 import gettext
+from typing import Optional
 
 import strawberry
 from opentelemetry import trace
 from strawberry.types import Info
 
-from selfprivacy_api.graphql import IsAuthenticated
-from selfprivacy_api.graphql.common_types.user import (
-    PasswordResetLinkReturn,
-    UserMutationReturn,
-    get_user_by_username,
-)
 from selfprivacy_api.actions.ssh import (
     InvalidPublicKey,
     KeyAlreadyExists,
@@ -21,38 +15,40 @@ from selfprivacy_api.actions.ssh import (
     create_ssh_key as create_ssh_key_action,
     remove_ssh_key as remove_ssh_key_action,
 )
-from selfprivacy_api.graphql.mutations.mutation_interface import (
-    GenericMutationReturn,
-)
 from selfprivacy_api.actions.users import (
     ApiUsingWrongUserRepository,
     create_user as create_user_action,
     delete_user as delete_user_action,
-    update_user as update_user_action,
     generate_password_reset_link as generate_password_reset_link_action,
+    update_user as update_user_action,
+)
+from selfprivacy_api.graphql import IsAuthenticated
+from selfprivacy_api.graphql.common_types.user import (
+    PasswordResetLinkReturn,
+    UserMutationReturn,
+    get_user_by_username,
+)
+from selfprivacy_api.graphql.mutations.mutation_interface import (
+    GenericMutationReturn,
 )
 from selfprivacy_api.repositories.users.exceptions import (
     DisplaynameTooLong,
     PasswordIsEmpty,
-    UserOrGroupNotFound,
-    UsernameForbidden,
     UserAlreadyExists,
     UserIsProtected,
+    UsernameForbidden,
     UsernameNotAlphanumeric,
     UsernameTooLong,
     UserNotFound,
+    UserOrGroupNotFound,
 )
-from selfprivacy_api.repositories.users.exceptions.exceptions_json import (
-    PrimaryUserNotFoundInJsonUserData,
-)
-
 from selfprivacy_api.repositories.users.exceptions.exceptions_kanidm import (
     FailedToGetValidKanidmToken,
+    KanidmCliSubprocessError,
     KanidmDidNotReturnAdminPassword,
     KanidmQueryError,
     KanidmReturnEmptyResponse,
     KanidmReturnUnknownResponseType,
-    KanidmCliSubprocessError,
     NoPasswordResetLinkFoundInResponse,
 )
 from selfprivacy_api.utils.localization import (
@@ -128,7 +124,6 @@ class UsersMutations:
                 PasswordIsEmpty,
                 UsernameNotAlphanumeric,
                 UsernameTooLong,
-                PrimaryUserNotFoundInJsonUserData,
                 KanidmDidNotReturnAdminPassword,
                 KanidmQueryError,
                 DisplaynameTooLong,
