@@ -84,7 +84,7 @@ class JsonUserRepository(AbstractUserRepository):
                 raise InvalidConfiguration(
                     "Broken config: Admin name is not defined. Consider recovery or add it manually"
                 )
-            if username == user_data["username"]:
+            if username == user_data.get("username", None):
                 raise UserAlreadyExists("User already exists")
             if username in [user["username"] for user in user_data["users"]]:
                 raise UserAlreadyExists("User already exists")
@@ -102,7 +102,7 @@ class JsonUserRepository(AbstractUserRepository):
 
         with WriteUserData() as user_data:
             ensure_ssh_and_users_fields_exist(user_data)
-            if username == user_data["username"] or username == "root":
+            if username == user_data.get("username", None) or username == "root":
                 raise UserIsProtected("Cannot delete main or root user")
 
             for data_user in user_data["users"]:
@@ -128,7 +128,7 @@ class JsonUserRepository(AbstractUserRepository):
         with WriteUserData() as data:
             ensure_ssh_and_users_fields_exist(data)
 
-            if username == data["username"]:
+            if username == data.get("username", None):
                 data["hashedMasterPassword"] = hashed_password
 
             # Return 404 if user does not exist
@@ -154,11 +154,11 @@ class JsonUserRepository(AbstractUserRepository):
                     ssh_keys=data["ssh"]["rootKeys"],
                 )
 
-            if username == data["username"]:
+            if username == data.get("username", None):
                 return UserDataUser(
                     user_type=UserDataUserOrigin.PRIMARY,
                     username=username,
-                    ssh_keys=data["sshKeys"],
+                    ssh_keys=data.get("sshKeys", []),
                 )
 
             for user in data["users"]:
