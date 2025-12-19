@@ -2,12 +2,12 @@ import gettext
 import logging
 from textwrap import dedent
 
-from selfprivacy_api.utils.strings import REPORT_IT_TO_SUPPORT_CHATS
 from selfprivacy_api.utils import USERDATA_FILE
 from selfprivacy_api.utils.localization import (
     DEFAULT_LOCALE,
     TranslateSystemMessage as t,
 )
+from selfprivacy_api.utils.strings import REPORT_IT_TO_SUPPORT_CHATS
 
 _ = gettext.gettext
 

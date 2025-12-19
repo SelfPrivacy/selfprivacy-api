@@ -1,7 +1,7 @@
-from typing import Any, Optional, Union
-from textwrap import dedent
 import gettext
 import logging
+from textwrap import dedent
+from typing import Any, Optional, Union
 
 from selfprivacy_api.utils.localization import (
     DEFAULT_LOCALE,

@@ -1,11 +1,11 @@
 import gettext
 import logging
 
-from selfprivacy_api.utils.strings import REPORT_IT_TO_SUPPORT_CHATS
 from selfprivacy_api.utils.localization import (
     DEFAULT_LOCALE,
     TranslateSystemMessage as t,
 )
+from selfprivacy_api.utils.strings import REPORT_IT_TO_SUPPORT_CHATS
 
 logger = logging.getLogger(__name__)
 

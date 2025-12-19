@@ -4,27 +4,28 @@ The only actions on tokens that are accessible from APIs
 """
 
 import gettext
-from typing import Optional
+import logging
 from datetime import datetime, timezone
-from pydantic import BaseModel
+from textwrap import dedent
+from typing import Optional
+
 from mnemonic import Mnemonic
 from opentelemetry import trace
-from textwrap import dedent
-import logging
+from pydantic import BaseModel
 
-from selfprivacy_api.utils.timeutils import ensure_tz_aware, ensure_tz_aware_strict
+from selfprivacy_api.repositories.tokens import ACTIVE_TOKEN_PROVIDER
+from selfprivacy_api.repositories.tokens.exceptions import (
+    InvalidMnemonic,
+    NewDeviceKeyNotFound,
+    RecoveryKeyNotFound,
+    TokenNotFound,
+)
 from selfprivacy_api.utils.localization import (
     DEFAULT_LOCALE,
     TranslateSystemMessage as t,
 )
-
-from selfprivacy_api.repositories.tokens import ACTIVE_TOKEN_PROVIDER
-from selfprivacy_api.repositories.tokens.exceptions import (
-    TokenNotFound,
-    RecoveryKeyNotFound,
-    InvalidMnemonic,
-    NewDeviceKeyNotFound,
-)
+from selfprivacy_api.utils.strings import REPORT_IT_TO_SUPPORT_CHATS
+from selfprivacy_api.utils.timeutils import ensure_tz_aware, ensure_tz_aware_strict
 
 _ = gettext.gettext
 

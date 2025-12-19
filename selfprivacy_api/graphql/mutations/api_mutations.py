@@ -2,8 +2,8 @@
 
 # pylint: disable=too-few-public-methods
 
-import gettext
 import datetime
+import gettext
 from typing import Optional
 
 import strawberry
@@ -15,21 +15,21 @@ from selfprivacy_api.actions.api_tokens import (
     ExpirationDateInThePast,
     InvalidUsesLeft,
     delete_api_token,
-    get_new_api_recovery_key,
-    use_mnemonic_recovery_token,
-    refresh_api_token,
     delete_new_device_auth_token,
+    get_new_api_recovery_key,
     get_new_device_auth_token,
+    refresh_api_token,
+    use_mnemonic_recovery_token,
     use_new_device_auth_token,
-)
-from selfprivacy_api.repositories.tokens.exceptions import (
-    TokenNotFound,
-    RecoveryKeyNotFound,
 )
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericMutationReturn,
     MutationReturnInterface,
+)
+from selfprivacy_api.repositories.tokens.exceptions import (
+    RecoveryKeyNotFound,
+    TokenNotFound,
 )
 from selfprivacy_api.utils.localization import (
     TranslateSystemMessage as t,
@@ -145,7 +145,7 @@ class ApiMutations:
                     token=token,
                 )
             else:
-                error = RecoveryKeyNotFound
+                error = RecoveryKeyNotFound()
                 return DeviceApiTokenMutationReturn(
                     success=False,
                     message=error.get_error_message(locale=locale),
@@ -165,9 +165,10 @@ class ApiMutations:
                 .replace("Bearer ", "")
             )
             if not token_string:
+                error = TokenNotFound()
                 return DeviceApiTokenMutationReturn(
                     success=False,
-                    message=TokenNotFound.get_error_message(locale=locale),
+                    message=error.get_error_message(locale=locale),
                     code=404,
                     token=None,
                 )
@@ -272,9 +273,10 @@ class ApiMutations:
         ):
             token = use_new_device_auth_token(input.key, input.deviceName)
             if token is None:
+                error = TokenNotFound()
                 return DeviceApiTokenMutationReturn(
                     success=False,
-                    message=TokenNotFound.get_error_message(locale=locale),
+                    message=error.get_error_message(locale=locale),
                     code=404,
                     token=None,
                 )

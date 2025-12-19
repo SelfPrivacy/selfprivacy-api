@@ -1,10 +1,12 @@
 import gettext
 import logging
-from typing import List, Literal
 from textwrap import dedent
+from typing import List, Literal
 
 from selfprivacy_api.utils.localization import (
     DEFAULT_LOCALE,
+)
+from selfprivacy_api.utils.localization import (
     TranslateSystemMessage as t,
 )
 
