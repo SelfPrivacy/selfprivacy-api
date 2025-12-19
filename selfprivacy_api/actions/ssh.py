@@ -91,30 +91,39 @@ def create_ssh_key(username: str, ssh_key: str):
         ensure_ssh_and_users_fields_exist(data)
 
         if username == data.get("username", None):
-            if ssh_key in data.get("sshKeys", []):
-                raise KeyAlreadyExists()
+            _add_key_to_main_user(data, ssh_key)
+        elif username == "root":
+            _add_key_to_root(data, ssh_key)
+        else:
+            _add_key_to_regular_user(data, username, ssh_key)
 
-            data["sshKeys"].append(ssh_key)
+
+def _add_key_to_main_user(data: dict, ssh_key: str) -> None:
+    """Add SSH key to the main user"""
+    if ssh_key in data.get("sshKeys", []):
+        raise KeyAlreadyExists()
+    data["sshKeys"].append(ssh_key)
+
+
+def _add_key_to_root(data: dict, ssh_key: str) -> None:
+    """Add SSH key to root user"""
+    if ssh_key in data["ssh"]["rootKeys"]:
+        raise KeyAlreadyExists()
+    data["ssh"]["rootKeys"].append(ssh_key)
+
+
+def _add_key_to_regular_user(data: dict, username: str, ssh_key: str) -> None:
+    """Add SSH key to a regular user"""
+    for user in data["users"]:
+        if user["username"] == username:
+            if "sshKeys" not in user:
+                user["sshKeys"] = []
+            if ssh_key in user["sshKeys"]:
+                raise KeyAlreadyExists()
+            user["sshKeys"].append(ssh_key)
             return
 
-        if username == "root":
-            if ssh_key in data["ssh"]["rootKeys"]:
-                raise KeyAlreadyExists()
-
-            data["ssh"]["rootKeys"].append(ssh_key)
-            return
-
-        for user in data["users"]:
-            if user["username"] == username:
-                if "sshKeys" not in user:
-                    user["sshKeys"] = []
-                if ssh_key in user["sshKeys"]:
-                    raise KeyAlreadyExists()
-
-                user["sshKeys"].append(ssh_key)
-                return
-
-        raise UserNotFound()
+    raise UserNotFound()
 
 
 def remove_ssh_key(username: str, ssh_key: str):
