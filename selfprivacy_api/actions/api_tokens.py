@@ -14,12 +14,7 @@ from opentelemetry import trace
 from pydantic import BaseModel
 
 from selfprivacy_api.repositories.tokens import ACTIVE_TOKEN_PROVIDER
-from selfprivacy_api.repositories.tokens.exceptions import (
-    InvalidMnemonic,
-    NewDeviceKeyNotFound,
-    RecoveryKeyNotFound,
-    TokenNotFound,
-)
+from selfprivacy_api.repositories.tokens.exceptions import TokenNotFound
 from selfprivacy_api.utils.localization import (
     DEFAULT_LOCALE,
     TranslateSystemMessage as t,
@@ -73,6 +68,8 @@ def is_token_valid(token) -> bool:
 
 
 class CannotDeleteCallerException(Exception):
+    code = 400
+
     def __init__(self):
         logger.error(self.get_error_message())
 
@@ -107,11 +104,9 @@ def delete_api_token(caller_token: str, token_name: str) -> None:
 @tracer.start_as_current_span("create_api_token")
 def refresh_api_token(caller_token: str) -> str:
     """Refresh the token"""
-    try:
-        old_token = ACTIVE_TOKEN_PROVIDER.get_token_by_token_string(caller_token)
-        new_token = ACTIVE_TOKEN_PROVIDER.refresh_token(old_token)
-    except TokenNotFound:
-        raise TokenNotFound()
+
+    old_token = ACTIVE_TOKEN_PROVIDER.get_token_by_token_string(caller_token)
+    new_token = ACTIVE_TOKEN_PROVIDER.refresh_token(old_token)
     return new_token.token
 
 
@@ -148,8 +143,12 @@ def get_api_recovery_token_status() -> RecoveryTokenStatus:
 
 
 class ExpirationDateInThePast(Exception):
-    @staticmethod
-    def get_error_message(locale: str = DEFAULT_LOCALE) -> str:
+    code = 400
+
+    def __init__(self):
+        logger.error(self.get_error_message())
+
+    def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
         return t.translate(
             text=_(
                 dedent(
@@ -165,6 +164,8 @@ class ExpirationDateInThePast(Exception):
 
 
 class InvalidUsesLeft(Exception):
+    code = 400
+
     def __init__(self):
         logger.error(self.get_error_message())
 
@@ -202,11 +203,8 @@ def use_mnemonic_recovery_token(mnemonic_phrase, name):
     Substract 1 from uses_left if it exists.
     mnemonic_phrase is a string representation of the mnemonic word list.
     """
-    try:
-        token = ACTIVE_TOKEN_PROVIDER.use_mnemonic_recovery_key(mnemonic_phrase, name)
-        return token.token
-    except (RecoveryKeyNotFound, InvalidMnemonic):
-        return None
+    token = ACTIVE_TOKEN_PROVIDER.use_mnemonic_recovery_key(mnemonic_phrase, name)
+    return token.token
 
 
 @tracer.start_as_current_span("delete_new_device_auth_token")
@@ -225,14 +223,18 @@ def get_new_device_auth_token() -> str:
 
 
 @tracer.start_as_current_span("use_new_device_auth_token")
-def use_new_device_auth_token(mnemonic_phrase, name) -> Optional[str]:
+def use_new_device_auth_token(mnemonic_phrase, name) -> str:
     """
     Use the new device auth token by converting the mnemonic string to a byte array.
     If the mnemonic phrase is valid then generate a device token and return it.
     New device auth token must be deleted.
     """
-    try:
-        token = ACTIVE_TOKEN_PROVIDER.use_mnemonic_new_device_key(mnemonic_phrase, name)
-        return token.token
-    except (NewDeviceKeyNotFound, InvalidMnemonic):
-        return None
+    token = ACTIVE_TOKEN_PROVIDER.use_mnemonic_new_device_key(mnemonic_phrase, name)
+    return token.token
+
+
+API_TOKENS_ACTION_EXCEPTIONS = (
+    InvalidUsesLeft,
+    ExpirationDateInThePast,
+    CannotDeleteCallerException,
+)
