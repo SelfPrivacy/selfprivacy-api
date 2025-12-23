@@ -9,14 +9,10 @@ from opentelemetry import trace
 from strawberry.types import Info
 
 from selfprivacy_api.actions.ssh import (
-    InvalidPublicKey,
-    KeyAlreadyExists,
-    KeyNotFound,
     create_ssh_key as create_ssh_key_action,
     remove_ssh_key as remove_ssh_key_action,
 )
 from selfprivacy_api.actions.users import (
-    ApiUsingWrongUserRepository,
     create_user as create_user_action,
     delete_user as delete_user_action,
     generate_password_reset_link as generate_password_reset_link_action,
@@ -31,25 +27,9 @@ from selfprivacy_api.graphql.common_types.user import (
 from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericMutationReturn,
 )
-from selfprivacy_api.repositories.users.exceptions import (
-    DisplaynameTooLong,
-    PasswordIsEmpty,
-    UserAlreadyExists,
-    UserIsProtected,
-    UsernameForbidden,
-    UsernameNotAlphanumeric,
-    UsernameTooLong,
-    UserNotFound,
-    UserOrGroupNotFound,
-)
+from selfprivacy_api.repositories.users.exceptions import USERS_REPOSITORY_EXCEPTIONS
 from selfprivacy_api.repositories.users.exceptions.exceptions_kanidm import (
-    FailedToGetValidKanidmToken,
-    KanidmCliSubprocessError,
-    KanidmDidNotReturnAdminPassword,
-    KanidmQueryError,
-    KanidmReturnEmptyResponse,
-    KanidmReturnUnknownResponseType,
-    NoPasswordResetLinkFoundInResponse,
+    USERS_KANIDM_REPOSITORY_EXCEPTIONS,
 )
 from selfprivacy_api.utils.localization import (
     TranslateSystemMessage as t,
@@ -63,6 +43,9 @@ _ = gettext.gettext
 
 FAILED_TO_SETUP_SSO_PASSWORD_TEXT = _(
     "New password applied an an email password. To use Single Sign On, please update the SelfPrivacy app."
+)
+USERS_MUTATION_EXCEPTIONS = (
+    USERS_REPOSITORY_EXCEPTIONS + USERS_KANIDM_REPOSITORY_EXCEPTIONS
 )
 
 
@@ -120,31 +103,17 @@ class UsersMutations:
                     directmemberof=user.directmemberof,
                     displayname=user.display_name,
                 )
-            except (
-                PasswordIsEmpty,
-                UsernameNotAlphanumeric,
-                UsernameTooLong,
-                KanidmDidNotReturnAdminPassword,
-                KanidmQueryError,
-                DisplaynameTooLong,
-                KanidmCliSubprocessError,
-                FailedToGetValidKanidmToken,
-            ) as error:
-                return await return_failed_mutation_return(
-                    message=error.get_error_message(locale=locale),
-                )
-            except UsernameForbidden as error:
-                return await return_failed_mutation_return(
-                    message=error.get_error_message(locale=locale),
-                    code=409,
-                    username=user.username,
-                )
-            except UserAlreadyExists as error:
-                return await return_failed_mutation_return(
-                    message=error.get_error_message(locale=locale),
-                    code=409,
-                    username=user.username,
-                )
+            except Exception as error:
+                if error in USERS_MUTATION_EXCEPTIONS:
+                    return await return_failed_mutation_return(
+                        message=error.get_error_message(locale=locale),
+                        code=error.code,
+                    )
+                else:
+                    return await return_failed_mutation_return(
+                        message=str(error),
+                        code=400,
+                    )
 
             if user.password:
                 return UserMutationReturn(
@@ -153,7 +122,6 @@ class UsersMutations:
                     code=201,
                     user=await get_user_by_username(user.username),
                 )
-
             return UserMutationReturn(
                 success=True,
                 message=t.translate(text=_("User created"), locale=locale),
@@ -173,30 +141,19 @@ class UsersMutations:
         ):
             try:
                 await delete_user_action(username)
-            except (UserNotFound, UserOrGroupNotFound) as error:
-                return GenericMutationReturn(
-                    success=False,
-                    message=error.get_error_message(locale=locale),
-                    code=404,
-                )
-            except UserIsProtected as error:
-                return GenericMutationReturn(
-                    success=False,
-                    code=400,
-                    message=error.get_error_message(locale=locale),
-                )
-            except (
-                KanidmDidNotReturnAdminPassword,
-                KanidmQueryError,
-                KanidmCliSubprocessError,
-                FailedToGetValidKanidmToken,
-            ) as error:
-                return GenericMutationReturn(
-                    success=False,
-                    code=500,
-                    message=error.get_error_message(locale=locale),
-                )
-
+            except Exception as error:
+                if error in USERS_MUTATION_EXCEPTIONS:
+                    return GenericMutationReturn(
+                        success=False,
+                        message=error.get_error_message(locale=locale),
+                        code=error.code,
+                    )
+                else:
+                    return GenericMutationReturn(
+                        success=False,
+                        message=str(error),
+                        code=400,
+                    )
             return GenericMutationReturn(
                 success=True,
                 message=t.translate(text=_("User deleted"), locale=locale),
@@ -223,25 +180,19 @@ class UsersMutations:
                     directmemberof=user.directmemberof,
                     displayname=user.display_name,
                 )
-            except (
-                PasswordIsEmpty,
-                KanidmDidNotReturnAdminPassword,
-                KanidmQueryError,
-                DisplaynameTooLong,
-                KanidmCliSubprocessError,
-                FailedToGetValidKanidmToken,
-                ApiUsingWrongUserRepository,
-            ) as error:
-                return await return_failed_mutation_return(
-                    message=error.get_error_message(locale=locale),
-                    username=user.username,
-                )
-            except (UserNotFound, UserOrGroupNotFound) as error:
-                return await return_failed_mutation_return(
-                    message=error.get_error_message(locale=locale),
-                    code=404,
-                    username=user.username,
-                )
+            except Exception as error:
+                if error in USERS_MUTATION_EXCEPTIONS:
+                    return await return_failed_mutation_return(
+                        message=error.get_error_message(locale=locale),
+                        username=user.username,
+                        code=error.code,
+                    )
+                else:
+                    return await return_failed_mutation_return(
+                        message=str(error),
+                        username=user.username,
+                        code=400,
+                    )
 
             if user.password:
                 return UserMutationReturn(
@@ -273,26 +224,17 @@ class UsersMutations:
         ):
             try:
                 create_ssh_key_action(ssh_input.username, ssh_input.ssh_key)
-            except KeyAlreadyExists as error:
-                return await return_failed_mutation_return(
-                    message=error.get_error_message(locale=locale),
-                    code=409,
-                )
-            except InvalidPublicKey as error:
-                return await return_failed_mutation_return(
-                    message=error.get_error_message(locale=locale),
-                )
-            except UserNotFound as error:
-                return await return_failed_mutation_return(
-                    message=error.get_error_message(locale=locale),
-                    code=404,
-                )
-            except Exception as error:  # TODO why?
-                return await return_failed_mutation_return(
-                    message=str(error),
-                    code=500,
-                )
-
+            except Exception as error:
+                if error in USERS_MUTATION_EXCEPTIONS:
+                    return await return_failed_mutation_return(
+                        message=error.get_error_message(locale=locale),
+                        code=error.code,
+                    )
+                else:
+                    return await return_failed_mutation_return(
+                        message=str(error),
+                        code=500,
+                    )
             return UserMutationReturn(
                 success=True,
                 message=t.translate(
@@ -317,18 +259,19 @@ class UsersMutations:
         ):
             try:
                 remove_ssh_key_action(ssh_input.username, ssh_input.ssh_key)
-            except (KeyNotFound, UserNotFound) as error:
-                return await return_failed_mutation_return(
-                    message=error.get_error_message(locale=locale),
-                    code=404,
-                )
-            except Exception as error:  # TODO why?
-                return UserMutationReturn(
-                    success=False,
-                    message=str(error),
-                    code=500,
-                )
-
+            except Exception as error:
+                if error in USERS_MUTATION_EXCEPTIONS:
+                    return UserMutationReturn(
+                        success=False,
+                        message=error.get_error_message(locale=locale),
+                        code=error.code,
+                    )
+                else:
+                    return UserMutationReturn(
+                        success=False,
+                        message=str(error),
+                        code=500,
+                    )
             return UserMutationReturn(
                 success=True,
                 message=t.translate(
@@ -354,34 +297,19 @@ class UsersMutations:
                 password_reset_link = await generate_password_reset_link_action(
                     username=username
                 )
-            except (UserNotFound, UserOrGroupNotFound) as error:
-                return PasswordResetLinkReturn(
-                    success=False,
-                    message=error.get_error_message(locale=locale),
-                    code=404,
-                )
-            except UserIsProtected as error:
-                return PasswordResetLinkReturn(
-                    success=False,
-                    message=error.get_error_message(locale=locale),
-                    code=400,
-                )
-            except (
-                NoPasswordResetLinkFoundInResponse,
-                KanidmDidNotReturnAdminPassword,
-                KanidmReturnUnknownResponseType,
-                KanidmReturnEmptyResponse,
-                KanidmQueryError,
-                KanidmCliSubprocessError,
-                FailedToGetValidKanidmToken,
-                ApiUsingWrongUserRepository,
-            ) as error:
-                return PasswordResetLinkReturn(
-                    success=False,
-                    code=500,
-                    message=error.get_error_message(locale=locale),
-                )
-
+            except Exception as error:
+                if error in USERS_MUTATION_EXCEPTIONS:
+                    return PasswordResetLinkReturn(
+                        success=False,
+                        message=error.get_error_message(locale=locale),
+                        code=error.code,
+                    )
+                else:
+                    return PasswordResetLinkReturn(
+                        success=False,
+                        message=str(error),
+                        code=400,
+                    )
             return PasswordResetLinkReturn(
                 success=True,
                 message=t.translate(text=_("Link successfully created"), locale=locale),

@@ -47,6 +47,8 @@ class ApiUsingWrongUserRepository(Exception):
     API is using a too old or unfinished user repository. Are you debugging?
     """
 
+    code = 500
+
     def __init__(self):
         logger.error(self.get_error_message())
 

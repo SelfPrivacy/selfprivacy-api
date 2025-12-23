@@ -8,33 +8,27 @@ import strawberry
 from opentelemetry import trace
 from strawberry.types import Info
 
+from selfprivacy_api.actions.services import (
+    SERVICES_ACTION_EXCEPTIONS,
+    move_service,
+)
+from selfprivacy_api.graphql import IsAuthenticated
+from selfprivacy_api.graphql.common_types.jobs import job_to_api_job, translate_job
+from selfprivacy_api.graphql.common_types.service import (
+    Service,
+    service_to_graphql_service,
+)
+from selfprivacy_api.graphql.mutations.mutation_interface import (
+    GenericJobMutationReturn,
+    GenericMutationReturn,
+)
+from selfprivacy_api.jobs import JobStatus
+from selfprivacy_api.services import ServiceManager
 from selfprivacy_api.utils import pretty_error
 from selfprivacy_api.utils.localization import (
     TranslateSystemMessage as t,
     get_locale,
 )
-from selfprivacy_api.graphql import IsAuthenticated
-from selfprivacy_api.graphql.common_types.jobs import job_to_api_job
-from selfprivacy_api.jobs import JobStatus
-
-
-from selfprivacy_api.graphql.mutations.mutation_interface import (
-    GenericJobMutationReturn,
-    GenericMutationReturn,
-)
-from selfprivacy_api.graphql.common_types.service import (
-    Service,
-    service_to_graphql_service,
-)
-from selfprivacy_api.graphql.common_types.jobs import translate_job
-
-from selfprivacy_api.actions.services import (
-    move_service,
-    ServiceNotFoundError,
-    VolumeNotFoundError,
-)
-
-from selfprivacy_api.services import ServiceManager
 
 tracer = trace.get_tracer(__name__)
 
@@ -167,10 +161,10 @@ class ServicesMutations:
                         code=404,
                     )
                 service.disable()
-            except Exception as e:
+            except Exception as error:
                 return ServiceMutationReturn(
                     success=False,
-                    message=pretty_error(e),
+                    message=pretty_error(error),
                     code=400,
                 )
             return ServiceMutationReturn(
@@ -277,28 +271,28 @@ class ServicesMutations:
                 )
             try:
                 service.set_configuration(input.configuration)
-                return ServiceMutationReturn(
-                    success=True,
-                    message=t.translate(
-                        text=_("Service configuration updated."), locale=locale
-                    ),
-                    code=200,
-                    service=await service_to_graphql_service(service),
-                )
-            except ValueError as e:
+            except ValueError as error:
                 return ServiceMutationReturn(
                     success=False,
-                    message=e.args[0],
+                    message=error.args[0],
                     code=400,
                     service=await service_to_graphql_service(service),
                 )
-            except Exception as e:
+            except Exception as error:
                 return ServiceMutationReturn(
                     success=False,
-                    message=pretty_error(e),
+                    message=pretty_error(error),
                     code=400,
                     service=await service_to_graphql_service(service),
                 )
+            return ServiceMutationReturn(
+                success=True,
+                message=t.translate(
+                    text=_("Service configuration updated."), locale=locale
+                ),
+                code=200,
+                service=await service_to_graphql_service(service),
+            )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def move_service(
@@ -329,20 +323,20 @@ class ServicesMutations:
 
             try:
                 job = await move_service(input.service_id, input.location)
-
-            except (ServiceNotFoundError, VolumeNotFoundError) as error:
-                return ServiceJobMutationReturn(
-                    success=False,
-                    message=error.get_error_message(locale=locale),
-                    code=404,
-                )
-            except Exception as e:
-                return ServiceJobMutationReturn(
-                    success=False,
-                    message=pretty_error(e),
-                    code=400,
-                    service=await service_to_graphql_service(service),
-                )
+            except Exception as error:
+                if isinstance(error, SERVICES_ACTION_EXCEPTIONS):
+                    return ServiceJobMutationReturn(
+                        success=False,
+                        message=error.get_error_message(locale=locale),
+                        code=error.code,
+                    )
+                else:
+                    return ServiceJobMutationReturn(
+                        success=False,
+                        message=pretty_error(error),
+                        code=400,
+                        service=await service_to_graphql_service(service),
+                    )
 
             if job.status in [JobStatus.CREATED, JobStatus.RUNNING]:
                 return ServiceJobMutationReturn(

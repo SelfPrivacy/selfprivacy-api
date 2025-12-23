@@ -5,8 +5,6 @@ from typing import List, Literal
 
 from selfprivacy_api.utils.localization import (
     DEFAULT_LOCALE,
-)
-from selfprivacy_api.utils.localization import (
     TranslateSystemMessage as t,
 )
 
@@ -27,6 +25,8 @@ class UserNotFound(Exception):
 
 class UserOrGroupNotFound(Exception):
     """User or group not found"""
+
+    code = 404
 
     def __init__(self):
         logger.error(self.get_error_message())
@@ -49,6 +49,8 @@ class UserOrGroupNotFound(Exception):
 
 class UserIsProtected(Exception):
     """User is protected and cannot be deleted or modified"""
+
+    code = 400
 
     def __init__(self, account_type: Literal["root", "primary"]):
         if account_type not in ("root", "primary"):
@@ -74,6 +76,8 @@ class UserIsProtected(Exception):
 
 class UsernameForbidden(Exception):
     """Username is forbidden"""
+
+    code = 409
 
     def __init__(
         self,
@@ -107,6 +111,8 @@ class UsernameForbidden(Exception):
 class UserAlreadyExists(Exception):
     """User already exists"""
 
+    code = 409
+
     def __init__(self):
         logger.error(self.get_error_message())
 
@@ -116,6 +122,8 @@ class UserAlreadyExists(Exception):
 
 class UsernameNotAlphanumeric(Exception):
     """Username must be alphanumeric and start with a letter"""
+
+    code = 400
 
     def __init__(self, regex_pattern: str):
         self.regex_pattern = regex_pattern
@@ -140,6 +148,8 @@ class UsernameNotAlphanumeric(Exception):
 class UsernameTooLong(Exception):
     """Username is too long. Must be less than 32 characters"""
 
+    code = 400
+
     def __init__(self):
         logger.error(self.get_error_message())
 
@@ -153,6 +163,8 @@ class UsernameTooLong(Exception):
 class PasswordIsEmpty(Exception):
     """Password cannot be empty"""
 
+    code = 400
+
     def __init__(self):
         logger.error(self.get_error_message())
 
@@ -163,6 +175,8 @@ class PasswordIsEmpty(Exception):
 class DisplaynameTooLong(Exception):
     """Display name is too long. Must be less than 16 characters"""
 
+    code = 400
+
     def __init__(self):
         logger.error(self.get_error_message())
 
@@ -171,3 +185,16 @@ class DisplaynameTooLong(Exception):
             text=_("Display name is too long. Must be less than 16 characters."),
             locale=locale,
         )
+
+
+USERS_REPOSITORY_EXCEPTIONS = (
+    DisplaynameTooLong,
+    PasswordIsEmpty,
+    UserAlreadyExists,
+    UserIsProtected,
+    UsernameForbidden,
+    UsernameNotAlphanumeric,
+    UsernameTooLong,
+    UserNotFound,
+    UserOrGroupNotFound,
+)

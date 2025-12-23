@@ -7,7 +7,6 @@ import gettext
 from typing import Optional
 
 import strawberry
-from _pytest._code.code import ReprLocals
 from opentelemetry import trace
 from strawberry.types import Info
 

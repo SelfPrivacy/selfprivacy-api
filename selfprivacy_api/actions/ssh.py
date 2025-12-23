@@ -6,14 +6,17 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from selfprivacy_api.utils import WriteUserData, ReadUserData, validate_ssh_public_key
-from selfprivacy_api.utils import ensure_ssh_and_users_fields_exist
+from selfprivacy_api.repositories.users.exceptions import UserNotFound
+from selfprivacy_api.utils import (
+    ReadUserData,
+    WriteUserData,
+    ensure_ssh_and_users_fields_exist,
+    validate_ssh_public_key,
+)
 from selfprivacy_api.utils.localization import (
     DEFAULT_LOCALE,
     TranslateSystemMessage as t,
 )
-
-from selfprivacy_api.repositories.users.exceptions import UserNotFound
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +46,8 @@ class UserdataSshSettings(BaseModel):
 class KeyNotFound(Exception):
     """Key not found"""
 
+    code = 404
+
     def __init__(self):
         logger.error(self.get_error_message())
 
@@ -53,6 +58,8 @@ class KeyNotFound(Exception):
 class KeyAlreadyExists(Exception):
     """Key already exists"""
 
+    code = 409
+
     def __init__(self):
         logger.error(self.get_error_message())
 
@@ -62,6 +69,8 @@ class KeyAlreadyExists(Exception):
 
 class InvalidPublicKey(Exception):
     """Invalid public key"""
+
+    code = 400
 
     def __init__(self):
         logger.error(self.get_error_message())

@@ -21,6 +21,8 @@ KANIDM_BROKE_COMPATIBILITY = (
 class KanidmQueryError(Exception):
     """Error occurred during kanidm query"""
 
+    code = 500
+
     def __init__(
         self,
         endpoint: str,
@@ -68,6 +70,8 @@ class KanidmQueryError(Exception):
 class KanidmReturnEmptyResponse(Exception):
     """Kanidm returned a empty response"""
 
+    code = 500
+
     def __init__(self):
         logger.error(self.get_error_message())
 
@@ -82,6 +86,8 @@ class KanidmReturnEmptyResponse(Exception):
 
 class KanidmReturnUnknownResponseType(Exception):
     """Kanidm returned a unknown response"""
+
+    code = 500
 
     def __init__(self, endpoint: str, method: str, response_data: Any) -> None:
         self.endpoint = endpoint
@@ -120,6 +126,8 @@ class KanidmReturnUnknownResponseType(Exception):
 class KanidmDidNotReturnAdminPassword(Exception):
     """Kanidm didn't return the admin password"""
 
+    code = 500
+
     def __init__(self, command: str, regex_pattern: str, output: Any) -> None:
         self.command = command
         self.regex_pattern = regex_pattern
@@ -155,6 +163,8 @@ class KanidmDidNotReturnAdminPassword(Exception):
 
 class KanidmCliSubprocessError(Exception):
     """An error occurred when using Kanidm cli"""
+
+    code = 500
 
     def __init__(self, command: str, description: str, error: str) -> None:
         self.command = command
@@ -192,6 +202,8 @@ class KanidmCliSubprocessError(Exception):
 class FailedToGetValidKanidmToken(Exception):
     """Kanidm failed to return a valid token"""
 
+    code = 500
+
     def __init__(self):
         logger.error(self.get_error_message())
 
@@ -208,6 +220,8 @@ class FailedToGetValidKanidmToken(Exception):
 
 class NoPasswordResetLinkFoundInResponse(Exception):
     """No password reset link was found in the Kanidm response."""
+
+    code = 500
 
     def __init__(self, endpoint: str, method: str, data: Union[dict, list]):
         self.endpoint = endpoint
@@ -238,3 +252,14 @@ class NoPasswordResetLinkFoundInResponse(Exception):
             ),
             locale=locale,
         )
+
+
+USERS_KANIDM_REPOSITORY_EXCEPTIONS = (
+    FailedToGetValidKanidmToken,
+    KanidmCliSubprocessError,
+    KanidmDidNotReturnAdminPassword,
+    KanidmQueryError,
+    KanidmReturnEmptyResponse,
+    KanidmReturnUnknownResponseType,
+    NoPasswordResetLinkFoundInResponse,
+)
