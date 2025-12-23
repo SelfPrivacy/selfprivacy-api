@@ -16,6 +16,8 @@ logger = logging.getLogger(__name__)
 class UserNotFound(Exception):
     """User not found"""
 
+    code = 404
+
     def __init__(self):
         logger.error(self.get_error_message())
 

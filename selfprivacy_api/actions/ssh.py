@@ -209,3 +209,6 @@ def get_ssh_keys(username: str) -> list:
                 return []
 
     raise UserNotFound()
+
+
+SSH_ACTIONS_EXCEPTIONS = (KeyNotFound, KeyAlreadyExists, InvalidPublicKey)

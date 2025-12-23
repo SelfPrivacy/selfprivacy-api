@@ -9,6 +9,7 @@ from opentelemetry import trace
 from strawberry.types import Info
 
 from selfprivacy_api.actions.ssh import (
+    SSH_ACTIONS_EXCEPTIONS,
     create_ssh_key as create_ssh_key_action,
     remove_ssh_key as remove_ssh_key_action,
 )
@@ -45,7 +46,9 @@ FAILED_TO_SETUP_SSO_PASSWORD_TEXT = _(
     "New password applied an an email password. To use Single Sign On, please update the SelfPrivacy app."
 )
 USERS_MUTATION_EXCEPTIONS = (
-    USERS_REPOSITORY_EXCEPTIONS + USERS_KANIDM_REPOSITORY_EXCEPTIONS
+    USERS_REPOSITORY_EXCEPTIONS
+    + USERS_KANIDM_REPOSITORY_EXCEPTIONS
+    + SSH_ACTIONS_EXCEPTIONS
 )
 
 
@@ -104,7 +107,7 @@ class UsersMutations:
                     displayname=user.display_name,
                 )
             except Exception as error:
-                if error in USERS_MUTATION_EXCEPTIONS:
+                if isinstance(error, USERS_MUTATION_EXCEPTIONS):
                     return await return_failed_mutation_return(
                         message=error.get_error_message(locale=locale),
                         code=error.code,
@@ -142,7 +145,7 @@ class UsersMutations:
             try:
                 await delete_user_action(username)
             except Exception as error:
-                if error in USERS_MUTATION_EXCEPTIONS:
+                if isinstance(error, USERS_MUTATION_EXCEPTIONS):
                     return GenericMutationReturn(
                         success=False,
                         message=error.get_error_message(locale=locale),
@@ -225,7 +228,7 @@ class UsersMutations:
             try:
                 create_ssh_key_action(ssh_input.username, ssh_input.ssh_key)
             except Exception as error:
-                if error in USERS_MUTATION_EXCEPTIONS:
+                if isinstance(error, USERS_MUTATION_EXCEPTIONS):
                     return await return_failed_mutation_return(
                         message=error.get_error_message(locale=locale),
                         code=error.code,
@@ -260,7 +263,7 @@ class UsersMutations:
             try:
                 remove_ssh_key_action(ssh_input.username, ssh_input.ssh_key)
             except Exception as error:
-                if error in USERS_MUTATION_EXCEPTIONS:
+                if isinstance(error, USERS_MUTATION_EXCEPTIONS):
                     return UserMutationReturn(
                         success=False,
                         message=error.get_error_message(locale=locale),
@@ -298,7 +301,7 @@ class UsersMutations:
                     username=username
                 )
             except Exception as error:
-                if error in USERS_MUTATION_EXCEPTIONS:
+                if isinstance(error, USERS_MUTATION_EXCEPTIONS):
                     return PasswordResetLinkReturn(
                         success=False,
                         message=error.get_error_message(locale=locale),

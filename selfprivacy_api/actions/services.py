@@ -77,4 +77,4 @@ async def move_service(service_id: str, volume_name: str) -> Job:
     return job
 
 
-SERVICES_ACTION_EXCEPTIONS = [ServiceNotFoundError, VolumeNotFoundError]
+SERVICES_ACTION_EXCEPTIONS = (ServiceNotFoundError, VolumeNotFoundError)
