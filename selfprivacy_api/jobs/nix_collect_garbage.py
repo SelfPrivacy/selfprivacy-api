@@ -1,17 +1,17 @@
-import logging
 import gettext
-from typing import Any, Tuple, Iterable
+import logging
 import re
 import subprocess
 from textwrap import dedent
+from typing import Any, Iterable, Tuple
 
+from selfprivacy_api.jobs import Job, Jobs, JobStatus
+from selfprivacy_api.models.exception import ApiException
 from selfprivacy_api.utils.huey import huey
 from selfprivacy_api.utils.localization import (
     DEFAULT_LOCALE,
     TranslateSystemMessage as t,
 )
-
-from selfprivacy_api.jobs import JobStatus, Jobs, Job
 from selfprivacy_api.utils.strings import REPORT_IT_TO_SUPPORT_CHATS
 
 logger = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ _ = gettext.gettext
 CLEAR_NIX_STORAGE_COMMAND = ["nix-store", "--gc"]
 
 
-class FailedToFindResult(Exception):
+class FailedToFindResult(ApiException):
     def __init__(self, regex_pattern: str, command: str, data: str):
         self.regex_pattern = regex_pattern
         self.command = command
@@ -54,7 +54,7 @@ class FailedToFindResult(Exception):
         )
 
 
-class ShellException(Exception):
+class ShellException(ApiException):
     """Shell command failed"""
 
     def __init__(self, command: str, output: Any, description: str):

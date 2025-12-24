@@ -12,6 +12,7 @@ from selfprivacy_api.actions.email_passwords import (
     update_legacy_email_password_hash,
 )
 from selfprivacy_api.actions.ssh import get_ssh_keys
+from selfprivacy_api.models.exception import ApiException
 from selfprivacy_api.models.group import Group, get_default_grops
 from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
 from selfprivacy_api.repositories.users import ACTIVE_USERS_PROVIDER
@@ -42,7 +43,7 @@ logger = logging.getLogger(__name__)
 _ = gettext.gettext
 
 
-class ApiUsingWrongUserRepository(Exception):
+class ApiUsingWrongUserRepository(ApiException):
     """
     API is using a too old or unfinished user repository. Are you debugging?
     """

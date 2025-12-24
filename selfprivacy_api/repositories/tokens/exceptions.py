@@ -2,6 +2,7 @@ import gettext
 import logging
 from textwrap import dedent
 
+from selfprivacy_api.models.exception import ApiException
 from selfprivacy_api.utils.localization import (
     DEFAULT_LOCALE,
     TranslateSystemMessage as t,
@@ -13,7 +14,7 @@ logger = logging.getLogger(__name__)
 _ = gettext.gettext
 
 
-class TokenNotFound(Exception):
+class TokenNotFound(ApiException):
     code = 404
 
     def __init__(self):
@@ -38,7 +39,7 @@ class TokenNotFound(Exception):
         )
 
 
-class RecoveryKeyNotFound(Exception):
+class RecoveryKeyNotFound(ApiException):
     code = 404
 
     def __init__(self):
@@ -63,7 +64,7 @@ class RecoveryKeyNotFound(Exception):
         )
 
 
-class InvalidMnemonic(Exception):
+class InvalidMnemonic(ApiException):
     code = 400
 
     def __init__(self):
@@ -78,7 +79,7 @@ class InvalidMnemonic(Exception):
         }
 
 
-class NewDeviceKeyNotFound(Exception):
+class NewDeviceKeyNotFound(ApiException):
     code = 404
 
     def __init__(self):

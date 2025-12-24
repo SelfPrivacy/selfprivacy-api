@@ -13,6 +13,7 @@ from mnemonic import Mnemonic
 from opentelemetry import trace
 from pydantic import BaseModel
 
+from selfprivacy_api.models.exception import ApiException
 from selfprivacy_api.repositories.tokens import ACTIVE_TOKEN_PROVIDER
 from selfprivacy_api.repositories.tokens.exceptions import TokenNotFound
 from selfprivacy_api.utils.localization import (
@@ -67,7 +68,7 @@ def is_token_valid(token) -> bool:
     return ACTIVE_TOKEN_PROVIDER.is_token_valid(token)
 
 
-class CannotDeleteCallerException(Exception):
+class CannotDeleteCallerException(ApiException):
     code = 400
 
     def __init__(self):
@@ -142,7 +143,7 @@ def get_api_recovery_token_status() -> RecoveryTokenStatus:
     )
 
 
-class ExpirationDateInThePast(Exception):
+class ExpirationDateInThePast(ApiException):
     code = 400
 
     def __init__(self):
@@ -163,7 +164,7 @@ class ExpirationDateInThePast(Exception):
         )
 
 
-class InvalidUsesLeft(Exception):
+class InvalidUsesLeft(ApiException):
     code = 400
 
     def __init__(self):
@@ -231,10 +232,3 @@ def use_new_device_auth_token(mnemonic_phrase, name) -> str:
     """
     token = ACTIVE_TOKEN_PROVIDER.use_mnemonic_new_device_key(mnemonic_phrase, name)
     return token.token
-
-
-API_TOKENS_ACTION_EXCEPTIONS = (
-    InvalidUsesLeft,
-    ExpirationDateInThePast,
-    CannotDeleteCallerException,
-)

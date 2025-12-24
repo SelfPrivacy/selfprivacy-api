@@ -2,6 +2,7 @@ import gettext
 import logging
 
 from selfprivacy_api.jobs import Job, Jobs
+from selfprivacy_api.models.exception import ApiException
 from selfprivacy_api.services import ServiceManager
 from selfprivacy_api.services.tasks import move_service as move_service_task
 from selfprivacy_api.utils.block_devices import BlockDevices
@@ -16,7 +17,7 @@ logger = logging.getLogger(__name__)
 _ = gettext.gettext
 
 
-class ServiceNotFoundError(Exception):
+class ServiceNotFoundError(ApiException):
     code = 404
 
     def __init__(self, service_id: str):
@@ -34,7 +35,7 @@ class ServiceNotFoundError(Exception):
         }
 
 
-class VolumeNotFoundError(Exception):
+class VolumeNotFoundError(ApiException):
     code = 404
 
     def __init__(self, volume_name: str):
@@ -75,6 +76,3 @@ async def move_service(service_id: str, volume_name: str) -> Job:
 
     move_service_task(service, volume, job)
     return job
-
-
-SERVICES_ACTION_EXCEPTIONS = (ServiceNotFoundError, VolumeNotFoundError)

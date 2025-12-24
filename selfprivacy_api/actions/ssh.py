@@ -6,6 +6,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
+from selfprivacy_api.models.exception import ApiException
 from selfprivacy_api.repositories.users.exceptions import UserNotFound
 from selfprivacy_api.utils import (
     ReadUserData,
@@ -43,7 +44,7 @@ class UserdataSshSettings(BaseModel):
     rootKeys: list[str] = []
 
 
-class KeyNotFound(Exception):
+class KeyNotFound(ApiException):
     """Key not found"""
 
     code = 404
@@ -55,7 +56,7 @@ class KeyNotFound(Exception):
         return t.translate(text=_("Key not found"), locale=locale)
 
 
-class KeyAlreadyExists(Exception):
+class KeyAlreadyExists(ApiException):
     """Key already exists"""
 
     code = 409
@@ -67,7 +68,7 @@ class KeyAlreadyExists(Exception):
         return t.translate(text=_("Key already exists"), locale=locale)
 
 
-class InvalidPublicKey(Exception):
+class InvalidPublicKey(ApiException):
     """Invalid public key"""
 
     code = 400
@@ -209,6 +210,3 @@ def get_ssh_keys(username: str) -> list:
                 return []
 
     raise UserNotFound()
-
-
-SSH_ACTIONS_EXCEPTIONS = (KeyNotFound, KeyAlreadyExists, InvalidPublicKey)

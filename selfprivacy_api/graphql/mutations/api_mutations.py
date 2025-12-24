@@ -11,7 +11,6 @@ from opentelemetry import trace
 from strawberry.types import Info
 
 from selfprivacy_api.actions.api_tokens import (
-    API_TOKENS_ACTION_EXCEPTIONS,
     delete_api_token,
     delete_new_device_auth_token,
     get_new_api_recovery_key,
@@ -25,8 +24,8 @@ from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericMutationReturn,
     MutationReturnInterface,
 )
+from selfprivacy_api.models.exception import ApiException
 from selfprivacy_api.repositories.tokens.exceptions import (
-    TOKEN_EXCEPTIONS,
     TokenNotFound,
 )
 from selfprivacy_api.utils.localization import (
@@ -37,8 +36,6 @@ from selfprivacy_api.utils.localization import (
 _ = gettext.gettext
 
 tracer = trace.get_tracer(__name__)
-
-API_MUTATION_EXCEPTIONS = API_TOKENS_ACTION_EXCEPTIONS + TOKEN_EXCEPTIONS
 
 
 @strawberry.type
@@ -102,7 +99,7 @@ class ApiMutations:
             try:
                 key = get_new_api_recovery_key(limits.expiration_date, limits.uses)
             except Exception as error:
-                if error in API_MUTATION_EXCEPTIONS:
+                if isinstance(error, ApiException):
                     return ApiKeyMutationReturn(
                         success=False,
                         message=error.get_error_message(locale=locale),
@@ -139,7 +136,7 @@ class ApiMutations:
             try:
                 token = use_mnemonic_recovery_token(input.key, input.deviceName)
             except Exception as error:
-                if isinstance(error, API_MUTATION_EXCEPTIONS):
+                if isinstance(error, ApiException):
                     return DeviceApiTokenMutationReturn(
                         success=False,
                         message=error.get_error_message(locale=locale),
@@ -183,7 +180,7 @@ class ApiMutations:
             try:
                 new_token = refresh_api_token(token_string)
             except Exception as error:
-                if isinstance(error, API_MUTATION_EXCEPTIONS):
+                if isinstance(error, ApiException):
                     return DeviceApiTokenMutationReturn(
                         success=False,
                         message=error.get_error_message(locale=locale),
@@ -223,7 +220,7 @@ class ApiMutations:
             try:
                 delete_api_token(self_token, device)
             except Exception as error:
-                if isinstance(error, API_MUTATION_EXCEPTIONS):
+                if isinstance(error, ApiException):
                     return GenericMutationReturn(
                         success=False,
                         message=error.get_error_message(locale=locale),
@@ -284,7 +281,7 @@ class ApiMutations:
             try:
                 token = use_new_device_auth_token(input.key, input.deviceName)
             except Exception as error:
-                if isinstance(error, API_MUTATION_EXCEPTIONS):
+                if isinstance(error, ApiException):
                     return DeviceApiTokenMutationReturn(
                         success=False,
                         message=error.get_error_message(locale=locale),

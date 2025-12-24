@@ -3,6 +3,7 @@ import logging
 from textwrap import dedent
 from typing import Any, Optional, Union
 
+from selfprivacy_api.models.exception import ApiException
 from selfprivacy_api.utils.localization import (
     DEFAULT_LOCALE,
     TranslateSystemMessage as t,
@@ -18,7 +19,7 @@ KANIDM_BROKE_COMPATIBILITY = (
 )
 
 
-class KanidmQueryError(Exception):
+class KanidmQueryError(ApiException):
     """Error occurred during kanidm query"""
 
     code = 500
@@ -67,7 +68,7 @@ class KanidmQueryError(Exception):
         )
 
 
-class KanidmReturnEmptyResponse(Exception):
+class KanidmReturnEmptyResponse(ApiException):
     """Kanidm returned a empty response"""
 
     code = 500
@@ -84,7 +85,7 @@ class KanidmReturnEmptyResponse(Exception):
         }
 
 
-class KanidmReturnUnknownResponseType(Exception):
+class KanidmReturnUnknownResponseType(ApiException):
     """Kanidm returned a unknown response"""
 
     code = 500
@@ -123,7 +124,7 @@ class KanidmReturnUnknownResponseType(Exception):
         )
 
 
-class KanidmDidNotReturnAdminPassword(Exception):
+class KanidmDidNotReturnAdminPassword(ApiException):
     """Kanidm didn't return the admin password"""
 
     code = 500
@@ -161,7 +162,7 @@ class KanidmDidNotReturnAdminPassword(Exception):
         )
 
 
-class KanidmCliSubprocessError(Exception):
+class KanidmCliSubprocessError(ApiException):
     """An error occurred when using Kanidm cli"""
 
     code = 500
@@ -199,7 +200,7 @@ class KanidmCliSubprocessError(Exception):
         )
 
 
-class FailedToGetValidKanidmToken(Exception):
+class FailedToGetValidKanidmToken(ApiException):
     """Kanidm failed to return a valid token"""
 
     code = 500
@@ -218,7 +219,7 @@ class FailedToGetValidKanidmToken(Exception):
         }
 
 
-class NoPasswordResetLinkFoundInResponse(Exception):
+class NoPasswordResetLinkFoundInResponse(ApiException):
     """No password reset link was found in the Kanidm response."""
 
     code = 500
@@ -252,14 +253,3 @@ class NoPasswordResetLinkFoundInResponse(Exception):
             ),
             locale=locale,
         )
-
-
-USERS_KANIDM_REPOSITORY_EXCEPTIONS = (
-    FailedToGetValidKanidmToken,
-    KanidmCliSubprocessError,
-    KanidmDidNotReturnAdminPassword,
-    KanidmQueryError,
-    KanidmReturnEmptyResponse,
-    KanidmReturnUnknownResponseType,
-    NoPasswordResetLinkFoundInResponse,
-)

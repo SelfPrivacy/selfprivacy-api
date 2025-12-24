@@ -3,6 +3,7 @@ import logging
 from textwrap import dedent
 from typing import List, Literal
 
+from selfprivacy_api.models.exception import ApiException
 from selfprivacy_api.utils.localization import (
     DEFAULT_LOCALE,
     TranslateSystemMessage as t,
@@ -13,7 +14,7 @@ _ = gettext.gettext
 logger = logging.getLogger(__name__)
 
 
-class UserNotFound(Exception):
+class UserNotFound(ApiException):
     """User not found"""
 
     code = 404
@@ -25,7 +26,7 @@ class UserNotFound(Exception):
         return t.translate(text=_("User not found"), locale=locale)
 
 
-class UserOrGroupNotFound(Exception):
+class UserOrGroupNotFound(ApiException):
     """User or group not found"""
 
     code = 404
@@ -49,7 +50,7 @@ class UserOrGroupNotFound(Exception):
         )
 
 
-class UserIsProtected(Exception):
+class UserIsProtected(ApiException):
     """User is protected and cannot be deleted or modified"""
 
     code = 400
@@ -76,7 +77,7 @@ class UserIsProtected(Exception):
         )
 
 
-class UsernameForbidden(Exception):
+class UsernameForbidden(ApiException):
     """Username is forbidden"""
 
     code = 409
@@ -110,7 +111,7 @@ class UsernameForbidden(Exception):
         )
 
 
-class UserAlreadyExists(Exception):
+class UserAlreadyExists(ApiException):
     """User already exists"""
 
     code = 409
@@ -122,7 +123,7 @@ class UserAlreadyExists(Exception):
         return t.translate(text=_("User already exists"), locale=locale)
 
 
-class UsernameNotAlphanumeric(Exception):
+class UsernameNotAlphanumeric(ApiException):
     """Username must be alphanumeric and start with a letter"""
 
     code = 400
@@ -147,7 +148,7 @@ class UsernameNotAlphanumeric(Exception):
         )
 
 
-class UsernameTooLong(Exception):
+class UsernameTooLong(ApiException):
     """Username is too long. Must be less than 32 characters"""
 
     code = 400
@@ -162,7 +163,7 @@ class UsernameTooLong(Exception):
         )
 
 
-class PasswordIsEmpty(Exception):
+class PasswordIsEmpty(ApiException):
     """Password cannot be empty"""
 
     code = 400
@@ -174,7 +175,7 @@ class PasswordIsEmpty(Exception):
         return t.translate(text=_("Password cannot be empty."), locale=locale)
 
 
-class DisplaynameTooLong(Exception):
+class DisplaynameTooLong(ApiException):
     """Display name is too long. Must be less than 16 characters"""
 
     code = 400
@@ -187,16 +188,3 @@ class DisplaynameTooLong(Exception):
             text=_("Display name is too long. Must be less than 16 characters."),
             locale=locale,
         )
-
-
-USERS_REPOSITORY_EXCEPTIONS = (
-    DisplaynameTooLong,
-    PasswordIsEmpty,
-    UserAlreadyExists,
-    UserIsProtected,
-    UsernameForbidden,
-    UsernameNotAlphanumeric,
-    UsernameTooLong,
-    UserNotFound,
-    UserOrGroupNotFound,
-)

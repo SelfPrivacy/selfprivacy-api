@@ -4,23 +4,22 @@ import gettext
 import logging
 import subprocess
 from textwrap import dedent
+from typing import Any, Optional
+
 import pytz
-from typing import Optional, Any
 from pydantic import BaseModel
 
-from selfprivacy_api.jobs import Job, JobStatus, Jobs
+from selfprivacy_api.graphql.queries.providers import DnsProvider
+from selfprivacy_api.jobs import Job, Jobs, JobStatus
 from selfprivacy_api.jobs.upgrade_system import rebuild_system_task
-
-from selfprivacy_api.utils.strings import REPORT_IT_TO_SUPPORT_CHATS
-from selfprivacy_api.utils.systemd import systemd_proxy, start_unit
-from selfprivacy_api.utils import WriteUserData, ReadUserData
-from selfprivacy_api.utils import UserDataFiles
+from selfprivacy_api.models.exception import ApiException
+from selfprivacy_api.utils import ReadUserData, UserDataFiles, WriteUserData
 from selfprivacy_api.utils.localization import (
     DEFAULT_LOCALE,
     TranslateSystemMessage as t,
 )
-
-from selfprivacy_api.graphql.queries.providers import DnsProvider
+from selfprivacy_api.utils.strings import REPORT_IT_TO_SUPPORT_CHATS
+from selfprivacy_api.utils.systemd import start_unit, systemd_proxy
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +34,7 @@ def get_timezone() -> str:
         return "Etc/UTC"
 
 
-class InvalidTimezone(Exception):
+class InvalidTimezone(ApiException):
     """Invalid timezone"""
 
     pass
@@ -89,7 +88,7 @@ def set_auto_upgrade_settings(
             user_data["autoUpgrade"]["allowReboot"] = allowReboot
 
 
-class ShellException(Exception):
+class ShellException(ApiException):
     """Shell command failed"""
 
     def __init__(self, command: str, output: Any, description: str):
