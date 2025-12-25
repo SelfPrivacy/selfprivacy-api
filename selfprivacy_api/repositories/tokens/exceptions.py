@@ -65,8 +65,6 @@ class RecoveryKeyNotFound(ApiException):
 
 
 class InvalidMnemonic(ApiException):
-    code = 400
-
     def __init__(self):
         logger.error(self.get_error_message())
 

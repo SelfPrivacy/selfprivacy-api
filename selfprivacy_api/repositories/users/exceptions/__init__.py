@@ -19,8 +19,9 @@ class UserNotFound(ApiException):
 
     code = 404
 
-    def __init__(self):
-        logger.error(self.get_error_message())
+    def __init__(self, log: bool = True):
+        if log:
+            logger.error(self.get_error_message())
 
     def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
         return t.translate(text=_("User not found"), locale=locale)
@@ -52,8 +53,6 @@ class UserOrGroupNotFound(ApiException):
 
 class UserIsProtected(ApiException):
     """User is protected and cannot be deleted or modified"""
-
-    code = 400
 
     def __init__(self, account_type: Literal["root", "primary"]):
         if account_type not in ("root", "primary"):
@@ -116,8 +115,9 @@ class UserAlreadyExists(ApiException):
 
     code = 409
 
-    def __init__(self):
-        logger.error(self.get_error_message())
+    def __init__(self, log: bool = True):
+        if log:
+            logger.error(self.get_error_message())
 
     def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
         return t.translate(text=_("User already exists"), locale=locale)
@@ -125,8 +125,6 @@ class UserAlreadyExists(ApiException):
 
 class UsernameNotAlphanumeric(ApiException):
     """Username must be alphanumeric and start with a letter"""
-
-    code = 400
 
     def __init__(self, regex_pattern: str):
         self.regex_pattern = regex_pattern
@@ -151,8 +149,6 @@ class UsernameNotAlphanumeric(ApiException):
 class UsernameTooLong(ApiException):
     """Username is too long. Must be less than 32 characters"""
 
-    code = 400
-
     def __init__(self):
         logger.error(self.get_error_message())
 
@@ -166,8 +162,6 @@ class UsernameTooLong(ApiException):
 class PasswordIsEmpty(ApiException):
     """Password cannot be empty"""
 
-    code = 400
-
     def __init__(self):
         logger.error(self.get_error_message())
 
@@ -177,8 +171,6 @@ class PasswordIsEmpty(ApiException):
 
 class DisplaynameTooLong(ApiException):
     """Display name is too long. Must be less than 16 characters"""
-
-    code = 400
 
     def __init__(self):
         logger.error(self.get_error_message())

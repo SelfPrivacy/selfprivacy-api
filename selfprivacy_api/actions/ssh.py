@@ -71,8 +71,6 @@ class KeyAlreadyExists(ApiException):
 class InvalidPublicKey(ApiException):
     """Invalid public key"""
 
-    code = 400
-
     def __init__(self):
         logger.error(self.get_error_message())
 
@@ -209,4 +207,4 @@ def get_ssh_keys(username: str) -> list:
                     return user["sshKeys"]
                 return []
 
-    raise UserNotFound()
+    raise UserNotFound(log=False)

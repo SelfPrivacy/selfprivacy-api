@@ -105,7 +105,7 @@ class KanidmReturnUnknownResponseType(ApiException):
                         """
                         Something is wrong with the user management program Kanidm.
                         Kanidm returned unknown type response.
-                        There may have been a Kanidm update that broke compatibility.
+                        %(maybe_kanidm_broke_compatibility)s
                         %(REPORT_IT_TO_SUPPORT_CHATS)s
                         Endpoint %(endpoint)s
                         Method: %(method)s
@@ -119,6 +119,7 @@ class KanidmReturnUnknownResponseType(ApiException):
                 "endpoint": self.endpoint,
                 "method": self.method,
                 "response": self.response_data,
+                "maybe_kanidm_broke_compatibility": KANIDM_BROKE_COMPATIBILITY,
                 "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
             }
         )

@@ -57,6 +57,8 @@ class FailedToFindResult(ApiException):
 class ShellException(ApiException):
     """Shell command failed"""
 
+    code = 500
+
     def __init__(self, command: str, output: Any, description: str):
         self.command = command
         self.description = description

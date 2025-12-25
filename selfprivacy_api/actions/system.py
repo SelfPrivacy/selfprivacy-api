@@ -37,13 +37,32 @@ def get_timezone() -> str:
 class InvalidTimezone(ApiException):
     """Invalid timezone"""
 
-    pass
+    def __init__(self, timezone: str):
+        self.timezone = timezone
+
+        logging.error(self.get_error_message())
+
+    def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
+        return t.translate(
+            text=_(
+                dedent(
+                    """
+                    Invalid timezone: %(timezone)s
+                    Timezone not in pytz.all_timezones.
+                    List of available timezones:
+                    https://data.iana.org/time-zones/data/zone.tab
+                    """
+                )
+            )
+            % {"timezone": self.timezone},
+            locale=locale,
+        )
 
 
 def change_timezone(timezone: str) -> None:
     """Change the timezone of the server"""
     if timezone not in pytz.all_timezones:
-        raise InvalidTimezone(f"Invalid timezone: {timezone}")
+        raise InvalidTimezone(timezone=timezone)
     with WriteUserData() as user_data:
         user_data["timezone"] = timezone
 

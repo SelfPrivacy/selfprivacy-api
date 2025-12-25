@@ -69,7 +69,6 @@ def is_token_valid(token) -> bool:
 
 
 class CannotDeleteCallerException(ApiException):
-    code = 400
 
     def __init__(self):
         logger.error(self.get_error_message())
@@ -144,7 +143,6 @@ def get_api_recovery_token_status() -> RecoveryTokenStatus:
 
 
 class ExpirationDateInThePast(ApiException):
-    code = 400
 
     def __init__(self):
         logger.error(self.get_error_message())
@@ -165,8 +163,6 @@ class ExpirationDateInThePast(ApiException):
 
 
 class InvalidUsesLeft(ApiException):
-    code = 400
-
     def __init__(self):
         logger.error(self.get_error_message())
 

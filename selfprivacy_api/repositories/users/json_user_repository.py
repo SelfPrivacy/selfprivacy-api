@@ -80,9 +80,9 @@ class JsonUserRepository(AbstractUserRepository):
         with ReadUserData() as user_data:
             ensure_ssh_and_users_fields_exist(user_data)
             if username == user_data.get("username", None):
-                raise UserAlreadyExists
+                raise UserAlreadyExists(log=False)
             if username in [user["username"] for user in user_data["users"]]:
-                raise UserAlreadyExists
+                raise UserAlreadyExists(log=False)
 
         with WriteUserData() as user_data:
             ensure_ssh_and_users_fields_exist(user_data)
@@ -107,7 +107,7 @@ class JsonUserRepository(AbstractUserRepository):
                     user_data["users"].remove(data_user)
                     break
             else:
-                raise UserNotFound
+                raise UserNotFound(log=False)
 
     @staticmethod
     async def update_user(
