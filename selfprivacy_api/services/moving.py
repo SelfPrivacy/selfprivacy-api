@@ -6,12 +6,11 @@ import shutil
 from typing import List
 
 from selfprivacy_api.jobs import Job, report_progress
-from selfprivacy_api.models.exception import ApiException
 from selfprivacy_api.services.owned_path import Bind
 from selfprivacy_api.utils.block_devices import BlockDevice
 
 
-class MoveError(ApiException):
+class MoveError(Exception):
     """Move of the data has failed"""
 
 

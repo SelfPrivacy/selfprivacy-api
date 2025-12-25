@@ -7,7 +7,6 @@ from os.path import exists
 
 from pydantic import BaseModel
 
-from selfprivacy_api.models.exception import ApiException
 from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
 
 logger = logging.getLogger(__name__)
@@ -16,7 +15,7 @@ logger = logging.getLogger(__name__)
 VOLUMES_PATH = "/volumes"
 
 
-class BindError(ApiException):
+class BindError(Exception):
     pass
 
 

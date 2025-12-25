@@ -2,8 +2,6 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from selfprivacy_api.utils import get_domain
-
 
 class Group(BaseModel):
     """
