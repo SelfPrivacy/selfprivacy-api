@@ -2,19 +2,18 @@
 # pylint: disable=unused-argument
 import pytest
 
+from selfprivacy_api.repositories.users.json_user_repository import JsonUserRepository
+from selfprivacy_api.utils import WriteUserData
 from tests.common import (
     generate_users_query,
     read_json,
 )
-from selfprivacy_api.utils import WriteUserData
 from tests.test_graphql.common import (
     assert_empty,
     assert_errorcode,
+    assert_ok,
     get_data,
 )
-from selfprivacy_api.repositories.users.json_user_repository import JsonUserRepository
-
-from tests.test_graphql.common import assert_ok
 
 invalid_usernames = [
     "messagebus",
@@ -505,13 +504,14 @@ def test_graphql_add_existing_user(authorized_client, one_user, use_json_reposit
     assert_errorcode(output, code=409)
 
 
-def test_graphql_add_user_when_no_admin_defined(
-    authorized_client, no_users_no_admin_nobody, use_json_repository
-):
-    output = api_add_user(authorized_client, "tester", password="12345678")
-
-    assert_errorcode(output, code=400)
-    assert output["user"] is None
+# Linked to branch nhnn/inex/allow-no-main-username-nixos-25.11
+#
+# def test_graphql_add_user_when_no_admin_defined(
+#     authorized_client, no_users_no_admin_nobody, use_json_repository
+# ):
+#     output = api_add_user(authorized_client, "tester", password="12345678")
+#     assert_errorcode(output, code=400)
+#     assert output["user"] is None
 
 
 def test_graphql_add_long_username(
@@ -799,15 +799,17 @@ def test_graphql_get_root_user_no_primary_user(
     assert user["sshKeys"] == ["ssh-ed25519 KEY test@pc"]
 
 
-def test_graphql_add_user_no_primary_user(
-    authorized_client, no_primary_user, mock_subprocess_popen, use_json_repository
-):
-    """Test that creating a user fails gracefully when primary user is not defined"""
-    output = api_add_user(authorized_client, "user3", password="12345678")
+# Linked to branch nhnn/inex/allow-no-main-username-nixos-25.11
+#
+# def test_graphql_add_user_no_primary_user(
+#     authorized_client, no_primary_user, mock_subprocess_popen, use_json_repository
+# ):
+#     """Test that creating a user fails gracefully when primary user is not defined"""
+#     output = api_add_user(authorized_client, "user3", password="12345678")
 
-    # Should fail because admin is not configured
-    assert_errorcode(output, code=400)
-    assert output["user"] is None
+#     # Should fail because admin is not configured
+#     assert_errorcode(output, code=400)
+#     assert output["user"] is None
 
 
 def test_graphql_delete_user_no_primary_user(
