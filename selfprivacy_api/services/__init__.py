@@ -383,11 +383,7 @@ async def get_services(exclude_remote=False) -> list[Service]:
         },
     ) as span:
         if not exclude_remote and path.exists(SP_SUGGESTED_MODULES_PATH):
-            # remote_services = await get_remote_services(ignored_services=service_ids)
-            remote_services = filter(
-                lambda service: service.get_id() not in service_ids,
-                await SuggestedServices.get(),
-            )
+            remote_services = await SuggestedServices.get()
             service_ids += [service.get_id() for service in remote_services]
             span.add_event(
                 "Including remote services",
@@ -416,31 +412,3 @@ async def get_templated_services(ignored_services: list[str]) -> list[Service]:
                 logger.error(f"Failed to load service: {e}")
 
     return templated_services
-
-
-@tracer.start_as_current_span("get_remote_services")
-async def get_remote_services(ignored_services: list[str]) -> list[Service]:
-    services: list[Service] = []
-    if path.exists(SP_SUGGESTED_MODULES_PATH):
-        # It is a file with a JSON array
-        with open(SP_SUGGESTED_MODULES_PATH) as f:
-            suggested_modules = json.load(f)
-        async with asyncio.TaskGroup() as tg:
-            tasks: list[asyncio.Task[TemplatedService]] = []
-            for module in suggested_modules:
-                if module in ignored_services:
-                    continue
-                tasks.append(
-                    tg.create_task(
-                        get_remote_service(
-                            module,
-                            f"git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/{module}",
-                        )
-                    )
-                )
-        for task in tasks:
-            try:
-                services.append(task.result())
-            except Exception as e:
-                logger.error(f"Failed to load remote service: {e}")
-    return services
