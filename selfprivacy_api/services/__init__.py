@@ -375,15 +375,26 @@ async def get_services(exclude_remote=False) -> list[Service]:
     )
     service_ids += [service.get_id() for service in templated_services]
 
-    if not exclude_remote and path.exists(SP_SUGGESTED_MODULES_PATH):
-        # remote_services = await get_remote_services(ignored_services=service_ids)
-        remote_services = filter(
-            lambda service: service.get_id() not in service_ids,
-            await SuggestedServices.get(),
-        )
-        service_ids += [service.get_id() for service in remote_services]
+    with tracer.start_as_current_span(
+        "check_include_remote_services",
+        attributes={
+            "exclude_remote": exclude_remote,
+            "path_exists": path.exists(SP_SUGGESTED_MODULES_PATH),
+        },
+    ) as span:
+        if not exclude_remote and path.exists(SP_SUGGESTED_MODULES_PATH):
+            # remote_services = await get_remote_services(ignored_services=service_ids)
+            remote_services = filter(
+                lambda service: service.get_id() not in service_ids,
+                await SuggestedServices.get(),
+            )
+            service_ids += [service.get_id() for service in remote_services]
+            span.add_event(
+                "Including remote services",
+                attributes={"remote_service_count": len(list(remote_services))},
+            )
 
-        templated_services += remote_services
+            templated_services += remote_services
 
     return hardcoded_services + templated_services
 

@@ -102,7 +102,9 @@ class TemplatedService(Service):
     """Class representing a dynamically loaded service."""
 
     def __init__(self, service_id: str, source_data: str) -> None:
-        with tracer.start_as_current_span("TemplatedService.__init__"):
+        with tracer.start_as_current_span(
+            "TemplatedService.__init__", attributes={"service_id": service_id}
+        ):
             self.definition_data = json.loads(source_data)
             # Check if required fields are present
             if "meta" not in self.definition_data:
