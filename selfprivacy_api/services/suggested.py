@@ -62,20 +62,27 @@ class SuggestedServices:
 
     @staticmethod
     async def get() -> list[TemplatedService]:
-        redis = await RedisPool().get_connection_async()
-        services = []
+        with tracer.start_as_current_span("SuggestedServices.get") as span:
+            redis = await RedisPool().get_connection_async()
+            services = []
 
-        async for key in redis.scan_iter("suggestedservices:*:data"):
-            service_id = key.split("suggestedservices:")[1].split(":data")[0]
+            async for key in redis.scan_iter("suggestedservices:*:data"):
+                service_id = key.split("suggestedservices:")[1].split(":data")[0]
 
-            # If service is already installed - no reason to return newer cached version as it may not represent reality.
-            if exists(join(SP_MODULES_DEFINITIONS_PATH, service_id)):
-                continue
+                # If service is already installed - no reason to return newer cached version as it may not represent reality.
+                if exists(join(SP_MODULES_DEFINITIONS_PATH, service_id)):
+                    span.add_event(
+                        "Skipped suggested service as it is already installed",
+                        attributes={"service_id": service_id},
+                    )
+                    continue
 
-            service_data = await redis.get(key)
+                service_data = await redis.get(key)
 
-            assert service_data is not None
+                assert service_data is not None
 
-            services.append(TemplatedService(service_id, service_data))
+                services.append(TemplatedService(service_id, service_data))
 
-        return services
+            span.set_attribute("suggested_service_count", len(services))
+
+            return services
