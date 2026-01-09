@@ -6,21 +6,19 @@ The only actions on tokens that are accessible from APIs
 import gettext
 import logging
 from datetime import datetime, timezone
-from textwrap import dedent
 from typing import Optional
 
 from mnemonic import Mnemonic
 from opentelemetry import trace
 from pydantic import BaseModel
 
-from selfprivacy_api.models.exception import ApiException
-from selfprivacy_api.repositories.tokens import ACTIVE_TOKEN_PROVIDER
-from selfprivacy_api.repositories.tokens.exceptions import TokenNotFound
-from selfprivacy_api.utils.localization import (
-    DEFAULT_LOCALE,
-    TranslateSystemMessage as t,
+from selfprivacy_api.exceptions.tokens import (
+    CannotDeleteCallerException,
+    ExpirationDateInThePast,
+    InvalidUsesLeft,
+    TokenNotFound,
 )
-from selfprivacy_api.utils.strings import REPORT_IT_TO_SUPPORT_CHATS
+from selfprivacy_api.repositories.tokens import ACTIVE_TOKEN_PROVIDER
 from selfprivacy_api.utils.timeutils import ensure_tz_aware, ensure_tz_aware_strict
 
 _ = gettext.gettext
@@ -66,28 +64,6 @@ def get_api_tokens_with_caller_flag(caller_token: str) -> list[TokenInfoWithIsCa
 def is_token_valid(token) -> bool:
     """Check if token is valid"""
     return ACTIVE_TOKEN_PROVIDER.is_token_valid(token)
-
-
-class CannotDeleteCallerException(ApiException):
-
-    def __init__(self):
-        logger.error(self.get_error_message())
-
-    def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
-        return t.translate(
-            text=_(
-                dedent(
-                    """
-                    It looks like you're trying to remove access for the device you're currently using.
-                    The access token you're trying to delete is active and is being used for this request,
-                    so it cannot be removed.
-                    %(REPORT_IT_TO_SUPPORT_CHATS)s
-                    """
-                )
-            )
-            % {"REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS},
-            locale=locale,
-        )
 
 
 @tracer.start_as_current_span("create_api_token")
@@ -140,34 +116,6 @@ def get_api_recovery_token_status() -> RecoveryTokenStatus:
         expiration=expiry_date,
         uses_left=token.uses_left,
     )
-
-
-class ExpirationDateInThePast(ApiException):
-
-    def __init__(self):
-        logger.error(self.get_error_message())
-
-    def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
-        return t.translate(
-            text=_(
-                dedent(
-                    """
-                    Specified expiration date is in the past. Please provide a future date.
-                    Validation rule: expiration_date must be greater than the current time.
-                    If you believe this is a mistake, there may be a problem with the server's date/time settings.
-                    """
-                )
-            ),
-            locale=locale,
-        )
-
-
-class InvalidUsesLeft(ApiException):
-    def __init__(self):
-        logger.error(self.get_error_message())
-
-    def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
-        return t.translate(text=_("Uses left must be greater than 0."), locale=locale)
 
 
 @tracer.start_as_current_span("get_new_api_recovery_key")

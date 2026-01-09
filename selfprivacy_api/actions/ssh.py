@@ -6,34 +6,22 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from selfprivacy_api.models.exception import ApiException
-from selfprivacy_api.repositories.users.exceptions import UserNotFound
+from selfprivacy_api.exceptions.users import UserNotFound
+from selfprivacy_api.exceptions.users.ssh import (
+    InvalidPublicKey,
+    KeyAlreadyExists,
+    KeyNotFound,
+)
 from selfprivacy_api.utils import (
     ReadUserData,
     WriteUserData,
     ensure_ssh_and_users_fields_exist,
     validate_ssh_public_key,
 )
-from selfprivacy_api.utils.localization import (
-    DEFAULT_LOCALE,
-    TranslateSystemMessage as t,
-)
 
 logger = logging.getLogger(__name__)
 
 _ = gettext.gettext
-
-
-# https://www.openssh.org/specs.html
-VALID_SSH_KEY_TYPES = [
-    "ssh-ed25519",
-    "ecdsa-sha2-nistp256",
-    "ecdsa-sha2-nistp384",
-    "ecdsa-sha2-nistp521",
-    "sk-ssh-ed25519@openssh.com",
-    # OpenSSH supports only P-256 for sk-ecdsa- keys.
-    "sk-ecdsa-sha2-nistp256@openssh.com",
-]
 
 
 class UserdataSshSettings(BaseModel):
@@ -42,43 +30,6 @@ class UserdataSshSettings(BaseModel):
     enable: bool = True
     passwordAuthentication: bool = False
     rootKeys: list[str] = []
-
-
-class KeyNotFound(ApiException):
-    """Key not found"""
-
-    code = 404
-
-    def __init__(self):
-        logger.error(self.get_error_message())
-
-    def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
-        return t.translate(text=_("Key not found"), locale=locale)
-
-
-class KeyAlreadyExists(ApiException):
-    """Key already exists"""
-
-    code = 409
-
-    def __init__(self):
-        logger.error(self.get_error_message())
-
-    def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
-        return t.translate(text=_("Key already exists"), locale=locale)
-
-
-class InvalidPublicKey(ApiException):
-    """Invalid public key"""
-
-    def __init__(self):
-        logger.error(self.get_error_message())
-
-    def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
-        return t.translate(
-            text=_("Invalid key type. Supported key types: "),
-            locale=locale,
-        ) + ", ".join(VALID_SSH_KEY_TYPES)
 
 
 def enable_ssh():

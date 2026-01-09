@@ -12,11 +12,11 @@ from selfprivacy_api.actions.email_passwords import (
     update_legacy_email_password_hash,
 )
 from selfprivacy_api.actions.ssh import get_ssh_keys
-from selfprivacy_api.models.exception import ApiException
-from selfprivacy_api.models.group import Group, get_default_grops
-from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
-from selfprivacy_api.repositories.users import ACTIVE_USERS_PROVIDER
-from selfprivacy_api.repositories.users.exceptions import (
+from selfprivacy_api.exceptions import (
+    PLEASE_UPDATE_APP_TEXT,
+    ApiUsingWrongUserRepository,
+)
+from selfprivacy_api.exceptions.users import (
     DisplaynameTooLong,
     UserAlreadyExists,
     UserIsProtected,
@@ -25,6 +25,9 @@ from selfprivacy_api.repositories.users.exceptions import (
     UsernameTooLong,
     UserNotFound,
 )
+from selfprivacy_api.models.group import Group, get_default_grops
+from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
+from selfprivacy_api.repositories.users import ACTIVE_USERS_PROVIDER
 from selfprivacy_api.repositories.users.json_user_repository import JsonUserRepository
 from selfprivacy_api.repositories.users.kanidm_user_repository import SP_DEFAULT_GROUPS
 from selfprivacy_api.utils import (
@@ -32,32 +35,10 @@ from selfprivacy_api.utils import (
     FORBIDDEN_USERNAMES,
     is_username_forbidden,
 )
-from selfprivacy_api.utils.localization import (
-    DEFAULT_LOCALE,
-    TranslateSystemMessage as t,
-)
-from selfprivacy_api.utils.strings import PLEASE_UPDATE_APP_TEXT
 
 logger = logging.getLogger(__name__)
 
 _ = gettext.gettext
-
-
-class ApiUsingWrongUserRepository(ApiException):
-    """
-    API is using a too old or unfinished user repository. Are you debugging?
-    """
-
-    code = 500
-
-    def __init__(self):
-        logger.error(self.get_error_message())
-
-    def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
-        return t.translate(
-            text=_("API is using a too old or unfinished user repository"),
-            locale=locale,
-        )
 
 
 async def get_users(

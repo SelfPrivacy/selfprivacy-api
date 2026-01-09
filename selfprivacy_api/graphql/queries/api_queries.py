@@ -1,18 +1,20 @@
 """API access status"""
 
 # pylint: disable=too-few-public-methods
+
 import datetime
 import typing
+
 import strawberry
 from opentelemetry import trace
-
 from strawberry.types import Info
+
 from selfprivacy_api.actions.api_tokens import (
-    get_api_tokens_with_caller_flag,
     get_api_recovery_token_status,
+    get_api_tokens_with_caller_flag,
 )
-from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.dependencies import get_api_version as get_api_version_dependency
+from selfprivacy_api.graphql import IsAuthenticated
 
 tracer = trace.get_tracer(__name__)
 

@@ -11,6 +11,7 @@ from strawberry.types import Info
 from selfprivacy_api.actions.services import (
     move_service,
 )
+from selfprivacy_api.exceptions.abstract_exception import AbstractException
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.common_types.jobs import job_to_api_job, translate_job
 from selfprivacy_api.graphql.common_types.service import (
@@ -22,7 +23,6 @@ from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericMutationReturn,
 )
 from selfprivacy_api.jobs import JobStatus
-from selfprivacy_api.models.exception import ApiException
 from selfprivacy_api.services import ServiceManager
 from selfprivacy_api.utils import pretty_error
 from selfprivacy_api.utils.localization import (
@@ -324,7 +324,7 @@ class ServicesMutations:
             try:
                 job = await move_service(input.service_id, input.location)
             except Exception as error:
-                if isinstance(error, ApiException):
+                if isinstance(error, AbstractException):
                     return ServiceJobMutationReturn(
                         success=False,
                         message=error.get_error_message(locale=locale),

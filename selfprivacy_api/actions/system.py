@@ -3,22 +3,16 @@
 import gettext
 import logging
 import subprocess
-from textwrap import dedent
-from typing import Any, Optional
+from typing import Optional
 
 import pytz
 from pydantic import BaseModel
 
+from selfprivacy_api.exceptions.system import InvalidTimezone
 from selfprivacy_api.graphql.queries.providers import DnsProvider
 from selfprivacy_api.jobs import Job, Jobs, JobStatus
 from selfprivacy_api.jobs.upgrade_system import rebuild_system_task
-from selfprivacy_api.models.exception import ApiException
 from selfprivacy_api.utils import ReadUserData, UserDataFiles, WriteUserData
-from selfprivacy_api.utils.localization import (
-    DEFAULT_LOCALE,
-    TranslateSystemMessage as t,
-)
-from selfprivacy_api.utils.strings import REPORT_IT_TO_SUPPORT_CHATS
 from selfprivacy_api.utils.systemd import start_unit, systemd_proxy
 
 logger = logging.getLogger(__name__)
@@ -32,31 +26,6 @@ def get_timezone() -> str:
         if "timezone" in user_data:
             return user_data["timezone"]
         return "Etc/UTC"
-
-
-class InvalidTimezone(ApiException):
-    """Invalid timezone"""
-
-    def __init__(self, timezone: str):
-        self.timezone = timezone
-
-        logging.error(self.get_error_message())
-
-    def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
-        return t.translate(
-            text=_(
-                dedent(
-                    """
-                    Invalid timezone: %(timezone)s
-                    Timezone not in pytz.all_timezones.
-                    List of available timezones:
-                    https://data.iana.org/time-zones/data/zone.tab
-                    """
-                )
-            )
-            % {"timezone": self.timezone},
-            locale=locale,
-        )
 
 
 def change_timezone(timezone: str) -> None:
@@ -105,39 +74,6 @@ def set_auto_upgrade_settings(
             user_data["autoUpgrade"]["enable"] = enable
         if allowReboot is not None:
             user_data["autoUpgrade"]["allowReboot"] = allowReboot
-
-
-class ShellException(ApiException):
-    """Shell command failed"""
-
-    def __init__(self, command: str, output: Any, description: str):
-        self.command = command
-        self.description = description
-        self.output = str(output)
-
-        logging.error(self.get_error_message())
-
-    def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
-        return t.translate(
-            text=_(
-                dedent(
-                    """
-                    Shell command failed.
-                    %(description)s
-                    %(REPORT_IT_TO_SUPPORT_CHATS)s
-                    Executed command: %(command)s
-                    Output: %(output)s
-                    """
-                )
-            )
-            % {
-                "command": self.command,
-                "description": self.description,
-                "output": self.output,
-                "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
-            },
-            locale=locale,
-        )
 
 
 def add_rebuild_job() -> Job:

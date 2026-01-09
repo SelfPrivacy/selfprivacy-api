@@ -3,7 +3,7 @@ import logging
 from textwrap import dedent
 from typing import List, Literal
 
-from selfprivacy_api.models.exception import ApiException
+from selfprivacy_api.exceptions.abstract_exception import AbstractException
 from selfprivacy_api.utils.localization import (
     DEFAULT_LOCALE,
     TranslateSystemMessage as t,
@@ -14,7 +14,7 @@ _ = gettext.gettext
 logger = logging.getLogger(__name__)
 
 
-class UserNotFound(ApiException):
+class UserNotFound(AbstractException):
     """User not found"""
 
     code = 404
@@ -27,7 +27,7 @@ class UserNotFound(ApiException):
         return t.translate(text=_("User not found"), locale=locale)
 
 
-class UserOrGroupNotFound(ApiException):
+class UserOrGroupNotFound(AbstractException):
     """User or group not found"""
 
     code = 404
@@ -51,7 +51,7 @@ class UserOrGroupNotFound(ApiException):
         )
 
 
-class UserIsProtected(ApiException):
+class UserIsProtected(AbstractException):
     """User is protected and cannot be deleted or modified"""
 
     def __init__(self, account_type: Literal["root", "primary"]):
@@ -76,7 +76,7 @@ class UserIsProtected(ApiException):
         )
 
 
-class UsernameForbidden(ApiException):
+class UsernameForbidden(AbstractException):
     """Username is forbidden"""
 
     code = 409
@@ -110,7 +110,7 @@ class UsernameForbidden(ApiException):
         )
 
 
-class UserAlreadyExists(ApiException):
+class UserAlreadyExists(AbstractException):
     """User already exists"""
 
     code = 409
@@ -123,7 +123,7 @@ class UserAlreadyExists(ApiException):
         return t.translate(text=_("User already exists"), locale=locale)
 
 
-class UsernameNotAlphanumeric(ApiException):
+class UsernameNotAlphanumeric(AbstractException):
     """Username must be alphanumeric and start with a letter"""
 
     def __init__(self, regex_pattern: str):
@@ -146,7 +146,7 @@ class UsernameNotAlphanumeric(ApiException):
         )
 
 
-class UsernameTooLong(ApiException):
+class UsernameTooLong(AbstractException):
     """Username is too long. Must be less than 32 characters"""
 
     def __init__(self):
@@ -159,7 +159,7 @@ class UsernameTooLong(ApiException):
         )
 
 
-class PasswordIsEmpty(ApiException):
+class PasswordIsEmpty(AbstractException):
     """Password cannot be empty"""
 
     def __init__(self):
@@ -169,7 +169,7 @@ class PasswordIsEmpty(ApiException):
         return t.translate(text=_("Password cannot be empty."), locale=locale)
 
 
-class DisplaynameTooLong(ApiException):
+class DisplaynameTooLong(AbstractException):
     """Display name is too long. Must be less than 16 characters"""
 
     def __init__(self):
