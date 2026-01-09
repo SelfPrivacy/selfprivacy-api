@@ -26,6 +26,8 @@ REPORT_IT_TO_SUPPORT_CHATS = _(
     )
 )
 
+KANIDM_DESCRIPTION = "Kanidm is the identity and authentication service that manages users and access to system services."
+
 
 class ApiUsingWrongUserRepository(AbstractException):
     """
