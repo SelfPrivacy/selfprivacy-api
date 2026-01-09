@@ -1,16 +1,15 @@
 import logging
-import subprocess
 import re
+import subprocess
 
 from selfprivacy_api.models.kanidm_credential_type import KanidmCredentialType
-
 
 logger = logging.getLogger(__name__)
 
 # TODO: admin token
 
 
-def get_kanidm_minimum_credential_type() -> KanidmCredentialType:
+async def get_kanidm_minimum_credential_type() -> KanidmCredentialType:
     result = subprocess.check_output(
         ["kanidm", "group", "get", "idm_all_persons"],
         stderr=subprocess.STDOUT,
@@ -21,10 +20,12 @@ def get_kanidm_minimum_credential_type() -> KanidmCredentialType:
         if {match.group(1)}:
             return KanidmCredentialType({match.group(1)})
 
-    raise RuntimeError()  # TODO: replace this error after https://git.selfprivacy.org/SelfPrivacy/selfprivacy-rest-api/pulls/196 merge
+    raise RuntimeError()
 
 
-def set_kanidm_minimum_credential_type(minimum_credential_type: KanidmCredentialType):
+async def set_kanidm_minimum_credential_type(
+    minimum_credential_type: KanidmCredentialType,
+):
     result = subprocess.check_output(
         [
             "kanidm",
@@ -32,10 +33,11 @@ def set_kanidm_minimum_credential_type(minimum_credential_type: KanidmCredential
             "account-policy",
             "credential-type-minimum",
             "idm_all_persons",
-            minimum_credential_type,
+            minimum_credential_type.value,
         ],
         stderr=subprocess.STDOUT,
-    ).decode("utf-8", "replace")
+        text=True,
+    )
 
     if "Updated credential type minimum" in result:
         logger.warning(
