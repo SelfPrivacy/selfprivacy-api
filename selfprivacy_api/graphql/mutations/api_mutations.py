@@ -19,14 +19,14 @@ from selfprivacy_api.actions.api_tokens import (
     use_mnemonic_recovery_token,
     use_new_device_auth_token,
 )
+from selfprivacy_api.exceptions.abstract_exception import AbstractException
+from selfprivacy_api.exceptions.tokens import (
+    TokenNotFound,
+)
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericMutationReturn,
     MutationReturnInterface,
-)
-from selfprivacy_api.models.exception import AbstractException
-from selfprivacy_api.repositories.tokens.exceptions import (
-    TokenNotFound,
 )
 from selfprivacy_api.utils.localization import (
     TranslateSystemMessage as t,

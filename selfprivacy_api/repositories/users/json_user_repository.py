@@ -1,16 +1,16 @@
 from typing import Optional
 from uuid import uuid4
 
-from selfprivacy_api.models.group import Group
-from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
-from selfprivacy_api.repositories.users.abstract_user_repository import (
-    AbstractUserRepository,
-)
-from selfprivacy_api.repositories.users.exceptions import (
+from selfprivacy_api.exceptions.users import (
     PasswordIsEmpty,
     UserAlreadyExists,
     UserIsProtected,
     UserNotFound,
+)
+from selfprivacy_api.models.group import Group
+from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
+from selfprivacy_api.repositories.users.abstract_user_repository import (
+    AbstractUserRepository,
 )
 from selfprivacy_api.utils import (
     ReadUserData,

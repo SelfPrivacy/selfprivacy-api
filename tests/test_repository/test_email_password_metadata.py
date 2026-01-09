@@ -3,11 +3,11 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from selfprivacy_api.utils.redis_pool import RedisPool
 from selfprivacy_api.models.email_password_metadata import EmailPasswordData
 from selfprivacy_api.repositories.email_password.email_password_redis_repository import (
     EmailPasswordManager,
 )
+from selfprivacy_api.utils.redis_pool import RedisPool
 
 
 def create_password_metadata() -> EmailPasswordData:

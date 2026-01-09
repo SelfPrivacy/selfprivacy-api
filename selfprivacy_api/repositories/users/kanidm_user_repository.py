@@ -1,18 +1,18 @@
+import logging
+import os
+import re
+import subprocess
 from json import JSONDecodeError
 from typing import Any, Optional, Union
-import subprocess
-import re
-import os
-import logging
+
 import httpx
 
-from selfprivacy_api.models.group import Group, get_default_grops
-from selfprivacy_api.repositories.users.exceptions import (
+from selfprivacy_api.exceptions.users import (
     UserAlreadyExists,
     UserNotFound,
     UserOrGroupNotFound,
 )
-from selfprivacy_api.repositories.users.exceptions.exceptions_kanidm import (
+from selfprivacy_api.exceptions.users.kanidm_repository import (
     FailedToGetValidKanidmToken,
     KanidmCliSubprocessError,
     KanidmDidNotReturnAdminPassword,
@@ -21,14 +21,14 @@ from selfprivacy_api.repositories.users.exceptions.exceptions_kanidm import (
     KanidmReturnUnknownResponseType,
     NoPasswordResetLinkFoundInResponse,
 )
-from selfprivacy_api.services import KANIDM_A_RECORD
-from selfprivacy_api.utils import get_domain, temporary_env_var
-from selfprivacy_api.utils.redis_pool import RedisPool
+from selfprivacy_api.models.group import Group, get_default_grops
 from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
 from selfprivacy_api.repositories.users.abstract_user_repository import (
     AbstractUserRepository,
 )
-
+from selfprivacy_api.services import KANIDM_A_RECORD
+from selfprivacy_api.utils import get_domain, temporary_env_var
+from selfprivacy_api.utils.redis_pool import RedisPool
 
 REDIS_TOKEN_KEY = "kanidm:token"
 
