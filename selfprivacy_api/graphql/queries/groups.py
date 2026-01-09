@@ -5,11 +5,11 @@ from typing import List
 
 import strawberry
 
+from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.common_types.groups import (
     Group,
     get_groups,
 )
-from selfprivacy_api.graphql import IsAuthenticated
 
 
 @strawberry.type

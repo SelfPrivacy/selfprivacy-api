@@ -3,12 +3,12 @@ import logging
 from textwrap import dedent
 from typing import Any, Optional, Union
 
-from selfprivacy_api.models.exception import ApiException
+from selfprivacy_api.exceptions import REPORT_IT_TO_SUPPORT_CHATS
+from selfprivacy_api.exceptions.abstract_exception import AbstractException
 from selfprivacy_api.utils.localization import (
     DEFAULT_LOCALE,
     TranslateSystemMessage as t,
 )
-from selfprivacy_api.utils.strings import REPORT_IT_TO_SUPPORT_CHATS
 
 _ = gettext.gettext
 
@@ -19,7 +19,7 @@ KANIDM_BROKE_COMPATIBILITY = (
 )
 
 
-class KanidmQueryError(ApiException):
+class KanidmQueryError(AbstractException):
     """Error occurred during kanidm query"""
 
     code = 500
@@ -68,7 +68,7 @@ class KanidmQueryError(ApiException):
         )
 
 
-class KanidmReturnEmptyResponse(ApiException):
+class KanidmReturnEmptyResponse(AbstractException):
     """Kanidm returned a empty response"""
 
     code = 500
@@ -85,7 +85,7 @@ class KanidmReturnEmptyResponse(ApiException):
         }
 
 
-class KanidmReturnUnknownResponseType(ApiException):
+class KanidmReturnUnknownResponseType(AbstractException):
     """Kanidm returned a unknown response"""
 
     code = 500
@@ -125,7 +125,7 @@ class KanidmReturnUnknownResponseType(ApiException):
         )
 
 
-class KanidmDidNotReturnAdminPassword(ApiException):
+class KanidmDidNotReturnAdminPassword(AbstractException):
     """Kanidm didn't return the admin password"""
 
     code = 500
@@ -163,7 +163,7 @@ class KanidmDidNotReturnAdminPassword(ApiException):
         )
 
 
-class KanidmCliSubprocessError(ApiException):
+class KanidmCliSubprocessError(AbstractException):
     """An error occurred when using Kanidm cli"""
 
     code = 500
@@ -201,7 +201,7 @@ class KanidmCliSubprocessError(ApiException):
         )
 
 
-class FailedToGetValidKanidmToken(ApiException):
+class FailedToGetValidKanidmToken(AbstractException):
     """Kanidm failed to return a valid token"""
 
     code = 500
@@ -220,7 +220,7 @@ class FailedToGetValidKanidmToken(ApiException):
         }
 
 
-class NoPasswordResetLinkFoundInResponse(ApiException):
+class NoPasswordResetLinkFoundInResponse(AbstractException):
     """No password reset link was found in the Kanidm response."""
 
     code = 500

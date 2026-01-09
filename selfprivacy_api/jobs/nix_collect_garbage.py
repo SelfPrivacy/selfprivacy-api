@@ -3,88 +3,17 @@ import logging
 import re
 import subprocess
 from textwrap import dedent
-from typing import Any, Iterable, Tuple
+from typing import Iterable, Tuple
 
+from selfprivacy_api.exceptions.system import FailedToFindResult, ShellException
 from selfprivacy_api.jobs import Job, Jobs, JobStatus
-from selfprivacy_api.models.exception import ApiException
 from selfprivacy_api.utils.huey import huey
-from selfprivacy_api.utils.localization import (
-    DEFAULT_LOCALE,
-    TranslateSystemMessage as t,
-)
-from selfprivacy_api.utils.strings import REPORT_IT_TO_SUPPORT_CHATS
 
 logger = logging.getLogger(__name__)
 
 _ = gettext.gettext
 
 CLEAR_NIX_STORAGE_COMMAND = ["nix-store", "--gc"]
-
-
-class FailedToFindResult(ApiException):
-    def __init__(self, regex_pattern: str, command: str, data: str):
-        self.regex_pattern = regex_pattern
-        self.command = command
-        self.data = data
-
-        logger.error(self.get_error_message())
-
-    def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
-        return t.translate(
-            text=_(
-                dedent(
-                    """
-                    Garbage collection result was not found.
-                    The code analyzes the last line in the command output using a regular expression.
-                    Simply put, we're just looking for a similar string: "1537 store paths deleted, 339.84 MiB freed".
-                    %(REPORT_IT_TO_SUPPORT_CHATS)s
-                    Command: %(command)s
-                    Used regex pattern: %(regex_pattern)s
-                    Last line: %(last_line)s
-                    """
-                )
-            )
-            % {
-                "command": self.command,
-                "regex_pattern": self.regex_pattern,
-                "last_line": self.data,
-                "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
-            },
-            locale=locale,
-        )
-
-
-class ShellException(ApiException):
-    """Shell command failed"""
-
-    code = 500
-
-    def __init__(self, command: str, output: Any, description: str):
-        self.command = command
-        self.description = description
-        self.output = str(output)
-
-    def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
-        return t.translate(
-            text=_(
-                dedent(
-                    """
-                    Shell command failed.
-                    %(description)s
-                    %(REPORT_IT_TO_SUPPORT_CHATS)s
-                    Executed command: %(command)s
-                    Output: %(output)s
-                    """
-                )
-            )
-            % {
-                "command": self.command,
-                "description": self.description,
-                "output": self.output,
-                "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
-            },
-            locale=locale,
-        )
 
 
 def delete_old_gens_and_return_dead_report() -> str:
@@ -128,6 +57,13 @@ def parse_line(job: Job, line: str) -> Job:
             regex_pattern=regex_pattern,
             data=line,
             command=" ".join(CLEAR_NIX_STORAGE_COMMAND),
+            description=dedent(
+                """
+                Garbage collection result was not found.
+                The code analyzes the last line in the command output using a regular expression.
+                Simply put, we're just looking for a similar string: "1537 store paths deleted, 339.84 MiB freed".
+                """
+            ),
         )
 
     else:

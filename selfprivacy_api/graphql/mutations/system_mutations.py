@@ -2,33 +2,31 @@
 
 # pylint: disable=too-few-public-methods
 
-from typing import Optional
 import gettext
+from typing import Optional
 
 import strawberry
 from opentelemetry import trace
 from strawberry.types import Info
 
-from selfprivacy_api.utils import pretty_error
-from selfprivacy_api.utils.localization import (
-    TranslateSystemMessage as t,
-    get_locale,
-)
-from selfprivacy_api.jobs.nix_collect_garbage import nix_collect_garbage
-
+import selfprivacy_api.actions.ssh as ssh_actions
+import selfprivacy_api.actions.system as system_actions
+from selfprivacy_api.actions.system import set_dns_provider
+from selfprivacy_api.exceptions.system import ShellException
 from selfprivacy_api.graphql import IsAuthenticated
-from selfprivacy_api.graphql.common_types.jobs import job_to_api_job
-from selfprivacy_api.graphql.queries.providers import DnsProvider
-from selfprivacy_api.graphql.common_types.jobs import translate_job
+from selfprivacy_api.graphql.common_types.jobs import job_to_api_job, translate_job
 from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericJobMutationReturn,
     GenericMutationReturn,
     MutationReturnInterface,
 )
-
-import selfprivacy_api.actions.system as system_actions
-import selfprivacy_api.actions.ssh as ssh_actions
-from selfprivacy_api.actions.system import set_dns_provider
+from selfprivacy_api.graphql.queries.providers import DnsProvider
+from selfprivacy_api.jobs.nix_collect_garbage import nix_collect_garbage
+from selfprivacy_api.utils import pretty_error
+from selfprivacy_api.utils.localization import (
+    TranslateSystemMessage as t,
+    get_locale,
+)
 
 tracer = trace.get_tracer(__name__)
 _ = gettext.gettext
@@ -185,7 +183,7 @@ class SystemMutations:
                     code=200,
                     job=translate_job(job=job_to_api_job(job), locale=locale),
                 )
-            except system_actions.ShellException as error:
+            except ShellException as error:
                 return GenericJobMutationReturn(
                     success=False,
                     message=error.get_error_message(locale=locale),
@@ -204,7 +202,7 @@ class SystemMutations:
                     message="Starting system rollback",
                     code=200,
                 )
-            except system_actions.ShellException as error:
+            except ShellException as error:
                 return GenericMutationReturn(
                     success=False,
                     message=error.get_error_message(locale=locale),
@@ -226,7 +224,7 @@ class SystemMutations:
                     code=200,
                     job=translate_job(job=job_to_api_job(job), locale=locale),
                 )
-            except system_actions.ShellException as error:
+            except ShellException as error:
                 return GenericJobMutationReturn(
                     success=False,
                     message=error.get_error_message(locale=locale),
@@ -244,7 +242,7 @@ class SystemMutations:
                 message=t.translate(text=_("System reboot has started"), locale=locale),
                 code=200,
             )
-        except system_actions.ShellException as error:
+        except ShellException as error:
             return GenericMutationReturn(
                 success=False,
                 message=error.get_error_message(locale=locale),

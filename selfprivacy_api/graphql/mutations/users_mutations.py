@@ -1,6 +1,7 @@
 """Users management module"""
 
 # pylint: disable=too-few-public-methods
+
 import gettext
 from typing import Optional
 
@@ -18,6 +19,8 @@ from selfprivacy_api.actions.users import (
     generate_password_reset_link as generate_password_reset_link_action,
     update_user as update_user_action,
 )
+from selfprivacy_api.exceptions import PLEASE_UPDATE_APP_TEXT
+from selfprivacy_api.exceptions.abstract_exception import AbstractException
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.common_types.user import (
     PasswordResetLinkReturn,
@@ -27,12 +30,10 @@ from selfprivacy_api.graphql.common_types.user import (
 from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericMutationReturn,
 )
-from selfprivacy_api.models.exception import ApiException
 from selfprivacy_api.utils.localization import (
     TranslateSystemMessage as t,
     get_locale,
 )
-from selfprivacy_api.utils.strings import PLEASE_UPDATE_APP_TEXT
 
 tracer = trace.get_tracer(__name__)
 
@@ -98,7 +99,7 @@ class UsersMutations:
                     displayname=user.display_name,
                 )
             except Exception as error:
-                if isinstance(error, ApiException):
+                if isinstance(error, AbstractException):
                     return await return_failed_mutation_return(
                         message=error.get_error_message(locale=locale),
                         code=error.code,
@@ -136,7 +137,7 @@ class UsersMutations:
             try:
                 await delete_user_action(username)
             except Exception as error:
-                if isinstance(error, ApiException):
+                if isinstance(error, AbstractException):
                     return GenericMutationReturn(
                         success=False,
                         message=error.get_error_message(locale=locale),
@@ -175,7 +176,7 @@ class UsersMutations:
                     displayname=user.display_name,
                 )
             except Exception as error:
-                if isinstance(error, ApiException):
+                if isinstance(error, AbstractException):
                     return await return_failed_mutation_return(
                         message=error.get_error_message(locale=locale),
                         username=user.username,
@@ -219,7 +220,7 @@ class UsersMutations:
             try:
                 create_ssh_key_action(ssh_input.username, ssh_input.ssh_key)
             except Exception as error:
-                if isinstance(error, ApiException):
+                if isinstance(error, AbstractException):
                     return await return_failed_mutation_return(
                         message=error.get_error_message(locale=locale),
                         code=error.code,
@@ -254,7 +255,7 @@ class UsersMutations:
             try:
                 remove_ssh_key_action(ssh_input.username, ssh_input.ssh_key)
             except Exception as error:
-                if isinstance(error, ApiException):
+                if isinstance(error, AbstractException):
                     return UserMutationReturn(
                         success=False,
                         message=error.get_error_message(locale=locale),
@@ -292,7 +293,7 @@ class UsersMutations:
                     username=username
                 )
             except Exception as error:
-                if isinstance(error, ApiException):
+                if isinstance(error, AbstractException):
                     return PasswordResetLinkReturn(
                         success=False,
                         message=error.get_error_message(locale=locale),

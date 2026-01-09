@@ -5,7 +5,7 @@ from selfprivacy_api.utils.localization import (
 )
 
 
-class ApiException(Exception, ABC):
+class AbstractException(Exception, ABC):
     """
     SelfPrivacy API standard for Exceptions.
 

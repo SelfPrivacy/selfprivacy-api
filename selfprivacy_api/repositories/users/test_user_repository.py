@@ -2,20 +2,19 @@ import logging
 import uuid
 from typing import Optional
 
-from selfprivacy_api.repositories.users.exceptions import (
+from selfprivacy_api.exceptions.users import (
     UserAlreadyExists,
     UserNotFound,
     UserOrGroupNotFound,
 )
-from selfprivacy_api.repositories.users.kanidm_user_repository import (
+from selfprivacy_api.exceptions.users.kanidm_repository import (
     NoPasswordResetLinkFoundInResponse,
 )
-
+from selfprivacy_api.models.group import Group, get_default_grops
+from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
 from selfprivacy_api.repositories.users.abstract_user_repository import (
     AbstractUserRepository,
 )
-from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
-from selfprivacy_api.models.group import Group, get_default_grops
 from selfprivacy_api.utils import get_domain
 
 logger = logging.getLogger(__name__)

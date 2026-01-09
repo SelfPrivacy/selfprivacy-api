@@ -1,22 +1,22 @@
 import gettext
+from datetime import datetime
+from typing import Optional
 
 import strawberry
 from opentelemetry import trace
 from strawberry.types import Info
 
-from typing import Optional
-from datetime import datetime
 from selfprivacy_api.models.services import ServiceStatus
 from selfprivacy_api.services.prometheus import Prometheus
-from selfprivacy_api.utils.monitoring import (
-    MonitoringQueries,
-    MonitoringQueryError,
-    MonitoringValuesResult,
-    MonitoringMetricsResult,
-)
 from selfprivacy_api.utils.localization import (
     TranslateSystemMessage as t,
     get_locale,
+)
+from selfprivacy_api.utils.monitoring import (
+    MonitoringMetricsResult,
+    MonitoringQueries,
+    MonitoringQueryError,
+    MonitoringValuesResult,
 )
 
 _ = gettext.gettext

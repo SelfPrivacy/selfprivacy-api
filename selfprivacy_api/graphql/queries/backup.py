@@ -1,14 +1,16 @@
 """Backup"""
 
 # pylint: disable=too-few-public-methods
+
 import typing
+
 import strawberry
 from opentelemetry import trace
 
 from selfprivacy_api.backup import Backups
 from selfprivacy_api.backup.local_secret import LocalBackupSecret
 from selfprivacy_api.backup.tasks import which_snapshots_to_full_restore
-from selfprivacy_api.graphql.queries.providers import BackupProvider
+from selfprivacy_api.graphql.common_types.backup import AutobackupQuotas
 from selfprivacy_api.graphql.common_types.service import (
     Service,
     ServiceStatusEnum,
@@ -16,9 +18,9 @@ from selfprivacy_api.graphql.common_types.service import (
     SupportLevelEnum,
     service_to_graphql_service,
 )
-from selfprivacy_api.graphql.common_types.backup import AutobackupQuotas
-from selfprivacy_api.services import ServiceManager
+from selfprivacy_api.graphql.queries.providers import BackupProvider
 from selfprivacy_api.models.backup.snapshot import Snapshot
+from selfprivacy_api.services import ServiceManager
 
 tracer = trace.get_tracer(__name__)
 
