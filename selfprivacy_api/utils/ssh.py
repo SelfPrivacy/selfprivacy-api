@@ -69,7 +69,6 @@ def validate_ssh_public_key(key):
             return False
 
     if key_type in VALID_SSH_KEY_TYPES:
-        # TODO: Check key length?
         return True
 
     return False

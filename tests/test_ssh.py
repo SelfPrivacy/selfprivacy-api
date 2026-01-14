@@ -68,14 +68,6 @@ def password_auth_spectrum(request):
     return request.param
 
 
-# def admin_name() -> Optional[str]:
-#    users = JsonUserRepository.get_users()
-#    for user in users:
-#        if user.user_type == UserDataUserOrigin.PRIMARY:
-#            return user.username
-#    return None
-
-
 def get_raw_json_ssh_setting(setting: str):
     with ReadUserData() as data:
         return (data.get("ssh") or {}).get(setting)
