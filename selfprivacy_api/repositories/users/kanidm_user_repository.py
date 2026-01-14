@@ -1,4 +1,5 @@
 import asyncio
+import gettext
 import logging
 import os
 import re
@@ -36,7 +37,12 @@ REDIS_TOKEN_KEY = "kanidm:token"
 SP_ADMIN_GROUPS = ["sp.admins"]
 SP_DEFAULT_GROUPS = ["sp.full_users"]
 
+
 logger = logging.getLogger(__name__)
+
+_ = gettext.gettext
+
+ERROR_CREATING_KANIDM_TOKEN_TEXT = _("Error creating Kanidm token")
 
 
 def get_kanidm_url():
@@ -142,7 +148,7 @@ class KanidmAdminToken:
                 if proc.returncode != 0:
                     raise KanidmCliSubprocessError(
                         command=command,
-                        description="Error creating Kanidm token.",
+                        description=ERROR_CREATING_KANIDM_TOKEN_TEXT,
                         error=stderr.decode(errors="replace"),
                     )
 
@@ -156,14 +162,14 @@ class KanidmAdminToken:
                 if proc.returncode != 0:
                     raise KanidmCliSubprocessError(
                         command=command,
-                        description="Error creating Kanidm token.",
+                        description=ERROR_CREATING_KANIDM_TOKEN_TEXT,
                         error=stderr.decode(errors="replace"),
                     )
 
             except OSError as error:
                 raise KanidmCliSubprocessError(
                     command=command,
-                    description="Error creating Kanidm token.",
+                    description=ERROR_CREATING_KANIDM_TOKEN_TEXT,
                     error=str(error),
                 )
 
