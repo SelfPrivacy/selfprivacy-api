@@ -74,7 +74,7 @@ class AbstractException(Exception, ABC):
                     "command": self.command,
                     "regex_pattern": self.regex_pattern,
                     "output": self.output,
-                    "maybe_kanidm_broke_compatibility": KANIDM_BROKE_COMPATIBILITY,
+                    "maybe_kanidm_broke_compatibility": KANIDM_PROBLEMS,
                     "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
                 },
                 locale=locale,

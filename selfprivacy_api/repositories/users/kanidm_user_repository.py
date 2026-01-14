@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import re
@@ -129,31 +130,44 @@ class KanidmAdminToken:
         redis = RedisPool().get_connection_async()
 
         with temporary_env_var(key="KANIDM_PASSWORD", value=kanidm_admin_password):
-            command = ["kanidm", "login", "-D", "idm_admin"]
+            command = "kanidm login -D idm_admin"
+
             try:
-                subprocess.run(command, check=True)
-
-                command = [
-                    "kanidm",
-                    "service-account",
-                    "api-token",
-                    "generate",
-                    "--rw",
-                    "sp.selfprivacy-api.service-account",
-                    "kanidm_service_account_token",
-                ]
-                output = subprocess.check_output(
+                proc = await asyncio.create_subprocess_exec(
                     command,
-                    text=True,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
                 )
-            except subprocess.CalledProcessError as error:
+                _, stderr = await proc.communicate()
+                if proc.returncode != 0:
+                    raise KanidmCliSubprocessError(
+                        command=command,
+                        description="Error creating Kanidm token.",
+                        error=stderr.decode(errors="replace"),
+                    )
+
+                command = "kanidm service-account api-token generate --rw sp.selfprivacy-api.service-account kanidm_service_account_token"
+                proc = await asyncio.create_subprocess_exec(
+                    command,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
+                stdout, stderr = await proc.communicate()
+                if proc.returncode != 0:
+                    raise KanidmCliSubprocessError(
+                        command=command,
+                        description="Error creating Kanidm token.",
+                        error=stderr.decode(errors="replace"),
+                    )
+
+            except OSError as error:
                 raise KanidmCliSubprocessError(
-                    command=" ".join(command),
+                    command=command,
                     description="Error creating Kanidm token.",
-                    error=str(error.output),
+                    error=str(error),
                 )
 
-        kanidm_admin_token = output.splitlines()[-1]
+        kanidm_admin_token = stdout.decode(errors="replace").splitlines()[-1]
 
         await redis.set("kanidm:token", kanidm_admin_token)
         return kanidm_admin_token
@@ -211,14 +225,15 @@ class KanidmAdminToken:
             httpx.RequestError,
         ) as error:
             raise KanidmQueryError(
+                description="Kanidm is not responding to requests. Connection error.",
                 endpoint=endpoint,
                 method=method,
                 error_text=error,
-                description="Kanidm is not responding to requests.",
             )
 
         except Exception as error:
             raise KanidmQueryError(
+                description="Unknown error while checking the Kanidm admin token.",
                 endpoint=endpoint,
                 method=method,
                 error_text=error,
@@ -268,7 +283,7 @@ class KanidmUserRepository(AbstractUserRepository):
         """
 
         if response_data is None:
-            raise KanidmReturnEmptyResponse
+            raise KanidmReturnEmptyResponse(endpoint=endpoint, method=method)
 
         if data_type == "list":
             if not isinstance(response_data, list):
