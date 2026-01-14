@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from json import JSONDecodeError
 from typing import Any, Optional, Union
@@ -66,7 +67,7 @@ class KanidmUserRepository(AbstractUserRepository):
         """
 
         if response_data is None:
-            raise KanidmReturnEmptyResponse
+            raise KanidmReturnEmptyResponse(endpoint=endpoint, method=method)
 
         if data_type == "list":
             if not isinstance(response_data, list):
