@@ -1,39 +1,101 @@
+import asyncio
 import gettext
 import logging
 import re
-import subprocess
 from textwrap import dedent
 
-from selfprivacy_api.exceptions import KANIDM_DESCRIPTION, KANIDM_PROBLEMS
-from selfprivacy_api.exceptions.kanidm import FailedToSetupKanidmMinimumCredentialType
-from selfprivacy_api.exceptions.system import FailedToFindResult, ShellException
+from selfprivacy_api.exceptions.kanidm import (
+    KANIDM_DESCRIPTION,
+    KANIDM_PROBLEMS,
+    STANDARD_OUTPUT_EXAMPLE,
+    FailedToSetupKanidmMinimumCredentialType,
+)
+from selfprivacy_api.exceptions.system import FailedToFindResult
+from selfprivacy_api.exceptions.users.kanidm_repository import KanidmCliSubprocessError
 from selfprivacy_api.models.kanidm_credential_type import KanidmCredentialType
+from selfprivacy_api.utils import temporary_env_var
+from selfprivacy_api.utils.kanidm_admin_token import KanidmAdminToken
 
 logger = logging.getLogger(__name__)
 
 _ = gettext.gettext
 
-# TODO: admin token
+
+KANIDM_GET_MIN_CREDENTIAL_TYPE_ERROR_PREFIX = _(
+    "Error while trying to get the Kanidm minimum credential type"
+)
+FAILED_TO_KANIDM_LOGIN = _(
+    "%(prefix)s: failed to log in to the Kanidm admin account."
+) % {"prefix": KANIDM_GET_MIN_CREDENTIAL_TYPE_ERROR_PREFIX}
+
+FAILED_TO_KANIDM_GET_IDM_ALL_PERSONS = _(
+    "%(prefix)s: failed to get the full definition of the group idm_all_persons."
+) % {"prefix": KANIDM_GET_MIN_CREDENTIAL_TYPE_ERROR_PREFIX}
+
+FAILED_TO_KANIDM_SET_MINIMUM_CREDENTIAL_TYPE = _(
+    "Error while trying to set the Kanidm minimum credential type: failed to update the credential_type_minimum policy for the group idm_all_persons."
+)
 
 
 async def get_kanidm_minimum_credential_type() -> KanidmCredentialType:
-    command_array = ["kanidm", "group", "get", "idm_all_persons"]
-    result = subprocess.check_output(
-        command_array,
-        stderr=subprocess.STDOUT,
-        text=True,
-    )
+    kanidm_admin_password = KanidmAdminToken.reset_idm_admin_password()
+
+    with temporary_env_var(key="KANIDM_PASSWORD", value=kanidm_admin_password):
+        command = "kanidm login -D idm_admin"
+
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                command,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            stdout, stderr = await proc.communicate()
+            if proc.returncode != 0:
+                raise KanidmCliSubprocessError(
+                    command=command,
+                    description=FAILED_TO_KANIDM_LOGIN,
+                    error=stderr.decode(errors="replace"),
+                )
+        except OSError as error:
+            raise KanidmCliSubprocessError(
+                command=command,
+                description=FAILED_TO_KANIDM_LOGIN,
+                error=str(error),
+            )
+
+        command = "kanidm group get idm_all_persons"
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                command,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            output, stderr = await proc.communicate()
+            output = output.decode(errors="replace")
+
+            if proc.returncode != 0:
+                raise KanidmCliSubprocessError(
+                    command=command,
+                    description=FAILED_TO_KANIDM_GET_IDM_ALL_PERSONS,
+                    error=stderr.decode(errors="replace"),
+                )
+        except OSError as error:
+            raise KanidmCliSubprocessError(
+                command=command,
+                description=FAILED_TO_KANIDM_GET_IDM_ALL_PERSONS,
+                error=str(error),
+            )
 
     regex_pattern = r"(?mi)^\s*credential_type_minimum\s*:\s*(\S+)"
-    match = re.search(regex_pattern, result)
+    match = re.search(regex_pattern, output)
     if match and match.group(1):
         return KanidmCredentialType(match.group(1))
 
     raise FailedToFindResult(
-        data=result,
-        command=" ".join(command_array),
-        description=dedent(
-            _(
+        data=output,
+        command=command,
+        description=_(
+            dedent(
                 """
                 Kanidm CLI did not return the minimum credential type for the "idm_all_persons" group.
                 %(KANIDM_DESCRIPTION)s
@@ -41,16 +103,14 @@ async def get_kanidm_minimum_credential_type() -> KanidmCredentialType:
                 "credential_type_minimum: <VALUE>"
 
                 Standard output example:
-                name: idm_all_persons
-                uuid: 00000000-0000-0000-0000-000000000000
-                description: All persons
-                credential_type_minimum: any
+                %(STANDARD_OUTPUT_EXAMPLE)s
 
                 %(KANIDM_PROBLEMS)s
                 """
             )
             % {
                 "KANIDM_DESCRIPTION": KANIDM_DESCRIPTION,
+                "STANDARD_OUTPUT_EXAMPLE": STANDARD_OUTPUT_EXAMPLE,
                 "KANIDM_PROBLEMS": KANIDM_PROBLEMS,
             },
         ),
@@ -61,52 +121,39 @@ async def get_kanidm_minimum_credential_type() -> KanidmCredentialType:
 async def set_kanidm_minimum_credential_type(
     minimum_credential_type: KanidmCredentialType,
 ) -> None:
-    command_array = [
-        "kanidm",
-        "group",
-        "account-policy",
-        "credential-type-minimum",
-        "idm_all_persons",
-        minimum_credential_type.value,
-    ]
+    command = f"kanidm group account-policy credential-type-minimum idm_all_persons {minimum_credential_type.value}"
 
     try:
-        result = subprocess.check_output(
-            command_array,
-            stderr=subprocess.STDOUT,
-            text=True,
+        proc = await asyncio.create_subprocess_exec(
+            command,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
         )
-    except subprocess.CalledProcessError as error:
-        raise ShellException(
-            command=" ".join(command_array),
-            output=error.output,
-            description=dedent(
-                _(
-                    """
-                    Failed to set the minimum credential type for the "idm_all_persons" group in Kanidm.
-                    %(KANIDM_DESCRIPTION)s
-                    The system tried to update the "idm_all_persons" group policy, but the Kanidm CLI command failed.
-                    %(KANIDM_PROBLEMS)s
-                    """
-                )
-                % {
-                    "KANIDM_DESCRIPTION": KANIDM_DESCRIPTION,
-                    "KANIDM_PROBLEMS": KANIDM_PROBLEMS,
-                },
-            ),
+        output, stderr = await proc.communicate()
+        output = output.decode(errors="replace")
+
+        if proc.returncode != 0:
+            raise KanidmCliSubprocessError(
+                command=command,
+                description=FAILED_TO_KANIDM_SET_MINIMUM_CREDENTIAL_TYPE,
+                error=stderr.decode(errors="replace"),
+            )
+    except OSError as error:
+        raise KanidmCliSubprocessError(
+            command=command,
+            error=str(error),
+            description=FAILED_TO_KANIDM_SET_MINIMUM_CREDENTIAL_TYPE,
         )
 
-    if "Updated credential type minimum" not in result:
-        raise ShellException(
-            command=" ".join(command_array),
-            output=result,
+    if "Updated credential type minimum" not in output:
+        raise KanidmCliSubprocessError(
+            error=output,
+            command=command,
             description=dedent(
                 _(
                     """
                     Kanidm CLI did not confirm that the minimum credential type was updated.
-                    %(KANIDM_DESCRIPTION)s
                     The output does not contain the expected phrase: "Updated credential type minimum".
-                    %(KANIDM_PROBLEMS)s
                     """
                 )
             ),

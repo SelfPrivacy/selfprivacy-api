@@ -1,3 +1,5 @@
+import asyncio
+import gettext
 import logging
 import os
 import re
@@ -17,6 +19,10 @@ from selfprivacy_api.utils.redis_pool import RedisPool
 REDIS_TOKEN_KEY = "kanidm:token"  # TODO better place?
 
 logger = logging.getLogger(__name__)
+
+_ = gettext.gettext
+
+ERROR_CREATING_KANIDM_TOKEN_TEXT = _("Error creating Kanidm token")
 
 
 def get_kanidm_url():
@@ -68,7 +74,7 @@ class KanidmAdminToken:
             "The Kanidm admin token from the environment is missing or invalid. Regenerating."
         )
 
-        kanidm_admin_password = KanidmAdminToken._reset_and_save_idm_admin_password()
+        kanidm_admin_password = KanidmAdminToken.reset_idm_admin_password()
         return await KanidmAdminToken._create_and_save_token(kanidm_admin_password)
 
     @staticmethod
@@ -110,37 +116,50 @@ class KanidmAdminToken:
         redis = RedisPool().get_connection_async()
 
         with temporary_env_var(key="KANIDM_PASSWORD", value=kanidm_admin_password):
-            command = ["kanidm", "login", "-D", "idm_admin"]
+            command = "kanidm login -D idm_admin"
+
             try:
-                subprocess.run(command, check=True)
-
-                command = [
-                    "kanidm",
-                    "service-account",
-                    "api-token",
-                    "generate",
-                    "--rw",
-                    "sp.selfprivacy-api.service-account",
-                    "kanidm_service_account_token",
-                ]
-                output = subprocess.check_output(
+                proc = await asyncio.create_subprocess_exec(
                     command,
-                    text=True,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
                 )
-            except subprocess.CalledProcessError as error:
+                _, stderr = await proc.communicate()
+                if proc.returncode != 0:
+                    raise KanidmCliSubprocessError(
+                        command=command,
+                        description=ERROR_CREATING_KANIDM_TOKEN_TEXT,
+                        error=stderr.decode(errors="replace"),
+                    )
+
+                command = "kanidm service-account api-token generate --rw sp.selfprivacy-api.service-account kanidm_service_account_token"
+                proc = await asyncio.create_subprocess_exec(
+                    command,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
+                stdout, stderr = await proc.communicate()
+                if proc.returncode != 0:
+                    raise KanidmCliSubprocessError(
+                        command=command,
+                        description=ERROR_CREATING_KANIDM_TOKEN_TEXT,
+                        error=stderr.decode(errors="replace"),
+                    )
+
+            except OSError as error:
                 raise KanidmCliSubprocessError(
-                    command=" ".join(command),
-                    description="Error creating Kanidm token.",
-                    error=str(error.output),
+                    command=command,
+                    description=ERROR_CREATING_KANIDM_TOKEN_TEXT,
+                    error=str(error),
                 )
 
-        kanidm_admin_token = output.splitlines()[-1]
+        kanidm_admin_token = stdout.decode(errors="replace").splitlines()[-1]
 
         await redis.set("kanidm:token", kanidm_admin_token)
         return kanidm_admin_token
 
     @staticmethod
-    def _reset_and_save_idm_admin_password() -> str:
+    def reset_idm_admin_password() -> str:
         command = [
             "kanidmd",
             "recover-account",
@@ -192,14 +211,15 @@ class KanidmAdminToken:
             httpx.RequestError,
         ) as error:
             raise KanidmQueryError(
+                description="Kanidm is not responding to requests. Connection error.",
                 endpoint=endpoint,
                 method=method,
                 error_text=error,
-                description="Kanidm is not responding to requests.",
             )
 
         except Exception as error:
             raise KanidmQueryError(
+                description="Unknown error while checking the Kanidm admin token.",
                 endpoint=endpoint,
                 method=method,
                 error_text=error,

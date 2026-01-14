@@ -3,8 +3,6 @@ import logging
 from textwrap import dedent
 
 from selfprivacy_api.exceptions import (
-    KANIDM_DESCRIPTION,
-    KANIDM_PROBLEMS,
     REPORT_IT_TO_SUPPORT_CHATS,
 )
 from selfprivacy_api.exceptions.abstract_exception import AbstractException
@@ -16,6 +14,32 @@ from selfprivacy_api.utils.localization import (
 logger = logging.getLogger(__name__)
 
 _ = gettext.gettext
+
+
+KANIDM_DESCRIPTION = _(
+    "Kanidm is the identity and authentication service that manages users and access to system services."
+)
+
+KANIDM_PROBLEMS = _("There may have been a Kanidm update that broke compatibility.")
+
+KANIDM_DEBUG_HELP = _(
+    dedent(
+        """
+        Console commands to debug:
+            "systemctl status kanidm.service"
+            "journalctl -u kanidm.service -f"
+        """
+    )
+)
+
+STANDARD_OUTPUT_EXAMPLE = dedent(
+    """
+    name: idm_all_persons
+    uuid: 00000000-0000-0000-0000-000000000000
+    description: All persons
+    credential_type_minimum: any
+    """
+)
 
 
 class FailedToSetupKanidmMinimumCredentialType(AbstractException):
@@ -53,10 +77,7 @@ class FailedToSetupKanidmMinimumCredentialType(AbstractException):
                     Used regex pattern: %(regex_pattern)s
 
                     Standard output example:
-                    name: idm_all_persons
-                    uuid: 00000000-0000-0000-0000-000000000000
-                    description: All persons
-                    credential_type_minimum: any
+                    %(STANDARD_OUTPUT_EXAMPLE)s
                     """
                 )
             )
@@ -68,6 +89,7 @@ class FailedToSetupKanidmMinimumCredentialType(AbstractException):
                 "KANIDM_DESCRIPTION": KANIDM_DESCRIPTION,
                 "KANIDM_PROBLEMS": KANIDM_PROBLEMS,
                 "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
+                "STANDARD_OUTPUT_EXAMPLE": STANDARD_OUTPUT_EXAMPLE,
             },
             locale=locale,
         )

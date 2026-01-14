@@ -4,12 +4,14 @@ from textwrap import dedent
 from typing import Any, Optional
 
 from selfprivacy_api.exceptions import (
-    KANIDM_DEBUG_HELP,
-    KANIDM_DESCRIPTION,
-    KANIDM_PROBLEMS,
     REPORT_IT_TO_SUPPORT_CHATS,
 )
 from selfprivacy_api.exceptions.abstract_exception import AbstractException
+from selfprivacy_api.exceptions.kanidm import (
+    KANIDM_DEBUG_HELP,
+    KANIDM_DESCRIPTION,
+    KANIDM_PROBLEMS,
+)
 from selfprivacy_api.utils.localization import (
     DEFAULT_LOCALE,
     TranslateSystemMessage as t,

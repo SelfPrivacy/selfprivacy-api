@@ -26,22 +26,6 @@ REPORT_IT_TO_SUPPORT_CHATS = _(
     )
 )
 
-KANIDM_DESCRIPTION = _(
-    "Kanidm is the identity and authentication service that manages users and access to system services."
-)
-
-KANIDM_PROBLEMS = _("There may have been a Kanidm update that broke compatibility.")
-
-KANIDM_DEBUG_HELP = _(
-    dedent(
-        """
-        Console commands to debug:
-            "systemctl status kanidm.service"
-            "journalctl -u kanidm.service -f"
-        """
-    )
-)
-
 
 class ApiUsingWrongUserRepository(AbstractException):
     """
