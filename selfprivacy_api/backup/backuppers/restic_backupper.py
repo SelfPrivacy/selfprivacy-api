@@ -530,7 +530,9 @@ class ResticBackupper(AbstractBackupper):
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         ) as backup_listing_process_descriptor:
-            output = backup_listing_process_descriptor.communicate()[0].decode("utf-8", "replace")
+            output = backup_listing_process_descriptor.communicate()[0].decode(
+                "utf-8", "replace"
+            )
 
         if "Is there a repository at the following location?" in output:
             raise ValueError("No repository! : " + output)
