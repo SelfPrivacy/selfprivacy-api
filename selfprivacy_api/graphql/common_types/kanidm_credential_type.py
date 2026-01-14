@@ -30,9 +30,9 @@ class KanidmCredentialTypeMutationReturn(MutationReturnInterface):
     minimum_credential_type: Optional[KanidmCredentialTypeEnum] = None
 
 
-def get_minimum_kanidm_credential_type() -> KanidmCredentialType:
+async def get_minimum_kanidm_credential_type() -> KanidmCredentialType:
     """Get KanidmCredentialLvl"""
-    minimum_credential_type = actions_get_kanidm_minimum_credential_type()
+    minimum_credential_type = await actions_get_kanidm_minimum_credential_type()
 
     enum_val = KanidmCredentialTypeEnum[minimum_credential_type.name]
     return KanidmCredentialType(minimum_credential_type=enum_val)  # type: ignore[call-arg]
