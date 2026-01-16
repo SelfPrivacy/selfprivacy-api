@@ -3,6 +3,7 @@ Action-level tests of ssh
 (For API-independent logic incl. connection to persistent storage)
 """
 
+import base64
 import pytest
 from typing import Optional
 
@@ -420,6 +421,17 @@ async def test_remove_user_key_on_undefined(generic_userdata, username):
     with pytest.raises(UserNotFound):
         remove_ssh_key(username, key1)
 
+def test_malformed_key_blob_exceeds_bounds():
+    """Test that a crafted key blob with oversized key_type_size returns error."""
+
+    # key_type_size = 100 (big-endian), but actual key_type (ssh-ed25519) size is just 11 bytes.
+    malformed_blob = b'\x00\x00\x00\x64' + b'ssh-ed25519'
+
+    b64_blob = base64.b64encode(malformed_blob).decode('ascii')
+    malicious_key = f"ssh-ed25519 {b64_blob}"
+
+    result = validate_ssh_public_key(malicious_key)
+    assert result is False
 
 def test_validate_ssh_ed25519():
     assert (

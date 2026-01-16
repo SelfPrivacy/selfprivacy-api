@@ -17,10 +17,12 @@ def _get_blob_keytype(b: bytes) -> Optional[Tuple[str, int]]:
     if len(b) <= 4:
         return None
     key_type_size = int.from_bytes(b[:4], "big", signed=False)
+    if 4 + key_type_size > len(b):
+        return None
     return (b[4 : 4 + key_type_size].decode("ascii"), 4 + key_type_size)
 
 
-# returns RSA modulues bit-length from OpenSSH key blob. doesn't check if n is a prime or if e is sane.
+# returns RSA modulus bit-length from OpenSSH key blob. doesn't check if n is a prime or if e is sane.
 def _rsa_modulus_from_blob(b: bytes) -> Optional[int]:
     e_len = int.from_bytes(b[:4], "big", signed=False)
     off = 4 + e_len
@@ -46,7 +48,7 @@ def validate_ssh_public_key(key):
 
     try:
         key_type, b64blob = key.split()[:2]
-        key_data = base64.b64decode(b64blob)
+        key_data = base64.b64decode(b64blob, validate=True)
         keytype_from_blob_result = _get_blob_keytype(key_data)
         if keytype_from_blob_result is None:
             return False
@@ -61,6 +63,8 @@ def validate_ssh_public_key(key):
     if key_type == "ssh-rsa":
         try:
             bits = _rsa_modulus_from_blob(key_data)
+            if bits is None:
+                return False
             # https://crypto.stackexchange.com/questions/119164/benefits-and-drawbacks-of-ssh-rsa-long-key/119166#119166
             if bits < 2048 or bits > 16384:
                 return False
