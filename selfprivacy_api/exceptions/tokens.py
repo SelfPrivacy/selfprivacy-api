@@ -52,7 +52,7 @@ class RecoveryKeyNotFound(AbstractException):
                     dedent(
                         """
                         Recovery key not found or is no longer valid.
-                        %(REPORT_IT_TO_SUPPORT_CHATS)s")
+                        %(REPORT_IT_TO_SUPPORT_CHATS)s
                         """
                     )
                 ),

@@ -37,7 +37,7 @@ class VolumeNotFoundError(AbstractException):
     def __init__(self, volume_name: str):
         self.volume_name = volume_name
 
-        logging.error(self.get_error_message())
+        logger.error(self.get_error_message())
 
     def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
         return t.translate(

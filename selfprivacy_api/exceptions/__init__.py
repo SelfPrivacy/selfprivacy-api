@@ -26,11 +26,16 @@ REPORT_IT_TO_SUPPORT_CHATS = _(
     )
 )
 
+# KANIDM strings will be in a separate file in this PR:
+# https://git.selfprivacy.org/SelfPrivacy/selfprivacy-rest-api/pulls/195
+
 KANIDM_DESCRIPTION = _(
     "Kanidm is the identity and authentication service that manages users and access to system services."
 )
 
-KANIDM_PROBLEMS = _("There may have been a Kanidm update that broke compatibility.")
+KANIDM_PROBLEMS = _(
+    "A recent Kanidm update may have introduced breaking changes affecting API, CLI commands or configuration compatibility."
+)
 
 KANIDM_DEBUG_HELP = _(
     dedent(
