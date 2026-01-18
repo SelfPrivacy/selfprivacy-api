@@ -121,11 +121,18 @@ async def get_kanidm_minimum_credential_type() -> KanidmCredentialType:
 async def set_kanidm_minimum_credential_type(
     minimum_credential_type: KanidmCredentialType,
 ) -> None:
-    command = f"kanidm group account-policy credential-type-minimum idm_all_persons {minimum_credential_type.value}"
+    command = [
+        "kanidm",
+        "group",
+        "account-policy",
+        "credential-type-minimum",
+        "idm_all_persons",
+        minimum_credential_type.value,
+    ]
 
     try:
         proc = await asyncio.create_subprocess_exec(
-            command,
+            *command,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
@@ -134,21 +141,21 @@ async def set_kanidm_minimum_credential_type(
 
         if proc.returncode != 0:
             raise KanidmCliSubprocessError(
-                command=command,
+                command=" ".join(command),
                 description=FAILED_TO_KANIDM_SET_MINIMUM_CREDENTIAL_TYPE,
                 error=stderr.decode(errors="replace"),
             )
     except OSError as error:
         raise KanidmCliSubprocessError(
-            command=command,
-            error=str(error),
+            command=" ".join(command),
             description=FAILED_TO_KANIDM_SET_MINIMUM_CREDENTIAL_TYPE,
+            error=str(error),
         )
 
     if "Updated credential type minimum" not in output:
         raise KanidmCliSubprocessError(
             error=output,
-            command=command,
+            command=" ".join(command),
             description=dedent(
                 _(
                     """
