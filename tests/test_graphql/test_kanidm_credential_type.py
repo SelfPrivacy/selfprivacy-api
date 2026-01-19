@@ -1,3 +1,5 @@
+from unittest.mock import AsyncMock
+
 from selfprivacy_api.models.kanidm_credential_type import KanidmCredentialType
 from tests.test_graphql.common import assert_empty, assert_ok, get_data
 
@@ -26,12 +28,9 @@ mutation MyMutation($minimumCredentialType: SetKanidmMinimumCredentialTypeInput!
 
 
 def test_graphql_get_minimum_kanidm_credential_type(authorized_client, mocker):
-    async def fake_get():
-        return KanidmCredentialType.mfa
-
     mocker.patch(
         "selfprivacy_api.graphql.common_types.kanidm_credential_type.actions_get_kanidm_minimum_credential_type",
-        fake_get,
+        new=AsyncMock(return_value=KanidmCredentialType.mfa),
     )
 
     response = authorized_client.post("/graphql", json={"query": KANIDM_GET_MIN_QUERY})
@@ -44,12 +43,9 @@ def test_graphql_get_minimum_kanidm_credential_type(authorized_client, mocker):
 
 
 def test_graphql_set_minimum_kanidm_credential_type(authorized_client, mocker):
-    async def set_mock(*args, **kwargs):
-        return None
-
     mocker.patch(
         "selfprivacy_api.graphql.mutations.kanidm_mutations.set_kanidm_minimum_credential_type_action",
-        set_mock,
+        new=AsyncMock(return_value=None),
     )
 
     response = authorized_client.post(

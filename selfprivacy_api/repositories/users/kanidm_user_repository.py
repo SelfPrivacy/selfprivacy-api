@@ -23,18 +23,12 @@ from selfprivacy_api.repositories.users.abstract_user_repository import (
 )
 from selfprivacy_api.services import KANIDM_A_RECORD
 from selfprivacy_api.utils import get_domain
-from selfprivacy_api.utils.kanidm_admin_token import KanidmAdminToken
-
-REDIS_TOKEN_KEY = "kanidm:token"
+from selfprivacy_api.utils.kanidm_admin_token import KanidmAdminToken, get_kanidm_url
 
 SP_ADMIN_GROUPS = ["sp.admins"]
 SP_DEFAULT_GROUPS = ["sp.full_users"]
 
 logger = logging.getLogger(__name__)
-
-
-def get_kanidm_url():
-    return f"https://auth.{get_domain()}"
 
 
 class KanidmUserRepository(AbstractUserRepository):

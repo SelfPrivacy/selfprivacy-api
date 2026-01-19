@@ -16,11 +16,11 @@ from selfprivacy_api.exceptions.users.kanidm_repository import (
 from selfprivacy_api.utils import get_domain, temporary_env_var
 from selfprivacy_api.utils.redis_pool import RedisPool
 
-REDIS_TOKEN_KEY = "kanidm:token"  # TODO better place?
-
 logger = logging.getLogger(__name__)
 
 _ = gettext.gettext
+
+REDIS_TOKEN_KEY = "kanidm:token"
 
 ERROR_CREATING_KANIDM_TOKEN_TEXT = _("Error creating Kanidm token")
 
@@ -96,7 +96,7 @@ class KanidmAdminToken:
                         "The Kanidm admin token will be generated."
                     )
                     return None
-                await redis.set("kanidm:token", token)
+                await redis.set(REDIS_TOKEN_KEY, token)
                 return token
         except FileNotFoundError:
             logger.warning(
@@ -155,7 +155,7 @@ class KanidmAdminToken:
 
         kanidm_admin_token = stdout.decode(errors="replace").splitlines()[-1]
 
-        await redis.set("kanidm:token", kanidm_admin_token)
+        await redis.set(REDIS_TOKEN_KEY, kanidm_admin_token)
         return kanidm_admin_token
 
     @staticmethod
