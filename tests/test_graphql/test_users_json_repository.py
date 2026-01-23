@@ -76,7 +76,9 @@ def one_user(mocker, datadir):
         {
             "username": "user1",
             "hashedPassword": "HASHED_PASSWORD_1",
-            "sshKeys": ["ssh-rsa KEY user1@pc"],
+            "sshKeys": [
+                "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGouijZuaO6EKh1wZypWvCgQOxSnjnZ52z5hITM2R9MR user1"
+            ],
         }
     ]
     return datadir
@@ -89,7 +91,9 @@ def some_users(mocker, datadir):
         {
             "username": "user1",
             "hashedPassword": "HASHED_PASSWORD_1",
-            "sshKeys": ["ssh-rsa KEY user1@pc"],
+            "sshKeys": [
+                "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGouijZuaO6EKh1wZypWvCgQOxSnjnZ52z5hITM2R9MR user1"
+            ],
         },
         {"username": "user2", "hashedPassword": "HASHED_PASSWORD_2", "sshKeys": []},
         {"username": "user3", "hashedPassword": "HASHED_PASSWORD_3"},
@@ -192,7 +196,7 @@ def test_graphql_get_some_users(
     assert len(response.json()["data"]["users"]["allUsers"]) == 4
     assert response.json()["data"]["users"]["allUsers"][0]["username"] == "user1"
     assert response.json()["data"]["users"]["allUsers"][0]["sshKeys"] == [
-        "ssh-rsa KEY user1@pc"
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGouijZuaO6EKh1wZypWvCgQOxSnjnZ52z5hITM2R9MR user1"
     ]
 
     assert response.json()["data"]["users"]["allUsers"][1]["username"] == "user2"
@@ -200,7 +204,7 @@ def test_graphql_get_some_users(
 
     assert response.json()["data"]["users"]["allUsers"][3]["username"] == "tester"
     assert response.json()["data"]["users"]["allUsers"][3]["sshKeys"] == [
-        "ssh-rsa KEY test@pc"
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHptiXtnh0b57aK6B117g+CkINlbx8JSTl03Ry0/a2BB dummykey"
     ]
 
 
@@ -219,7 +223,7 @@ def test_graphql_get_no_users(
     assert len(response.json()["data"]["users"]["allUsers"]) == 1
     assert response.json()["data"]["users"]["allUsers"][0]["username"] == "tester"
     assert response.json()["data"]["users"]["allUsers"][0]["sshKeys"] == [
-        "ssh-rsa KEY test@pc"
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHptiXtnh0b57aK6B117g+CkINlbx8JSTl03Ry0/a2BB dummykey"
     ]
 
 
@@ -238,7 +242,7 @@ def test_graphql_get_users_undefined_but_admin(
     assert len(response.json()["data"]["users"]["allUsers"]) == 1
     assert response.json()["data"]["users"]["allUsers"][0]["username"] == "tester"
     assert response.json()["data"]["users"]["allUsers"][0]["sshKeys"] == [
-        "ssh-rsa KEY test@pc"
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHptiXtnh0b57aK6B117g+CkINlbx8JSTl03Ry0/a2BB dummykey"
     ]
 
 
@@ -302,7 +306,7 @@ def test_graphql_get_one_user(
     assert len(response.json()["data"]["users"]["getUser"]) == 2
     assert response.json()["data"]["users"]["getUser"]["username"] == "user1"
     assert response.json()["data"]["users"]["getUser"]["sshKeys"] == [
-        "ssh-rsa KEY user1@pc"
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGouijZuaO6EKh1wZypWvCgQOxSnjnZ52z5hITM2R9MR user1"
     ]
 
 
@@ -362,7 +366,7 @@ def test_graphql_get_root_user(
     assert len(response.json()["data"]["users"]["getUser"]) == 2
     assert response.json()["data"]["users"]["getUser"]["username"] == "root"
     assert response.json()["data"]["users"]["getUser"]["sshKeys"] == [
-        "ssh-ed25519 KEY test@pc"
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIElWG9GbP2g8Jsy/N01w1wjRvBxsNLWxr9NasN694kYw testkey"
     ]
 
 
@@ -384,7 +388,7 @@ def test_graphql_get_main_user(
     assert len(response.json()["data"]["users"]["getUser"]) == 2
     assert response.json()["data"]["users"]["getUser"]["username"] == "tester"
     assert response.json()["data"]["users"]["getUser"]["sshKeys"] == [
-        "ssh-rsa KEY test@pc"
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHptiXtnh0b57aK6B117g+CkINlbx8JSTl03Ry0/a2BB dummykey"
     ]
 
 
@@ -703,7 +707,7 @@ def test_graphql_update_user(
 
     assert response.json()["data"]["users"]["updateUser"]["user"]["username"] == "user1"
     assert response.json()["data"]["users"]["updateUser"]["user"]["sshKeys"] == [
-        "ssh-rsa KEY user1@pc"
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGouijZuaO6EKh1wZypWvCgQOxSnjnZ52z5hITM2R9MR user1"
     ]
 
 
