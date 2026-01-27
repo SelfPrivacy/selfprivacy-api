@@ -41,7 +41,7 @@ async def get_encryption_status_for_volume(
             "fscryptctl",
             "key_status",
             key_id,
-            blockdev.path,
+            blockdev.mountpoints[0],
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
@@ -59,3 +59,39 @@ async def get_encryption_status_for_volume(
         return VolumeEncryptionStatus(
             is_enrolled=True, is_unlocked="Present" in stdout_text, key_id=key_id
         )
+
+
+async def enroll_volume_encryption(
+    volume_name: str, key: bytes
+) -> Optional[VolumeEncryptionStatus]:
+    redis = RedisPool().get_connection_async()
+    blockdev = BlockDevices().get_block_device_by_canonical_name(volume_name)
+
+    if blockdev is None:
+        return None
+
+    if await redis.get(f"encryption:{volume_name}:key_id") is not None:
+        # Already enrolled.
+        return None
+
+    process = await asyncio.create_subprocess_exec(
+        "fscryptctl",
+        "add_key",
+        blockdev.mountpoints[0],
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    stdout, stderr = await process.communicate(input=key)
+
+    if process.returncode is None:
+        raise Exception("Process was killed unexpectedly")
+
+    if process.returncode != 0:
+        # TODO: proper error handling
+        raise Exception("Process exited with an error")
+
+    key_id = stdout.decode("utf-8").strip()
+
+    await redis.set(f"encryption:{volume_name}:key_id", key_id)
+
+    return await get_encryption_status_for_volume(volume_name)
