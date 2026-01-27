@@ -24,7 +24,7 @@ from selfprivacy_api.migrations.add_postgres_location import AddPostgresLocation
 from selfprivacy_api.migrations.replace_blockdevices_to_uuid import (
     ReplaceBlockDevicesToUUID,
 )
-
+from selfprivacy_api.migrations.enable_encryption import EnableExt4EncryptionFeature
 from selfprivacy_api.migrations.switch_to_flakes import SwitchToFlakes
 
 logger = logging.getLogger(__name__)
@@ -38,6 +38,7 @@ migrations = [
     AddPostgresLocation(),
     SwitchToFlakes(),
     ReplaceBlockDevicesToUUID(),
+    EnableExt4EncryptionFeature(),
 ]
 
 
