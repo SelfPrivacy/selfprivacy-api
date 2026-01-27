@@ -1,4 +1,5 @@
 import asyncio
+import subprocess
 
 from opentelemetry import trace
 from typing import Optional
@@ -87,8 +88,16 @@ async def enroll_volume_encryption(
         raise Exception("Process was killed unexpectedly")
 
     if process.returncode != 0:
-        # TODO: proper error handling
-        raise Exception("Process exited with an error")
+        raise subprocess.CalledProcessError(
+            process.returncode,
+            [
+                "fscryptctl",
+                "add_key",
+                blockdev.mountpoints[0],
+            ],
+            stdout,
+            stderr,
+        )
 
     key_id = stdout.decode("utf-8").strip()
 
