@@ -89,7 +89,7 @@ async def enroll_volume_encryption(
         raise Exception("Process was killed unexpectedly")
 
     if process.returncode != 0:
-        logging.error("fscrypt add_key failed:", stdout, stderr)
+        print("fscrypt add_key failed:", stdout, stderr)
         raise subprocess.CalledProcessError(
             process.returncode,
             [
