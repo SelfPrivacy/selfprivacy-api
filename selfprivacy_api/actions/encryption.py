@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import subprocess
 
 from opentelemetry import trace
@@ -7,8 +8,8 @@ from pydantic import BaseModel
 from selfprivacy_api.utils.redis_pool import RedisPool
 from selfprivacy_api.utils.block_devices import BlockDevices
 
+logger = logging.getLogger(__name__)
 tracer = trace.get_tracer(__name__)
-
 
 class VolumeEncryptionStatus(BaseModel):
     """fscrypt encryption status for a volume."""
@@ -88,6 +89,7 @@ async def enroll_volume_encryption(
         raise Exception("Process was killed unexpectedly")
 
     if process.returncode != 0:
+        logging.error("fscrypt add_key failed:", stdout, stderr)
         raise subprocess.CalledProcessError(
             process.returncode,
             [
