@@ -179,6 +179,7 @@ in
             pkgs.mkpasswd
             pkgs.util-linux
             pkgs.e2fsprogs
+            pkgs.fscryptctl
             pkgs.iproute2
             pkgs.postgresql_16.out
             sp-fetch-remote-module
