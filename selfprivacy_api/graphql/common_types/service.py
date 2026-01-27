@@ -16,6 +16,8 @@ from selfprivacy_api.services import ServiceDnsRecord
 from selfprivacy_api.utils.block_devices import BlockDevices
 from selfprivacy_api.utils.network import get_ip4, get_ip6
 
+from selfprivacy_api.actions.encryption import get_encryption_status_for_volume
+
 tracer = trace.get_tracer(__name__)
 
 
@@ -51,12 +53,34 @@ class StorageVolume:
         """Get usages of a volume"""
         return await get_usages(self)
 
+    @strawberry.field
+    async def encryption(self) -> "StorageEncryptionStatus":
+        """Get per-directory encryption settings of a volume"""
+        encryption_status = await get_encryption_status_for_volume(self.name)
+        if encryption_status is None:
+            # TODO: proper error handling
+            raise Exception("Encryption status shouldn't return None")
+        return StorageEncryptionStatus(
+            is_enrolled=encryption_status.is_enrolled,
+            is_unlocked=encryption_status.is_unlocked,
+            key_id=encryption_status.key_id,
+        )
+
 
 @strawberry.interface
 class StorageUsageInterface:
     used_space: str
     volume: Optional[StorageVolume]
     title: str
+
+
+@strawberry.type
+class StorageEncryptionStatus:
+    """Storage usage for a service"""
+
+    is_enrolled: bool
+    is_unlocked: bool
+    key_id: Optional[str]
 
 
 @strawberry.type
