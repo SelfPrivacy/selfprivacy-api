@@ -90,7 +90,6 @@ async def enroll_volume_encryption(
         raise Exception("Process was killed unexpectedly")
 
     if process.returncode != 0:
-        print("fscrypt add_key failed:", stdout, stderr)
         raise subprocess.CalledProcessError(
             process.returncode,
             [
@@ -105,5 +104,62 @@ async def enroll_volume_encryption(
     key_id = stdout.decode("utf-8").strip()
 
     await redis.set(f"encryption:{volume_name}:key_id", key_id)
+
+    return await get_encryption_status_for_volume(volume_name)
+
+
+async def unlock_volume_with_encryption_key(
+    volume_name: str, key: bytes
+) -> Optional[VolumeEncryptionStatus]:
+    redis = RedisPool().get_connection_async()
+    blockdev = BlockDevices().get_block_device_by_canonical_name(volume_name)
+
+    if blockdev is None:
+        return None
+
+    key_id = await redis.get(f"encryption:{volume_name}:key_id")
+
+    if key_id is None:
+        return None
+
+    process = await asyncio.create_subprocess_exec(
+        "fscryptctl",
+        "add_key",
+        blockdev.mountpoints[0],
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+        stdin=asyncio.subprocess.PIPE
+    )
+    stdout, stderr = await process.communicate(input=key)
+
+    if process.returncode is None:
+        raise Exception("Process was killed unexpectedly")
+
+    if process.returncode != 0:
+        raise subprocess.CalledProcessError(
+            process.returncode,
+            [
+                "fscryptctl",
+                "add_key",
+                blockdev.mountpoints[0],
+            ],
+            stdout,
+            stderr,
+        )
+
+    added_key_id = stdout.decode("utf-8").strip()
+
+    # We have only one key per volume, so this means we got invalid key.
+    if key_id != added_key_id:
+        process = await asyncio.create_subprocess_exec(
+            "fscryptctl",
+            "remove_key",
+            added_key_id,
+            blockdev.mountpoints[0],
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        await process.communicate()
+        return None
 
     return await get_encryption_status_for_volume(volume_name)

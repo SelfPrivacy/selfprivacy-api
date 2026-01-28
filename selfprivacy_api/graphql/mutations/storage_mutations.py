@@ -29,7 +29,7 @@ from selfprivacy_api.jobs.migrate_to_binds import (
     start_bind_migration,
 )
 
-from selfprivacy_api.actions.encryption import enroll_volume_encryption
+from selfprivacy_api.actions.encryption import enroll_volume_encryption, unlock_volume_with_encryption_key
 
 tracer = trace.get_tracer(__name__)
 _ = gettext.gettext
@@ -49,15 +49,15 @@ class MigrateToBindsInput:
 
 
 @strawberry.input
-class EnrollVolumeEncryptionInput:
-    """Migrate to binds input"""
+class EnrollOrUnlockVolumeEncryptionInput:
+    """ Input expected to be provided when enrolling or unlocking volume encryption """
 
     volume_name: str
     encoded_key: str
 
 
 @strawberry.type
-class VolumeEncryptionEnrollReturn(MutationReturnInterface):
+class VolumeEncryptionEnrollOrUnlockReturn(MutationReturnInterface):
     """Return password reset link"""
 
     encryption: Optional[StorageEncryptionStatus] = None
@@ -201,8 +201,8 @@ class StorageMutations:
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def enroll_volume_encryption(
-        self, input: EnrollVolumeEncryptionInput, info: Info
-    ) -> VolumeEncryptionEnrollReturn:
+        self, input: EnrollOrUnlockVolumeEncryptionInput, info: Info
+    ) -> VolumeEncryptionEnrollOrUnlockReturn:
         """Enroll encryption key into volume"""
         locale = get_locale(info=info)
 
@@ -216,7 +216,7 @@ class StorageMutations:
                 input.volume_name
             )
             if volume is None:
-                return VolumeEncryptionEnrollReturn(
+                return VolumeEncryptionEnrollOrUnlockReturn(
                     success=False,
                     code=404,
                     message=t.translate(text=VOLUME_NOT_FOUND, locale=locale),
@@ -228,7 +228,7 @@ class StorageMutations:
             enroll_result = await enroll_volume_encryption(input.volume_name, key)
 
             if enroll_result is None:
-                return VolumeEncryptionEnrollReturn(
+                return VolumeEncryptionEnrollOrUnlockReturn(
                     success=False,
                     code=500,
                     message=t.translate(
@@ -236,7 +236,7 @@ class StorageMutations:
                     ),
                 )
 
-            return VolumeEncryptionEnrollReturn(
+            return VolumeEncryptionEnrollOrUnlockReturn(
                 success=True,
                 code=200,
                 message=t.translate(
@@ -246,5 +246,56 @@ class StorageMutations:
                     is_enrolled=enroll_result.is_enrolled,
                     is_unlocked=enroll_result.is_unlocked,
                     key_id=enroll_result.key_id,
+                ),
+            )
+
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    async def unlock_volume_encryption(
+        self, input: EnrollOrUnlockVolumeEncryptionInput, info: Info
+    ) -> VolumeEncryptionEnrollOrUnlockReturn:
+        """Enroll encryption key into volume"""
+        locale = get_locale(info=info)
+
+        with tracer.start_as_current_span(
+            "unlock_volume_encryption_mutation",
+            attributes={
+                "volume_name": input.volume_name,
+            },
+        ):
+            volume = BlockDevices().get_block_device_by_canonical_name(
+                input.volume_name
+            )
+            if volume is None:
+                return VolumeEncryptionEnrollOrUnlockReturn(
+                    success=False,
+                    code=404,
+                    message=t.translate(text=VOLUME_NOT_FOUND, locale=locale),
+                )
+
+            # TODO: validation of key size and error handling
+            key = base64.b64decode(input.encoded_key)
+
+            unlock_result = await unlock_volume_with_encryption_key(input.volume_name, key)
+
+            if unlock_result is None:
+                return VolumeEncryptionEnrollOrUnlockReturn(
+                    success=False,
+                    code=500,
+                    message=t.translate(
+                        text=_("Incorrect volume key"), locale=locale
+                    ),
+                )
+
+            return VolumeEncryptionEnrollOrUnlockReturn(
+                success=True,
+                code=200,
+                message=t.translate(
+                    text=_("Volume unlocked successfully!"), locale=locale
+                ),
+                encryption=StorageEncryptionStatus(
+                    is_enrolled=unlock_result.is_enrolled,
+                    is_unlocked=unlock_result.is_unlocked,
+                    key_id=unlock_result.key_id,
                 ),
             )
