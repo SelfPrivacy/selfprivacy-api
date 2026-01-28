@@ -82,6 +82,7 @@ async def enroll_volume_encryption(
         blockdev.mountpoints[0],
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
+        stdin=asyncio.subprocess.PIPE
     )
     stdout, stderr = await process.communicate(input=key)
 
