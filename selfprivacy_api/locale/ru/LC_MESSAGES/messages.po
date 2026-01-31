@@ -37,7 +37,7 @@ msgid "User is protected and cannot be deleted or modified"
 msgstr "Пользователь защищён и не может быть удалён или изменён"
 
 #: selfprivacy_api/repositories/users/exceptions.py:39
-msgid "Username is forbidden"
+msgid "Username is reserved"
 msgstr "Имя пользователя запрещено"
 
 #: selfprivacy_api/repositories/users/exceptions.py:47

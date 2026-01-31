@@ -1,40 +1,33 @@
 import logging
-from os import environ
 import os
+from os import environ
 
-from selfprivacy_api.dependencies import get_api_version
-from selfprivacy_api.utils.huey import huey
-
-from selfprivacy_api.backup.tasks import *
-from selfprivacy_api.services.tasks import move_service
-from selfprivacy_api.jobs.upgrade_system import rebuild_system_task
-
-from selfprivacy_api.jobs.test import test_job
-from selfprivacy_api.jobs.nix_collect_garbage import run_task
-
-from opentelemetry.sdk.resources import (
-    SERVICE_NAME,
-    SERVICE_VERSION,
-    SERVICE_INSTANCE_ID,
-    Resource,
-)
-
-from selfprivacy_api.utils.otel import OTEL_ENABLED, setup_instrumentation
-from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-
-from opentelemetry import metrics
-from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
-from opentelemetry.sdk.metrics import MeterProvider
-from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
-
+from opentelemetry import metrics, trace
+from opentelemetry._logs import get_logger, set_logger_provider
 from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
+from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
-from opentelemetry._logs import set_logger_provider, get_logger
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+from opentelemetry.sdk.resources import (
+    SERVICE_INSTANCE_ID,
+    SERVICE_NAME,
+    SERVICE_VERSION,
+    Resource,
+)
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
+from selfprivacy_api.backup.tasks import *
+from selfprivacy_api.dependencies import get_api_version
+from selfprivacy_api.jobs.nix_collect_garbage import nix_collect_garbage_task
+from selfprivacy_api.jobs.test import test_job
+from selfprivacy_api.jobs.upgrade_system import rebuild_system_task
+from selfprivacy_api.services.tasks import move_service
+from selfprivacy_api.utils.huey import huey
+from selfprivacy_api.utils.otel import OTEL_ENABLED, setup_instrumentation
 
 setup_instrumentation()
 

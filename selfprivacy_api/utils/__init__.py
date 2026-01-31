@@ -1,23 +1,21 @@
 #!/usr/bin/env python3
 """Various utility functions"""
 import datetime
-from enum import Enum
-from typing import Callable, TypeVar
+import glob
 import json
 import os
 import subprocess
-import portalocker
-from typing import Optional
-import glob
 from contextlib import contextmanager
-
+from enum import Enum
 from traceback import format_tb as format_traceback
+from typing import Callable, Optional, TypeVar
+
+import portalocker
 
 from selfprivacy_api.utils.default_subdomains import (
     DEFAULT_SUBDOMAINS,
     RESERVED_SUBDOMAINS,
 )
-
 
 USERDATA_FILE = "/etc/nixos/userdata.json"
 SECRETS_FILE = "/etc/selfprivacy/secrets.json"
@@ -27,8 +25,8 @@ ACCOUNT_PATH_PATTERN = (
     "/var/lib/acme/.lego/accounts/*/acme-v02.api.letsencrypt.org/*/account.json"
 )
 
-FORBIDDEN_PREFIXES = ["systemd", "nixbld"]
-FORBIDDEN_USERNAMES = [
+RESERVED_PREFIXES = ["systemd", "nixbld"]
+RESERVED_USERNAMES = [
     "root",
     "messagebus",
     "postfix",
@@ -149,13 +147,13 @@ def validate_ssh_public_key(key):
     return True
 
 
-def is_username_forbidden(username):
-    for prefix in FORBIDDEN_PREFIXES:
+def is_username_or_prefix_reserved(username) -> str | bool:
+    for prefix in RESERVED_PREFIXES:
         if username.startswith(prefix):
-            return True
+            return prefix
 
-    for forbidden_username in FORBIDDEN_USERNAMES:
-        if username == forbidden_username:
+    for reserved_username in RESERVED_USERNAMES:
+        if username == reserved_username:
             return True
 
     return False

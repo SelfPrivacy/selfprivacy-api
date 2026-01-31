@@ -1,15 +1,11 @@
 import gettext
-import logging
 import re
 import subprocess
-from textwrap import dedent
 from typing import Iterable, Tuple
 
 from selfprivacy_api.exceptions.system import FailedToFindResult, ShellException
 from selfprivacy_api.jobs import Job, Jobs, JobStatus
 from selfprivacy_api.utils.huey import huey
-
-logger = logging.getLogger(__name__)
 
 _ = gettext.gettext
 
@@ -35,7 +31,7 @@ def delete_old_gens_and_return_dead_report() -> str:
     return " " if result is None else result
 
 
-def run_nix_collect_garbage() -> Iterable[bytes]:
+def action_nix_collect_garbage() -> Iterable[bytes]:
     process = subprocess.Popen(
         CLEAR_NIX_STORAGE_COMMAND, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
     )
@@ -57,12 +53,11 @@ def parse_line(job: Job, line: str) -> Job:
             regex_pattern=regex_pattern,
             data=line,
             command=" ".join(CLEAR_NIX_STORAGE_COMMAND),
-            description=dedent(
-                """
-                Garbage collection result was not found.
-                The code analyzes the last line in the command output using a regular expression.
-                Simply put, we're just looking for a similar string: "1537 store paths deleted, 339.84 MiB freed".
-                """
+            description=(
+                "Garbage collection result was not found.\n"
+                "The code analyzes the last line in the command output using a regular expression.\n"
+                "Simply put, we're just looking for a similar string: "
+                '"1537 store paths deleted, 339.84 MiB freed".'
             ),
         )
 
@@ -110,7 +105,7 @@ def get_dead_packages(output) -> Tuple[int, float]:
 
 
 @huey.task()
-def run_task(job: Job):
+def nix_collect_garbage_task(job: Job):
     Jobs.update(
         job=job,
         status=JobStatus.RUNNING,
@@ -139,31 +134,32 @@ def run_task(job: Job):
         % {"dead_packages": dead_packages},
     )
 
-    stream = run_nix_collect_garbage()
-    process_stream(job, stream, dead_packages)
+    stream = action_nix_collect_garbage()
 
-
-def nix_collect_garbage() -> Job:
-    job = Jobs.add(
-        type_id="maintenance.collect_nix_garbage",
-        name=_("Collect garbage"),
-        description=_("Cleaning up unused packages"),
-    )
-
+    error_message = None
     try:
-        run_task(job=job)
+        process_stream(job, stream, dead_packages)
     except ShellException as error:
-        error_message = (
-            error.get_error_message()
-            if getattr(error, "get_error_message", None)
-            else str(error)
-        )
+        error_message = str(error)
+    except FailedToFindResult as error:
+        error_message = error.get_error_message()
 
+    if error_message is not None:
         Jobs.update(
             job=job,
             status=JobStatus.ERROR,
             status_text=_("Garbage collection failed"),
             error=error_message,  # need to translate
         )
+
+
+def start_nix_collect_garbage() -> Job:
+    job = Jobs.add(
+        type_id="maintenance.collect_nix_garbage",
+        name=_("Collect garbage"),
+        description=_("Cleaning up unused packages"),
+    )
+
+    nix_collect_garbage_task(job=job)
 
     return job

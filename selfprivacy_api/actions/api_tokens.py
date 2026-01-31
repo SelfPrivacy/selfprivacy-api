@@ -4,7 +4,6 @@ The only actions on tokens that are accessible from APIs
 """
 
 import gettext
-import logging
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -23,7 +22,6 @@ from selfprivacy_api.utils.timeutils import ensure_tz_aware, ensure_tz_aware_str
 
 _ = gettext.gettext
 
-logger = logging.getLogger(__name__)
 tracer = trace.get_tracer(__name__)
 
 

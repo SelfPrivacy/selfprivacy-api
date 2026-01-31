@@ -35,6 +35,7 @@
               pyflakes
               typer # for strawberry
               types-redis # for mypy
+              aiofiles
             ]
             ++ strawberry-graphql.optional-dependencies.cli
           )

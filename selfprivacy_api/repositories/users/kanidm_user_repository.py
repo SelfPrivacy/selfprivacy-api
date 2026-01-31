@@ -7,6 +7,7 @@ import subprocess
 from json import JSONDecodeError
 from typing import Any, Optional, Union
 
+import aiofiles
 import httpx
 
 from selfprivacy_api.exceptions.users import (
@@ -41,8 +42,6 @@ SP_DEFAULT_GROUPS = ["sp.full_users"]
 logger = logging.getLogger(__name__)
 
 _ = gettext.gettext
-
-ERROR_CREATING_KANIDM_TOKEN_TEXT = _("Error creating Kanidm token")
 
 
 def get_kanidm_url():
@@ -108,8 +107,9 @@ class KanidmAdminToken:
             )
             return None
         try:
-            with open(token_path, "r") as file:
-                token = file.read().strip()
+            async with aiofiles.open(token_path, mode="r") as file:
+                token = await file.read()
+                token = token.strip()
                 if not token:
                     logger.warning(
                         "KANIDM_ADMIN_TOKEN_FILE is empty. "
@@ -136,40 +136,46 @@ class KanidmAdminToken:
         redis = RedisPool().get_connection_async()
 
         with temporary_env_var(key="KANIDM_PASSWORD", value=kanidm_admin_password):
-            command = "kanidm login -D idm_admin"
+            command = ["kanidm", "login", "-D", "idm_admin"]
 
             try:
                 proc = await asyncio.create_subprocess_exec(
-                    command,
+                    *command,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
                 )
                 _, stderr = await proc.communicate()
                 if proc.returncode != 0:
                     raise KanidmCliSubprocessError(
-                        command=command,
-                        description=ERROR_CREATING_KANIDM_TOKEN_TEXT,
+                        command=" ".join(command),
                         error=stderr.decode(errors="replace"),
                     )
 
-                command = "kanidm service-account api-token generate --rw sp.selfprivacy-api.service-account kanidm_service_account_token"
+                command = [
+                    "kanidm",
+                    "service-account",
+                    "api-token",
+                    "generate",
+                    "--rw",
+                    "sp.selfprivacy-api.service-account",
+                    "kanidm_service_account_token",
+                ]
+
                 proc = await asyncio.create_subprocess_exec(
-                    command,
+                    *command,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
                 )
                 stdout, stderr = await proc.communicate()
                 if proc.returncode != 0:
                     raise KanidmCliSubprocessError(
-                        command=command,
-                        description=ERROR_CREATING_KANIDM_TOKEN_TEXT,
+                        command=" ".join(command),
                         error=stderr.decode(errors="replace"),
                     )
 
             except OSError as error:
                 raise KanidmCliSubprocessError(
-                    command=command,
-                    description=ERROR_CREATING_KANIDM_TOKEN_TEXT,
+                    command=" ".join(command),
                     error=str(error),
                 )
 
@@ -231,7 +237,9 @@ class KanidmAdminToken:
             httpx.RequestError,
         ) as error:
             raise KanidmQueryError(
-                description="Kanidm is not responding to requests. Connection error.",
+                description=_(
+                    "Kanidm is not responding to requests. Connection error."
+                ),
                 endpoint=endpoint,
                 method=method,
                 error_text=error,
@@ -239,7 +247,7 @@ class KanidmAdminToken:
 
         except Exception as error:
             raise KanidmQueryError(
-                description="Unknown error while checking the Kanidm admin token.",
+                description=_("Unknown error while checking the Kanidm admin token."),
                 endpoint=endpoint,
                 method=method,
                 error_text=error,
@@ -374,7 +382,7 @@ class KanidmUserRepository(AbstractUserRepository):
             raise KanidmQueryError(
                 endpoint=full_endpoint,
                 method=method,
-                description="No JSON found in Kanidm response.",
+                description=_("No JSON found in Kanidm response."),
                 error_text=error,
             )
         except (
@@ -386,7 +394,7 @@ class KanidmUserRepository(AbstractUserRepository):
                 endpoint=endpoint,
                 method=method,
                 error_text=error,
-                description="Kanidm is not responding to requests.",
+                description=_("Kanidm is not responding to requests."),
             )
 
         except Exception as error:
@@ -409,7 +417,7 @@ class KanidmUserRepository(AbstractUserRepository):
                     raise KanidmQueryError(
                         endpoint=full_endpoint,
                         method=method,
-                        error_text="Kanidm access issue",
+                        error_text=_("Kanidm access issue"),
                     )
                 elif response_data == "notauthenticated":
                     raise FailedToGetValidKanidmToken
