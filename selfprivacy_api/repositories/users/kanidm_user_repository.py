@@ -1,8 +1,8 @@
+import gettext
 import logging
 from json import JSONDecodeError
 from typing import Any, Optional, Union
 
-import aiofiles
 import httpx
 
 from selfprivacy_api.exceptions.users import (
