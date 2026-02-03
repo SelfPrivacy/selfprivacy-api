@@ -1,7 +1,6 @@
 """Actions to manage the SSH."""
 
 import gettext
-import logging
 from typing import Optional
 
 from pydantic import BaseModel
@@ -18,8 +17,6 @@ from selfprivacy_api.utils import (
     ensure_ssh_and_users_fields_exist,
     validate_ssh_public_key,
 )
-
-logger = logging.getLogger(__name__)
 
 _ = gettext.gettext
 

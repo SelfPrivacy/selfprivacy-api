@@ -75,7 +75,9 @@ def one_user(mocker, datadir):
         {
             "username": "user1",
             "hashedPassword": "HASHED_PASSWORD_1",
-            "sshKeys": ["ssh-rsa KEY user1@pc"],
+            "sshKeys": [
+                "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGouijZuaO6EKh1wZypWvCgQOxSnjnZ52z5hITM2R9MR user1"
+            ],
         }
     ]
     return datadir
@@ -88,7 +90,9 @@ def some_users(mocker, datadir):
         {
             "username": "user1",
             "hashedPassword": "HASHED_PASSWORD_1",
-            "sshKeys": ["ssh-rsa KEY user1@pc"],
+            "sshKeys": [
+                "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGouijZuaO6EKh1wZypWvCgQOxSnjnZ52z5hITM2R9MR user1"
+            ],
         },
         {"username": "user2", "hashedPassword": "HASHED_PASSWORD_2", "sshKeys": []},
         {"username": "user3", "hashedPassword": "HASHED_PASSWORD_3"},
@@ -131,7 +135,7 @@ class ProcessMock:
         self.args = args
         self.kwargs = kwargs
 
-    def communicate():  # pylint: disable=no-method-argument
+    def communicate():  # pyright: ignore[reportSelfClsParameterName]
         return (b"NEW_HASHED", None)
 
     returncode = 0
@@ -191,7 +195,7 @@ def test_graphql_get_some_users(
     assert len(response.json()["data"]["users"]["allUsers"]) == 4
     assert response.json()["data"]["users"]["allUsers"][0]["username"] == "user1"
     assert response.json()["data"]["users"]["allUsers"][0]["sshKeys"] == [
-        "ssh-rsa KEY user1@pc"
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGouijZuaO6EKh1wZypWvCgQOxSnjnZ52z5hITM2R9MR user1"
     ]
 
     assert response.json()["data"]["users"]["allUsers"][1]["username"] == "user2"
@@ -199,7 +203,7 @@ def test_graphql_get_some_users(
 
     assert response.json()["data"]["users"]["allUsers"][3]["username"] == "tester"
     assert response.json()["data"]["users"]["allUsers"][3]["sshKeys"] == [
-        "ssh-rsa KEY test@pc"
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHptiXtnh0b57aK6B117g+CkINlbx8JSTl03Ry0/a2BB dummykey"
     ]
 
 
@@ -218,7 +222,7 @@ def test_graphql_get_no_users(
     assert len(response.json()["data"]["users"]["allUsers"]) == 1
     assert response.json()["data"]["users"]["allUsers"][0]["username"] == "tester"
     assert response.json()["data"]["users"]["allUsers"][0]["sshKeys"] == [
-        "ssh-rsa KEY test@pc"
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHptiXtnh0b57aK6B117g+CkINlbx8JSTl03Ry0/a2BB dummykey"
     ]
 
 
@@ -237,7 +241,7 @@ def test_graphql_get_users_undefined_but_admin(
     assert len(response.json()["data"]["users"]["allUsers"]) == 1
     assert response.json()["data"]["users"]["allUsers"][0]["username"] == "tester"
     assert response.json()["data"]["users"]["allUsers"][0]["sshKeys"] == [
-        "ssh-rsa KEY test@pc"
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHptiXtnh0b57aK6B117g+CkINlbx8JSTl03Ry0/a2BB dummykey"
     ]
 
 
@@ -301,7 +305,7 @@ def test_graphql_get_one_user(
     assert len(response.json()["data"]["users"]["getUser"]) == 2
     assert response.json()["data"]["users"]["getUser"]["username"] == "user1"
     assert response.json()["data"]["users"]["getUser"]["sshKeys"] == [
-        "ssh-rsa KEY user1@pc"
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGouijZuaO6EKh1wZypWvCgQOxSnjnZ52z5hITM2R9MR user1"
     ]
 
 
@@ -361,7 +365,7 @@ def test_graphql_get_root_user(
     assert len(response.json()["data"]["users"]["getUser"]) == 2
     assert response.json()["data"]["users"]["getUser"]["username"] == "root"
     assert response.json()["data"]["users"]["getUser"]["sshKeys"] == [
-        "ssh-ed25519 KEY test@pc"
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIElWG9GbP2g8Jsy/N01w1wjRvBxsNLWxr9NasN694kYw testkey"
     ]
 
 
@@ -383,7 +387,7 @@ def test_graphql_get_main_user(
     assert len(response.json()["data"]["users"]["getUser"]) == 2
     assert response.json()["data"]["users"]["getUser"]["username"] == "tester"
     assert response.json()["data"]["users"]["getUser"]["sshKeys"] == [
-        "ssh-rsa KEY test@pc"
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHptiXtnh0b57aK6B117g+CkINlbx8JSTl03Ry0/a2BB dummykey"
     ]
 
 
@@ -504,14 +508,12 @@ def test_graphql_add_existing_user(authorized_client, one_user, use_json_reposit
     assert_errorcode(output, code=409)
 
 
-# Linked to branch nhnn/inex/allow-no-main-username-nixos-25.11
-#
-# def test_graphql_add_user_when_no_admin_defined(
-#     authorized_client, no_users_no_admin_nobody, use_json_repository
-# ):
-#     output = api_add_user(authorized_client, "tester", password="12345678")
-#     assert_errorcode(output, code=400)
-#     assert output["user"] is None
+def test_graphql_add_user_when_no_admin_defined(
+    authorized_client, no_users_no_admin_nobody, use_json_repository
+):
+    output = api_add_user(authorized_client, "tester", password="12345678")
+    assert_ok(output, code=201)
+    assert output["user"] is not None
 
 
 def test_graphql_add_long_username(
@@ -703,7 +705,7 @@ def test_graphql_update_user(
 
     assert response.json()["data"]["users"]["updateUser"]["user"]["username"] == "user1"
     assert response.json()["data"]["users"]["updateUser"]["user"]["sshKeys"] == [
-        "ssh-rsa KEY user1@pc"
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGouijZuaO6EKh1wZypWvCgQOxSnjnZ52z5hITM2R9MR user1"
     ]
 
 
@@ -799,17 +801,15 @@ def test_graphql_get_root_user_no_primary_user(
     assert user["sshKeys"] == ["ssh-ed25519 KEY test@pc"]
 
 
-# Linked to branch nhnn/inex/allow-no-main-username-nixos-25.11
-#
-# def test_graphql_add_user_no_primary_user(
-#     authorized_client, no_primary_user, mock_subprocess_popen, use_json_repository
-# ):
-#     """Test that creating a user fails gracefully when primary user is not defined"""
-#     output = api_add_user(authorized_client, "user3", password="12345678")
+def test_graphql_add_user_no_primary_user(
+    authorized_client, no_primary_user, mock_subprocess_popen, use_json_repository
+):
+    """Test that creating a user fails gracefully when primary user is not defined"""
+    output = api_add_user(authorized_client, "user3", password="12345678")
 
-#     # Should fail because admin is not configured
-#     assert_errorcode(output, code=400)
-#     assert output["user"] is None
+    # Should fail because admin is not configured
+    assert_ok(output, code=201)
+    assert output["user"] is not None
 
 
 def test_graphql_delete_user_no_primary_user(

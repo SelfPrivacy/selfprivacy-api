@@ -1,7 +1,7 @@
 {
   description = "SelfPrivacy API flake";
 
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
 
   outputs =
     { self, nixpkgs, ... }:
@@ -35,6 +35,7 @@
               pyflakes
               typer # for strawberry
               types-redis # for mypy
+              aiofiles
             ]
             ++ strawberry-graphql.optional-dependencies.cli
           )
@@ -75,22 +76,41 @@
             pythonPackages = pkgs.python312Packages;
             rev = self.shortRev or self.dirtyShortRev or "dirty";
           };
-          pytest-vm = pkgs.writeShellScriptBin "pytest-vm" ''
+          pytest-vm = let
+            check = self.checks.${system}.default.extend {
+              modules = [
+                ({config, lib, ...}: {
+                  nodes.machine = {
+                    virtualisation.sharedDirectories.src = {
+                      source = "$API_SOURCES";
+                      target = vmtest-src-dir;
+                    };
+                    virtualisation.fileSystems.${vmtest-src-dir} = lib.mkForce {
+                      neededForBoot = true;
+                      device = "src";
+                      fsType = "9p";
+                      options = [
+                        "trans=virtio"
+                        "version=9p2000.L"
+                        "msize=${toString config.nodes.machine.virtualisation.msize}"
+                        "x-systemd.requires=modprobe@9pnet_virtio.service"
+                      ];
+                    };
+                  };
+                })
+              ];
+            };
+          in pkgs.writeShellScriptBin "pytest-vm" ''
             set -o errexit
             set -o nounset
             set -o xtrace
 
             # see https://github.com/NixOS/nixpkgs/blob/66a9817cec77098cfdcbb9ad82dbb92651987a84/nixos/lib/test-driver/test_driver/machine.py#L359
             export TMPDIR=''${TMPDIR:=/tmp}/nixos-vm-tmp-dir
-            readonly NIXOS_VM_SHARED_DIR_HOST="$TMPDIR/shared-xchg"
-            readonly NIXOS_VM_SHARED_DIR_GUEST="/tmp/shared"
-
-            mkdir -p "$TMPDIR"
-            ln -sfv "$PWD" -T "$NIXOS_VM_SHARED_DIR_HOST"
+            export API_SOURCES=$PWD
 
             SCRIPT=$(cat <<EOF
             start_all()
-            machine.succeed("ln -sf $NIXOS_VM_SHARED_DIR_GUEST -T ${vmtest-src-dir} >&2")
             machine.succeed("cd ${vmtest-src-dir} && coverage run -m pytest $@ >&2")
             machine.succeed("cd ${vmtest-src-dir} && coverage report >&2")
             EOF
@@ -98,12 +118,12 @@
 
             if [ -f "/etc/arch-release" ]; then
                 ${
-                  self.checks.${system}.default.driverInteractive
+                  check.driverInteractive
                 }/bin/nixos-test-driver --no-interactive <(printf "%s" "$SCRIPT")
             else
-                ${self.checks.${system}.default.driver}/bin/nixos-test-driver -- <(printf "%s" "$SCRIPT")
+                ${check.driver}/bin/nixos-test-driver -- <(printf "%s" "$SCRIPT")
             fi
-          '';
+        '';
           dependencies-json = pkgs.writeTextFile {
             name = "dependencies-versions.json";
             text =
@@ -132,6 +152,7 @@
           default = pkgs.mkShellNoCC {
             name = "SP API dev shell";
             packages = with pkgs; [
+              gettext # msginit, msgfmt
               nixpkgs-fmt
               rclone
               valkey
@@ -220,6 +241,13 @@
                   fsType = "ext4";
                   noCheck = true;
                 };
+                virtualisation.fileSystems.${vmtest-src-dir} = {
+                  neededForBoot = true;
+                  device = self.outPath;
+                  options = [
+                    "bind"
+                  ];
+                };
                 boot.consoleLogLevel = lib.mkForce 3;
                 documentation.enable = false;
                 services.journald.extraConfig = lib.mkForce "";
@@ -236,7 +264,6 @@
                   restic
                 ];
                 environment.variables.TEST_MODE = "true";
-                systemd.tmpfiles.settings.src.${vmtest-src-dir}.L.argument = self.outPath;
               };
             testScript = ''
               start_all()

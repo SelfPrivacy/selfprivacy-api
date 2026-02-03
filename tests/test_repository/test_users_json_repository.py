@@ -19,11 +19,15 @@ async def test_delete_user_writes_json(generic_userdata):
             {
                 "username": "user1",
                 "hashedPassword": "HASHED_PASSWORD_1",
-                "sshKeys": ["ssh-rsa KEY user1@pc"],
+                "sshKeys": [
+                    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGouijZuaO6EKh1wZypWvCgQOxSnjnZ52z5hITM2R9MR user1"
+                ],
             },
             {
                 "username": "user3",
                 "hashedPassword": "HASHED_PASSWORD_3",
-                "sshKeys": ["ssh-rsa KEY user3@pc"],
+                "sshKeys": [
+                    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGouijZuaO6EKh1wZypWvCgQOxSnjnZ52z5hITM2R9MR user3"
+                ],
             },
         ]

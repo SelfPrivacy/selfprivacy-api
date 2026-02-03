@@ -1,7 +1,6 @@
 """Actions to manage the system."""
 
 import gettext
-import logging
 import subprocess
 from typing import Optional
 
@@ -14,8 +13,6 @@ from selfprivacy_api.jobs import Job, Jobs, JobStatus
 from selfprivacy_api.jobs.upgrade_system import rebuild_system_task
 from selfprivacy_api.utils import ReadUserData, UserDataFiles, WriteUserData
 from selfprivacy_api.utils.systemd import start_unit, systemd_proxy
-
-logger = logging.getLogger(__name__)
 
 _ = gettext.gettext
 

@@ -16,10 +16,10 @@ logger = logging.getLogger(__name__)
 class ServiceNotFoundError(AbstractException):
     code = 404
 
-    def __init__(self, service_id: str):
+    def __init__(self, service_id: str, log: bool = True):
         self.service_id = service_id
 
-        logger.error(self.get_error_message())
+        super().__init__(log=log)
 
     def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
         return t.translate(
@@ -34,10 +34,10 @@ class ServiceNotFoundError(AbstractException):
 class VolumeNotFoundError(AbstractException):
     code = 404
 
-    def __init__(self, volume_name: str):
+    def __init__(self, volume_name: str, log: bool = True):
         self.volume_name = volume_name
 
-        logging.error(self.get_error_message())
+        super().__init__(log=log)
 
     def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
         return t.translate(

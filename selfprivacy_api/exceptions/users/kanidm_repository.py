@@ -1,6 +1,4 @@
 import gettext
-import logging
-from textwrap import dedent
 from typing import Any, Optional
 
 from selfprivacy_api.exceptions import (
@@ -19,8 +17,6 @@ from selfprivacy_api.utils.localization import (
 
 _ = gettext.gettext
 
-logger = logging.getLogger(__name__)
-
 
 class KanidmQueryError(AbstractException):
     """Error occurred during kanidm query"""
@@ -33,121 +29,110 @@ class KanidmQueryError(AbstractException):
         method: str,
         error_text: Any,
         description: Optional[str] = " ",
+        log: bool = True,
     ) -> None:
         self.endpoint = endpoint
         self.method = method
         self.error_text = str(error_text)
         self.description = description
 
-        logger.error(self.get_error_message())
+        super().__init__(log=log)
 
     def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
-        return (
-            t.translate(
-                text=_(
-                    dedent(
-                        """
-                        An error occurred while making a request to Kanidm.
-                        %(KANIDM_DESCRIPTION)s
-                        %(description)s
-                        %(REPORT_IT_TO_SUPPORT_CHATS)s
-
-                        Endpoint: %(endpoint)s
-                        Method: %(method)s
-                        Error: %(error)s
-                        """
-                    )
-                ),
-                locale=locale,
-            )
-            % {
-                "KANIDM_DESCRIPTION": KANIDM_DESCRIPTION,
-                "description": self.description,
-                "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
-                "endpoint": self.endpoint,
-                "method": self.method,
-                "error": self.error_text,
-            }
-        )
+        return t.translate(
+            text=_(
+                "An error occurred during a request to Kanidm.\n"
+                "%(KANIDM_DESCRIPTION)s\n"
+                "%(description)s\n"
+                "%(REPORT_IT_TO_SUPPORT_CHATS)s\n"
+                "\n"
+                "Endpoint: %(endpoint)s\n"
+                "Method: %(method)s\n"
+                "Error: %(error)s"
+            ),
+            locale=locale,
+        ) % {
+            "KANIDM_DESCRIPTION": KANIDM_DESCRIPTION,
+            "description": self.description,
+            "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
+            "endpoint": self.endpoint,
+            "method": self.method,
+            "error": self.error_text,
+        }
 
 
 class KanidmReturnEmptyResponse(AbstractException):
-    """Kanidm returned a empty response"""
+    """Kanidm returned an empty response"""
 
     code = 500
 
-    def __init__(self, endpoint: str, method: str):
+    def __init__(
+        self,
+        endpoint: str,
+        method: str,
+        log: bool = True,
+    ):
         self.endpoint = endpoint
         self.method = method
 
-        logger.error(self.get_error_message())
+        super().__init__(log=log)
 
     def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
-        return (
-            t.translate(
-                text=_(
-                    dedent(
-                        """
-                        Kanidm returned an empty response.
-                        %(KANIDM_DESCRIPTION)s
-                        %(REPORT_IT_TO_SUPPORT_CHATS)s
-
-                        Endpoint: %(endpoint)s
-                        Method: %(method)s
-                        """
-                    )
-                ),
-                locale=locale,
-            )
-            % {
-                "KANIDM_DESCRIPTION": KANIDM_DESCRIPTION,
-                "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
-                "endpoint": self.endpoint,
-                "method": self.method,
-            }
-        )
+        return t.translate(
+            text=_(
+                "Kanidm returned an empty response.\n"
+                "%(KANIDM_DESCRIPTION)s\n"
+                "%(REPORT_IT_TO_SUPPORT_CHATS)s\n\n"
+                "Endpoint: %(endpoint)s\n"
+                "Method: %(method)s"
+            ),
+            locale=locale,
+        ) % {
+            "KANIDM_DESCRIPTION": KANIDM_DESCRIPTION,
+            "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
+            "endpoint": self.endpoint,
+            "method": self.method,
+        }
 
 
 class KanidmReturnUnknownResponseType(AbstractException):
-    """Kanidm returned a unknown response"""
+    """Kanidm returned an unknown response"""
 
     code = 500
 
-    def __init__(self, endpoint: str, method: str, response_data: Any) -> None:
+    def __init__(
+        self,
+        endpoint: str,
+        method: str,
+        response_data: Any,
+        log: bool = True,
+    ) -> None:
         self.endpoint = endpoint
         self.method = method
         self.response_data = str(response_data)
 
-        logger.error(self.get_error_message())
+        super().__init__(log=log)
 
     def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
-        return (
-            t.translate(
-                text=_(
-                    dedent(
-                        """
-                        Kanidm returned unknown type response.
-                        %(KANIDM_DESCRIPTION)s
-                        %(KANIDM_PROBLEMS)s
-                        %(REPORT_IT_TO_SUPPORT_CHATS)s
-
-                        Endpoint %(endpoint)s
-                        Method: %(method)s
-                        Response: %(response)s
-                        """
-                    )
-                ),
-                locale=locale,
-            )
-            % {
-                "KANIDM_DESCRIPTION": KANIDM_DESCRIPTION,
-                "KANIDM_PROBLEMS": KANIDM_PROBLEMS,
-                "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
-                "endpoint": self.endpoint,
-                "method": self.method,
-                "response": self.response_data,
-            }
-        )
+        return t.translate(
+            text=_(
+                "Kanidm returned an unknown type response.\n"
+                "%(KANIDM_DESCRIPTION)s\n"
+                "%(KANIDM_PROBLEMS)s\n"
+                "%(REPORT_IT_TO_SUPPORT_CHATS)s\n\n"
+                "Endpoint: %(endpoint)s\n"
+                "Method: %(method)s\n"
+                "Response: %(response)s"
+            ),
+            locale=locale,
+        ) % {
+            "KANIDM_DESCRIPTION": KANIDM_DESCRIPTION,
+            "KANIDM_PROBLEMS": KANIDM_PROBLEMS,
+            "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
+            "endpoint": self.endpoint,
+            "method": self.method,
+            "response": self.response_data,
+        }
 
 
 class KanidmDidNotReturnAdminPassword(AbstractException):
@@ -155,30 +140,31 @@ class KanidmDidNotReturnAdminPassword(AbstractException):
 
     code = 500
 
-    def __init__(self, command: str, regex_pattern: str, output: Any) -> None:
+    def __init__(
+        self,
+        command: str,
+        regex_pattern: str,
+        output: Any,
+        log: bool = True,
+    ) -> None:
         self.command = command
         self.regex_pattern = regex_pattern
         self.output = str(output)
 
-        logger.error(self.get_error_message())
+        super().__init__(log=log)
 
     def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
         return t.translate(
             text=_(
-                dedent(
-                    """
-                    Kanidm CLI did not return the admin password.
-                    %(KANIDM_DESCRIPTION)s
-                    %(KANIDM_PROBLEMS)s
-                    %(REPORT_IT_TO_SUPPORT_CHATS)s
-
-                    %(KANIDM_DEBUG_HELP)s
-
-                    Used command: %(command)s
-                    Used regex pattern: %(regex_pattern)s
-                    Kanidm's CLI output: %(output)s
-                    """
-                )
+                "Failed to get access to Kanidm admin account:\n"
+                "Kanidm CLI did not reset the admin password.\n"
+                "%(KANIDM_DESCRIPTION)s\n"
+                "%(KANIDM_PROBLEMS)s\n"
+                "%(REPORT_IT_TO_SUPPORT_CHATS)s\n\n"
+                "%(KANIDM_DEBUG_HELP)s\n\n"
+                "Used command: %(command)s\n"
+                "Used regex pattern: %(regex_pattern)s\n"
+                "Kanidm's CLI output: %(output)s"
             )
             % {
                 "KANIDM_DESCRIPTION": KANIDM_DESCRIPTION,
@@ -198,28 +184,29 @@ class KanidmCliSubprocessError(AbstractException):
 
     code = 500
 
-    def __init__(self, command: str, description: str, error: str) -> None:
+    def __init__(
+        self,
+        command: str,
+        error: str,
+        description: str = _("Error creating Kanidm token"),
+        log: bool = True,
+    ) -> None:
         self.command = command
         self.description = description
         self.error = error
 
-        logger.error(self.get_error_message())
+        super().__init__(log=log)
 
     def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
         return t.translate(
             text=_(
-                dedent(
-                    """
-                    Kanidm CLI return error.
-                    %(KANIDM_DESCRIPTION)s
-                    %(description)s
-                    %(KANIDM_PROBLEMS)s
-                    %(REPORT_IT_TO_SUPPORT_CHATS)s
-
-                    Used command: %(command)s
-                    Error: %(error)s
-                    """
-                )
+                "Kanidm CLI returned an error.\n"
+                "%(KANIDM_DESCRIPTION)s\n"
+                "%(description)s\n"
+                "%(KANIDM_PROBLEMS)s\n"
+                "%(REPORT_IT_TO_SUPPORT_CHATS)s\n\n"
+                "Used command: %(command)s\n"
+                "Error: %(error)s"
             )
             % {
                 "KANIDM_DESCRIPTION": KANIDM_DESCRIPTION,
@@ -234,70 +221,64 @@ class KanidmCliSubprocessError(AbstractException):
 
 
 class FailedToGetValidKanidmToken(AbstractException):
-    """Kanidm failed to return a valid token"""
+    """Сouldn't get a valid Kanidm token"""
 
     code = 500
 
-    def __init__(self):
-        logger.error(self.get_error_message())
-
-    def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
-        return (
-            t.translate(
-                text=_(
-                    dedent(
-                        """
-                        Failed to get a valid Kanidm token.
-                        %(KANIDM_DESCRIPTION)s
-                        %(KANIDM_PROBLEMS)s
-                        %(REPORT_IT_TO_SUPPORT_CHATS)s
-                        """
-                    )
-                ),
-                locale=locale,
-            )
-            % {
-                "KANIDM_DESCRIPTION": KANIDM_DESCRIPTION,
-                "KANIDM_PROBLEMS": KANIDM_PROBLEMS,
-                "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
-            }
-        )
-
-
-class NoPasswordResetLinkFoundInResponse(AbstractException):
-    """No password reset link was found in the Kanidm response."""
-
-    code = 500
-
-    def __init__(self, endpoint: str, method: str, data: Any):
-        self.endpoint = endpoint
-        self.method = method
-        self.data = str(data)
-
-        logger.error(self.get_error_message())
+    def __init__(self, log: bool = True):
+        super().__init__(log=log)
 
     def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
         return t.translate(
             text=_(
-                dedent(
-                    """
-                    The Kanidm response does not contain a password reset link.
-                    %(KANIDM_DESCRIPTION)s
-                    Failed to find "token" in data.
-                    %(REPORT_IT_TO_SUPPORT_CHATS)s
-
-                    Endpoint: %(endpoint)s
-                    Method: %(method)s
-                    Data: %(data)s
-                    """
-                )
-                % {
-                    "KANIDM_DESCRIPTION": KANIDM_DESCRIPTION,
-                    "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
-                    "endpoint": self.endpoint,
-                    "method": self.method,
-                    "data": self.data,
-                }
+                "Сouldn't get a valid Kanidm token.\n"
+                "%(KANIDM_DESCRIPTION)s\n"
+                "%(KANIDM_PROBLEMS)s\n"
+                "%(REPORT_IT_TO_SUPPORT_CHATS)s"
             ),
+            locale=locale,
+        ) % {
+            "KANIDM_DESCRIPTION": KANIDM_DESCRIPTION,
+            "KANIDM_PROBLEMS": KANIDM_PROBLEMS,
+            "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
+        }
+
+
+class NoPasswordResetLinkFoundInResponse(AbstractException):
+    """Kanidm didn't return a password reset link"""
+
+    code = 500
+
+    def __init__(
+        self,
+        endpoint: str,
+        method: str,
+        data: Any,
+        log: bool = True,
+    ):
+        self.endpoint = endpoint
+        self.method = method
+        self.data = str(data)
+
+        super().__init__(log=log)
+
+    def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
+        return t.translate(
+            text=_(
+                "Kanidm didn't return a password reset link.\n"
+                "%(KANIDM_DESCRIPTION)s\n"
+                'Failed to find "token" in data.\n'
+                "%(REPORT_IT_TO_SUPPORT_CHATS)s\n\n"
+                "Endpoint: %(endpoint)s\n"
+                "Method: %(method)s\n"
+                "Data: %(data)s\n"
+            )
+            % {
+                "KANIDM_DESCRIPTION": KANIDM_DESCRIPTION,
+                "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
+                "endpoint": self.endpoint,
+                "method": self.method,
+                "data": self.data,
+            },
             locale=locale,
         )

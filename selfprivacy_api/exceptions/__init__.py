@@ -1,14 +1,10 @@
 import gettext
-import logging
-from textwrap import dedent
 
 from selfprivacy_api.exceptions.abstract_exception import AbstractException
 from selfprivacy_api.utils.localization import (
     DEFAULT_LOCALE,
     TranslateSystemMessage as t,
 )
-
-logger = logging.getLogger(__name__)
 
 _ = gettext.gettext
 
@@ -17,28 +13,23 @@ PLEASE_UPDATE_APP_TEXT = _(
 )
 
 REPORT_IT_TO_SUPPORT_CHATS = _(
-    dedent(
-        """
-        Please report it to our support chats:
-        https://matrix.to/#/#chat:selfprivacy.org
-        https://t.me/selfprivacy_chat
-        """
-    )
+    "Please report it to our support chats:\n"
+    "#chat:selfprivacy.org on Matrix or @selprivacy_chat on Telegram."
 )
 
 
 class ApiUsingWrongUserRepository(AbstractException):
     """
-    API is using a too old or unfinished user repository. Are you debugging?
+    The API is using wrong user repository. Are you debugging?
     """
 
     code = 500
 
-    def __init__(self):
-        logger.error(self.get_error_message())
+    def __init__(self, log: bool = True):
+        super().__init__(log=log)
 
     def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
         return t.translate(
-            text=_("API is using a too old or unfinished user repository"),
+            text=_("The API is using the wrong user repository."),
             locale=locale,
         )

@@ -2,6 +2,7 @@ import logging
 from json import JSONDecodeError
 from typing import Any, Optional, Union
 
+import aiofiles
 import httpx
 
 from selfprivacy_api.exceptions.users import (
@@ -28,7 +29,10 @@ from selfprivacy_api.utils.kanidm_admin_token import KanidmAdminToken, get_kanid
 SP_ADMIN_GROUPS = ["sp.admins"]
 SP_DEFAULT_GROUPS = ["sp.full_users"]
 
+
 logger = logging.getLogger(__name__)
+
+_ = gettext.gettext
 
 
 class KanidmUserRepository(AbstractUserRepository):
@@ -145,7 +149,7 @@ class KanidmUserRepository(AbstractUserRepository):
             raise KanidmQueryError(
                 endpoint=full_endpoint,
                 method=method,
-                description="No JSON found in Kanidm response.",
+                description=_("No JSON found in Kanidm response."),
                 error_text=error,
             )
         except (
@@ -157,7 +161,7 @@ class KanidmUserRepository(AbstractUserRepository):
                 endpoint=endpoint,
                 method=method,
                 error_text=error,
-                description="Kanidm is not responding to requests.",
+                description=_("Kanidm is not responding to requests."),
             )
 
         except Exception as error:
@@ -180,7 +184,7 @@ class KanidmUserRepository(AbstractUserRepository):
                     raise KanidmQueryError(
                         endpoint=full_endpoint,
                         method=method,
-                        error_text="Kanidm access issue",
+                        error_text=_("Kanidm access issue"),
                     )
                 elif response_data == "notauthenticated":
                     raise FailedToGetValidKanidmToken

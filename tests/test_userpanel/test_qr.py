@@ -19,7 +19,7 @@ def test_qr_code_creation():
         "ih": server_domain,
         "ip": 993,
         "sh": server_domain,
-        "sp": 587,
+        "sp": 465,
     }
 
     # Create the deltachat URI
@@ -64,7 +64,7 @@ def test_qr_code_with_different_parameters():
             "ih": server_domain,
             "ip": 993,
             "sh": server_domain,
-            "sp": 587,
+            "sp": 465,
         }
 
         deltachat_uri = f"dclogin://{login}?{urlencode(deltachat_params)}"
@@ -87,7 +87,7 @@ def test_qr_code_uri_format():
         "ih": server_domain,
         "ip": 993,
         "sh": server_domain,
-        "sp": 587,
+        "sp": 465,
     }
 
     deltachat_uri = f"dclogin://{login}?{urlencode(deltachat_params)}"
@@ -100,7 +100,7 @@ def test_qr_code_uri_format():
     assert "ih=example.com" in deltachat_uri
     assert "ip=993" in deltachat_uri
     assert "sh=example.com" in deltachat_uri
-    assert "sp=587" in deltachat_uri
+    assert "sp=465" in deltachat_uri
 
     # Test that QR code generation works with this URI
     qr_base64 = generate_qr_code(deltachat_uri)
@@ -129,7 +129,7 @@ def test_qr_code_with_special_characters():
             "ih": server_domain,
             "ip": 993,
             "sh": server_domain,
-            "sp": 587,
+            "sp": 465,
         }
 
         deltachat_uri = f"dclogin://{login}?{urlencode(deltachat_params)}"

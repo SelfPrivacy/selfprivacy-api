@@ -267,7 +267,7 @@ async def create_email_password_post(
             "ih": server_domain,
             "ip": 993,
             "sh": server_domain,
-            "sp": 587,
+            "sp": 465,
         }
         deltachat_uri = f"dclogin://{login}?{urlencode(deltachat_params)}"
         deltachat_qr_base64 = generate_qr_code(deltachat_uri)

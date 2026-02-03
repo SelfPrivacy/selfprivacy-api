@@ -3,8 +3,8 @@ from uuid import uuid4
 
 from selfprivacy_api.exceptions.users import (
     PasswordIsEmpty,
+    RootUserIsProtected,
     UserAlreadyExists,
-    UserIsProtected,
     UserNotFound,
 )
 from selfprivacy_api.models.group import Group
@@ -24,7 +24,7 @@ class JsonUserRepository(AbstractUserRepository):
     @staticmethod
     def _check_and_hash_password(password: str):
         if password == "":
-            raise PasswordIsEmpty
+            raise PasswordIsEmpty()
 
         return hash_password(password)
 
@@ -98,9 +98,9 @@ class JsonUserRepository(AbstractUserRepository):
         with WriteUserData() as user_data:
             ensure_ssh_and_users_fields_exist(user_data)
             if username == user_data.get("username", None):
-                raise UserIsProtected(account_type="primary")
+                raise RootUserIsProtected()
             if username == "root":
-                raise UserIsProtected(account_type="root")
+                raise RootUserIsProtected()
 
             for data_user in user_data["users"]:
                 if data_user["username"] == username:
@@ -135,7 +135,7 @@ class JsonUserRepository(AbstractUserRepository):
                         data_user["hashedPassword"] = hashed_password
                         break
                 else:
-                    raise UserNotFound
+                    raise UserNotFound()
 
     @staticmethod
     async def get_user_by_username(username: str) -> Optional[UserDataUser]:

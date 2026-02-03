@@ -13,22 +13,22 @@
   "timezone": "Etc/UTC",
   "username": "tester",
   "useBinds": true,
-  "sshKeys": ["ssh-rsa KEY test@pc"],
+  "sshKeys": ["ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHptiXtnh0b57aK6B117g+CkINlbx8JSTl03Ry0/a2BB dummykey"],
   "users": [
     {
       "username": "user1",
       "hashedPassword": "HASHED_PASSWORD_1",
-      "sshKeys": ["ssh-rsa KEY user1@pc"]
+      "sshKeys": ["ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGouijZuaO6EKh1wZypWvCgQOxSnjnZ52z5hITM2R9MR user1"]
     },
     {
       "username": "user2",
       "hashedPassword": "HASHED_PASSWORD_2",
-      "sshKeys": ["ssh-rsa KEY user2@pc"]
+      "sshKeys": ["ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGouijZuaO6EKh1wZypWvCgQOxSnjnZ52z5hITM2R9MR user2"]
     },
     {
       "username": "user3",
       "hashedPassword": "HASHED_PASSWORD_3",
-      "sshKeys": ["ssh-rsa KEY user3@pc"]
+      "sshKeys": ["ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGouijZuaO6EKh1wZypWvCgQOxSnjnZ52z5hITM2R9MR user3"]
     }
   ],
   "autoUpgrade": {
@@ -80,6 +80,6 @@
   "ssh": {
     "enable": true,
     "passwordAuthentication": false,
-    "rootKeys": ["ssh-ed25519 KEY test@pc"]
+    "rootKeys": ["ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIElWG9GbP2g8Jsy/N01w1wjRvBxsNLWxr9NasN694kYw testkey"]
   }
 }

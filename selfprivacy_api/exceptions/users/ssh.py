@@ -28,8 +28,8 @@ class KeyNotFound(AbstractException):
 
     code = 404
 
-    def __init__(self):
-        logger.error(self.get_error_message())
+    def __init__(self, log: bool = True):
+        super().__init__(log=log)
 
     def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
         return t.translate(text=_("Key not found"), locale=locale)
@@ -40,8 +40,8 @@ class KeyAlreadyExists(AbstractException):
 
     code = 409
 
-    def __init__(self):
-        logger.error(self.get_error_message())
+    def __init__(self, log: bool = True):
+        super().__init__(log=log)
 
     def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
         return t.translate(text=_("Key already exists"), locale=locale)
@@ -50,8 +50,8 @@ class KeyAlreadyExists(AbstractException):
 class InvalidPublicKey(AbstractException):
     """Invalid public key"""
 
-    def __init__(self):
-        logger.error(self.get_error_message())
+    def __init__(self, log: bool = True):
+        super().__init__(log=log)
 
     def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
         return t.translate(

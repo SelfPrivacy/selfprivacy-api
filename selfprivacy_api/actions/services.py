@@ -1,5 +1,4 @@
 import gettext
-import logging
 
 from selfprivacy_api.exceptions.services import (
     ServiceNotFoundError,
@@ -9,8 +8,6 @@ from selfprivacy_api.jobs import Job, Jobs
 from selfprivacy_api.services import ServiceManager
 from selfprivacy_api.services.tasks import move_service as move_service_task
 from selfprivacy_api.utils.block_devices import BlockDevices
-
-logger = logging.getLogger(__name__)
 
 _ = gettext.gettext
 

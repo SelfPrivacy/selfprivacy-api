@@ -21,7 +21,7 @@ from selfprivacy_api.graphql.mutations.mutation_interface import (
     MutationReturnInterface,
 )
 from selfprivacy_api.graphql.queries.providers import DnsProvider
-from selfprivacy_api.jobs.nix_collect_garbage import nix_collect_garbage
+from selfprivacy_api.jobs.nix_collect_garbage import start_nix_collect_garbage
 from selfprivacy_api.utils import pretty_error
 from selfprivacy_api.utils.localization import (
     TranslateSystemMessage as t,
@@ -265,7 +265,7 @@ class SystemMutations:
         locale = get_locale(info=info)
 
         with tracer.start_as_current_span("nix_collect_garbage_mutation"):
-            job = nix_collect_garbage()
+            job = start_nix_collect_garbage()
 
             return GenericJobMutationReturn(
                 success=True,

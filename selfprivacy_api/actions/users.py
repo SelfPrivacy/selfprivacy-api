@@ -18,8 +18,8 @@ from selfprivacy_api.exceptions import (
 )
 from selfprivacy_api.exceptions.users import (
     DisplaynameTooLong,
+    RootUserIsProtected,
     UserAlreadyExists,
-    UserIsProtected,
     UsernameForbidden,
     UsernameNotAlphanumeric,
     UsernameTooLong,
@@ -30,11 +30,7 @@ from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
 from selfprivacy_api.repositories.users import ACTIVE_USERS_PROVIDER
 from selfprivacy_api.repositories.users.json_user_repository import JsonUserRepository
 from selfprivacy_api.repositories.users.kanidm_user_repository import SP_DEFAULT_GROUPS
-from selfprivacy_api.utils import (
-    FORBIDDEN_PREFIXES,
-    FORBIDDEN_USERNAMES,
-    is_username_forbidden,
-)
+from selfprivacy_api.utils import is_username_or_prefix_reserved
 
 logger = logging.getLogger(__name__)
 
@@ -74,22 +70,19 @@ async def create_user(
     displayname: Optional[str] = None,
 ) -> None:
 
-    if is_username_forbidden(username):
-        raise UsernameForbidden(
-            forbudden_usernames=FORBIDDEN_USERNAMES,
-            forbudden_prefixes=FORBIDDEN_PREFIXES,
-        )
+    forbidden_prefix = is_username_or_prefix_reserved(username)
+    if isinstance(forbidden_prefix, str):
+        raise UsernameForbidden(forbidden_prefix=forbidden_prefix)
+    if forbidden_prefix:
+        raise UsernameForbidden()
 
-    regex_pattern = r"^[a-z_][a-z0-9_]+$"
-    if not re.match(regex_pattern, username):
-        raise UsernameNotAlphanumeric(regex_pattern=regex_pattern)
+    if not re.match(r"^[a-z_][a-z0-9_]+$", username):
+        raise UsernameNotAlphanumeric()
 
     if len(username) >= 32:
         raise UsernameTooLong
 
     if password:
-        logger.warning(PLEASE_UPDATE_APP_TEXT)
-
         add_email_password(
             username=username,
             password=password,
@@ -117,7 +110,7 @@ async def create_user(
 
 async def delete_user(username: str) -> None:
     if username == "root":
-        raise UserIsProtected(account_type="root")
+        raise RootUserIsProtected()
 
     try:
         user = await ACTIVE_USERS_PROVIDER.get_user_by_username(username=username)
@@ -127,7 +120,7 @@ async def delete_user(username: str) -> None:
         if not ACTIVE_USERS_PROVIDER == JsonUserRepository:
             try:
                 await JsonUserRepository.delete_user(username=username)
-            except (UserNotFound, UserIsProtected):
+            except (UserNotFound, RootUserIsProtected):
                 pass
 
     if (
@@ -135,7 +128,7 @@ async def delete_user(username: str) -> None:
         and ACTIVE_USERS_PROVIDER == JsonUserRepository
         and user.user_type == UserDataUserOrigin.PRIMARY
     ):
-        raise UserIsProtected(account_type="primary")
+        raise RootUserIsProtected()
 
     delete_all_email_passwords_hashes(username=username)
 
@@ -150,8 +143,6 @@ async def update_user(
 ) -> None:
 
     if password:
-        logger.warning(PLEASE_UPDATE_APP_TEXT)
-
         update_legacy_email_password_hash(
             username=username,
             password=password,
@@ -159,7 +150,7 @@ async def update_user(
         )
 
     if username == "root":
-        raise UserIsProtected(account_type="root")
+        raise RootUserIsProtected()
 
     if displayname:
         if ACTIVE_USERS_PROVIDER == JsonUserRepository:
@@ -226,7 +217,7 @@ async def generate_password_reset_link(username: str) -> str:
         raise ApiUsingWrongUserRepository
 
     if username == "root":
-        raise UserIsProtected(account_type="root")
+        raise RootUserIsProtected()
 
     return await ACTIVE_USERS_PROVIDER.generate_password_reset_link(username=username)
 
