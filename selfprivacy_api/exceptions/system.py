@@ -30,7 +30,7 @@ class ShellException(AbstractException):
     def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
         return t.translate(
             text=_(
-                "Shell command failed.\n"
+                "Command execution failed.\n"
                 "%(description)s\n"
                 "%(REPORT_IT_TO_SUPPORT_CHATS)s\n"
                 "Executed command: %(command)s\n"

@@ -152,6 +152,7 @@
           default = pkgs.mkShellNoCC {
             name = "SP API dev shell";
             packages = with pkgs; [
+              gettext # msginit, msgfmt
               nixpkgs-fmt
               rclone
               valkey

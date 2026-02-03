@@ -78,7 +78,7 @@ class CannotDeleteCallerException(AbstractException):
     def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
         return t.translate(
             text=_(
-                "The access token you’re trying to delete is currently in use by this device, so removing access is not possible."
+                "The access token you’re trying to delete is currently in use by this device, so removing access is not possible.\n"
                 "%(REPORT_IT_TO_SUPPORT_CHATS)s"
             )
             % {"REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS},
