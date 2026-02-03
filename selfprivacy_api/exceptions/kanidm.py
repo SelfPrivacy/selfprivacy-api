@@ -20,7 +20,9 @@ KANIDM_DESCRIPTION = _(
     "Kanidm is the identity and authentication service that manages users and access to system services."
 )
 
-KANIDM_PROBLEMS = _("There may have been a Kanidm update that broke compatibility.")
+KANIDM_PROBLEMS = _(
+    "In some cases, a Kanidm update may introduce breaking changes affecting the API, CLI commands, or configuration compatibility."
+)
 
 KANIDM_DEBUG_HELP = _(
     dedent(
