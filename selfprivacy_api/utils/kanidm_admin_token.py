@@ -27,7 +27,7 @@ ERROR_CREATING_KANIDM_TOKEN_TEXT = _("Error creating Kanidm token")
 
 
 def get_kanidm_url():
-    return f"https://auth.{get_domain()}"  # TODO better place?
+    return f"https://auth.{get_domain()}"
 
 
 class KanidmAdminToken:
