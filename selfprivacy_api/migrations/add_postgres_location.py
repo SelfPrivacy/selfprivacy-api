@@ -1,5 +1,5 @@
 from selfprivacy_api.migrations.migration import Migration
-from selfprivacy_api.utils import WriteUserData, ReadUserData
+from selfprivacy_api.utils import ReadUserData, WriteUserData
 from selfprivacy_api.utils.block_devices import BlockDevices
 
 
@@ -34,6 +34,4 @@ class AddPostgresLocation(Migration):
             raise Exception("Couldn't get location for Postgres")
 
         with WriteUserData() as data:
-            if "postgresql" not in data:
-                data["postgresql"] = {}
-            data["postgresql"]["location"] = pleroma_location
+            data.setdefault("postgresql", {})["location"] = pleroma_location

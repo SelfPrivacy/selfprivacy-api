@@ -1,8 +1,9 @@
 """A block device API wrapping lsblk"""
 
 from __future__ import annotations
-import subprocess
+
 import json
+import subprocess
 import typing
 
 from selfprivacy_api.utils import ReadUserData, WriteUserData
@@ -170,8 +171,7 @@ class BlockDevice:
         Mount the block device.
         """
         with WriteUserData() as user_data:
-            if "volumes" not in user_data:
-                user_data["volumes"] = []
+            user_data.setdefault("volumes", [])
             # Check if the volume is already mounted
             for volume in user_data["volumes"]:
                 if (
@@ -193,8 +193,7 @@ class BlockDevice:
         Unmount the block device.
         """
         with WriteUserData() as user_data:
-            if "volumes" not in user_data:
-                user_data["volumes"] = []
+            user_data.setdefault("volumes", [])
             # Check if the volume is already mounted
             for volume in user_data["volumes"]:
                 if volume["device"] == f"/dev/disk/by-uuid/{self.uuid}":

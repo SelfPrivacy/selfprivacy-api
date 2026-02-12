@@ -31,21 +31,16 @@ class UserdataSshSettings(BaseModel):
 
 def enable_ssh():
     with WriteUserData() as data:
-        if "ssh" not in data:
-            data["ssh"] = {}
-        data["ssh"]["enable"] = True
+        data.setdefault("ssh", {})["enable"] = True
 
 
 def get_ssh_settings() -> UserdataSshSettings:
     with ReadUserData() as data:
         if "ssh" not in data:
             return UserdataSshSettings()
-        if "enable" not in data["ssh"]:
-            data["ssh"]["enable"] = True
-        if "passwordAuthentication" not in data["ssh"]:
-            data["ssh"]["passwordAuthentication"] = False
-        if "rootKeys" not in data["ssh"]:
-            data["ssh"]["rootKeys"] = []
+        data["ssh"].setdefault("enable", True)
+        data["ssh"].setdefault("passwordAuthentication", False)
+        data["ssh"].setdefault("rootKeys", [])
         return UserdataSshSettings(**data["ssh"])
 
 
@@ -53,8 +48,7 @@ def set_ssh_settings(
     enable: Optional[bool] = None,
 ) -> None:
     with WriteUserData() as data:
-        if "ssh" not in data:
-            data["ssh"] = {}
+        data.setdefault("ssh", {})
         if enable is not None:
             data["ssh"]["enable"] = enable
 
@@ -94,8 +88,7 @@ def _add_key_to_regular_user(data: dict, username: str, ssh_key: str) -> None:
     """Add SSH key to a regular user"""
     for user in data["users"]:
         if user["username"] == username:
-            if "sshKeys" not in user:
-                user["sshKeys"] = []
+            user.setdefault("sshKeys", [])
             if ssh_key in user["sshKeys"]:
                 raise KeyAlreadyExists()
             user["sshKeys"].append(ssh_key)
@@ -126,8 +119,7 @@ def remove_ssh_key(username: str, ssh_key: str):
 
         for user in data["users"]:
             if user["username"] == username:
-                if "sshKeys" not in user:
-                    user["sshKeys"] = []
+                user.setdefault("sshKeys", [])
                 if ssh_key in user["sshKeys"]:
                     user["sshKeys"].remove(ssh_key)
                     return

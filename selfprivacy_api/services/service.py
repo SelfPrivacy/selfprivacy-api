@@ -1,38 +1,35 @@
 """Abstract class for a service running on a server"""
 
-from abc import ABC, abstractmethod
 import asyncio
 import logging
-from typing import List, Optional
+from abc import ABC, abstractmethod
 from os.path import exists
+from typing import List, Optional
 
 from selfprivacy_api import utils
-from selfprivacy_api.services.config_item import ServiceConfigItem
-from selfprivacy_api.utils.default_subdomains import DEFAULT_SUBDOMAINS
-from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
-from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
-
 from selfprivacy_api.jobs import Job, Jobs, JobStatus, report_progress
 from selfprivacy_api.jobs.upgrade_system import rebuild_system
-
 from selfprivacy_api.models.services import (
     License,
-    ServiceStatus,
     ServiceDnsRecord,
+    ServiceStatus,
     SupportLevel,
 )
+from selfprivacy_api.services.config_item import ServiceConfigItem
 from selfprivacy_api.services.generic_size_counter import get_storage_usage
-from selfprivacy_api.services.owned_path import OwnedPath, Bind
 from selfprivacy_api.services.moving import (
+    MoveError,
+    bind_folders,
     check_binds,
     check_volume,
-    unbind_folders,
-    bind_folders,
     ensure_folder_ownership,
-    MoveError,
     move_data_to_volume,
+    unbind_folders,
 )
-
+from selfprivacy_api.services.owned_path import Bind, OwnedPath
+from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
+from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
+from selfprivacy_api.utils.default_subdomains import DEFAULT_SUBDOMAINS
 
 DEFAULT_START_STOP_TIMEOUT = 5 * 60
 
@@ -230,11 +227,9 @@ class Service(ABC):
     def _set_enable(cls, enable: bool):
         name = cls.get_id()
         with WriteUserData() as user_data:
-            if "modules" not in user_data:
-                user_data["modules"] = {}
-            if name not in user_data["modules"]:
-                user_data["modules"][name] = {}
-            user_data["modules"][name]["enable"] = enable
+            user_data.setdefault("modules", {})
+            user_data["modules"].setdefault(name, {})
+            user_data["module"][name]["enable"] = enable
 
     @classmethod
     def enable(cls):
@@ -398,10 +393,8 @@ class Service(ABC):
 
         service_id = cls.get_id()
         with WriteUserData() as user_data:
-            if "modules" not in user_data:
-                user_data["modules"] = {}
-            if service_id not in user_data["modules"]:
-                user_data["modules"][service_id] = {}
+            user_data.setdefault("modules", {})
+            user_data["modules"].setdefault(service_id, {})
             user_data["modules"][service_id]["location"] = volume.name
 
     def binds(self) -> List[Bind]:

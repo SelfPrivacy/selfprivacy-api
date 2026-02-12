@@ -123,18 +123,12 @@ class ReadUserData(object):
 
 
 def ensure_ssh_and_users_fields_exist(data):
-    if "ssh" not in data:
-        data["ssh"] = {}
+    data.setdefault("ssh", {})
+    if data["ssh"].get("rootKeys") is None:
         data["ssh"]["rootKeys"] = []
 
-    elif data["ssh"].get("rootKeys") is None:
-        data["ssh"]["rootKeys"] = []
-
-    if "sshKeys" not in data:
-        data["sshKeys"] = []
-
-    if "users" not in data:
-        data["users"] = []
+    data.setdefault("sshKeys", [])
+    data.setdefault("users", [])
 
 
 def validate_ssh_public_key(key):
