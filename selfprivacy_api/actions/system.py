@@ -42,14 +42,10 @@ class UserDataAutoUpgradeSettings(BaseModel):
 
 def set_dns_provider(provider: DnsProvider, token: str):
     with WriteUserData() as user_data:
-        if "dns" not in user_data.keys():
-            user_data["dns"] = {}
-        user_data["dns"]["provider"] = provider.value
+        user_data.setdefault("dns", {})["provider"] = provider.value
 
     with WriteUserData(file_type=UserDataFiles.SECRETS) as secrets:
-        if "dns" not in secrets.keys():
-            secrets["dns"] = {}
-        secrets["dns"]["apiKey"] = token
+        secrets.setdefault("dns", {})["apiKey"] = token
 
 
 def get_auto_upgrade_settings() -> UserDataAutoUpgradeSettings:
@@ -65,8 +61,7 @@ def set_auto_upgrade_settings(
 ) -> None:
     """Set the auto-upgrade settings"""
     with WriteUserData() as user_data:
-        if "autoUpgrade" not in user_data:
-            user_data["autoUpgrade"] = {}
+        user_data.setdefault("autoUpgrade", {})
         if enable is not None:
             user_data["autoUpgrade"]["enable"] = enable
         if allowReboot is not None:

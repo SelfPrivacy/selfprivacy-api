@@ -1,7 +1,6 @@
 import logging
 
 from selfprivacy_api.migrations.migration import Migration
-
 from selfprivacy_api.utils import ReadUserData, WriteUserData
 from selfprivacy_api.utils.block_devices import BlockDevices
 
@@ -28,8 +27,7 @@ class ReplaceBlockDevicesToUUID(Migration):
         partitions = BlockDevices().get_block_devices()
 
         with WriteUserData() as user_data:
-            if "server" not in user_data:
-                user_data["server"] = {}
+            user_data.setdefault("server", {})
 
             new_volumes = []
 

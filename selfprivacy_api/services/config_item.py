@@ -1,5 +1,5 @@
-from abc import ABC, abstractmethod
 import re
+from abc import ABC, abstractmethod
 from typing import Optional
 
 from selfprivacy_api.utils import (
@@ -71,10 +71,8 @@ class StringServiceConfigItem(ServiceConfigItem):
         if not self.validate_value(value):
             raise ValueError(f"Value {value} is not valid")
         with WriteUserData() as user_data:
-            if "modules" not in user_data:
-                user_data["modules"] = {}
-            if service_id not in user_data["modules"]:
-                user_data["modules"][service_id] = {}
+            user_data.setdefault("modules", {})
+            user_data["modules"].setdefault(service_id, {})
             user_data["modules"][service_id][self.id] = value
 
     def as_dict(self, service_id):
@@ -128,10 +126,9 @@ class BoolServiceConfigItem(ServiceConfigItem):
         if not self.validate_value(value):
             raise ValueError(f"Value {value} is not a boolean")
         with WriteUserData() as user_data:
-            if "modules" not in user_data:
-                user_data["modules"] = {}
-            if service_id not in user_data["modules"]:
-                user_data["modules"][service_id] = {}
+            user_data.setdefault("modules", {})
+            user_data["modules"].setdefault(service_id, {})
+
             user_data["modules"][service_id][self.id] = value
 
     def as_dict(self, service_id):
@@ -177,10 +174,8 @@ class EnumServiceConfigItem(ServiceConfigItem):
         if not self.validate_value(value):
             raise ValueError(f"Value {value} is not in options")
         with WriteUserData() as user_data:
-            if "modules" not in user_data:
-                user_data["modules"] = {}
-            if service_id not in user_data["modules"]:
-                user_data["modules"][service_id] = {}
+            user_data.setdefault("modules", {})
+            user_data["modules"].setdefault(service_id, {})
             user_data["modules"][service_id][self.id] = value
 
     def as_dict(self, service_id):
@@ -232,10 +227,8 @@ class IntServiceConfigItem(ServiceConfigItem):
         if not self.validate_value(value):
             raise ValueError(f"Value {value} is not valid")
         with WriteUserData() as user_data:
-            if "modules" not in user_data:
-                user_data["modules"] = {}
-            if service_id not in user_data["modules"]:
-                user_data["modules"][service_id] = {}
+            user_data.setdefault("modules", {})
+            user_data["modules"].setdefault(service_id, {})
             user_data["modules"][service_id][self.id] = value
 
     def as_dict(self, service_id):

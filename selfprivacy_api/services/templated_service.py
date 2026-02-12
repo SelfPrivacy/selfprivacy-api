@@ -1,16 +1,15 @@
 """A Service implementation that loads all needed data from a JSON file"""
 
 import base64
-import logging
 import json
-
-from typing import List, Optional
-from os.path import join, exists
+import logging
 from os import mkdir, remove
+from os.path import exists, join
+from typing import List, Optional
+
 from opentelemetry import trace
 
-from selfprivacy_api.utils.postgres import PostgresDumper
-from selfprivacy_api.jobs import Job, JobStatus, Jobs
+from selfprivacy_api.jobs import Job, Jobs, JobStatus
 from selfprivacy_api.models.services import (
     License,
     ServiceDnsRecord,
@@ -18,25 +17,26 @@ from selfprivacy_api.models.services import (
     ServiceStatus,
     SupportLevel,
 )
+from selfprivacy_api.services.config_item import (
+    BoolServiceConfigItem,
+    EnumServiceConfigItem,
+    IntServiceConfigItem,
+    ServiceConfigItem,
+    StringServiceConfigItem,
+)
 from selfprivacy_api.services.flake_service_manager import FlakeServiceManager
 from selfprivacy_api.services.generic_size_counter import get_storage_usage
 from selfprivacy_api.services.owned_path import OwnedPath
 from selfprivacy_api.services.service import Service
 from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
-from selfprivacy_api.services.config_item import (
-    ServiceConfigItem,
-    StringServiceConfigItem,
-    BoolServiceConfigItem,
-    EnumServiceConfigItem,
-    IntServiceConfigItem,
-)
 from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
+from selfprivacy_api.utils.postgres import PostgresDumper
 from selfprivacy_api.utils.systemd import (
     get_service_status_from_several_units,
+    listen_for_unit_state_changes,
+    restart_unit,
     start_unit,
     stop_unit,
-    restart_unit,
-    listen_for_unit_state_changes,
 )
 
 SP_MODULES_DEFINITIONS_PATH = "/etc/sp-modules"
@@ -266,10 +266,8 @@ class TemplatedService(Service):
     def _set_enable(self, enable: bool):
         name = self.get_id()
         with WriteUserData() as user_data:
-            if "modules" not in user_data:
-                user_data["modules"] = {}
-            if name not in user_data["modules"]:
-                user_data["modules"][name] = {}
+            user_data.setdefault("modules", {})
+            user_data["modules"].setdefault(name, {})
             user_data["modules"][name]["enable"] = enable
 
     def enable(self):
@@ -290,14 +288,11 @@ class TemplatedService(Service):
                 )
         if "location" in self.options:
             with WriteUserData() as user_data:
-                if "modules" not in user_data:
-                    user_data["modules"] = {}
-                if name not in user_data["modules"]:
-                    user_data["modules"][name] = {}
-                if "location" not in user_data["modules"][name]:
-                    user_data["modules"][name]["location"] = (
-                        BlockDevices().get_root_block_device().canonical_name
-                    )
+                user_data.setdefault("modules", {})
+                user_data["modules"].setdefault(name, {})
+                user_data["modules"][name].setdefault(
+                    "location", (BlockDevices().get_root_block_device().canonical_name)
+                )
 
         self._set_enable(True)
 
@@ -445,10 +440,8 @@ class TemplatedService(Service):
 
         service_id = self.get_id()
         with WriteUserData() as user_data:
-            if "modules" not in user_data:
-                user_data["modules"] = {}
-            if service_id not in user_data["modules"]:
-                user_data["modules"][service_id] = {}
+            user_data.setdefault("modules", {})
+            user_data["modules"].setdefault(service_id, {})
             user_data["modules"][service_id]["location"] = volume.name
 
     def get_postgresql_databases(self) -> List[str]:

@@ -1,20 +1,20 @@
 """Function to perform migration of app data to binds."""
 
-import gettext
-import subprocess
 import asyncio
+import gettext
+import logging
 import pathlib
 import shutil
-import logging
+import subprocess
 
 from pydantic import BaseModel
 
-from selfprivacy_api.jobs import Job, JobStatus, Jobs
+from selfprivacy_api.jobs import Job, Jobs, JobStatus
 from selfprivacy_api.services import ServiceManager
 from selfprivacy_api.services.mailserver import MailServer
 from selfprivacy_api.utils import ReadUserData, WriteUserData
-from selfprivacy_api.utils.huey import huey, huey_async_helper
 from selfprivacy_api.utils.block_devices import BlockDevices
+from selfprivacy_api.utils.huey import huey, huey_async_helper
 
 logger = logging.getLogger(__name__)
 
@@ -43,21 +43,15 @@ def activate_binds(config: BindMigrationConfig):
     """Activate binds."""
     # Activate binds in userdata
     with WriteUserData() as user_data:
-        if "email" not in user_data:
-            user_data["email"] = {}
-        user_data["email"]["location"] = config.email_block_device
-        if "bitwarden" not in user_data:
-            user_data["bitwarden"] = {}
-        user_data["bitwarden"]["location"] = config.bitwarden_block_device
-        if "gitea" not in user_data:
-            user_data["gitea"] = {}
-        user_data["gitea"]["location"] = config.gitea_block_device
-        if "nextcloud" not in user_data:
-            user_data["nextcloud"] = {}
-        user_data["nextcloud"]["location"] = config.nextcloud_block_device
-        if "pleroma" not in user_data:
-            user_data["pleroma"] = {}
-        user_data["pleroma"]["location"] = config.pleroma_block_device
+        user_data.setdefault("email", {})["location"] = config.email_block_device
+        user_data.setdefault("bitwarden", {})[
+            "location"
+        ] = config.bitwarden_block_device
+        user_data.setdefault("gitea", {})["location"] = config.gitea_block_device
+        user_data.setdefault("nextcloud", {})[
+            "location"
+        ] = config.nextcloud_block_device
+        user_data.setdefault("pleroma", {})["location"] = config.pleroma_block_device
 
         user_data["useBinds"] = True
 

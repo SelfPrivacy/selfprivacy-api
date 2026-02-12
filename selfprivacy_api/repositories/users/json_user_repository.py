@@ -160,13 +160,10 @@ class JsonUserRepository(AbstractUserRepository):
 
             for user in data["users"]:
                 if user["username"] == username:
-                    if "sshKeys" not in user:
-                        user["sshKeys"] = []
-
                     return UserDataUser(
                         user_type=UserDataUserOrigin.NORMAL,
                         username=username,
-                        ssh_keys=user["sshKeys"],
+                        ssh_keys=user.setdefault("sshKeys", []),
                     )
 
             return None
