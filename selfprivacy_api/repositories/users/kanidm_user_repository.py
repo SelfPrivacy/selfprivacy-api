@@ -1,12 +1,17 @@
+import json
+import logging
+import os
+import subprocess
 from json import JSONDecodeError
 from typing import Any, Optional, Union
-import subprocess
-import re
-import os
-import logging
+
 import httpx
 
 from selfprivacy_api.models.group import Group, get_default_grops
+from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
+from selfprivacy_api.repositories.users.abstract_user_repository import (
+    AbstractUserRepository,
+)
 from selfprivacy_api.repositories.users.exceptions import (
     NoPasswordResetLinkFoundInResponse,
     UserAlreadyExists,
@@ -24,11 +29,6 @@ from selfprivacy_api.repositories.users.exceptions_kanidm import (
 from selfprivacy_api.services import KANIDM_A_RECORD
 from selfprivacy_api.utils import get_domain, temporary_env_var
 from selfprivacy_api.utils.redis_pool import RedisPool
-from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
-from selfprivacy_api.repositories.users.abstract_user_repository import (
-    AbstractUserRepository,
-)
-
 
 REDIS_TOKEN_KEY = "kanidm:token"
 
@@ -158,22 +158,25 @@ class KanidmAdminToken:
         output = subprocess.check_output(
             [
                 "kanidmd",
-                "recover-account",
                 "-c",
                 "/etc/kanidm/server.toml",
+                "scripting",
+                "recover-account",
                 "idm_admin",
-                "-o",
-                "json",
             ],
             text=True,
         )
 
-        match = re.search(r'"password":"([^"]+)"', output)
-        if match:
-            new_kanidm_admin_password = match.group(
-                1
-            )  # we have many non-JSON strings in output
-        else:
+        try:
+            response = json.loads(output)
+        except json.JSONDecodeError as error:
+            raise KanidmDidNotReturnAdminPassword from error
+
+        new_kanidm_admin_password = response.get("output")
+        if (
+            not isinstance(new_kanidm_admin_password, str)
+            or not new_kanidm_admin_password
+        ):
             raise KanidmDidNotReturnAdminPassword
 
         return new_kanidm_admin_password
