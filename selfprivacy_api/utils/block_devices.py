@@ -1,8 +1,9 @@
 """A block device API wrapping lsblk"""
 
 from __future__ import annotations
-import subprocess
+
 import json
+import subprocess
 import typing
 
 from selfprivacy_api.utils import ReadUserData, WriteUserData
@@ -149,8 +150,7 @@ class BlockDevice:
         }
 
     def is_usable_partition(self):
-        # Ignore devices with type "rom"
-        if self.type == "rom":
+        if self.type == "rom" or not self.uuid:
             return False
         if self.fstype == "ext4":
             return True
