@@ -21,7 +21,9 @@ class TokenNotFound(AbstractException):
             text=_("Access token was not found.\n%(REPORT_IT_TO_SUPPORT_CHATS)s"),
             locale=locale,
         ) % {
-            "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
+            "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
+                text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
+            ),
         }
 
 
@@ -39,7 +41,9 @@ class RecoveryKeyNotFound(AbstractException):
             ),
             locale=locale,
         ) % {
-            "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
+            "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
+                text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
+            ),
         }
 
 
@@ -52,7 +56,9 @@ class InvalidMnemonic(AbstractException):
             text=_("Invalid recovery key. %(REPORT_IT_TO_SUPPORT_CHATS)s"),
             locale=locale,
         ) % {
-            "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
+            "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
+                text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
+            ),
         }
 
 
@@ -67,7 +73,9 @@ class NewDeviceKeyNotFound(AbstractException):
             text=_("New device key not found. %(REPORT_IT_TO_SUPPORT_CHATS)s"),
             locale=locale,
         ) % {
-            "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
+            "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
+                text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
+            ),
         }
 
 
@@ -81,7 +89,11 @@ class CannotDeleteCallerException(AbstractException):
                 "The access token you’re trying to delete is currently in use by this device, so removing access is not possible.\n"
                 "%(REPORT_IT_TO_SUPPORT_CHATS)s"
             )
-            % {"REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS},
+            % {
+                "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
+                    text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
+                )
+            },
             locale=locale,
         )
 

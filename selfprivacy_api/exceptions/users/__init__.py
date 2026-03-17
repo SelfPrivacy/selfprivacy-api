@@ -38,7 +38,7 @@ class UserOrGroupNotFound(AbstractException):
                 "%(KANIDM_DESCRIPTION)s\n"
             ),
             locale=locale,
-        ) % {"KANIDM_DESCRIPTION": KANIDM_DESCRIPTION}
+        ) % {"KANIDM_DESCRIPTION": t.translate(text=KANIDM_DESCRIPTION, locale=locale)}
 
 
 class RootUserIsProtected(AbstractException):

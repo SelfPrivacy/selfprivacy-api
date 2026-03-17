@@ -40,7 +40,9 @@ class ShellException(AbstractException):
                 "command": self.command,
                 "description": self.description,
                 "output": self.output,
-                "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
+                "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
+                    text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
+                ),
             },
             locale=locale,
         )
@@ -97,7 +99,9 @@ class FailedToFindResult(AbstractException):
                 "command": self.command,
                 "regex_pattern": self.regex_pattern,
                 "data": self.data,
-                "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
+                "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
+                    text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
+                ),
             },
             locale=locale,
         )

@@ -14,7 +14,10 @@ from pydantic import BaseModel
 from selfprivacy_api.exceptions.tokens import (
     CannotDeleteCallerException,
     ExpirationDateInThePast,
+    InvalidMnemonic,
     InvalidUsesLeft,
+    NewDeviceKeyNotFound,
+    RecoveryKeyNotFound,
     TokenNotFound,
 )
 from selfprivacy_api.repositories.tokens import ACTIVE_TOKEN_PROVIDER
@@ -146,8 +149,11 @@ def use_mnemonic_recovery_token(mnemonic_phrase, name):
     Substract 1 from uses_left if it exists.
     mnemonic_phrase is a string representation of the mnemonic word list.
     """
-    token = ACTIVE_TOKEN_PROVIDER.use_mnemonic_recovery_key(mnemonic_phrase, name)
-    return token.token
+    try:
+        token = ACTIVE_TOKEN_PROVIDER.use_mnemonic_recovery_key(mnemonic_phrase, name)
+        return token.token
+    except (RecoveryKeyNotFound, InvalidMnemonic):
+        return None
 
 
 @tracer.start_as_current_span("delete_new_device_auth_token")
@@ -166,11 +172,14 @@ def get_new_device_auth_token() -> str:
 
 
 @tracer.start_as_current_span("use_new_device_auth_token")
-def use_new_device_auth_token(mnemonic_phrase, name) -> str:
+def use_new_device_auth_token(mnemonic_phrase, name) -> Optional[str]:
     """
     Use the new device auth token by converting the mnemonic string to a byte array.
     If the mnemonic phrase is valid then generate a device token and return it.
     New device auth token must be deleted.
     """
-    token = ACTIVE_TOKEN_PROVIDER.use_mnemonic_new_device_key(mnemonic_phrase, name)
-    return token.token
+    try:
+        token = ACTIVE_TOKEN_PROVIDER.use_mnemonic_new_device_key(mnemonic_phrase, name)
+        return token.token
+    except (NewDeviceKeyNotFound, InvalidMnemonic):
+        return None

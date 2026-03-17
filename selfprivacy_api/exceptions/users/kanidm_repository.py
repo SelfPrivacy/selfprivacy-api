@@ -50,9 +50,11 @@ class KanidmQueryError(AbstractException):
             ),
             locale=locale,
         ) % {
-            "KANIDM_DESCRIPTION": KANIDM_DESCRIPTION,
+            "KANIDM_DESCRIPTION": t.translate(text=KANIDM_DESCRIPTION, locale=locale),
             "description": self.description,
-            "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
+            "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
+                text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
+            ),
             "endpoint": self.endpoint,
             "method": self.method,
             "error": self.error_text,
@@ -86,8 +88,10 @@ class KanidmReturnEmptyResponse(AbstractException):
             ),
             locale=locale,
         ) % {
-            "KANIDM_DESCRIPTION": KANIDM_DESCRIPTION,
-            "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
+            "KANIDM_DESCRIPTION": t.translate(text=KANIDM_DESCRIPTION, locale=locale),
+            "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
+                text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
+            ),
             "endpoint": self.endpoint,
             "method": self.method,
         }
@@ -124,9 +128,11 @@ class KanidmReturnUnknownResponseType(AbstractException):
             ),
             locale=locale,
         ) % {
-            "KANIDM_DESCRIPTION": KANIDM_DESCRIPTION,
-            "KANIDM_PROBLEMS": KANIDM_PROBLEMS,
-            "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
+            "KANIDM_DESCRIPTION": t.translate(text=KANIDM_DESCRIPTION, locale=locale),
+            "KANIDM_PROBLEMS": t.translate(text=KANIDM_PROBLEMS, locale=locale),
+            "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
+                text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
+            ),
             "endpoint": self.endpoint,
             "method": self.method,
             "response": self.response_data,
@@ -165,10 +171,14 @@ class KanidmDidNotReturnAdminPassword(AbstractException):
                 "Kanidm's CLI output: %(output)s"
             )
             % {
-                "KANIDM_DESCRIPTION": KANIDM_DESCRIPTION,
-                "KANIDM_PROBLEMS": KANIDM_PROBLEMS,
-                "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
-                "KANIDM_DEBUG_HELP": KANIDM_DEBUG_HELP,
+                "KANIDM_DESCRIPTION": t.translate(
+                    text=KANIDM_DESCRIPTION, locale=locale
+                ),
+                "KANIDM_PROBLEMS": t.translate(text=KANIDM_PROBLEMS, locale=locale),
+                "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
+                    text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
+                ),
+                "KANIDM_DEBUG_HELP": t.translate(text=KANIDM_DEBUG_HELP, locale=locale),
                 "command": self.command,
                 "regex_pattern": self.regex_pattern,
                 "output": self.output,
@@ -207,10 +217,14 @@ class KanidmCliSubprocessError(AbstractException):
                 "Error: %(error)s"
             )
             % {
-                "KANIDM_DESCRIPTION": KANIDM_DESCRIPTION,
+                "KANIDM_DESCRIPTION": t.translate(
+                    text=KANIDM_DESCRIPTION, locale=locale
+                ),
                 "description": self.description,
-                "KANIDM_PROBLEMS": KANIDM_PROBLEMS,
-                "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
+                "KANIDM_PROBLEMS": t.translate(text=KANIDM_PROBLEMS, locale=locale),
+                "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
+                    text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
+                ),
                 "command": self.command,
                 "error": self.error,
             },
@@ -236,9 +250,11 @@ class FailedToGetValidKanidmToken(AbstractException):
             ),
             locale=locale,
         ) % {
-            "KANIDM_DESCRIPTION": KANIDM_DESCRIPTION,
-            "KANIDM_PROBLEMS": KANIDM_PROBLEMS,
-            "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
+            "KANIDM_DESCRIPTION": t.translate(text=KANIDM_DESCRIPTION, locale=locale),
+            "KANIDM_PROBLEMS": t.translate(text=KANIDM_PROBLEMS, locale=locale),
+            "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
+                text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
+            ),
         }
 
 
@@ -272,8 +288,12 @@ class NoPasswordResetLinkFoundInResponse(AbstractException):
                 "Data: %(data)s\n"
             )
             % {
-                "KANIDM_DESCRIPTION": KANIDM_DESCRIPTION,
-                "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
+                "KANIDM_DESCRIPTION": t.translate(
+                    text=KANIDM_DESCRIPTION, locale=locale
+                ),
+                "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
+                    text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
+                ),
                 "endpoint": self.endpoint,
                 "method": self.method,
                 "data": self.data,
