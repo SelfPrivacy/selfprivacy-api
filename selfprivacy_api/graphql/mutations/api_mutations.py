@@ -21,6 +21,7 @@ from selfprivacy_api.actions.api_tokens import (
 )
 from selfprivacy_api.exceptions.abstract_exception import AbstractException
 from selfprivacy_api.exceptions.tokens import (
+    RecoveryKeyNotFound,
     TokenNotFound,
 )
 from selfprivacy_api.graphql import IsAuthenticated
