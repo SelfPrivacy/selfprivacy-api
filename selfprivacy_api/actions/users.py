@@ -13,7 +13,6 @@ from selfprivacy_api.actions.email_passwords import (
 )
 from selfprivacy_api.actions.ssh import get_ssh_keys
 from selfprivacy_api.exceptions import (
-    PLEASE_UPDATE_APP_TEXT,
     ApiUsingWrongUserRepository,
 )
 from selfprivacy_api.exceptions.users import (

@@ -27,7 +27,9 @@ class ServiceNotFoundError(AbstractException):
             locale=locale,
         ) % {
             "service_id": self.service_id,
-            "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
+            "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
+                text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
+            ),
         }
 
 
@@ -45,5 +47,7 @@ class VolumeNotFoundError(AbstractException):
             locale=locale,
         ) % {
             "volume_name": self.volume_name,
-            "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
+            "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
+                text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
+            ),
         }

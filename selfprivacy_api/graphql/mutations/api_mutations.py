@@ -21,6 +21,7 @@ from selfprivacy_api.actions.api_tokens import (
 )
 from selfprivacy_api.exceptions.abstract_exception import AbstractException
 from selfprivacy_api.exceptions.tokens import (
+    RecoveryKeyNotFound,
     TokenNotFound,
 )
 from selfprivacy_api.graphql import IsAuthenticated
@@ -150,6 +151,13 @@ class ApiMutations:
                         code=400,
                         token=None,
                     )
+            if token is None:
+                return DeviceApiTokenMutationReturn(
+                    success=False,
+                    message=RecoveryKeyNotFound.get_error_message(locale=locale),
+                    code=404,
+                    token=None,
+                )
             return DeviceApiTokenMutationReturn(
                 success=True,
                 message=t.translate(text=_("Recovery key used"), locale=locale),
@@ -295,6 +303,14 @@ class ApiMutations:
                         code=400,
                         token=None,
                     )
+
+            if token is None:
+                return DeviceApiTokenMutationReturn(
+                    success=False,
+                    message=TokenNotFound.get_error_message(locale=locale),
+                    code=404,
+                    token=None,
+                )
             return DeviceApiTokenMutationReturn(
                 success=True,
                 message=t.translate(text=_("Token used"), locale=locale),
