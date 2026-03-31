@@ -1,5 +1,3 @@
-"""Class representing Nextcloud service."""
-
 import base64
 import subprocess
 from typing import List, Optional
@@ -21,7 +19,7 @@ class PostgreSQL(Service):
 
     @staticmethod
     def get_id() -> str:
-        return "monitoring"
+        return "postgresql"
 
     @staticmethod
     def get_display_name() -> str:
@@ -29,7 +27,9 @@ class PostgreSQL(Service):
 
     @staticmethod
     def get_description() -> str:
-        return "PostgreSQL is used for resource monitoring and alerts."
+        return (
+            "PostgreSQL is a database used by many services to store application data."
+        )
 
     @staticmethod
     def get_svg_icon(raw=False) -> str:
