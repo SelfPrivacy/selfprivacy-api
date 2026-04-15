@@ -1,4 +1,5 @@
 from typing import Optional
+
 import strawberry
 
 from selfprivacy_api.graphql.common_types.jobs import ApiJob

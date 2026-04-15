@@ -2,25 +2,25 @@
 # pylint: disable=unused-argument
 # pylint: disable=missing-function-docstring
 from tests.common import (
-    RECOVERY_KEY_VALIDATION_DATETIME,
     DEVICE_KEY_VALIDATION_DATETIME,
+    RECOVERY_KEY_VALIDATION_DATETIME,  # noqa: F401
     NearFuture,
-    generate_api_query,
+    generate_api_query,  # noqa: F401
 )
 from tests.conftest import DEVICE_WE_AUTH_TESTS_WITH
 from tests.test_graphql.common import (
-    get_data,
+    API_DEVICES_QUERY,  # noqa: F401
+    ORIGINAL_DEVICES,
     assert_empty,
-    assert_ok,
     assert_errorcode,
-    assert_token_valid,
+    assert_ok,
     assert_original,
     assert_same,
+    assert_token_valid,
+    get_data,
     graphql_get_devices,
     request_devices,
     set_client_token,
-    API_DEVICES_QUERY,
-    ORIGINAL_DEVICES,
 )
 
 

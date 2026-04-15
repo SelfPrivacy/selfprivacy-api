@@ -1,11 +1,12 @@
 """Services status"""
 
 # pylint: disable=too-few-public-methods
+
 import asyncio
 import typing
-from opentelemetry import trace
 
 import strawberry
+from opentelemetry import trace
 
 from selfprivacy_api.graphql.common_types.service import (
     Service,

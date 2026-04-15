@@ -1,13 +1,13 @@
 from __future__ import annotations
+
 import logging
-import subprocess
 import pathlib
+import subprocess
 from os.path import exists
 
 from pydantic import BaseModel
 
 from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
-
 
 logger = logging.getLogger(__name__)
 

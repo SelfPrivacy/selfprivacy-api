@@ -9,14 +9,14 @@ import gettext
 
 from systemd import journal
 
-from selfprivacy_api.jobs import JobStatus, Jobs, Job
+from selfprivacy_api.jobs import Job, Jobs, JobStatus
 from selfprivacy_api.utils.huey import huey, huey_async_helper
 from selfprivacy_api.utils.systemd import (
-    start_unit,
-    get_service_status,
-    wait_for_unit_state,
-    get_last_log_lines,
     ServiceStatus,
+    get_last_log_lines,
+    get_service_status,
+    start_unit,
+    wait_for_unit_state,
 )
 
 _ = gettext.gettext

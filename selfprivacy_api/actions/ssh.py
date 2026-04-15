@@ -5,12 +5,18 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from selfprivacy_api.utils import WriteUserData, ReadUserData
+from selfprivacy_api.exceptions.users import UserNotFound
+from selfprivacy_api.exceptions.users.ssh import (
+    InvalidPublicKey,
+    KeyAlreadyExists,
+    KeyNotFound,
+)
+from selfprivacy_api.utils import (
+    ReadUserData,
+    WriteUserData,
+    ensure_ssh_and_users_fields_exist,
+)
 from selfprivacy_api.utils.ssh import validate_ssh_public_key
-from selfprivacy_api.utils import ensure_ssh_and_users_fields_exist
-from selfprivacy_api.utils.localization import TranslateSystemMessage as t
-
-from selfprivacy_api.repositories.users.exceptions import UserNotFound
 
 _ = gettext.gettext
 
@@ -21,35 +27,6 @@ class UserdataSshSettings(BaseModel):
     enable: bool = True
     passwordAuthentication: bool = False
     rootKeys: list[str] = []
-
-
-class KeyNotFound(Exception):
-    """Key not found"""
-
-    @staticmethod
-    def get_error_message(locale: str) -> str:
-        return t.translate(text=_("Key not found"), locale=locale)
-
-
-class KeyAlreadyExists(Exception):
-    """Key already exists"""
-
-    @staticmethod
-    def get_error_message(locale: str) -> str:
-        return t.translate(text=_("Key already exists"), locale=locale)
-
-
-class InvalidPublicKey(Exception):
-    """Invalid public key"""
-
-    @staticmethod
-    def get_error_message(locale: str) -> str:
-        return t.translate(
-            text=_(
-                "Invalid key type. Only ssh-ed25519, ssh-rsa (2048 bits or more) and ecdsa are supported"
-            ),
-            locale=locale,
-        )
 
 
 def enable_ssh():
@@ -178,4 +155,4 @@ def get_ssh_keys(username: str) -> list:
                     return user["sshKeys"]
                 return []
 
-    raise UserNotFound()
+    raise UserNotFound(log=False)

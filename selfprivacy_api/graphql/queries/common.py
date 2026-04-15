@@ -1,8 +1,9 @@
 """Common types and enums used by different types of queries."""
 
-from enum import Enum
 import datetime
+from enum import Enum
 from typing import Optional
+
 import strawberry
 
 

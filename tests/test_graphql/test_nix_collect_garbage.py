@@ -15,7 +15,7 @@ from tests.test_graphql.common import (
 from selfprivacy_api.jobs.nix_collect_garbage import (
     get_dead_packages,
     parse_line,
-    ShellException,
+    FailedToFindResult,
 )
 
 OUTPUT_PRINT_DEAD = """
@@ -80,7 +80,7 @@ def test_parse_line_with_blank_line():
         description="description",
     )
 
-    with pytest.raises(ShellException):
+    with pytest.raises(FailedToFindResult):
         parse_line(job, txt)
 
 

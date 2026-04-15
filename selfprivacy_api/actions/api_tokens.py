@@ -4,22 +4,24 @@ The only actions on tokens that are accessible from APIs
 """
 
 import gettext
-from typing import Optional
 from datetime import datetime, timezone
-from pydantic import BaseModel
+from typing import Optional
+
 from mnemonic import Mnemonic
 from opentelemetry import trace
+from pydantic import BaseModel
 
-from selfprivacy_api.utils.timeutils import ensure_tz_aware, ensure_tz_aware_strict
-from selfprivacy_api.utils.localization import TranslateSystemMessage as t
-
-from selfprivacy_api.repositories.tokens import ACTIVE_TOKEN_PROVIDER
-from selfprivacy_api.repositories.tokens.exceptions import (
-    TokenNotFound,
-    RecoveryKeyNotFound,
+from selfprivacy_api.exceptions.tokens import (
+    CannotDeleteCallerException,
+    ExpirationDateInThePast,
     InvalidMnemonic,
+    InvalidUsesLeft,
     NewDeviceKeyNotFound,
+    RecoveryKeyNotFound,
+    TokenNotFound,
 )
+from selfprivacy_api.repositories.tokens import ACTIVE_TOKEN_PROVIDER
+from selfprivacy_api.utils.timeutils import ensure_tz_aware, ensure_tz_aware_strict
 
 _ = gettext.gettext
 
@@ -65,15 +67,6 @@ def is_token_valid(token) -> bool:
     return ACTIVE_TOKEN_PROVIDER.is_token_valid(token)
 
 
-class CannotDeleteCallerException(Exception):
-    @staticmethod
-    def get_error_message(locale: str) -> str:
-        return t.translate(
-            text=_("Cannot delete caller's token"),
-            locale=locale,
-        )
-
-
 @tracer.start_as_current_span("create_api_token")
 def delete_api_token(caller_token: str, token_name: str) -> None:
     """Delete the token"""
@@ -88,11 +81,9 @@ def delete_api_token(caller_token: str, token_name: str) -> None:
 @tracer.start_as_current_span("create_api_token")
 def refresh_api_token(caller_token: str) -> str:
     """Refresh the token"""
-    try:
-        old_token = ACTIVE_TOKEN_PROVIDER.get_token_by_token_string(caller_token)
-        new_token = ACTIVE_TOKEN_PROVIDER.refresh_token(old_token)
-    except TokenNotFound:
-        raise TokenNotFound()
+
+    old_token = ACTIVE_TOKEN_PROVIDER.get_token_by_token_string(caller_token)
+    new_token = ACTIVE_TOKEN_PROVIDER.refresh_token(old_token)
     return new_token.token
 
 
@@ -128,18 +119,6 @@ def get_api_recovery_token_status() -> RecoveryTokenStatus:
     )
 
 
-class InvalidExpirationDate(Exception):
-    @staticmethod
-    def get_error_message(locale: str) -> str:
-        return t.translate(text=_("Expiration date is in the past"), locale=locale)
-
-
-class InvalidUsesLeft(Exception):
-    @staticmethod
-    def get_error_message(locale: str) -> str:
-        return t.translate(text=_("Uses must be greater than 0"), locale=locale)
-
-
 @tracer.start_as_current_span("get_new_api_recovery_key")
 def get_new_api_recovery_key(
     expiration_date: Optional[datetime] = None, uses_left: Optional[int] = None
@@ -149,7 +128,7 @@ def get_new_api_recovery_key(
         expiration_date = ensure_tz_aware(expiration_date)
         current_time = datetime.now(timezone.utc)
         if expiration_date < current_time:
-            raise InvalidExpirationDate()
+            raise ExpirationDateInThePast()
     if uses_left is not None:
         if uses_left <= 0:
             raise InvalidUsesLeft()
@@ -161,7 +140,8 @@ def get_new_api_recovery_key(
 
 @tracer.start_as_current_span("use_mnemonic_recovery_token")
 def use_mnemonic_recovery_token(mnemonic_phrase, name):
-    """Use the recovery token by converting the mnemonic word list to a byte array.
+    """
+    Use the recovery token by converting the mnemonic word list to a byte array.
     If the recovery token if invalid itself, return None
     If the binary representation of phrase not matches
     the byte array of the recovery token, return None.
@@ -183,7 +163,8 @@ def delete_new_device_auth_token() -> None:
 
 @tracer.start_as_current_span("get_new_device_auth_token")
 def get_new_device_auth_token() -> str:
-    """Generate and store a new device auth token which is valid for 10 minutes
+    """
+    Generate and store a new device auth token which is valid for 10 minutes
     and return a mnemonic phrase representation
     """
     key = ACTIVE_TOKEN_PROVIDER.get_new_device_key()
@@ -192,7 +173,8 @@ def get_new_device_auth_token() -> str:
 
 @tracer.start_as_current_span("use_new_device_auth_token")
 def use_new_device_auth_token(mnemonic_phrase, name) -> Optional[str]:
-    """Use the new device auth token by converting the mnemonic string to a byte array.
+    """
+    Use the new device auth token by converting the mnemonic string to a byte array.
     If the mnemonic phrase is valid then generate a device token and return it.
     New device auth token must be deleted.
     """

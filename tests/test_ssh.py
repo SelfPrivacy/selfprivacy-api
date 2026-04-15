@@ -4,21 +4,23 @@ Action-level tests of ssh
 """
 
 import base64
-import pytest
 from typing import Optional
 
+import pytest
+
 from selfprivacy_api.actions.ssh import (
-    get_ssh_settings,
-    create_ssh_key,
-    remove_ssh_key,
     KeyNotFound,
     UserNotFound,
+    create_ssh_key,
+    get_ssh_settings,
+    remove_ssh_key,
 )
-from selfprivacy_api.utils.ssh import validate_ssh_public_key
-from selfprivacy_api.repositories.users.json_user_repository import JsonUserRepository
-
-from selfprivacy_api.utils import WriteUserData, ReadUserData
+from selfprivacy_api.exceptions.users import UserNotFound
+from selfprivacy_api.exceptions.users.ssh import KeyNotFound
 from selfprivacy_api.models.user import UserDataUserOrigin
+from selfprivacy_api.repositories.users.json_user_repository import JsonUserRepository
+from selfprivacy_api.utils import ReadUserData, WriteUserData
+from selfprivacy_api.utils.ssh import validate_ssh_public_key
 
 
 @pytest.fixture(params=[True, False])

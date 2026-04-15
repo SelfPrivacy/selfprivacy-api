@@ -1,18 +1,17 @@
-"""Users"""
-
 # pylint: disable=too-few-public-methods
-from typing import Optional, List
-from opentelemetry import trace
+
+from typing import List, Optional
 
 import strawberry
+from opentelemetry import trace
 
+from selfprivacy_api.exceptions.users import UserNotFound
+from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.common_types.user import (
     User,
     get_user_by_username,
     get_users,
 )
-from selfprivacy_api.graphql import IsAuthenticated
-from selfprivacy_api.repositories.users.exceptions import UserNotFound
 
 tracer = trace.get_tracer(__name__)
 

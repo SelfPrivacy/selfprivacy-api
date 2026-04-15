@@ -2,21 +2,20 @@
 Token repository using Redis as backend.
 """
 
-from typing import Any, Optional
 from datetime import datetime, timezone
 from hashlib import md5
+from typing import Any, Optional
+
 from opentelemetry import trace
 
-from selfprivacy_api.utils.redis_pool import RedisPool
-
-from selfprivacy_api.models.tokens.token import Token
-from selfprivacy_api.models.tokens.recovery_key import RecoveryKey
+from selfprivacy_api.exceptions.tokens import TokenNotFound
 from selfprivacy_api.models.tokens.new_device_key import NewDeviceKey
-
-from selfprivacy_api.repositories.tokens.exceptions import TokenNotFound
+from selfprivacy_api.models.tokens.recovery_key import RecoveryKey
+from selfprivacy_api.models.tokens.token import Token
 from selfprivacy_api.repositories.tokens.abstract_tokens_repository import (
     AbstractTokensRepository,
 )
+from selfprivacy_api.utils.redis_pool import RedisPool
 
 TOKENS_PREFIX = "token_repo:tokens:"
 NEW_DEVICE_KEY_REDIS_KEY = "token_repo:new_device_key"

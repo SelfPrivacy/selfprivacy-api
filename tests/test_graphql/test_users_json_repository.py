@@ -2,19 +2,18 @@
 # pylint: disable=unused-argument
 import pytest
 
+from selfprivacy_api.repositories.users.json_user_repository import JsonUserRepository
+from selfprivacy_api.utils import WriteUserData
 from tests.common import (
     generate_users_query,
     read_json,
 )
-from selfprivacy_api.utils import WriteUserData
 from tests.test_graphql.common import (
     assert_empty,
     assert_errorcode,
+    assert_ok,
     get_data,
 )
-from selfprivacy_api.repositories.users.json_user_repository import JsonUserRepository
-
-from tests.test_graphql.common import assert_ok
 
 invalid_usernames = [
     "messagebus",
@@ -136,7 +135,7 @@ class ProcessMock:
         self.args = args
         self.kwargs = kwargs
 
-    def communicate():  # pylint: disable=no-method-argument
+    def communicate():  # pyright: ignore[reportSelfClsParameterName]
         return (b"NEW_HASHED", None)
 
     returncode = 0
@@ -513,9 +512,8 @@ def test_graphql_add_user_when_no_admin_defined(
     authorized_client, no_users_no_admin_nobody, use_json_repository
 ):
     output = api_add_user(authorized_client, "tester", password="12345678")
-
-    assert_errorcode(output, code=400)
-    assert output["user"] is None
+    assert_ok(output, code=201)
+    assert output["user"] is not None
 
 
 def test_graphql_add_long_username(
@@ -810,8 +808,8 @@ def test_graphql_add_user_no_primary_user(
     output = api_add_user(authorized_client, "user3", password="12345678")
 
     # Should fail because admin is not configured
-    assert_errorcode(output, code=400)
-    assert output["user"] is None
+    assert_ok(output, code=201)
+    assert output["user"] is not None
 
 
 def test_graphql_delete_user_no_primary_user(

@@ -1,23 +1,21 @@
 #!/usr/bin/env python3
 """Various utility functions"""
 import datetime
-from enum import Enum
-from typing import Callable, TypeVar
+import glob
 import json
 import os
 import subprocess
-import portalocker
-from typing import Optional
-import glob
 from contextlib import contextmanager
-
+from enum import Enum
 from traceback import format_tb as format_traceback
+from typing import Callable, Optional, TypeVar
+
+import portalocker
 
 from selfprivacy_api.utils.default_subdomains import (
     DEFAULT_SUBDOMAINS,
     RESERVED_SUBDOMAINS,
 )
-
 
 USERDATA_FILE = "/etc/nixos/userdata.json"
 SECRETS_FILE = "/etc/selfprivacy/secrets.json"
@@ -26,6 +24,36 @@ DKIM_DIR = "/var/dkim"
 ACCOUNT_PATH_PATTERN = (
     "/var/lib/acme/.lego/accounts/*/acme-v02.api.letsencrypt.org/*/account.json"
 )
+
+RESERVED_PREFIXES = ["systemd", "nixbld"]
+RESERVED_USERNAMES = [
+    "root",
+    "messagebus",
+    "postfix",
+    "polkituser",
+    "dovecot2",
+    "dovenull",
+    "nginx",
+    "postgres",
+    "prosody",
+    "opendkim",
+    "rspamd",
+    "sshd",
+    "selfprivacy-api",
+    "restic",
+    "redis",
+    "pleroma",
+    "ocserv",
+    "nextcloud",
+    "memcached",
+    "knot-resolver",
+    "gitea",
+    "bitwarden_rs",
+    "vaultwarden",
+    "acme",
+    "virtualMail",
+    "nobody",
+]
 
 
 class UserDataFiles(Enum):
@@ -109,44 +137,13 @@ def ensure_ssh_and_users_fields_exist(data):
         data["users"] = []
 
 
-def is_username_forbidden(username):
-    forbidden_prefixes = ["systemd", "nixbld"]
-
-    forbidden_usernames = [
-        "root",
-        "messagebus",
-        "postfix",
-        "polkituser",
-        "dovecot2",
-        "dovenull",
-        "nginx",
-        "postgres",
-        "prosody",
-        "opendkim",
-        "rspamd",
-        "sshd",
-        "selfprivacy-api",
-        "restic",
-        "redis",
-        "pleroma",
-        "ocserv",
-        "nextcloud",
-        "memcached",
-        "knot-resolver",
-        "gitea",
-        "bitwarden_rs",
-        "vaultwarden",
-        "acme",
-        "virtualMail",
-        "nobody",
-    ]
-
-    for prefix in forbidden_prefixes:
+def is_username_or_prefix_reserved(username) -> str | bool:
+    for prefix in RESERVED_PREFIXES:
         if username.startswith(prefix):
-            return True
+            return prefix
 
-    for forbidden_username in forbidden_usernames:
-        if username == forbidden_username:
+    for reserved_username in RESERVED_USERNAMES:
+        if username == reserved_username:
             return True
 
     return False

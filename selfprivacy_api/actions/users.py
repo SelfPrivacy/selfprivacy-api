@@ -1,55 +1,39 @@
 """Actions to manage the users."""
 
 import gettext
+import logging
 import re
 import uuid
-import logging
 from typing import Optional
 
-from selfprivacy_api.utils import is_username_forbidden
-from selfprivacy_api.utils.strings import PLEASE_UPDATE_APP_TEXT
-from selfprivacy_api.utils.localization import TranslateSystemMessage as t
-
-from selfprivacy_api.models.group import Group, get_default_grops
-from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
-
+from selfprivacy_api.actions.email_passwords import (
+    add_email_password,
+    delete_all_email_passwords_hashes,
+    update_legacy_email_password_hash,
+)
 from selfprivacy_api.actions.ssh import get_ssh_keys
-
-from selfprivacy_api.repositories.users.json_user_repository import JsonUserRepository
-from selfprivacy_api.repositories.users import ACTIVE_USERS_PROVIDER
-from selfprivacy_api.repositories.users.kanidm_user_repository import SP_DEFAULT_GROUPS
-from selfprivacy_api.repositories.users.exceptions import (
+from selfprivacy_api.exceptions import (
+    ApiUsingWrongUserRepository,
+)
+from selfprivacy_api.exceptions.users import (
     DisplaynameTooLong,
-    UserIsProtected,
+    RootUserIsProtected,
+    UserAlreadyExists,
     UsernameForbidden,
     UsernameNotAlphanumeric,
     UsernameTooLong,
     UserNotFound,
-    UserAlreadyExists,
-    InvalidConfiguration,
 )
-from selfprivacy_api.actions.email_passwords import (
-    add_email_password,
-    update_legacy_email_password_hash,
-    delete_all_email_passwords_hashes,
-)
+from selfprivacy_api.models.group import Group, get_default_grops
+from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
+from selfprivacy_api.repositories.users import ACTIVE_USERS_PROVIDER
+from selfprivacy_api.repositories.users.json_user_repository import JsonUserRepository
+from selfprivacy_api.repositories.users.kanidm_user_repository import SP_DEFAULT_GROUPS
+from selfprivacy_api.utils import is_username_or_prefix_reserved
 
 logger = logging.getLogger(__name__)
 
 _ = gettext.gettext
-
-
-class ApiUsingWrongUserRepository(Exception):
-    """
-    API is using a too old or unfinished user repository. Are you debugging?
-    """
-
-    @staticmethod
-    def get_error_message(locale: str) -> str:
-        return t.translate(
-            text=_("API is using a too old or unfinished user repository"),
-            locale=locale,
-        )
 
 
 async def get_users(
@@ -85,18 +69,19 @@ async def create_user(
     displayname: Optional[str] = None,
 ) -> None:
 
-    if is_username_forbidden(username):
-        raise UsernameForbidden
+    forbidden_prefix = is_username_or_prefix_reserved(username)
+    if isinstance(forbidden_prefix, str):
+        raise UsernameForbidden(forbidden_prefix=forbidden_prefix)
+    if forbidden_prefix:
+        raise UsernameForbidden()
 
     if not re.match(r"^[a-z_][a-z0-9_]+$", username):
-        raise UsernameNotAlphanumeric
+        raise UsernameNotAlphanumeric()
 
     if len(username) >= 32:
         raise UsernameTooLong
 
     if password:
-        logger.warning(PLEASE_UPDATE_APP_TEXT)
-
         add_email_password(
             username=username,
             password=password,
@@ -111,7 +96,7 @@ async def create_user(
             await JsonUserRepository.create_user(
                 username=username, password=str(uuid.uuid4())
             )  # random password for legacy repo
-        except (UserAlreadyExists, InvalidConfiguration):
+        except UserAlreadyExists:
             pass
 
     await ACTIVE_USERS_PROVIDER.create_user(
@@ -124,7 +109,7 @@ async def create_user(
 
 async def delete_user(username: str) -> None:
     if username == "root":
-        raise UserIsProtected
+        raise RootUserIsProtected()
 
     try:
         user = await ACTIVE_USERS_PROVIDER.get_user_by_username(username=username)
@@ -134,7 +119,7 @@ async def delete_user(username: str) -> None:
         if not ACTIVE_USERS_PROVIDER == JsonUserRepository:
             try:
                 await JsonUserRepository.delete_user(username=username)
-            except (UserNotFound, UserIsProtected):
+            except (UserNotFound, RootUserIsProtected):
                 pass
 
     if (
@@ -142,7 +127,7 @@ async def delete_user(username: str) -> None:
         and ACTIVE_USERS_PROVIDER == JsonUserRepository
         and user.user_type == UserDataUserOrigin.PRIMARY
     ):
-        raise UserIsProtected
+        raise RootUserIsProtected()
 
     delete_all_email_passwords_hashes(username=username)
 
@@ -157,8 +142,6 @@ async def update_user(
 ) -> None:
 
     if password:
-        logger.warning(PLEASE_UPDATE_APP_TEXT)
-
         update_legacy_email_password_hash(
             username=username,
             password=password,
@@ -166,7 +149,7 @@ async def update_user(
         )
 
     if username == "root":
-        raise UserIsProtected
+        raise RootUserIsProtected()
 
     if displayname:
         if ACTIVE_USERS_PROVIDER == JsonUserRepository:
@@ -233,7 +216,7 @@ async def generate_password_reset_link(username: str) -> str:
         raise ApiUsingWrongUserRepository
 
     if username == "root":
-        raise UserIsProtected
+        raise RootUserIsProtected()
 
     return await ACTIVE_USERS_PROVIDER.generate_password_reset_link(username=username)
 

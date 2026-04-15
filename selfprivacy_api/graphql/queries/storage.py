@@ -1,7 +1,9 @@
 """Storage queries."""
 
 # pylint: disable=too-few-public-methods
+
 import typing
+
 import strawberry
 from opentelemetry import trace
 

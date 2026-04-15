@@ -3,29 +3,23 @@
 # pylint: disable=missing-function-docstring
 
 from datetime import datetime, timezone
-from mnemonic import Mnemonic
 
 import pytest
+from mnemonic import Mnemonic
 
+from selfprivacy_api.exceptions.tokens import (
+    InvalidMnemonic,
+    NewDeviceKeyNotFound,
+    RecoveryKeyNotFound,
+    TokenNotFound,
+)
 from selfprivacy_api.models.tokens.new_device_key import NewDeviceKey
 from selfprivacy_api.models.tokens.recovery_key import RecoveryKey
 from selfprivacy_api.models.tokens.token import Token
-from selfprivacy_api.repositories.tokens.exceptions import (
-    InvalidMnemonic,
-    RecoveryKeyNotFound,
-    TokenNotFound,
-    NewDeviceKeyNotFound,
-)
-
-from selfprivacy_api.repositories.tokens.redis_tokens_repository import (
-    RedisTokensRepository,
-)
 from selfprivacy_api.repositories.tokens.abstract_tokens_repository import (
     AbstractTokensRepository,
 )
-
-from tests.common import ten_minutes_into_past, ten_hours_into_future
-
+from tests.common import ten_hours_into_future, ten_minutes_into_past
 
 ORIGINAL_DEVICE_NAMES = [
     "primary_token",
