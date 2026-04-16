@@ -10,7 +10,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: https://git.selfprivacy.org/SelfPrivacy/"
 "selfprivacy-api/issues\n"
 "POT-Creation-Date: 2025-10-19 12:41+0400\n"
-"PO-Revision-Date: 2026-04-16 09:56+0000\n"
+"PO-Revision-Date: 2026-04-16 12:07+0000\n"
 "Last-Translator: Inex Code <inex.code@selfprivacy.org>\n"
 "Language-Team: Russian <http://weblate.selfprivacy.org/projects/selfprivacy/"
 "selfprivacy-api/ru/>\n"
@@ -25,7 +25,7 @@ msgstr ""
 #: selfprivacy_api/actions/services.py:28
 #, python-format
 msgid "Move %(service)s"
-msgstr "Перемещение %(service)s"
+msgstr "Переместить %(service)s"
 
 #: selfprivacy_api/actions/services.py:29
 #, python-format
@@ -34,7 +34,7 @@ msgstr "Перемещение данных %(service)s на %(volume)s"
 
 #: selfprivacy_api/actions/system.py:79
 msgid "Rebuild system"
-msgstr "Пересборка системы"
+msgstr "Пересборать систему"
 
 #: selfprivacy_api/actions/system.py:81
 msgid ""
@@ -43,7 +43,7 @@ msgstr "Применение новой конфигурации системы 
 
 #: selfprivacy_api/actions/system.py:103
 msgid "Upgrade system"
-msgstr "Обновление системы"
+msgstr "Обновить систему"
 
 #: selfprivacy_api/actions/system.py:104
 msgid "Upgrading the system to the latest version."
@@ -75,11 +75,11 @@ msgstr "Токен удалён"
 
 #: selfprivacy_api/graphql/mutations/api_mutations.py:250
 msgid "Device api key generated"
-msgstr "Сгенерирован API ключ устройства"
+msgstr "Сгенерирован ключ авторизации нового устройства"
 
 #: selfprivacy_api/graphql/mutations/api_mutations.py:264
 msgid "New device key deleted"
-msgstr "Ключ нового устройства удалён"
+msgstr "Ключ авторизации нового устройства удалён"
 
 #: selfprivacy_api/graphql/mutations/api_mutations.py:300
 msgid "Token used"
@@ -99,7 +99,7 @@ msgstr "Снимок с указанным ID не найден:"
 
 #: selfprivacy_api/graphql/mutations/backup_mutations.py:175
 msgid "Trimming autobackup snapshots"
-msgstr "Очистка снимков автокопий"
+msgstr "Очистка автоматических снимков"
 
 #: selfprivacy_api/graphql/mutations/backup_mutations.py:180
 msgid "Pruning the excessive snapshots after the new autobackup quotas are set"
