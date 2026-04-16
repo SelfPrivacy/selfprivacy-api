@@ -7,7 +7,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
-"Report-Msgid-Bugs-To: https://git.selfprivacy.org/SelfPrivacy/selfprivacy-rest-api/issues\n"
+"Report-Msgid-Bugs-To: https://git.selfprivacy.org/SelfPrivacy/selfprivacy-"
+"rest-api/issues\n"
 "POT-Creation-Date: 1970-01-01 00:00+0000\n"
 "PO-Revision-Date: 2026-02-04 00:00+0400\n"
 "Last-Translator: def <dettlaff@riseup.net>\n"
@@ -16,7 +17,8 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: selfprivacy_api/actions/kanidm_credential_type.py:14
 msgid "Error while trying to get the Kanidm minimum credential type: Kanidm did not return a valid \"credential_type_minimum\" value for the group idm_all_persons."
@@ -28,6 +30,7 @@ msgid "Move %(service)s"
 msgstr "Перемещение %(service)s"
 
 #: selfprivacy_api/actions/services.py:30
+#: selfprivacy_api/actions/services.py:29
 #, python-format
 msgid "Moving %(service)s data to %(volume)s"
 msgstr "Перемещение данных %(service)s на %(volume)s"
@@ -48,21 +51,26 @@ msgstr "Обновление системы"
 msgid "Upgrading the system to the latest version."
 msgstr "Обновление системы до последней версии."
 
-#: selfprivacy_api/backup/jobs.py:51
+#: selfprivacy_api/backup/jobs.py:51 selfprivacy_api/backup/jobs.py:52
 msgid "Automatic backup"
 msgstr "Автоматическое резервное копирование"
 
-#: selfprivacy_api/backup/jobs.py:52
+#: selfprivacy_api/backup/jobs.py:52 selfprivacy_api/backup/jobs.py:53
 #, python-format
 msgid "Scheduled backup for services: %(pretty_service_list)s"
-msgstr "Запланированное резервное копирование для сервисов: %(pretty_service_list)s"
+msgstr ""
+"Запланированное резервное копирование для сервисов: %(pretty_service_list)s"
 
-#: selfprivacy_api/backup/jobs.py:61
+#: selfprivacy_api/backup/jobs.py:61 selfprivacy_api/backup/jobs.py:62
 #, python-format
-msgid "Cannot start a backup of %(service_id)s, another operation is running: %(op_type)s"
-msgstr "Нельзя запустить резервное копирование %(service_id)s, выполняется другая операция: %(op_type)s"
+msgid ""
+"Cannot start a backup of %(service_id)s, another operation is running: "
+"%(op_type)s"
+msgstr ""
+"Нельзя запустить резервное копирование %(service_id)s, выполняется другая "
+"операция: %(op_type)s"
 
-#: selfprivacy_api/backup/jobs.py:70
+#: selfprivacy_api/backup/jobs.py:70 selfprivacy_api/backup/jobs.py:71
 #, python-format
 msgid "Backup %(display_name)s"
 msgstr "Резервное копирование %(display_name)s"
@@ -72,53 +80,60 @@ msgstr "Резервное копирование %(display_name)s"
 msgid "Backing up %(display_name)s"
 msgstr "Создание резервной копии %(display_name)s"
 
-#: selfprivacy_api/backup/jobs.py:80
+#: selfprivacy_api/backup/jobs.py:80 selfprivacy_api/backup/jobs.py:79
 #, python-format
-msgid "Cannot start a restore of %(service_id)s, another operation is running: %(op_type)s"
-msgstr "Нельзя запустить восстановление %(service_id)s, выполняется другая операция: %(op_type)s"
+msgid ""
+"Cannot start a restore of %(service_id)s, another operation is running: "
+"%(op_type)s"
+msgstr ""
+"Нельзя запустить восстановление %(service_id)s, выполняется другая операция: "
+"%(op_type)s"
 
-#: selfprivacy_api/backup/jobs.py:94
+#: selfprivacy_api/backup/jobs.py:94 selfprivacy_api/backup/jobs.py:93
 msgid "Total restore"
 msgstr "Полное восстановление"
 
-#: selfprivacy_api/backup/jobs.py:95
+#: selfprivacy_api/backup/jobs.py:95 selfprivacy_api/backup/jobs.py:94
 msgid "Restoring all enabled services"
 msgstr "Восстановление всех включённых сервисов"
 
-#: selfprivacy_api/backup/jobs.py:115
+#: selfprivacy_api/backup/jobs.py:115 selfprivacy_api/backup/jobs.py:114
 msgid "Total backup"
 msgstr "Полное резервное копирование"
 
-#: selfprivacy_api/backup/jobs.py:116
+#: selfprivacy_api/backup/jobs.py:116 selfprivacy_api/backup/jobs.py:115
 msgid "Backing up all the enabled services"
 msgstr "Резервное копирование всех включённых сервисов"
 
-#: selfprivacy_api/backup/jobs.py:130
+#: selfprivacy_api/backup/jobs.py:130 selfprivacy_api/backup/jobs.py:129
 #, python-format
 msgid "Restore %(display_name)s"
 msgstr "Восстановление %(display_name)s"
 
-#: selfprivacy_api/backup/jobs.py:132
+#: selfprivacy_api/backup/jobs.py:132 selfprivacy_api/backup/jobs.py:130
 #, python-format
 msgid "Restoring %(display_name)s from %(snapshot_id)s"
 msgstr "Восстановление %(display_name)s из %(snapshot_id)s"
 
-#: selfprivacy_api/backup/tasks.py:213
+#: selfprivacy_api/backup/tasks.py:213 selfprivacy_api/backup/tasks.py:214
 msgid "Finding the last autobackup session"
 msgstr "Поиск последней сессии автоматического резервного копирования"
 
-#: selfprivacy_api/backup/tasks.py:232
+#: selfprivacy_api/backup/tasks.py:232 selfprivacy_api/backup/tasks.py:233
 #, python-format
 msgid "restoring %(service_name)s"
 msgstr "восстановление %(service_name)s"
 
-#: selfprivacy_api/backup/tasks.py:237
+#: selfprivacy_api/backup/tasks.py:237 selfprivacy_api/backup/tasks.py:238
 msgid "rebuilding system"
 msgstr "пересборка системы"
 
 #: selfprivacy_api/exceptions/__init__.py:12
-msgid "Your SelfPrivacy app is out of date, please update it to use new features."
-msgstr "Ваше приложение SelfPrivacy устарело; обновите его, чтобы использовать новые функции."
+msgid ""
+"Your SelfPrivacy app is out of date, please update it to use new features."
+msgstr ""
+"Ваше приложение SelfPrivacy устарело; обновите его, чтобы использовать новые "
+"функции."
 
 #: selfprivacy_api/exceptions/__init__.py:16
 msgid ""
@@ -129,6 +144,7 @@ msgstr ""
 "#chat:selfprivacy.org в Matrix или @selprivacy_chat в Telegram."
 
 #: selfprivacy_api/exceptions/__init__.py:33
+#: selfprivacy_api/exceptions/__init__.py:47
 msgid "The API is using the wrong user repository."
 msgstr "API использует неверный репозиторий пользователей."
 
@@ -297,26 +313,32 @@ msgstr "Нет такого сервиса: %(service_id)s. %(REPORT_IT_TO_SUPPO
 #: selfprivacy_api/exceptions/services.py:43
 #, python-format
 msgid ""
-"Service modules cannot be changed because legacy service modules have not been migrated.\n"
+"Service modules cannot be changed because legacy service modules have not "
+"been migrated.\n"
 "Legacy service module flake is still present.\n"
-"Restart the SelfPrivacy API service to re-run the migration, then try again.\n"
+"Restart the SelfPrivacy API service to re-run the migration, then try "
+"again.\n"
 "%(REPORT_IT_TO_SUPPORT_CHATS)s"
 msgstr ""
 
 #: selfprivacy_api/exceptions/services.py:67
+#: selfprivacy_api/exceptions/services.py:44
 #, python-format
 msgid "No such volume: %(volume_name)s. %(REPORT_IT_TO_SUPPORT_CHATS)s"
 msgstr "Нет такого тома: %(volume_name)s. %(REPORT_IT_TO_SUPPORT_CHATS)s"
 
 #: selfprivacy_api/exceptions/ssh.py:35
+#: selfprivacy_api/exceptions/users/ssh.py:35
 msgid "Key not found"
 msgstr "Ключ не найден"
 
 #: selfprivacy_api/exceptions/ssh.py:47
+#: selfprivacy_api/exceptions/users/ssh.py:47
 msgid "Key already exists"
 msgstr "Ключ уже существует"
 
 #: selfprivacy_api/exceptions/ssh.py:58
+#: selfprivacy_api/exceptions/users/ssh.py:58
 msgid "Invalid key type. Supported key types: "
 msgstr "Недопустимый тип ключа. Поддерживаемые типы ключей: "
 
@@ -336,6 +358,7 @@ msgstr ""
 "Вывод: %(output)s"
 
 #: selfprivacy_api/exceptions/system.py:61
+#: selfprivacy_api/exceptions/system.py:60
 #, python-format
 msgid ""
 "Invalid timezone: %(timezone)s\n"
@@ -365,7 +388,9 @@ msgstr ""
 
 #: selfprivacy_api/exceptions/system.py:120
 #, python-format
-msgid "The provider %(provider)s requires additional secrets, but they were not provided."
+msgid ""
+"The provider %(provider)s requires additional secrets, but they were not "
+"provided."
 msgstr ""
 
 #: selfprivacy_api/exceptions/system.py:139
@@ -403,67 +428,88 @@ msgstr "Сервис Gitea не найден."
 
 #: selfprivacy_api/exceptions/tokens.py:72
 #, fuzzy
-msgid "The access token you’re trying to delete is currently in use by this device, so removing access is not possible."
+msgid ""
+"The access token you’re trying to delete is currently in use by this device, "
+"so removing access is not possible."
 msgstr ""
-"Токен доступа, который вы пытаетесь удалить, сейчас используется этим устройством, поэтому отключить доступ невозможно.\n"
+"Токен доступа, который вы пытаетесь удалить, сейчас используется этим "
+"устройством, поэтому отключить доступ невозможно.\n"
 "%(REPORT_IT_TO_SUPPORT_CHATS)s"
 
 #: selfprivacy_api/exceptions/tokens.py:86
+#: selfprivacy_api/exceptions/tokens.py:97
 msgid ""
 "Specified expiration date is in the past. Please provide a future date.\n"
-"If you believe this is a mistake, there may be a problem with the server's date/time settings."
+"If you believe this is a mistake, there may be a problem with the server's "
+"date/time settings."
 msgstr ""
 "Указанная дата истечения уже прошла. Укажите дату в будущем.\n"
-"Если вы считаете, что это ошибка, возможно, на сервере неверно настроены дата/время."
+"Если вы считаете, что это ошибка, возможно, на сервере неверно настроены "
+"дата/время."
 
 #: selfprivacy_api/exceptions/tokens.py:98
+#: selfprivacy_api/exceptions/tokens.py:109
 msgid "Uses left must be greater than 0."
 msgstr "Оставшееся количество использований должно быть больше 0."
 
 #: selfprivacy_api/exceptions/users.py:22
+#: selfprivacy_api/exceptions/users/__init__.py:22
 msgid "User not found"
 msgstr "Пользователь не найден"
 
 #: selfprivacy_api/exceptions/users.py:36
+#: selfprivacy_api/exceptions/users/__init__.py:36
 #, python-format
 msgid ""
 "User or group not found.\n"
-"Kanidm uses the same error for missing users and groups.%(KANIDM_DESCRIPTION)s\n"
+"Kanidm uses the same error for missing users and groups."
+"%(KANIDM_DESCRIPTION)s\n"
 msgstr ""
 "Пользователь или группа не найдены.\n"
-"Kanidm использует одну и ту же ошибку для отсутствующих пользователей и групп.\n"
-"%(KANIDM_DESCRIPTION)s\n"
+"Kanidm использует одну и ту же ошибку для отсутствующих пользователей и "
+"групп. %(KANIDM_DESCRIPTION)s\n"
 
 #: selfprivacy_api/exceptions/users.py:52
+#: selfprivacy_api/exceptions/users/__init__.py:52
 msgid "Root user cannot be deleted or modified."
 msgstr "Суперпользователь не может быть удалён или изменён."
 
 #: selfprivacy_api/exceptions/users.py:75
+#: selfprivacy_api/exceptions/users/__init__.py:75
 #, python-format
 msgid ""
 "Username is in reserved list or have reserved prefix.\n"
 "Reserved prefix: %(forbidden_prefix)s."
 msgstr ""
-"Имя пользователя находится в списке зарезервированных или имеет зарезервированный префикс.\n"
+"Имя пользователя находится в списке зарезервированных или имеет "
+"зарезервированный префикс.\n"
 "Зарезервированный префикс: %(forbidden_prefix)s."
 
 #: selfprivacy_api/exceptions/users.py:83
+#: selfprivacy_api/exceptions/users/__init__.py:84
 msgid "Username is in reserved list or have reserved prefix."
-msgstr "Имя пользователя находится в списке зарезервированных или имеет зарезервированный префикс."
+msgstr ""
+"Имя пользователя находится в списке зарезервированных или имеет "
+"зарезервированный префикс."
 
 #: selfprivacy_api/exceptions/users.py:97
+#: selfprivacy_api/exceptions/users/__init__.py:98
 msgid "User already exists"
 msgstr "Пользователь уже существует"
 
 #: selfprivacy_api/exceptions/users.py:108
+#: selfprivacy_api/exceptions/users/__init__.py:109
 msgid "Username must be alphanumeric and start with a letter.\n"
-msgstr "Имя пользователя должно состоять из букв и цифр и начинаться с буквы.\n"
+msgstr ""
+"Имя пользователя должно состоять из букв и цифр и начинаться с буквы.\n"
 
 #: selfprivacy_api/exceptions/users.py:121
+#: selfprivacy_api/exceptions/users/__init__.py:122
 msgid "Username is too long. Must be less than 32 characters."
 msgstr "Имя пользователя слишком длинное. Должно быть меньше 32 символов."
 
 #: selfprivacy_api/exceptions/users.py:133
+#: selfprivacy_api/exceptions/users/__init__.py:134
 msgid "Password cannot be empty."
 msgstr "Пароль не может быть пустым."
 
@@ -476,30 +522,37 @@ msgid "Display name is too long. Must be less than 256 characters."
 msgstr "Отображаемое имя слишком длинное. Должно быть меньше 256 символов."
 
 #: selfprivacy_api/graphql/mutations/api_mutations.py:120
+#: selfprivacy_api/graphql/mutations/api_mutations.py:118
 msgid "Recovery key generated"
 msgstr "Ключ восстановления сгенерирован"
 
 #: selfprivacy_api/graphql/mutations/api_mutations.py:163
+#: selfprivacy_api/graphql/mutations/api_mutations.py:155
 msgid "Recovery key used"
 msgstr "Ключ восстановления использован"
 
 #: selfprivacy_api/graphql/mutations/api_mutations.py:208
+#: selfprivacy_api/graphql/mutations/api_mutations.py:199
 msgid "Token refreshed"
 msgstr "Токен обновлён"
 
 #: selfprivacy_api/graphql/mutations/api_mutations.py:247
+#: selfprivacy_api/graphql/mutations/api_mutations.py:237
 msgid "Token deleted"
 msgstr "Токен удалён"
 
 #: selfprivacy_api/graphql/mutations/api_mutations.py:260
+#: selfprivacy_api/graphql/mutations/api_mutations.py:250
 msgid "Device api key generated"
 msgstr "Сгенерирован API ключ устройства"
 
 #: selfprivacy_api/graphql/mutations/api_mutations.py:274
+#: selfprivacy_api/graphql/mutations/api_mutations.py:264
 msgid "New device key deleted"
 msgstr "Ключ нового устройства удалён"
 
 #: selfprivacy_api/graphql/mutations/api_mutations.py:317
+#: selfprivacy_api/graphql/mutations/api_mutations.py:300
 msgid "Token used"
 msgstr "Токен использован"
 
@@ -578,17 +631,23 @@ msgid "Service configuration updated."
 msgstr "Настройки сервиса обновлены."
 
 #: selfprivacy_api/graphql/mutations/services_mutations.py:344
+#: selfprivacy_api/graphql/mutations/services_mutations.py:345
 msgid "Started moving the service."
 msgstr "Начат перенос сервиса."
 
 #: selfprivacy_api/graphql/mutations/services_mutations.py:353
+#: selfprivacy_api/graphql/mutations/services_mutations.py:354
 msgid "Service moved."
 msgstr "Сервис перемещён."
 
 #: selfprivacy_api/graphql/mutations/services_mutations.py:363
+#: selfprivacy_api/graphql/mutations/services_mutations.py:364
 #, python-format
-msgid "While moving service and performing the step '%(status_text)s', an error occurred: %(error)s"
-msgstr "При переносе сервиса на шаге «%(status_text)s» произошла ошибка: %(error)s"
+msgid ""
+"While moving service and performing the step '%(status_text)s', an error "
+"occurred: %(error)s"
+msgstr ""
+"При переносе сервиса на шаге «%(status_text)s» произошла ошибка: %(error)s"
 
 #: selfprivacy_api/graphql/mutations/storage_mutations.py:29
 msgid "Volume not found"
@@ -615,12 +674,16 @@ msgid "Volume not unmounted (already unmounted?)"
 msgstr "Том не размонтирован (возможно, уже размонтирован)"
 
 #: selfprivacy_api/graphql/mutations/storage_mutations.py:158
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:155
 msgid "Already migrated to binds"
-msgstr "Уже используется новая схема хранения."
+msgstr "Уже используется новая схема хранения"
 
 #: selfprivacy_api/graphql/mutations/storage_mutations.py:175
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:172
 msgid "Migration to binds started, rebuild the system to apply changes"
-msgstr "Начат переход на новую схему хранения. Пересоберите систему, чтобы применить изменения."
+msgstr ""
+"Начат переход на новую схему хранения. Пересоберите систему, чтобы применить "
+"изменения"
 
 #: selfprivacy_api/graphql/mutations/system_mutations.py:143
 msgid "Timezone changed"
@@ -778,7 +841,9 @@ msgstr "Переход на новую схему хранения"
 
 #: selfprivacy_api/jobs/migrate_to_binds.py:389
 msgid "Migration required to use the new disk space management."
-msgstr "Чтобы использовать новое управление местом на диске, нужен переход на новую схему хранения."
+msgstr ""
+"Чтобы использовать новое управление местом на диске, нужен переход на новую "
+"схему хранения."
 
 #: selfprivacy_api/jobs/nix_collect_garbage.py:68
 msgid "Garbage collection completed."
@@ -843,11 +908,12 @@ msgstr "Система пересобрана."
 msgid "System rebuild failed. Last log lines:\n"
 msgstr "Сбой пересборки системы. Последние строки лога:\n"
 
-#: selfprivacy_api/models/services.py:94
+#: selfprivacy_api/models/services.py:94 selfprivacy_api/models/services.py:93
 msgid "No description found!"
 msgstr "Описание не найдено!"
 
 #: selfprivacy_api/models/services.py:101
+#: selfprivacy_api/models/services.py:100
 msgid "No backup description found!"
 msgstr "Описание резервной копии не найдено!"
 
@@ -887,16 +953,76 @@ msgstr "Выполнение дошло до недостижимого учас
 msgid "Kanidm access issue"
 msgstr "Проблема доступа к Kanidm"
 
-#~ msgid "Kanidm is not responding to requests. Connection error."
-#~ msgstr "Kanidm не отвечает на запросы. Ошибка подключения."
+#: selfprivacy_api/repositories/users/kanidm_user_repository.py:241
+msgid "Kanidm is not responding to requests. Connection error."
+msgstr "Kanidm не отвечает на запросы. Ошибка подключения."
 
-#~ msgid "Unknown error while checking the Kanidm admin token."
-#~ msgstr "Неизвестная ошибка при проверке администраторского токена Kanidm."
+#: selfprivacy_api/repositories/users/kanidm_user_repository.py:250
+msgid "Unknown error while checking the Kanidm admin token."
+msgstr "Неизвестная ошибка при проверке администраторского токена Kanidm."
 
+#: selfprivacy_api/exceptions/tokens.py:52
 #, python-format
-#~ msgid "Invalid recovery key. %(REPORT_IT_TO_SUPPORT_CHATS)s"
-#~ msgstr "Недействительный ключ восстановления. %(REPORT_IT_TO_SUPPORT_CHATS)s"
+msgid "Invalid recovery key. %(REPORT_IT_TO_SUPPORT_CHATS)s"
+msgstr "Недействительный ключ восстановления. %(REPORT_IT_TO_SUPPORT_CHATS)s"
 
+#: selfprivacy_api/exceptions/tokens.py:67
 #, python-format
-#~ msgid "New device key not found. %(REPORT_IT_TO_SUPPORT_CHATS)s"
-#~ msgstr "Ключ нового устройства не найден. %(REPORT_IT_TO_SUPPORT_CHATS)s"
+msgid "New device key not found. %(REPORT_IT_TO_SUPPORT_CHATS)s"
+msgstr "Ключ нового устройства не найден. %(REPORT_IT_TO_SUPPORT_CHATS)s"
+
+#: selfprivacy_api/exceptions/tokens.py:21
+#, python-format
+msgid ""
+"Access token was not found.\n"
+"%(REPORT_IT_TO_SUPPORT_CHATS)s"
+msgstr ""
+"Токен доступа не найден.\n"
+"%(REPORT_IT_TO_SUPPORT_CHATS)s"
+
+#: selfprivacy_api/exceptions/tokens.py:37
+#, python-format
+msgid ""
+"Recovery key is not found or no longer valid.\n"
+"%(REPORT_IT_TO_SUPPORT_CHATS)s"
+msgstr ""
+"Ключ восстановления не найден или больше не действителен.\n"
+"%(REPORT_IT_TO_SUPPORT_CHATS)s"
+
+#: selfprivacy_api/exceptions/tokens.py:81
+#, python-format
+msgid ""
+"The access token you’re trying to delete is currently in use by this device, "
+"so removing access is not possible.\n"
+"%(REPORT_IT_TO_SUPPORT_CHATS)s"
+msgstr ""
+"Токен доступа, который вы пытаетесь удалить, сейчас используется этим "
+"устройством, поэтому отключить доступ невозможно.\n"
+"%(REPORT_IT_TO_SUPPORT_CHATS)s"
+
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:157
+#, python-format
+msgid ""
+"Failed to get access to Kanidm admin account:\n"
+"Kanidm CLI did not reset the admin password.\n"
+"%(KANIDM_DESCRIPTION)s\n"
+"%(KANIDM_PROBLEMS)s\n"
+"%(REPORT_IT_TO_SUPPORT_CHATS)s\n"
+"\n"
+"%(KANIDM_DEBUG_HELP)s\n"
+"\n"
+"Used command: %(command)s\n"
+"Used regex pattern: %(regex_pattern)s\n"
+"Kanidm's CLI output: %(output)s"
+msgstr ""
+"Не удалось получить доступ к учётной записи администратора Kanidm:\n"
+"Kanidm CLI не сбросил пароль администратора.\n"
+"%(KANIDM_DESCRIPTION)s\n"
+"%(KANIDM_PROBLEMS)s\n"
+"%(REPORT_IT_TO_SUPPORT_CHATS)s\n"
+"\n"
+"%(KANIDM_DEBUG_HELP)s\n"
+"\n"
+"Использованная команда: %(command)s\n"
+"Использованный шаблон regex: %(regex_pattern)s\n"
+"Вывод Kanidm CLI: %(output)s"
