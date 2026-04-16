@@ -27,7 +27,7 @@ msgstr "Не удалось получить минимально допусти
 #: selfprivacy_api/actions/services.py:28
 #, python-format
 msgid "Move %(service)s"
-msgstr "Перемещение %(service)s"
+msgstr "Переместить %(service)s"
 
 #: selfprivacy_api/actions/services.py:30
 #: selfprivacy_api/actions/services.py:29
@@ -37,7 +37,7 @@ msgstr "Перемещение данных %(service)s на %(volume)s"
 
 #: selfprivacy_api/actions/system.py:147
 msgid "Rebuild system"
-msgstr "Пересборка системы"
+msgstr "Пересборать систему"
 
 #: selfprivacy_api/actions/system.py:149
 msgid "Applying the new system configuration by building the new NixOS generation."
@@ -45,7 +45,7 @@ msgstr "Применение новой конфигурации системы 
 
 #: selfprivacy_api/actions/system.py:171
 msgid "Upgrade system"
-msgstr "Обновление системы"
+msgstr "Обновить систему"
 
 #: selfprivacy_api/actions/system.py:172
 msgid "Upgrading the system to the latest version."
@@ -544,12 +544,12 @@ msgstr "Токен удалён"
 #: selfprivacy_api/graphql/mutations/api_mutations.py:260
 #: selfprivacy_api/graphql/mutations/api_mutations.py:250
 msgid "Device api key generated"
-msgstr "Сгенерирован API ключ устройства"
+msgstr "Сгенерирован ключ авторизации нового устройства"
 
 #: selfprivacy_api/graphql/mutations/api_mutations.py:274
 #: selfprivacy_api/graphql/mutations/api_mutations.py:264
 msgid "New device key deleted"
-msgstr "Ключ нового устройства удалён"
+msgstr "Ключ авторизации нового устройства удалён"
 
 #: selfprivacy_api/graphql/mutations/api_mutations.py:317
 #: selfprivacy_api/graphql/mutations/api_mutations.py:300
@@ -570,7 +570,7 @@ msgstr "Снимок с указанным ID не найден:"
 
 #: selfprivacy_api/graphql/mutations/backup_mutations.py:175
 msgid "Trimming autobackup snapshots"
-msgstr "Очистка снимков автокопий"
+msgstr "Очистка автоматических снимков"
 
 #: selfprivacy_api/graphql/mutations/backup_mutations.py:180
 msgid "Pruning the excessive snapshots after the new autobackup quotas are set"
