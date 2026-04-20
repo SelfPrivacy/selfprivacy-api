@@ -15,8 +15,8 @@ from selfprivacy_api.utils import (
     ReadUserData,
     WriteUserData,
     ensure_ssh_and_users_fields_exist,
-    validate_ssh_public_key,
 )
+from selfprivacy_api.utils.ssh import validate_ssh_public_key
 
 _ = gettext.gettext
 

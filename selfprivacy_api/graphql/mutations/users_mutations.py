@@ -103,11 +103,13 @@ class UsersMutations:
                     return await return_failed_mutation_return(
                         message=error.get_error_message(locale=locale),
                         code=error.code,
+                        username=user.username,
                     )
                 else:
                     return await return_failed_mutation_return(
                         message=str(error),
                         code=400,
+                        username=user.username,
                     )
 
             if user.password:
