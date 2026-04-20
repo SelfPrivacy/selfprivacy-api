@@ -26,20 +26,20 @@ msgstr ""
 msgid "Moving %(service)s data to %(volume)s"
 msgstr ""
 
-#: selfprivacy_api/actions/system.py:79
+#: selfprivacy_api/actions/system.py:90
 msgid "Rebuild system"
 msgstr ""
 
-#: selfprivacy_api/actions/system.py:81
+#: selfprivacy_api/actions/system.py:92
 msgid ""
 "Applying the new system configuration by building the new NixOS generation."
 msgstr ""
 
-#: selfprivacy_api/actions/system.py:103
+#: selfprivacy_api/actions/system.py:114
 msgid "Upgrade system"
 msgstr ""
 
-#: selfprivacy_api/actions/system.py:104
+#: selfprivacy_api/actions/system.py:115
 msgid "Upgrading the system to the latest version."
 msgstr ""
 
@@ -111,39 +111,39 @@ msgstr ""
 msgid "Password deleted successfully"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:108
+#: selfprivacy_api/graphql/mutations/system_mutations.py:110
 msgid "Timezone changed"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:136
+#: selfprivacy_api/graphql/mutations/system_mutations.py:138
 msgid "Auto-upgrade settings changed"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:165
+#: selfprivacy_api/graphql/mutations/system_mutations.py:167
 msgid "SSH settings changed"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:181
+#: selfprivacy_api/graphql/mutations/system_mutations.py:183
 msgid "Starting system rebuild"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:222
+#: selfprivacy_api/graphql/mutations/system_mutations.py:224
 msgid "Starting system upgrade"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:242
+#: selfprivacy_api/graphql/mutations/system_mutations.py:244
 msgid "System reboot has started"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:258
+#: selfprivacy_api/graphql/mutations/system_mutations.py:260
 msgid "There is no repository to pull changes from."
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:274
+#: selfprivacy_api/graphql/mutations/system_mutations.py:276
 msgid "Garbage collector started..."
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:296
+#: selfprivacy_api/graphql/mutations/system_mutations.py:298
 msgid "Provider set"
 msgstr ""
 
@@ -554,36 +554,47 @@ msgid ""
 "Data: %(data)s"
 msgstr ""
 
+#: selfprivacy_api/exceptions/system.py:123
+#, python-format
+msgid "The provider %(provider)s requires a token ID, but it was not provided."
+msgstr ""
+
+#: selfprivacy_api/exceptions/system.py:143
+#, python-format
+msgid ""
+"The provider %(provider)s does not use a token ID, but one was provided."
+msgstr ""
+
 #: selfprivacy_api/exceptions/tokens.py:22
 msgid "Access token was not found."
 msgstr ""
 
-#: selfprivacy_api/exceptions/tokens.py:37
+#: selfprivacy_api/exceptions/tokens.py:36
 msgid "Recovery key is not found or no longer valid."
 msgstr ""
 
-#: selfprivacy_api/exceptions/tokens.py:49
+#: selfprivacy_api/exceptions/tokens.py:47
 msgid "Invalid recovery key."
 msgstr ""
 
-#: selfprivacy_api/exceptions/tokens.py:62
+#: selfprivacy_api/exceptions/tokens.py:60
 msgid "New device key not found."
 msgstr ""
 
-#: selfprivacy_api/exceptions/tokens.py:74
+#: selfprivacy_api/exceptions/tokens.py:72
 msgid ""
 "The access token you’re trying to delete is currently in use by this device, "
 "so removing access is not possible."
 msgstr ""
 
-#: selfprivacy_api/exceptions/tokens.py:88
+#: selfprivacy_api/exceptions/tokens.py:86
 msgid ""
 "Specified expiration date is in the past. Please provide a future date.\n"
 "If you believe this is a mistake, there may be a problem with the server's "
 "date/time settings."
 msgstr ""
 
-#: selfprivacy_api/exceptions/tokens.py:100
+#: selfprivacy_api/exceptions/tokens.py:98
 msgid "Uses left must be greater than 0."
 msgstr ""
 

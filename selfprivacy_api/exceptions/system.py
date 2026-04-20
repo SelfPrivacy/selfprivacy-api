@@ -105,3 +105,43 @@ class FailedToFindResult(AbstractException):
             },
             locale=locale,
         )
+
+
+class ProviderRequiresTokenId(AbstractException):
+    def __init__(
+        self,
+        provider: str,
+        log: bool = True,
+    ):
+        self.provider = provider
+
+        super().__init__(log=log)
+
+    def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
+        return t.translate(
+            text=_(
+                "The provider %(provider)s requires a token ID, but it was not provided."
+            )
+            % {"provider": self.provider},
+            locale=locale,
+        )
+
+
+class ProviderDoesNotUseTokenId(AbstractException):
+    def __init__(
+        self,
+        provider: str,
+        log: bool = True,
+    ):
+        self.provider = provider
+
+        super().__init__(log=log)
+
+    def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
+        return t.translate(
+            text=_(
+                "The provider %(provider)s does not use a token ID, but one was provided."
+            )
+            % {"provider": self.provider},
+            locale=locale,
+        )

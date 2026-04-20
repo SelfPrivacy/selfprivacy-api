@@ -7,7 +7,11 @@ from typing import Optional
 import pytz
 from pydantic import BaseModel
 
-from selfprivacy_api.exceptions.system import InvalidTimezone
+from selfprivacy_api.exceptions.system import (
+    InvalidTimezone,
+    ProviderRequiresTokenId,
+    ProviderDoesNotUseTokenId,
+)
 from selfprivacy_api.graphql.queries.providers import DnsProvider
 from selfprivacy_api.jobs import Job, Jobs, JobStatus
 from selfprivacy_api.jobs.upgrade_system import rebuild_system_task
@@ -40,16 +44,23 @@ class UserDataAutoUpgradeSettings(BaseModel):
     allowReboot: bool = False
 
 
-def set_dns_provider(provider: DnsProvider, token: str):
+def set_dns_provider(
+    provider: DnsProvider, token: str, token_id: Optional[str] = None
+) -> None:
+    if provider.needs_token_id() and not token_id:
+        raise ProviderRequiresTokenId(provider=provider.value)
+    if not provider.needs_token_id() and token_id:
+        raise ProviderDoesNotUseTokenId(provider=provider.value)
+
     with WriteUserData() as user_data:
-        if "dns" not in user_data.keys():
-            user_data["dns"] = {}
-        user_data["dns"]["provider"] = provider.value
+        user_data.setdefault("dns", {})["provider"] = provider.value
 
     with WriteUserData(file_type=UserDataFiles.SECRETS) as secrets:
-        if "dns" not in secrets.keys():
-            secrets["dns"] = {}
-        secrets["dns"]["apiKey"] = token
+        secrets.setdefault("dns", {})["apiKey"] = token
+        if token_id:
+            secrets["dns"]["apiKeyId"] = token_id
+        else:
+            secrets["dns"].pop("apiKeyId", None)
 
 
 def get_auto_upgrade_settings() -> UserDataAutoUpgradeSettings:

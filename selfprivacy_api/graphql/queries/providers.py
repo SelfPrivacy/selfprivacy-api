@@ -10,6 +10,10 @@ class DnsProvider(Enum):
     CLOUDFLARE = "CLOUDFLARE"
     DIGITALOCEAN = "DIGITALOCEAN"
     DESEC = "DESEC"
+    PORKBUN = "PORKBUN"
+
+    def needs_token_id(self) -> bool:
+        return self in {DnsProvider.PORKBUN}
 
 
 @strawberry.enum
