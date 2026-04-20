@@ -30,6 +30,7 @@ xgettext \
   selfprivacy_api/backup/jobs.py \
   selfprivacy_api/backup/tasks.py \
   selfprivacy_api/exceptions/__init__.py \
+  selfprivacy_api/exceptions/kanidm.py \
   selfprivacy_api/exceptions/services.py \
   selfprivacy_api/exceptions/system.py \
   selfprivacy_api/exceptions/tokens.py \

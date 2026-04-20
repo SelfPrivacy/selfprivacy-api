@@ -36,7 +36,8 @@ msgstr "Пересборка системы"
 #: selfprivacy_api/actions/system.py:81
 msgid ""
 "Applying the new system configuration by building the new NixOS generation."
-msgstr "Применение новой конфигурации системы путём сборки новой генерации NixOS."
+msgstr ""
+"Применение новой конфигурации системы путём сборки новой генерации NixOS."
 
 #: selfprivacy_api/actions/system.py:103
 msgid "Upgrade system"
@@ -54,31 +55,31 @@ msgstr "Задача удалена"
 msgid "Job not found"
 msgstr "Задача не найдена"
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:118
+#: selfprivacy_api/graphql/mutations/api_mutations.py:119
 msgid "Recovery key generated"
 msgstr "Ключ восстановления сгенерирован"
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:155
+#: selfprivacy_api/graphql/mutations/api_mutations.py:164
 msgid "Recovery key used"
 msgstr "Ключ восстановления использован"
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:199
+#: selfprivacy_api/graphql/mutations/api_mutations.py:208
 msgid "Token refreshed"
 msgstr "Токен обновлён"
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:237
+#: selfprivacy_api/graphql/mutations/api_mutations.py:246
 msgid "Token deleted"
 msgstr "Токен удалён"
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:250
+#: selfprivacy_api/graphql/mutations/api_mutations.py:259
 msgid "Device api key generated"
 msgstr "Сгенерирован API ключ устройства"
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:264
+#: selfprivacy_api/graphql/mutations/api_mutations.py:273
 msgid "New device key deleted"
 msgstr "Ключ нового устройства удалён"
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:300
+#: selfprivacy_api/graphql/mutations/api_mutations.py:318
 msgid "Token used"
 msgstr "Токен использован"
 
@@ -156,27 +157,27 @@ msgid ""
 "update the SelfPrivacy app."
 msgstr "Новый пароль применён как пароль электронной почты. Чтобы использовать единый вход (SSO), обновите приложение SelfPrivacy."
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:122
+#: selfprivacy_api/graphql/mutations/users_mutations.py:124
 msgid "User created"
 msgstr "Пользователь создан"
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:154
+#: selfprivacy_api/graphql/mutations/users_mutations.py:156
 msgid "User deleted"
 msgstr "Пользователь удалён"
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:202
+#: selfprivacy_api/graphql/mutations/users_mutations.py:204
 msgid "User updated"
 msgstr "Пользователь обновлён"
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:236
+#: selfprivacy_api/graphql/mutations/users_mutations.py:238
 msgid "New SSH key successfully written"
 msgstr "Новый ключ SSH успешно записан"
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:273
+#: selfprivacy_api/graphql/mutations/users_mutations.py:275
 msgid "SSH key successfully removed"
 msgstr "Ключ SSH успешно удалён"
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:310
+#: selfprivacy_api/graphql/mutations/users_mutations.py:312
 msgid "Link successfully created"
 msgstr "Ссылка успешно создана"
 
@@ -259,7 +260,8 @@ msgstr "Сервис перемещён."
 msgid ""
 "While moving service and performing the step '%(status_text)s', an error "
 "occurred: %(error)s"
-msgstr "При переносе сервиса на шаге «%(status_text)s» произошла ошибка: %(error)s"
+msgstr ""
+"При переносе сервиса на шаге «%(status_text)s» произошла ошибка: %(error)s"
 
 #: selfprivacy_api/graphql/queries/monitoring.py:24
 msgid "Prometheus is not running"
@@ -419,7 +421,8 @@ msgstr "Автоматическое резервное копирование"
 #: selfprivacy_api/backup/jobs.py:53
 #, python-format
 msgid "Scheduled backup for services: %(pretty_service_list)s"
-msgstr "Запланированное резервное копирование для сервисов: %(pretty_service_list)s"
+msgstr ""
+"Запланированное резервное копирование для сервисов: %(pretty_service_list)s"
 
 #: selfprivacy_api/backup/jobs.py:62
 #, python-format
@@ -497,15 +500,19 @@ msgstr ""
 "Пожалуйста, сообщите об этом в наши чаты поддержки:\n"
 "#chat:selfprivacy.org в Matrix или @selprivacy_chat в Telegram."
 
-#: selfprivacy_api/exceptions/__init__.py:21
+#: selfprivacy_api/exceptions/__init__.py:33
+msgid "The API is using the wrong user repository."
+msgstr "API использует неверный репозиторий пользователей."
+
+#: selfprivacy_api/exceptions/kanidm.py:20
 msgid ""
 "Kanidm is the identity and authentication service that manages users and "
-"access to services."
+"access to system services."
 msgstr ""
 "Kanidm — это сервис идентификации и аутентификации, который управляет "
-"пользователями и доступом к сервисам."
+"пользователями и доступом к системным сервисам."
 
-#: selfprivacy_api/exceptions/__init__.py:25
+#: selfprivacy_api/exceptions/kanidm.py:24
 msgid ""
 "In some cases, a Kanidm update may introduce breaking changes affecting the "
 "API, CLI commands, or configuration compatibility."
@@ -513,26 +520,12 @@ msgstr ""
 "В некоторых случаях обновление Kanidm может внести несовместимые изменения, "
 "затрагивающие API, команды CLI или совместимость конфигурации."
 
-#: selfprivacy_api/exceptions/__init__.py:29
-msgid ""
-"Console commands to debug:\n"
-"    'systemctl status kanidm.service'\n"
-"    'journalctl -u kanidm.service'\n"
-msgstr ""
-"Консольные команды для отладки:\n"
-"    'systemctl status kanidm.service'\n"
-"    'journalctl -u kanidm.service'\n"
-
-#: selfprivacy_api/exceptions/__init__.py:47
-msgid "The API is using the wrong user repository."
-msgstr "API использует неверный репозиторий пользователей."
-
 #: selfprivacy_api/exceptions/services.py:26
 #, python-format
 msgid "No such service: %(service_id)s. %(REPORT_IT_TO_SUPPORT_CHATS)s"
 msgstr "Нет такого сервиса: %(service_id)s. %(REPORT_IT_TO_SUPPORT_CHATS)s"
 
-#: selfprivacy_api/exceptions/services.py:44
+#: selfprivacy_api/exceptions/services.py:46
 #, python-format
 msgid "No such volume: %(volume_name)s. %(REPORT_IT_TO_SUPPORT_CHATS)s"
 msgstr "Нет такого тома: %(volume_name)s. %(REPORT_IT_TO_SUPPORT_CHATS)s"
@@ -552,7 +545,7 @@ msgstr ""
 "Выполненная команда: %(command)s\n"
 "Вывод: %(output)s"
 
-#: selfprivacy_api/exceptions/system.py:60
+#: selfprivacy_api/exceptions/system.py:62
 #, python-format
 msgid ""
 "Invalid timezone: %(timezone)s\n"
@@ -565,7 +558,7 @@ msgstr ""
 "Список доступных часовых поясов:\n"
 "https://data.iana.org/time-zones/data/zone.tab"
 
-#: selfprivacy_api/exceptions/system.py:89
+#: selfprivacy_api/exceptions/system.py:91
 #, python-format
 msgid ""
 "%(description)s\n"
@@ -589,7 +582,7 @@ msgstr ""
 "Токен доступа не найден.\n"
 "%(REPORT_IT_TO_SUPPORT_CHATS)s"
 
-#: selfprivacy_api/exceptions/tokens.py:37
+#: selfprivacy_api/exceptions/tokens.py:39
 #, python-format
 msgid ""
 "Recovery key is not found or no longer valid.\n"
@@ -598,17 +591,17 @@ msgstr ""
 "Ключ восстановления не найден или больше не действителен.\n"
 "%(REPORT_IT_TO_SUPPORT_CHATS)s"
 
-#: selfprivacy_api/exceptions/tokens.py:52
+#: selfprivacy_api/exceptions/tokens.py:56
 #, python-format
 msgid "Invalid recovery key. %(REPORT_IT_TO_SUPPORT_CHATS)s"
 msgstr "Недействительный ключ восстановления. %(REPORT_IT_TO_SUPPORT_CHATS)s"
 
-#: selfprivacy_api/exceptions/tokens.py:67
+#: selfprivacy_api/exceptions/tokens.py:73
 #, python-format
 msgid "New device key not found. %(REPORT_IT_TO_SUPPORT_CHATS)s"
 msgstr "Ключ нового устройства не найден. %(REPORT_IT_TO_SUPPORT_CHATS)s"
 
-#: selfprivacy_api/exceptions/tokens.py:81
+#: selfprivacy_api/exceptions/tokens.py:89
 #, python-format
 msgid ""
 "The access token you’re trying to delete is currently in use by this device, "
@@ -619,7 +612,7 @@ msgstr ""
 "устройством, поэтому отключить доступ невозможно.\n"
 "%(REPORT_IT_TO_SUPPORT_CHATS)s"
 
-#: selfprivacy_api/exceptions/tokens.py:97
+#: selfprivacy_api/exceptions/tokens.py:109
 msgid ""
 "Specified expiration date is in the past. Please provide a future date.\n"
 "If you believe this is a mistake, there may be a problem with the server's "
@@ -629,7 +622,7 @@ msgstr ""
 "Если вы считаете, что это ошибка, возможно, на сервере неверно настроены "
 "дата/время."
 
-#: selfprivacy_api/exceptions/tokens.py:109
+#: selfprivacy_api/exceptions/tokens.py:121
 msgid "Uses left must be greater than 0."
 msgstr "Оставшееся количество использований должно быть больше 0."
 
@@ -671,7 +664,8 @@ msgstr "Пользователь уже существует"
 
 #: selfprivacy_api/exceptions/users/__init__.py:109
 msgid "Username must be alphanumeric and start with a letter.\n"
-msgstr "Имя пользователя должно состоять из букв и цифр и начинаться с буквы.\n"
+msgstr ""
+"Имя пользователя должно состоять из букв и цифр и начинаться с буквы.\n"
 
 #: selfprivacy_api/exceptions/users/__init__.py:122
 msgid "Username is too long. Must be less than 32 characters."
@@ -685,7 +679,7 @@ msgstr "Пароль не может быть пустым."
 msgid "Display name is too long. Must be less than 256 characters."
 msgstr "Отображаемое имя слишком длинное. Должно быть меньше 256 символов."
 
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:42
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:44
 #, python-format
 msgid ""
 "An error occurred during a request to Kanidm.\n"
@@ -706,7 +700,7 @@ msgstr ""
 "Метод: %(method)s\n"
 "Ошибка: %(error)s"
 
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:81
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:85
 #, python-format
 msgid ""
 "Kanidm returned an empty response.\n"
@@ -723,7 +717,7 @@ msgstr ""
 "Эндпоинт: %(endpoint)s\n"
 "Метод: %(method)s"
 
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:117
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:123
 #, python-format
 msgid ""
 "Kanidm returned an unknown type response.\n"
@@ -744,7 +738,7 @@ msgstr ""
 "Метод: %(method)s\n"
 "Ответ: %(response)s"
 
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:157
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:165
 #, python-format
 msgid ""
 "Failed to get access to Kanidm admin account:\n"
@@ -771,11 +765,11 @@ msgstr ""
 "Использованный шаблон regex: %(regex_pattern)s\n"
 "Вывод Kanidm CLI: %(output)s"
 
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:189
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:201
 msgid "Error creating Kanidm token"
 msgstr "Ошибка при создании токена Kanidm"
 
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:201
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:213
 #, python-format
 msgid ""
 "Kanidm CLI returned an error.\n"
@@ -796,7 +790,7 @@ msgstr ""
 "Использованная команда: %(command)s\n"
 "Ошибка: %(error)s"
 
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:232
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:248
 #, python-format
 msgid ""
 "Сouldn't get a valid Kanidm token.\n"
@@ -809,7 +803,7 @@ msgstr ""
 "%(KANIDM_PROBLEMS)s\n"
 "%(REPORT_IT_TO_SUPPORT_CHATS)s"
 
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:266
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:284
 #, python-format
 msgid ""
 "Kanidm didn't return a password reset link.\n"
@@ -842,22 +836,14 @@ msgstr "Ключ уже существует"
 msgid "Invalid key type. Supported key types: "
 msgstr "Недопустимый тип ключа. Поддерживаемые типы ключей: "
 
-#: selfprivacy_api/repositories/users/kanidm_user_repository.py:241
-msgid "Kanidm is not responding to requests. Connection error."
-msgstr "Kanidm не отвечает на запросы. Ошибка подключения."
-
-#: selfprivacy_api/repositories/users/kanidm_user_repository.py:250
-msgid "Unknown error while checking the Kanidm admin token."
-msgstr "Неизвестная ошибка при проверке администраторского токена Kanidm."
-
-#: selfprivacy_api/repositories/users/kanidm_user_repository.py:385
+#: selfprivacy_api/repositories/users/kanidm_user_repository.py:152
 msgid "No JSON found in Kanidm response."
 msgstr "В ответе Kanidm не найден JSON."
 
-#: selfprivacy_api/repositories/users/kanidm_user_repository.py:397
+#: selfprivacy_api/repositories/users/kanidm_user_repository.py:164
 msgid "Kanidm is not responding to requests."
 msgstr "Kanidm не отвечает на запросы."
 
-#: selfprivacy_api/repositories/users/kanidm_user_repository.py:420
+#: selfprivacy_api/repositories/users/kanidm_user_repository.py:187
 msgid "Kanidm access issue"
 msgstr "Проблема доступа к Kanidm"

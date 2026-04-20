@@ -55,27 +55,27 @@ msgstr ""
 msgid "Recovery key generated"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:163
+#: selfprivacy_api/graphql/mutations/api_mutations.py:164
 msgid "Recovery key used"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:207
+#: selfprivacy_api/graphql/mutations/api_mutations.py:208
 msgid "Token refreshed"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:245
+#: selfprivacy_api/graphql/mutations/api_mutations.py:246
 msgid "Token deleted"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:258
+#: selfprivacy_api/graphql/mutations/api_mutations.py:259
 msgid "Device api key generated"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:272
+#: selfprivacy_api/graphql/mutations/api_mutations.py:273
 msgid "New device key deleted"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:316
+#: selfprivacy_api/graphql/mutations/api_mutations.py:318
 msgid "Token used"
 msgstr ""
 
@@ -492,27 +492,20 @@ msgid ""
 "#chat:selfprivacy.org on Matrix or @selprivacy_chat on Telegram."
 msgstr ""
 
-#: selfprivacy_api/exceptions/__init__.py:21
-msgid ""
-"Kanidm is the identity and authentication service that manages users and "
-"access to services."
+#: selfprivacy_api/exceptions/__init__.py:33
+msgid "The API is using the wrong user repository."
 msgstr ""
 
-#: selfprivacy_api/exceptions/__init__.py:25
+#: selfprivacy_api/exceptions/kanidm.py:20
+msgid ""
+"Kanidm is the identity and authentication service that manages users and "
+"access to system services."
+msgstr ""
+
+#: selfprivacy_api/exceptions/kanidm.py:24
 msgid ""
 "In some cases, a Kanidm update may introduce breaking changes affecting the "
 "API, CLI commands, or configuration compatibility."
-msgstr ""
-
-#: selfprivacy_api/exceptions/__init__.py:29
-msgid ""
-"Console commands to debug:\n"
-"    'systemctl status kanidm.service'\n"
-"    'journalctl -u kanidm.service'\n"
-msgstr ""
-
-#: selfprivacy_api/exceptions/__init__.py:47
-msgid "The API is using the wrong user repository."
 msgstr ""
 
 #: selfprivacy_api/exceptions/services.py:26
@@ -554,36 +547,46 @@ msgid ""
 "Data: %(data)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/tokens.py:22
-msgid "Access token was not found."
+#: selfprivacy_api/exceptions/tokens.py:21
+#, python-format
+msgid ""
+"Access token was not found.\n"
+"%(REPORT_IT_TO_SUPPORT_CHATS)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/tokens.py:37
-msgid "Recovery key is not found or no longer valid."
+#: selfprivacy_api/exceptions/tokens.py:39
+#, python-format
+msgid ""
+"Recovery key is not found or no longer valid.\n"
+"%(REPORT_IT_TO_SUPPORT_CHATS)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/tokens.py:49
-msgid "Invalid recovery key."
+#: selfprivacy_api/exceptions/tokens.py:56
+#, python-format
+msgid "Invalid recovery key. %(REPORT_IT_TO_SUPPORT_CHATS)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/tokens.py:62
-msgid "New device key not found."
+#: selfprivacy_api/exceptions/tokens.py:73
+#, python-format
+msgid "New device key not found. %(REPORT_IT_TO_SUPPORT_CHATS)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/tokens.py:74
+#: selfprivacy_api/exceptions/tokens.py:89
+#, python-format
 msgid ""
 "The access token you’re trying to delete is currently in use by this device, "
-"so removing access is not possible."
+"so removing access is not possible.\n"
+"%(REPORT_IT_TO_SUPPORT_CHATS)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/tokens.py:88
+#: selfprivacy_api/exceptions/tokens.py:109
 msgid ""
 "Specified expiration date is in the past. Please provide a future date.\n"
 "If you believe this is a mistake, there may be a problem with the server's "
 "date/time settings."
 msgstr ""
 
-#: selfprivacy_api/exceptions/tokens.py:100
+#: selfprivacy_api/exceptions/tokens.py:121
 msgid "Uses left must be greater than 0."
 msgstr ""
 
@@ -634,7 +637,7 @@ msgstr ""
 msgid "Display name is too long. Must be less than 256 characters."
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:42
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:44
 #, python-format
 msgid ""
 "An error occurred during a request to Kanidm.\n"
@@ -647,7 +650,7 @@ msgid ""
 "Error: %(error)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:83
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:85
 #, python-format
 msgid ""
 "Kanidm returned an empty response.\n"
@@ -658,7 +661,7 @@ msgid ""
 "Method: %(method)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:121
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:123
 #, python-format
 msgid ""
 "Kanidm returned an unknown type response.\n"
@@ -671,7 +674,7 @@ msgid ""
 "Response: %(response)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:163
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:165
 #, python-format
 msgid ""
 "Failed to get access to Kanidm admin account:\n"
@@ -687,11 +690,11 @@ msgid ""
 "Kanidm's CLI output: %(output)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:199
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:201
 msgid "Error creating Kanidm token"
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:211
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:213
 #, python-format
 msgid ""
 "Kanidm CLI returned an error.\n"
@@ -704,7 +707,7 @@ msgid ""
 "Error: %(error)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:246
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:248
 #, python-format
 msgid ""
 "Сouldn't get a valid Kanidm token.\n"
@@ -713,7 +716,7 @@ msgid ""
 "%(REPORT_IT_TO_SUPPORT_CHATS)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:282
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:284
 #, python-format
 msgid ""
 "Kanidm didn't return a password reset link.\n"
@@ -738,22 +741,14 @@ msgstr ""
 msgid "Invalid key type. Supported key types: "
 msgstr ""
 
-#: selfprivacy_api/repositories/users/kanidm_user_repository.py:241
-msgid "Kanidm is not responding to requests. Connection error."
-msgstr ""
-
-#: selfprivacy_api/repositories/users/kanidm_user_repository.py:250
-msgid "Unknown error while checking the Kanidm admin token."
-msgstr ""
-
-#: selfprivacy_api/repositories/users/kanidm_user_repository.py:385
+#: selfprivacy_api/repositories/users/kanidm_user_repository.py:152
 msgid "No JSON found in Kanidm response."
 msgstr ""
 
-#: selfprivacy_api/repositories/users/kanidm_user_repository.py:397
+#: selfprivacy_api/repositories/users/kanidm_user_repository.py:164
 msgid "Kanidm is not responding to requests."
 msgstr ""
 
-#: selfprivacy_api/repositories/users/kanidm_user_repository.py:420
+#: selfprivacy_api/repositories/users/kanidm_user_repository.py:187
 msgid "Kanidm access issue"
 msgstr ""
