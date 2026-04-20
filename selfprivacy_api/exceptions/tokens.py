@@ -16,8 +16,7 @@ class TokenNotFound(AbstractException):
     def __init__(self, log: bool = True):
         super().__init__(log=log)
 
-    @staticmethod
-    def get_error_message(locale: str = DEFAULT_LOCALE) -> str:
+    def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
         return t.translate(
             text=_("Access token was not found.\n%(REPORT_IT_TO_SUPPORT_CHATS)s"),
             locale=locale,
@@ -34,8 +33,7 @@ class RecoveryKeyNotFound(AbstractException):
     def __init__(self, log: bool = True):
         super().__init__(log=log)
 
-    @staticmethod
-    def get_error_message(locale: str = DEFAULT_LOCALE) -> str:
+    def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
         return t.translate(
             text=_(
                 "Recovery key is not found or no longer valid.\n"

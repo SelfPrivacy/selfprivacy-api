@@ -88,9 +88,13 @@ class FailedToSetupKanidmMinimumCredentialType(AbstractException):
                 "expected_phrase": self.EXPECTED_CONFIRMATION_PHRASE,
                 "get_command": self.GET_COMMAND,
                 "regex_pattern": self.GET_REGEX_PATTERN,
-                "KANIDM_DESCRIPTION": KANIDM_DESCRIPTION,
-                "KANIDM_PROBLEMS": KANIDM_PROBLEMS,
-                "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
+                "KANIDM_DESCRIPTION": t.translate(
+                    text=KANIDM_DESCRIPTION, locale=locale
+                ),
+                "KANIDM_PROBLEMS": t.translate(text=KANIDM_PROBLEMS, locale=locale),
+                "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
+                    text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
+                ),
                 "STANDARD_OUTPUT_EXAMPLE": STANDARD_OUTPUT_EXAMPLE,
             },
             locale=locale,

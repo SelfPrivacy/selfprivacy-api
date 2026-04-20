@@ -152,10 +152,11 @@ class ApiMutations:
                         token=None,
                     )
             if token is None:
+                error = RecoveryKeyNotFound(log=False)
                 return DeviceApiTokenMutationReturn(
                     success=False,
-                    message=RecoveryKeyNotFound.get_error_message(locale=locale),
-                    code=404,
+                    message=error.get_error_message(locale=locale),
+                    code=error.code,
                     token=None,
                 )
             return DeviceApiTokenMutationReturn(
@@ -305,10 +306,11 @@ class ApiMutations:
                     )
 
             if token is None:
+                error = TokenNotFound(log=False)
                 return DeviceApiTokenMutationReturn(
                     success=False,
-                    message=TokenNotFound.get_error_message(locale=locale),
-                    code=404,
+                    message=error.get_error_message(locale=locale),
+                    code=error.code,
                     token=None,
                 )
             return DeviceApiTokenMutationReturn(
