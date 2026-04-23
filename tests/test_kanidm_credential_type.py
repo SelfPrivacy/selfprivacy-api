@@ -1,5 +1,3 @@
-from textwrap import dedent
-
 import pytest
 
 from selfprivacy_api.actions.kanidm_credential_type import (
@@ -7,134 +5,87 @@ from selfprivacy_api.actions.kanidm_credential_type import (
     set_kanidm_minimum_credential_type,
 )
 from selfprivacy_api.exceptions.kanidm import FailedToSetupKanidmMinimumCredentialType
-from selfprivacy_api.exceptions.system import FailedToFindResult
-from selfprivacy_api.exceptions.users.kanidm_repository import KanidmCliSubprocessError
+from selfprivacy_api.exceptions.users.kanidm_repository import KanidmQueryError
 from selfprivacy_api.models.kanidm_credential_type import KanidmCredentialType
-
-STANDARD_OUTPUT_EXAMPLE = dedent(
-    """
-    name: idm_all_persons
-    uuid: 00000000-0000-0000-0000-000000000000
-    description: All persons
-    credential_type_minimum: any
-    """
-)
-
-
-class Proc:
-    def __init__(self, stdout=b"", stderr=b"", returncode=0):
-        self._stdout = stdout
-        self._stderr = stderr
-        self.returncode = returncode
-
-    async def communicate(self):
-        return self._stdout, self._stderr
 
 
 @pytest.mark.asyncio
 async def test_get_kanidm_credential_type(mocker):
     mocker.patch(
-        "selfprivacy_api.actions.kanidm_credential_type.KanidmAdminToken.reset_idm_admin_password",
-        return_value="dummy",
-    )
-
-    mocker.patch(
-        "selfprivacy_api.actions.kanidm_credential_type.asyncio.create_subprocess_exec",
-        side_effect=[
-            Proc(stdout=b"login ok\n", returncode=0),
-            Proc(stdout=STANDARD_OUTPUT_EXAMPLE.encode(), returncode=0),
-        ],
+        "selfprivacy_api.actions.kanidm_credential_type.send_kanidm_query",
+        return_value=["any"],
     )
 
     assert await get_kanidm_minimum_credential_type() == KanidmCredentialType.any
 
 
 @pytest.mark.asyncio
-async def test_set_kanidm_credential_type(mocker):
+async def test_get_kanidm_credential_type_query_error(mocker):
     mocker.patch(
-        "selfprivacy_api.actions.kanidm_credential_type.asyncio.create_subprocess_exec",
-        return_value=Proc(stdout=b"Updated credential type minimum\n", returncode=0),
+        "selfprivacy_api.actions.kanidm_credential_type.send_kanidm_query",
+        side_effect=KanidmQueryError(
+            endpoint="group/idm_all_persons/_attr/credential_type_minimum",
+            method="GET",
+            error_text="failed",
+        ),
     )
 
+    with pytest.raises(KanidmQueryError):
+        await get_kanidm_minimum_credential_type()
+
+
+@pytest.mark.asyncio
+async def test_set_kanidm_credential_type(mocker):
+    send_query = mocker.patch(
+        "selfprivacy_api.actions.kanidm_credential_type.send_kanidm_query",
+        return_value={"status": "ok"},
+    )
     mocker.patch(
         "selfprivacy_api.actions.kanidm_credential_type.get_kanidm_minimum_credential_type",
         return_value=KanidmCredentialType.passkey,
     )
 
     await set_kanidm_minimum_credential_type(KanidmCredentialType.passkey)
+    send_query.assert_called_once_with(
+        endpoint="group/idm_all_persons/_attr/credential_type_minimum",
+        method="PUT",
+        data=["passkey"],
+    )
 
 
 @pytest.mark.asyncio
-async def test_get_kanidm_credential_type_login_oserror(mocker):
-    mocker.patch(
-        "selfprivacy_api.actions.kanidm_credential_type.KanidmAdminToken.reset_idm_admin_password",
-        return_value="dummy",
-    )
-    mocker.patch(
-        "selfprivacy_api.actions.kanidm_credential_type.asyncio.create_subprocess_exec",
-        side_effect=OSError("no such file or directory"),
-    )
-
-    with pytest.raises(KanidmCliSubprocessError):
-        await get_kanidm_minimum_credential_type()
-
-
-@pytest.mark.asyncio
-async def test_get_kanidm_credential_type_missing_field_raises_failed_to_find_result(
+async def test_get_kanidm_credential_type_missing_field_raises_kanidm_query_error(
     mocker,
 ):
     mocker.patch(
-        "selfprivacy_api.actions.kanidm_credential_type.KanidmAdminToken.reset_idm_admin_password",
-        return_value="dummy",
-    )
-    mocker.patch(
-        "selfprivacy_api.actions.kanidm_credential_type.asyncio.create_subprocess_exec",
-        side_effect=[
-            Proc(stdout=b"login ok\n", returncode=0),
-            Proc(
-                stdout=dedent(
-                    """
-                    name: idm_all_persons
-                    uuid: 00000000-0000-0000-0000-000000000000
-                    description: All persons
-                    """
-                ).encode(),
-                returncode=0,
-            ),
-        ],
+        "selfprivacy_api.actions.kanidm_credential_type.send_kanidm_query",
+        return_value=[],
     )
 
-    with pytest.raises(FailedToFindResult):
+    with pytest.raises(KanidmQueryError):
         await get_kanidm_minimum_credential_type()
 
 
 @pytest.mark.asyncio
-async def test_set_kanidm_credential_type_subprocess_returncode_nonzero(mocker):
+async def test_set_kanidm_credential_type_query_error(mocker):
     mocker.patch(
-        "selfprivacy_api.actions.kanidm_credential_type.asyncio.create_subprocess_exec",
-        return_value=Proc(stderr=b"failed\n", returncode=1),
+        "selfprivacy_api.actions.kanidm_credential_type.send_kanidm_query",
+        side_effect=KanidmQueryError(
+            endpoint="group/idm_all_persons/_attr/credential_type_minimum",
+            method="PUT",
+            error_text="failed",
+        ),
     )
 
-    with pytest.raises(KanidmCliSubprocessError):
-        await set_kanidm_minimum_credential_type(KanidmCredentialType.passkey)
-
-
-@pytest.mark.asyncio
-async def test_set_kanidm_credential_type_subprocess_oserror(mocker):
-    mocker.patch(
-        "selfprivacy_api.actions.kanidm_credential_type.asyncio.create_subprocess_exec",
-        side_effect=OSError("exec format error"),
-    )
-
-    with pytest.raises(KanidmCliSubprocessError):
+    with pytest.raises(KanidmQueryError):
         await set_kanidm_minimum_credential_type(KanidmCredentialType.passkey)
 
 
 @pytest.mark.asyncio
 async def test_set_kanidm_credential_type_verification_mismatch_raises(mocker):
     mocker.patch(
-        "selfprivacy_api.actions.kanidm_credential_type.asyncio.create_subprocess_exec",
-        return_value=Proc(stdout=b"Updated credential type minimum\n", returncode=0),
+        "selfprivacy_api.actions.kanidm_credential_type.send_kanidm_query",
+        return_value={"status": "ok"},
     )
     mocker.patch(
         "selfprivacy_api.actions.kanidm_credential_type.get_kanidm_minimum_credential_type",
