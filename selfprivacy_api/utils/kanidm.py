@@ -4,15 +4,20 @@ import logging
 import os
 import re
 import subprocess
-from typing import Optional
+from json import JSONDecodeError
+from typing import Any, Optional, Union
 
 import aiofiles
 import httpx
 
+from selfprivacy_api.exceptions.users import UserAlreadyExists, UserOrGroupNotFound
 from selfprivacy_api.exceptions.users.kanidm_repository import (
+    FailedToGetValidKanidmToken,
     KanidmCliSubprocessError,
     KanidmDidNotReturnAdminPassword,
     KanidmQueryError,
+    KanidmReturnEmptyResponse,
+    KanidmReturnUnknownResponseType,
 )
 from selfprivacy_api.utils import get_domain, temporary_env_var
 from selfprivacy_api.utils.redis_pool import RedisPool
@@ -28,6 +33,138 @@ ERROR_CREATING_KANIDM_TOKEN_TEXT = _("Error creating Kanidm token")
 
 def get_kanidm_url():
     return f"https://auth.{get_domain()}"
+
+
+def check_kanidm_response_type(
+    data_type: str,
+    response_data: Any,
+    endpoint: str,
+    method: str,
+) -> None:
+    """
+    Validates the type and that content of the response data is not empty.
+
+    Args:
+        data_type (str): Expected type of response data ('list' or 'dict').
+        response_data (Any): Response data to validate.
+
+    Raises:
+        KanidmReturnEmptyResponse: If the response data is empty.
+        KanidmReturnUnknownResponseType: If the response data is not of the expected type.
+    """
+
+    if response_data is None:
+        raise KanidmReturnEmptyResponse(endpoint=endpoint, method=method)
+
+    if data_type == "list":
+        if not isinstance(response_data, list):
+            raise KanidmReturnUnknownResponseType(
+                response_data=response_data,
+                endpoint=endpoint,
+                method=method,
+            )
+
+    elif data_type == "dict":
+        if not isinstance(response_data, dict):
+            raise KanidmReturnUnknownResponseType(
+                response_data=response_data,
+                endpoint=endpoint,
+                method=method,
+            )
+
+
+async def send_kanidm_query(
+    endpoint: str, method: str = "GET", data=None
+) -> Union[dict, list]:
+    """
+    Sends a request to the Kanidm API.
+
+    Args:
+        endpoint (str): The API endpoint.
+        method (str, optional): The HTTP method (GET, POST, PATCH, DELETE). Defaults to "GET".
+        data (Optional[dict], optional): The data to send in the request body. Defaults to None.
+
+    Returns:
+        Union[dict, list]: The response data.
+
+    Raises:
+        KanidmQueryError: If an error occurs during the request.
+        UserAlreadyExists: If the user already exists.
+        UserNotFound: If the user is not found.
+        UserOrGroupNotFound: If the user or group does not exist.
+
+    Raises from KanidmAdminToken:
+        KanidmCliSubprocessError: If there is an error with the Kanidm CLI subprocess.
+        KanidmDidNotReturnAdminPassword: If Kanidm did not return the admin password.
+        FailedToGetValidKanidmToken: If a valid Kanidm token could not be retrieved.
+    """
+
+    full_endpoint = f"{get_kanidm_url()}/v1/{endpoint}"
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.request(
+                method,
+                full_endpoint,
+                json=data,
+                headers={
+                    "Authorization": f"Bearer {await KanidmAdminToken.get()}",
+                    "Content-Type": "application/json",
+                },
+                timeout=1,
+            )
+
+            response_data = response.json()
+
+    except JSONDecodeError as error:
+        raise KanidmQueryError(
+            endpoint=full_endpoint,
+            method=method,
+            description=_("No JSON found in Kanidm response."),
+            error_text=error,
+        )
+    except (
+        httpx.TimeoutException,
+        httpx.ConnectError,
+        httpx.RequestError,
+    ) as error:
+        raise KanidmQueryError(
+            endpoint=endpoint,
+            method=method,
+            error_text=error,
+            description=_("Kanidm is not responding to requests."),
+        )
+
+    except Exception as error:
+        raise KanidmQueryError(
+            endpoint=full_endpoint,
+            method=method,
+            error_text=error,
+        )
+
+    if response.status_code != 200:
+        if isinstance(response_data, dict):
+            plugin_error = response_data.get("plugin", {})
+            if plugin_error.get("attrunique") == "duplicate value detected":
+                raise UserAlreadyExists  # does it work only for user? NO ONE KNOWS
+
+        if isinstance(response_data, str):
+            if response_data == "nomatchingentries":
+                raise UserOrGroupNotFound  # does it work only for user? - NO
+            elif response_data == "accessdenied":
+                raise KanidmQueryError(
+                    endpoint=full_endpoint,
+                    method=method,
+                    error_text=_("Kanidm access issue"),
+                )
+            elif response_data == "notauthenticated":
+                raise FailedToGetValidKanidmToken
+
+        raise KanidmQueryError(
+            error_text=response.text, endpoint=full_endpoint, method=method
+        )
+
+    return response_data
 
 
 class KanidmAdminToken:
