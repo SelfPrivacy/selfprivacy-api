@@ -1,21 +1,22 @@
 from __future__ import annotations
 
+import re
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Optional
-from mnemonic import Mnemonic
 from secrets import randbelow
-import re
+from typing import Optional
 
-from selfprivacy_api.models.tokens.token import Token
-from selfprivacy_api.repositories.tokens.exceptions import (
-    TokenNotFound,
+from mnemonic import Mnemonic
+
+from selfprivacy_api.exceptions.tokens import (
     InvalidMnemonic,
-    RecoveryKeyNotFound,
     NewDeviceKeyNotFound,
+    RecoveryKeyNotFound,
+    TokenNotFound,
 )
-from selfprivacy_api.models.tokens.recovery_key import RecoveryKey
 from selfprivacy_api.models.tokens.new_device_key import NewDeviceKey
+from selfprivacy_api.models.tokens.recovery_key import RecoveryKey
+from selfprivacy_api.models.tokens.token import Token
 
 
 class AbstractTokensRepository(ABC):

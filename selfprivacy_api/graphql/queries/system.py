@@ -1,21 +1,22 @@
 """Common system information and settings"""
 
 # pylint: disable=too-few-public-methods
+
 import os
 import typing
+
 import strawberry
 from opentelemetry import trace
 
+import selfprivacy_api.actions.ssh as ssh_actions
+import selfprivacy_api.actions.system as system_actions
 from selfprivacy_api.graphql.common_types.dns import DnsRecord
-
 from selfprivacy_api.graphql.queries.common import Alert, Severity
 from selfprivacy_api.graphql.queries.providers import DnsProvider, ServerProvider
 from selfprivacy_api.jobs import Jobs
 from selfprivacy_api.jobs.migrate_to_binds import is_bind_migrated
 from selfprivacy_api.services import ServiceManager
 from selfprivacy_api.utils import ReadUserData
-import selfprivacy_api.actions.system as system_actions
-import selfprivacy_api.actions.ssh as ssh_actions
 
 tracer = trace.get_tracer(__name__)
 

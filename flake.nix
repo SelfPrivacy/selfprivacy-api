@@ -35,6 +35,7 @@
               pyflakes
               typer # for strawberry
               types-redis # for mypy
+              aiofiles
             ]
             ++ strawberry-graphql.optional-dependencies.cli
           )
@@ -151,6 +152,7 @@
           default = pkgs.mkShellNoCC {
             name = "SP API dev shell";
             packages = with pkgs; [
+              gettext # msginit, msgfmt
               nixpkgs-fmt
               rclone
               valkey

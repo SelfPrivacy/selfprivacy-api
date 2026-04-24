@@ -1,12 +1,13 @@
 """Generic handler for moving services"""
 
 from __future__ import annotations
+
 import shutil
 from typing import List
 
 from selfprivacy_api.jobs import Job, report_progress
-from selfprivacy_api.utils.block_devices import BlockDevice
 from selfprivacy_api.services.owned_path import Bind
+from selfprivacy_api.utils.block_devices import BlockDevice
 
 
 class MoveError(Exception):

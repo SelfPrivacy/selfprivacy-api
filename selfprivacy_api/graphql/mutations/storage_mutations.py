@@ -6,23 +6,21 @@ import strawberry
 from opentelemetry import trace
 from strawberry.types import Info
 
-from selfprivacy_api.utils.block_devices import BlockDevices
-from selfprivacy_api.utils.localization import (
-    TranslateSystemMessage as t,
-    get_locale,
-)
 from selfprivacy_api.graphql import IsAuthenticated
-from selfprivacy_api.graphql.common_types.jobs import job_to_api_job
+from selfprivacy_api.graphql.common_types.jobs import job_to_api_job, translate_job
 from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericJobMutationReturn,
     GenericMutationReturn,
 )
-from selfprivacy_api.graphql.common_types.jobs import translate_job
-
 from selfprivacy_api.jobs.migrate_to_binds import (
     BindMigrationConfig,
     is_bind_migrated,
     start_bind_migration,
+)
+from selfprivacy_api.utils.block_devices import BlockDevices
+from selfprivacy_api.utils.localization import (
+    TranslateSystemMessage as t,
+    get_locale,
 )
 
 tracer = trace.get_tracer(__name__)

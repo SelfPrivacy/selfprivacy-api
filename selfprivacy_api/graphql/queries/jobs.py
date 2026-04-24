@@ -1,21 +1,21 @@
 """Jobs status"""
 
 # pylint: disable=too-few-public-methods
-import strawberry
-from strawberry.types import Info
 
 from typing import List, Optional
-from opentelemetry import trace
 
-from selfprivacy_api.jobs import Jobs
+import strawberry
+from opentelemetry import trace
+from strawberry.types import Info
+
 from selfprivacy_api.graphql.common_types.jobs import (
     ApiJob,
     get_api_job_by_id,
     job_to_api_job,
+    translate_job,
 )
+from selfprivacy_api.jobs import Jobs
 from selfprivacy_api.utils.localization import get_locale
-from selfprivacy_api.graphql.common_types.jobs import translate_job
-
 
 tracer = trace.get_tracer(__name__)
 

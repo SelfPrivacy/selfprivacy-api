@@ -8,10 +8,7 @@ xgettext \
   -k_ \
   -kngettext:1,2 \
   -o selfprivacy_api/locale/messages.pot \
-  selfprivacy_api/utils/strings.py \
-  selfprivacy_api/repositories/users/exceptions.py \
-  selfprivacy_api/repositories/users/exceptions_kanidm.py \
-  selfprivacy_api/repositories/tokens/exceptions.py \
+  selfprivacy_api/utils/localization.py \
   selfprivacy_api/actions/ssh.py \
   selfprivacy_api/actions/users.py \
   selfprivacy_api/actions/api_tokens.py \
@@ -32,3 +29,11 @@ xgettext \
   selfprivacy_api/models/services.py \
   selfprivacy_api/backup/jobs.py \
   selfprivacy_api/backup/tasks.py \
+  selfprivacy_api/exceptions/__init__.py \
+  selfprivacy_api/exceptions/services.py \
+  selfprivacy_api/exceptions/system.py \
+  selfprivacy_api/exceptions/tokens.py \
+  selfprivacy_api/exceptions/users/__init__.py \
+  selfprivacy_api/exceptions/users/kanidm_repository.py \
+  selfprivacy_api/exceptions/users/ssh.py \
+  selfprivacy_api/repositories/users/kanidm_user_repository.py \

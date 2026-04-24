@@ -2,19 +2,17 @@
 
 import gettext
 import subprocess
+from typing import Optional
+
 import pytz
-from typing import Optional, Any
 from pydantic import BaseModel
 
-from selfprivacy_api.jobs import Job, JobStatus, Jobs
-from selfprivacy_api.jobs.upgrade_system import rebuild_system_task
-
-from selfprivacy_api.utils import WriteUserData, ReadUserData
-from selfprivacy_api.utils import UserDataFiles
-from selfprivacy_api.utils.localization import TranslateSystemMessage as t
-from selfprivacy_api.utils.systemd import systemd_proxy, start_unit
-
+from selfprivacy_api.exceptions.system import InvalidTimezone
 from selfprivacy_api.graphql.queries.providers import DnsProvider
+from selfprivacy_api.jobs import Job, Jobs, JobStatus
+from selfprivacy_api.jobs.upgrade_system import rebuild_system_task
+from selfprivacy_api.utils import ReadUserData, UserDataFiles, WriteUserData
+from selfprivacy_api.utils.systemd import start_unit, systemd_proxy
 
 _ = gettext.gettext
 
@@ -27,16 +25,10 @@ def get_timezone() -> str:
         return "Etc/UTC"
 
 
-class InvalidTimezone(Exception):
-    """Invalid timezone"""
-
-    pass
-
-
 def change_timezone(timezone: str) -> None:
     """Change the timezone of the server"""
     if timezone not in pytz.all_timezones:
-        raise InvalidTimezone(f"Invalid timezone: {timezone}")
+        raise InvalidTimezone(timezone=timezone)
     with WriteUserData() as user_data:
         user_data["timezone"] = timezone
 
@@ -79,29 +71,6 @@ def set_auto_upgrade_settings(
             user_data["autoUpgrade"]["enable"] = enable
         if allowReboot is not None:
             user_data["autoUpgrade"]["allowReboot"] = allowReboot
-
-
-class ShellException(Exception):
-    """Shell command failed"""
-
-    def __init__(self, command: Optional[Any] = None, output: Optional[Any] = None):
-        self.command = str(command)
-        self.output = str(output)
-
-    def get_error_message(self, locale: str) -> str:
-        message = t.translate(text=_("Shell command failed."), locale=locale)
-
-        if self.command:
-            message += t.translate(
-                text=_(" Executed command array: %(commands)s."), locale=locale
-            ) % {"commands": self.command}
-
-        if self.output:
-            message += t.translate(text=_(" Output: %(output)s"), locale=locale) % {
-                "output": self.output
-            }
-
-        return message
 
 
 def add_rebuild_job() -> Job:

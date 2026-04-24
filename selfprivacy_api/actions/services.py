@@ -1,33 +1,15 @@
 import gettext
 
-from selfprivacy_api.utils.localization import TranslateSystemMessage as t
-from selfprivacy_api.utils.block_devices import BlockDevices
-from selfprivacy_api.jobs import Jobs, Job
-
+from selfprivacy_api.exceptions.services import (
+    ServiceNotFoundError,
+    VolumeNotFoundError,
+)
+from selfprivacy_api.jobs import Job, Jobs
 from selfprivacy_api.services import ServiceManager
 from selfprivacy_api.services.tasks import move_service as move_service_task
+from selfprivacy_api.utils.block_devices import BlockDevices
 
 _ = gettext.gettext
-
-
-class ServiceNotFoundError(Exception):
-    def __init__(self, service_id: str):
-        self.service_id = service_id
-
-    def get_error_message(self, locale: str) -> str:
-        return t.translate(text=_("No such service: %(service_id)s"), locale=locale) % {
-            "service_id": self.service_id
-        }
-
-
-class VolumeNotFoundError(Exception):
-    def __init__(self, volume_name: str):
-        self.volume_name = volume_name
-
-    def get_error_message(self, locale: str) -> str:
-        return t.translate(text=_("No such volume: %(volume_name)s"), locale=locale) % {
-            "volume_name": self.volume_name
-        }
 
 
 async def move_service(service_id: str, volume_name: str) -> Job:

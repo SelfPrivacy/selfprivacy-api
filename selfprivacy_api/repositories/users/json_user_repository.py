@@ -1,31 +1,30 @@
 from typing import Optional
 from uuid import uuid4
 
+from selfprivacy_api.exceptions.users import (
+    PasswordIsEmpty,
+    RootUserIsProtected,
+    UserAlreadyExists,
+    UserNotFound,
+)
+from selfprivacy_api.models.group import Group
 from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
+from selfprivacy_api.repositories.users.abstract_user_repository import (
+    AbstractUserRepository,
+)
 from selfprivacy_api.utils import (
     ReadUserData,
     WriteUserData,
     ensure_ssh_and_users_fields_exist,
     hash_password,
 )
-from selfprivacy_api.repositories.users.abstract_user_repository import (
-    AbstractUserRepository,
-)
-from selfprivacy_api.repositories.users.exceptions import (
-    InvalidConfiguration,
-    UserAlreadyExists,
-    UserIsProtected,
-    UserNotFound,
-    PasswordIsEmpty,
-)
-from selfprivacy_api.models.group import Group
 
 
 class JsonUserRepository(AbstractUserRepository):
     @staticmethod
     def _check_and_hash_password(password: str):
         if password == "":
-            raise PasswordIsEmpty("Password is empty")
+            raise PasswordIsEmpty()
 
         return hash_password(password)
 
@@ -80,14 +79,10 @@ class JsonUserRepository(AbstractUserRepository):
 
         with ReadUserData() as user_data:
             ensure_ssh_and_users_fields_exist(user_data)
-            if "username" not in user_data.keys():
-                raise InvalidConfiguration(
-                    "Broken config: Admin name is not defined. Consider recovery or add it manually"
-                )
             if username == user_data.get("username", None):
-                raise UserAlreadyExists("User already exists")
+                raise UserAlreadyExists(log=False)
             if username in [user["username"] for user in user_data["users"]]:
-                raise UserAlreadyExists("User already exists")
+                raise UserAlreadyExists(log=False)
 
         with WriteUserData() as user_data:
             ensure_ssh_and_users_fields_exist(user_data)
@@ -102,15 +97,17 @@ class JsonUserRepository(AbstractUserRepository):
 
         with WriteUserData() as user_data:
             ensure_ssh_and_users_fields_exist(user_data)
-            if username == user_data.get("username", None) or username == "root":
-                raise UserIsProtected("Cannot delete main or root user")
+            if username == user_data.get("username", None):
+                raise RootUserIsProtected()
+            if username == "root":
+                raise RootUserIsProtected()
 
             for data_user in user_data["users"]:
                 if data_user["username"] == username:
                     user_data["users"].remove(data_user)
                     break
             else:
-                raise UserNotFound("User did not exist")
+                raise UserNotFound(log=False)
 
     @staticmethod
     async def update_user(
@@ -138,7 +135,7 @@ class JsonUserRepository(AbstractUserRepository):
                         data_user["hashedPassword"] = hashed_password
                         break
                 else:
-                    raise UserNotFound("User does not exist")
+                    raise UserNotFound()
 
     @staticmethod
     async def get_user_by_username(username: str) -> Optional[UserDataUser]:

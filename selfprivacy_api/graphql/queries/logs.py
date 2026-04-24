@@ -1,10 +1,12 @@
 """System logs"""
 
-from opentelemetry import trace
-from datetime import datetime
 import asyncio
 import typing
+from datetime import datetime
+
 import strawberry
+from opentelemetry import trace
+
 from selfprivacy_api.utils.systemd_journal import get_paginated_logs
 
 tracer = trace.get_tracer(__name__)
