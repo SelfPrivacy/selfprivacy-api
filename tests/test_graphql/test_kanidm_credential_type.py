@@ -6,9 +6,7 @@ from tests.test_graphql.common import assert_empty, assert_ok, get_data
 KANIDM_GET_MIN_QUERY = """
 query MyQuery {
   kanidm {
-    getMinimumKanidmCredentialType {
-      minimumCredentialType
-    }
+    getMinimumKanidmCredentialType
   }
 }
 """
@@ -36,10 +34,7 @@ def test_graphql_get_minimum_kanidm_credential_type(authorized_client, mocker):
     response = authorized_client.post("/graphql", json={"query": KANIDM_GET_MIN_QUERY})
     data = get_data(response)
 
-    assert (
-        data["kanidm"]["getMinimumKanidmCredentialType"]["minimumCredentialType"]
-        == "mfa"
-    )
+    assert data["kanidm"]["getMinimumKanidmCredentialType"] == "mfa"
 
 
 def test_graphql_set_minimum_kanidm_credential_type(authorized_client, mocker):

@@ -12,27 +12,21 @@ from selfprivacy_api.graphql.mutations.mutation_interface import (
 
 
 @strawberry.enum
-class KanidmCredentialTypeEnum(Enum):
+class KanidmCredentialType(Enum):
     any = "any"  # no minimum (password-only allowed)
     mfa = "mfa"  # must be multi-factor (e.g., password + TOTP or passkey)
     passkey = "passkey"  # requires a WebAuthn passkey
 
 
 @strawberry.type
-class KanidmCredentialType:
-    minimum_credential_type: KanidmCredentialTypeEnum
-
-
-@strawberry.type
 class KanidmCredentialTypeMutationReturn(MutationReturnInterface):
     """Return type for Kanidm Credential Type mutation"""
 
-    minimum_credential_type: Optional[KanidmCredentialTypeEnum] = None
+    minimum_credential_type: Optional[KanidmCredentialType] = None
 
 
 async def get_minimum_kanidm_credential_type() -> KanidmCredentialType:
-    """Get KanidmCredentialLvl"""
+    """Get minimum kanidm credential type."""
     minimum_credential_type = await actions_get_kanidm_minimum_credential_type()
 
-    enum_val = KanidmCredentialTypeEnum[minimum_credential_type.name]
-    return KanidmCredentialType(minimum_credential_type=enum_val)  # type: ignore[call-arg]
+    return KanidmCredentialType[minimum_credential_type.name]

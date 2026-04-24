@@ -8,7 +8,7 @@ from selfprivacy_api.actions.kanidm_credential_type import (
 from selfprivacy_api.exceptions.abstract_exception import AbstractException
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.common_types.kanidm_credential_type import (
-    KanidmCredentialTypeEnum,
+    KanidmCredentialType,
     KanidmCredentialTypeMutationReturn,
 )
 from selfprivacy_api.models.kanidm_credential_type import (
@@ -21,7 +21,7 @@ from selfprivacy_api.utils.localization import get_locale
 class SetKanidmMinimumCredentialTypeInput:
     """Input type for set_kanidm_minimum_credential_type mutation"""
 
-    minimum_credential_type: KanidmCredentialTypeEnum
+    minimum_credential_type: KanidmCredentialType
 
 
 @strawberry.type
