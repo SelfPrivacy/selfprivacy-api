@@ -1,8 +1,8 @@
 import asyncio
 import gettext
+import json
 import logging
 import os
-import re
 import subprocess
 from json import JSONDecodeError
 from typing import Any, Optional, Union
@@ -10,8 +10,7 @@ from typing import Any, Optional, Union
 import aiofiles
 import httpx
 
-from selfprivacy_api.exceptions.users import UserAlreadyExists, UserOrGroupNotFound
-from selfprivacy_api.exceptions.users.kanidm_repository import (
+from selfprivacy_api.exceptions.kanidm import (
     FailedToGetValidKanidmToken,
     KanidmCliSubprocessError,
     KanidmDidNotReturnAdminPassword,
@@ -19,6 +18,7 @@ from selfprivacy_api.exceptions.users.kanidm_repository import (
     KanidmReturnEmptyResponse,
     KanidmReturnUnknownResponseType,
 )
+from selfprivacy_api.exceptions.users import UserAlreadyExists, UserOrGroupNotFound
 from selfprivacy_api.utils import get_domain, temporary_env_var
 from selfprivacy_api.utils.redis_pool import RedisPool
 
@@ -307,12 +307,11 @@ class KanidmAdminToken:
     def reset_idm_admin_password() -> str:
         command = [
             "kanidmd",
-            "recover-account",
             "-c",
             "/etc/kanidm/server.toml",
+            "scripting",
+            "recover-account",
             "idm_admin",
-            "-o",
-            "json",
         ]
 
         output = subprocess.check_output(
@@ -320,16 +319,21 @@ class KanidmAdminToken:
             text=True,
         )
 
-        regex_pattern = r'"password":"([^"]+)"'
-        match = re.search(regex_pattern, output)
-        if match:
-            new_kanidm_admin_password = match.group(
-                1
-            )  # we have many non-JSON strings in output
-        else:
+        try:
+            response = json.loads(output)
+        except json.JSONDecodeError as error:
             raise KanidmDidNotReturnAdminPassword(
                 command=" ".join(command),
-                regex_pattern=regex_pattern,
+                output=output,
+            ) from error
+
+        new_kanidm_admin_password = response.get("output")
+        if (
+            not isinstance(new_kanidm_admin_password, str)
+            or not new_kanidm_admin_password
+        ):
+            raise KanidmDidNotReturnAdminPassword(
+                command=" ".join(command),
                 output=output,
             )
 

@@ -2,13 +2,11 @@ import gettext
 import logging
 from typing import Optional
 
-from selfprivacy_api.exceptions.users import (
-    UserNotFound,
-)
-from selfprivacy_api.exceptions.users.kanidm_repository import (
+from selfprivacy_api.exceptions.kanidm import (
     KanidmReturnEmptyResponse,
     NoPasswordResetLinkFoundInResponse,
 )
+from selfprivacy_api.exceptions.users import UserNotFound
 from selfprivacy_api.models.group import Group, get_default_grops
 from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
 from selfprivacy_api.repositories.users.abstract_user_repository import (

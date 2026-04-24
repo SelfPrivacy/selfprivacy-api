@@ -5,8 +5,6 @@ from selfprivacy_api.exceptions.kanidm import (
     KANIDM_DEBUG_HELP,
     KANIDM_DESCRIPTION,
     KANIDM_PROBLEMS,
-)
-from selfprivacy_api.exceptions.users.kanidm_repository import (
     FailedToGetValidKanidmToken,
     KanidmCliSubprocessError,
     KanidmDidNotReturnAdminPassword,
@@ -91,7 +89,6 @@ def test_kanidm_return_unknown_response_type_get_error_message():
 def test_kanidm_did_not_return_admin_password_get_error_message():
     error = KanidmDidNotReturnAdminPassword(
         command="kanidm recover-account admin",
-        regex_pattern=r"password:\s+(.+)",
         output="stdout text",
     )
 
@@ -108,7 +105,6 @@ def test_kanidm_did_not_return_admin_password_get_error_message():
     )
     assert t.translate(text=KANIDM_DEBUG_HELP, locale=DEFAULT_LOCALE) in message
     assert "kanidm recover-account admin" in message
-    assert r"password:\s+(.+)" in message
     assert "stdout text" in message
 
 

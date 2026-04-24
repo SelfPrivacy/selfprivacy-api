@@ -4,7 +4,7 @@ from selfprivacy_api.actions.kanidm_credential_type import (
     get_kanidm_minimum_credential_type,
     set_kanidm_minimum_credential_type,
 )
-from selfprivacy_api.exceptions.users.kanidm_repository import KanidmQueryError
+from selfprivacy_api.exceptions.kanidm import KanidmQueryError
 from selfprivacy_api.models.kanidm_credential_type import KanidmCredentialType
 
 
@@ -78,4 +78,3 @@ async def test_set_kanidm_credential_type_query_error(mocker):
 
     with pytest.raises(KanidmQueryError):
         await set_kanidm_minimum_credential_type(KanidmCredentialType.passkey)
-

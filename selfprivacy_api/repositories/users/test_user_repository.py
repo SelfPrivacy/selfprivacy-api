@@ -2,13 +2,11 @@ import logging
 import uuid
 from typing import Optional
 
+from selfprivacy_api.exceptions.kanidm import NoPasswordResetLinkFoundInResponse
 from selfprivacy_api.exceptions.users import (
     UserAlreadyExists,
     UserNotFound,
     UserOrGroupNotFound,
-)
-from selfprivacy_api.exceptions.users.kanidm_repository import (
-    NoPasswordResetLinkFoundInResponse,
 )
 from selfprivacy_api.models.group import Group, get_default_grops
 from selfprivacy_api.models.user import UserDataUser, UserDataUserOrigin
