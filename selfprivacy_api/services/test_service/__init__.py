@@ -65,9 +65,7 @@ class DummyService(Service):
         """Read SVG icon from file and return it as base64 encoded string."""
         if raw:
             return BITWARDEN_ICON
-        return base64.b64encode(BITWARDEN_ICON.encode("utf-8")).decode(
-            "utf-8", "replace"
-        )
+        return base64.b64encode(BITWARDEN_ICON.encode("utf-8")).decode("utf-8")
 
     @classmethod
     def is_movable(cls) -> bool:

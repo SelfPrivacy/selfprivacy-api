@@ -4,7 +4,6 @@ from selfprivacy_api.actions.kanidm_credential_type import (
     get_kanidm_minimum_credential_type,
     set_kanidm_minimum_credential_type,
 )
-from selfprivacy_api.exceptions.kanidm import FailedToSetupKanidmMinimumCredentialType
 from selfprivacy_api.exceptions.users.kanidm_repository import KanidmQueryError
 from selfprivacy_api.models.kanidm_credential_type import KanidmCredentialType
 
@@ -80,17 +79,3 @@ async def test_set_kanidm_credential_type_query_error(mocker):
     with pytest.raises(KanidmQueryError):
         await set_kanidm_minimum_credential_type(KanidmCredentialType.passkey)
 
-
-@pytest.mark.asyncio
-async def test_set_kanidm_credential_type_verification_mismatch_raises(mocker):
-    mocker.patch(
-        "selfprivacy_api.actions.kanidm_credential_type.send_kanidm_query",
-        return_value={"status": "ok"},
-    )
-    mocker.patch(
-        "selfprivacy_api.actions.kanidm_credential_type.get_kanidm_minimum_credential_type",
-        return_value=KanidmCredentialType.any,
-    )
-
-    with pytest.raises(FailedToSetupKanidmMinimumCredentialType):
-        await set_kanidm_minimum_credential_type(KanidmCredentialType.passkey)

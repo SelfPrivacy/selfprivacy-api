@@ -115,12 +115,12 @@ async def reboot_system() -> None:
 
 def get_system_version() -> str:
     """Get system version"""
-    return subprocess.check_output(["uname", "-a"]).decode("utf-8", "replace").strip()
+    return subprocess.check_output(["uname", "-a"]).decode("utf-8").strip()
 
 
 def get_python_version() -> str:
     """Get Python version"""
-    return subprocess.check_output(["python", "-V"]).decode("utf-8", "replace").strip()
+    return subprocess.check_output(["python", "-V"]).decode("utf-8").strip()
 
 
 class SystemActionResult(BaseModel):

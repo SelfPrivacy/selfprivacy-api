@@ -147,9 +147,7 @@ class TemplatedService(Service):
     def get_svg_icon(self, raw=False) -> str:
         if raw:
             return self.meta.svg_icon
-        return base64.b64encode(self.meta.svg_icon.encode("utf-8")).decode(
-            "utf-8", "replace"
-        )
+        return base64.b64encode(self.meta.svg_icon.encode("utf-8")).decode("utf-8")
 
     def get_subdomain(self) -> Optional[str]:
         # If there are no subdomain options, return None

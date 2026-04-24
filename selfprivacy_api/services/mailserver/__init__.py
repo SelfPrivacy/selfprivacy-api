@@ -34,9 +34,7 @@ class MailServer(Service):
     def get_svg_icon(raw=False) -> str:
         if raw:
             return MAILSERVER_ICON
-        return base64.b64encode(MAILSERVER_ICON.encode("utf-8")).decode(
-            "utf-8", "replace"
-        )
+        return base64.b64encode(MAILSERVER_ICON.encode("utf-8")).decode("utf-8")
 
     @staticmethod
     def get_user() -> str:

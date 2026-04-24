@@ -1,8 +1,5 @@
 import gettext
 
-from selfprivacy_api.exceptions.kanidm import (
-    FailedToSetupKanidmMinimumCredentialType,
-)
 from selfprivacy_api.exceptions.users.kanidm_repository import KanidmQueryError
 from selfprivacy_api.models.kanidm_credential_type import KanidmCredentialType
 from selfprivacy_api.utils.kanidm import (
@@ -56,6 +53,3 @@ async def set_kanidm_minimum_credential_type(
         method=method,
         data=[minimum_credential_type.value],
     )
-
-    if await get_kanidm_minimum_credential_type() != minimum_credential_type:
-        raise FailedToSetupKanidmMinimumCredentialType()
