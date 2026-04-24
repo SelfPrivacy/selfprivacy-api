@@ -78,4 +78,3 @@ async def test_set_kanidm_credential_type_query_error(mocker):
 
     with pytest.raises(KanidmQueryError):
         await set_kanidm_minimum_credential_type(KanidmCredentialType.passkey)
-
