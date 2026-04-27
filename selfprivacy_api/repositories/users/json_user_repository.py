@@ -163,7 +163,7 @@ class JsonUserRepository(AbstractUserRepository):
                     return UserDataUser(
                         user_type=UserDataUserOrigin.NORMAL,
                         username=username,
-                        ssh_keys=user.setdefault("sshKeys", []),
+                        ssh_keys=user.get("sshKeys", []),
                     )
 
             return None

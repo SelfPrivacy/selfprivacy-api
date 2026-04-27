@@ -30,8 +30,10 @@ class AddMonitoring(Migration):
                     "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/monitoring"
                 )
         with WriteUserData() as data:
-            if "monitoring" not in data["modules"]:
-                data["modules"]["monitoring"] = {
+            data["modules"].setdefault(
+                "monitoring",
+                {
                     "enable": True,
                     "location": BlockDevices().get_root_block_device().canonical_name,
-                }
+                },
+            )

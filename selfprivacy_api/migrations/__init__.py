@@ -47,12 +47,7 @@ async def run_migrations():
     if the migration needed.
     """
     with ReadUserData(UserDataFiles.SECRETS) as data:
-        if "api" not in data:
-            skipped_migrations = []
-        elif "skippedMigrations" not in data["api"]:
-            skipped_migrations = []
-        else:
-            skipped_migrations = data["api"].get("skippedMigrations", [])
+        skipped_migrations = data.get("api", {}).get("skippedMigrations", [])
 
     if "DISABLE_ALL" in skipped_migrations:
         return
