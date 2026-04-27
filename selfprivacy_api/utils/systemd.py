@@ -226,7 +226,7 @@ def get_last_log_lines(service: str, lines_count: int) -> List[str]:
                 "cat",
             ],
             shell=False,
-        ).decode("utf-8", "replace")
+        ).decode("utf-8")
         return logs.splitlines()
     except subprocess.CalledProcessError:
         return []

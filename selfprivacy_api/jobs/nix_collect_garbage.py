@@ -77,7 +77,7 @@ def process_stream(job: Job, stream: Iterable[bytes], total_dead_packages: int) 
     prev_progress = 0
 
     for line in stream:
-        line = line.decode("utf-8", "replace")
+        line = line.decode("utf-8")
 
         if "deleting '/nix/store/" in line:
             completed_packages += 1
