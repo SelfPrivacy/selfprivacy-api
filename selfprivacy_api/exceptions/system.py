@@ -107,7 +107,7 @@ class FailedToFindResult(AbstractException):
         )
 
 
-class ProviderRequiresTokenId(AbstractException):
+class ProviderRequiresAdditionalSecret(AbstractException):
     def __init__(
         self,
         provider: str,
@@ -120,14 +120,14 @@ class ProviderRequiresTokenId(AbstractException):
     def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
         return t.translate(
             text=_(
-                "The provider %(provider)s requires a token ID, but it was not provided."
+                "The provider %(provider)s requires additional secrets, but they were not provided."
             )
             % {"provider": self.provider},
             locale=locale,
         )
 
 
-class ProviderDoesNotUseTokenId(AbstractException):
+class ProviderDoesNotUseProvidedSecret(AbstractException):
     def __init__(
         self,
         provider: str,
@@ -140,7 +140,7 @@ class ProviderDoesNotUseTokenId(AbstractException):
     def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
         return t.translate(
             text=_(
-                "The provider %(provider)s does not use a token ID, but one was provided."
+                "The provider %(provider)s does not use the provided additional secrets."
             )
             % {"provider": self.provider},
             locale=locale,

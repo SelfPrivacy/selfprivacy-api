@@ -69,8 +69,11 @@ class SetDnsProviderInput:
     """Input type to set the provider"""
 
     provider: DnsProvider
-    api_token: str
-    api_token_id: Optional[str] = None
+    token: str
+    token_id: Optional[str] = None
+    url: Optional[str] = None
+    tenant: Optional[str] = None
+    secondary_token: Optional[str] = None
 
 
 @strawberry.input
@@ -291,7 +294,14 @@ class SystemMutations:
             },
         ):
             try:
-                set_dns_provider(input.provider, input.api_token, input.api_token_id)
+                set_dns_provider(
+                    provider=input.provider,
+                    token=input.token,
+                    token_id=input.token_id,
+                    url=input.url,
+                    tenant=input.tenant,
+                    secondary_token=input.secondary_token,
+                )
                 return GenericMutationReturn(
                     success=True,
                     code=200,
