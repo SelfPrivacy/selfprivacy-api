@@ -44,13 +44,12 @@ class UserDataAutoUpgradeSettings(BaseModel):
     allowReboot: bool = False
 
 
-def set_dns_provider(
+def _validate_dns_provider_input(
     provider: DnsProvider,
-    token: str,
-    token_id: Optional[str] = None,
-    url: Optional[str] = None,
-    tenant: Optional[str] = None,
-    secondary_token: Optional[str] = None,
+    token_id: Optional[str],
+    url: Optional[str],
+    tenant: Optional[str],
+    secondary_token: Optional[str],
 ) -> None:
     if (
         (provider.needs_token_id() and not token_id)
@@ -66,6 +65,24 @@ def set_dns_provider(
         or (not provider.needs_secondary_token() and secondary_token)
     ):
         raise ProviderDoesNotUseProvidedSecret(provider=provider.value)
+
+
+def set_dns_provider(
+    provider: DnsProvider,
+    token: str,
+    token_id: Optional[str] = None,
+    url: Optional[str] = None,
+    tenant: Optional[str] = None,
+    secondary_token: Optional[str] = None,
+) -> None:
+
+    _validate_dns_provider_input(
+        provider=provider,
+        token_id=token_id,
+        url=url,
+        tenant=tenant,
+        secondary_token=secondary_token,
+    )
 
     with WriteUserData() as user_data:
         user_data.setdefault("dns", {})["provider"] = provider.value
