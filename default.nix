@@ -44,6 +44,7 @@ pythonPackages.buildPythonPackage {
     (callPackage ./nixos/packages/opentelemetry-instrumentation-threading { })
     # opentelemetry-instrumentation-jinja2
     opentelemetry-instrumentation
+    aiofiles
   ] ++ strawberry-graphql.optional-dependencies.opentelemetry);
   pythonImportsCheck = [ "selfprivacy_api" ];
   doCheck = false;
