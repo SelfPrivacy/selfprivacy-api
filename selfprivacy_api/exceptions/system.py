@@ -105,3 +105,41 @@ class FailedToFindResult(AbstractException):
             },
             locale=locale,
         )
+
+
+class ProviderRequiresAdditionalSecret(AbstractException):
+    def __init__(
+        self,
+        provider: str,
+        log: bool = True,
+    ):
+        self.provider = provider
+
+        super().__init__(log=log)
+
+    def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
+        return t.translate(
+            text=_(
+                "The provider %(provider)s requires additional secrets, but they were not provided."
+            ),
+            locale=locale,
+        ) % {"provider": self.provider}
+
+
+class ProviderDoesNotUseProvidedSecret(AbstractException):
+    def __init__(
+        self,
+        provider: str,
+        log: bool = True,
+    ):
+        self.provider = provider
+
+        super().__init__(log=log)
+
+    def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
+        return t.translate(
+            text=_(
+                "The provider %(provider)s does not use the provided additional secrets."
+            ),
+            locale=locale,
+        ) % {"provider": self.provider}

@@ -7,7 +7,11 @@ from typing import Optional
 import pytz
 from pydantic import BaseModel
 
-from selfprivacy_api.exceptions.system import InvalidTimezone
+from selfprivacy_api.exceptions.system import (
+    InvalidTimezone,
+    ProviderRequiresAdditionalSecret,
+    ProviderDoesNotUseProvidedSecret,
+)
 from selfprivacy_api.graphql.queries.providers import DnsProvider
 from selfprivacy_api.jobs import Job, Jobs, JobStatus
 from selfprivacy_api.jobs.upgrade_system import rebuild_system_task
@@ -40,16 +44,74 @@ class UserDataAutoUpgradeSettings(BaseModel):
     allowReboot: bool = False
 
 
-def set_dns_provider(provider: DnsProvider, token: str):
+def _validate_dns_provider_input(
+    provider: DnsProvider,
+    token_id: Optional[str],
+    url: Optional[str],
+    tenant: Optional[str],
+    secondary_token: Optional[str],
+) -> None:
+    if (
+        (provider.needs_token_id() and not token_id)
+        or (provider.needs_url() and not url)
+        or (provider.needs_tenant() and not tenant)
+        or (provider.needs_secondary_token() and not secondary_token)
+    ):
+        raise ProviderRequiresAdditionalSecret(provider=provider.value)
+    if (
+        (not provider.needs_token_id() and token_id)
+        or (not provider.needs_url() and url)
+        or (not provider.needs_tenant() and tenant)
+        or (not provider.needs_secondary_token() and secondary_token)
+    ):
+        raise ProviderDoesNotUseProvidedSecret(provider=provider.value)
+
+
+def set_dns_provider(
+    provider: DnsProvider,
+    token: str,
+    token_id: Optional[str] = None,
+    url: Optional[str] = None,
+    tenant: Optional[str] = None,
+    secondary_token: Optional[str] = None,
+) -> None:
+
+    _validate_dns_provider_input(
+        provider=provider,
+        token_id=token_id,
+        url=url,
+        tenant=tenant,
+        secondary_token=secondary_token,
+    )
+
     with WriteUserData() as user_data:
-        if "dns" not in user_data.keys():
-            user_data["dns"] = {}
-        user_data["dns"]["provider"] = provider.value
+        user_data.setdefault("dns", {})["provider"] = provider.value
 
     with WriteUserData(file_type=UserDataFiles.SECRETS) as secrets:
-        if "dns" not in secrets.keys():
-            secrets["dns"] = {}
-        secrets["dns"]["apiKey"] = token
+        secrets.setdefault("dns", {})["token"] = token
+
+        # Remove old legacy field if it exists
+        secrets["dns"].pop("apiKey", None)
+
+        if token_id:
+            secrets["dns"]["tokenId"] = token_id
+        else:
+            secrets["dns"].pop("tokenId", None)
+
+        if url:
+            secrets["dns"]["url"] = url
+        else:
+            secrets["dns"].pop("url", None)
+
+        if tenant:
+            secrets["dns"]["tenant"] = tenant
+        else:
+            secrets["dns"].pop("tenant", None)
+
+        if secondary_token:
+            secrets["dns"]["secondaryToken"] = secondary_token
+        else:
+            secrets["dns"].pop("secondaryToken", None)
 
 
 def get_auto_upgrade_settings() -> UserDataAutoUpgradeSettings:

@@ -12,6 +12,7 @@ from strawberry.types import Info
 import selfprivacy_api.actions.ssh as ssh_actions
 import selfprivacy_api.actions.system as system_actions
 from selfprivacy_api.actions.system import set_dns_provider
+from selfprivacy_api.exceptions.abstract_exception import AbstractException
 from selfprivacy_api.exceptions.system import ShellException
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.common_types.jobs import job_to_api_job, translate_job
@@ -68,7 +69,11 @@ class SetDnsProviderInput:
     """Input type to set the provider"""
 
     provider: DnsProvider
-    api_token: str
+    token: str
+    token_id: Optional[str] = None
+    url: Optional[str] = None
+    tenant: Optional[str] = None
+    secondary_token: Optional[str] = None
 
 
 @strawberry.input
@@ -289,15 +294,29 @@ class SystemMutations:
             },
         ):
             try:
-                set_dns_provider(input.provider, input.api_token)
+                set_dns_provider(
+                    provider=input.provider,
+                    token=input.token,
+                    token_id=input.token_id,
+                    url=input.url,
+                    tenant=input.tenant,
+                    secondary_token=input.secondary_token,
+                )
                 return GenericMutationReturn(
                     success=True,
                     code=200,
                     message=t.translate(text=_("Provider set"), locale=locale),
                 )
-            except Exception as e:
+
+            except Exception as error:
+                if isinstance(error, AbstractException):
+                    return GenericMutationReturn(
+                        success=False,
+                        message=error.get_error_message(locale=locale),
+                        code=error.code,
+                    )
                 return GenericMutationReturn(
                     success=False,
                     code=400,
-                    message=pretty_error(e),
+                    message=pretty_error(error),
                 )
