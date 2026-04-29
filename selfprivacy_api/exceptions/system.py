@@ -121,10 +121,9 @@ class ProviderRequiresAdditionalSecret(AbstractException):
         return t.translate(
             text=_(
                 "The provider %(provider)s requires additional secrets, but they were not provided."
-            )
-            % {"provider": self.provider},
+            ),
             locale=locale,
-        )
+        ) % {"provider": self.provider}
 
 
 class ProviderDoesNotUseProvidedSecret(AbstractException):
@@ -141,7 +140,6 @@ class ProviderDoesNotUseProvidedSecret(AbstractException):
         return t.translate(
             text=_(
                 "The provider %(provider)s does not use the provided additional secrets."
-            )
-            % {"provider": self.provider},
+            ),
             locale=locale,
-        )
+        ) % {"provider": self.provider}
