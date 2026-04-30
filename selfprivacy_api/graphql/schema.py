@@ -158,7 +158,7 @@ class Mutation(
         return EmailPasswordsMetadataMutations()
 
     @strawberry.field(permission_classes=[IsAuthenticated])
-    async def kanidm_mutations(self) -> KanidmMutations:
+    async def kanidm(self) -> KanidmMutations:
         """Kanidm mutations"""
         return KanidmMutations()
 

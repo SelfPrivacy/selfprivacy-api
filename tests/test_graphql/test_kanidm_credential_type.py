@@ -13,7 +13,7 @@ query MyQuery {
 
 KANIDM_SET_MIN_MUTATION = """
 mutation MyMutation($minimumCredentialType: SetKanidmMinimumCredentialTypeInput!) {
-  kanidmMutations {
+  kanidm {
     setKanidmMinimumCredentialType(minimumCredentialType: $minimumCredentialType) {
       code
       message
@@ -54,7 +54,7 @@ def test_graphql_set_minimum_kanidm_credential_type(authorized_client, mocker):
     )
     data = get_data(response)
 
-    output = data["kanidmMutations"]["setKanidmMinimumCredentialType"]
+    output = data["kanidm"]["setKanidmMinimumCredentialType"]
     assert_ok(output, code=200)
     assert output["minimumCredentialType"] == "passkey"
 

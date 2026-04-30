@@ -72,14 +72,17 @@ class AbstractException(Exception, ABC):
                     "Used command: %(command)s\n"
                     "Used regex pattern: %(regex_pattern)s\n"
                     "Kanidm's CLI output: %(output)s"
-                )
-                % {
-                    "command": self.command,
-                    "regex_pattern": self.regex_pattern,
-                    "output": self.output,
-                    "maybe_kanidm_broke_compatibility": KANIDM_PROBLEMS,
-                    "REPORT_IT_TO_SUPPORT_CHATS": REPORT_IT_TO_SUPPORT_CHATS,
-                },
+                ),
                 locale=locale,
-            )
+            ) % {
+                "command": self.command,
+                "regex_pattern": self.regex_pattern,
+                "output": self.output,
+                "maybe_kanidm_broke_compatibility": t.translate(
+                    text=KANIDM_PROBLEMS, locale=locale
+                ),
+                "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
+                    text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
+                ),
+            }
         """

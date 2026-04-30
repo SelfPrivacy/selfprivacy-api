@@ -35,17 +35,16 @@ class ShellException(AbstractException):
                 "%(REPORT_IT_TO_SUPPORT_CHATS)s\n"
                 "Executed command: %(command)s\n"
                 "Output: %(output)s"
-            )
-            % {
-                "command": self.command,
-                "description": self.description,
-                "output": self.output,
-                "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
-                    text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
-                ),
-            },
+            ),
             locale=locale,
-        )
+        ) % {
+            "command": self.command,
+            "description": self.description,
+            "output": self.output,
+            "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
+                text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
+            ),
+        }
 
 
 class InvalidTimezone(AbstractException):
@@ -63,10 +62,9 @@ class InvalidTimezone(AbstractException):
                 "Timezone not in pytz.all_timezones.\n"
                 "List of available timezones:\n"
                 "https://data.iana.org/time-zones/data/zone.tab"
-            )
-            % {"timezone": self.timezone},
+            ),
             locale=locale,
-        )
+        ) % {"timezone": self.timezone}
 
 
 class FailedToFindResult(AbstractException):
@@ -93,15 +91,52 @@ class FailedToFindResult(AbstractException):
                 "Command: %(command)s\n"
                 "Used regex pattern: %(regex_pattern)s\n"
                 "Data: %(data)s"
-            )
-            % {
-                "description": self.description,
-                "command": self.command,
-                "regex_pattern": self.regex_pattern,
-                "data": self.data,
-                "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
-                    text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
-                ),
-            },
+            ),
             locale=locale,
-        )
+        ) % {
+            "description": self.description,
+            "command": self.command,
+            "regex_pattern": self.regex_pattern,
+            "data": self.data,
+            "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
+                text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
+            ),
+        }
+
+
+class ProviderRequiresAdditionalSecret(AbstractException):
+    def __init__(
+        self,
+        provider: str,
+        log: bool = True,
+    ):
+        self.provider = provider
+
+        super().__init__(log=log)
+
+    def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
+        return t.translate(
+            text=_(
+                "The provider %(provider)s requires additional secrets, but they were not provided."
+            ),
+            locale=locale,
+        ) % {"provider": self.provider}
+
+
+class ProviderDoesNotUseProvidedSecret(AbstractException):
+    def __init__(
+        self,
+        provider: str,
+        log: bool = True,
+    ):
+        self.provider = provider
+
+        super().__init__(log=log)
+
+    def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
+        return t.translate(
+            text=_(
+                "The provider %(provider)s does not use the provided additional secrets."
+            ),
+            locale=locale,
+        ) % {"provider": self.provider}

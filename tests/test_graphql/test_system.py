@@ -7,11 +7,12 @@ import json
 from collections import Counter
 
 from selfprivacy_api.graphql.queries.providers import DnsProvider
-from selfprivacy_api.utils import ReadUserData, UserDataFiles
+from selfprivacy_api.utils import ReadUserData, UserDataFiles, WriteUserData
 
 from tests.common import generate_system_query, read_json
 from tests.test_graphql.common import (
     assert_empty,
+    assert_errorcode,
     assert_ok,
     get_data,
 )
@@ -19,11 +20,32 @@ from tests.test_dkim import no_dkim_file, dkim_file
 from unittest.mock import mock_open
 
 
-def assert_provider(provider_str: str, key: str):
+def assert_provider(provider_str: str, token: str):
     with ReadUserData() as user_data:
         assert user_data["dns"]["provider"] == provider_str
     with ReadUserData(file_type=UserDataFiles.SECRETS) as secrets:
-        assert secrets["dns"]["apiKey"] == key
+        assert secrets["dns"]["token"] == token
+        assert "apiKey" not in secrets["dns"]
+
+
+def assert_provider_token_id(token_id: str):
+    with ReadUserData(file_type=UserDataFiles.SECRETS) as secrets:
+        assert secrets["dns"]["tokenId"] == token_id
+
+
+def assert_provider_token_id_absent():
+    with ReadUserData(file_type=UserDataFiles.SECRETS) as secrets:
+        assert "tokenId" not in secrets["dns"]
+
+
+def assert_provider_secret(secret_field: str, value: str):
+    with ReadUserData(file_type=UserDataFiles.SECRETS) as secrets:
+        assert secrets["dns"][secret_field] == value
+
+
+def assert_provider_secret_absent(secret_field: str):
+    with ReadUserData(file_type=UserDataFiles.SECRETS) as secrets:
+        assert secret_field not in secrets["dns"]
 
 
 @pytest.fixture
@@ -173,21 +195,55 @@ def mock_dkim_key(mocker):
     return mock
 
 
-def api_set_dns_provider_raw(authorized_client, provider: str, token: str):
+def api_set_dns_provider_raw(
+    authorized_client,
+    provider: str,
+    token: str,
+    token_id: str | None = None,
+    url: str | None = None,
+    tenant: str | None = None,
+    secondary_token: str | None = None,
+):
+    payload = {"provider": provider, "token": token}
+    if token_id is not None:
+        payload["tokenId"] = token_id
+    if url is not None:
+        payload["url"] = url
+    if tenant is not None:
+        payload["tenant"] = tenant
+    if secondary_token is not None:
+        payload["secondaryToken"] = secondary_token
+
     response = authorized_client.post(
         "/graphql",
         json={
             "query": API_SET_DNS_PROVIDER_MUTATION,
             "variables": {
-                "input": {"provider": provider, "apiToken": token},
+                "input": payload,
             },
         },
     )
     return response
 
 
-def api_set_dns_provider(authorized_client, provider: DnsProvider, token: str):
-    return api_set_dns_provider_raw(authorized_client, provider.value, token)
+def api_set_dns_provider(
+    authorized_client,
+    provider: DnsProvider,
+    token: str,
+    token_id: str | None = None,
+    url: str | None = None,
+    tenant: str | None = None,
+    secondary_token: str | None = None,
+):
+    return api_set_dns_provider_raw(
+        authorized_client,
+        provider.value,
+        token,
+        token_id,
+        url,
+        tenant,
+        secondary_token,
+    )
 
 
 API_PYTHON_VERSION_INFO = """
@@ -1415,6 +1471,275 @@ def test_set_dns_provider_nonexistent(authorized_client, generic_userdata):
     # Test that nothing has indeed changed
     with pytest.raises(AssertionError):
         assert_provider(provider, token)
+
+
+def test_set_dns_provider_requires_token_id(authorized_client, generic_userdata):
+    provider = DnsProvider.PORKBUN
+    token = "someRandomToken"
+
+    response = api_set_dns_provider(authorized_client, provider, token)
+    data = get_data(response)["system"]["setDnsProvider"]
+    assert_errorcode(data, 400)
+
+    with pytest.raises(AssertionError):
+        assert_provider(provider.value, token)
+
+
+def test_set_dns_provider_accepts_token_id_when_required(
+    authorized_client, generic_userdata
+):
+    provider = DnsProvider.PORKBUN
+    token = "someRandomToken"
+    token_id = "someTokenId"
+
+    response = api_set_dns_provider(authorized_client, provider, token, token_id)
+    data = get_data(response)["system"]["setDnsProvider"]
+    assert_ok(data)
+    assert_provider(provider.value, token)
+    assert_provider_token_id(token_id)
+
+
+def test_set_dns_provider_rejects_token_id_for_provider_that_does_not_use_it(
+    authorized_client, generic_userdata
+):
+    provider = DnsProvider.DIGITALOCEAN
+    token = "someRandomToken"
+    token_id = "someTokenId"
+
+    response = api_set_dns_provider(authorized_client, provider, token, token_id)
+    data = get_data(response)["system"]["setDnsProvider"]
+    assert_errorcode(data, 400)
+
+    with pytest.raises(AssertionError):
+        assert_provider(provider.value, token)
+
+
+def test_set_dns_provider_without_token_id_when_provider_does_not_use_it(
+    authorized_client, generic_userdata
+):
+    provider = DnsProvider.DIGITALOCEAN
+    token = "someRandomToken"
+
+    response = api_set_dns_provider(authorized_client, provider, token)
+    data = get_data(response)["system"]["setDnsProvider"]
+    assert_ok(data)
+    assert_provider(provider.value, token)
+    assert_provider_token_id_absent()
+
+
+def test_set_dns_provider_removes_existing_token_id_when_not_needed(
+    authorized_client, generic_userdata
+):
+    setup_provider = DnsProvider.PORKBUN
+    setup_token = "someRandomToken"
+    setup_token_id = "someTokenId"
+
+    setup_response = api_set_dns_provider(
+        authorized_client, setup_provider, setup_token, setup_token_id
+    )
+    setup_data = get_data(setup_response)["system"]["setDnsProvider"]
+    assert_ok(setup_data)
+    assert_provider_token_id(setup_token_id)
+
+    provider = DnsProvider.DIGITALOCEAN
+    token = "anotherToken"
+    response = api_set_dns_provider(authorized_client, provider, token)
+    data = get_data(response)["system"]["setDnsProvider"]
+
+    assert_ok(data)
+    assert_provider(provider.value, token)
+    assert_provider_token_id_absent()
+
+
+@pytest.mark.parametrize(
+    "method_name, secret_key, secret_value, mutation_kwargs",
+    [
+        (
+            "needs_url",
+            "url",
+            "https://api.provider.example",
+            {"url": "https://api.provider.example"},
+        ),
+        (
+            "needs_tenant",
+            "tenant",
+            "tenant-123",
+            {"tenant": "tenant-123"},
+        ),
+        (
+            "needs_secondary_token",
+            "secondaryToken",
+            "secondary-secret",
+            {"secondary_token": "secondary-secret"},
+        ),
+    ],
+)
+def test_set_dns_provider_requires_new_secret_when_provider_needs_it(
+    authorized_client,
+    generic_userdata,
+    mocker,
+    method_name,
+    secret_key,
+    secret_value,
+    mutation_kwargs,
+):
+    provider = DnsProvider.PORKBUN
+    token = "someRandomToken"
+    token_id = "required-token-id"
+
+    mocker.patch.object(
+        DnsProvider,
+        method_name,
+        autospec=True,
+        side_effect=lambda provider_enum: provider_enum == DnsProvider.PORKBUN,
+    )
+
+    response = api_set_dns_provider(
+        authorized_client, provider, token, token_id=token_id
+    )
+    data = get_data(response)["system"]["setDnsProvider"]
+    assert_errorcode(data, 400)
+
+    with pytest.raises(AssertionError):
+        assert_provider(provider.value, token)
+
+    response = api_set_dns_provider(
+        authorized_client,
+        provider,
+        token,
+        token_id=token_id,
+        **mutation_kwargs,
+    )
+    data = get_data(response)["system"]["setDnsProvider"]
+    assert_ok(data)
+    assert_provider(provider.value, token)
+    assert_provider_secret(secret_key, secret_value)
+
+
+@pytest.mark.parametrize(
+    "secret_key, mutation_kwargs",
+    [
+        ("url", {"url": "https://api.provider.example"}),
+        ("tenant", {"tenant": "tenant-123"}),
+        ("secondaryToken", {"secondary_token": "secondary-secret"}),
+    ],
+)
+def test_set_dns_provider_rejects_new_secret_for_provider_that_does_not_use_it(
+    authorized_client,
+    generic_userdata,
+    secret_key,
+    mutation_kwargs,
+):
+    provider = DnsProvider.DIGITALOCEAN
+    token = "someRandomToken"
+
+    response = api_set_dns_provider(
+        authorized_client,
+        provider,
+        token,
+        **mutation_kwargs,
+    )
+    data = get_data(response)["system"]["setDnsProvider"]
+    assert_errorcode(data, 400)
+
+    with pytest.raises(AssertionError):
+        assert_provider(provider.value, token)
+
+
+@pytest.mark.parametrize(
+    "method_name, secret_key, secret_value, mutation_kwargs",
+    [
+        (
+            "needs_url",
+            "url",
+            "https://api.provider.example",
+            {"url": "https://api.provider.example"},
+        ),
+        (
+            "needs_tenant",
+            "tenant",
+            "tenant-123",
+            {"tenant": "tenant-123"},
+        ),
+        (
+            "needs_secondary_token",
+            "secondaryToken",
+            "secondary-secret",
+            {"secondary_token": "secondary-secret"},
+        ),
+    ],
+)
+def test_set_dns_provider_removes_existing_new_secret_when_not_needed(
+    authorized_client,
+    generic_userdata,
+    mocker,
+    method_name,
+    secret_key,
+    secret_value,
+    mutation_kwargs,
+):
+    setup_provider = DnsProvider.PORKBUN
+    setup_token = "someRandomToken"
+    setup_token_id = "required-token-id"
+
+    mocker.patch.object(
+        DnsProvider,
+        method_name,
+        autospec=True,
+        side_effect=lambda provider_enum: provider_enum == DnsProvider.PORKBUN,
+    )
+
+    setup_response = api_set_dns_provider(
+        authorized_client,
+        setup_provider,
+        setup_token,
+        token_id=setup_token_id,
+        **mutation_kwargs,
+    )
+    setup_data = get_data(setup_response)["system"]["setDnsProvider"]
+    assert_ok(setup_data)
+    assert_provider_secret(secret_key, secret_value)
+
+    provider = DnsProvider.DIGITALOCEAN
+    token = "anotherToken"
+    response = api_set_dns_provider(authorized_client, provider, token)
+    data = get_data(response)["system"]["setDnsProvider"]
+
+    assert_ok(data)
+    assert_provider(provider.value, token)
+    assert_provider_secret_absent(secret_key)
+
+
+def test_set_dns_provider_new_secrets_are_absent_when_not_provided(
+    authorized_client, generic_userdata
+):
+    provider = DnsProvider.DIGITALOCEAN
+    token = "someRandomToken"
+
+    response = api_set_dns_provider(authorized_client, provider, token)
+    data = get_data(response)["system"]["setDnsProvider"]
+    assert_ok(data)
+    assert_provider(provider.value, token)
+    assert_provider_secret_absent("url")
+    assert_provider_secret_absent("tenant")
+    assert_provider_secret_absent("secondaryToken")
+
+
+def test_set_dns_provider_removes_legacy_api_key_field(
+    authorized_client, generic_userdata
+):
+    with WriteUserData(file_type=UserDataFiles.SECRETS) as secrets:
+        secrets["dns"] = {"apiKey": "legacy-token"}
+
+    provider = DnsProvider.DIGITALOCEAN
+    token = "someRandomToken"
+    response = api_set_dns_provider(authorized_client, provider, token)
+    data = get_data(response)["system"]["setDnsProvider"]
+
+    assert_ok(data)
+    assert_provider(provider.value, token)
+    with ReadUserData(file_type=UserDataFiles.SECRETS) as secrets:
+        assert "apiKey" not in secrets["dns"]
 
 
 def test_set_dns_provider_unauthorized(client, generic_userdata):

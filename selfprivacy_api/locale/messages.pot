@@ -16,6 +16,38 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: selfprivacy_api/utils/kanidm.py:31
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:198
+msgid "Error creating Kanidm token"
+msgstr ""
+
+#: selfprivacy_api/utils/kanidm.py:123
+msgid "No JSON found in Kanidm response."
+msgstr ""
+
+#: selfprivacy_api/utils/kanidm.py:135
+msgid "Kanidm is not responding to requests."
+msgstr ""
+
+#: selfprivacy_api/utils/kanidm.py:158
+msgid "Kanidm access issue"
+msgstr ""
+
+#: selfprivacy_api/utils/kanidm.py:360
+msgid "Kanidm is not responding to requests. Connection error."
+msgstr ""
+
+#: selfprivacy_api/utils/kanidm.py:369
+msgid "Unknown error while checking the Kanidm admin token."
+msgstr ""
+
+#: selfprivacy_api/actions/kanidm_credential_type.py:14
+msgid ""
+"Error while trying to get the Kanidm minimum credential type: Kanidm did not "
+"return a valid \"credential_type_minimum\" value for the group "
+"idm_all_persons."
+msgstr ""
+
 #: selfprivacy_api/actions/services.py:28
 #, python-format
 msgid "Move %(service)s"
@@ -26,20 +58,20 @@ msgstr ""
 msgid "Moving %(service)s data to %(volume)s"
 msgstr ""
 
-#: selfprivacy_api/actions/system.py:79
+#: selfprivacy_api/actions/system.py:141
 msgid "Rebuild system"
 msgstr ""
 
-#: selfprivacy_api/actions/system.py:81
+#: selfprivacy_api/actions/system.py:143
 msgid ""
 "Applying the new system configuration by building the new NixOS generation."
 msgstr ""
 
-#: selfprivacy_api/actions/system.py:103
+#: selfprivacy_api/actions/system.py:165
 msgid "Upgrade system"
 msgstr ""
 
-#: selfprivacy_api/actions/system.py:104
+#: selfprivacy_api/actions/system.py:166
 msgid "Upgrading the system to the latest version."
 msgstr ""
 
@@ -111,39 +143,39 @@ msgstr ""
 msgid "Password deleted successfully"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:108
+#: selfprivacy_api/graphql/mutations/system_mutations.py:113
 msgid "Timezone changed"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:136
+#: selfprivacy_api/graphql/mutations/system_mutations.py:141
 msgid "Auto-upgrade settings changed"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:165
+#: selfprivacy_api/graphql/mutations/system_mutations.py:170
 msgid "SSH settings changed"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:181
+#: selfprivacy_api/graphql/mutations/system_mutations.py:186
 msgid "Starting system rebuild"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:222
+#: selfprivacy_api/graphql/mutations/system_mutations.py:227
 msgid "Starting system upgrade"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:242
+#: selfprivacy_api/graphql/mutations/system_mutations.py:247
 msgid "System reboot has started"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:258
+#: selfprivacy_api/graphql/mutations/system_mutations.py:263
 msgid "There is no repository to pull changes from."
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:274
+#: selfprivacy_api/graphql/mutations/system_mutations.py:279
 msgid "Garbage collector started..."
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:296
+#: selfprivacy_api/graphql/mutations/system_mutations.py:308
 msgid "Provider set"
 msgstr ""
 
@@ -496,16 +528,23 @@ msgstr ""
 msgid "The API is using the wrong user repository."
 msgstr ""
 
-#: selfprivacy_api/exceptions/kanidm.py:20
+#: selfprivacy_api/exceptions/kanidm.py:7
 msgid ""
 "Kanidm is the identity and authentication service that manages users and "
 "access to system services."
 msgstr ""
 
-#: selfprivacy_api/exceptions/kanidm.py:24
+#: selfprivacy_api/exceptions/kanidm.py:11
 msgid ""
 "In some cases, a Kanidm update may introduce breaking changes affecting the "
 "API, CLI commands, or configuration compatibility."
+msgstr ""
+
+#: selfprivacy_api/exceptions/kanidm.py:15
+msgid ""
+"Console commands to debug:\n"
+"\"systemctl status kanidm.service\"\n"
+"\"journalctl -u kanidm.service -f\""
 msgstr ""
 
 #: selfprivacy_api/exceptions/services.py:26
@@ -528,7 +567,7 @@ msgid ""
 "Output: %(output)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/system.py:62
+#: selfprivacy_api/exceptions/system.py:61
 #, python-format
 msgid ""
 "Invalid timezone: %(timezone)s\n"
@@ -537,7 +576,7 @@ msgid ""
 "https://data.iana.org/time-zones/data/zone.tab"
 msgstr ""
 
-#: selfprivacy_api/exceptions/system.py:91
+#: selfprivacy_api/exceptions/system.py:89
 #, python-format
 msgid ""
 "%(description)s\n"
@@ -545,6 +584,18 @@ msgid ""
 "Command: %(command)s\n"
 "Used regex pattern: %(regex_pattern)s\n"
 "Data: %(data)s"
+msgstr ""
+
+#: selfprivacy_api/exceptions/system.py:120
+#, python-format
+msgid ""
+"The provider %(provider)s requires additional secrets, but they were not "
+"provided."
+msgstr ""
+
+#: selfprivacy_api/exceptions/system.py:139
+#, python-format
+msgid "The provider %(provider)s does not use the provided additional secrets."
 msgstr ""
 
 #: selfprivacy_api/exceptions/tokens.py:21
@@ -579,14 +630,14 @@ msgid ""
 "%(REPORT_IT_TO_SUPPORT_CHATS)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/tokens.py:109
+#: selfprivacy_api/exceptions/tokens.py:108
 msgid ""
 "Specified expiration date is in the past. Please provide a future date.\n"
 "If you believe this is a mistake, there may be a problem with the server's "
 "date/time settings."
 msgstr ""
 
-#: selfprivacy_api/exceptions/tokens.py:121
+#: selfprivacy_api/exceptions/tokens.py:120
 msgid "Uses left must be greater than 0."
 msgstr ""
 
@@ -613,27 +664,27 @@ msgid ""
 "Reserved prefix: %(forbidden_prefix)s."
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/__init__.py:84
+#: selfprivacy_api/exceptions/users/__init__.py:83
 msgid "Username is in reserved list or have reserved prefix."
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/__init__.py:98
+#: selfprivacy_api/exceptions/users/__init__.py:97
 msgid "User already exists"
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/__init__.py:109
+#: selfprivacy_api/exceptions/users/__init__.py:108
 msgid "Username must be alphanumeric and start with a letter.\n"
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/__init__.py:122
+#: selfprivacy_api/exceptions/users/__init__.py:121
 msgid "Username is too long. Must be less than 32 characters."
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/__init__.py:134
+#: selfprivacy_api/exceptions/users/__init__.py:133
 msgid "Password cannot be empty."
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/__init__.py:145
+#: selfprivacy_api/exceptions/users/__init__.py:144
 msgid "Display name is too long. Must be less than 256 characters."
 msgstr ""
 
@@ -690,11 +741,7 @@ msgid ""
 "Kanidm's CLI output: %(output)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:201
-msgid "Error creating Kanidm token"
-msgstr ""
-
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:213
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:210
 #, python-format
 msgid ""
 "Kanidm CLI returned an error.\n"
@@ -707,7 +754,7 @@ msgid ""
 "Error: %(error)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:248
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:242
 #, python-format
 msgid ""
 "Сouldn't get a valid Kanidm token.\n"
@@ -716,7 +763,7 @@ msgid ""
 "%(REPORT_IT_TO_SUPPORT_CHATS)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:284
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:278
 #, python-format
 msgid ""
 "Kanidm didn't return a password reset link.\n"
@@ -739,16 +786,4 @@ msgstr ""
 
 #: selfprivacy_api/exceptions/users/ssh.py:58
 msgid "Invalid key type. Supported key types: "
-msgstr ""
-
-#: selfprivacy_api/repositories/users/kanidm_user_repository.py:152
-msgid "No JSON found in Kanidm response."
-msgstr ""
-
-#: selfprivacy_api/repositories/users/kanidm_user_repository.py:164
-msgid "Kanidm is not responding to requests."
-msgstr ""
-
-#: selfprivacy_api/repositories/users/kanidm_user_repository.py:187
-msgid "Kanidm access issue"
 msgstr ""
