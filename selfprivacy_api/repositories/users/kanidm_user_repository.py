@@ -269,7 +269,7 @@ class KanidmUserRepository(AbstractUserRepository):
         )
 
         try:
-            KanidmUserRepository._check_response_type_and_not_empty(
+            check_kanidm_response_type(
                 data_type="dict",
                 endpoint=endpoint,
                 method=method,
@@ -332,7 +332,7 @@ class KanidmUserRepository(AbstractUserRepository):
             method=method,
         )
 
-        KanidmUserRepository._check_response_type_and_not_empty(
+        check_kanidm_response_type(
             endpoint=endpoint,
             method=method,
             data_type="dict",
@@ -374,7 +374,7 @@ class KanidmUserRepository(AbstractUserRepository):
             method=method,
         )
 
-        KanidmUserRepository._check_response_type_and_not_empty(
+        check_kanidm_response_type(
             endpoint=endpoint,
             method=method,
             data_type="list",
