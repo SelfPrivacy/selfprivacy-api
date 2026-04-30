@@ -88,14 +88,13 @@ class CannotDeleteCallerException(AbstractException):
             text=_(
                 "The access token you’re trying to delete is currently in use by this device, so removing access is not possible.\n"
                 "%(REPORT_IT_TO_SUPPORT_CHATS)s"
-            )
-            % {
-                "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
-                    text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
-                )
-            },
+            ),
             locale=locale,
-        )
+        ) % {
+            "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
+                text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
+            )
+        }
 
 
 class ExpirationDateInThePast(AbstractException):

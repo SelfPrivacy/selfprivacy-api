@@ -1,5 +1,4 @@
 import gettext
-from textwrap import dedent
 
 _ = gettext.gettext
 
@@ -13,11 +12,7 @@ KANIDM_PROBLEMS = _(
 )
 
 KANIDM_DEBUG_HELP = _(
-    dedent(
-        """
-        Console commands to debug:
-            "systemctl status kanidm.service"
-            "journalctl -u kanidm.service -f"
-        """
-    )
+    "Console commands to debug:\n"
+    '"systemctl status kanidm.service"\n'
+    '"journalctl -u kanidm.service -f"'
 )

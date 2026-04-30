@@ -9,9 +9,11 @@ xgettext \
   -kngettext:1,2 \
   -o selfprivacy_api/locale/messages.pot \
   selfprivacy_api/utils/localization.py \
+  selfprivacy_api/utils/kanidm.py \
   selfprivacy_api/actions/ssh.py \
   selfprivacy_api/actions/users.py \
   selfprivacy_api/actions/api_tokens.py \
+  selfprivacy_api/actions/kanidm_credential_type.py \
   selfprivacy_api/actions/services.py \
   selfprivacy_api/actions/system.py \
   selfprivacy_api/graphql/mutations/job_mutations.py \

@@ -171,22 +171,19 @@ class KanidmDidNotReturnAdminPassword(AbstractException):
                 "Used command: %(command)s\n"
                 "Used regex pattern: %(regex_pattern)s\n"
                 "Kanidm's CLI output: %(output)s"
-            )
-            % {
-                "KANIDM_DESCRIPTION": t.translate(
-                    text=KANIDM_DESCRIPTION, locale=locale
-                ),
-                "KANIDM_PROBLEMS": t.translate(text=KANIDM_PROBLEMS, locale=locale),
-                "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
-                    text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
-                ),
-                "KANIDM_DEBUG_HELP": t.translate(text=KANIDM_DEBUG_HELP, locale=locale),
-                "command": self.command,
-                "regex_pattern": self.regex_pattern,
-                "output": self.output,
-            },
+            ),
             locale=locale,
-        )
+        ) % {
+            "KANIDM_DESCRIPTION": t.translate(text=KANIDM_DESCRIPTION, locale=locale),
+            "KANIDM_PROBLEMS": t.translate(text=KANIDM_PROBLEMS, locale=locale),
+            "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
+                text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
+            ),
+            "KANIDM_DEBUG_HELP": t.translate(text=KANIDM_DEBUG_HELP, locale=locale),
+            "command": self.command,
+            "regex_pattern": self.regex_pattern,
+            "output": self.output,
+        }
 
 
 class KanidmCliSubprocessError(AbstractException):
@@ -217,21 +214,18 @@ class KanidmCliSubprocessError(AbstractException):
                 "%(REPORT_IT_TO_SUPPORT_CHATS)s\n\n"
                 "Used command: %(command)s\n"
                 "Error: %(error)s"
-            )
-            % {
-                "KANIDM_DESCRIPTION": t.translate(
-                    text=KANIDM_DESCRIPTION, locale=locale
-                ),
-                "description": self.description,
-                "KANIDM_PROBLEMS": t.translate(text=KANIDM_PROBLEMS, locale=locale),
-                "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
-                    text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
-                ),
-                "command": self.command,
-                "error": self.error,
-            },
+            ),
             locale=locale,
-        )
+        ) % {
+            "KANIDM_DESCRIPTION": t.translate(text=KANIDM_DESCRIPTION, locale=locale),
+            "description": self.description,
+            "KANIDM_PROBLEMS": t.translate(text=KANIDM_PROBLEMS, locale=locale),
+            "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
+                text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
+            ),
+            "command": self.command,
+            "error": self.error,
+        }
 
 
 class FailedToGetValidKanidmToken(AbstractException):
@@ -288,17 +282,14 @@ class NoPasswordResetLinkFoundInResponse(AbstractException):
                 "Endpoint: %(endpoint)s\n"
                 "Method: %(method)s\n"
                 "Data: %(data)s\n"
-            )
-            % {
-                "KANIDM_DESCRIPTION": t.translate(
-                    text=KANIDM_DESCRIPTION, locale=locale
-                ),
-                "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
-                    text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
-                ),
-                "endpoint": self.endpoint,
-                "method": self.method,
-                "data": self.data,
-            },
+            ),
             locale=locale,
-        )
+        ) % {
+            "KANIDM_DESCRIPTION": t.translate(text=KANIDM_DESCRIPTION, locale=locale),
+            "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
+                text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
+            ),
+            "endpoint": self.endpoint,
+            "method": self.method,
+            "data": self.data,
+        }
