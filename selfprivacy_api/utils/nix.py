@@ -25,8 +25,6 @@ async def evaluate_nix_file(file: str, apply: str = "f: f"):
         stderr=asyncio.subprocess.PIPE,
     )
     stdout, stderr = await process.communicate()
-    if process.returncode is None:
-        raise Exception("Process was killed unexpectedly")
     if process.returncode != 0:
         raise ShellException(
             " ".join(command),

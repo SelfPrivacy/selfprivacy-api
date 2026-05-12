@@ -48,6 +48,7 @@ class FlakeServiceManager:
 """
         content += f"\n  inputs = {inputs_expr};"
         content += """
+
   outputs =
     inputs@{ self, selfprivacy-nixos-config, ... }:
     let

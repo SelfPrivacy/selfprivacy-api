@@ -2,6 +2,7 @@ import aiofiles
 import pytest
 
 from selfprivacy_api.services.flake_service_manager import FlakeServiceManager
+from selfprivacy_api.actions.system import set_nixos_config_url
 
 all_services_file = """
 {
@@ -36,6 +37,7 @@ all_services_file = """
       url = "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/vikunja";
     };
   };
+
   outputs =
     inputs@{ self, selfprivacy-nixos-config, ... }:
     let
@@ -75,6 +77,7 @@ some_services_file = """
       url = "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/monitoring";
     };
   };
+
   outputs =
     inputs@{ self, selfprivacy-nixos-config, ... }:
     let
@@ -185,3 +188,18 @@ async def test_change_empty_services_list(no_services_flake_mock):
         file_content = (await file.read()).strip()
 
     assert all_services_file.strip() == file_content
+
+
+@pytest.mark.asyncio
+async def test_change_nixos_config_url(no_services_flake_mock):
+    async with aiofiles.open(no_services_flake_mock, "r", encoding="utf-8") as file:
+        original_flake = (await file.read()).strip()
+
+    await set_nixos_config_url(
+        "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=supersecretbranch"
+    )
+
+    async with aiofiles.open(no_services_flake_mock, "r", encoding="utf-8") as file:
+        file_content = (await file.read()).strip()
+
+    assert original_flake.replace("ref=flakes", "ref=supersecretbranch") == file_content
