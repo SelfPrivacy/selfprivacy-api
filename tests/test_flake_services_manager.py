@@ -1,8 +1,11 @@
 import aiofiles
+import tempfile
 import pytest
 
 from selfprivacy_api.services.flake_service_manager import FlakeServiceManager
 from selfprivacy_api.actions.system import set_nixos_config_url
+from selfprivacy_api.exceptions.system import ShellException
+from selfprivacy_api.utils.nix import format_nix_expr, evaluate_nix_file
 
 all_services_file = """
 {
@@ -120,6 +123,21 @@ def no_services_flake_mock(mocker, datadir):
 
 
 # ---
+
+
+@pytest.mark.asyncio
+async def test_parsing_invalid_nix_fails():
+    with tempfile.NamedTemporaryFile() as fp:
+        fp.write(b"{ x =  }")
+        fp.close()
+        with pytest.raises(ShellException) as _:
+            await evaluate_nix_file(fp.name)
+
+
+@pytest.mark.asyncio
+async def test_formatting_invalid_nix_fails():
+    with pytest.raises(ShellException) as _:
+        await format_nix_expr("{ x = }")
 
 
 @pytest.mark.asyncio
