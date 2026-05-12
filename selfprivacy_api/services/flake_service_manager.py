@@ -1,3 +1,4 @@
+import aiofiles
 import copy
 
 from opentelemetry import trace
@@ -69,8 +70,8 @@ class FlakeServiceManager:
 
         content = await format_nix_expr(content)
 
-        with open(FLAKE_CONFIG_PATH, "w") as file:
-            file.write(content)
+        async with aiofiles.open(FLAKE_CONFIG_PATH, "w") as file:
+            await file.write(content)
 
         if exc:
             self._span.set_status(trace.Status(trace.StatusCode.ERROR))

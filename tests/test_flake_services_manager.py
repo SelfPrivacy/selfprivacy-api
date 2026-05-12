@@ -1,3 +1,4 @@
+import aiofiles
 import pytest
 
 from selfprivacy_api.services.flake_service_manager import FlakeServiceManager
@@ -148,8 +149,8 @@ async def test_change_services_list(some_services_flake_mock):
     async with FlakeServiceManager() as manager:
         assert manager.services == services
 
-    with open(some_services_flake_mock, "r", encoding="utf-8") as file:
-        file_content = file.read().strip()
+    async with aiofiles.open(some_services_flake_mock, "r", encoding="utf-8") as file:
+        file_content = (await file.read()).strip()
 
     assert all_services_file.strip() == file_content
 
@@ -180,7 +181,7 @@ async def test_change_empty_services_list(no_services_flake_mock):
     async with FlakeServiceManager() as manager:
         assert manager.services == services
 
-    with open(no_services_flake_mock, "r", encoding="utf-8") as file:
-        file_content = file.read().strip()
+    async with aiofiles.open(no_services_flake_mock, "r", encoding="utf-8") as file:
+        file_content = (await file.read()).strip()
 
     assert all_services_file.strip() == file_content

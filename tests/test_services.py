@@ -108,7 +108,7 @@ def undefined_enabledness_service(dummy_service: DummyService, request) -> Dummy
 
 
 @pytest.mark.asyncio
-async def test_undefined_enabledness_in_json_means_False(
+async def test_undefined_enabledness_in_json_means_false(
     undefined_enabledness_service: DummyService,
 ):
     dummy_service = undefined_enabledness_service

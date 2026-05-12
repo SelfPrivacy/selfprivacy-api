@@ -1,5 +1,6 @@
 """A Service implementation that loads all needed data from a JSON file"""
 
+import aiofiles
 import base64
 import logging
 import json
@@ -278,8 +279,8 @@ class TemplatedService(Service):
         if not self.is_installed():
             # First, double-check that it is a suggested module
             if exists(SP_SUGGESTED_MODULES_PATH):
-                with open(SP_SUGGESTED_MODULES_PATH) as file:
-                    suggested_modules = json.load(file)
+                async with aiofiles.open(SP_SUGGESTED_MODULES_PATH) as file:
+                    suggested_modules = json.loads(await file.read())
                 if name not in suggested_modules:
                     raise ValueError("Service is not a suggested module")
             else:
