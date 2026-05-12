@@ -1,5 +1,4 @@
 import aiofiles
-import tempfile
 import pytest
 
 from selfprivacy_api.services.flake_service_manager import FlakeServiceManager
@@ -112,24 +111,14 @@ def some_services_flake_mock(mocker, datadir):
     return flake_config_path
 
 
-@pytest.fixture
-def no_services_flake_mock(mocker, datadir):
-    flake_config_path = datadir / "no_services.nix"
-    mocker.patch(
-        "selfprivacy_api.services.flake_service_manager.FLAKE_CONFIG_PATH",
-        new=flake_config_path,
-    )
-    return flake_config_path
-
-
 # ---
 
 
 @pytest.mark.asyncio
 async def test_parsing_invalid_nix_fails():
-    with tempfile.NamedTemporaryFile() as fp:
-        fp.write(b"{ x =  }")
-        fp.close()
+    async with aiofiles.tempfile.NamedTemporaryFile() as fp:
+        await fp.write(b"{ x =  }")
+        await fp.close()
         with pytest.raises(ShellException) as _:
             await evaluate_nix_file(fp.name)
 

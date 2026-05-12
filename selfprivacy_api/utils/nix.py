@@ -3,13 +3,15 @@
 import asyncio
 import json
 import logging
+from os import PathLike
 
 from selfprivacy_api.exceptions.system import ShellException
 
 logger = logging.getLogger(__name__)
 
 
-async def evaluate_nix_file(file: str, apply: str = "f: f"):
+async def evaluate_nix_file(file: str | PathLike[str], apply: str = "f: f"):
+    file = str(file)  # we need string, not path object.
     command = [
         "nix",
         "eval",

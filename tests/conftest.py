@@ -11,6 +11,7 @@ import subprocess
 
 from os import path
 from os import makedirs
+from pathlib import Path
 from typing import AsyncGenerator
 from fastapi.testclient import TestClient
 from shutil import copyfile
@@ -98,6 +99,20 @@ def clone_global_file(filename, tmpdir) -> str:
 
     copyfile(source_path, clone_path)
     return clone_path
+
+
+@pytest.fixture
+def no_services_flake_mock(mocker, tmp_path):
+    source_path = (
+        Path(__file__).parent / "test_flake_services_manager" / "no_services.nix"
+    )
+    flake_config_path = tmp_path / "no_services.nix"
+    copyfile(source_path, flake_config_path)
+    mocker.patch(
+        "selfprivacy_api.services.flake_service_manager.FLAKE_CONFIG_PATH",
+        new=str(flake_config_path),
+    )
+    return str(flake_config_path)
 
 
 @pytest.fixture
