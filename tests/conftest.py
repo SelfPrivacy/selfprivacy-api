@@ -14,6 +14,7 @@ from typing import AsyncGenerator, List
 import httpx
 import pytest
 import pytest_asyncio
+from pathlib import Path
 from fastapi.testclient import TestClient
 
 import selfprivacy_api.services as services
@@ -110,6 +111,20 @@ def clone_global_file(filename, tmpdir) -> str:
 
     copyfile(source_path, clone_path)
     return clone_path
+
+
+@pytest.fixture
+def no_services_flake_mock(mocker, tmp_path):
+    source_path = (
+        Path(__file__).parent / "test_flake_services_manager" / "no_services.nix"
+    )
+    flake_config_path = tmp_path / "no_services.nix"
+    copyfile(source_path, flake_config_path)
+    mocker.patch(
+        "selfprivacy_api.services.flake_service_manager.FLAKE_CONFIG_PATH",
+        new=str(flake_config_path),
+    )
+    return str(flake_config_path)
 
 
 @pytest.fixture

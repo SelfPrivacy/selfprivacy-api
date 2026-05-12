@@ -8,6 +8,7 @@ from collections import Counter
 
 from selfprivacy_api.graphql.queries.providers import DnsProvider
 from selfprivacy_api.utils import ReadUserData, UserDataFiles, WriteUserData
+from selfprivacy_api.services.flake_service_manager import FlakeServiceManager
 
 from tests.common import generate_system_query, read_json
 from tests.test_graphql.common import (
@@ -1748,3 +1749,57 @@ def test_set_dns_provider_unauthorized(client, generic_userdata):
 
     response = api_set_dns_provider(client, provider, token)
     assert_empty(response)
+
+
+API_SET_NIXOS_CONFIG_URL_MUTATION = """
+mutation setNixosConfigUrl($url: String!) {
+    system {
+        setNixosConfigUrl(url: $url) {
+            success
+            message
+            code
+        }
+    }
+}
+"""
+
+
+def test_graphql_set_nixos_config_url_unauthorized(client, turned_on):
+    """Test set nixos config url without auth"""
+    response = client.post(
+        "/graphql",
+        json={
+            "query": API_SET_NIXOS_CONFIG_URL_MUTATION,
+            "variables": {
+                "url": "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=supersecretbranch"
+            },
+        },
+    )
+    assert_empty(response)
+
+
+@pytest.mark.asyncio
+async def test_graphql_set_nixos_config_url(
+    no_services_flake_mock, authorized_client, turned_on
+):
+    """Test set nixos config url"""
+    new_config_url = "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=supersecretbranch"
+
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_SET_NIXOS_CONFIG_URL_MUTATION,
+            "variables": {
+                "url": new_config_url,
+            },
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json().get("data") is not None
+    assert response.json()["data"]["system"]["setNixosConfigUrl"]["success"] is True
+    assert response.json()["data"]["system"]["setNixosConfigUrl"]["message"] is not None
+    assert response.json()["data"]["system"]["setNixosConfigUrl"]["code"] == 200
+
+    async with FlakeServiceManager() as manager:
+        assert manager.inputs["selfprivacy-nixos-config"]["url"] == new_config_url
