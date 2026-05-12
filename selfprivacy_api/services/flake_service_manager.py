@@ -34,20 +34,27 @@ class FlakeServiceManager:
         return self
 
     async def __aexit__(self, exc_type, exc, traceback) -> None:
-        if self.inputs == self._inputs and self.services == self._services:
-            return
+        try:
+            if exc:
+                self._span.set_status(trace.Status(trace.StatusCode.ERROR))
+                self._span.record_exception(exc)
+                return
 
-        inputs = self.inputs
-        for service_name, url in self.services.items():
-            inputs[f"{SP_MODULE_INPUT_PREFIX}{service_name}"] = {"url": url}
+            if self.inputs == self._inputs and self.services == self._services:
+                self._span.set_status(trace.Status(trace.StatusCode.OK))
+                return
 
-        inputs_expr = await to_nix_expr(inputs)
+            inputs = self.inputs
+            for service_name, url in self.services.items():
+                inputs[f"{SP_MODULE_INPUT_PREFIX}{service_name}"] = {"url": url}
 
-        content = """{
+            inputs_expr = await to_nix_expr(inputs)
+
+            content = """{
   description = "SelfPrivacy NixOS configuration local flake";
 """
-        content += f"\n  inputs = {inputs_expr};"
-        content += """
+            content += f"\n  inputs = {inputs_expr};"
+            content += """
 
   outputs =
     inputs@{ self, selfprivacy-nixos-config, ... }:
@@ -69,15 +76,11 @@ class FlakeServiceManager:
 }
 """
 
-        content = await format_nix_expr(content)
+            content = await format_nix_expr(content)
 
-        async with aiofiles.open(FLAKE_CONFIG_PATH, "w") as file:
-            await file.write(content)
+            async with aiofiles.open(FLAKE_CONFIG_PATH, "w") as file:
+                await file.write(content)
 
-        if exc:
-            self._span.set_status(trace.Status(trace.StatusCode.ERROR))
-            self._span.record_exception(exc)
-        else:
             self._span.set_status(trace.Status(trace.StatusCode.OK))
-
-        self._span.end()
+        finally:
+            self._span.end()
