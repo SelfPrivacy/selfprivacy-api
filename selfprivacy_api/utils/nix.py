@@ -4,19 +4,13 @@ import asyncio
 import json
 import logging
 
+from selfprivacy_api.exceptions.system import ShellException
+
 logger = logging.getLogger(__name__)
 
 
-class NixException(Exception):
-    """Nix call errors"""
-
-    @staticmethod
-    def get_error_message() -> str:
-        return "Internal nix call failed"
-
-
 async def evaluate_nix_file(file: str, apply: str = "f: f"):
-    process = await asyncio.create_subprocess_exec(
+    command = [
         "nix",
         "eval",
         "--file",
@@ -24,6 +18,9 @@ async def evaluate_nix_file(file: str, apply: str = "f: f"):
         "--apply",
         apply,
         "--json",
+    ]
+    process = await asyncio.create_subprocess_exec(
+        *command,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
@@ -31,15 +28,17 @@ async def evaluate_nix_file(file: str, apply: str = "f: f"):
     if process.returncode is None:
         raise Exception("Process was killed unexpectedly")
     if process.returncode != 0:
-        msg = "evaluate_nix_file Nix call failed with non zero exit code."
-        logger.error(f"{msg}\n" + stderr.decode("utf-8"))
-        raise NixException(msg)
+        raise ShellException(
+            " ".join(command),
+            stderr.decode("utf-8"),
+            f"Failed to evaluate Nix expression in file {file}",
+        )
     return json.loads(stdout.decode("utf-8"))
 
 
 async def to_nix_expr(value):
     str_json = json.dumps(value)
-    process = await asyncio.create_subprocess_exec(
+    command = [
         "nix",
         "eval",
         "--expr",
@@ -48,16 +47,21 @@ async def to_nix_expr(value):
         "input",
         str_json,
         "res",
+    ]
+    process = await asyncio.create_subprocess_exec(
+        *command,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
     stdout, stderr = await process.communicate()
     if process.returncode != 0:
-        msg = "to_nix_expr Nix call failed with non zero exit code."
-        logger.error(f"{msg}\n" + stderr.decode("utf-8"))
-        raise NixException(msg)
-    nix_expr = stdout.decode("utf-8").strip()
+        raise ShellException(
+            " ".join(command),
+            stderr.decode("utf-8"),
+            "Failed to convert JSON object to Nix expression",
+        )
 
+    nix_expr = stdout.decode("utf-8").strip()
     assert len(nix_expr) != 0
 
     return nix_expr
@@ -72,7 +76,9 @@ async def format_nix_expr(expr: str):
     )
     stdout, stderr = await process.communicate(expr.encode("utf-8"))
     if process.returncode != 0:
-        msg = "format_nix_expr nixfmt-rfc-style call failed with non zero exit code."
-        logger.error(f"{msg}\n" + stderr.decode("utf-8"))
-        raise NixException(msg)
+        raise ShellException(
+            "nixfmt",
+            stderr.decode("utf-8"),
+            "Failed to format Nix expression via nixfmt",
+        )
     return stdout.decode("utf-8").strip()
