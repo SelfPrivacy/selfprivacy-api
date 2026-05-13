@@ -4,7 +4,6 @@ import logging
 import os
 import json
 import subprocess
-from json import JSONDecodeError
 from typing import Any, Optional, Union
 
 import aiofiles
@@ -382,7 +381,7 @@ class KanidmUserRepository(AbstractUserRepository):
 
                 response_data = response.json()
 
-        except JSONDecodeError as error:
+        except json.JSONDecodeError as error:
             raise KanidmQueryError(
                 endpoint=full_endpoint,
                 method=method,
