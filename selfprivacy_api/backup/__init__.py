@@ -745,7 +745,7 @@ class Backups:
         if period is None:
             return False
 
-        if not await service.is_enabled():
+        if not service.is_enabled():
             return False
         if not service.can_be_backed_up():
             return False

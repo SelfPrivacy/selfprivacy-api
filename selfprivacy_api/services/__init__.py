@@ -85,9 +85,7 @@ class ServiceManager(Service):
     @staticmethod
     @tracer.start_as_current_span("get_enabled_services")
     async def get_enabled_services() -> list[Service]:
-        return [
-            service for service in await get_services() if await service.is_enabled()
-        ]
+        return [service for service in await get_services() if service.is_enabled()]
 
     @staticmethod
     @tracer.start_as_current_span("get_enabled_services_with_urls")
@@ -95,7 +93,7 @@ class ServiceManager(Service):
         return [
             service
             for service in await get_services(exclude_remote=True)
-            if await service.is_enabled() and service.get_url()
+            if service.is_enabled() and service.get_url()
         ]
 
     # This one is not currently used by any code.``
@@ -194,7 +192,7 @@ class ServiceManager(Service):
         return True
 
     @staticmethod
-    async def is_enabled() -> bool:
+    def is_enabled() -> bool:
         return True
 
     @staticmethod

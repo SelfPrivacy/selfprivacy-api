@@ -282,7 +282,7 @@ async def service_to_graphql_service(service: ServiceInterface) -> Service:
         svg_icon=service.get_svg_icon(),
         is_movable=service.is_movable(),
         is_required=service.is_required(),
-        is_enabled=await service.is_enabled(),
+        is_enabled=service.is_enabled(),
         is_installed=await service.is_installed(),
         can_be_backed_up=service.can_be_backed_up(),
         backup_description=service.get_backup_description(),

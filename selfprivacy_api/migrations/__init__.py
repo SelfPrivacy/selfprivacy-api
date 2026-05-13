@@ -37,7 +37,7 @@ migrations = [
     AddPostgresLocation(),
     SwitchToFlakes(),
     ReplaceBlockDevicesToUUID(),
-    AddMonitoring()
+    AddMonitoring(),
 ]
 
 

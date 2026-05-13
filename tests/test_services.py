@@ -62,10 +62,10 @@ async def test_service_stopper(raw_dummy_service):
 async def test_enabling_disabling_reads_json(dummy_service: DummyService):
     with WriteUserData() as data:
         data["modules"][dummy_service.get_id()]["enable"] = False
-    assert await dummy_service.is_enabled() is False
+    assert dummy_service.is_enabled() is False
     with WriteUserData() as data:
         data["modules"][dummy_service.get_id()]["enable"] = True
-    assert await dummy_service.is_enabled() is True
+    assert dummy_service.is_enabled() is True
 
 
 # A helper to test undefined states. Used in fixtures below
@@ -112,7 +112,7 @@ async def test_undefined_enabledness_in_json_means_false(
     undefined_enabledness_service: DummyService,
 ):
     dummy_service = undefined_enabledness_service
-    assert await dummy_service.is_enabled() is False
+    assert dummy_service.is_enabled() is False
 
 
 @pytest.mark.asyncio
