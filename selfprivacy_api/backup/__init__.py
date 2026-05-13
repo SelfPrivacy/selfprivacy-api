@@ -711,7 +711,7 @@ class Backups:
         return [
             service
             for service in await ServiceManager.get_all_services()
-            if await Backups.is_time_to_backup_service(service, time)
+            if Backups.is_time_to_backup_service(service, time)
         ]
 
     @staticmethod
@@ -739,7 +739,7 @@ class Backups:
 
     @staticmethod
     @tracer.start_as_current_span("is_time_to_backup_service")
-    async def is_time_to_backup_service(service: Service, time: datetime):
+    def is_time_to_backup_service(service: Service, time: datetime):
         """Returns True if it is time to back up a service"""
         period = Backups.autobackup_period_minutes()
         if period is None:

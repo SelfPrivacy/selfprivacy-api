@@ -58,8 +58,7 @@ async def test_service_stopper(raw_dummy_service):
 #     ]
 
 
-@pytest.mark.asyncio
-async def test_enabling_disabling_reads_json(dummy_service: DummyService):
+def test_enabling_disabling_reads_json(dummy_service: DummyService):
     with WriteUserData() as data:
         data["modules"][dummy_service.get_id()]["enable"] = False
     assert dummy_service.is_enabled() is False
@@ -107,8 +106,7 @@ def undefined_enabledness_service(dummy_service: DummyService, request) -> Dummy
     return dummy_service
 
 
-@pytest.mark.asyncio
-async def test_undefined_enabledness_in_json_means_false(
+def test_undefined_enabledness_in_json_means_false(
     undefined_enabledness_service: DummyService,
 ):
     dummy_service = undefined_enabledness_service

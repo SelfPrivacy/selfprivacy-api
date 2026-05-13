@@ -46,7 +46,7 @@ def dummy_snapshot(date: datetime):
 @pytest.mark.asyncio
 async def test_no_default_autobackup(backups, dummy_service):
     now = datetime.now(timezone.utc)
-    assert not await Backups.is_time_to_backup_service(dummy_service, now)
+    assert not Backups.is_time_to_backup_service(dummy_service, now)
     assert not await Backups.is_time_to_backup(now)
 
 
@@ -87,7 +87,7 @@ async def test_autobackup_taskbody(backups, only_dummy_service):
     assert_job_finished(autobackup_job_type(), count=0)
 
     Backups.set_autobackup_period_minutes(backup_period)
-    assert await Backups.is_time_to_backup_service(dummy_service, now)
+    assert Backups.is_time_to_backup_service(dummy_service, now)
     assert await Backups.is_time_to_backup(now)
     assert dummy_service in await Backups.services_to_back_up(now)
     assert len(await Backups.services_to_back_up(now)) == 1
@@ -107,15 +107,15 @@ async def test_autobackup_timer_periods(backups, dummy_service):
     now = datetime.now(timezone.utc)
     backup_period = 13  # minutes
 
-    assert not await Backups.is_time_to_backup_service(dummy_service, now)
+    assert not Backups.is_time_to_backup_service(dummy_service, now)
     assert not await Backups.is_time_to_backup(now)
 
     Backups.set_autobackup_period_minutes(backup_period)
-    assert await Backups.is_time_to_backup_service(dummy_service, now)
+    assert Backups.is_time_to_backup_service(dummy_service, now)
     assert await Backups.is_time_to_backup(now)
 
     Backups.set_autobackup_period_minutes(0)
-    assert not await Backups.is_time_to_backup_service(dummy_service, now)
+    assert not Backups.is_time_to_backup_service(dummy_service, now)
     assert not await Backups.is_time_to_backup(now)
 
 
@@ -131,14 +131,14 @@ async def test_autobackup_timer_enabling(backups, dummy_service):
     )  # there are other services too, not just our dummy
 
     # not backuppable service is not backuppable even if period is set
-    assert not await Backups.is_time_to_backup_service(dummy_service, now)
+    assert not Backups.is_time_to_backup_service(dummy_service, now)
 
     dummy_service.set_backuppable(True)
     assert dummy_service.can_be_backed_up()
-    assert await Backups.is_time_to_backup_service(dummy_service, now)
+    assert Backups.is_time_to_backup_service(dummy_service, now)
 
     Backups.disable_all_autobackup()
-    assert not await Backups.is_time_to_backup_service(dummy_service, now)
+    assert not Backups.is_time_to_backup_service(dummy_service, now)
     assert not await Backups.is_time_to_backup(now)
 
 
@@ -148,19 +148,19 @@ async def test_autobackup_timing(backups, dummy_service):
     now = datetime.now(timezone.utc)
 
     Backups.set_autobackup_period_minutes(backup_period)
-    assert await Backups.is_time_to_backup_service(dummy_service, now)
+    assert Backups.is_time_to_backup_service(dummy_service, now)
     assert await Backups.is_time_to_backup(now)
 
     await Backups.back_up(dummy_service)
 
     now = datetime.now(timezone.utc)
-    assert not await Backups.is_time_to_backup_service(dummy_service, now)
+    assert not Backups.is_time_to_backup_service(dummy_service, now)
 
     past = datetime.now(timezone.utc) - timedelta(minutes=1)
-    assert not await Backups.is_time_to_backup_service(dummy_service, past)
+    assert not Backups.is_time_to_backup_service(dummy_service, past)
 
     future = datetime.now(timezone.utc) + timedelta(minutes=backup_period + 2)
-    assert await Backups.is_time_to_backup_service(dummy_service, future)
+    assert Backups.is_time_to_backup_service(dummy_service, future)
 
 
 # --------------------- What to autobackup and what not to --------------------
@@ -195,10 +195,10 @@ async def test_services_to_autobackup(backups, dummy_service):
 async def test_do_not_autobackup_disabled_services(backups, dummy_service):
     now = datetime.now(timezone.utc)
     Backups.set_autobackup_period_minutes(3)
-    assert await Backups.is_time_to_backup_service(dummy_service, now) is True
+    assert Backups.is_time_to_backup_service(dummy_service, now) is True
 
     await dummy_service.disable()
-    assert await Backups.is_time_to_backup_service(dummy_service, now) is False
+    assert Backups.is_time_to_backup_service(dummy_service, now) is False
 
 
 @pytest.mark.asyncio
@@ -207,7 +207,7 @@ async def test_failed_autoback_prevents_more_autobackup(backups, dummy_service):
     now = datetime.now(timezone.utc)
 
     Backups.set_autobackup_period_minutes(backup_period)
-    assert await Backups.is_time_to_backup_service(dummy_service, now)
+    assert Backups.is_time_to_backup_service(dummy_service, now)
 
     # artificially making an errored out backup job
     dummy_service.set_backuppable(False)
@@ -218,7 +218,7 @@ async def test_failed_autoback_prevents_more_autobackup(backups, dummy_service):
     assert Backups.get_last_backed_up(dummy_service) is None
     assert Backups.get_last_backup_error_time(dummy_service) is not None
 
-    assert await Backups.is_time_to_backup_service(dummy_service, now) is False
+    assert Backups.is_time_to_backup_service(dummy_service, now) is False
 
 
 @pytest.mark.asyncio
@@ -239,8 +239,8 @@ async def test_slices_minimal(backups, only_dummy_service_and_api):
     now = datetime.now(timezone.utc)
 
     Backups.set_autobackup_period_minutes(backup_period)
-    assert await Backups.is_time_to_backup_service(dummy_service, now)
-    assert await Backups.is_time_to_backup_service(ServiceManager(), now)
+    assert Backups.is_time_to_backup_service(dummy_service, now)
+    assert Backups.is_time_to_backup_service(ServiceManager(), now)
 
     assert len(await ServiceManager.get_all_services()) == 2
     assert len(await Backups.services_to_back_up(now)) == 2
