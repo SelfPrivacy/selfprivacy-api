@@ -3,7 +3,6 @@ import gettext
 import logging
 import os
 import json
-import re
 import subprocess
 from json import JSONDecodeError
 from typing import Any, Optional, Union
