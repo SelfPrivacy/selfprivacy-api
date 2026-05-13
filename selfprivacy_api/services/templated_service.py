@@ -219,7 +219,7 @@ class TemplatedService(Service):
     def get_backup_description(self) -> str:
         return self.meta.backup_description
 
-    async def is_enabled(self) -> bool:
+    def is_enabled(self) -> bool:
         name = self.get_id()
         with ReadUserData() as user_data:
             return user_data.get("modules", {}).get(name, {}).get("enable", False)

@@ -22,8 +22,9 @@ class MergeSpModulesFlake(Migration):
             "/etc/nixos/sp-modules/flake.nix", "f: f.inputs"
         )
 
-        os.rename("/etc/nixos/sp-modules", "/etc/nixos/.legacy-sp-modules")
-
         async with FlakeServiceManager() as manager:
+            manager.inputs.pop("sp-modules", None)
             for key, value in current_services.items():
                 manager.services[key] = value["url"]
+
+        os.rename("/etc/nixos/sp-modules", "/etc/nixos/.legacy-sp-modules")
