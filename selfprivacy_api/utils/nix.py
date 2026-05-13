@@ -62,7 +62,6 @@ async def to_nix_expr(value):
         )
 
     nix_expr = stdout.decode("utf-8").strip()
-    assert len(nix_expr) != 0
 
     return nix_expr
 

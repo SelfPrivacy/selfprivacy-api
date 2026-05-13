@@ -276,7 +276,7 @@ class TemplatedService(Service):
     async def enable(self):
         """Enable the service. Usually this means enabling systemd unit."""
         name = self.get_id()
-        if not self.is_installed():
+        if not await self.is_installed():
             # First, double-check that it is a suggested module
             if exists(SP_SUGGESTED_MODULES_PATH):
                 async with aiofiles.open(SP_SUGGESTED_MODULES_PATH) as file:

@@ -13,23 +13,35 @@ tracer = trace.get_tracer(__name__)
 
 class FlakeServiceManager:
     async def __aenter__(self) -> "FlakeServiceManager":
-        self._span = tracer.start_span("FlakeServiceManager context")
+        self._span_context_manager = tracer.start_as_current_span(
+            "FlakeServiceManager context",
+            record_exception=False,
+            set_status_on_exception=False,
+        )
+        self._span = self._span_context_manager.__enter__()
         self._inputs = {}
         self._services = {}
 
-        inputs = await evaluate_nix_file(
-            FLAKE_CONFIG_PATH, 'f: if builtins.hasAttr "inputs" f then f.inputs else {}'
-        )
+        try:
+            inputs = await evaluate_nix_file(
+                FLAKE_CONFIG_PATH,
+                'f: if builtins.hasAttr "inputs" f then f.inputs else {}',
+            )
 
-        for key, value in inputs.items():
-            if key.startswith(SP_MODULE_INPUT_PREFIX):
-                service_name = key.removeprefix(SP_MODULE_INPUT_PREFIX)
-                self._services[service_name] = value["url"]
-            else:
-                self._inputs[key] = value
+            for key, value in inputs.items():
+                if key.startswith(SP_MODULE_INPUT_PREFIX):
+                    service_name = key.removeprefix(SP_MODULE_INPUT_PREFIX)
+                    self._services[service_name] = value["url"]
+                else:
+                    self._inputs[key] = value
 
-        self.inputs = copy.deepcopy(self._inputs)
-        self.services = copy.deepcopy(self._services)
+            self.inputs = copy.deepcopy(self._inputs)
+            self.services = copy.deepcopy(self._services)
+        except Exception as exc:
+            self._span.set_status(trace.Status(trace.StatusCode.ERROR))
+            self._span.record_exception(exc)
+            self._span_context_manager.__exit__(type(exc), exc, exc.__traceback__)
+            raise
 
         return self
 
@@ -83,4 +95,4 @@ class FlakeServiceManager:
 
             self._span.set_status(trace.Status(trace.StatusCode.OK))
         finally:
-            self._span.end()
+            self._span_context_manager.__exit__(exc_type, exc, traceback)
