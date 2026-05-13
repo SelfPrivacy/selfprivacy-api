@@ -70,3 +70,25 @@ def test_all_jobs_when_some(authorized_client, jobs):
     assert api_job["finishedAt"] == None
     assert api_job["error"] == None
     assert api_job["result"] == None
+
+
+def test_job_args_interpolated_in_graphql_response(authorized_client, jobs):
+    Jobs.add(
+        name="Backup %(display_name)s",
+        type_id="test.backup",
+        description="Backing up %(display_name)s",
+        name_args={"display_name": "Nextcloud"},
+        description_args={"display_name": "Nextcloud"},
+    )
+    output = api_jobs(authorized_client)
+    assert len(output) == 1
+    assert output[0]["name"] == "Backup Nextcloud"
+    assert output[0]["description"] == "Backing up Nextcloud"
+
+
+def test_job_without_args_unaffected_in_graphql_response(authorized_client, jobs):
+    Jobs.add("Total backup", "test.total", "Backing up all enabled services")
+    output = api_jobs(authorized_client)
+    assert len(output) == 1
+    assert output[0]["name"] == "Total backup"
+    assert output[0]["description"] == "Backing up all enabled services"

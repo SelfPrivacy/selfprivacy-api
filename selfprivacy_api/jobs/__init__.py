@@ -15,14 +15,14 @@ A job is a dictionary with the following keys:
     - result: result of the job
 """
 
+import json
 import typing
-import asyncio
 import datetime
 from uuid import UUID
 import uuid
 from enum import Enum
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from selfprivacy_api.utils.redis_pool import RedisPool
 from selfprivacy_api.utils.redis_model_storage import store_model_as_hash
@@ -53,6 +53,8 @@ class Job(BaseModel):
     type_id: str
     name: str
     description: str
+    name_args: typing.Optional[dict] = None
+    description_args: typing.Optional[dict] = None
     status: JobStatus
     status_text: typing.Optional[str]
     progress: typing.Optional[int]
@@ -61,6 +63,13 @@ class Job(BaseModel):
     finished_at: typing.Optional[datetime.datetime]
     error: typing.Optional[str]
     result: typing.Optional[str]
+
+    @field_validator("name_args", "description_args", mode="before")
+    @classmethod
+    def _parse_json_dict(cls, v: typing.Any) -> typing.Any:
+        if isinstance(v, str):
+            return json.loads(v)
+        return v
 
 
 class Jobs:
@@ -83,6 +92,8 @@ class Jobs:
         name: str,
         type_id: str,
         description: str,
+        name_args: typing.Optional[dict] = None,
+        description_args: typing.Optional[dict] = None,
         status: JobStatus = JobStatus.CREATED,
         status_text: str = "",
         progress: int = 0,
@@ -95,6 +106,8 @@ class Jobs:
             name=name,
             type_id=type_id,
             description=description,
+            name_args=name_args,
+            description_args=description_args,
             status=status,
             status_text=status_text,
             progress=progress,

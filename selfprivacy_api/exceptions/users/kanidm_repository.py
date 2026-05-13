@@ -169,9 +169,7 @@ class KanidmDidNotReturnAdminPassword(AbstractException):
             ),
             locale=locale,
         ) % {
-            "KANIDM_DESCRIPTION": t.translate(
-                text=KANIDM_DESCRIPTION, locale=locale
-            ),
+            "KANIDM_DESCRIPTION": t.translate(text=KANIDM_DESCRIPTION, locale=locale),
             "KANIDM_PROBLEMS": t.translate(text=KANIDM_PROBLEMS, locale=locale),
             "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
                 text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
@@ -213,9 +211,7 @@ class KanidmCliSubprocessError(AbstractException):
             ),
             locale=locale,
         ) % {
-            "KANIDM_DESCRIPTION": t.translate(
-                text=KANIDM_DESCRIPTION, locale=locale
-            ),
+            "KANIDM_DESCRIPTION": t.translate(text=KANIDM_DESCRIPTION, locale=locale),
             "description": self.description,
             "KANIDM_PROBLEMS": t.translate(text=KANIDM_PROBLEMS, locale=locale),
             "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
@@ -283,9 +279,7 @@ class NoPasswordResetLinkFoundInResponse(AbstractException):
             ),
             locale=locale,
         ) % {
-            "KANIDM_DESCRIPTION": t.translate(
-                text=KANIDM_DESCRIPTION, locale=locale
-            ),
+            "KANIDM_DESCRIPTION": t.translate(text=KANIDM_DESCRIPTION, locale=locale),
             "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
                 text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
             ),

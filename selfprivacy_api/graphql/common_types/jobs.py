@@ -28,6 +28,8 @@ class ApiJob:
     finished_at: Optional[datetime.datetime]
     error: Optional[str]
     result: Optional[str]
+    name_args: strawberry.Private[Optional[dict]] = None
+    description_args: strawberry.Private[Optional[dict]] = None
 
 
 def job_to_api_job(job: Job) -> ApiJob:
@@ -45,6 +47,8 @@ def job_to_api_job(job: Job) -> ApiJob:
         finished_at=job.finished_at,
         error=job.error,
         result=job.result,
+        name_args=job.name_args,
+        description_args=job.description_args,
     )
 
 
@@ -70,11 +74,19 @@ def translate_job(job: ApiJob, locale: str) -> ApiJob:
             return ""
         return t.translate(text=text, locale=locale)
 
+    name = t.translate(text=job.name, locale=locale)
+    if job.name_args:
+        name = name % job.name_args
+
+    description = t.translate(text=job.description, locale=locale)
+    if job.description_args:
+        description = description % job.description_args
+
     return ApiJob(
         uid=job.uid,
         type_id=job.type_id,
-        name=t.translate(text=job.name, locale=locale),
-        description=t.translate(text=job.description, locale=locale),
+        name=name,
+        description=description,
         status=job.status,
         status_text=_tr_opt(job.status_text, locale),
         progress=job.progress,

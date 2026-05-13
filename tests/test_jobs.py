@@ -4,6 +4,7 @@ import pytest
 from time import sleep
 
 from selfprivacy_api.jobs import Jobs, JobStatus
+from selfprivacy_api.graphql.common_types.jobs import job_to_api_job, translate_job
 import selfprivacy_api.jobs as jobsmodule
 
 
@@ -116,6 +117,68 @@ def test_finishing_equals_100_unless_stated_otherwise(jobs_with_one_job):
     jobs.update(job=test_job, status=JobStatus.FINISHED, progress=23)
 
     assert test_job.progress == 23
+
+
+def test_job_args_none_by_default(jobs_with_one_job):
+    job = jobs_with_one_job.get_jobs()[0]
+    assert job.name_args is None
+    assert job.description_args is None
+
+
+def test_job_args_survive_redis_roundtrip(jobs):
+    job = jobs.add(
+        name="Restore %(display_name)s",
+        type_id="test.restore",
+        description="Restoring %(display_name)s from %(snapshot_id)s",
+        name_args={"display_name": "MyService"},
+        description_args={"display_name": "MyService", "snapshot_id": "snap-123"},
+    )
+    retrieved = jobs.get_job(str(job.uid))
+    assert retrieved is not None
+    assert retrieved.name == "Restore %(display_name)s"
+    assert retrieved.description == "Restoring %(display_name)s from %(snapshot_id)s"
+    assert retrieved.name_args == {"display_name": "MyService"}
+    assert retrieved.description_args == {
+        "display_name": "MyService",
+        "snapshot_id": "snap-123",
+    }
+
+
+def test_translate_job_interpolates_args(jobs):
+    job = jobs.add(
+        name="Backup %(display_name)s",
+        type_id="test.backup",
+        description="Backing up %(display_name)s",
+        name_args={"display_name": "TestService"},
+        description_args={"display_name": "TestService"},
+    )
+    translated = translate_job(job_to_api_job(job), locale="en")
+    assert translated.name == "Backup TestService"
+    assert translated.description == "Backing up TestService"
+
+
+def test_translate_job_multi_key_description_args(jobs):
+    job = jobs.add(
+        name="Restore %(display_name)s",
+        type_id="test.restore",
+        description="Restoring %(display_name)s from %(snapshot_id)s",
+        name_args={"display_name": "Nextcloud"},
+        description_args={"display_name": "Nextcloud", "snapshot_id": "abc-123"},
+    )
+    translated = translate_job(job_to_api_job(job), locale="en")
+    assert translated.name == "Restore Nextcloud"
+    assert translated.description == "Restoring Nextcloud from abc-123"
+
+
+def test_translate_job_without_args_unchanged(jobs):
+    job = jobs.add(
+        name="Total backup",
+        type_id="test.total",
+        description="Backing up all enabled services",
+    )
+    translated = translate_job(job_to_api_job(job), locale="en")
+    assert translated.name == "Total backup"
+    assert translated.description == "Backing up all enabled services"
 
 
 @pytest.fixture
