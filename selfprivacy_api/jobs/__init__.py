@@ -57,14 +57,24 @@ class Job(BaseModel):
     description_args: typing.Optional[dict] = None
     status: JobStatus
     status_text: typing.Optional[str]
+    status_text_args: typing.Optional[dict] = None
     progress: typing.Optional[int]
     created_at: datetime.datetime
     updated_at: datetime.datetime
     finished_at: typing.Optional[datetime.datetime]
     error: typing.Optional[str]
+    error_args: typing.Optional[dict] = None
     result: typing.Optional[str]
+    result_args: typing.Optional[dict] = None
 
-    @field_validator("name_args", "description_args", mode="before")
+    @field_validator(
+        "name_args",
+        "description_args",
+        "status_text_args",
+        "error_args",
+        "result_args",
+        mode="before",
+    )
     @classmethod
     def _parse_json_dict(cls, v: typing.Any) -> typing.Any:
         if isinstance(v, str):
@@ -199,21 +209,29 @@ class Jobs:
         job: Job,
         status: JobStatus,
         status_text: typing.Optional[str] = None,
+        status_text_args: typing.Optional[dict] = None,
         progress: typing.Optional[int] = None,
         name: typing.Optional[str] = None,
+        name_args: typing.Optional[dict] = None,
         description: typing.Optional[str] = None,
+        description_args: typing.Optional[dict] = None,
         error: typing.Optional[str] = None,
+        error_args: typing.Optional[dict] = None,
         result: typing.Optional[str] = None,
+        result_args: typing.Optional[dict] = None,
     ) -> Job:
         """
         Update a job in the jobs list.
         """
         if name is not None:
             job.name = name
+            job.name_args = name_args
         if description is not None:
             job.description = description
+            job.description_args = description_args
         if status_text is not None:
             job.status_text = status_text
+            job.status_text_args = status_text_args
 
         # if it is finished it is 100
         # unless user says otherwise
@@ -227,7 +245,9 @@ class Jobs:
         Jobs.log_status_update(job, status)
         job.updated_at = datetime.datetime.now()
         job.error = error
+        job.error_args = error_args
         job.result = result
+        job.result_args = result_args
         if status in (JobStatus.FINISHED, JobStatus.ERROR):
             job.finished_at = datetime.datetime.now()
 

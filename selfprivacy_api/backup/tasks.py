@@ -230,8 +230,8 @@ async def do_full_restore(job: Job) -> None:
         Jobs.update(
             job,
             JobStatus.RUNNING,
-            status_text=_("restoring %(service_name)s")
-            % {"service_name": snap.service_name},
+            status_text=_("restoring %(service_name)s"),
+            status_text_args={"service_name": snap.service_name},
             progress=progress,
         )
 

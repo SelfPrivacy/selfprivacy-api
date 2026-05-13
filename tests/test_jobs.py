@@ -119,10 +119,40 @@ def test_finishing_equals_100_unless_stated_otherwise(jobs_with_one_job):
     assert test_job.progress == 23
 
 
+def test_update_name_and_description_args(jobs):
+    job = jobs.add(
+        name="Backup %(display_name)s",
+        type_id="test.backup",
+        description="Backing up %(display_name)s",
+        name_args={"display_name": "Nextcloud"},
+        description_args={"display_name": "Nextcloud"},
+    )
+    jobs.update(
+        job=job,
+        status=JobStatus.RUNNING,
+        name="Move %(service)s",
+        name_args={"service": "Bitwarden"},
+        description="Moving %(service)s data to %(volume)s",
+        description_args={"service": "Bitwarden", "volume": "sdb"},
+    )
+    retrieved = jobs.get_job(str(job.uid))
+    assert retrieved is not None
+    assert retrieved.name == "Move %(service)s"
+    assert retrieved.name_args == {"service": "Bitwarden"}
+    assert retrieved.description == "Moving %(service)s data to %(volume)s"
+    assert retrieved.description_args == {"service": "Bitwarden", "volume": "sdb"}
+    translated = translate_job(job_to_api_job(retrieved), locale="en")
+    assert translated.name == "Move Bitwarden"
+    assert translated.description == "Moving Bitwarden data to sdb"
+
+
 def test_job_args_none_by_default(jobs_with_one_job):
     job = jobs_with_one_job.get_jobs()[0]
     assert job.name_args is None
     assert job.description_args is None
+    assert job.status_text_args is None
+    assert job.error_args is None
+    assert job.result_args is None
 
 
 def test_job_args_survive_redis_roundtrip(jobs):
@@ -133,41 +163,65 @@ def test_job_args_survive_redis_roundtrip(jobs):
         name_args={"display_name": "MyService"},
         description_args={"display_name": "MyService", "snapshot_id": "snap-123"},
     )
+    jobs.update(
+        job=job,
+        status=JobStatus.RUNNING,
+        status_text="Found %(dead_packages)s packages to remove!",
+        status_text_args={"dead_packages": 42},
+    )
+    jobs.update(
+        job=job,
+        status=JobStatus.ERROR,
+        error="Block device %(block_device_name)s not found.",
+        error_args={"block_device_name": "sdb"},
+        result="%(size_in_megabytes)s have been cleared",
+        result_args={"size_in_megabytes": "1.2 GB"},
+    )
     retrieved = jobs.get_job(str(job.uid))
     assert retrieved is not None
     assert retrieved.name == "Restore %(display_name)s"
-    assert retrieved.description == "Restoring %(display_name)s from %(snapshot_id)s"
     assert retrieved.name_args == {"display_name": "MyService"}
+    assert retrieved.description == "Restoring %(display_name)s from %(snapshot_id)s"
     assert retrieved.description_args == {
         "display_name": "MyService",
         "snapshot_id": "snap-123",
     }
+    assert retrieved.status_text == "Found %(dead_packages)s packages to remove!"
+    assert retrieved.status_text_args == {"dead_packages": 42}
+    assert retrieved.error == "Block device %(block_device_name)s not found."
+    assert retrieved.error_args == {"block_device_name": "sdb"}
+    assert retrieved.result == "%(size_in_megabytes)s have been cleared"
+    assert retrieved.result_args == {"size_in_megabytes": "1.2 GB"}
 
 
 def test_translate_job_interpolates_args(jobs):
     job = jobs.add(
         name="Backup %(display_name)s",
         type_id="test.backup",
-        description="Backing up %(display_name)s",
-        name_args={"display_name": "TestService"},
-        description_args={"display_name": "TestService"},
-    )
-    translated = translate_job(job_to_api_job(job), locale="en")
-    assert translated.name == "Backup TestService"
-    assert translated.description == "Backing up TestService"
-
-
-def test_translate_job_multi_key_description_args(jobs):
-    job = jobs.add(
-        name="Restore %(display_name)s",
-        type_id="test.restore",
-        description="Restoring %(display_name)s from %(snapshot_id)s",
+        description="Backing up %(display_name)s from %(snapshot_id)s",
         name_args={"display_name": "Nextcloud"},
         description_args={"display_name": "Nextcloud", "snapshot_id": "abc-123"},
     )
+    jobs.update(
+        job=job,
+        status=JobStatus.RUNNING,
+        status_text="Found %(dead_packages)s packages to remove!",
+        status_text_args={"dead_packages": 15},
+    )
+    jobs.update(
+        job=job,
+        status=JobStatus.ERROR,
+        error="Block device %(block_device_name)s not found.",
+        error_args={"block_device_name": "sdb"},
+        result="%(size_in_megabytes)s have been cleared",
+        result_args={"size_in_megabytes": "339.84 MiB"},
+    )
     translated = translate_job(job_to_api_job(job), locale="en")
-    assert translated.name == "Restore Nextcloud"
-    assert translated.description == "Restoring Nextcloud from abc-123"
+    assert translated.name == "Backup Nextcloud"
+    assert translated.description == "Backing up Nextcloud from abc-123"
+    assert translated.status_text == "Found 15 packages to remove!"
+    assert translated.error == "Block device sdb not found."
+    assert translated.result == "339.84 MiB have been cleared"
 
 
 def test_translate_job_without_args_unchanged(jobs):
@@ -176,9 +230,32 @@ def test_translate_job_without_args_unchanged(jobs):
         type_id="test.total",
         description="Backing up all enabled services",
     )
+    jobs.update(
+        job=job,
+        status=JobStatus.FINISHED,
+        status_text="Done",
+        result="System is clear",
+        error=None,
+    )
     translated = translate_job(job_to_api_job(job), locale="en")
     assert translated.name == "Total backup"
     assert translated.description == "Backing up all enabled services"
+    assert translated.status_text == "Done"
+    assert translated.result == "System is clear"
+    assert translated.error is None
+
+
+def test_translate_job_status_text_args_cleared_on_update(jobs):
+    job = jobs.add(name="Some job", type_id="test.job", description="Doing things")
+    jobs.update(
+        job=job,
+        status=JobStatus.RUNNING,
+        status_text="Found %(dead_packages)s packages to remove!",
+        status_text_args={"dead_packages": 15},
+    )
+    jobs.update(job=job, status=JobStatus.RUNNING, status_text="Cleaning...")
+    translated = translate_job(job_to_api_job(job), locale="en")
+    assert translated.status_text == "Cleaning..."
 
 
 @pytest.fixture

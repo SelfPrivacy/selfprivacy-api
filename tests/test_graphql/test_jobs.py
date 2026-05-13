@@ -1,4 +1,4 @@
-from selfprivacy_api.jobs import Jobs
+from selfprivacy_api.jobs import Jobs, JobStatus
 
 from tests.common import generate_jobs_query
 from tests.test_graphql.common import (
@@ -73,17 +73,34 @@ def test_all_jobs_when_some(authorized_client, jobs):
 
 
 def test_job_args_interpolated_in_graphql_response(authorized_client, jobs):
-    Jobs.add(
+    job = Jobs.add(
         name="Backup %(display_name)s",
         type_id="test.backup",
         description="Backing up %(display_name)s",
         name_args={"display_name": "Nextcloud"},
         description_args={"display_name": "Nextcloud"},
     )
+    Jobs.update(
+        job=job,
+        status=JobStatus.RUNNING,
+        status_text="Found %(dead_packages)s packages to remove!",
+        status_text_args={"dead_packages": 7},
+    )
+    Jobs.update(
+        job=job,
+        status=JobStatus.ERROR,
+        error="Block device %(block_device_name)s not found.",
+        error_args={"block_device_name": "sdb"},
+        result="%(size_in_megabytes)s have been cleared",
+        result_args={"size_in_megabytes": "339.84 MiB"},
+    )
     output = api_jobs(authorized_client)
     assert len(output) == 1
     assert output[0]["name"] == "Backup Nextcloud"
     assert output[0]["description"] == "Backing up Nextcloud"
+    assert output[0]["statusText"] == "Found 7 packages to remove!"
+    assert output[0]["error"] == "Block device sdb not found."
+    assert output[0]["result"] == "339.84 MiB have been cleared"
 
 
 def test_job_without_args_unaffected_in_graphql_response(authorized_client, jobs):
