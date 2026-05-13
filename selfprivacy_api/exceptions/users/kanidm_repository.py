@@ -147,12 +147,10 @@ class KanidmDidNotReturnAdminPassword(AbstractException):
     def __init__(
         self,
         command: str,
-        regex_pattern: str,
         output: Any,
         log: bool = True,
     ) -> None:
         self.command = command
-        self.regex_pattern = regex_pattern
         self.output = str(output)
 
         super().__init__(log=log)
@@ -167,7 +165,6 @@ class KanidmDidNotReturnAdminPassword(AbstractException):
                 "%(REPORT_IT_TO_SUPPORT_CHATS)s\n\n"
                 "%(KANIDM_DEBUG_HELP)s\n\n"
                 "Used command: %(command)s\n"
-                "Used regex pattern: %(regex_pattern)s\n"
                 "Kanidm's CLI output: %(output)s"
             )
             % {
@@ -180,7 +177,6 @@ class KanidmDidNotReturnAdminPassword(AbstractException):
                 ),
                 "KANIDM_DEBUG_HELP": t.translate(text=KANIDM_DEBUG_HELP, locale=locale),
                 "command": self.command,
-                "regex_pattern": self.regex_pattern,
                 "output": self.output,
             },
             locale=locale,

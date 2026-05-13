@@ -2,6 +2,7 @@ import asyncio
 import gettext
 import logging
 import os
+import json
 import re
 import subprocess
 from json import JSONDecodeError
@@ -188,12 +189,11 @@ class KanidmAdminToken:
     def _reset_and_save_idm_admin_password() -> str:
         command = [
             "kanidmd",
+            "scripting",
             "recover-account",
+            "idm_admin",
             "-c",
             "/etc/kanidm/server.toml",
-            "idm_admin",
-            "-o",
-            "json",
         ]
 
         output = subprocess.check_output(
@@ -201,16 +201,21 @@ class KanidmAdminToken:
             text=True,
         )
 
-        regex_pattern = r'"password":"([^"]+)"'
-        match = re.search(regex_pattern, output)
-        if match:
-            new_kanidm_admin_password = match.group(
-                1
-            )  # we have many non-JSON strings in output
-        else:
+        try:
+            response = json.loads(output)
+        except json.JSONDecodeError as error:
             raise KanidmDidNotReturnAdminPassword(
                 command=" ".join(command),
-                regex_pattern=regex_pattern,
+                output=output,
+            ) from error
+
+        new_kanidm_admin_password = response.get("output")
+        if (
+            not isinstance(new_kanidm_admin_password, str)
+            or not new_kanidm_admin_password
+        ):
+            raise KanidmDidNotReturnAdminPassword(
+                command=" ".join(command),
                 output=output,
             )
 
