@@ -1,3 +1,4 @@
+import json
 import uuid
 
 from datetime import datetime
@@ -14,6 +15,8 @@ def store_model_as_hash(redis, redis_key, model):
             value = value.isoformat()
         if isinstance(value, Enum):
             value = value.value
+        if isinstance(value, dict):
+            value = json.dumps(value)
         value = str(value)
         model_dict[key] = value
 

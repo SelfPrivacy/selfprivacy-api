@@ -50,8 +50,8 @@ def add_autobackup_job(services: List[Service]) -> Job:
     job = Jobs.add(
         type_id=autobackup_job_type(),
         name=_("Automatic backup"),
-        description=_("Scheduled backup for services: %(pretty_service_list)s")
-        % {"pretty_service_list": pretty_service_list},
+        description=_("Scheduled backup for services: %(pretty_service_list)s"),
+        description_args={"pretty_service_list": pretty_service_list},
     )
     return job
 
@@ -68,8 +68,10 @@ def add_backup_job(service: Service) -> Job:
     display_name = service.get_display_name()
     job = Jobs.add(
         type_id=backup_job_type(service),
-        name=_("Backup %(display_name)s") % {"display_name": display_name},
-        description=_("Backing up %(display_name)s") % {"display_name": display_name},
+        name=_("Backup %(display_name)s"),
+        name_args={"display_name": display_name},
+        description=_("Backing up %(display_name)s"),
+        description_args={"display_name": display_name},
     )
     return job
 
@@ -126,12 +128,10 @@ async def add_restore_job(snapshot: Snapshot) -> Job:
     display_name = service.get_display_name()
     job = Jobs.add(
         type_id=restore_job_type(service),
-        name=_("Restore %(display_name)s") % {"display_name": display_name},
-        description=_("Restoring %(display_name)s from %(snapshot_id)s")
-        % {
-            "display_name": display_name,
-            "snapshot_id": snapshot.id,
-        },
+        name=_("Restore %(display_name)s"),
+        name_args={"display_name": display_name},
+        description=_("Restoring %(display_name)s from %(snapshot_id)s"),
+        description_args={"display_name": display_name, "snapshot_id": snapshot.id},
     )
     return job
 
