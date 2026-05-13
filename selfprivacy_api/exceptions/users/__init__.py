@@ -74,12 +74,11 @@ class UsernameForbidden(AbstractException):
                 text=_(
                     "Username is in reserved list or have reserved prefix.\n"
                     "Reserved prefix: %(forbidden_prefix)s."
-                )
-                % {
-                    "forbidden_prefix": self.forbidden_prefix,
-                },
+                ),
                 locale=locale,
-            )
+            ) % {
+                "forbidden_prefix": self.forbidden_prefix,
+            }
         return t.translate(
             text=_("Username is in reserved list or have reserved prefix."),
             locale=locale,
