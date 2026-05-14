@@ -5,8 +5,6 @@ from selfprivacy_api.exceptions.kanidm import (
     KANIDM_DEBUG_HELP,
     KANIDM_DESCRIPTION,
     KANIDM_PROBLEMS,
-)
-from selfprivacy_api.exceptions.users.kanidm_repository import (
     FailedToGetValidKanidmToken,
     KanidmCliSubprocessError,
     KanidmDidNotReturnAdminPassword,
