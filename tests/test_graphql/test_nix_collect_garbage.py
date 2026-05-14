@@ -67,7 +67,9 @@ def test_parse_line():
     )
 
     output = parse_line(job, txt)
-    assert output.result == "425.51 MiB have been cleared"
+    assert output.result == "%(size_in_megabytes)s have been cleared"
+    assert output.result_args is not None
+    assert output.result_args.get("size_in_megabytes") == "425.51 MiB"
     assert output.status == JobStatus.FINISHED
     assert output.error is None
 

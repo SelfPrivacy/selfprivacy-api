@@ -66,8 +66,8 @@ def parse_line(job: Job, line: str) -> Job:
             job=job,
             status=JobStatus.FINISHED,
             status_text=_("Garbage collection completed."),
-            result=_("%(size_in_megabytes)s have been cleared")
-            % {"size_in_megabytes": match.group(0)},
+            result=_("%(size_in_megabytes)s have been cleared"),
+            result_args={"size_in_megabytes": match.group(0)},
         )
     return job
 
@@ -130,8 +130,8 @@ def nix_collect_garbage_task(job: Job):
         job=job,
         status=JobStatus.RUNNING,
         progress=0,
-        status_text=_("Found %(dead_packages)s packages to remove!")
-        % {"dead_packages": dead_packages},
+        status_text=_("Found %(dead_packages)s packages to remove!"),
+        status_text_args={"dead_packages": dead_packages},
     )
 
     stream = action_nix_collect_garbage()

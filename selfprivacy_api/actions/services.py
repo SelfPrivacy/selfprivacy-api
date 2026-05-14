@@ -25,9 +25,10 @@ async def move_service(service_id: str, volume_name: str) -> Job:
 
     job = Jobs.add(
         type_id=f"services.{service.get_id()}.move",
-        name=_("Move %(service)s") % {"service": service.get_display_name()},
-        description=_("Moving %(service)s data to %(volume)s")
-        % {
+        name=_("Move %(service)s"),
+        name_args={"service": service.get_display_name()},
+        description=_("Moving %(service)s data to %(volume)s"),
+        description_args={
             "service": service.get_display_name(),
             "volume": volume.get_display_name().lower(),
         },
