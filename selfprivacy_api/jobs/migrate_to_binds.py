@@ -181,8 +181,8 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
             Jobs.update(
                 job=job,
                 status=JobStatus.ERROR,
-                error=_("Block device %(block_device_name)s not found.")
-                % {"block_device_name": block_device_name},
+                error=_("Block device %(block_device_name)s not found."),
+                error_args={"block_device_name": block_device_name},
             )
             return
 
@@ -198,16 +198,16 @@ def migrate_to_binds(config: BindMigrationConfig, job: Job):
             Jobs.update(
                 job=job,
                 status=JobStatus.ERROR,
-                error=_("Block device %(block_device_name)s not found.")
-                % {"block_device_name": block_device_name},
+                error=_("Block device %(block_device_name)s not found."),
+                error_args={"block_device_name": block_device_name},
             )
             return
         if f"/volumes/{block_device_name}" not in block_device.mountpoints:
             Jobs.update(
                 job=job,
                 status=JobStatus.ERROR,
-                error=_("Block device %(block_device_name)s not mounted.")
-                % {"block_device_name": block_device_name},
+                error=_("Block device %(block_device_name)s not mounted."),
+                error_args={"block_device_name": block_device_name},
             )
             return
 
