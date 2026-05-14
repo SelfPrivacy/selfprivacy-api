@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # For more information, see the README.md section “How to Add Translations”.
 

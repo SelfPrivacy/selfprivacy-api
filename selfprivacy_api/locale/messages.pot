@@ -22,25 +22,25 @@ msgstr ""
 msgid "Move %(service)s"
 msgstr ""
 
-#: selfprivacy_api/actions/services.py:29
+#: selfprivacy_api/actions/services.py:30
 #, python-format
 msgid "Moving %(service)s data to %(volume)s"
 msgstr ""
 
-#: selfprivacy_api/actions/system.py:124
+#: selfprivacy_api/actions/system.py:141
 msgid "Rebuild system"
 msgstr ""
 
-#: selfprivacy_api/actions/system.py:126
+#: selfprivacy_api/actions/system.py:143
 msgid ""
 "Applying the new system configuration by building the new NixOS generation."
 msgstr ""
 
-#: selfprivacy_api/actions/system.py:148
+#: selfprivacy_api/actions/system.py:165
 msgid "Upgrade system"
 msgstr ""
 
-#: selfprivacy_api/actions/system.py:149
+#: selfprivacy_api/actions/system.py:166
 msgid "Upgrading the system to the latest version."
 msgstr ""
 
@@ -431,40 +431,40 @@ msgstr ""
 msgid "Backup %(display_name)s"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:72
+#: selfprivacy_api/backup/jobs.py:73
 #, python-format
 msgid "Backing up %(display_name)s"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:79
+#: selfprivacy_api/backup/jobs.py:81
 #, python-format
 msgid ""
 "Cannot start a restore of %(service_id)s, another operation is running: "
 "%(op_type)s"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:93
+#: selfprivacy_api/backup/jobs.py:95
 msgid "Total restore"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:94
+#: selfprivacy_api/backup/jobs.py:96
 msgid "Restoring all enabled services"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:114
+#: selfprivacy_api/backup/jobs.py:116
 msgid "Total backup"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:115
+#: selfprivacy_api/backup/jobs.py:117
 msgid "Backing up all the enabled services"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:129
+#: selfprivacy_api/backup/jobs.py:131
 #, python-format
 msgid "Restore %(display_name)s"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:130
+#: selfprivacy_api/backup/jobs.py:133
 #, python-format
 msgid "Restoring %(display_name)s from %(snapshot_id)s"
 msgstr ""
@@ -536,7 +536,7 @@ msgid ""
 "Output: %(output)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/system.py:62
+#: selfprivacy_api/exceptions/system.py:61
 #, python-format
 msgid ""
 "Invalid timezone: %(timezone)s\n"
@@ -545,7 +545,7 @@ msgid ""
 "https://data.iana.org/time-zones/data/zone.tab"
 msgstr ""
 
-#: selfprivacy_api/exceptions/system.py:91
+#: selfprivacy_api/exceptions/system.py:89
 #, python-format
 msgid ""
 "%(description)s\n"
@@ -555,14 +555,14 @@ msgid ""
 "Data: %(data)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/system.py:123
+#: selfprivacy_api/exceptions/system.py:120
 #, python-format
 msgid ""
 "The provider %(provider)s requires additional secrets, but they were not "
 "provided."
 msgstr ""
 
-#: selfprivacy_api/exceptions/system.py:143
+#: selfprivacy_api/exceptions/system.py:139
 #, python-format
 msgid "The provider %(provider)s does not use the provided additional secrets."
 msgstr ""
@@ -623,27 +623,27 @@ msgid ""
 "Reserved prefix: %(forbidden_prefix)s."
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/__init__.py:84
+#: selfprivacy_api/exceptions/users/__init__.py:83
 msgid "Username is in reserved list or have reserved prefix."
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/__init__.py:98
+#: selfprivacy_api/exceptions/users/__init__.py:97
 msgid "User already exists"
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/__init__.py:109
+#: selfprivacy_api/exceptions/users/__init__.py:108
 msgid "Username must be alphanumeric and start with a letter.\n"
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/__init__.py:122
+#: selfprivacy_api/exceptions/users/__init__.py:121
 msgid "Username is too long. Must be less than 32 characters."
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/__init__.py:134
+#: selfprivacy_api/exceptions/users/__init__.py:133
 msgid "Password cannot be empty."
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/__init__.py:145
+#: selfprivacy_api/exceptions/users/__init__.py:144
 msgid "Display name is too long. Must be less than 256 characters."
 msgstr ""
 
@@ -684,7 +684,7 @@ msgid ""
 "Response: %(response)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:163
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:161
 #, python-format
 msgid ""
 "Failed to get access to Kanidm admin account:\n"
@@ -696,15 +696,14 @@ msgid ""
 "%(KANIDM_DEBUG_HELP)s\n"
 "\n"
 "Used command: %(command)s\n"
-"Used regex pattern: %(regex_pattern)s\n"
 "Kanidm's CLI output: %(output)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:199
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:192
 msgid "Error creating Kanidm token"
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:211
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:204
 #, python-format
 msgid ""
 "Kanidm CLI returned an error.\n"
@@ -717,7 +716,7 @@ msgid ""
 "Error: %(error)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:246
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:236
 #, python-format
 msgid ""
 "Сouldn't get a valid Kanidm token.\n"
@@ -726,7 +725,7 @@ msgid ""
 "%(REPORT_IT_TO_SUPPORT_CHATS)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:282
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:272
 #, python-format
 msgid ""
 "Kanidm didn't return a password reset link.\n"
@@ -751,22 +750,22 @@ msgstr ""
 msgid "Invalid key type. Supported key types: "
 msgstr ""
 
-#: selfprivacy_api/repositories/users/kanidm_user_repository.py:241
+#: selfprivacy_api/repositories/users/kanidm_user_repository.py:244
 msgid "Kanidm is not responding to requests. Connection error."
 msgstr ""
 
-#: selfprivacy_api/repositories/users/kanidm_user_repository.py:250
+#: selfprivacy_api/repositories/users/kanidm_user_repository.py:253
 msgid "Unknown error while checking the Kanidm admin token."
 msgstr ""
 
-#: selfprivacy_api/repositories/users/kanidm_user_repository.py:385
+#: selfprivacy_api/repositories/users/kanidm_user_repository.py:388
 msgid "No JSON found in Kanidm response."
 msgstr ""
 
-#: selfprivacy_api/repositories/users/kanidm_user_repository.py:397
+#: selfprivacy_api/repositories/users/kanidm_user_repository.py:400
 msgid "Kanidm is not responding to requests."
 msgstr ""
 
-#: selfprivacy_api/repositories/users/kanidm_user_repository.py:420
+#: selfprivacy_api/repositories/users/kanidm_user_repository.py:423
 msgid "Kanidm access issue"
 msgstr ""
