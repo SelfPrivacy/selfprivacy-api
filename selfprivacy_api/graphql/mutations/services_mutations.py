@@ -11,7 +11,6 @@ from strawberry.types import Info
 from selfprivacy_api.actions.services import (
     move_service,
 )
-from selfprivacy_api.exceptions.abstract_exception import AbstractException
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.common_types.jobs import job_to_api_job, translate_job
 from selfprivacy_api.graphql.common_types.service import (
@@ -24,7 +23,7 @@ from selfprivacy_api.graphql.mutations.mutation_interface import (
 )
 from selfprivacy_api.jobs import JobStatus
 from selfprivacy_api.services import ServiceManager
-from selfprivacy_api.utils import pretty_error
+from selfprivacy_api.utils.graphql import mutation_error_fields
 from selfprivacy_api.utils.localization import (
     TranslateSystemMessage as t,
     get_locale,
@@ -128,11 +127,9 @@ class ServicesMutations:
                         code=404,
                     )
                 service.enable()
-            except Exception as e:
+            except Exception as error:
                 return ServiceMutationReturn(
-                    success=False,
-                    message=pretty_error(e),
-                    code=400,
+                    **mutation_error_fields(error, locale, code=400),
                 )
 
             return ServiceMutationReturn(
@@ -163,9 +160,7 @@ class ServicesMutations:
                 service.disable()
             except Exception as error:
                 return ServiceMutationReturn(
-                    success=False,
-                    message=pretty_error(error),
-                    code=400,
+                    **mutation_error_fields(error, locale, code=400),
                 )
             return ServiceMutationReturn(
                 success=True,
@@ -189,7 +184,13 @@ class ServicesMutations:
                     message=t.translate(text=SERVICE_NOT_FOUND, locale=locale),
                     code=404,
                 )
-            await service.stop()
+            try:
+                await service.stop()
+            except Exception as error:
+                return ServiceMutationReturn(
+                    **mutation_error_fields(error, locale, code=400),
+                    service=await service_to_graphql_service(service),
+                )
             return ServiceMutationReturn(
                 success=True,
                 message=t.translate(text=_("Service stopped."), locale=locale),
@@ -212,7 +213,13 @@ class ServicesMutations:
                     message=t.translate(text=SERVICE_NOT_FOUND, locale=locale),
                     code=404,
                 )
-            await service.start()
+            try:
+                await service.start()
+            except Exception as error:
+                return ServiceMutationReturn(
+                    **mutation_error_fields(error, locale, code=400),
+                    service=await service_to_graphql_service(service),
+                )
             return ServiceMutationReturn(
                 success=True,
                 message=t.translate(text=_("Service started."), locale=locale),
@@ -237,7 +244,13 @@ class ServicesMutations:
                     message=t.translate(text=SERVICE_NOT_FOUND, locale=locale),
                     code=404,
                 )
-            await service.restart()
+            try:
+                await service.restart()
+            except Exception as error:
+                return ServiceMutationReturn(
+                    **mutation_error_fields(error, locale, code=400),
+                    service=await service_to_graphql_service(service),
+                )
             return ServiceMutationReturn(
                 success=True,
                 message=t.translate(text=_("Service restarted."), locale=locale),
@@ -280,9 +293,7 @@ class ServicesMutations:
                 )
             except Exception as error:
                 return ServiceMutationReturn(
-                    success=False,
-                    message=pretty_error(error),
-                    code=400,
+                    **mutation_error_fields(error, locale, code=400),
                     service=await service_to_graphql_service(service),
                 )
             return ServiceMutationReturn(
@@ -324,19 +335,10 @@ class ServicesMutations:
             try:
                 job = await move_service(input.service_id, input.location)
             except Exception as error:
-                if isinstance(error, AbstractException):
-                    return ServiceJobMutationReturn(
-                        success=False,
-                        message=error.get_error_message(locale=locale),
-                        code=error.code,
-                    )
-                else:
-                    return ServiceJobMutationReturn(
-                        success=False,
-                        message=pretty_error(error),
-                        code=400,
-                        service=await service_to_graphql_service(service),
-                    )
+                return ServiceJobMutationReturn(
+                    **mutation_error_fields(error, locale, code=400),
+                    service=await service_to_graphql_service(service),
+                )
 
             if job.status in [JobStatus.CREATED, JobStatus.RUNNING]:
                 return ServiceJobMutationReturn(

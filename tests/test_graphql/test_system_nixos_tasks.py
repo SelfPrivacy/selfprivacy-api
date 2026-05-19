@@ -3,6 +3,7 @@
 # pylint: disable=missing-function-docstring
 import pytest
 
+from selfprivacy_api.exceptions.dbus import DbusCallFailed
 from selfprivacy_api.jobs import JobStatus, Jobs
 from tests.test_graphql.common import assert_empty, assert_ok, get_data
 
@@ -196,6 +197,30 @@ def test_graphql_system_rollback(authorized_client, mocker):
     assert rollback_unit_started
 
 
+def test_graphql_system_rollback_failure(authorized_client, mocker):
+    async def rollback():
+        raise DbusCallFailed(
+            error=RuntimeError("dbus unavailable"),
+            operation="systemd StartUnit sp-nixos-rollback.service",
+        )
+
+    mocker.patch("selfprivacy_api.actions.system.rollback_system", rollback)
+
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_ROLLBACK_SYSTEM_MUTATION,
+        },
+    )
+    data = response.json()["data"]["system"]["runSystemRollback"]
+
+    assert data["success"] is False
+    assert "D-Bus call failed." in data["message"]
+    assert "systemd StartUnit sp-nixos-rollback.service" in data["message"]
+    assert "dbus unavailable" in data["message"]
+    assert data["code"] == 500
+
+
 API_REBOOT_SYSTEM_MUTATION = """
 mutation system {
     system {
@@ -254,3 +279,27 @@ def test_graphql_reboot_system(authorized_client, mocker):
     assert response.json()["data"]["system"]["rebootSystem"]["code"] == 200
 
     assert reboot_started
+
+
+def test_graphql_reboot_system_failure(authorized_client, mocker):
+    async def reboot():
+        raise DbusCallFailed(
+            error=RuntimeError("dbus unavailable"),
+            operation="systemd Reboot",
+        )
+
+    mocker.patch("selfprivacy_api.actions.system.reboot_system", reboot)
+
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_REBOOT_SYSTEM_MUTATION,
+        },
+    )
+    data = response.json()["data"]["system"]["rebootSystem"]
+
+    assert data["success"] is False
+    assert "D-Bus call failed." in data["message"]
+    assert "systemd Reboot" in data["message"]
+    assert "dbus unavailable" in data["message"]
+    assert data["code"] == 500

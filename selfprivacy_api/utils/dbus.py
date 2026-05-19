@@ -1,5 +1,12 @@
 import sdbus
-from typing import Optional
+from collections.abc import Awaitable, Callable
+from typing import Optional, TypeVar
+
+from sdbus.exceptions import SdBusBaseError
+
+from selfprivacy_api.exceptions.dbus import DbusCallFailed
+
+T = TypeVar("T")
 
 
 class DbusConnection:
@@ -26,3 +33,10 @@ class DbusConnection:
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
+
+
+async def wrapped_dbus_call(call: Callable[[], Awaitable[T]], operation: str) -> T:
+    try:
+        return await call()
+    except SdBusBaseError as error:
+        raise DbusCallFailed(error=error, operation=operation) from error

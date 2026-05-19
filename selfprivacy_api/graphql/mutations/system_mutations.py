@@ -12,8 +12,6 @@ from strawberry.types import Info
 import selfprivacy_api.actions.ssh as ssh_actions
 import selfprivacy_api.actions.system as system_actions
 from selfprivacy_api.actions.system import set_dns_provider
-from selfprivacy_api.exceptions.abstract_exception import AbstractException
-from selfprivacy_api.exceptions.system import ShellException
 from selfprivacy_api.graphql import IsAuthenticated
 from selfprivacy_api.graphql.common_types.jobs import job_to_api_job, translate_job
 from selfprivacy_api.graphql.mutations.mutation_interface import (
@@ -23,7 +21,10 @@ from selfprivacy_api.graphql.mutations.mutation_interface import (
 )
 from selfprivacy_api.graphql.queries.providers import DnsProvider
 from selfprivacy_api.jobs.nix_collect_garbage import start_nix_collect_garbage
-from selfprivacy_api.utils import pretty_error
+from selfprivacy_api.utils.graphql import (
+    generic_job_mutation_error,
+    generic_mutation_error,
+)
 from selfprivacy_api.utils.localization import (
     TranslateSystemMessage as t,
     get_locale,
@@ -188,12 +189,8 @@ class SystemMutations:
                     code=200,
                     job=translate_job(job=job_to_api_job(job), locale=locale),
                 )
-            except ShellException as error:
-                return GenericJobMutationReturn(
-                    success=False,
-                    message=error.get_error_message(locale=locale),
-                    code=500,
-                )
+            except Exception as error:
+                return generic_job_mutation_error(error, locale, code=500)
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def run_system_rollback(self, info: Info) -> GenericMutationReturn:
@@ -204,15 +201,13 @@ class SystemMutations:
                 await system_actions.rollback_system()
                 return GenericMutationReturn(
                     success=True,
-                    message="Starting system rollback",
+                    message=t.translate(
+                        text=_("Starting system rollback"), locale=locale
+                    ),
                     code=200,
                 )
-            except ShellException as error:
-                return GenericMutationReturn(
-                    success=False,
-                    message=error.get_error_message(locale=locale),
-                    code=500,
-                )
+            except Exception as error:
+                return generic_mutation_error(error, locale, code=500)
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def run_system_upgrade(self, info: Info) -> GenericJobMutationReturn:
@@ -229,30 +224,22 @@ class SystemMutations:
                     code=200,
                     job=translate_job(job=job_to_api_job(job), locale=locale),
                 )
-            except ShellException as error:
-                return GenericJobMutationReturn(
-                    success=False,
-                    message=error.get_error_message(locale=locale),
-                    code=500,
-                )
+            except Exception as error:
+                return generic_job_mutation_error(error, locale, code=500)
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def reboot_system(self, info: Info) -> GenericMutationReturn:
         locale = get_locale(info=info)
 
-        await system_actions.reboot_system()
         try:
+            await system_actions.reboot_system()
             return GenericMutationReturn(
                 success=True,
                 message=t.translate(text=_("System reboot has started"), locale=locale),
                 code=200,
             )
-        except ShellException as error:
-            return GenericMutationReturn(
-                success=False,
-                message=error.get_error_message(locale=locale),
-                code=500,
-            )
+        except Exception as error:
+            return generic_mutation_error(error, locale, code=500)
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def pull_repository_changes(self, info: Info) -> GenericMutationReturn:
@@ -309,14 +296,4 @@ class SystemMutations:
                 )
 
             except Exception as error:
-                if isinstance(error, AbstractException):
-                    return GenericMutationReturn(
-                        success=False,
-                        message=error.get_error_message(locale=locale),
-                        code=error.code,
-                    )
-                return GenericMutationReturn(
-                    success=False,
-                    code=400,
-                    message=pretty_error(error),
-                )
+                return generic_mutation_error(error, locale, code=400)

@@ -13,7 +13,7 @@ from sdbus import (
 from sdbus.exceptions import SdBusUnmappedMessageError
 from selfprivacy_api.models.services import ServiceStatus
 from selfprivacy_api.utils import lazy_var
-from selfprivacy_api.utils.dbus import DbusConnection
+from selfprivacy_api.utils.dbus import DbusConnection, wrapped_dbus_call
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +91,10 @@ systemd_proxy = lazy_var(
 
 async def get_unit_proxy(unit: str) -> SystemdUnitInterface:
     # We use LoadUnit as GetUnit might return stale information.
-    object_path = await systemd_proxy().load_unit(unit)
+    object_path = await wrapped_dbus_call(
+        lambda: systemd_proxy().load_unit(unit),
+        operation=f"systemd LoadUnit {unit}",
+    )
     return SystemdUnitInterface.new_proxy(
         service_name="org.freedesktop.systemd1",
         object_path=object_path,
@@ -148,15 +151,31 @@ async def wait_for_unit_state(unit: str, states: List[ServiceStatus]):
 
 
 async def start_unit(unit: str):
-    await systemd_proxy().start_unit(unit, "replace")
+    await wrapped_dbus_call(
+        lambda: systemd_proxy().start_unit(unit, "replace"),
+        operation=f"systemd StartUnit {unit}",
+    )
 
 
 async def stop_unit(unit: str):
-    await systemd_proxy().stop_unit(unit, "replace")
+    await wrapped_dbus_call(
+        lambda: systemd_proxy().stop_unit(unit, "replace"),
+        operation=f"systemd StopUnit {unit}",
+    )
 
 
 async def restart_unit(unit: str):
-    await systemd_proxy().restart_unit(unit, "replace")
+    await wrapped_dbus_call(
+        lambda: systemd_proxy().restart_unit(unit, "replace"),
+        operation=f"systemd RestartUnit {unit}",
+    )
+
+
+async def reboot() -> None:
+    await wrapped_dbus_call(
+        lambda: systemd_proxy().reboot(),
+        operation="systemd Reboot",
+    )
 
 
 async def get_service_status(unit: str) -> ServiceStatus:

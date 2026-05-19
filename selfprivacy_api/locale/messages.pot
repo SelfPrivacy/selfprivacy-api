@@ -112,39 +112,43 @@ msgstr ""
 msgid "Password deleted successfully"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:113
+#: selfprivacy_api/graphql/mutations/system_mutations.py:114
 msgid "Timezone changed"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:141
+#: selfprivacy_api/graphql/mutations/system_mutations.py:142
 msgid "Auto-upgrade settings changed"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:170
+#: selfprivacy_api/graphql/mutations/system_mutations.py:171
 msgid "SSH settings changed"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:186
+#: selfprivacy_api/graphql/mutations/system_mutations.py:187
 msgid "Starting system rebuild"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:227
+#: selfprivacy_api/graphql/mutations/system_mutations.py:205
+msgid "Starting system rollback"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/system_mutations.py:222
 msgid "Starting system upgrade"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:247
+#: selfprivacy_api/graphql/mutations/system_mutations.py:238
 msgid "System reboot has started"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:263
+#: selfprivacy_api/graphql/mutations/system_mutations.py:250
 msgid "There is no repository to pull changes from."
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:279
+#: selfprivacy_api/graphql/mutations/system_mutations.py:266
 msgid "Garbage collector started..."
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:308
+#: selfprivacy_api/graphql/mutations/system_mutations.py:295
 msgid "Provider set"
 msgstr ""
 
@@ -210,49 +214,49 @@ msgstr ""
 msgid "Migration to binds started, rebuild the system to apply changes"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:38
+#: selfprivacy_api/graphql/mutations/services_mutations.py:37
 msgid "Service not found"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:140
+#: selfprivacy_api/graphql/mutations/services_mutations.py:137
 msgid "Service enabled."
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:172
+#: selfprivacy_api/graphql/mutations/services_mutations.py:167
 msgid "Service disabled."
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:195
+#: selfprivacy_api/graphql/mutations/services_mutations.py:196
 msgid "Service stopped."
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:218
+#: selfprivacy_api/graphql/mutations/services_mutations.py:225
 msgid "Service started."
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:243
+#: selfprivacy_api/graphql/mutations/services_mutations.py:256
 msgid "Service restarted."
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:266
-#: selfprivacy_api/graphql/mutations/services_mutations.py:317
+#: selfprivacy_api/graphql/mutations/services_mutations.py:279
+#: selfprivacy_api/graphql/mutations/services_mutations.py:328
 #, python-format
 msgid "Service does not exist: %(service_id)s"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:291
+#: selfprivacy_api/graphql/mutations/services_mutations.py:302
 msgid "Service configuration updated."
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:345
+#: selfprivacy_api/graphql/mutations/services_mutations.py:347
 msgid "Started moving the service."
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:354
+#: selfprivacy_api/graphql/mutations/services_mutations.py:356
 msgid "Service moved."
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:364
+#: selfprivacy_api/graphql/mutations/services_mutations.py:366
 #, python-format
 msgid ""
 "While moving service and performing the step '%(status_text)s', an error "
@@ -514,6 +518,16 @@ msgstr ""
 
 #: selfprivacy_api/exceptions/__init__.py:47
 msgid "The API is using the wrong user repository."
+msgstr ""
+
+#: selfprivacy_api/exceptions/dbus.py:33
+#, python-format
+msgid ""
+"D-Bus call failed.\n"
+"Operation: %(operation)s\n"
+"D-Bus error: %(error_name)s\n"
+"%(REPORT_IT_TO_SUPPORT_CHATS)s\n"
+"Error: %(error)s"
 msgstr ""
 
 #: selfprivacy_api/exceptions/services.py:26
