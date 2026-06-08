@@ -329,7 +329,6 @@ class KanidmAdminToken:
         else:
             raise KanidmDidNotReturnAdminPassword(
                 command=" ".join(command),
-                regex_pattern=regex_pattern,
                 output=output,
             )
 
