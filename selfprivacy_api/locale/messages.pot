@@ -53,7 +53,7 @@ msgstr ""
 msgid "Move %(service)s"
 msgstr ""
 
-#: selfprivacy_api/actions/services.py:29
+#: selfprivacy_api/actions/services.py:30
 #, python-format
 msgid "Moving %(service)s data to %(volume)s"
 msgstr ""
@@ -462,40 +462,40 @@ msgstr ""
 msgid "Backup %(display_name)s"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:72
+#: selfprivacy_api/backup/jobs.py:73
 #, python-format
 msgid "Backing up %(display_name)s"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:79
+#: selfprivacy_api/backup/jobs.py:81
 #, python-format
 msgid ""
 "Cannot start a restore of %(service_id)s, another operation is running: "
 "%(op_type)s"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:93
+#: selfprivacy_api/backup/jobs.py:95
 msgid "Total restore"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:94
+#: selfprivacy_api/backup/jobs.py:96
 msgid "Restoring all enabled services"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:114
+#: selfprivacy_api/backup/jobs.py:116
 msgid "Total backup"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:115
+#: selfprivacy_api/backup/jobs.py:117
 msgid "Backing up all the enabled services"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:129
+#: selfprivacy_api/backup/jobs.py:131
 #, python-format
 msgid "Restore %(display_name)s"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:130
+#: selfprivacy_api/backup/jobs.py:133
 #, python-format
 msgid "Restoring %(display_name)s from %(snapshot_id)s"
 msgstr ""
@@ -737,7 +737,6 @@ msgid ""
 "%(KANIDM_DEBUG_HELP)s\n"
 "\n"
 "Used command: %(command)s\n"
-"Used regex pattern: %(regex_pattern)s\n"
 "Kanidm's CLI output: %(output)s"
 msgstr ""
 
