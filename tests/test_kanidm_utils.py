@@ -475,6 +475,7 @@ def test_reset_idm_admin_password_raises_when_password_missing(mocker):
         "selfprivacy_api.utils.kanidm.subprocess.check_output",
         return_value="no password in this output",
     )
+    mocker.patch("selfprivacy_api.utils.kanidm.re.search", return_value=None)
 
     with pytest.raises(KanidmDidNotReturnAdminPassword):
         KanidmAdminToken.reset_idm_admin_password()

@@ -178,7 +178,6 @@ class KanidmDidNotReturnAdminPassword(AbstractException):
             ),
             "KANIDM_DEBUG_HELP": t.translate(text=KANIDM_DEBUG_HELP, locale=locale),
             "command": self.command,
-            "regex_pattern": self.regex_pattern,
             "output": self.output,
         }
 
