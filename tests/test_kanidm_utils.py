@@ -8,8 +8,7 @@ from types import SimpleNamespace
 import httpx
 import pytest
 
-from selfprivacy_api.exceptions.users import UserAlreadyExists, UserOrGroupNotFound
-from selfprivacy_api.exceptions.users.kanidm_repository import (
+from selfprivacy_api.exceptions.kanidm import (
     FailedToGetValidKanidmToken,
     KanidmCliSubprocessError,
     KanidmDidNotReturnAdminPassword,
@@ -17,6 +16,7 @@ from selfprivacy_api.exceptions.users.kanidm_repository import (
     KanidmReturnEmptyResponse,
     KanidmReturnUnknownResponseType,
 )
+from selfprivacy_api.exceptions.users import UserAlreadyExists, UserOrGroupNotFound
 from selfprivacy_api.utils.kanidm import (
     REDIS_TOKEN_KEY,
     KanidmAdminToken,
@@ -462,7 +462,7 @@ async def test_create_and_save_token_raises_on_login_error(mocker):
 def test_reset_idm_admin_password_returns_parsed_password(mocker):
     mocker.patch(
         "selfprivacy_api.utils.kanidm.subprocess.check_output",
-        return_value='noise {"password":"fresh-password"} more-noise',
+        return_value='{"output":"fresh-password"}',
     )
 
     password = KanidmAdminToken.reset_idm_admin_password()
@@ -473,9 +473,8 @@ def test_reset_idm_admin_password_returns_parsed_password(mocker):
 def test_reset_idm_admin_password_raises_when_password_missing(mocker):
     mocker.patch(
         "selfprivacy_api.utils.kanidm.subprocess.check_output",
-        return_value="no password in this output",
+        return_value="{}",
     )
-    mocker.patch("selfprivacy_api.utils.kanidm.re.search", return_value=None)
 
     with pytest.raises(KanidmDidNotReturnAdminPassword):
         KanidmAdminToken.reset_idm_admin_password()
