@@ -75,6 +75,7 @@
             pythonPackages = pkgs.python312Packages;
             rev = self.shortRev or self.dirtyShortRev or "dirty";
           };
+          pam-email-selfprivacy = pkgs.callPackage ./extra/pam_email_selfprivacy {};
           pytest-vm = let
             check = self.checks.${system}.default.extend {
               modules = [
@@ -148,9 +149,12 @@
           pkgs = nixpkgs.legacyPackages.${system};
         in
         {
-          default = pkgs.mkShellNoCC {
+          default = pkgs.mkShell {
             name = "SP API dev shell";
             packages = with pkgs; [
+              rustc
+              cargo
+              pam
               gettext # msginit, msgfmt
               nixpkgs-fmt
               rclone
