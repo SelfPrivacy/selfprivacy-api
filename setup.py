@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="selfprivacy_api",
-    version="3.8.0",
+    version="3.8.1",
     packages=find_packages(),
     scripts=[
         "selfprivacy_api/app.py",
