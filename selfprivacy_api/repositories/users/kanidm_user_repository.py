@@ -8,6 +8,7 @@ from typing import Any, Optional, Union
 
 import aiofiles
 import httpx
+from opentelemetry import trace
 
 from selfprivacy_api.exceptions.users import (
     UserAlreadyExists,
@@ -39,6 +40,7 @@ SP_DEFAULT_GROUPS = ["sp.full_users"]
 
 
 logger = logging.getLogger(__name__)
+tracer = trace.get_tracer(__name__)
 
 _ = gettext.gettext
 
@@ -366,70 +368,75 @@ class KanidmUserRepository(AbstractUserRepository):
 
         full_endpoint = f"{get_kanidm_url()}/v1/{endpoint}"
 
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.request(
-                    method,
-                    full_endpoint,
-                    json=data,
-                    headers={
-                        "Authorization": f"Bearer {await KanidmAdminToken.get()}",
-                        "Content-Type": "application/json",
-                    },
-                    timeout=1,
+        with tracer.start_as_current_span(f"kanidm.query {method} {endpoint}") as span:
+            span.set_attribute("kanidm.endpoint", endpoint)
+            span.set_attribute("http.method", method)
+
+            try:
+                async with httpx.AsyncClient() as client:
+                    response = await client.request(
+                        method,
+                        full_endpoint,
+                        json=data,
+                        headers={
+                            "Authorization": f"Bearer {await KanidmAdminToken.get()}",
+                            "Content-Type": "application/json",
+                        },
+                        timeout=1,
+                    )
+
+                    span.set_attribute("http.status_code", response.status_code)
+                    response_data = response.json()
+
+            except json.JSONDecodeError as error:
+                raise KanidmQueryError(
+                    endpoint=full_endpoint,
+                    method=method,
+                    description=_("No JSON found in Kanidm response."),
+                    error_text=error,
+                )
+            except (
+                httpx.TimeoutException,
+                httpx.ConnectError,
+                httpx.RequestError,
+            ) as error:
+                raise KanidmQueryError(
+                    endpoint=endpoint,
+                    method=method,
+                    error_text=error,
+                    description=_("Kanidm is not responding to requests."),
                 )
 
-                response_data = response.json()
+            except Exception as error:
+                raise KanidmQueryError(
+                    endpoint=full_endpoint,
+                    method=method,
+                    error_text=error,
+                )
 
-        except json.JSONDecodeError as error:
-            raise KanidmQueryError(
-                endpoint=full_endpoint,
-                method=method,
-                description=_("No JSON found in Kanidm response."),
-                error_text=error,
-            )
-        except (
-            httpx.TimeoutException,
-            httpx.ConnectError,
-            httpx.RequestError,
-        ) as error:
-            raise KanidmQueryError(
-                endpoint=endpoint,
-                method=method,
-                error_text=error,
-                description=_("Kanidm is not responding to requests."),
-            )
+            if response.status_code != 200:
+                if isinstance(response_data, dict):
+                    plugin_error = response_data.get("plugin", {})
+                    if plugin_error.get("attrunique") == "duplicate value detected":
+                        raise UserAlreadyExists  # does it work only for user? NO ONE KNOWS
 
-        except Exception as error:
-            raise KanidmQueryError(
-                endpoint=full_endpoint,
-                method=method,
-                error_text=error,
-            )
+                if isinstance(response_data, str):
+                    if response_data == "nomatchingentries":
+                        raise UserOrGroupNotFound  # does it work only for user? - NO
+                    elif response_data == "accessdenied":
+                        raise KanidmQueryError(
+                            endpoint=full_endpoint,
+                            method=method,
+                            error_text=_("Kanidm access issue"),
+                        )
+                    elif response_data == "notauthenticated":
+                        raise FailedToGetValidKanidmToken
 
-        if response.status_code != 200:
-            if isinstance(response_data, dict):
-                plugin_error = response_data.get("plugin", {})
-                if plugin_error.get("attrunique") == "duplicate value detected":
-                    raise UserAlreadyExists  # does it work only for user? NO ONE KNOWS
+                raise KanidmQueryError(
+                    error_text=response.text, endpoint=full_endpoint, method=method
+                )
 
-            if isinstance(response_data, str):
-                if response_data == "nomatchingentries":
-                    raise UserOrGroupNotFound  # does it work only for user? - NO
-                elif response_data == "accessdenied":
-                    raise KanidmQueryError(
-                        endpoint=full_endpoint,
-                        method=method,
-                        error_text=_("Kanidm access issue"),
-                    )
-                elif response_data == "notauthenticated":
-                    raise FailedToGetValidKanidmToken
-
-            raise KanidmQueryError(
-                error_text=response.text, endpoint=full_endpoint, method=method
-            )
-
-        return response_data
+            return response_data
 
     @staticmethod
     async def create_user(
