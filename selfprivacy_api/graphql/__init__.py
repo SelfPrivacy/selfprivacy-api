@@ -2,7 +2,9 @@
 
 # pylint: disable=too-few-public-methods
 from typing import Any
+from opentelemetry import trace
 
+from strawberry.extensions.tracing import OpenTelemetryExtension
 from strawberry.extensions import SchemaExtension
 from strawberry.permission import BasePermission
 from strawberry.types import Info
@@ -38,3 +40,14 @@ class LocaleExtension(SchemaExtension):
         )
         info.context["locale"] = locale
         return _next(root, info, *args, **kwargs)
+
+
+class SelfPrivacyOpenTelemetryExtension(OpenTelemetryExtension):
+    def on_operation(self):
+        server_span = trace.get_current_span()
+        yield from super().on_operation()
+
+        operation_name = self.execution_context.operation_name
+        if operation_name and server_span and server_span.is_recording():
+            server_span.update_name(f"GraphQL {operation_name}")
+            server_span.set_attribute("graphql.operation.name", operation_name)
