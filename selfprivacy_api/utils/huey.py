@@ -7,6 +7,7 @@ from os import environ
 from typing import Optional
 from huey import RedisHuey
 
+from selfprivacy_api.utils.otel import OTEL_ENABLED
 from selfprivacy_api.utils.redis_pool import RedisPool
 
 HUEY_DATABASE_NUMBER = 10
@@ -63,8 +64,23 @@ class HueyAsyncHelper:
             raise e
 
 
+class TracedRedisHuey(RedisHuey):
+    def _execute(self, task, timestamp):
+        if not OTEL_ENABLED:
+            return super()._execute(task, timestamp)
+
+        from opentelemetry import trace
+
+        task_name = getattr(task, "name", task.__class__.__name__)
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span(f"huey.task {task_name}") as span:
+            span.set_attribute("huey.task_name", task_name)
+            span.set_attribute("huey.task_id", task.id)
+            return super()._execute(task, timestamp)
+
+
 # Singleton instance containing the huey database.
-huey = RedisHuey(
+huey = TracedRedisHuey(
     "selfprivacy-api",
     url=RedisPool.connection_url(dbnumber=HUEY_DATABASE_NUMBER),
     immediate=immediate(),
