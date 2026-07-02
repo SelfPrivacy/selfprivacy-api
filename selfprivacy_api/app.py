@@ -216,7 +216,7 @@ async def root():
 
 
 if OTEL_ENABLED:
-    FastAPIInstrumentor.instrument_app(app)
+    FastAPIInstrumentor.instrument_app(app, exclude_spans=["receive", "send"])
 
 
 if __name__ == "__main__":

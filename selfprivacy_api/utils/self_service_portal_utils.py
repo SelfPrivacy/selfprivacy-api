@@ -16,8 +16,10 @@ from selfprivacy_api.utils.argon2 import (
     generate_urlsave_password,
 )
 from selfprivacy_api.actions.email_passwords import add_email_password
+from opentelemetry import trace
 
 logger = logging.getLogger(__name__)
+tracer = trace.get_tracer(__name__)
 
 
 def get_email_credentials_metadata_with_passwords_hashes(
@@ -33,6 +35,7 @@ def is_expired(expires_at: Optional[datetime]) -> bool:
     return expires_at is not None and expires_at < datetime.now(timezone.utc)
 
 
+@tracer.start_as_current_span("validate_email_password")
 def validate_email_password(username: str, password: str) -> bool:
     email_passwords_data = (
         ACTIVE_EMAIL_PASSWORD_PROVIDER.get_all_email_passwords_metadata(

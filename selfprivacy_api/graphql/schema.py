@@ -6,11 +6,14 @@ import asyncio
 from typing import AsyncGenerator, List
 import strawberry
 from strawberry.types import Info
-from strawberry.extensions.tracing import OpenTelemetryExtension
 
 from selfprivacy_api.utils.localization import Localization, DEFAULT_LOCALE
 
-from selfprivacy_api.graphql import IsAuthenticated, LocaleExtension
+from selfprivacy_api.graphql import (
+    IsAuthenticated,
+    LocaleExtension,
+    SelfPrivacyOpenTelemetryExtension,
+)
 from selfprivacy_api.graphql.mutations.deprecated_mutations import (
     DeprecatedApiMutations,
     DeprecatedJobMutations,
@@ -231,6 +234,6 @@ schema = strawberry.Schema(
         EnumConfigItem,
     ],
     extensions=[
-        OpenTelemetryExtension(),
+        SelfPrivacyOpenTelemetryExtension,
     ],
 )
