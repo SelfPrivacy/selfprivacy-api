@@ -1,10 +1,11 @@
 import gettext
 from enum import Enum
-from typing import Optional, List
+from typing import List, Optional
+
 from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
 
-from selfprivacy_api.services.owned_path import OwnedPath
+from selfprivacy_api.models.owned_path import OwnedPath
 
 _ = gettext.gettext
 
