@@ -1,18 +1,19 @@
 import asyncio
-from enum import Enum
-from typing import Optional, List
 import datetime
+from enum import Enum
+from typing import List, Optional
+
 import strawberry
 from opentelemetry import trace
 
 from selfprivacy_api.graphql.common_types.backup import BackupReason
 from selfprivacy_api.graphql.common_types.dns import DnsRecord
-
 from selfprivacy_api.models.services import License
-from selfprivacy_api.services import ServiceManager
-from selfprivacy_api.services import Service as ServiceInterface
-from selfprivacy_api.services import ServiceDnsRecord
-
+from selfprivacy_api.services import (
+    Service as ServiceInterface,
+    ServiceDnsRecord,
+    ServiceManager,
+)
 from selfprivacy_api.utils.block_devices import BlockDevices
 from selfprivacy_api.utils.network import get_ip4, get_ip6
 
@@ -102,7 +103,7 @@ class LicenseType:
 @tracer.start_as_current_span("get_storage_usage")
 async def get_storage_usage(root: "Service") -> ServiceStorageUsage:
     """Get storage usage for a service"""
-    service = await ServiceManager.get_service_by_id(root.id)
+    service = root.service_object
     if service is None:
         return ServiceStorageUsage(
             service=service,
@@ -111,7 +112,7 @@ async def get_storage_usage(root: "Service") -> ServiceStorageUsage:
             volume=get_volume_by_id("sda1"),
         )
     return ServiceStorageUsage(
-        service=await service_to_graphql_service(service),
+        service=root,
         title=service.get_display_name(),
         used_space=str(await service.get_storage_usage()),
         volume=get_volume_by_id(service.get_drive()),
@@ -215,25 +216,25 @@ class Service:
     homepage: Optional[str]
     source_page: Optional[str]
     support_level: SupportLevelEnum
+    service_object: strawberry.Private[Optional[ServiceInterface]] = None
 
     @strawberry.field
     async def dns_records(self) -> Optional[List[DnsRecord]]:
         with tracer.start_as_current_span(
             "resolve_service_dns_records", attributes={"service_id": self.id}
         ):
-            service = await ServiceManager.get_service_by_id(self.id)
+            service = self.service_object
             if service is None:
                 raise LookupError(f"no service {self.id}. Should be unreachable")
 
             raw_records = service.get_dns_records(get_ip4(), get_ip6())
-            dns_records = [service_dns_to_graphql(record) for record in raw_records]
-            return dns_records
+            return [service_dns_to_graphql(record) for record in raw_records]
 
     @strawberry.field
     async def storage_usage(self) -> ServiceStorageUsage:
         """Get storage usage for a service"""
         with tracer.start_as_current_span(
-            "get_storage_usage", attributes={"service_id": self.id}
+            "resolve_storage_usage", attributes={"service_id": self.id}
         ):
             return await get_storage_usage(self)
 
@@ -243,7 +244,7 @@ class Service:
         with tracer.start_as_current_span(
             "resolve_service_configuration", attributes={"service_id": self.id}
         ):
-            service = await ServiceManager.get_service_by_id(self.id)
+            service = self.service_object
             if service is None:
                 return None
             config_items = service.get_configuration()
@@ -295,6 +296,7 @@ async def service_to_graphql_service(service: ServiceInterface) -> Service:
         homepage=service.get_homepage(),
         source_page=service.get_source_page(),
         support_level=SupportLevelEnum(service.get_support_level().value),
+        service_object=service,
     )
 
 
