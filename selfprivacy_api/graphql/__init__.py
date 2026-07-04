@@ -1,11 +1,15 @@
 """GraphQL API for SelfPrivacy."""
 
 # pylint: disable=too-few-public-methods
-from typing import Any
+from inspect import isawaitable
+from typing import Any, Callable
+
+from opentelemetry import context as otel_context
 from opentelemetry import trace
 
 from strawberry.extensions.tracing import OpenTelemetryExtension
-from strawberry.extensions import SchemaExtension
+from strawberry.extensions.tracing.utils import should_skip_tracing
+from strawberry.extensions import LifecycleStep, SchemaExtension
 from strawberry.permission import BasePermission
 from strawberry.types import Info
 
@@ -45,9 +49,49 @@ class LocaleExtension(SchemaExtension):
 class SelfPrivacyOpenTelemetryExtension(OpenTelemetryExtension):
     def on_operation(self):
         server_span = trace.get_current_span()
-        yield from super().on_operation()
+        gen = super().on_operation()
+        next(gen)
+
+        token = otel_context.attach(
+            trace.set_span_in_context(self._span_holder[LifecycleStep.OPERATION])
+        )
+        try:
+            yield
+        finally:
+            otel_context.detach(token)
+            try:
+                next(gen)
+            except StopIteration:
+                pass
 
         operation_name = self.execution_context.operation_name
         if operation_name and server_span and server_span.is_recording():
             server_span.update_name(f"GraphQL {operation_name}")
             server_span.set_attribute("graphql.operation.name", operation_name)
+
+    async def resolve(
+        self,
+        _next: Callable,
+        root: Any,
+        info: Any,
+        *args: str,
+        **kwargs: Any,
+    ) -> Any:
+        if should_skip_tracing(_next, info):
+            result = _next(root, info, *args, **kwargs)
+
+            if isawaitable(result):
+                result = await result
+
+            return result
+
+        with self._tracer.start_as_current_span(
+            f"GraphQL Resolving: {info.field_name}",
+        ) as span:
+            self.add_tags(span, info, kwargs)
+            result = _next(root, info, *args, **kwargs)
+
+            if isawaitable(result):
+                result = await result
+
+            return result
