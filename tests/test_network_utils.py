@@ -2,110 +2,155 @@
 # pylint: disable=redefined-outer-name
 # pylint: disable=unused-argument
 # pylint: disable=missing-function-docstring
-import subprocess
+import socket
+from collections import namedtuple
+
 import pytest
 
 from selfprivacy_api.utils.network import get_ip4, get_ip6
 
-OUTPUT_STRING = b"""
-2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
-    link/ether 96:00:00:f1:34:ae brd ff:ff:ff:ff:ff:ff
-    altname enp0s3
-    altname ens3
-    inet 157.90.247.192/32 brd 157.90.247.192 scope global dynamic eth0
-       valid_lft 46061sec preferred_lft 35261sec
-    inet6 fe80::9400:ff:fef1:34ae/64 scope link
-       valid_lft forever preferred_lft forever
-    inet6 2a01:4f8:c17:7e3d::2/64 scope global
-       valid_lft forever preferred_lft forever
-"""
+# Mirrors the shape of psutil._common.snicaddr without depending on psutil
+# being importable on the host (it only ships inside the Nix dev shell).
+snicaddr = namedtuple("snicaddr", ["family", "address", "netmask", "broadcast", "ptp"])
 
-OUTPUT_STRING_WITOUT_IP6 = b"""
-2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
-    link/ether 96:00:00:f1:34:ae brd ff:ff:ff:ff:ff:ff
-    altname enp0s3
-    altname ens3
-    inet 157.90.247.192/32 brd 157.90.247.192 scope global dynamic eth0
-       valid_lft 46061sec preferred_lft 35261sec
-    inet6 fe80::9400:ff:fef1:34ae/64 scope link
-       valid_lft forever preferred_lft forever
-"""
-
-FAILED_OUTPUT_STRING = b"""
-Device "eth0" does not exist.
-"""
-
-
-@pytest.fixture
-def ip_process_mock(mocker):
-    mock = mocker.patch(
-        "subprocess.check_output", autospec=True, return_value=OUTPUT_STRING
-    )
-    return mock
-
-
-@pytest.fixture
-def ip_process_mock_without_ip6(mocker):
-    mock = mocker.patch(
-        "subprocess.check_output", autospec=True, return_value=OUTPUT_STRING_WITOUT_IP6
-    )
-    return mock
-
-
-@pytest.fixture
-def failed_ip_process_mock(mocker):
-    mock = mocker.patch(
-        "subprocess.check_output",
-        autospec=True,
-        return_value=FAILED_OUTPUT_STRING,
-    )
-    return mock
-
-
-@pytest.fixture
-def failed_subprocess_call(mocker):
-    mock = mocker.patch(
-        "subprocess.check_output",
-        autospec=True,
-        side_effect=subprocess.CalledProcessError(
-            returncode=1, cmd=["ip", "addr", "show", "dev", "eth0"]
+NET_IF_ADDRS = {
+    "eth0": [
+        snicaddr(
+            family=socket.AF_INET,
+            address="157.90.247.192",
+            netmask="255.255.255.255",
+            broadcast="157.90.247.192",
+            ptp=None,
         ),
+        snicaddr(
+            family=socket.AF_INET6,
+            address="fe80::9400:ff:fef1:34ae%eth0",
+            netmask="ffff:ffff:ffff:ffff::",
+            broadcast=None,
+            ptp=None,
+        ),
+        snicaddr(
+            family=socket.AF_INET6,
+            address="2a01:4f8:c17:7e3d::2",
+            netmask="ffff:ffff:ffff:ffff::",
+            broadcast=None,
+            ptp=None,
+        ),
+    ]
+}
+
+NET_IF_ADDRS_WITHOUT_IP6 = {
+    "eth0": [
+        snicaddr(
+            family=socket.AF_INET,
+            address="157.90.247.192",
+            netmask="255.255.255.255",
+            broadcast="157.90.247.192",
+            ptp=None,
+        ),
+        snicaddr(
+            family=socket.AF_INET6,
+            address="fe80::9400:ff:fef1:34ae%eth0",
+            netmask="ffff:ffff:ffff:ffff::",
+            broadcast=None,
+            ptp=None,
+        ),
+    ]
+}
+
+NET_IF_ADDRS_MALFORMED_IP6 = {
+    "eth0": [
+        snicaddr(
+            family=socket.AF_INET6,
+            address="not-an-ip",
+            netmask=None,
+            broadcast=None,
+            ptp=None,
+        ),
+        snicaddr(
+            family=socket.AF_INET6,
+            address="2a01:4f8:c17:7e3d::2",
+            netmask="ffff:ffff:ffff:ffff::",
+            broadcast=None,
+            ptp=None,
+        ),
+    ]
+}
+
+
+@pytest.fixture
+def net_if_addrs_mock(mocker):
+    return mocker.patch(
+        "selfprivacy_api.utils.network.psutil.net_if_addrs",
+        autospec=True,
+        return_value=NET_IF_ADDRS,
     )
-    return mock
 
 
-def test_get_ip4(ip_process_mock):
+@pytest.fixture
+def net_if_addrs_mock_without_ip6(mocker):
+    return mocker.patch(
+        "selfprivacy_api.utils.network.psutil.net_if_addrs",
+        autospec=True,
+        return_value=NET_IF_ADDRS_WITHOUT_IP6,
+    )
+
+
+@pytest.fixture
+def net_if_addrs_mock_missing_interface(mocker):
+    return mocker.patch(
+        "selfprivacy_api.utils.network.psutil.net_if_addrs",
+        autospec=True,
+        return_value={},
+    )
+
+
+@pytest.fixture
+def net_if_addrs_mock_malformed_ip6(mocker):
+    return mocker.patch(
+        "selfprivacy_api.utils.network.psutil.net_if_addrs",
+        autospec=True,
+        return_value=NET_IF_ADDRS_MALFORMED_IP6,
+    )
+
+
+def test_get_ip4(net_if_addrs_mock):
     """Test get IPv4 address"""
     ip4 = get_ip4()
     assert ip4 == "157.90.247.192"
 
 
-def test_get_ip6(ip_process_mock):
+def test_get_ip6(net_if_addrs_mock):
     """Test get IPv6 address"""
     ip6 = get_ip6()
     assert ip6 == "2a01:4f8:c17:7e3d::2"
 
 
-def test_failed_get_ip4(failed_ip_process_mock):
+def test_get_ip4_custom_interface(net_if_addrs_mock):
+    ip4 = get_ip4(interface="wlan0")
+    assert ip4 == ""
+
+
+def test_get_ip6_custom_interface(net_if_addrs_mock):
+    ip6 = get_ip6(interface="wlan0")
+    assert ip6 is None
+
+
+def test_failed_get_ip4_missing_interface(net_if_addrs_mock_missing_interface):
     ip4 = get_ip4()
     assert ip4 == ""
 
 
-def test_failed_get_ip6(failed_ip_process_mock):
+def test_failed_get_ip6_missing_interface(net_if_addrs_mock_missing_interface):
     ip6 = get_ip6()
     assert ip6 is None
 
 
-def test_failed_get_ip6_when_none(ip_process_mock_without_ip6):
+def test_failed_get_ip6_when_only_link_local(net_if_addrs_mock_without_ip6):
     ip6 = get_ip6()
     assert ip6 is None
 
 
-def test_failed_subprocess_get_ip4(failed_subprocess_call):
-    ip4 = get_ip4()
-    assert ip4 == ""
-
-
-def test_failed_subprocess_get_ip6(failed_subprocess_call):
+def test_get_ip6_skips_malformed_address(net_if_addrs_mock_malformed_ip6):
     ip6 = get_ip6()
-    assert ip6 is None
+    assert ip6 == "2a01:4f8:c17:7e3d::2"

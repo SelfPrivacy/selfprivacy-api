@@ -1,32 +1,29 @@
 #!/usr/bin/env python3
 """Network utils"""
-import subprocess
-import re
+
 import ipaddress
+import socket
 from typing import Optional
 
+import psutil
 
-def get_ip4() -> str:
+
+def get_ip4(interface: str = "eth0") -> str:
     """Get IPv4 address"""
-    try:
-        ip4 = subprocess.check_output(["ip", "addr", "show", "dev", "eth0"]).decode(
-            "utf-8"
-        )
-        ip4 = re.search(r"inet (\d+\.\d+\.\d+\.\d+)\/\d+", ip4)
-    except subprocess.CalledProcessError:
-        ip4 = None
-    return ip4.group(1) if ip4 else ""
+    for addr in psutil.net_if_addrs().get(interface, []):
+        if addr.family == socket.AF_INET:
+            return addr.address
+    return ""
 
 
-def get_ip6() -> Optional[str]:
+def get_ip6(interface: str = "eth0") -> Optional[str]:
     """Get IPv6 address"""
-    try:
-        ip6_addresses = subprocess.check_output(
-            ["ip", "addr", "show", "dev", "eth0"]
-        ).decode("utf-8")
-        ip6_addresses = re.findall(r"inet6 (\S+)\/\d+", ip6_addresses)
-        for address in ip6_addresses:
-            if ipaddress.IPv6Address(address).is_global:
-                return address
-    except subprocess.CalledProcessError:
-        return None
+    for addr in psutil.net_if_addrs().get(interface, []):
+        if addr.family == socket.AF_INET6:
+            address = addr.address.split("%", 1)[0]
+            try:
+                if ipaddress.IPv6Address(address).is_global:
+                    return address
+            except ipaddress.AddressValueError:
+                continue
+    return None
