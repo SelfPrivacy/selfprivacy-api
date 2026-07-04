@@ -34,7 +34,6 @@ from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
 from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry._logs import set_logger_provider, get_logger
-from opentelemetry import context as otel_context
 
 
 import uvicorn
@@ -56,13 +55,6 @@ from selfprivacy_api.userpanel.routes.user import router as user_router
 from selfprivacy_api.userpanel.routes.internal import router as internal_router
 
 from selfprivacy_api.userpanel.static import static_dir
-
-
-# Capture OTel context per request/WS and expose it to Strawberry resolvers
-async def graphql_context_getter():
-    return {
-        "otel_context": otel_context.get_current(),
-    }
 
 
 setup_instrumentation()
@@ -176,13 +168,12 @@ async def app_lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=app_lifespan)
 
-graphql_app: GraphQLRouter[dict[str, otel_context.Context], None] = GraphQLRouter(
+graphql_app: GraphQLRouter = GraphQLRouter(
     schema,
     subscription_protocols=[
         GRAPHQL_TRANSPORT_WS_PROTOCOL,
         GRAPHQL_WS_PROTOCOL,
     ],
-    context_getter=graphql_context_getter,
 )
 
 app.add_middleware(
