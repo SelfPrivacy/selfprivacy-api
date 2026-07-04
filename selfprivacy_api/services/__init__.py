@@ -3,10 +3,12 @@
 import asyncio
 import base64
 import logging
+import os
 import typing
 from os import listdir, makedirs, path
 from os.path import exists, join
 from shutil import copyfile, copytree, rmtree
+from threading import stack_size
 from typing import List
 
 from opentelemetry import trace
@@ -338,18 +340,32 @@ class ServiceManager(Service):
         rmtree(cls.dump_dir(), ignore_errors=True)
 
 
-# @redis_cached_call(ttl=30)
+# {service_id: ((st_mtime_ns, st_size, st_ino), TemplatedService)}
+_templated_service_cache: dict[str, tuple[tuple[int, int, int], TemplatedService]] = {}
+
+
 async def get_templated_service(service_id: str) -> TemplatedService:
     with tracer.start_as_current_span(
         "fetch_templated_service", attributes={"service_id": service_id}
-    ):
-        if not exists(path.join(SP_MODULES_DEFINITIONS_PATH, service_id)):
+    ) as span:
+        definiton_path = path.join(SP_MODULES_DEFINITIONS_PATH, service_id)
+        try:
+            stat = os.stat(definiton_path)
+        except FileNotFoundError:
             raise FileNotFoundError(f"Service definition for {service_id} not found")
-        with open(
-            path.join(SP_MODULES_DEFINITIONS_PATH, service_id), "r", encoding="utf-8"
-        ) as f:
+        stat_key = (stat.st_mtime_ns, stat.st_size, stat.st_ino)
+
+        cached = _templated_service_cache.get(service_id)
+        if cached is not None and cached[0] == stat_key:
+            span.set_attribute("cache_hit", True)
+            return cached[1]
+
+        span.set_attribute("cache_hit", False)
+        with open(definiton_path, "r", encoding="utf-8") as f:
             service_data = f.read()
-    return TemplatedService(service_id, service_data)
+        service = TemplatedService(service_id, service_data)
+        _templated_service_cache[service_id] = (stat_key, service)
+        return service
 
 
 DUMMY_SERVICES = []
