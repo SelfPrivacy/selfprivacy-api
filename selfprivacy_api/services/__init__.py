@@ -1,40 +1,39 @@
 """Services module."""
 
-import logging
-import base64
-import typing
-import json
 import asyncio
+import base64
+import json
+import logging
+import typing
+from os import listdir, makedirs, path
+from os.path import exists, join
+from shutil import copyfile, copytree, rmtree
 from typing import List
-from os import listdir, path, makedirs
-from os.path import join, exists
+
 from opentelemetry import trace
 
-from shutil import copyfile, copytree, rmtree
-from selfprivacy_api.jobs import Job, JobStatus, Jobs
-from selfprivacy_api.services.prometheus import Prometheus
-from selfprivacy_api.services.mailserver import MailServer
-
-from selfprivacy_api.services.service import Service, ServiceDnsRecord
-from selfprivacy_api.services.service import ServiceStatus
-from selfprivacy_api.services.remote import get_remote_service
-from selfprivacy_api.services.suggested import SuggestedServices
 import selfprivacy_api.utils.network as network_utils
-
+from selfprivacy_api.jobs import Job, Jobs, JobStatus
 from selfprivacy_api.services.api_icon import API_ICON
-from selfprivacy_api.utils import (
-    USERDATA_FILE,
-    DKIM_DIR,
-    SECRETS_FILE,
-    get_domain,
-    read_account_uri,
-)
-from selfprivacy_api.utils.block_devices import BlockDevices
+from selfprivacy_api.services.mailserver import MailServer
+from selfprivacy_api.services.prometheus import Prometheus
+from selfprivacy_api.services.remote import get_remote_service
+from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
+from selfprivacy_api.services.suggested import SuggestedServices
 from selfprivacy_api.services.templated_service import (
     SP_MODULES_DEFINITIONS_PATH,
     SP_SUGGESTED_MODULES_PATH,
     TemplatedService,
 )
+from selfprivacy_api.utils import (
+    DKIM_DIR,
+    SECRETS_FILE,
+    USERDATA_FILE,
+    get_domain,
+    read_account_uri,
+)
+from selfprivacy_api.utils.block_devices import BlockDevices
+from selfprivacy_api.utils.request_memo import request_memoized
 
 CONFIG_STASH_DIR = "/etc/selfprivacy/dump"
 KANIDM_A_RECORD = "auth"
@@ -53,6 +52,13 @@ class ServiceManager(Service):
 
     @staticmethod
     async def get_service_by_id(service_id: str) -> typing.Optional[Service]:
+        return await request_memoized(
+            ("get_service_by_id", service_id),
+            lambda: ServiceManager._get_service_by_id(service_id),
+        )
+
+    @staticmethod
+    async def _get_service_by_id(service_id: str) -> typing.Optional[Service]:
         with tracer.start_as_current_span("get_service_by_id") as span:
             span.set_attribute("service_id", service_id)
 
@@ -358,8 +364,14 @@ HARDCODED_SERVICES: list[Service] = [
 ]
 
 
-@tracer.start_as_current_span("get_services")
 async def get_services(exclude_remote=False) -> list[Service]:
+    return await request_memoized(
+        ("get_services", exclude_remote), lambda: _get_services(exclude_remote)
+    )
+
+
+@tracer.start_as_current_span("get_services")
+async def _get_services(exclude_remote=False) -> list[Service]:
     if "ONLY_DUMMY_SERVICE" in TEST_FLAGS:
         return DUMMY_SERVICES
     if "DUMMY_SERVICE_AND_API" in TEST_FLAGS:
