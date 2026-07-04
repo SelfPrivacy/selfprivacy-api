@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """Various utility functions"""
+
+import copy
 import datetime
 import glob
 import json
@@ -69,17 +71,50 @@ def get_domain():
         return user_data["domain"]
 
 
+# {path: ((st_mtime_ns, st_size, st_ino), parsed_data)}
+_json_file_cache: dict[str, tuple[tuple[int, int, int], dict]] = {}
+
+
+def _file_stat_key(st: os.stat_result) -> tuple[int, int, int]:
+    return (st.st_mtime_ns, st.st_size, st.st_ino)
+
+
+def _invalidate_json_cache(path: str) -> None:
+    _json_file_cache.pop(path, None)
+
+
+def _read_json_cached(path: str) -> dict:
+    entry = _json_file_cache.get(path)
+    if entry is not None:
+        try:
+            if _file_stat_key(os.stat(path)) == entry[0]:
+                return copy.deepcopy(entry[1])
+        except FileNotFoundError:
+            _invalidate_json_cache(path)
+    with open(path, "r", encoding="utf-8") as file:
+        portalocker.lock(file, portalocker.LOCK_SH)
+        try:
+            stat_key = _file_stat_key(os.fstat(file.fileno()))
+            data = json.load(file)
+        finally:
+            portalocker.unlock(file)
+    _json_file_cache[path] = (stat_key, data)
+    return copy.deepcopy(data)
+
+
 class WriteUserData(object):
     """Write userdata.json with lock"""
 
     def __init__(self, file_type=UserDataFiles.USERDATA):
         if file_type == UserDataFiles.USERDATA:
+            self.path = USERDATA_FILE
             self.userdata_file = open(USERDATA_FILE, "r+", encoding="utf-8")
         elif file_type == UserDataFiles.SECRETS:
             # Make sure file exists
             if not os.path.exists(SECRETS_FILE):
                 with open(SECRETS_FILE, "w", encoding="utf-8") as secrets_file:
                     secrets_file.write("{}")
+            self.path = SECRETS_FILE
             self.userdata_file = open(SECRETS_FILE, "r+", encoding="utf-8")
         else:
             raise ValueError("Unknown file type")
@@ -96,6 +131,7 @@ class WriteUserData(object):
             self.userdata_file.truncate()
         portalocker.unlock(self.userdata_file)
         self.userdata_file.close()
+        _invalidate_json_cache(self.path)
 
 
 class ReadUserData(object):
@@ -103,23 +139,21 @@ class ReadUserData(object):
 
     def __init__(self, file_type=UserDataFiles.USERDATA):
         if file_type == UserDataFiles.USERDATA:
-            self.userdata_file = open(USERDATA_FILE, "r", encoding="utf-8")
+            self.path = USERDATA_FILE
         elif file_type == UserDataFiles.SECRETS:
             if not os.path.exists(SECRETS_FILE):
                 with open(SECRETS_FILE, "w", encoding="utf-8") as secrets_file:
                     secrets_file.write("{}")
-            self.userdata_file = open(SECRETS_FILE, "r", encoding="utf-8")
+            self.path = SECRETS_FILE
         else:
             raise ValueError("Unknown file type")
-        portalocker.lock(self.userdata_file, portalocker.LOCK_SH)
-        self.data = json.load(self.userdata_file)
+        self.data = _read_json_cached(self.path)
 
     def __enter__(self) -> dict:
         return self.data
 
     def __exit__(self, *args):
-        portalocker.unlock(self.userdata_file)
-        self.userdata_file.close()
+        pass
 
 
 def ensure_ssh_and_users_fields_exist(data):
