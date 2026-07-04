@@ -4,17 +4,16 @@
 from inspect import isawaitable
 from typing import Any, Callable
 
-from opentelemetry import context as otel_context
-from opentelemetry import trace
-
+from opentelemetry import context as otel_context, trace
+from strawberry.extensions import LifecycleStep, SchemaExtension
 from strawberry.extensions.tracing import OpenTelemetryExtension
 from strawberry.extensions.tracing.utils import should_skip_tracing
-from strawberry.extensions import LifecycleStep, SchemaExtension
 from strawberry.permission import BasePermission
 from strawberry.types import Info
 
 from selfprivacy_api.actions.api_tokens import is_token_valid
 from selfprivacy_api.utils.localization import Localization
+from selfprivacy_api.utils.request_memo import begin_request_memo, end_request_memo
 
 
 class IsAuthenticated(BasePermission):
@@ -95,3 +94,14 @@ class SelfPrivacyOpenTelemetryExtension(OpenTelemetryExtension):
                 result = await result
 
             return result
+
+
+class RequestMemoExtension(SchemaExtension):
+    """Gives each GraphQL operation a memoization scope"""
+
+    def on_operation(self):
+        token = begin_request_memo()
+        try:
+            yield
+        finally:
+            end_request_memo(token)

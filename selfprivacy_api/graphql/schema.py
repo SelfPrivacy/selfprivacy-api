@@ -4,16 +4,23 @@
 
 import asyncio
 from typing import AsyncGenerator, List
+
 import strawberry
 from strawberry.types import Info
-
-from selfprivacy_api.utils.localization import Localization, DEFAULT_LOCALE
 
 from selfprivacy_api.graphql import (
     IsAuthenticated,
     LocaleExtension,
+    RequestMemoExtension,
     SelfPrivacyOpenTelemetryExtension,
 )
+from selfprivacy_api.graphql.common_types.service import (
+    BoolConfigItem,
+    EnumConfigItem,
+    StringConfigItem,
+)
+from selfprivacy_api.graphql.mutations.api_mutations import ApiMutations
+from selfprivacy_api.graphql.mutations.backup_mutations import BackupMutations
 from selfprivacy_api.graphql.mutations.deprecated_mutations import (
     DeprecatedApiMutations,
     DeprecatedJobMutations,
@@ -22,42 +29,32 @@ from selfprivacy_api.graphql.mutations.deprecated_mutations import (
     DeprecatedSystemMutations,
     DeprecatedUsersMutations,
 )
-from selfprivacy_api.graphql.mutations.api_mutations import ApiMutations
+from selfprivacy_api.graphql.mutations.email_passwords_metadata_mutations import (
+    EmailPasswordsMetadataMutations,
+)
 from selfprivacy_api.graphql.mutations.job_mutations import JobMutations
 from selfprivacy_api.graphql.mutations.mutation_interface import GenericMutationReturn
 from selfprivacy_api.graphql.mutations.services_mutations import ServicesMutations
 from selfprivacy_api.graphql.mutations.storage_mutations import StorageMutations
 from selfprivacy_api.graphql.mutations.system_mutations import SystemMutations
-from selfprivacy_api.graphql.mutations.backup_mutations import BackupMutations
-from selfprivacy_api.graphql.mutations.email_passwords_metadata_mutations import (
-    EmailPasswordsMetadataMutations,
-)
-
+from selfprivacy_api.graphql.mutations.users_mutations import UsersMutations
 from selfprivacy_api.graphql.queries.api_queries import Api
 from selfprivacy_api.graphql.queries.backup import Backup
 from selfprivacy_api.graphql.queries.groups import Groups
 from selfprivacy_api.graphql.queries.jobs import Job
 from selfprivacy_api.graphql.queries.logs import LogEntry, Logs
+from selfprivacy_api.graphql.queries.monitoring import Monitoring
 from selfprivacy_api.graphql.queries.services import Services
 from selfprivacy_api.graphql.queries.storage import Storage
 from selfprivacy_api.graphql.queries.system import System
-from selfprivacy_api.graphql.queries.monitoring import Monitoring
-
-from selfprivacy_api.graphql.subscriptions.jobs import ApiJob
+from selfprivacy_api.graphql.queries.users import Users
 from selfprivacy_api.graphql.subscriptions.jobs import (
+    ApiJob,
     job_updates as job_update_generator,
 )
 from selfprivacy_api.graphql.subscriptions.logs import log_stream
-
-from selfprivacy_api.graphql.common_types.service import (
-    StringConfigItem,
-    BoolConfigItem,
-    EnumConfigItem,
-)
-
-from selfprivacy_api.graphql.mutations.users_mutations import UsersMutations
-from selfprivacy_api.graphql.queries.users import Users
 from selfprivacy_api.jobs.test import test_job
+from selfprivacy_api.utils.localization import DEFAULT_LOCALE, Localization
 
 
 @strawberry.type
@@ -234,6 +231,7 @@ schema = strawberry.Schema(
         EnumConfigItem,
     ],
     extensions=[
+        RequestMemoExtension,
         SelfPrivacyOpenTelemetryExtension,
     ],
 )
