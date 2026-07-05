@@ -10,7 +10,7 @@ class TokenHeader(BaseModel):
 
 
 async def get_token_header(
-    token: str = Depends(APIKeyHeader(name="Authorization", auto_error=False))
+    token: str = Depends(APIKeyHeader(name="Authorization", auto_error=False)),
 ) -> TokenHeader:
     if token is None:
         raise HTTPException(
@@ -18,7 +18,7 @@ async def get_token_header(
         )
     else:
         token = token.replace("Bearer ", "")
-        if not is_token_valid(token):
+        if not await is_token_valid(token):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
             )

@@ -73,23 +73,26 @@ def global_data_dir():
     return path.join(path.dirname(__file__), "data")
 
 
-@pytest.fixture
-def empty_redis_repo():
+@pytest_asyncio.fixture
+async def empty_redis_repo():
     repo = RedisTokensRepository()
-    repo.reset()
-    assert repo.get_tokens() == []
+    await repo.reset()
+    assert await repo.get_tokens() == []
     return repo
 
 
 @pytest.fixture
 def redis_repo_with_tokens():
-    repo = RedisTokensRepository()
-    repo.reset()
-    for token in TOKENS:
-        repo._store_token(token)
-    assert sorted(repo.get_tokens(), key=lambda x: x.token) == sorted(
-        TOKENS, key=lambda x: x.token
-    )
+    async def _seed():
+        repo = RedisTokensRepository()
+        await repo.reset()
+        for token in TOKENS:
+            await repo._store_token(token)
+        assert sorted(await repo.get_tokens(), key=lambda x: x.token) == sorted(
+            TOKENS, key=lambda x: x.token
+        )
+
+    asyncio.run(_seed())
 
 
 def clone_global_file(filename, tmpdir) -> str:
