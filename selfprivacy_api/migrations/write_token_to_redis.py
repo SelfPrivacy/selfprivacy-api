@@ -1,14 +1,14 @@
 import logging
 from datetime import datetime
 from typing import Optional
+
 from selfprivacy_api.migrations.migration import Migration
 from selfprivacy_api.models.tokens.token import Token
-
-from selfprivacy_api.repositories.tokens.redis_tokens_repository import (
-    RedisTokensRepository,
-)
 from selfprivacy_api.repositories.tokens.abstract_tokens_repository import (
     AbstractTokensRepository,
+)
+from selfprivacy_api.repositories.tokens.redis_tokens_repository import (
+    RedisTokensRepository,
 )
 from selfprivacy_api.utils import ReadUserData, UserDataFiles
 
@@ -24,8 +24,8 @@ class WriteTokenToRedis(Migration):
     def get_migration_description(self) -> str:
         return "Loads the initial token into redis token storage"
 
-    def is_repo_empty(self, repo: AbstractTokensRepository) -> bool:
-        if repo.get_tokens() != []:
+    async def is_repo_empty(self, repo: AbstractTokensRepository) -> bool:
+        if await repo.get_tokens() != []:
             return False
         return True
 
@@ -43,7 +43,7 @@ class WriteTokenToRedis(Migration):
 
     async def is_migration_needed(self) -> bool:
         try:
-            if self.get_token_from_json() is not None and self.is_repo_empty(
+            if self.get_token_from_json() is not None and await self.is_repo_empty(
                 RedisTokensRepository()
             ):
                 return True
@@ -59,7 +59,7 @@ class WriteTokenToRedis(Migration):
             if token is None:
                 logging.error("No token found in secrets.json")
                 return
-            RedisTokensRepository()._store_token(token)
+            await RedisTokensRepository()._store_token(token)
 
             logging.error("Done")
         except Exception as e:

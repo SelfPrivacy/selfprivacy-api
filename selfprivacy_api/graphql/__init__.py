@@ -22,7 +22,7 @@ class IsAuthenticated(BasePermission):
 
     message = "You must be authenticated to access this resource."
 
-    def has_permission(self, source: Any, info: Info, **kwargs) -> bool:
+    async def has_permission(self, source: Any, info: Info, **kwargs) -> bool:
         token = info.context["request"].headers.get("Authorization")
         if token is None:
             token = info.context["request"].query_params.get("token")
@@ -32,7 +32,7 @@ class IsAuthenticated(BasePermission):
                 token = connection_params.get("Authorization")
         if token is None:
             return False
-        return is_token_valid(token.replace("Bearer ", ""))
+        return await is_token_valid(token.replace("Bearer ", ""))
 
 
 class LocaleExtension(SchemaExtension):
