@@ -26,6 +26,7 @@ from selfprivacy_api.services import Service, ServiceManager, ServiceStatus
 from selfprivacy_api.services.test_service import DummyService
 from selfprivacy_api.utils.huey import huey
 from selfprivacy_api.utils.observable import Observable
+from selfprivacy_api.utils.redis_pool import RedisPool
 
 API_REBUILD_SYSTEM_UNIT = "sp-nixos-rebuild.service"
 API_UPGRADE_SYSTEM_UNIT = "sp-nixos-upgrade.service"
@@ -66,6 +67,15 @@ DEVICE_WE_AUTH_TESTS_WITH = TOKENS_FILE_CONTENTS["tokens"][0]
 
 def pytest_generate_tests(metafunc):
     os.environ["TEST_MODE"] = "true"
+
+
+@pytest.fixture(autouse=True)
+def isolated_redis_pool_singleton():
+    """Each test builds its own RedisPool so singleton state (pools,
+    per-loop caches, patched connection config) never leaks across tests."""
+    RedisPool.reset()
+    yield
+    RedisPool.reset()
 
 
 def global_data_dir():
