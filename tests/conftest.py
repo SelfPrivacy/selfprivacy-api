@@ -18,6 +18,7 @@ from shutil import copyfile
 from selfprivacy_api.models.tokens.token import Token
 
 from selfprivacy_api.utils.huey import huey
+from selfprivacy_api.utils.redis_pool import RedisPool
 from selfprivacy_api.utils.observable import Observable
 
 import selfprivacy_api.services as services
@@ -67,6 +68,15 @@ DEVICE_WE_AUTH_TESTS_WITH = TOKENS_FILE_CONTENTS["tokens"][0]
 
 def pytest_generate_tests(metafunc):
     os.environ["TEST_MODE"] = "true"
+
+
+@pytest.fixture(autouse=True)
+def isolated_redis_pool_singleton():
+    """Each test builds its own RedisPool so singleton state (pools,
+    per-loop caches, patched connection config) never leaks across tests."""
+    RedisPool.reset()
+    yield
+    RedisPool.reset()
 
 
 def global_data_dir():
