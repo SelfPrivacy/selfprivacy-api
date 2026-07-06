@@ -1,8 +1,8 @@
 import asyncio
 import gettext
+import json
 import logging
 import os
-import json
 import subprocess
 from typing import Any, Optional, Union
 
@@ -49,13 +49,35 @@ def get_kanidm_url():
     return f"https://auth.{get_domain()}"
 
 
+_kanidm_client: Optional[httpx.AsyncClient] = None
+
+
+def kanidm_client() -> httpx.AsyncClient:
+    global _kanidm_client
+    if _kanidm_client is None:
+        _kanidm_client = httpx.AsyncClient(timeout=15)
+    return _kanidm_client
+
+
 class KanidmAdminToken:
     """
     Manages the administrative token for Kanidm.
 
+    Token sources, in priority order: the Redis cache, the token file
+    provided by the NixOS module (KANIDM_ADMIN_TOKEN_FILE), and — as a
+    last resort with real side effects (idm_admin password reset, token
+    minted on the service account) — CLI regeneration.
+
     Methods:
-        get() -> str:
-            Retrieves the current administrative token. If absent, resets the admin password and creates a new token.
+        get(rejected_token=None) -> str:
+            Retrieves the current administrative token. With
+            `rejected_token` set (a token Kanidm just refused), skips the
+            Redis cache and only adopts the environment token if it
+            differs from the rejected one and passes a probe request;
+            otherwise regenerates.
+
+        _is_token_valid(token: str) -> bool:
+            Probes kanidm with one request to check a candidate token.
 
         _create_and_save_token(kanidm_admin_password: str) -> str:
             Creates a new token using the admin password and saves it to Redis.
@@ -65,34 +87,34 @@ class KanidmAdminToken:
 
         _delete_kanidm_token_from_db() -> None:
             Deletes the admin token from Redis.
-
-        _is_token_valid() -> bool:
-            Sends a request to kanidm to check the validity of the token.
     """
 
     @staticmethod
-    async def get() -> str:
-        redis = RedisPool().get_connection_async()
-        kanidm_admin_token: str | None = await redis.get(REDIS_TOKEN_KEY)
+    async def get(rejected_token: Optional[str] = None) -> str:
+        if rejected_token is None:
+            redis = RedisPool().get_connection_async()
+            kanidm_admin_token: str | None = await redis.get(REDIS_TOKEN_KEY)
+            if kanidm_admin_token:
+                return kanidm_admin_token
 
-        if kanidm_admin_token and await KanidmAdminToken._is_token_valid(
-            kanidm_admin_token
-        ):
-            return kanidm_admin_token
-
-        logging.warning(
-            "The Kanidm admin token from Redis is missing or invalid. Trying to retrieve it from the environment."
-        )
+            logging.warning(
+                "No Kanidm admin token in Redis. "
+                "Trying to retrieve it from the environment."
+            )
 
         new_kanidm_admin_token = await KanidmAdminToken._get_admin_token_from_env()
-        if new_kanidm_admin_token and await KanidmAdminToken._is_token_valid(
-            new_kanidm_admin_token
-        ):
-            return new_kanidm_admin_token
+        if new_kanidm_admin_token is not None:
+            if rejected_token is None:
+                # Used optimistically; a rejection is handled by
+                # _send_query's retry.
+                return new_kanidm_admin_token
+            if new_kanidm_admin_token != rejected_token and (
+                await KanidmAdminToken._is_token_valid(new_kanidm_admin_token)
+            ):
+                # The environment token was rotated since we cached it.
+                return new_kanidm_admin_token
 
-        logging.warning(
-            "The Kanidm admin token from the environment is missing or invalid. Regenerating."
-        )
+        logging.warning("The Kanidm admin token is missing or invalid. Regenerating.")
 
         kanidm_admin_password = KanidmAdminToken._reset_and_save_idm_admin_password()
         return await KanidmAdminToken._create_and_save_token(kanidm_admin_password)
@@ -117,7 +139,7 @@ class KanidmAdminToken:
                         "The Kanidm admin token will be generated."
                     )
                     return None
-                await redis.set("kanidm:token", token)
+                await redis.set(REDIS_TOKEN_KEY, token)
                 return token
         except FileNotFoundError:
             logger.warning(
@@ -182,7 +204,7 @@ class KanidmAdminToken:
 
         kanidm_admin_token = stdout.decode(errors="replace").splitlines()[-1]
 
-        await redis.set("kanidm:token", kanidm_admin_token)
+        await redis.set(REDIS_TOKEN_KEY, kanidm_admin_token)
         return kanidm_admin_token
 
     @staticmethod
@@ -223,49 +245,17 @@ class KanidmAdminToken:
 
     @staticmethod
     async def _is_token_valid(token: str) -> bool:
-        endpoint = f"{get_kanidm_url()}/v1/person/root"
-        method = "GET"
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(
-                    endpoint,
-                    headers={
-                        "Authorization": f"Bearer {token}",
-                        "Content-Type": "application/json",
-                    },
-                    timeout=1,
-                )
-
-        except (
-            httpx.TimeoutException,
-            httpx.ConnectError,
-            httpx.RequestError,
-        ) as error:
-            raise KanidmQueryError(
-                description=_(
-                    "Kanidm is not responding to requests. Connection error."
-                ),
-                endpoint=endpoint,
-                method=method,
-                error_text=error,
+            response = await kanidm_client().get(
+                f"{get_kanidm_url()}/v1/person/root",
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                },
             )
-
-        except Exception as error:
-            raise KanidmQueryError(
-                description=_("Unknown error while checking the Kanidm admin token."),
-                endpoint=endpoint,
-                method=method,
-                error_text=error,
-            )
-
-        response_data = response.json()
-
-        # we do not handle the other errors, this is handled by the main function in KanidmUserRepository._send_query
-        if response.status_code != 200:
-            if isinstance(response_data, str) and response_data == "notauthenticated":
-                logger.error("Kanidm token is not valid")
-                return False
-        return True
+        except httpx.HTTPError:
+            return False
+        return response.status_code == 200
 
     @staticmethod
     async def _delete_kanidm_token_from_db() -> None:
@@ -372,77 +362,96 @@ class KanidmUserRepository(AbstractUserRepository):
             span.set_attribute("kanidm.endpoint", endpoint)
             span.set_attribute("http.method", method)
 
-            try:
-                async with httpx.AsyncClient() as client:
-                    response = await client.request(
+            rejected_token = None
+            for attempt in (1, 2):
+                token = await KanidmAdminToken.get(rejected_token=rejected_token)
+                try:
+                    response = await kanidm_client().request(
                         method,
                         full_endpoint,
                         json=data,
                         headers={
-                            "Authorization": f"Bearer {await KanidmAdminToken.get()}",
+                            "Authorization": f"Bearer {token}",
                             "Content-Type": "application/json",
                         },
-                        timeout=1,
                     )
 
                     span.set_attribute("http.status_code", response.status_code)
                     response_data = response.json()
 
-            except json.JSONDecodeError as error:
-                raise KanidmQueryError(
-                    endpoint=full_endpoint,
-                    method=method,
-                    description=_("No JSON found in Kanidm response."),
-                    error_text=error,
-                )
-            except (
-                httpx.TimeoutException,
-                httpx.ConnectError,
-                httpx.RequestError,
-            ) as error:
-                raise KanidmQueryError(
-                    endpoint=endpoint,
-                    method=method,
-                    error_text=error,
-                    description=_("Kanidm is not responding to requests."),
-                )
+                except json.JSONDecodeError as error:
+                    raise KanidmQueryError(
+                        endpoint=full_endpoint,
+                        method=method,
+                        description=_("No JSON found in Kanidm response."),
+                        error_text=error,
+                    )
+                except (
+                    httpx.TimeoutException,
+                    httpx.ConnectError,
+                    httpx.RequestError,
+                ) as error:
+                    raise KanidmQueryError(
+                        endpoint=endpoint,
+                        method=method,
+                        error_text=error,
+                        description=_("Kanidm is not responding to requests."),
+                    )
 
-            except Exception as error:
-                raise KanidmQueryError(
-                    endpoint=full_endpoint,
-                    method=method,
-                    error_text=error,
-                )
+                except Exception as error:
+                    raise KanidmQueryError(
+                        endpoint=full_endpoint,
+                        method=method,
+                        error_text=error,
+                    )
 
-            if response.status_code != 200:
-                if isinstance(response_data, dict):
-                    # Current Kanidm reports duplicates via
-                    # "conflicting_attributes"; the "plugin"/"attrunique"
-                    # shape is from older versions, kept just in case.
-                    plugin_error = response_data.get("plugin", {})
-                    if (
-                        "conflicting_attributes" in response_data
-                        or plugin_error.get("attrunique") == "duplicate value detected"
-                    ):
-                        raise UserAlreadyExists  # does it work only for user? NO ONE KNOWS
+                if (
+                    attempt == 1
+                    and response.status_code != 200
+                    and response_data == "notauthenticated"
+                ):
+                    await KanidmAdminToken._delete_kanidm_token_from_db()
+                    span.add_event("Kanidm token rejected, retrying with a new one")
+                    rejected_token = token
+                    continue
 
-                if isinstance(response_data, str):
-                    if response_data == "nomatchingentries":
-                        raise UserOrGroupNotFound  # does it work only for user? - NO
-                    elif response_data == "accessdenied":
-                        raise KanidmQueryError(
-                            endpoint=full_endpoint,
-                            method=method,
-                            error_text=_("Kanidm access issue"),
-                        )
-                    elif response_data == "notauthenticated":
-                        raise FailedToGetValidKanidmToken
+                if response.status_code != 200:
+                    if isinstance(response_data, dict):
+                        # Current Kanidm reports duplicates via
+                        # "conflicting_attributes"; the "plugin"/"attrunique"
+                        # shape is from older versions, kept just in case.
+                        plugin_error = response_data.get("plugin", {})
+                        if (
+                            "conflicting_attributes" in response_data
+                            or plugin_error.get("attrunique")
+                            == "duplicate value detected"
+                        ):
+                            raise UserAlreadyExists  # does it work only for user? NO ONE KNOWS
 
-                raise KanidmQueryError(
-                    error_text=response.text, endpoint=full_endpoint, method=method
-                )
+                    if isinstance(response_data, str):
+                        if response_data == "nomatchingentries":
+                            raise UserOrGroupNotFound  # does it work only for user? - NO
+                        elif response_data == "accessdenied":
+                            raise KanidmQueryError(
+                                endpoint=full_endpoint,
+                                method=method,
+                                error_text=_("Kanidm access issue"),
+                            )
+                        elif response_data == "notauthenticated":
+                            raise FailedToGetValidKanidmToken
 
-            return response_data
+                    raise KanidmQueryError(
+                        error_text=response.text, endpoint=full_endpoint, method=method
+                    )
+
+                return response_data
+
+            raise KanidmQueryError(
+                endpoint=endpoint,
+                method=method,
+                error_text="",
+                description=_("We soomehow got into unreachable code."),
+            )
 
     @staticmethod
     async def create_user(
