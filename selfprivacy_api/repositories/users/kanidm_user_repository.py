@@ -416,8 +416,14 @@ class KanidmUserRepository(AbstractUserRepository):
 
             if response.status_code != 200:
                 if isinstance(response_data, dict):
+                    # Current Kanidm reports duplicates via
+                    # "conflicting_attributes"; the "plugin"/"attrunique"
+                    # shape is from older versions, kept just in case.
                     plugin_error = response_data.get("plugin", {})
-                    if plugin_error.get("attrunique") == "duplicate value detected":
+                    if (
+                        "conflicting_attributes" in response_data
+                        or plugin_error.get("attrunique") == "duplicate value detected"
+                    ):
                         raise UserAlreadyExists  # does it work only for user? NO ONE KNOWS
 
                 if isinstance(response_data, str):
