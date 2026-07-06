@@ -3,31 +3,29 @@
 # pylint: disable=redefined-outer-name
 # pylint: disable=unused-argument
 import asyncio
+import datetime
+import json
 import os
+import subprocess
+from os import listdir, makedirs, path
+from shutil import copyfile
+from typing import AsyncGenerator, List
+
+import httpx
 import pytest
 import pytest_asyncio
-import datetime
-import subprocess
-
-from os import path
-from os import makedirs
-from typing import AsyncGenerator
 from fastapi.testclient import TestClient
-from shutil import copyfile
-
-from selfprivacy_api.models.tokens.token import Token
-
-from selfprivacy_api.utils.huey import huey
-from selfprivacy_api.utils.redis_pool import RedisPool
-from selfprivacy_api.utils.observable import Observable
 
 import selfprivacy_api.services as services
-from selfprivacy_api.services import Service, ServiceStatus, ServiceManager
-from selfprivacy_api.services.test_service import DummyService
-
+from selfprivacy_api.models.tokens.token import Token
 from selfprivacy_api.repositories.tokens.redis_tokens_repository import (
     RedisTokensRepository,
 )
+from selfprivacy_api.services import Service, ServiceManager, ServiceStatus
+from selfprivacy_api.services.test_service import DummyService
+from selfprivacy_api.utils.huey import huey
+from selfprivacy_api.utils.observable import Observable
+from selfprivacy_api.utils.redis_pool import RedisPool
 
 API_REBUILD_SYSTEM_UNIT = "sp-nixos-rebuild.service"
 API_UPGRADE_SYSTEM_UNIT = "sp-nixos-upgrade.service"
@@ -169,9 +167,6 @@ def volume_folders(tmpdir, mocker):
 
 TESTFILE_NAME = "testfile.txt"
 TESTFILE2_NAME = "testfile2.txt"
-
-from typing import List
-from os import listdir
 
 
 def testfile_paths(service_dirs: List[str]) -> List[str]:
@@ -355,3 +350,69 @@ def catch_nixos_rebuild_calls(mocker, fp):
 def assert_rebuild_was_made(fp):
     # TODO(nhnn): Actually wire it up with mock_system_rebuild_flow
     pass
+
+
+class KanidmApiRecorder:
+    """
+    Scripted handler for httpx.MockTransport that records every outgoing
+    request so tests can assert exact methods/URLs/headers/bodies.
+    """
+
+    def __init__(self):
+        self.requests: list[httpx.Request] = []
+        self.plan: list = []
+
+    def respond(self, status_code: int = 200, data=None) -> None:
+        """Enqueue a JSON response (data may be any JSON-serializable value)."""
+        self.plan.append(
+            httpx.Response(
+                status_code,
+                content=json.dumps(data).encode(),
+                headers={"Content-Type": "application/json"},
+            )
+        )
+
+    def respond_raw(self, response) -> None:
+        """Enqueue an arbitrary httpx.Response."""
+        self.plan.append(response)
+
+    def fail(self, exception: Exception) -> None:
+        """Enqueue an exception to be raised by the transport."""
+        self.plan.append(exception)
+
+    def __call__(self, request: httpx.Request) -> httpx.Response:
+        self.requests.append(request)
+        assert self.plan, f"Unexpected request, no scripted response left: {request}"
+        item = self.plan.pop(0)
+        if isinstance(item, Exception):
+            raise item
+        return item
+
+
+@pytest.fixture
+def kanidm_api(mocker):
+    """
+    Reroute httpx.AsyncClient, as looked up by the kanidm user repository
+    module, through an httpx.MockTransport backed by a recording handler.
+    """
+    recorder = KanidmApiRecorder()
+    transport = httpx.MockTransport(recorder)
+    real_async_client = httpx.AsyncClient
+
+    def client_factory(**kwargs):
+        return real_async_client(transport=transport, **kwargs)
+
+    mocker.patch(
+        "selfprivacy_api.repositories.users.kanidm_user_repository.httpx.AsyncClient",
+        new=client_factory,
+    )
+    return recorder
+
+
+@pytest.fixture
+def mock_kanidm_domain(mocker):
+    """Pin get_domain() as looked up by the kanidm user repository."""
+    return mocker.patch(
+        "selfprivacy_api.repositories.users.kanidm_user_repository.get_domain",
+        return_value="test.tld",
+    )
