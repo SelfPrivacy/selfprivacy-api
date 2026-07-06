@@ -6,6 +6,7 @@ pythonPackages.buildPythonPackage {
   src = builtins.filterSource (p: t: p != ".git" && t != "symlink") ./.;
   pyproject = true;
   propagatedBuildInputs = with pythonPackages; ([
+    packaging
     fastapi
     gevent
     huey

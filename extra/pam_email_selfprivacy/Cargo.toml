@@ -1,0 +1,17 @@
+[package]
+name = "pam_email_selfprivacy"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+panic = "abort"
+
+[dependencies]
+minreq = { version = "2.14.1", default-features = false, features = ["json-using-serde"] }
+nonstick = "0.1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1.0.150"
+thiserror = "2.0.18"

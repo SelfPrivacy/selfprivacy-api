@@ -75,6 +75,7 @@
             pythonPackages = pkgs.python312Packages;
             rev = self.shortRev or self.dirtyShortRev or "dirty";
           };
+          pam-email-selfprivacy = pkgs.callPackage ./extra/pam_email_selfprivacy {};
           pytest-vm = let
             check = self.checks.${system}.default.extend {
               modules = [
@@ -148,9 +149,18 @@
           pkgs = nixpkgs.legacyPackages.${system};
         in
         {
-          default = pkgs.mkShellNoCC {
+          default = pkgs.mkShell {
             name = "SP API dev shell";
+            LLVM_COV = "${pkgs.llvmPackages.llvm}/bin/llvm-cov";
+            LLVM_PROFDATA = "${pkgs.llvmPackages.llvm}/bin/llvm-profdata";
             packages = with pkgs; [
+              rustc
+              rustfmt
+              cargo
+              clippy
+              cargo-llvm-cov
+              llvmPackages.llvm
+              pam
               gettext # msginit, msgfmt
               nixpkgs-fmt
               rclone
@@ -199,6 +209,19 @@
               export TEST_MODE="true"
             '';
           };
+          ci-rust = pkgs.mkShell {
+            name = "SP API Rust CI shell";
+            LLVM_COV = "${pkgs.llvmPackages.llvm}/bin/llvm-cov";
+            LLVM_PROFDATA = "${pkgs.llvmPackages.llvm}/bin/llvm-profdata";
+            packages = with pkgs; [
+              rustc
+              cargo
+              clippy
+              cargo-llvm-cov
+              llvmPackages.llvm
+              pam
+            ];
+          };
           ci-sonar = pkgs.mkShellNoCC {
             name = "SP API sonar shell";
             packages = with pkgs; [
@@ -218,6 +241,7 @@
             {
               nativeBuildInputs = [ pkgs.black ];
             } "black --check ${self.outPath} > $out";
+          pam-email-selfprivacy-vm-integration = self.packages.${system}.pam-email-selfprivacy.tests.vm-integration;
           default = pkgs.testers.runNixOSTest {
             name = "default";
             nodes.machine =

@@ -11,6 +11,7 @@ let
   nixos-rebuild = "${config.system.build.nixos-rebuild}/bin/nixos-rebuild";
   nix = "${config.nix.package.out}/bin/nix";
   selfprivacy-graphql-api = selfprivacy-api-packages.${pkgs.stdenv.hostPlatform.system}.default;
+  pam-email-selfprivacy = selfprivacy-api-packages.${pkgs.stdenv.hostPlatform.system}.pam-email-selfprivacy;
   workerPython = pkgs.python312.withPackages (ps: [ selfprivacy-graphql-api ps.huey ]);
   sp-fetch-remote-module = pkgs.writeShellApplication {
     name = "sp-fetch-remote-module";
@@ -29,41 +30,9 @@ let
   sp = config.selfprivacy;
   domain = sp.domain;
   unix-user = "selfprivacy-api";
-  port = "5050";
 
   oauth-client-id = "selfprivacy-api";
   oauth-redirect-uri = "https://api.${domain}/login/callback";
-
-  dovecot-auth-script = pkgs.writeShellApplication {
-    name = "dovecot-auth-script.sh";
-    runtimeInputs = with pkgs; [
-      coreutils-full
-      gnugrep
-      curl
-      jq
-    ];
-    text = ''
-      CHECKPASSWORD_REPLY_BINARY="$1"
-
-      IFS= read -r -d ''' username <&3
-      IFS= read -r -d ''' password <&3
-
-      if ! response=$(curl -s -X POST http://127.0.0.1:${port}/internal/check-email-password \
-        -H "Content-Type: application/json" \
-        -d "{\"username\": \"$username\", \"password\": \"$password\"}"); then
-        exit 111
-      fi
-
-      isValid=$(echo "$response" | jq -r '.isValid')
-
-      if [ "$isValid" = "true" ]; then
-        exec "$CHECKPASSWORD_REPLY_BINARY"
-      else
-        exit 1
-      fi
-    '';
-  };
-
 in
 {
   options.services.selfprivacy-api = {
@@ -144,7 +113,7 @@ in
             // {
               HOME = "/root";
               PYTHONUNBUFFERED = "1";
-              SP_API_OTEL_ENABLED = builtins.toString cfg.opentelemetry.enable;
+              SP_API_OTEL_ENABLED = toString cfg.opentelemetry.enable;
               KANIDM_ADMIN_TOKEN_FILE =
                 sp.passthru.auth.mkServiceAccountTokenFP unix-user;
             }
@@ -203,7 +172,7 @@ in
             // {
               HOME = "/root";
               PYTHONUNBUFFERED = "1";
-              SP_API_OTEL_ENABLED = builtins.toString cfg.opentelemetry.enable;
+              SP_API_OTEL_ENABLED = toString cfg.opentelemetry.enable;
             }
             // config.networking.proxy.envVars
             // (lib.optionalAttrs cfg.opentelemetry.enable
@@ -370,12 +339,15 @@ in
       };
     };
 
-    services.dovecot2.extraConfig = lib.mkAfter ''
-      passdb {
-        driver = checkpassword
-        mechanisms = plain login
-        args = ${dovecot-auth-script}/bin/dovecot-auth-script.sh
-      }
+    services.dovecot2.settings."passdb pam" = {
+      failure_show_msg = false;
+      mechanisms_filter = [ "plain" "login" ];
+      service_name = "selfprivacymail";
+    };
+
+    security.pam.services.selfprivacymail.text = ''
+      auth required ${pam-email-selfprivacy}/lib/libpam_email_selfprivacy.so port=5050
+      account required pam_permit.so
     '';
 
     selfprivacy.auth.clients."${oauth-client-id}" = {

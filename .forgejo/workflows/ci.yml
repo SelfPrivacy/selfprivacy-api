@@ -35,10 +35,25 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Run tests and coverage
+      - name: Run Python tests and coverage
         run: |
           nix build -L .#checks.x86_64-linux.default
           cp result/coverage.xml/coverage.xml coverage.xml
+
+      - name: Run Rust tests, coverage and Clippy
+        run: |
+          nix develop -L .#ci-rust --command bash -c '
+            set -euo pipefail
+            cd extra/pam_email_selfprivacy
+            mkdir -p target/coverage
+            export CARGO_TARGET_DIR="$(mktemp -d /tmp/rust-target.XXXXXX)"
+            trap "rm -rf \"$CARGO_TARGET_DIR\"" EXIT
+            cargo llvm-cov --lcov --output-path target/coverage/lcov.info
+            cargo clippy --message-format=json > target/clippy-report.json
+          '
+
+      - name: Run Rust PAM integration test
+        run: nix build -L .#checks.x86_64-linux.pam-email-selfprivacy-vm-integration --no-link
 
       - name: Upload results to SonarQube
         env:
@@ -51,6 +66,11 @@ jobs:
           SONAR_PARAMS="$SONAR_PARAMS -Dsonar.token=$SONAR_TOKEN"
           SONAR_PARAMS="$SONAR_PARAMS -Dsonar.python.coverage.reportPaths=coverage.xml"
           SONAR_PARAMS="$SONAR_PARAMS -Dsonar.python.version=3.12"
+          SONAR_PARAMS="$SONAR_PARAMS -Dsonar.rust.cargo.manifestPaths=extra/pam_email_selfprivacy/Cargo.toml"
+          SONAR_PARAMS="$SONAR_PARAMS -Dsonar.rust.lcov.reportPaths=extra/pam_email_selfprivacy/target/coverage/lcov.info"
+          SONAR_PARAMS="$SONAR_PARAMS -Dsonar.rust.clippy.enabled=false"
+          SONAR_PARAMS="$SONAR_PARAMS -Dsonar.rust.clippyReport.reportPaths=extra/pam_email_selfprivacy/target/clippy-report.json"
+          SONAR_PARAMS="$SONAR_PARAMS -Dsonar.coverage.exclusions=extra/pam_email_selfprivacy/src/lib.rs" # lib.rs is just glue handling PAM communication and it is already tested with NixOS VM.
 
           # Check if this is a pull request
           if [ -n "${{ github.event.pull_request.number }}" ]; then
