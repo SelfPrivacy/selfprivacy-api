@@ -43,19 +43,30 @@ class RedisTokensRepository(AbstractTokensRepository):
     @tracer.start_as_current_span("get_tokens")
     async def get_tokens(self) -> list[Token]:
         """Get the tokens"""
+        return list((await self._tokens_by_key()).values())
+
+    async def _tokens_by_key(self) -> dict[str, Token]:
         redis = self.connection
-        tokens = []
-        async for key in redis.scan_iter(TOKENS_PREFIX + "*"):
-            token = await self._token_from_hash(key)
-            if token is not None:
-                tokens.append(token)
+        keys = [key async for key in redis.scan_iter(TOKENS_PREFIX + "*", count=100)]
+        if not keys:
+            return {}
+        async with redis.pipeline(transaction=False) as pipe:
+            for key in keys:
+                pipe.hgetall(key)
+            results = await pipe.execute()
+        tokens = {}
+        for key, token_dict in zip(keys, results):
+            if not token_dict:
+                continue
+            RedisTokensRepository._prepare_model_dict(token_dict)
+            token = Token(**token_dict)
+            token.created_at = token.created_at.replace(tzinfo=None)
+            tokens[key] = token
         return tokens
 
     async def _discover_token_key(self, input_token: Token) -> Optional[str]:
         """brute-force searching for tokens, for robust deletion"""
-        redis = self.connection
-        async for key in redis.scan_iter(TOKENS_PREFIX + "*"):
-            token = await self._token_from_hash(key)
+        for key, token in (await self._tokens_by_key()).items():
             if token == input_token:
                 return key
         return None
@@ -70,10 +81,7 @@ class RedisTokensRepository(AbstractTokensRepository):
 
     async def get_recovery_key(self) -> Optional[RecoveryKey]:
         """Get the recovery key"""
-        redis = self.connection
-        if await redis.exists(RECOVERY_KEY_REDIS_KEY):
-            return await self._recovery_key_from_hash(RECOVERY_KEY_REDIS_KEY)
-        return None
+        return await self._recovery_key_from_hash(RECOVERY_KEY_REDIS_KEY)
 
     async def _store_recovery_key(self, recovery_key: RecoveryKey) -> None:
         await self._store_model_as_hash(RECOVERY_KEY_REDIS_KEY, recovery_key)
@@ -137,23 +145,16 @@ class RedisTokensRepository(AbstractTokensRepository):
 
     async def _model_dict_from_hash(self, redis_key: str) -> Optional[dict[str, Any]]:
         redis = self.connection
-        if await redis.exists(redis_key):
-            token_dict: dict[str, Any] = await redis.hgetall(redis_key)  # type: ignore
-            RedisTokensRepository._prepare_model_dict(token_dict)
-            return token_dict
-        return None
+        token_dict: dict[str, Any] = await redis.hgetall(redis_key)  # type: ignore
+        if not token_dict:
+            return None
+        RedisTokensRepository._prepare_model_dict(token_dict)
+        return token_dict
 
     async def _hash_as_model(self, redis_key: str, model_class):
         token_dict = await self._model_dict_from_hash(redis_key)
         if token_dict is not None:
             return model_class(**token_dict)
-        return None
-
-    async def _token_from_hash(self, redis_key: str) -> Optional[Token]:
-        token = await self._hash_as_model(redis_key, Token)
-        if token is not None:
-            token.created_at = token.created_at.replace(tzinfo=None)
-            return token
         return None
 
     async def _recovery_key_from_hash(self, redis_key: str) -> Optional[RecoveryKey]:
@@ -164,9 +165,11 @@ class RedisTokensRepository(AbstractTokensRepository):
 
     async def _store_model_as_hash(self, redis_key, model):
         redis = self.connection
+        mapping = {}
         for key, value in model.model_dump().items():
             if isinstance(value, datetime):
                 if value.tzinfo is None:
                     value = value.replace(tzinfo=timezone.utc)
                 value = value.isoformat()
-            await redis.hset(redis_key, key, str(value))
+            mapping[key] = str(value)
+        await redis.hset(redis_key, mapping=mapping)
