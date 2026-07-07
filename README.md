@@ -1,7 +1,5 @@
 # SelfPrivacy GraphQL API which allows app to control your server
 
-![CI status](https://ci.selfprivacy.org/api/badges/SelfPrivacy/selfprivacy-rest-api/status.svg)
-
 ## Build
 
 ```console
