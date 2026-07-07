@@ -8,10 +8,9 @@ def setup_instrumentation():
         return
 
     from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
-
-    # from opentelemetry.instrumentation.redis import RedisInstrumentor
+    from opentelemetry.instrumentation.redis import RedisInstrumentor
     from opentelemetry.instrumentation.threading import ThreadingInstrumentor
 
     HTTPXClientInstrumentor().instrument()
-    # RedisInstrumentor().instrument()
+    RedisInstrumentor().instrument()
     ThreadingInstrumentor().instrument()
