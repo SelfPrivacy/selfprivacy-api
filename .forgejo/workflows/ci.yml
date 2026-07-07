@@ -70,7 +70,6 @@ jobs:
           SONAR_PARAMS="$SONAR_PARAMS -Dsonar.rust.lcov.reportPaths=extra/pam_email_selfprivacy/target/coverage/lcov.info"
           SONAR_PARAMS="$SONAR_PARAMS -Dsonar.rust.clippy.enabled=false"
           SONAR_PARAMS="$SONAR_PARAMS -Dsonar.rust.clippyReport.reportPaths=extra/pam_email_selfprivacy/target/clippy-report.json"
-          SONAR_PARAMS="$SONAR_PARAMS -Dsonar.coverage.exclusions=extra/pam_email_selfprivacy/src/lib.rs" # lib.rs is just glue handling PAM communication and it is already tested with NixOS VM.
 
           # Check if this is a pull request
           if [ -n "${{ github.event.pull_request.number }}" ]; then
