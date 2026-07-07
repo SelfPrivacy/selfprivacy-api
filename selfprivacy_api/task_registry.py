@@ -1,7 +1,6 @@
 import logging
 import os
 from os import environ
-from collections.abc import Sequence
 
 from opentelemetry import metrics, trace
 from opentelemetry._logs import get_logger, set_logger_provider
@@ -19,12 +18,7 @@ from opentelemetry.sdk.resources import (
     Resource,
 )
 from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace import ReadableSpan
-from opentelemetry.sdk.trace.export import (
-    BatchSpanProcessor,
-    SpanExporter,
-    SpanExportResult,
-)
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 from selfprivacy_api.backup.tasks import *
 from selfprivacy_api.dependencies import get_api_version
@@ -33,7 +27,11 @@ from selfprivacy_api.jobs.test import test_job
 from selfprivacy_api.jobs.upgrade_system import rebuild_system_task
 from selfprivacy_api.services.tasks import move_service
 from selfprivacy_api.utils.huey import huey
-from selfprivacy_api.utils.otel import OTEL_ENABLED, setup_instrumentation
+from selfprivacy_api.utils.otel import (
+    OTEL_ENABLED,
+    FilteringSpanExporter,
+    setup_instrumentation,
+)
 
 setup_instrumentation()
 
@@ -44,30 +42,6 @@ resource = Resource.create(
         SERVICE_INSTANCE_ID: os.getenv("OTEL_SERVICE_INSTANCE_ID", "unknown-instance"),
     }
 )
-
-
-class FilteringSpanExporter(SpanExporter):
-    def __init__(self, exporter: SpanExporter):
-        self.exporter = exporter
-
-    @staticmethod
-    def _is_redis_root_span(span: ReadableSpan) -> bool:
-        return span.parent is None and (
-            span.name.startswith("redis.")
-            or span.attributes.get("db.system") == "redis"
-        )
-
-    def export(self, spans: Sequence[ReadableSpan]) -> SpanExportResult:
-        filtered_spans = [span for span in spans if not self._is_redis_root_span(span)]
-        if not filtered_spans:
-            return SpanExportResult.SUCCESS
-        return self.exporter.export(filtered_spans)
-
-    def shutdown(self) -> None:
-        self.exporter.shutdown()
-
-    def force_flush(self, timeout_millis: int = 30000) -> bool:
-        return self.exporter.force_flush(timeout_millis)
 
 
 if OTEL_ENABLED:
