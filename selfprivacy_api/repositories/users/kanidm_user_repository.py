@@ -1,8 +1,8 @@
 import asyncio
 import gettext
+import json
 import logging
 import os
-import json
 import subprocess
 from typing import Any, Optional, Union
 
@@ -417,7 +417,10 @@ class KanidmUserRepository(AbstractUserRepository):
             if response.status_code != 200:
                 if isinstance(response_data, dict):
                     plugin_error = response_data.get("plugin", {})
-                    if plugin_error.get("attrunique") == "duplicate value detected":
+                    if (
+                        "conflicting_attributes" in response_data
+                        or plugin_error.get("attrunique") == "duplicate value detected"
+                    ):
                         raise UserAlreadyExists  # does it work only for user? NO ONE KNOWS
 
                 if isinstance(response_data, str):
