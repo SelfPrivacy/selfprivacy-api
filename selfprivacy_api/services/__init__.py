@@ -11,6 +11,7 @@ from shutil import copyfile, copytree, rmtree
 from threading import stack_size
 from typing import List
 
+import aiofiles
 from opentelemetry import trace
 
 import selfprivacy_api.utils.network as network_utils
@@ -361,8 +362,8 @@ async def get_templated_service(service_id: str) -> TemplatedService:
             return cached[1]
 
         span.set_attribute("cache_hit", False)
-        with open(definiton_path, "r", encoding="utf-8") as f:
-            service_data = f.read()
+        async with aiofiles.open(definiton_path, "r", encoding="utf-8") as f:
+            service_data = await f.read()
         service = TemplatedService(service_id, service_data)
         _templated_service_cache[service_id] = (stat_key, service)
         return service
