@@ -10,6 +10,7 @@ from strawberry.extensions.tracing import OpenTelemetryExtension
 from strawberry.extensions.tracing.utils import should_skip_tracing
 from strawberry.permission import BasePermission
 from strawberry.types import Info
+from strawberry.types.graphql import OperationType
 
 from selfprivacy_api.actions.api_tokens import is_token_valid
 from selfprivacy_api.utils.localization import Localization
@@ -97,9 +98,17 @@ class SelfPrivacyOpenTelemetryExtension(OpenTelemetryExtension):
 
 
 class RequestMemoExtension(SchemaExtension):
-    """Gives each GraphQL operation a memoization scope"""
+    """Gives each non-subscription GraphQL operation a memoization scope.
 
-    def on_operation(self):
+    Subscriptions are skipped on purpose: Strawberry's on_execute (and
+    on_operation) hook spans the full subscription lifetime, so memoizing
+    there would freeze cached data for the duration of the connection.
+    """
+
+    def on_execute(self):
+        if self.execution_context.operation_type == OperationType.SUBSCRIPTION:
+            yield
+            return
         token = begin_request_memo()
         try:
             yield
