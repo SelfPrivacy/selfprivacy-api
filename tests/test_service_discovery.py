@@ -33,6 +33,12 @@ async def test_get_templated_service_loads_real_definition(sp_modules_dir):
     assert service.is_movable() is True
     assert service.definition_data == json.loads(definition)
 
+    licenses = service.get_license()
+    assert len(licenses) == 1
+    assert licenses[0].spdx_id == "GPL-3.0-or-later"
+    assert licenses[0].full_name == "GNU General Public License v3.0 or later"
+    assert licenses[0].free is True
+
 
 @pytest.mark.asyncio
 async def test_get_templated_service_missing_definition_raises(sp_modules_dir):
