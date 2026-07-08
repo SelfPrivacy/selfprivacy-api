@@ -163,7 +163,7 @@ async def test_get_token_by_non_existent_token_string(some_tokens_repo):
     repo = some_tokens_repo
 
     with pytest.raises(TokenNotFound):
-        assert await repo.get_token_by_token_string(token_string="iamBadtoken") is None
+        await repo.get_token_by_token_string(token_string="iamBadtoken")
 
 
 async def test_get_token_by_name(some_tokens_repo):
@@ -179,7 +179,7 @@ async def test_get_token_by_non_existent_name(some_tokens_repo):
     repo = some_tokens_repo
 
     with pytest.raises(TokenNotFound):
-        assert await repo.get_token_by_name(token_name="badname") is None
+        await repo.get_token_by_name(token_name="badname")
 
 
 async def test_is_token_valid(some_tokens_repo):
@@ -266,7 +266,7 @@ async def test_delete_not_found_token(some_tokens_repo):
         created_at=TEST_DATE,
     )
     with pytest.raises(TokenNotFound):
-        assert await repo.delete_token(input_token) is None
+        await repo.delete_token(input_token)
 
     new_tokens = await repo.get_tokens()
     assert len(new_tokens) == len(initial_tokens)
@@ -296,7 +296,7 @@ async def test_refresh_not_found_token(some_tokens_repo, mock_token_generate):
     )
 
     with pytest.raises(TokenNotFound):
-        assert await repo.refresh_token(input_token) is None
+        await repo.refresh_token(input_token)
 
 
 ################
@@ -326,12 +326,9 @@ async def test_use_mnemonic_recovery_key_when_empty(empty_repo):
     repo = empty_repo
 
     with pytest.raises(RecoveryKeyNotFound):
-        assert (
-            await repo.use_mnemonic_recovery_key(
-                mnemonic_phrase="captain ribbon toddler settle symbol minute step broccoli bless universe divide bulb",
-                device_name="primary_token",
-            )
-            is None
+        await repo.use_mnemonic_recovery_key(
+            mnemonic_phrase="captain ribbon toddler settle symbol minute step broccoli bless universe divide bulb",
+            device_name="primary_token",
         )
 
 
@@ -342,12 +339,9 @@ async def test_use_mnemonic_not_valid_recovery_key(
     assert await repo.create_recovery_key(uses_left=0, expiration=None) is not None
 
     with pytest.raises(RecoveryKeyNotFound):
-        assert (
-            await repo.use_mnemonic_recovery_key(
-                mnemonic_phrase="captain ribbon toddler settle symbol minute step broccoli bless universe divide bulb",
-                device_name="primary_token",
-            )
-            is None
+        await repo.use_mnemonic_recovery_key(
+            mnemonic_phrase="captain ribbon toddler settle symbol minute step broccoli bless universe divide bulb",
+            device_name="primary_token",
         )
 
 
@@ -367,7 +361,7 @@ async def test_use_mnemonic_expired_recovery_key(
     assert not await repo.is_recovery_key_valid()
 
     with pytest.raises(RecoveryKeyNotFound):
-        token = await repo.use_mnemonic_recovery_key(
+        await repo.use_mnemonic_recovery_key(
             mnemonic_phrase=mnemonic_from_hex(recovery_key.key),
             device_name="newdevice",
         )
@@ -378,12 +372,9 @@ async def test_use_mnemonic_not_mnemonic_recovery_key(some_tokens_repo):
     assert await repo.create_recovery_key(uses_left=1, expiration=None) is not None
 
     with pytest.raises(InvalidMnemonic):
-        assert (
-            await repo.use_mnemonic_recovery_key(
-                mnemonic_phrase="sorry, it was joke",
-                device_name="primary_token",
-            )
-            is None
+        await repo.use_mnemonic_recovery_key(
+            mnemonic_phrase="sorry, it was joke",
+            device_name="primary_token",
         )
 
 
@@ -392,12 +383,9 @@ async def test_use_not_mnemonic_recovery_key(some_tokens_repo):
     assert await repo.create_recovery_key(uses_left=1, expiration=None) is not None
 
     with pytest.raises(InvalidMnemonic):
-        assert (
-            await repo.use_mnemonic_recovery_key(
-                mnemonic_phrase="please come back",
-                device_name="primary_token",
-            )
-            is None
+        await repo.use_mnemonic_recovery_key(
+            mnemonic_phrase="please come back",
+            device_name="primary_token",
         )
 
 
@@ -406,12 +394,9 @@ async def test_use_not_found_mnemonic_recovery_key(some_tokens_repo):
     assert await repo.create_recovery_key(uses_left=1, expiration=None) is not None
 
     with pytest.raises(RecoveryKeyNotFound):
-        assert (
-            await repo.use_mnemonic_recovery_key(
-                mnemonic_phrase="captain ribbon toddler settle symbol minute step broccoli bless universe divide bulb",
-                device_name="primary_token",
-            )
-            is None
+        await repo.use_mnemonic_recovery_key(
+            mnemonic_phrase="captain ribbon toddler settle symbol minute step broccoli bless universe divide bulb",
+            device_name="primary_token",
         )
 
 
@@ -484,12 +469,9 @@ async def test_use_invalid_mnemonic_new_device_key(some_tokens_repo):
     repo = some_tokens_repo
 
     with pytest.raises(InvalidMnemonic):
-        assert (
-            await repo.use_mnemonic_new_device_key(
-                device_name="imnew",
-                mnemonic_phrase="oh-no",
-            )
-            is None
+        await repo.use_mnemonic_new_device_key(
+            device_name="imnew",
+            mnemonic_phrase="oh-no",
         )
 
 
@@ -500,12 +482,9 @@ async def test_use_not_exists_mnemonic_new_device_key(
     assert await repo.get_new_device_key() is not None
 
     with pytest.raises(NewDeviceKeyNotFound):
-        assert (
-            await repo.use_mnemonic_new_device_key(
-                device_name="imnew",
-                mnemonic_phrase="uniform clarify napkin bid dress search input armor police cross salon because myself uphold slice bamboo hungry park",
-            )
-            is None
+        await repo.use_mnemonic_new_device_key(
+            device_name="imnew",
+            mnemonic_phrase="uniform clarify napkin bid dress search input armor police cross salon because myself uphold slice bamboo hungry park",
         )
 
 
@@ -526,12 +505,9 @@ async def test_use_mnemonic_new_device_key(empty_repo):
 
     # we must delete the key after use
     with pytest.raises(NewDeviceKeyNotFound):
-        assert (
-            await repo.use_mnemonic_new_device_key(
-                device_name="imnew",
-                mnemonic_phrase=mnemonic_phrase,
-            )
-            is None
+        await repo.use_mnemonic_new_device_key(
+            device_name="imnew",
+            mnemonic_phrase=mnemonic_phrase,
         )
 
 
@@ -549,7 +525,7 @@ async def test_use_mnemonic_expired_new_device_key(
     await repo._store_new_device_key(key)
 
     with pytest.raises(NewDeviceKeyNotFound):
-        token = await repo.use_mnemonic_new_device_key(
+        await repo.use_mnemonic_new_device_key(
             mnemonic_phrase=mnemonic_from_hex(key.key),
             device_name="imnew",
         )
@@ -559,12 +535,9 @@ async def test_use_mnemonic_new_device_key_when_empty(empty_repo):
     repo = empty_repo
 
     with pytest.raises(NewDeviceKeyNotFound):
-        assert (
-            await repo.use_mnemonic_new_device_key(
-                device_name="imnew",
-                mnemonic_phrase="captain ribbon toddler settle symbol minute step broccoli bless universe divide bulb",
-            )
-            is None
+        await repo.use_mnemonic_new_device_key(
+            device_name="imnew",
+            mnemonic_phrase="captain ribbon toddler settle symbol minute step broccoli bless universe divide bulb",
         )
 
 
