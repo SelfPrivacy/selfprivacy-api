@@ -91,7 +91,7 @@ Sometimes commands inside `nix develop` refuse to work properly if the calling s
 
 ## How to add translations
 
-## Mark strings for translation
+### Mark strings for translation
 
 ```
 import gettext
@@ -99,42 +99,54 @@ import gettext
 _ = gettext.gettext
 
 text = _("Service not found")
-
 ```
 
-## Translate at runtime
+`_()` is only an xgettext extraction marker. Locale-aware translation happens
+at message-render time via `TranslateSystemMessage.translate(text=..., locale=locale)`
+(typically inside `AbstractException.get_error_message(locale)`).
+
+### Translate at runtime
 
 ```
 from selfprivacy_api.utils.localization import TranslateSystemMessage as t
 
-print(t.translate(text=text, locale="au"))
+print(t.translate(text=text, locale="ru"))
 ```
 
-## Extract strings into a .pot file
+### Update .pot / .po after touching a translatable string
 
-1. Add your files to gettext_extract.sh
+Run the flake app from the repo root:
 
-2. Run gettext_extract.sh
-
-## Create or update a language (.po .mo)
-
-Create .po
 ```
-msginit \
-  --locale=ru_RU \
+nix run .#gettext-extract
+```
+
+It regenerates `selfprivacy_api/locale/messages.pot` from every
+`selfprivacy_api/**/*.py`, then `msgmerge`s existing per-language `.po` files
+while preserving their headers and translations. Commit the resulting `.pot`
+and `.po` changes.
+
+`.mo` files are **not** committed: the Nix derivation compiles them via
+`msgfmt` in `preBuild` when building the wheel. Locally, if you need `.mo`
+for testing non-English locales, run `msgfmt` yourself inside `nix develop`.
+
+CI enforces that the committed `.pot`/`.po` match what the extractor produces:
+the `lint-format` job runs `nix build .#checks.x86_64-linux.i18n-integrity`
+and fails fast if you forgot to run the extractor.
+
+### Add a new language
+
+`msginit` a `.po` (one-time, then delete this cell from memory):
+
+```
+mkdir -p selfprivacy_api/locale/es/LC_MESSAGES
+
+nix develop -c msginit \
+  --no-translator \
+  --locale=es_ES.UTF-8 \
   --input=selfprivacy_api/locale/messages.pot \
-  --output-file=selfprivacy_api/locale/ru/LC_MESSAGES/messages.po
+  --output-file=selfprivacy_api/locale/es/LC_MESSAGES/messages.po
 ```
 
-Ensure UTF-8 encoding for the .po
-```
-iconv -f ISO-8859-5 -t UTF-8 \
-  selfprivacy_api/locale/ru/LC_MESSAGES/messages.po \
-  -o selfprivacy_api/locale/ru/LC_MESSAGES/messages.utf8.po && \
-mv selfprivacy_api/locale/ru/LC_MESSAGES/messages.utf8.po selfprivacy_api/locale/ru/LC_MESSAGES/messages.po
-```
-
-Compile .mo
-```
-msgfmt -o selfprivacy_api/locale/ru/LC_MESSAGES/messages.mo selfprivacy_api/locale/ru/LC_MESSAGES/messages.po
-```
+Then fill in the header (`Last-Translator`, `Language-Team`, `Language`,
+`PO-Revision-Date`) and run `nix run .#gettext-extract` to msgmerge it.

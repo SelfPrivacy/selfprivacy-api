@@ -24,6 +24,9 @@ jobs:
       - name: Run code formatting checks
         run: nix develop -L .#ci-black --command black --check .
 
+      - name: Check i18n files are up to date
+        run: nix build -L .#checks.x86_64-linux.i18n-integrity --no-link
+
   tests-and-sonar:
     runs-on:
       - kvm

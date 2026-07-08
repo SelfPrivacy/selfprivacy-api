@@ -13,6 +13,10 @@
 
       vmtest-src-dir = "/root/source";
 
+      apiVersion = builtins.head (
+        builtins.match ''.*version="([^"]+)".*'' (builtins.readFile ./setup.py)
+      );
+
       mkPythonEnv =
         system:
         self.packages.${system}.default.pythonModule.withPackages (
@@ -75,55 +79,68 @@
             pythonPackages = pkgs.python312Packages;
             rev = self.shortRev or self.dirtyShortRev or "dirty";
           };
-          pam-email-selfprivacy = pkgs.callPackage ./extra/pam_email_selfprivacy {};
-          pytest-vm = let
-            check = self.checks.${system}.default.extend {
-              modules = [
-                ({config, lib, ...}: {
-                  nodes.machine = {
-                    virtualisation.sharedDirectories.src = {
-                      source = "$API_SOURCES";
-                      target = vmtest-src-dir;
+          src-with-mo = pkgs.runCommand "sp-api-src-with-mo" { nativeBuildInputs = [ pkgs.gettext ]; } ''
+            cp -r ${self} $out
+            chmod -R +w $out
+            shopt -s nullglob
+            for po in $out/selfprivacy_api/locale/*/LC_MESSAGES/messages.po; do
+              msgfmt -o "''${po%.po}.mo" "$po"
+            done
+          '';
+          pam-email-selfprivacy = pkgs.callPackage ./extra/pam_email_selfprivacy { };
+          pytest-vm =
+            let
+              check = self.checks.${system}.default.extend {
+                modules = [
+                  ({ config, lib, ... }: {
+                    nodes.machine = {
+                      virtualisation.sharedDirectories.src = {
+                        source = "$API_SOURCES";
+                        target = vmtest-src-dir;
+                      };
+                      virtualisation.fileSystems.${vmtest-src-dir} = lib.mkForce {
+                        neededForBoot = true;
+                        device = "src";
+                        fsType = "9p";
+                        options = [
+                          "trans=virtio"
+                          "version=9p2000.L"
+                          "msize=${toString config.nodes.machine.virtualisation.msize}"
+                          "x-systemd.requires=modprobe@9pnet_virtio.service"
+                        ];
+                      };
                     };
-                    virtualisation.fileSystems.${vmtest-src-dir} = lib.mkForce {
-                      neededForBoot = true;
-                      device = "src";
-                      fsType = "9p";
-                      options = [
-                        "trans=virtio"
-                        "version=9p2000.L"
-                        "msize=${toString config.nodes.machine.virtualisation.msize}"
-                        "x-systemd.requires=modprobe@9pnet_virtio.service"
-                      ];
-                    };
-                  };
-                })
-              ];
-            };
-          in pkgs.writeShellScriptBin "pytest-vm" ''
-            set -o errexit
-            set -o nounset
-            set -o xtrace
+                  })
+                ];
+              };
+            in
+            pkgs.writeShellScriptBin "pytest-vm" ''
+              set -o errexit
+              set -o nounset
+              set -o xtrace
 
-            # see https://github.com/NixOS/nixpkgs/blob/66a9817cec77098cfdcbb9ad82dbb92651987a84/nixos/lib/test-driver/test_driver/machine.py#L359
-            export TMPDIR=''${TMPDIR:=/tmp}/nixos-vm-tmp-dir
-            export API_SOURCES=$PWD
+              shopt -s nullglob
+              for po in selfprivacy_api/locale/*/LC_MESSAGES/messages.po; do
+                ${pkgs.gettext}/bin/msgfmt -o "''${po%.po}.mo" "$po"
+              done
 
-            SCRIPT=$(cat <<EOF
-            start_all()
-            machine.succeed("cd ${vmtest-src-dir} && coverage run -m pytest $@ >&2")
-            machine.succeed("cd ${vmtest-src-dir} && coverage report >&2")
-            EOF
-            )
+              # see https://github.com/NixOS/nixpkgs/blob/66a9817cec77098cfdcbb9ad82dbb92651987a84/nixos/lib/test-driver/test_driver/machine.py#L359
+              export TMPDIR=''${TMPDIR:=/tmp}/nixos-vm-tmp-dir
+              export API_SOURCES=$PWD
 
-            if [ -f "/etc/arch-release" ]; then
-                ${
-                  check.driverInteractive
-                }/bin/nixos-test-driver --no-interactive <(printf "%s" "$SCRIPT")
-            else
-                ${check.driver}/bin/nixos-test-driver -- <(printf "%s" "$SCRIPT")
-            fi
-        '';
+              SCRIPT=$(cat <<EOF
+              start_all()
+              machine.succeed("cd ${vmtest-src-dir} && coverage run -m pytest $@ >&2")
+              machine.succeed("cd ${vmtest-src-dir} && coverage report >&2")
+              EOF
+              )
+
+              if [ -f "/etc/arch-release" ]; then
+                  ${check.driverInteractive}/bin/nixos-test-driver --no-interactive <(printf "%s" "$SCRIPT")
+              else
+                  ${check.driver}/bin/nixos-test-driver -- <(printf "%s" "$SCRIPT")
+              fi
+            '';
           dependencies-json = pkgs.writeTextFile {
             name = "dependencies-versions.json";
             text =
@@ -141,8 +158,62 @@
                 dependencies = packageInfo;
               };
           };
+          gettext-extract = pkgs.writeShellApplication {
+            name = "gettext-extract";
+            runtimeInputs = with pkgs; [
+              gettext
+              findutils
+              coreutils
+              gnused
+            ];
+            text = ''
+              POT_FILE="selfprivacy_api/locale/messages.pot"
+
+              if [[ ! -d selfprivacy_api ]]; then
+                echo "gettext-extract: run this from the repo root" >&2
+                exit 1
+              fi
+
+              files_list="$(mktemp)"
+              trap 'rm -f "$files_list"' EXIT
+
+              find selfprivacy_api -type f -name '*.py' | LC_ALL=C sort > "$files_list"
+
+              xgettext \
+                --from-code=UTF-8 \
+                --language=Python \
+                -k_ \
+                -kngettext:1,2 \
+                --package-name="SelfPrivacy API" \
+                --package-version="${apiVersion}" \
+                --copyright-holder="SelfPrivacy" \
+                --msgid-bugs-address="https://git.selfprivacy.org/SelfPrivacy/selfprivacy-rest-api/issues" \
+                --foreign-user \
+                --sort-by-file \
+                --no-wrap \
+                --files-from="$files_list" \
+                -o "$POT_FILE"
+
+              # Normalize POT-Creation-Date so re-runs are byte-identical
+              # (load-bearing for the diff-based CI check).
+              sed -i -e 's|^"POT-Creation-Date:[^"]*|"POT-Creation-Date: 1970-01-01 00:00+0000\\n|' "$POT_FILE"
+
+              shopt -s nullglob
+              for po in selfprivacy_api/locale/*/LC_MESSAGES/messages.po; do
+                msgmerge --update --backup=none --no-wrap "$po" "$POT_FILE"
+                msgfmt -c --check-format -o /dev/null "$po"
+              done
+            '';
+          };
         }
       );
+
+      apps = nixpkgs.lib.genAttrs systems (system: {
+        gettext-extract = {
+          type = "app";
+          program = "${self.packages.${system}.gettext-extract}/bin/gettext-extract";
+        };
+      });
       devShells = nixpkgs.lib.genAttrs systems (
         system:
         let
@@ -237,11 +308,52 @@
           pkgs = nixpkgs.legacyPackages.${system};
         in
         {
-          fmt-check = pkgs.runCommandLocal "sp-api-fmt-check"
-            {
-              nativeBuildInputs = [ pkgs.black ];
-            } "black --check ${self.outPath} > $out";
-          pam-email-selfprivacy-vm-integration = self.packages.${system}.pam-email-selfprivacy.tests.vm-integration;
+          fmt-check = pkgs.runCommandLocal "sp-api-fmt-check" {
+            nativeBuildInputs = [ pkgs.black ];
+          } "black --check ${self.outPath} > $out";
+          i18n-integrity =
+            pkgs.runCommand "sp-api-i18n-integrity"
+              {
+                nativeBuildInputs = [
+                  self.packages.${system}.gettext-extract
+                  pkgs.diffutils
+                  pkgs.coreutils
+                ];
+              }
+              ''
+                set -euo pipefail
+
+                src=${self}
+                cp -r "$src" work
+                chmod -R +w work
+                cd work
+                gettext-extract
+
+                fail=0
+
+                if ! diff -u "$src/selfprivacy_api/locale/messages.pot" selfprivacy_api/locale/messages.pot; then
+                  fail=1
+                fi
+
+                shopt -s nullglob
+                for po in "$src"/selfprivacy_api/locale/*/LC_MESSAGES/messages.po; do
+                  rel="''${po#$src/}"
+                  if ! diff -u "$po" "$rel"; then
+                    fail=1
+                  fi
+                done
+
+                if [ $fail -ne 0 ]; then
+                  echo "" >&2
+                  echo "ERROR: i18n files are stale." >&2
+                  echo "Run 'nix run .#gettext-extract' and commit the result." >&2
+                  exit 1
+                fi
+
+                touch $out
+              '';
+          pam-email-selfprivacy-vm-integration =
+            self.packages.${system}.pam-email-selfprivacy.tests.vm-integration;
           default = pkgs.testers.runNixOSTest {
             name = "default";
             nodes.machine =
@@ -266,7 +378,7 @@
                 };
                 virtualisation.fileSystems.${vmtest-src-dir} = {
                   neededForBoot = true;
-                  device = self.outPath;
+                  device = "${self.packages.${system}.src-with-mo}";
                   options = [
                     "bind"
                   ];
