@@ -409,18 +409,26 @@ async def _get_services(exclude_remote=False) -> list[Service]:
 
 @tracer.start_as_current_span("get_templated_services")
 async def get_templated_services(ignored_services: list[str]) -> list[Service]:
+    # Wrap get_templated_server, so if the service definitoin is invalid,
+    # the error doesn't cascade into erroring entire task group.
+    async def load_service(module: str) -> typing.Optional[TemplatedService]:
+        try:
+            return await get_templated_service(module)
+        except Exception as e:
+            logger.error(f"Failed to load service {module}: {e}")
+            return None
+
     templated_services = []
     if path.exists(SP_MODULES_DEFINITIONS_PATH):
-        tasks: list[asyncio.Task[TemplatedService]] = []
+        tasks: list[asyncio.Task[typing.Optional[TemplatedService]]] = []
         async with asyncio.TaskGroup() as tg:
             for module in listdir(SP_MODULES_DEFINITIONS_PATH):
                 if module in ignored_services:
                     continue
-                tasks.append(tg.create_task(get_templated_service(module)))
+                tasks.append(tg.create_task(load_service(module)))
         for task in tasks:
-            try:
-                templated_services.append(task.result())
-            except Exception as e:
-                logger.error(f"Failed to load service: {e}")
+            service = task.result()
+            if service is not None:
+                templated_services.append(service)
 
     return templated_services
