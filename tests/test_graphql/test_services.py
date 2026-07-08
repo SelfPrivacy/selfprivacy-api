@@ -659,7 +659,8 @@ def test_graphql_move_service_without_folders_on_old_volume(
     assert "sda2/test_service is not found" in data["message"]
 
 
-def test_move_empty(
+@pytest.mark.asyncio
+async def test_move_empty(
     authorized_client, generic_userdata, mock_check_volume, dummy_service, fp, mocker
 ):
     """
@@ -674,7 +675,7 @@ def test_move_empty(
 
     dummy_service.set_drive(origin)
     dummy_service.set_simulated_moves(False)
-    dummy_service.disable()
+    await dummy_service.disable()
 
     unit_name = "sp-nixos-rebuild.service"
     mock_system_rebuild_flow(mocker, unit_name)

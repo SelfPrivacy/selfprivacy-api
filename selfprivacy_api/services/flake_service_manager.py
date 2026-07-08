@@ -1,18 +1,22 @@
 import re
 from typing import Tuple, Optional
 
+import aiofiles
+
 FLAKE_CONFIG_PATH = "/etc/nixos/sp-modules/flake.nix"
 
 
 class FlakeServiceManager:
-    def __enter__(self) -> "FlakeServiceManager":
+    async def __aenter__(self) -> "FlakeServiceManager":
         self.services = {}
 
-        with open(FLAKE_CONFIG_PATH, "r") as file:
-            for line in file:
-                service_name, url = self._extract_services(input_string=line)
-                if service_name and url:
-                    self.services[service_name] = url
+        async with aiofiles.open(FLAKE_CONFIG_PATH, "r") as file:
+            lines = await file.readlines()
+
+        for line in lines:
+            service_name, url = self._extract_services(input_string=line)
+            if service_name and url:
+                self.services[service_name] = url
 
         return self
 
@@ -31,9 +35,9 @@ class FlakeServiceManager:
         else:
             return None, None
 
-    def __exit__(self, exc_type, exc_value, traceback) -> None:
-        with open(FLAKE_CONFIG_PATH, "w") as file:
-            file.write(
+    async def __aexit__(self, exc_type, exc_value, traceback) -> None:
+        async with aiofiles.open(FLAKE_CONFIG_PATH, "w") as file:
+            await file.write(
                 """
 {
   description = "SelfPrivacy NixOS PoC modules/extensions/bundles/packages/etc";\n
@@ -41,13 +45,13 @@ class FlakeServiceManager:
             )
 
             for key, value in self.services.items():
-                file.write(
+                await file.write(
                     f"""
   inputs.{key}.url = "{value}";
 """
                 )
 
-            file.write(
+            await file.write(
                 """
   outputs = _: { };
 }

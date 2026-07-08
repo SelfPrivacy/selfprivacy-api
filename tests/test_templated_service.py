@@ -436,38 +436,43 @@ def test_is_enabled_reads_userdata(generic_userdata):
 
 def _patch_flake_manager(mocker, initial: dict | None = None) -> dict:
     """
-    Patch FlakeServiceManager so that `with FlakeServiceManager() as m: m.services`
+    Patch FlakeServiceManager so that `async with FlakeServiceManager() as m: m.services`
     exposes a real dict we can inspect. Returns that dict.
     """
     services = initial if initial is not None else {}
     ctx_stub = MagicMock()
     ctx_stub.services = services
-    manager_instance = MagicMock()
-    manager_instance.__enter__ = MagicMock(return_value=ctx_stub)
-    manager_instance.__exit__ = MagicMock(return_value=False)
+
+    class FlakeManagerStub:
+        async def __aenter__(self):
+            return ctx_stub
+
+        async def __aexit__(self, exc_type, exc, traceback):
+            return False
+
     mocker.patch(
         f"{TEMPLATED_SERVICE_MODULE_PATH}.FlakeServiceManager",
-        return_value=manager_instance,
+        return_value=FlakeManagerStub(),
     )
     return services
 
 
-def test_is_installed_true_when_service_in_flake_registry(mocker):
+async def test_is_installed_true_when_service_in_flake_registry(mocker):
     _patch_flake_manager(mocker, {"tsvc": "some-flake-url"})
     service = _make_service()
-    assert service.is_installed() is True
+    assert await service.is_installed() is True
 
 
-def test_is_installed_false_when_service_absent(mocker):
+async def test_is_installed_false_when_service_absent(mocker):
     _patch_flake_manager(mocker, {"other": "url"})
     service = _make_service()
-    assert service.is_installed() is False
+    assert await service.is_installed() is False
 
 
-def test_disable_writes_false(generic_userdata):
+async def test_disable_writes_false(generic_userdata):
     service = _make_service()
     service._set_enable(True)
-    service.disable()
+    await service.disable()
     assert service.is_enabled() is False
 
 
@@ -480,13 +485,13 @@ def test_set_enable_creates_missing_paths(generic_userdata):
     assert service.is_enabled() is True
 
 
-def test_enable_installed_skips_suggested_module_check(generic_userdata, mocker):
+async def test_enable_installed_skips_suggested_module_check(generic_userdata, mocker):
     flake_services = _patch_flake_manager(mocker, {"tsvc": "url"})
     exists_mock = mocker.patch(
         f"{TEMPLATED_SERVICE_MODULE_PATH}.exists", return_value=False
     )
     service = _make_service()
-    service.enable()
+    await service.enable()
     # Because is_installed() short-circuits, we should never have checked the
     # suggested-modules path.
     assert not any(
@@ -497,32 +502,36 @@ def test_enable_installed_skips_suggested_module_check(generic_userdata, mocker)
     assert service.is_enabled() is True
 
 
-def test_enable_missing_suggested_modules_file_raises(generic_userdata, mocker):
+async def test_enable_missing_suggested_modules_file_raises(generic_userdata, mocker):
     _patch_flake_manager(mocker, {})
     mocker.patch(f"{TEMPLATED_SERVICE_MODULE_PATH}.exists", return_value=False)
     service = _make_service()
     with pytest.raises(FileNotFoundError):
-        service.enable()
+        await service.enable()
 
 
-def test_enable_service_not_suggested_raises(generic_userdata, mocker):
+async def test_enable_service_not_suggested_raises(generic_userdata, mocker, tmp_path):
     _patch_flake_manager(mocker, {})
-    mocker.patch(f"{TEMPLATED_SERVICE_MODULE_PATH}.exists", return_value=True)
+    suggested_modules_path = tmp_path / "suggested-modules.json"
+    suggested_modules_path.write_text(json.dumps(["other"]))
     mocker.patch(
-        f"{TEMPLATED_SERVICE_MODULE_PATH}.open",
-        mocker.mock_open(read_data=json.dumps(["other"])),
+        f"{TEMPLATED_SERVICE_MODULE_PATH}.SP_SUGGESTED_MODULES_PATH",
+        new=str(suggested_modules_path),
     )
     service = _make_service()
     with pytest.raises(ValueError, match="suggested"):
-        service.enable()
+        await service.enable()
 
 
-def test_enable_registers_flake_and_sets_location(generic_userdata, mocker):
+async def test_enable_registers_flake_and_sets_location(
+    generic_userdata, mocker, tmp_path
+):
     flake_services = _patch_flake_manager(mocker, {})
-    mocker.patch(f"{TEMPLATED_SERVICE_MODULE_PATH}.exists", return_value=True)
+    suggested_modules_path = tmp_path / "suggested-modules.json"
+    suggested_modules_path.write_text(json.dumps(["tsvc"]))
     mocker.patch(
-        f"{TEMPLATED_SERVICE_MODULE_PATH}.open",
-        mocker.mock_open(read_data=json.dumps(["tsvc"])),
+        f"{TEMPLATED_SERVICE_MODULE_PATH}.SP_SUGGESTED_MODULES_PATH",
+        new=str(suggested_modules_path),
     )
     root_stub = MagicMock()
     root_stub.canonical_name = "sda1"
@@ -536,7 +545,7 @@ def test_enable_registers_flake_and_sets_location(generic_userdata, mocker):
         meta_patch={"isMovable": True},
         options_patch=_add_location_option({}),
     )
-    service.enable()
+    await service.enable()
 
     assert "tsvc" in flake_services
     assert "sp-modules/tsvc" in flake_services["tsvc"]

@@ -15,7 +15,7 @@ class AddMonitoring(Migration):
         return "Adds the Monitoring if it is not present."
 
     async def is_migration_needed(self) -> bool:
-        with FlakeServiceManager() as manager:
+        async with FlakeServiceManager() as manager:
             if "monitoring" not in manager.services:
                 return True
         with ReadUserData() as data:
@@ -24,7 +24,7 @@ class AddMonitoring(Migration):
         return False
 
     async def migrate(self) -> None:
-        with FlakeServiceManager() as manager:
+        async with FlakeServiceManager() as manager:
             if "monitoring" not in manager.services:
                 manager.services["monitoring"] = (
                     "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/monitoring"

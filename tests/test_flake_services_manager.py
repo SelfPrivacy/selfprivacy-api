@@ -1,3 +1,4 @@
+import aiofiles
 import pytest
 
 from selfprivacy_api.services.flake_service_manager import FlakeServiceManager
@@ -75,8 +76,8 @@ def no_services_flake_mock(mocker, datadir):
 # ---
 
 
-def test_read_services_list(some_services_flake_mock):
-    with FlakeServiceManager() as manager:
+async def test_read_services_list(some_services_flake_mock):
+    async with FlakeServiceManager() as manager:
         services = {
             "bitwarden": "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/bitwarden",
             "gitea": "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/gitea",
@@ -85,7 +86,7 @@ def test_read_services_list(some_services_flake_mock):
         assert manager.services == services
 
 
-def test_change_services_list(some_services_flake_mock):
+async def test_change_services_list(some_services_flake_mock):
     services = {
         "bitwarden": "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/bitwarden",
         "gitea": "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/gitea",
@@ -96,25 +97,25 @@ def test_change_services_list(some_services_flake_mock):
         "simple-nixos-mailserver": "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/simple-nixos-mailserver",
     }
 
-    with FlakeServiceManager() as manager:
+    async with FlakeServiceManager() as manager:
         manager.services = services
 
-    with FlakeServiceManager() as manager:
+    async with FlakeServiceManager() as manager:
         assert manager.services == services
 
-    with open(some_services_flake_mock, "r", encoding="utf-8") as file:
-        file_content = file.read().strip()
+    async with aiofiles.open(some_services_flake_mock, "r", encoding="utf-8") as file:
+        file_content = (await file.read()).strip()
 
     assert all_services_file.strip() == file_content
 
 
-def test_read_empty_services_list(no_services_flake_mock):
-    with FlakeServiceManager() as manager:
+async def test_read_empty_services_list(no_services_flake_mock):
+    async with FlakeServiceManager() as manager:
         services = {}
         assert manager.services == services
 
 
-def test_change_empty_services_list(no_services_flake_mock):
+async def test_change_empty_services_list(no_services_flake_mock):
     services = {
         "bitwarden": "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/bitwarden",
         "gitea": "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/gitea",
@@ -125,23 +126,25 @@ def test_change_empty_services_list(no_services_flake_mock):
         "simple-nixos-mailserver": "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/simple-nixos-mailserver",
     }
 
-    with FlakeServiceManager() as manager:
+    async with FlakeServiceManager() as manager:
         manager.services = services
 
-    with FlakeServiceManager() as manager:
+    async with FlakeServiceManager() as manager:
         assert manager.services == services
 
-    with open(no_services_flake_mock, "r", encoding="utf-8") as file:
-        file_content = file.read().strip()
+    async with aiofiles.open(no_services_flake_mock, "r", encoding="utf-8") as file:
+        file_content = (await file.read()).strip()
 
     assert all_services_file.strip() == file_content
 
 
-def test_migrate_services_list(all_services_old_flake_mock):
-    with FlakeServiceManager() as manager:
+async def test_migrate_services_list(all_services_old_flake_mock):
+    async with FlakeServiceManager():
         pass
 
-    with open(all_services_old_flake_mock, "r", encoding="utf-8") as file:
-        file_content = file.read().strip()
+    async with aiofiles.open(
+        all_services_old_flake_mock, "r", encoding="utf-8"
+    ) as file:
+        file_content = (await file.read()).strip()
 
     assert all_services_file.strip() == file_content

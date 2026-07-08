@@ -83,11 +83,11 @@ class MailServer(Service):
                 return
 
     @staticmethod
-    def enable():
+    async def enable():
         raise NotImplementedError("enable is not implemented for MailServer")
 
     @staticmethod
-    def disable():
+    async def disable():
         raise NotImplementedError("disable is not implemented for MailServer")
 
     @staticmethod

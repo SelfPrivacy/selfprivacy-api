@@ -200,7 +200,7 @@ class ServiceManager(Service):
         return True
 
     @staticmethod
-    def is_installed() -> bool:
+    async def is_installed() -> bool:
         return True
 
     @staticmethod
