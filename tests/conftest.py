@@ -111,6 +111,40 @@ def generic_userdata(mocker, tmpdir):
     return mock
 
 
+def read_module_definition(module_name: str) -> str:
+    """Read a real sp-module definition JSON from the test data directory."""
+    definition_path = path.join(global_data_dir(), "sp-modules", module_name)
+    with open(f"{definition_path}.json", encoding="utf-8") as file:
+        return file.read()
+
+
+def install_module_definition(modules_dir: str, service_id: str, text: str) -> str:
+    """Write a service definition into a directory standing in for /etc/sp-modules."""
+    makedirs(modules_dir, exist_ok=True)
+    definition_path = path.join(modules_dir, service_id)
+    with open(definition_path, "w", encoding="utf-8") as file:
+        file.write(text)
+    return definition_path
+
+
+@pytest.fixture
+def sp_modules_dir(mocker, tmp_path) -> str:
+    """
+    Point SP_MODULES_DEFINITIONS_PATH (at both of its import sites) to a
+    tmpdir stand-in for /etc/sp-modules. The directory itself is NOT created,
+    so tests can also exercise the "no modules installed" case.
+    """
+    modules_dir = str(tmp_path / "sp-modules")
+    mocker.patch(
+        "selfprivacy_api.services.SP_MODULES_DEFINITIONS_PATH", new=modules_dir
+    )
+    mocker.patch(
+        "selfprivacy_api.services.suggested.SP_MODULES_DEFINITIONS_PATH",
+        new=modules_dir,
+    )
+    return modules_dir
+
+
 @pytest.fixture
 def client(redis_repo_with_tokens):
     from selfprivacy_api.app import app
@@ -339,7 +373,7 @@ def assert_rebuild_was_made(fp):
     pass
 
 
-class KanidmApiRecorder:
+class HttpxApiRecorder:
     """
     Scripted handler for httpx.MockTransport that records every outgoing
     request so tests can assert exact methods/URLs/headers/bodies.
@@ -382,7 +416,7 @@ def kanidm_api(mocker):
     Reroute httpx.AsyncClient, as looked up by the kanidm user repository
     module, through an httpx.MockTransport backed by a recording handler.
     """
-    recorder = KanidmApiRecorder()
+    recorder = HttpxApiRecorder()
     transport = httpx.MockTransport(recorder)
     real_async_client = httpx.AsyncClient
 

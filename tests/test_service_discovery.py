@@ -1,0 +1,120 @@
+"""
+Tests for get_templated_service() and get_templated_services() from
+selfprivacy_api.services.
+"""
+
+import json
+import logging
+from os import makedirs
+
+import pytest
+
+from selfprivacy_api.services import get_templated_service, get_templated_services
+from selfprivacy_api.services.templated_service import TemplatedService
+from tests.conftest import install_module_definition, read_module_definition
+
+# --- get_templated_service -----------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_get_templated_service_loads_real_definition(sp_modules_dir):
+    definition = read_module_definition("gitea")
+    install_module_definition(sp_modules_dir, "gitea", definition)
+
+    service = await get_templated_service("gitea")
+
+    assert isinstance(service, TemplatedService)
+    assert service.get_id() == "gitea"
+    assert service.get_display_name() == "Forgejo"
+    assert service.is_movable() is True
+    assert service.definition_data == json.loads(definition)
+
+
+@pytest.mark.asyncio
+async def test_get_templated_service_missing_definition_raises(sp_modules_dir):
+    install_module_definition(sp_modules_dir, "gitea", read_module_definition("gitea"))
+
+    with pytest.raises(FileNotFoundError, match="nextcloud"):
+        await get_templated_service("nextcloud")
+
+
+@pytest.mark.asyncio
+async def test_get_templated_service_missing_directory_raises(sp_modules_dir):
+    # sp_modules_dir does not create the directory itself.
+    with pytest.raises(FileNotFoundError, match="gitea"):
+        await get_templated_service("gitea")
+
+
+@pytest.mark.asyncio
+async def test_get_templated_service_malformed_json_raises(sp_modules_dir):
+    install_module_definition(sp_modules_dir, "broken", "{not json")
+
+    with pytest.raises(json.JSONDecodeError):
+        await get_templated_service("broken")
+
+
+@pytest.mark.asyncio
+async def test_get_templated_service_incomplete_definition_raises(sp_modules_dir):
+    install_module_definition(sp_modules_dir, "no-meta", json.dumps({"options": {}}))
+    install_module_definition(
+        sp_modules_dir, "no-options", json.dumps({"meta": {"id": "no-options"}})
+    )
+
+    with pytest.raises(ValueError, match="meta"):
+        await get_templated_service("no-meta")
+    with pytest.raises(ValueError, match="options"):
+        await get_templated_service("no-options")
+
+
+# --- get_templated_services ----------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_get_templated_services_no_directory_returns_empty(sp_modules_dir):
+    assert await get_templated_services(ignored_services=[]) == []
+
+
+@pytest.mark.asyncio
+async def test_get_templated_services_empty_directory_returns_empty(sp_modules_dir):
+    makedirs(sp_modules_dir)
+    assert await get_templated_services(ignored_services=[]) == []
+
+
+@pytest.mark.asyncio
+async def test_get_templated_services_loads_all_installed(sp_modules_dir):
+    install_module_definition(sp_modules_dir, "gitea", read_module_definition("gitea"))
+    install_module_definition(
+        sp_modules_dir, "nextcloud", read_module_definition("nextcloud")
+    )
+
+    services = await get_templated_services(ignored_services=[])
+
+    assert all(isinstance(service, TemplatedService) for service in services)
+    assert {service.get_id() for service in services} == {"gitea", "nextcloud"}
+
+
+@pytest.mark.asyncio
+async def test_get_templated_services_skips_ignored(sp_modules_dir):
+    install_module_definition(sp_modules_dir, "gitea", read_module_definition("gitea"))
+    install_module_definition(
+        sp_modules_dir, "nextcloud", read_module_definition("nextcloud")
+    )
+
+    services = await get_templated_services(ignored_services=["gitea"])
+    assert [service.get_id() for service in services] == ["nextcloud"]
+
+    assert await get_templated_services(ignored_services=["gitea", "nextcloud"]) == []
+
+
+@pytest.mark.asyncio
+async def test_get_templated_services_broken_definition_skipped_and_logged(
+    sp_modules_dir, caplog
+):
+    install_module_definition(sp_modules_dir, "gitea", read_module_definition("gitea"))
+    install_module_definition(sp_modules_dir, "broken", "{not json")
+
+    with caplog.at_level(logging.ERROR, logger="selfprivacy_api.services"):
+        services = await get_templated_services(ignored_services=[])
+
+    assert [service.get_id() for service in services] == ["gitea"]
+    assert "Failed to load service" in caplog.text

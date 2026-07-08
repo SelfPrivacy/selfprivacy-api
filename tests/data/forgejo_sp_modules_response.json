@@ -1,0 +1,46 @@
+[
+  {
+    "name": "gitea",
+    "path": "sp-modules/gitea",
+    "sha": "e3e4d24493502f107b6d5d365bedbc07186e2d20",
+    "last_commit_sha": "f4b5ef270d75c23f2fddcd3def5e8e14c323ee65",
+    "last_commit_when": "2026-05-11T20:29:23Z",
+    "type": "dir",
+    "size": 0,
+    "encoding": null,
+    "content": null,
+    "target": null,
+    "url": "https://git.selfprivacy.org/api/v1/repos/SelfPrivacy/selfprivacy-nixos-config/contents/sp-modules/gitea?ref=flakes",
+    "html_url": "https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config/src/branch/flakes/sp-modules/gitea",
+    "git_url": "https://git.selfprivacy.org/api/v1/repos/SelfPrivacy/selfprivacy-nixos-config/git/blobs/e3e4d24493502f107b6d5d365bedbc07186e2d20",
+    "download_url": null,
+    "submodule_git_url": null,
+    "_links": {
+      "self": "https://git.selfprivacy.org/api/v1/repos/SelfPrivacy/selfprivacy-nixos-config/contents/sp-modules/gitea?ref=flakes",
+      "git": "https://git.selfprivacy.org/api/v1/repos/SelfPrivacy/selfprivacy-nixos-config/git/blobs/e3e4d24493502f107b6d5d365bedbc07186e2d20",
+      "html": "https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config/src/branch/flakes/sp-modules/gitea"
+    }
+  },
+  {
+    "name": "nextcloud",
+    "path": "sp-modules/nextcloud",
+    "sha": "63c3deac6ecd48b7b53bf24d14a8c5b2efa609a4",
+    "last_commit_sha": "f4b5ef270d75c23f2fddcd3def5e8e14c323ee65",
+    "last_commit_when": "2026-05-11T20:29:23Z",
+    "type": "dir",
+    "size": 0,
+    "encoding": null,
+    "content": null,
+    "target": null,
+    "url": "https://git.selfprivacy.org/api/v1/repos/SelfPrivacy/selfprivacy-nixos-config/contents/sp-modules/nextcloud?ref=flakes",
+    "html_url": "https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config/src/branch/flakes/sp-modules/nextcloud",
+    "git_url": "https://git.selfprivacy.org/api/v1/repos/SelfPrivacy/selfprivacy-nixos-config/git/blobs/63c3deac6ecd48b7b53bf24d14a8c5b2efa609a4",
+    "download_url": null,
+    "submodule_git_url": null,
+    "_links": {
+      "self": "https://git.selfprivacy.org/api/v1/repos/SelfPrivacy/selfprivacy-nixos-config/contents/sp-modules/nextcloud?ref=flakes",
+      "git": "https://git.selfprivacy.org/api/v1/repos/SelfPrivacy/selfprivacy-nixos-config/git/blobs/63c3deac6ecd48b7b53bf24d14a8c5b2efa609a4",
+      "html": "https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config/src/branch/flakes/sp-modules/nextcloud"
+    }
+  }
+]
