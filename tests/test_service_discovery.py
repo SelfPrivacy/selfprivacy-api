@@ -9,7 +9,6 @@ from os import makedirs
 
 import pytest
 
-import selfprivacy_api.services as services_module
 from selfprivacy_api.services import get_templated_service, get_templated_services
 from selfprivacy_api.services.templated_service import TemplatedService
 from tests.conftest import (
@@ -17,15 +16,6 @@ from tests.conftest import (
     install_real_module_definition,
     read_module_definition,
 )
-
-
-@pytest.fixture(autouse=True)
-def _clear_templated_service_cache():
-    """The parsed-definition cache is a module-level global; reset it per test."""
-    services_module._templated_service_cache.clear()
-    yield
-    services_module._templated_service_cache.clear()
-
 
 # --- get_templated_service -----------------------------------------------------------
 

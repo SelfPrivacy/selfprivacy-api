@@ -10,6 +10,7 @@ import httpx
 import pytest
 import pytest_asyncio
 
+import selfprivacy_api.services.suggested as suggested_module
 from selfprivacy_api.services.suggested import SuggestedServices
 from selfprivacy_api.services.templated_service import TemplatedService
 from selfprivacy_api.utils.redis_pool import RedisPool
@@ -233,3 +234,53 @@ async def test_get_skips_installed_services(suggested_redis, sp_modules_dir):
     services = await SuggestedServices.get()
 
     assert [service.get_id() for service in services] == ["nextcloud"]
+
+
+@pytest.mark.asyncio
+async def test_get_serves_from_cache_when_revision_unchanged(
+    suggested_redis, sp_modules_dir
+):
+    await seed_cached_module(suggested_redis, "gitea")
+
+    first = (await SuggestedServices.get())[0]
+    second = (await SuggestedServices.get())[0]
+
+    # Same Redis revision must be served from cache as the exact same object,
+    # rather than re-parsed from the cached JSON.
+    assert second is first
+
+
+@pytest.mark.asyncio
+async def test_get_cache_invalidated_when_revision_changes(
+    suggested_redis, sp_modules_dir
+):
+    await seed_cached_module(suggested_redis, "gitea")
+    first = (await SuggestedServices.get())[0]
+    assert first.get_id() == "gitea"
+
+    # A new HEAD revision with different data must bypass the cache and reparse.
+    await suggested_redis.set(
+        "suggestedservices:gitea:HEAD",
+        "1111111111111111111111111111111111111111",
+    )
+    await suggested_redis.set(
+        "suggestedservices:gitea:data", read_module_definition("nextcloud")
+    )
+    second = (await SuggestedServices.get())[0]
+
+    assert second is not first
+    assert second.get_id() == "nextcloud"
+
+
+@pytest.mark.asyncio
+async def test_get_does_not_cache_without_revision(suggested_redis, sp_modules_dir):
+    # Seed the data but no :HEAD key, so revision is None and must not be cached.
+    await suggested_redis.set(
+        "suggestedservices:gitea:data", read_module_definition("gitea")
+    )
+
+    first = (await SuggestedServices.get())[0]
+    second = (await SuggestedServices.get())[0]
+
+    assert second is not first
+    assert "gitea" not in suggested_module._suggested_service_cache

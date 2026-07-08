@@ -17,6 +17,7 @@ import pytest_asyncio
 from fastapi.testclient import TestClient
 
 import selfprivacy_api.services as services
+import selfprivacy_api.services.suggested as suggested_services
 from selfprivacy_api.models.tokens.token import Token
 from selfprivacy_api.repositories.tokens.redis_tokens_repository import (
     RedisTokensRepository,
@@ -149,6 +150,19 @@ def sp_modules_dir(mocker, tmp_path) -> str:
         new=modules_dir,
     )
     return modules_dir
+
+
+@pytest.fixture(autouse=True)
+def clear_templated_service_caches():
+    """
+    Reset the module-level parsed-definition caches around every test.
+    Both caches are process globals, so without this they leak between tests.
+    """
+    services._templated_service_cache.clear()
+    suggested_services._suggested_service_cache.clear()
+    yield
+    services._templated_service_cache.clear()
+    suggested_services._suggested_service_cache.clear()
 
 
 @pytest.fixture
