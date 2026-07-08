@@ -16,7 +16,7 @@ from selfprivacy_api.utils.redis_pool import RedisPool
 from tests.conftest import (
     HttpxApiRecorder,
     global_data_dir,
-    install_module_definition,
+    install_real_module_definition,
     read_module_definition,
 )
 
@@ -226,7 +226,7 @@ async def test_get_returns_cached_services(suggested_redis, sp_modules_dir):
 
 @pytest.mark.asyncio
 async def test_get_skips_installed_services(suggested_redis, sp_modules_dir):
-    install_module_definition(sp_modules_dir, "gitea", read_module_definition("gitea"))
+    install_real_module_definition(sp_modules_dir, "gitea")
     for name in ("gitea", "nextcloud"):
         await seed_cached_module(suggested_redis, name)
 

@@ -127,6 +127,12 @@ def install_module_definition(modules_dir: str, service_id: str, text: str) -> s
     return definition_path
 
 
+def install_real_module_definition(modules_dir: str, service_id: str) -> str:
+    return install_module_definition(
+        modules_dir, service_id, read_module_definition(service_id)
+    )
+
+
 @pytest.fixture
 def sp_modules_dir(mocker, tmp_path) -> str:
     """

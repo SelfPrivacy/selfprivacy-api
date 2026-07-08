@@ -11,7 +11,11 @@ import pytest
 
 from selfprivacy_api.services import get_templated_service, get_templated_services
 from selfprivacy_api.services.templated_service import TemplatedService
-from tests.conftest import install_module_definition, read_module_definition
+from tests.conftest import (
+    install_module_definition,
+    install_real_module_definition,
+    read_module_definition,
+)
 
 # --- get_templated_service -----------------------------------------------------------
 
@@ -32,7 +36,7 @@ async def test_get_templated_service_loads_real_definition(sp_modules_dir):
 
 @pytest.mark.asyncio
 async def test_get_templated_service_missing_definition_raises(sp_modules_dir):
-    install_module_definition(sp_modules_dir, "gitea", read_module_definition("gitea"))
+    install_real_module_definition(sp_modules_dir, "gitea")
 
     with pytest.raises(FileNotFoundError, match="nextcloud"):
         await get_templated_service("nextcloud")
@@ -82,10 +86,8 @@ async def test_get_templated_services_empty_directory_returns_empty(sp_modules_d
 
 @pytest.mark.asyncio
 async def test_get_templated_services_loads_all_installed(sp_modules_dir):
-    install_module_definition(sp_modules_dir, "gitea", read_module_definition("gitea"))
-    install_module_definition(
-        sp_modules_dir, "nextcloud", read_module_definition("nextcloud")
-    )
+    install_real_module_definition(sp_modules_dir, "gitea")
+    install_real_module_definition(sp_modules_dir, "nextcloud")
 
     services = await get_templated_services(ignored_services=[])
 
@@ -95,10 +97,8 @@ async def test_get_templated_services_loads_all_installed(sp_modules_dir):
 
 @pytest.mark.asyncio
 async def test_get_templated_services_skips_ignored(sp_modules_dir):
-    install_module_definition(sp_modules_dir, "gitea", read_module_definition("gitea"))
-    install_module_definition(
-        sp_modules_dir, "nextcloud", read_module_definition("nextcloud")
-    )
+    install_real_module_definition(sp_modules_dir, "gitea")
+    install_real_module_definition(sp_modules_dir, "nextcloud")
 
     services = await get_templated_services(ignored_services=["gitea"])
     assert [service.get_id() for service in services] == ["nextcloud"]
@@ -110,7 +110,7 @@ async def test_get_templated_services_skips_ignored(sp_modules_dir):
 async def test_get_templated_services_broken_definition_skipped_and_logged(
     sp_modules_dir, caplog
 ):
-    install_module_definition(sp_modules_dir, "gitea", read_module_definition("gitea"))
+    install_real_module_definition(sp_modules_dir, "gitea")
     install_module_definition(sp_modules_dir, "broken", "{not json")
 
     with caplog.at_level(logging.ERROR, logger="selfprivacy_api.services"):
