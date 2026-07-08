@@ -177,20 +177,6 @@ class AbstractTokensRepository(ABC):
         await self.delete_new_device_key()
         await self._delete_recovery_key()
 
-    async def clone(self, source: AbstractTokensRepository) -> None:
-        """Clone the state of another repository to this one"""
-        await self.reset()
-        for token in await source.get_tokens():
-            await self._store_token(token)
-
-        recovery_key = await source.get_recovery_key()
-        if recovery_key is not None:
-            await self._store_recovery_key(recovery_key)
-
-        new_device_key = await source._get_stored_new_device_key()
-        if new_device_key is not None:
-            await self._store_new_device_key(new_device_key)
-
     @abstractmethod
     async def _store_token(self, new_token: Token):
         """Store a token directly"""

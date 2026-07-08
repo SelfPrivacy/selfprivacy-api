@@ -539,18 +539,3 @@ async def test_use_mnemonic_new_device_key_when_empty(empty_repo):
             device_name="imnew",
             mnemonic_phrase="captain ribbon toddler settle symbol minute step broccoli bless universe divide bulb",
         )
-
-
-async def assert_identical(
-    repo_a: AbstractTokensRepository, repo_b: AbstractTokensRepository
-):
-    tokens_a = await repo_a.get_tokens()
-    tokens_b = await repo_b.get_tokens()
-    assert len(tokens_a) == len(tokens_b)
-    for token in tokens_a:
-        assert token in tokens_b
-    assert await repo_a.get_recovery_key() == await repo_b.get_recovery_key()
-    assert (
-        await repo_a._get_stored_new_device_key()
-        == await repo_b._get_stored_new_device_key()
-    )
