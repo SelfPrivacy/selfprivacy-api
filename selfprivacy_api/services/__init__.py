@@ -2,7 +2,6 @@
 
 import asyncio
 import base64
-import json
 import logging
 import typing
 from os import listdir, makedirs, path
@@ -17,7 +16,6 @@ from selfprivacy_api.jobs import Job, Jobs, JobStatus
 from selfprivacy_api.services.api_icon import API_ICON
 from selfprivacy_api.services.mailserver import MailServer
 from selfprivacy_api.services.prometheus import Prometheus
-from selfprivacy_api.services.remote import get_remote_service
 from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceStatus
 from selfprivacy_api.services.suggested import SuggestedServices
 from selfprivacy_api.services.templated_service import (
@@ -344,7 +342,7 @@ class ServiceManager(Service):
 async def get_templated_service(service_id: str) -> TemplatedService:
     with tracer.start_as_current_span(
         "fetch_templated_service", attributes={"service_id": service_id}
-    ) as span:
+    ):
         if not exists(path.join(SP_MODULES_DEFINITIONS_PATH, service_id)):
             raise FileNotFoundError(f"Service definition for {service_id} not found")
         with open(
@@ -409,9 +407,11 @@ async def _get_services(exclude_remote=False) -> list[Service]:
 
 @tracer.start_as_current_span("get_templated_services")
 async def get_templated_services(ignored_services: list[str]) -> list[Service]:
-    # Wrap get_templated_server, so if the service definitoin is invalid,
-    # the error doesn't cascade into erroring entire task group.
     async def load_service(module: str) -> typing.Optional[TemplatedService]:
+        """
+        Wrap get_templated_server, so if the service definition is invalid,
+        the error doesn't cascade into erroring entire task group.
+        """
         try:
             return await get_templated_service(module)
         except Exception as e:
