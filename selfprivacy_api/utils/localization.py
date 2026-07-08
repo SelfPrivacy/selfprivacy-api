@@ -21,7 +21,6 @@ from selfprivacy_api.utils.singleton_metaclass import SingletonMetaclass
 DEFAULT_LOCALE = "en"
 _DOMAIN = "messages"
 _LOCALE_DIR = pkg_files("selfprivacy_api") / "locale"
-print(_LOCALE_DIR)
 
 tracer = trace.get_tracer(__name__)
 
