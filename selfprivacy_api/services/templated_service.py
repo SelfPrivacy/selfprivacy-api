@@ -19,7 +19,11 @@ from selfprivacy_api.models.services import (
     ServiceStatus,
     SupportLevel,
 )
-from selfprivacy_api.services.flake_service_manager import FlakeServiceManager
+from selfprivacy_api.services.flake_service_manager import (
+    FlakeServiceManager,
+    SELFPRIVACY_NIXOS_CONFIG_INPUT,
+    get_sp_module_url,
+)
 from selfprivacy_api.services.generic_size_counter import get_storage_usage
 from selfprivacy_api.services.owned_path import OwnedPath
 from selfprivacy_api.services.service import Service
@@ -286,8 +290,8 @@ class TemplatedService(Service):
             else:
                 raise FileNotFoundError("Suggested modules file not found")
             async with FlakeServiceManager() as service_manager:
-                service_manager.services[name] = (
-                    f"git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/{name}"
+                service_manager.services[name] = get_sp_module_url(
+                    service_manager.inputs[SELFPRIVACY_NIXOS_CONFIG_INPUT]["url"], name
                 )
         if "location" in self.options:
             with WriteUserData() as user_data:

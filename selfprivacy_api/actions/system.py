@@ -20,7 +20,12 @@ from selfprivacy_api.utils import WriteUserData, ReadUserData
 from selfprivacy_api.utils import UserDataFiles
 from selfprivacy_api.utils.systemd import systemd_proxy, start_unit
 
-from selfprivacy_api.services.flake_service_manager import FlakeServiceManager
+from selfprivacy_api.services.flake_service_manager import (
+    FlakeServiceManager,
+    SELFPRIVACY_NIXOS_CONFIG_INPUT,
+    get_sp_module_url,
+    is_sp_module_url,
+)
 
 _ = gettext.gettext
 
@@ -191,7 +196,11 @@ def get_python_version() -> str:
 
 async def set_nixos_config_url(url: str):
     async with FlakeServiceManager() as manager:
-        manager.inputs["selfprivacy-nixos-config"]["url"] = url
+        old_url = manager.inputs[SELFPRIVACY_NIXOS_CONFIG_INPUT]["url"]
+        manager.inputs[SELFPRIVACY_NIXOS_CONFIG_INPUT]["url"] = url
+        for service_name, service_url in manager.services.items():
+            if is_sp_module_url(service_url, old_url):
+                manager.services[service_name] = get_sp_module_url(url, service_name)
 
 
 class SystemActionResult(BaseModel):

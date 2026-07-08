@@ -442,6 +442,11 @@ def _patch_flake_manager(mocker, initial: dict | None = None) -> dict:
     services = initial if initial is not None else {}
     ctx_stub = MagicMock()
     ctx_stub.services = services
+    ctx_stub.inputs = {
+        "selfprivacy-nixos-config": {
+            "url": "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes"
+        }
+    }
 
     class FlakeManagerStub:
         async def __aenter__(self):

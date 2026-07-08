@@ -1,14 +1,44 @@
 import aiofiles
 import copy
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from opentelemetry import trace
 from selfprivacy_api.utils.nix import evaluate_nix_file, to_nix_expr, format_nix_expr
 
 FLAKE_CONFIG_PATH = "/etc/nixos/flake.nix"
 SP_MODULE_INPUT_PREFIX = "sp-module-"
+SELFPRIVACY_NIXOS_CONFIG_INPUT = "selfprivacy-nixos-config"
+DEFAULT_NIXOS_CONFIG_URL = "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes"
 
 
 tracer = trace.get_tracer(__name__)
+
+
+def get_sp_module_url(nixos_config_url: str, service_name: str) -> str:
+    """Return flake URL for a service module in selfprivacy-nixos-config."""
+    parsed_url = urlsplit(nixos_config_url)
+    query = [
+        (key, value)
+        for key, value in parse_qsl(parsed_url.query, keep_blank_values=True)
+        if key != "dir"
+    ]
+    query.append(("dir", f"sp-modules/{service_name}"))
+    return urlunsplit(parsed_url._replace(query=urlencode(query, doseq=True, safe="/")))
+
+
+def is_sp_module_url(service_url: str, nixos_config_url: str) -> bool:
+    """Return True if service URL points to sp-module in nixos_config_url."""
+    service = urlsplit(service_url)
+    nixos_config = urlsplit(nixos_config_url)
+    if (service.scheme, service.netloc, service.path) != (
+        nixos_config.scheme,
+        nixos_config.netloc,
+        nixos_config.path,
+    ):
+        return False
+
+    query = dict(parse_qsl(service.query, keep_blank_values=True))
+    return query.get("dir", "").startswith("sp-modules/")
 
 
 class FlakeServiceManager:

@@ -210,3 +210,23 @@ async def test_change_nixos_config_url(no_services_flake_mock):
         file_content = (await file.read()).strip()
 
     assert original_flake.replace("ref=flakes", "ref=supersecretbranch") == file_content
+
+
+@pytest.mark.asyncio
+async def test_change_nixos_config_url_updates_only_selfprivacy_services(
+    some_services_flake_mock,
+):
+    external_url = (
+        "git+https://example.org/selfprivacy-modules/custom-service.git?ref=main"
+    )
+    new_config_url = "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=supersecretbranch"
+
+    async with FlakeServiceManager() as manager:
+        manager.services["external"] = external_url
+
+    await set_nixos_config_url(new_config_url)
+
+    async with FlakeServiceManager() as manager:
+        assert manager.inputs["selfprivacy-nixos-config"]["url"] == new_config_url
+        assert manager.services["gitea"] == f"{new_config_url}&dir=sp-modules/gitea"
+        assert manager.services["external"] == external_url
