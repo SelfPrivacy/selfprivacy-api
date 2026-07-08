@@ -9,6 +9,7 @@ from os import makedirs
 
 import pytest
 
+import selfprivacy_api.services as services_module
 from selfprivacy_api.services import get_templated_service, get_templated_services
 from selfprivacy_api.services.templated_service import TemplatedService
 from tests.conftest import (
@@ -16,6 +17,15 @@ from tests.conftest import (
     install_real_module_definition,
     read_module_definition,
 )
+
+
+@pytest.fixture(autouse=True)
+def _clear_templated_service_cache():
+    """The parsed-definition cache is a module-level global; reset it per test."""
+    services_module._templated_service_cache.clear()
+    yield
+    services_module._templated_service_cache.clear()
+
 
 # --- get_templated_service -----------------------------------------------------------
 
@@ -74,6 +84,33 @@ async def test_get_templated_service_incomplete_definition_raises(sp_modules_dir
         await get_templated_service("no-meta")
     with pytest.raises(ValueError, match="options"):
         await get_templated_service("no-options")
+
+
+@pytest.mark.asyncio
+async def test_get_templated_service_served_from_cache_when_unchanged(sp_modules_dir):
+    install_real_module_definition(sp_modules_dir, "gitea")
+
+    first = await get_templated_service("gitea")
+    second = await get_templated_service("gitea")
+
+    assert second is first
+
+
+@pytest.mark.asyncio
+async def test_get_templated_service_cache_invalidated_when_file_changes(
+    sp_modules_dir,
+):
+    install_module_definition(sp_modules_dir, "svc", read_module_definition("gitea"))
+    first = await get_templated_service("svc")
+    assert first.get_id() == "gitea"
+
+    install_module_definition(
+        sp_modules_dir, "svc", read_module_definition("nextcloud")
+    )
+    second = await get_templated_service("svc")
+
+    assert second is not first
+    assert second.get_id() == "nextcloud"
 
 
 # --- get_templated_services ----------------------------------------------------------
