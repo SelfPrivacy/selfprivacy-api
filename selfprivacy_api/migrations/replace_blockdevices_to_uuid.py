@@ -31,7 +31,9 @@ class ReplaceBlockDevicesToUUID(Migration):
             if "server" not in user_data:
                 user_data["server"] = {}
 
-            new_volumes = []
+            # Volumes that match no current partition (e.g. already recorded
+            # by UUID or temporarily detached) must be preserved as-is.
+            volumes = user_data.get("volumes", [])
 
             for partition in partitions:
                 if partition.is_root():
@@ -46,17 +48,11 @@ class ReplaceBlockDevicesToUUID(Migration):
                         f"Set system partition name to {partition.canonical_name}"
                     )
                 else:
-                    for volume in user_data.get("volumes", []):
+                    for volume in volumes:
                         if volume["device"] == partition.path:
-                            new_volumes.append(
-                                {
-                                    "device": f"/dev/disk/by-uuid/{partition.uuid}",
-                                    "mountPoint": volume["mountPoint"],
-                                    "fsType": volume["fsType"],
-                                }
-                            )
+                            volume["device"] = f"/dev/disk/by-uuid/{partition.uuid}"
                             logger.info(
                                 f"Replaced {partition.canonical_name} ({partition.uuid}) in volumes"
                             )
 
-            user_data["volumes"] = new_volumes
+            user_data["volumes"] = volumes
