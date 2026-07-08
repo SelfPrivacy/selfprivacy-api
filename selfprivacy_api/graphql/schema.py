@@ -231,6 +231,7 @@ schema = strawberry.Schema(
         EnumConfigItem,
     ],
     extensions=[
+        LocaleExtension,
         RequestMemoExtension,
         SelfPrivacyOpenTelemetryExtension,
     ],
