@@ -76,6 +76,33 @@ async def test_get_templated_service_incomplete_definition_raises(sp_modules_dir
         await get_templated_service("no-options")
 
 
+@pytest.mark.asyncio
+async def test_get_templated_service_served_from_cache_when_unchanged(sp_modules_dir):
+    install_real_module_definition(sp_modules_dir, "gitea")
+
+    first = await get_templated_service("gitea")
+    second = await get_templated_service("gitea")
+
+    assert second is first
+
+
+@pytest.mark.asyncio
+async def test_get_templated_service_cache_invalidated_when_file_changes(
+    sp_modules_dir,
+):
+    install_module_definition(sp_modules_dir, "svc", read_module_definition("gitea"))
+    first = await get_templated_service("svc")
+    assert first.get_id() == "gitea"
+
+    install_module_definition(
+        sp_modules_dir, "svc", read_module_definition("nextcloud")
+    )
+    second = await get_templated_service("svc")
+
+    assert second is not first
+    assert second.get_id() == "nextcloud"
+
+
 # --- get_templated_services ----------------------------------------------------------
 
 

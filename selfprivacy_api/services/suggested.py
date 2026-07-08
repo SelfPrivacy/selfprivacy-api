@@ -1,20 +1,22 @@
-import logging
-import httpx
 import asyncio
 import json
+import logging
+from os.path import exists, join
 
-from os.path import join, exists
+import httpx
 from opentelemetry import trace
 
+from selfprivacy_api.services.remote import get_remote_service
 from selfprivacy_api.services.templated_service import (
     SP_MODULES_DEFINITIONS_PATH,
     TemplatedService,
 )
 from selfprivacy_api.utils.redis_pool import RedisPool
-from selfprivacy_api.services.remote import get_remote_service
 
 logger = logging.getLogger(__name__)
 tracer = trace.get_tracer(__name__)
+
+_suggested_service_cache: dict[str, tuple[str, TemplatedService]] = {}
 
 
 class SuggestedServices:
@@ -33,11 +35,13 @@ class SuggestedServices:
                     name,
                     f"git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&rev={rev}&dir=sp-modules/{name}",
                 )
-                await redis.set(f"suggestedservices:{name}:HEAD", rev)
-                await redis.set(
-                    f"suggestedservices:{name}:data",
-                    json.dumps(remote_module.definition_data),
-                )
+                async with redis.pipeline(transaction=True) as pipe:
+                    pipe.set(
+                        f"suggestedservices:{name}:data",
+                        json.dumps(remote_module.definition_data),
+                    )
+                    pipe.set(f"suggestedservices:{name}:HEAD", rev)
+                    await pipe.execute()
                 logger.info(
                     f"Metadata for suggested remote module {name} has been updated to revision {rev}"
                 )
@@ -77,11 +81,25 @@ class SuggestedServices:
                     )
                     continue
 
+                revision = await redis.get(f"suggestedservices:{service_id}:HEAD")
+                cached = _suggested_service_cache.get(service_id)
+                if (
+                    cached is not None
+                    and revision is not None
+                    and cached[0] == revision
+                ):
+                    services.append(cached[1])
+                    continue
+
                 service_data = await redis.get(key)
 
                 assert service_data is not None
 
-                services.append(TemplatedService(service_id, service_data))
+                service = TemplatedService(service_id, service_data)
+                if revision is not None:
+                    _suggested_service_cache[service_id] = (revision, service)
+
+                services.append(service)
 
             span.set_attribute("suggested_service_count", len(services))
 
