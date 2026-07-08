@@ -10,8 +10,8 @@ The locales are loaded into the memory at the api startup and kept in a singleto
 
 from abc import ABC, abstractmethod
 import gettext
+from pathlib import Path
 from typing import Optional
-import os
 from importlib.resources import files as pkg_files
 
 from opentelemetry import trace
@@ -29,7 +29,9 @@ class Localization(metaclass=SingletonMetaclass):
     """Localization class."""
 
     def __init__(self):
-        self.supported_locales = os.listdir(str(_LOCALE_DIR))
+        self.supported_locales = [
+            p.name for p in Path(str(_LOCALE_DIR)).iterdir() if p.is_dir()
+        ]
 
     def get_locale(self, locale: Optional[str]) -> str:
         if not locale:
