@@ -501,9 +501,6 @@ class TemplatedService(Service):
             backup_file = join(db_dumps_folder, f"{db_name}.dump")
             if exists(backup_file):
                 remove(backup_file)
-            unpacked_file = backup_file.replace(".gz", "")
-            if exists(unpacked_file):
-                remove(unpacked_file)
 
     def post_backup(self, job: Job):
         if self.get_postgresql_databases():
