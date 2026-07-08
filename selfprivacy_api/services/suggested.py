@@ -35,11 +35,13 @@ class SuggestedServices:
                     name,
                     f"git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&rev={rev}&dir=sp-modules/{name}",
                 )
-                await redis.set(f"suggestedservices:{name}:HEAD", rev)
-                await redis.set(
-                    f"suggestedservices:{name}:data",
-                    json.dumps(remote_module.definition_data),
-                )
+                async with redis.pipeline(transaction=True) as pipe:
+                    pipe.set(
+                        f"suggestedservices:{name}:data",
+                        json.dumps(remote_module.definition_data),
+                    )
+                    pipe.set(f"suggestedservices:{name}:HEAD", rev)
+                    await pipe.execute()
                 logger.info(
                     f"Metadata for suggested remote module {name} has been updated to revision {rev}"
                 )
