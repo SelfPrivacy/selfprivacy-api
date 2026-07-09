@@ -40,7 +40,7 @@ async def get_storage_usage(path: str) -> int:
         if value is not None:
             return int(value)
 
-        async with redis_conn.lock(f"sizecounter:calculatelock:{path}"):
+        async with redis_conn.lock(f"sizecounter:calculatelock:{path}", timeout=2 * 60):
             usage = await asyncio.get_running_loop().run_in_executor(
                 None, get_storage_usage_blocking, path
             )
