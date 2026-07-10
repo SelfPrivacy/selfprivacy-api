@@ -28,19 +28,19 @@ msgstr "Перемещение %(service)s"
 msgid "Moving %(service)s data to %(volume)s"
 msgstr "Перемещение данных %(service)s на %(volume)s"
 
-#: selfprivacy_api/actions/system.py:141
+#: selfprivacy_api/actions/system.py:150
 msgid "Rebuild system"
 msgstr "Пересборка системы"
 
-#: selfprivacy_api/actions/system.py:143
+#: selfprivacy_api/actions/system.py:152
 msgid "Applying the new system configuration by building the new NixOS generation."
 msgstr "Применение новой конфигурации системы путём сборки новой генерации NixOS."
 
-#: selfprivacy_api/actions/system.py:165
+#: selfprivacy_api/actions/system.py:174
 msgid "Upgrade system"
 msgstr "Обновление системы"
 
-#: selfprivacy_api/actions/system.py:166
+#: selfprivacy_api/actions/system.py:175
 msgid "Upgrading the system to the latest version."
 msgstr "Обновление системы до последней версии."
 
@@ -640,6 +640,10 @@ msgstr "Сборщик мусора запущен..."
 #: selfprivacy_api/graphql/mutations/system_mutations.py:308
 msgid "Provider set"
 msgstr "Провайдер установлен"
+
+#: selfprivacy_api/graphql/mutations/system_mutations.py:340
+msgid "NixOS config URL updated"
+msgstr "URL конфигурации NixOS обновлён"
 
 #: selfprivacy_api/graphql/mutations/users_mutations.py:43
 msgid "New password applied an an email password. To use Single Sign On, please update the SelfPrivacy app."

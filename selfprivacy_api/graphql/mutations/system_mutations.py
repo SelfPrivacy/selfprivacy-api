@@ -322,7 +322,9 @@ class SystemMutations:
                 )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    async def set_nixos_config_url(self, url: str) -> GenericMutationReturn:
+    async def set_nixos_config_url(self, url: str, info: Info) -> GenericMutationReturn:
+        locale = get_locale(info=info)
+
         with tracer.start_as_current_span(
             "set_nixos_config_url",
             attributes={
@@ -334,11 +336,19 @@ class SystemMutations:
                 return GenericMutationReturn(
                     success=True,
                     code=200,
-                    message="NixOS config URL updated",
+                    message=t.translate(
+                        text=_("NixOS config URL updated"), locale=locale
+                    ),
                 )
-            except Exception as e:
+            except Exception as error:
+                if isinstance(error, AbstractException):
+                    return GenericMutationReturn(
+                        success=False,
+                        message=error.get_error_message(locale=locale),
+                        code=error.code,
+                    )
                 return GenericMutationReturn(
                     success=False,
                     code=400,
-                    message=pretty_error(e),
+                    message=pretty_error(error),
                 )
