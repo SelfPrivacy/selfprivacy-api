@@ -177,12 +177,12 @@ class Mutation(
 
 
 # A cruft for Websockets
-def authenticated(info: Info) -> bool:
-    return IsAuthenticated().has_permission(source=None, info=info)
+async def authenticated(info: Info) -> bool:
+    return await IsAuthenticated().has_permission(source=None, info=info)
 
 
-def reject_if_unauthenticated(info: Info):
-    if not authenticated(info):
+async def reject_if_unauthenticated(info: Info):
+    if not await authenticated(info):
         raise Exception(IsAuthenticated().message)
 
 
@@ -195,7 +195,7 @@ class Subscription:
 
     @strawberry.subscription
     async def job_updates(self, info: Info) -> AsyncGenerator[List[ApiJob], None]:
-        reject_if_unauthenticated(info)
+        await reject_if_unauthenticated(info)
 
         connection_params = info.context.get("connection_params")
         locales_raw = connection_params.get("Accept-Language")
@@ -210,14 +210,14 @@ class Subscription:
     @strawberry.subscription
     # Used for testing, consider deletion to shrink attack surface
     async def count(self, info: Info) -> AsyncGenerator[int, None]:
-        reject_if_unauthenticated(info)
+        await reject_if_unauthenticated(info)
         for i in range(10):
             yield i
             await asyncio.sleep(0.5)
 
     @strawberry.subscription
     async def log_entries(self, info: Info) -> AsyncGenerator[LogEntry, None]:
-        reject_if_unauthenticated(info)
+        await reject_if_unauthenticated(info)
         return log_stream()
 
 

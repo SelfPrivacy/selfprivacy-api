@@ -45,12 +45,14 @@ def _naive(date_time: datetime) -> datetime:
 
 
 @tracer.start_as_current_span("get_api_tokens_with_caller_flag")
-def get_api_tokens_with_caller_flag(caller_token: str) -> list[TokenInfoWithIsCaller]:
+async def get_api_tokens_with_caller_flag(
+    caller_token: str,
+) -> list[TokenInfoWithIsCaller]:
     """Get the tokens info"""
-    caller_name = ACTIVE_TOKEN_PROVIDER.get_token_by_token_string(
-        caller_token
+    caller_name = (
+        await ACTIVE_TOKEN_PROVIDER.get_token_by_token_string(caller_token)
     ).device_name
-    tokens = ACTIVE_TOKEN_PROVIDER.get_tokens()
+    tokens = await ACTIVE_TOKEN_PROVIDER.get_tokens()
     return [
         TokenInfoWithIsCaller(
             name=token.device_name,
@@ -62,28 +64,28 @@ def get_api_tokens_with_caller_flag(caller_token: str) -> list[TokenInfoWithIsCa
 
 
 @tracer.start_as_current_span("is_token_valid")
-def is_token_valid(token) -> bool:
+async def is_token_valid(token) -> bool:
     """Check if token is valid"""
-    return ACTIVE_TOKEN_PROVIDER.is_token_valid(token)
+    return await ACTIVE_TOKEN_PROVIDER.is_token_valid(token)
 
 
 @tracer.start_as_current_span("create_api_token")
-def delete_api_token(caller_token: str, token_name: str) -> None:
+async def delete_api_token(caller_token: str, token_name: str) -> None:
     """Delete the token"""
-    if ACTIVE_TOKEN_PROVIDER.is_token_name_pair_valid(token_name, caller_token):
+    if await ACTIVE_TOKEN_PROVIDER.is_token_name_pair_valid(token_name, caller_token):
         raise CannotDeleteCallerException()
-    if not ACTIVE_TOKEN_PROVIDER.is_token_name_exists(token_name):
+    if not await ACTIVE_TOKEN_PROVIDER.is_token_name_exists(token_name):
         raise TokenNotFound()
-    token = ACTIVE_TOKEN_PROVIDER.get_token_by_name(token_name)
-    ACTIVE_TOKEN_PROVIDER.delete_token(token)
+    token = await ACTIVE_TOKEN_PROVIDER.get_token_by_name(token_name)
+    await ACTIVE_TOKEN_PROVIDER.delete_token(token)
 
 
 @tracer.start_as_current_span("create_api_token")
-def refresh_api_token(caller_token: str) -> str:
+async def refresh_api_token(caller_token: str) -> str:
     """Refresh the token"""
 
-    old_token = ACTIVE_TOKEN_PROVIDER.get_token_by_token_string(caller_token)
-    new_token = ACTIVE_TOKEN_PROVIDER.refresh_token(old_token)
+    old_token = await ACTIVE_TOKEN_PROVIDER.get_token_by_token_string(caller_token)
+    new_token = await ACTIVE_TOKEN_PROVIDER.refresh_token(old_token)
     return new_token.token
 
 
@@ -98,12 +100,12 @@ class RecoveryTokenStatus(BaseModel):
 
 
 @tracer.start_as_current_span("get_api_recovery_token_status")
-def get_api_recovery_token_status() -> RecoveryTokenStatus:
+async def get_api_recovery_token_status() -> RecoveryTokenStatus:
     """Get the recovery token status, timezone-aware"""
-    token = ACTIVE_TOKEN_PROVIDER.get_recovery_key()
+    token = await ACTIVE_TOKEN_PROVIDER.get_recovery_key()
     if token is None:
         return RecoveryTokenStatus(exists=False, valid=False)
-    is_valid = ACTIVE_TOKEN_PROVIDER.is_recovery_key_valid()
+    is_valid = await ACTIVE_TOKEN_PROVIDER.is_recovery_key_valid()
 
     # New tokens are tz-aware, but older ones might not be
     expiry_date = token.expires_at
@@ -120,7 +122,7 @@ def get_api_recovery_token_status() -> RecoveryTokenStatus:
 
 
 @tracer.start_as_current_span("get_new_api_recovery_key")
-def get_new_api_recovery_key(
+async def get_new_api_recovery_key(
     expiration_date: Optional[datetime] = None, uses_left: Optional[int] = None
 ) -> str:
     """Get new recovery key"""
@@ -133,13 +135,13 @@ def get_new_api_recovery_key(
         if uses_left <= 0:
             raise InvalidUsesLeft()
 
-    key = ACTIVE_TOKEN_PROVIDER.create_recovery_key(expiration_date, uses_left)
+    key = await ACTIVE_TOKEN_PROVIDER.create_recovery_key(expiration_date, uses_left)
     mnemonic_phrase = Mnemonic(language="english").to_mnemonic(bytes.fromhex(key.key))
     return mnemonic_phrase
 
 
 @tracer.start_as_current_span("use_mnemonic_recovery_token")
-def use_mnemonic_recovery_token(mnemonic_phrase, name):
+async def use_mnemonic_recovery_token(mnemonic_phrase, name):
     """
     Use the recovery token by converting the mnemonic word list to a byte array.
     If the recovery token if invalid itself, return None
@@ -150,36 +152,40 @@ def use_mnemonic_recovery_token(mnemonic_phrase, name):
     mnemonic_phrase is a string representation of the mnemonic word list.
     """
     try:
-        token = ACTIVE_TOKEN_PROVIDER.use_mnemonic_recovery_key(mnemonic_phrase, name)
+        token = await ACTIVE_TOKEN_PROVIDER.use_mnemonic_recovery_key(
+            mnemonic_phrase, name
+        )
         return token.token
     except (RecoveryKeyNotFound, InvalidMnemonic):
         return None
 
 
 @tracer.start_as_current_span("delete_new_device_auth_token")
-def delete_new_device_auth_token() -> None:
-    ACTIVE_TOKEN_PROVIDER.delete_new_device_key()
+async def delete_new_device_auth_token() -> None:
+    await ACTIVE_TOKEN_PROVIDER.delete_new_device_key()
 
 
 @tracer.start_as_current_span("get_new_device_auth_token")
-def get_new_device_auth_token() -> str:
+async def get_new_device_auth_token() -> str:
     """
     Generate and store a new device auth token which is valid for 10 minutes
     and return a mnemonic phrase representation
     """
-    key = ACTIVE_TOKEN_PROVIDER.get_new_device_key()
+    key = await ACTIVE_TOKEN_PROVIDER.get_new_device_key()
     return Mnemonic(language="english").to_mnemonic(bytes.fromhex(key.key))
 
 
 @tracer.start_as_current_span("use_new_device_auth_token")
-def use_new_device_auth_token(mnemonic_phrase, name) -> Optional[str]:
+async def use_new_device_auth_token(mnemonic_phrase, name) -> Optional[str]:
     """
     Use the new device auth token by converting the mnemonic string to a byte array.
     If the mnemonic phrase is valid then generate a device token and return it.
     New device auth token must be deleted.
     """
     try:
-        token = ACTIVE_TOKEN_PROVIDER.use_mnemonic_new_device_key(mnemonic_phrase, name)
+        token = await ACTIVE_TOKEN_PROVIDER.use_mnemonic_new_device_key(
+            mnemonic_phrase, name
+        )
         return token.token
     except (NewDeviceKeyNotFound, InvalidMnemonic):
         return None

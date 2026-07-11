@@ -76,7 +76,7 @@ class UseNewDeviceKeyInput:
 @strawberry.type
 class ApiMutations:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def get_new_recovery_api_key(
+    async def get_new_recovery_api_key(
         self,
         info: Info,
         limits: Optional[RecoveryKeyLimitsInput] = None,
@@ -98,7 +98,9 @@ class ApiMutations:
             if limits is None:
                 limits = RecoveryKeyLimitsInput()
             try:
-                key = get_new_api_recovery_key(limits.expiration_date, limits.uses)
+                key = await get_new_api_recovery_key(
+                    limits.expiration_date, limits.uses
+                )
             except Exception as error:
                 if isinstance(error, AbstractException):
                     return ApiKeyMutationReturn(
@@ -122,7 +124,7 @@ class ApiMutations:
             )
 
     @strawberry.mutation()
-    def use_recovery_api_key(
+    async def use_recovery_api_key(
         self, input: UseRecoveryKeyInput, info: Info
     ) -> DeviceApiTokenMutationReturn:
         """Use recovery key"""
@@ -135,7 +137,7 @@ class ApiMutations:
             },
         ):
             try:
-                token = use_mnemonic_recovery_token(input.key, input.deviceName)
+                token = await use_mnemonic_recovery_token(input.key, input.deviceName)
             except Exception as error:
                 if isinstance(error, AbstractException):
                     return DeviceApiTokenMutationReturn(
@@ -166,7 +168,9 @@ class ApiMutations:
             )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def refresh_device_api_token(self, info: Info) -> DeviceApiTokenMutationReturn:
+    async def refresh_device_api_token(
+        self, info: Info
+    ) -> DeviceApiTokenMutationReturn:
         """Refresh device api token"""
         locale = get_locale(info=info)
 
@@ -186,7 +190,7 @@ class ApiMutations:
                 )
 
             try:
-                new_token = refresh_api_token(token_string)
+                new_token = await refresh_api_token(token_string)
             except Exception as error:
                 if isinstance(error, AbstractException):
                     return DeviceApiTokenMutationReturn(
@@ -210,7 +214,9 @@ class ApiMutations:
             )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def delete_device_api_token(self, device: str, info: Info) -> GenericMutationReturn:
+    async def delete_device_api_token(
+        self, device: str, info: Info
+    ) -> GenericMutationReturn:
         """Delete device api token"""
         locale = get_locale(info=info)
 
@@ -226,7 +232,7 @@ class ApiMutations:
                 .replace("Bearer ", "")
             )
             try:
-                delete_api_token(self_token, device)
+                await delete_api_token(self_token, device)
             except Exception as error:
                 if isinstance(error, AbstractException):
                     return GenericMutationReturn(
@@ -247,12 +253,12 @@ class ApiMutations:
             )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def get_new_device_api_key(self, info: Info) -> ApiKeyMutationReturn:
+    async def get_new_device_api_key(self, info: Info) -> ApiKeyMutationReturn:
         """Generate device api key"""
         locale = get_locale(info=info)
 
         with tracer.start_as_current_span("get_new_device_api_key"):
-            key = get_new_device_auth_token()
+            key = await get_new_device_auth_token()
             return ApiKeyMutationReturn(
                 success=True,
                 message=t.translate(text=_("Device api key generated"), locale=locale),
@@ -261,12 +267,12 @@ class ApiMutations:
             )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def invalidate_new_device_api_key(self, info: Info) -> GenericMutationReturn:
+    async def invalidate_new_device_api_key(self, info: Info) -> GenericMutationReturn:
         """Invalidate new device api key"""
         locale = get_locale(info=info)
 
         with tracer.start_as_current_span("invalidate_new_device_api_key"):
-            delete_new_device_auth_token()
+            await delete_new_device_auth_token()
             return GenericMutationReturn(
                 success=True,
                 message=t.translate(text=_("New device key deleted"), locale=locale),
@@ -274,7 +280,7 @@ class ApiMutations:
             )
 
     @strawberry.mutation()
-    def authorize_with_new_device_api_key(
+    async def authorize_with_new_device_api_key(
         self, input: UseNewDeviceKeyInput, info: Info
     ) -> DeviceApiTokenMutationReturn:
         """Authorize with new device api key"""
@@ -287,7 +293,7 @@ class ApiMutations:
             },
         ):
             try:
-                token = use_new_device_auth_token(input.key, input.deviceName)
+                token = await use_new_device_auth_token(input.key, input.deviceName)
             except Exception as error:
                 if isinstance(error, AbstractException):
                     return DeviceApiTokenMutationReturn(

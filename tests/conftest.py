@@ -26,6 +26,7 @@ from selfprivacy_api.services import Service, ServiceManager, ServiceStatus
 from selfprivacy_api.services.test_service import DummyService
 from selfprivacy_api.utils.huey import huey
 from selfprivacy_api.utils.observable import Observable
+from selfprivacy_api.utils.redis_pool import RedisPool
 
 API_REBUILD_SYSTEM_UNIT = "sp-nixos-rebuild.service"
 API_UPGRADE_SYSTEM_UNIT = "sp-nixos-upgrade.service"
@@ -68,27 +69,39 @@ def pytest_generate_tests(metafunc):
     os.environ["TEST_MODE"] = "true"
 
 
+@pytest.fixture(autouse=True)
+def isolated_redis_pool_singleton():
+    """Each test builds its own RedisPool so singleton state (pools,
+    per-loop caches, patched connection config) never leaks across tests."""
+    RedisPool.reset()
+    yield
+    RedisPool.reset()
+
+
 def global_data_dir():
     return path.join(path.dirname(__file__), "data")
 
 
-@pytest.fixture
-def empty_redis_repo():
+@pytest_asyncio.fixture
+async def empty_redis_repo():
     repo = RedisTokensRepository()
-    repo.reset()
-    assert repo.get_tokens() == []
+    await repo.reset()
+    assert await repo.get_tokens() == []
     return repo
 
 
 @pytest.fixture
 def redis_repo_with_tokens():
-    repo = RedisTokensRepository()
-    repo.reset()
-    for token in TOKENS:
-        repo._store_token(token)
-    assert sorted(repo.get_tokens(), key=lambda x: x.token) == sorted(
-        TOKENS, key=lambda x: x.token
-    )
+    async def _seed():
+        repo = RedisTokensRepository()
+        await repo.reset()
+        for token in TOKENS:
+            await repo._store_token(token)
+        assert sorted(await repo.get_tokens(), key=lambda x: x.token) == sorted(
+            TOKENS, key=lambda x: x.token
+        )
+
+    asyncio.run(_seed())
 
 
 def clone_global_file(filename, tmpdir) -> str:

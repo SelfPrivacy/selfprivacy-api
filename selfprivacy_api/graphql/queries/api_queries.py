@@ -48,7 +48,7 @@ class ApiRecoveryKeyStatus:
 @tracer.start_as_current_span("resolve_get_recovery_key_status")
 async def get_recovery_key_status() -> ApiRecoveryKeyStatus:
     """Get recovery key status, times are timezone-aware"""
-    status = get_api_recovery_token_status()
+    status = await get_api_recovery_token_status()
     if status is None or not status.exists:
         return ApiRecoveryKeyStatus(
             exists=False,
@@ -81,7 +81,7 @@ class Api:
                     creation_date=device.date,
                     is_caller=device.is_caller,
                 )
-                for device in get_api_tokens_with_caller_flag(
+                for device in await get_api_tokens_with_caller_flag(
                     info.context["request"]
                     .headers.get("Authorization", "")
                     .replace("Bearer ", "")
