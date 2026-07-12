@@ -458,31 +458,31 @@ msgstr "Ключ уже существует"
 msgid "Invalid key type. Supported key types: "
 msgstr "Недопустимый тип ключа. Поддерживаемые типы ключей: "
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:119
+#: selfprivacy_api/graphql/mutations/api_mutations.py:121
 msgid "Recovery key generated"
 msgstr "Ключ восстановления сгенерирован"
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:163
+#: selfprivacy_api/graphql/mutations/api_mutations.py:165
 msgid "Recovery key used"
 msgstr "Ключ восстановления использован"
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:207
+#: selfprivacy_api/graphql/mutations/api_mutations.py:211
 msgid "Token refreshed"
 msgstr "Токен обновлён"
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:245
+#: selfprivacy_api/graphql/mutations/api_mutations.py:251
 msgid "Token deleted"
 msgstr "Токен удалён"
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:258
+#: selfprivacy_api/graphql/mutations/api_mutations.py:264
 msgid "Device api key generated"
 msgstr "Сгенерирован API ключ устройства"
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:272
+#: selfprivacy_api/graphql/mutations/api_mutations.py:278
 msgid "New device key deleted"
 msgstr "Ключ нового устройства удалён"
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:316
+#: selfprivacy_api/graphql/mutations/api_mutations.py:322
 msgid "Token used"
 msgstr "Токен использован"
 

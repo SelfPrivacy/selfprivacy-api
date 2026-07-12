@@ -367,31 +367,31 @@ msgstr ""
 msgid "Invalid key type. Supported key types: "
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:119
+#: selfprivacy_api/graphql/mutations/api_mutations.py:121
 msgid "Recovery key generated"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:163
+#: selfprivacy_api/graphql/mutations/api_mutations.py:165
 msgid "Recovery key used"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:207
+#: selfprivacy_api/graphql/mutations/api_mutations.py:211
 msgid "Token refreshed"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:245
+#: selfprivacy_api/graphql/mutations/api_mutations.py:251
 msgid "Token deleted"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:258
+#: selfprivacy_api/graphql/mutations/api_mutations.py:264
 msgid "Device api key generated"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:272
+#: selfprivacy_api/graphql/mutations/api_mutations.py:278
 msgid "New device key deleted"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:316
+#: selfprivacy_api/graphql/mutations/api_mutations.py:322
 msgid "Token used"
 msgstr ""
 
