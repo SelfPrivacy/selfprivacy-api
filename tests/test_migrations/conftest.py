@@ -11,7 +11,13 @@ VM instance.
 import pytest
 
 from selfprivacy_api.jobs import Jobs
-from selfprivacy_api.services.flake_service_manager import FlakeServiceManager
+from selfprivacy_api.services.flake_service_manager import (
+    DEFAULT_NIXOS_CONFIG_URL,
+    SP_MODULE_INPUT_PREFIX,
+    FlakeServiceManager,
+    get_sp_module_url,
+    set_flake_ref,
+)
 from selfprivacy_api.utils import UserDataFiles, WriteUserData
 from selfprivacy_api.utils.block_devices import BlockDevices
 
@@ -29,10 +35,7 @@ ALL_USERS = NORMAL_USERS + [PRIMARY_USER]
 
 
 def sp_module_url(name: str, ref: str = "flakes") -> str:
-    return (
-        "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git"
-        f"?ref={ref}&dir=sp-modules/{name}"
-    )
+    return get_sp_module_url(set_flake_ref(DEFAULT_NIXOS_CONFIG_URL, ref), name)
 
 
 BASE_SERVICES = [
@@ -50,15 +53,21 @@ FLAKE_ALL_SERVICES = {
 }
 
 
-def flake_content(services: dict) -> str:
+def flake_content(
+    services: dict,
+    *,
+    inputs: dict | None = None,
+) -> str:
     """Render a flake.nix in the same shape FlakeServiceManager writes."""
     lines = [
         "{",
         '  description = "SelfPrivacy NixOS PoC modules/extensions/bundles/packages/etc";',
         "",
     ]
-    for name, url in services.items():
+    for name, url in (inputs or {}).items():
         lines.append(f'  inputs.{name}.url = "{url}";')
+    for name, url in services.items():
+        lines.append(f'  inputs.{SP_MODULE_INPUT_PREFIX}{name}.url = "{url}";')
     lines.append("  outputs = _: { };")
     lines.append("}")
     return "\n".join(lines) + "\n"
@@ -76,7 +85,12 @@ def flake_file(mocker, tmp_path):
 
     def install(services: dict) -> str:
         flake_path = tmp_path / "flake.nix"
-        flake_path.write_text(flake_content(services))
+        flake_path.write_text(
+            flake_content(
+                services,
+                inputs={"selfprivacy-nixos-config": DEFAULT_NIXOS_CONFIG_URL},
+            )
+        )
         mocker.patch(
             "selfprivacy_api.services.flake_service_manager.FLAKE_CONFIG_PATH",
             new=str(flake_path),

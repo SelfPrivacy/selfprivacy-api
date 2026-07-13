@@ -1,6 +1,15 @@
 from selfprivacy_api.migrations.migration import Migration
 
-from selfprivacy_api.services.flake_service_manager import FlakeServiceManager
+from selfprivacy_api.services.flake_service_manager import (
+    DEFAULT_NIXOS_CONFIG_URL,
+    FlakeServiceManager,
+    get_sp_module_url,
+    is_sp_module_url,
+    set_flake_ref,
+)
+
+
+SSO_NIXOS_CONFIG_URL = set_flake_ref(DEFAULT_NIXOS_CONFIG_URL, "sso")
 
 
 class SwitchToFlakes(Migration):
@@ -15,17 +24,14 @@ class SwitchToFlakes(Migration):
     async def is_migration_needed(self) -> bool:
         async with FlakeServiceManager() as manager:
             for service_url in manager.services.values():
-                if service_url.startswith(
-                    "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=sso"
-                ):
+                if is_sp_module_url(service_url, SSO_NIXOS_CONFIG_URL):
                     return True
         return False
 
     async def migrate(self) -> None:
         async with FlakeServiceManager() as manager:
-            # Go over each service, and if it has `ref=sso`, replace it with `ref=flakes`
-            for key, value in manager.services.items():
-                if value.startswith(
-                    "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=sso"
-                ):
-                    manager.services[key] = value.replace("ref=sso", "ref=flakes")
+            for service_name, service_url in manager.services.items():
+                if is_sp_module_url(service_url, SSO_NIXOS_CONFIG_URL):
+                    manager.services[service_name] = get_sp_module_url(
+                        DEFAULT_NIXOS_CONFIG_URL, service_name
+                    )

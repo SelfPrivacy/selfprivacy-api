@@ -1,7 +1,12 @@
 import aiofiles
 import pytest
 
-from selfprivacy_api.services.flake_service_manager import FlakeServiceManager
+from selfprivacy_api.services.flake_service_manager import (
+    DEFAULT_NIXOS_CONFIG_URL,
+    FlakeServiceManager,
+    get_sp_module_url,
+    set_flake_ref,
+)
 from selfprivacy_api.actions.system import set_nixos_config_url
 from selfprivacy_api.exceptions.system import ShellException
 from selfprivacy_api.utils.nix import format_nix_expr, evaluate_nix_file
@@ -197,6 +202,15 @@ async def test_change_empty_services_list(no_services_flake_mock):
     assert all_services_file.strip() == file_content
 
 
+def test_set_flake_ref_replaces_or_adds_ref():
+    assert set_flake_ref(DEFAULT_NIXOS_CONFIG_URL, "sso") == (
+        "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=sso"
+    )
+    assert set_flake_ref("github:NixOS/nixpkgs?dir=lib", "nixos-25.11") == (
+        "github:NixOS/nixpkgs?dir=lib&ref=nixos-25.11"
+    )
+
+
 @pytest.mark.asyncio
 async def test_change_nixos_config_url(no_services_flake_mock):
     async with aiofiles.open(no_services_flake_mock, "r", encoding="utf-8") as file:
@@ -228,5 +242,5 @@ async def test_change_nixos_config_url_updates_only_selfprivacy_services(
 
     async with FlakeServiceManager() as manager:
         assert manager.inputs["selfprivacy-nixos-config"]["url"] == new_config_url
-        assert manager.services["gitea"] == f"{new_config_url}&dir=sp-modules/gitea"
+        assert manager.services["gitea"] == get_sp_module_url(new_config_url, "gitea")
         assert manager.services["external"] == external_url

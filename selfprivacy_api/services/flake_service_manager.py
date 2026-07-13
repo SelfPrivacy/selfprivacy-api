@@ -1,9 +1,10 @@
-import aiofiles
 import copy
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
+import aiofiles
 from opentelemetry import trace
-from selfprivacy_api.utils.nix import evaluate_nix_file, to_nix_expr, format_nix_expr
+
+from selfprivacy_api.utils.nix import evaluate_nix_file, format_nix_expr, to_nix_expr
 
 FLAKE_CONFIG_PATH = "/etc/nixos/flake.nix"
 SP_MODULE_INPUT_PREFIX = "sp-module-"
@@ -12,6 +13,18 @@ DEFAULT_NIXOS_CONFIG_URL = "git+https://git.selfprivacy.org/SelfPrivacy/selfpriv
 
 
 tracer = trace.get_tracer(__name__)
+
+
+def set_flake_ref(flake_url: str, ref: str) -> str:
+    """Return a flake URL with its `ref` query parameter replaced."""
+    parsed_url = urlsplit(flake_url)
+    query = [
+        (key, ref if key == "ref" else value)
+        for key, value in parse_qsl(parsed_url.query, keep_blank_values=True)
+    ]
+    if not any(key == "ref" for key, _ in query):
+        query.append(("ref", ref))
+    return urlunsplit(parsed_url._replace(query=urlencode(query, doseq=True, safe="/")))
 
 
 def get_sp_module_url(nixos_config_url: str, service_name: str) -> str:
@@ -37,8 +50,10 @@ def is_sp_module_url(service_url: str, nixos_config_url: str) -> bool:
     ):
         return False
 
-    query = dict(parse_qsl(service.query, keep_blank_values=True))
-    return query.get("dir", "").startswith("sp-modules/")
+    service_query = dict(parse_qsl(service.query, keep_blank_values=True))
+    nixos_config_query = dict(parse_qsl(nixos_config.query, keep_blank_values=True))
+    service_dir = service_query.pop("dir", "")
+    return service_dir.startswith("sp-modules/") and service_query == nixos_config_query
 
 
 class FlakeServiceManager:
