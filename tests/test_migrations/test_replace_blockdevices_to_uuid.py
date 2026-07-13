@@ -6,7 +6,9 @@ from selfprivacy_api.migrations.replace_blockdevices_to_uuid import (
 )
 from selfprivacy_api.utils import ReadUserData, WriteUserData
 
-from tests.test_migrations.conftest import ROOT_UUID, VOLUME_UUID
+from tests.test_migrations.conftest import ROOT_UUID
+
+VOLUME_UUID = "fa9d0026-ee23-4047-b8b1-297ae16fa751"
 
 
 async def test_needed_when_root_partition_missing(generic_userdata):

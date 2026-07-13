@@ -4,11 +4,15 @@
 from selfprivacy_api.migrations.add_roundcube import AddRoundcube
 
 from tests.test_migrations.conftest import (
+    BASE_SERVICES,
     FLAKE_ALL_SERVICES,
-    FLAKE_WITHOUT_ROUNDCUBE,
     read_flake_services,
     sp_module_url,
 )
+
+FLAKE_WITHOUT_ROUNDCUBE = {
+    name: sp_module_url(name) for name in BASE_SERVICES + ["monitoring"]
+}
 
 
 async def test_migrate_adds_roundcube_input(flake_file):

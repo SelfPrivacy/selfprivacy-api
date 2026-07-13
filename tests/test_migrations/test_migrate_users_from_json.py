@@ -9,8 +9,26 @@ import pytest
 from selfprivacy_api.exceptions.users.kanidm_repository import KanidmQueryError
 from selfprivacy_api.migrations.migrate_users_from_json import MigrateUsersFromJson
 from selfprivacy_api.utils import WriteUserData
+from selfprivacy_api.utils.redis_pool import RedisPool
 
 from tests.test_migrations.conftest import ALL_USERS, PRIMARY_USER
+
+
+@pytest.fixture
+def clean_email_passwords():
+    """Remove email password hashes of turned_on.json users from the real
+    Redis before and after the test to avoid crosstalk."""
+    redis = RedisPool().get_userpanel_connection()
+
+    def clean():
+        for username in ALL_USERS:
+            for key in redis.scan_iter(f"priv/user/{username}/passwords/*"):
+                redis.delete(key)
+
+    clean()
+    yield redis
+    clean()
+
 
 ZERO_UUID = "00000000-0000-0000-0000-000000000000"
 

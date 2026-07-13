@@ -17,7 +17,7 @@ async def test_migrates_token_from_secrets(generic_userdata, empty_redis_repo):
 
     await migration.migrate()
 
-    tokens = RedisTokensRepository().get_tokens()
+    tokens = await RedisTokensRepository().get_tokens()
     assert len(tokens) == 1
     assert tokens[0].token == "SECRET_TOKEN"
     assert tokens[0].device_name == "Initial device"
@@ -35,4 +35,4 @@ async def test_not_needed_when_redis_has_tokens(
 async def test_not_needed_without_token_in_secrets(generic_userdata, empty_redis_repo):
     # secrets.json is {} — the swallowed-KeyError path in get_token_from_json
     assert await WriteTokenToRedis().is_migration_needed() is False
-    assert RedisTokensRepository().get_tokens() == []
+    assert await RedisTokensRepository().get_tokens() == []

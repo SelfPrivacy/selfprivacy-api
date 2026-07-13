@@ -5,11 +5,20 @@ from selfprivacy_api.migrations.switch_to_flakes import SwitchToFlakes
 
 from tests.test_migrations.conftest import (
     FLAKE_ALL_SERVICES,
-    FLAKE_WITH_SSO_REFS,
-    THIRD_PARTY_SSO_URL,
     read_flake_services,
     sp_module_url,
 )
+
+# Third-party module URL that contains "ref=sso" but does not start with the
+# selfprivacy-nixos-config prefix — SwitchToFlakes must leave it alone.
+THIRD_PARTY_SSO_URL = "git+https://git.example.org/Someone/some-module.git?ref=sso"
+
+FLAKE_WITH_SSO_REFS = {
+    "bitwarden": sp_module_url("bitwarden", ref="sso"),
+    "gitea": sp_module_url("gitea", ref="sso"),
+    "nextcloud": sp_module_url("nextcloud"),
+    "some-module": THIRD_PARTY_SSO_URL,
+}
 
 
 async def test_migrate_rewrites_sso_refs_to_flakes(flake_file):

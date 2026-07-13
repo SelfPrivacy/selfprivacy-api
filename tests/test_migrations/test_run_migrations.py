@@ -168,7 +168,7 @@ async def test_run_migrations_noop_on_fully_migrated_system(
     assert kanidm_api.requests[0].method == "GET"
 
     assert sorted(
-        RedisTokensRepository().get_tokens(), key=lambda token: token.token
+        await RedisTokensRepository().get_tokens(), key=lambda token: token.token
     ) == sorted(TOKENS, key=lambda token: token.token)
     assert await read_flake_services() == FLAKE_ALL_SERVICES
     with ReadUserData() as data:

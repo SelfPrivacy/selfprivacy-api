@@ -5,11 +5,15 @@ from selfprivacy_api.migrations.add_monitoring import AddMonitoring
 from selfprivacy_api.utils import ReadUserData, WriteUserData
 
 from tests.test_migrations.conftest import (
+    BASE_SERVICES,
     FLAKE_ALL_SERVICES,
-    FLAKE_WITHOUT_MONITORING,
     read_flake_services,
     sp_module_url,
 )
+
+FLAKE_WITHOUT_MONITORING = {
+    name: sp_module_url(name) for name in BASE_SERVICES + ["roundcube"]
+}
 
 
 def remove_monitoring_module():
