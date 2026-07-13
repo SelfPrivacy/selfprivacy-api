@@ -406,6 +406,19 @@ def assert_rebuild_was_made(fp):
     pass
 
 
+@pytest.fixture(autouse=True)
+def isolated_kanidm_client_singleton():
+    """kanidm_client() caches an httpx.AsyncClient whose connections bind to
+    the event loop of first use; reset it so tests (each running a fresh
+    loop) never share a client, and so the kanidm_api transport patch is
+    picked up on construction."""
+    from selfprivacy_api.repositories.users import kanidm_user_repository
+
+    kanidm_user_repository._kanidm_client = None
+    yield
+    kanidm_user_repository._kanidm_client = None
+
+
 class HttpxApiRecorder:
     """
     Scripted handler for httpx.MockTransport that records every outgoing

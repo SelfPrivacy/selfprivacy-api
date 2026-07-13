@@ -12,7 +12,6 @@ import pytest
 from selfprivacy_api.exceptions.users.kanidm_repository import (
     KanidmCliSubprocessError,
     KanidmDidNotReturnAdminPassword,
-    KanidmQueryError,
 )
 from selfprivacy_api.repositories.users.kanidm_user_repository import (
     REDIS_TOKEN_KEY,
@@ -85,41 +84,17 @@ def fake_kanidm_cli(mocker):
 # --- KanidmAdminToken.get() -----------------------------------------------------
 
 
-async def test_get_returns_redis_token_after_prevalidation(
+async def test_get_returns_redis_token_without_validation(
     redis, kanidm_api, mock_kanidm_domain
 ):
+    # Tokens are used optimistically; a rejected token is handled by
+    # _send_query's retry, not by pre-validation here.
     await redis.set(REDIS_TOKEN_KEY, "redis-token")
-    kanidm_api.respond(200, {"user": "root"})
 
     token = await KanidmAdminToken.get()
 
     assert token == "redis-token"
-    assert len(kanidm_api.requests) == 1
-    request = kanidm_api.requests[0]
-    assert request.method == "GET"
-    assert str(request.url) == "https://auth.test.tld/v1/person/root"
-    assert request.headers["authorization"] == "Bearer redis-token"
-
-
-async def test_get_with_invalid_redis_token_falls_back_to_env(
-    redis, kanidm_api, mock_kanidm_domain, monkeypatch, tmp_path
-):
-    await redis.set(REDIS_TOKEN_KEY, "stale-token")
-    token_file = tmp_path / "kanidm.token"
-    token_file.write_text("env-token\n")
-    monkeypatch.setenv("KANIDM_ADMIN_TOKEN_FILE", str(token_file))
-
-    kanidm_api.respond(401, "notauthenticated")  # stale redis token check
-    kanidm_api.respond(200, {"user": "root"})  # env token check
-
-    token = await KanidmAdminToken.get()
-
-    assert token == "env-token"
-    assert [request.headers["authorization"] for request in kanidm_api.requests] == [
-        "Bearer stale-token",
-        "Bearer env-token",
-    ]
-    assert await redis.get(REDIS_TOKEN_KEY) == "env-token"
+    assert kanidm_api.requests == []
 
 
 async def test_get_without_redis_token_reads_env_file(
@@ -128,14 +103,94 @@ async def test_get_without_redis_token_reads_env_file(
     token_file = tmp_path / "kanidm.token"
     token_file.write_text("  env-token  \n")
     monkeypatch.setenv("KANIDM_ADMIN_TOKEN_FILE", str(token_file))
-    kanidm_api.respond(200, {"user": "root"})
 
     token = await KanidmAdminToken.get()
 
     assert token == "env-token"  # stripped
     assert await redis.get(REDIS_TOKEN_KEY) == "env-token"
+    assert kanidm_api.requests == []
+
+
+# `rejected_token` is passed by _send_query's retry after Kanidm refuses the
+# cached token. The Redis cache is always skipped; the env token is adopted
+# only if it differs from the rejected one AND passes a probe request.
+
+
+async def test_get_rejected_token_adopts_rotated_env_token(
+    redis, kanidm_api, mock_kanidm_domain, monkeypatch, tmp_path, fake_kanidm_cli
+):
+    token_file = tmp_path / "kanidm.token"
+    token_file.write_text("rotated-env-token\n")
+    monkeypatch.setenv("KANIDM_ADMIN_TOKEN_FILE", str(token_file))
+    kanidm_api.respond(200, {"user": "root"})  # the probe
+
+    token = await KanidmAdminToken.get(rejected_token="rejected-token")
+
+    assert token == "rotated-env-token"
+    assert await redis.get(REDIS_TOKEN_KEY) == "rotated-env-token"
     assert len(kanidm_api.requests) == 1
-    assert kanidm_api.requests[0].headers["authorization"] == "Bearer env-token"
+    probe = kanidm_api.requests[0]
+    assert probe.method == "GET"
+    assert str(probe.url) == "https://auth.test.tld/v1/person/root"
+    assert probe.headers["authorization"] == "Bearer rotated-env-token"
+    # no idm_admin password reset, no token minted
+    assert fake_kanidm_cli.calls == []
+
+
+async def test_get_rejected_token_matching_env_regenerates_without_probe(
+    redis, kanidm_api, mock_kanidm_domain, monkeypatch, tmp_path, fp, fake_kanidm_cli
+):
+    token_file = tmp_path / "kanidm.token"
+    token_file.write_text("rejected-token\n")
+    monkeypatch.setenv("KANIDM_ADMIN_TOKEN_FILE", str(token_file))
+    fp.register(RECOVER_COMMAND, stdout='{"output": "recovered-password"}')
+    fake_kanidm_cli.processes.extend(
+        [FakeProcess(), FakeProcess(stdout=b"generated-token\n")]
+    )
+
+    token = await KanidmAdminToken.get(rejected_token="rejected-token")
+
+    assert token == "generated-token"
+    assert await redis.get(REDIS_TOKEN_KEY) == "generated-token"
+    # probing the very token that was just rejected would be pointless
+    assert kanidm_api.requests == []
+    assert fp.call_count(RECOVER_COMMAND) == 1
+
+
+async def test_get_rejected_token_with_unusable_env_token_regenerates(
+    redis, kanidm_api, mock_kanidm_domain, monkeypatch, tmp_path, fp, fake_kanidm_cli
+):
+    token_file = tmp_path / "kanidm.token"
+    token_file.write_text("stale-env-token\n")
+    monkeypatch.setenv("KANIDM_ADMIN_TOKEN_FILE", str(token_file))
+    kanidm_api.respond(401, "notauthenticated")  # the probe fails
+    fp.register(RECOVER_COMMAND, stdout='{"output": "recovered-password"}')
+    fake_kanidm_cli.processes.extend(
+        [FakeProcess(), FakeProcess(stdout=b"generated-token\n")]
+    )
+
+    token = await KanidmAdminToken.get(rejected_token="rejected-token")
+
+    assert token == "generated-token"
+    assert await redis.get(REDIS_TOKEN_KEY) == "generated-token"
+    assert len(kanidm_api.requests) == 1  # exactly one probe, then regen
+
+
+async def test_get_rejected_token_without_env_regenerates(
+    redis, kanidm_api, mock_kanidm_domain, monkeypatch, fp, fake_kanidm_cli
+):
+    await redis.set(REDIS_TOKEN_KEY, "rejected-token")  # skipped entirely
+    monkeypatch.delenv("KANIDM_ADMIN_TOKEN_FILE", raising=False)
+    fp.register(RECOVER_COMMAND, stdout='{"output": "recovered-password"}')
+    fake_kanidm_cli.processes.extend(
+        [FakeProcess(), FakeProcess(stdout=b"generated-token\n")]
+    )
+
+    token = await KanidmAdminToken.get(rejected_token="rejected-token")
+
+    assert token == "generated-token"
+    assert await redis.get(REDIS_TOKEN_KEY) == "generated-token"
+    assert kanidm_api.requests == []
 
 
 async def test_get_regenerates_token_when_no_sources(
@@ -325,49 +380,28 @@ def test_reset_password_empty_output_field_raises(fp):
 # --- _is_token_valid ------------------------------------------------------------
 
 
-async def test_is_token_valid_returns_true_for_200(kanidm_api, mock_kanidm_domain):
+async def test_is_token_valid_true_on_200(kanidm_api, mock_kanidm_domain):
     kanidm_api.respond(200, {"user": "root"})
 
-    result = await KanidmAdminToken._is_token_valid("valid-token")
+    assert await KanidmAdminToken._is_token_valid("probe-token") is True
 
-    assert result is True
     assert len(kanidm_api.requests) == 1
-    request = kanidm_api.requests[0]
-    assert request.method == "GET"
-    assert str(request.url) == "https://auth.test.tld/v1/person/root"
-    assert request.headers["authorization"] == "Bearer valid-token"
-    assert request.extensions["timeout"]["read"] == 1
+    probe = kanidm_api.requests[0]
+    assert probe.method == "GET"
+    assert str(probe.url) == "https://auth.test.tld/v1/person/root"
+    assert probe.headers["authorization"] == "Bearer probe-token"
 
 
-async def test_is_token_valid_returns_false_for_notauthenticated(
-    kanidm_api, mock_kanidm_domain
-):
+async def test_is_token_valid_false_on_non_200(kanidm_api, mock_kanidm_domain):
     kanidm_api.respond(401, "notauthenticated")
 
-    result = await KanidmAdminToken._is_token_valid("invalid-token")
-
-    assert result is False
+    assert await KanidmAdminToken._is_token_valid("probe-token") is False
 
 
-async def test_is_token_valid_raises_query_error_on_connection_issue(
-    kanidm_api, mock_kanidm_domain
-):
+async def test_is_token_valid_false_on_http_error(kanidm_api, mock_kanidm_domain):
     kanidm_api.fail(httpx.ConnectError("connection failed"))
 
-    with pytest.raises(KanidmQueryError) as error:
-        await KanidmAdminToken._is_token_valid("any-token")
-
-    assert "Connection error" in str(error.value.description)
-
-
-async def test_is_token_valid_returns_true_for_other_non_200_responses(
-    kanidm_api, mock_kanidm_domain
-):
-    kanidm_api.respond(500, {"error": "boom"})
-
-    result = await KanidmAdminToken._is_token_valid("any-token")
-
-    assert result is True
+    assert await KanidmAdminToken._is_token_valid("probe-token") is False
 
 
 # --- _delete_kanidm_token_from_db -----------------------------------------------

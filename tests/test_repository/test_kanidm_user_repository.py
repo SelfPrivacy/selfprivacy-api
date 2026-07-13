@@ -3,6 +3,7 @@
 # pylint: disable=missing-function-docstring
 
 import json
+from unittest.mock import call as mocker_call
 
 import httpx
 import pytest
@@ -21,8 +22,11 @@ from selfprivacy_api.exceptions.users.kanidm_repository import (
 )
 from selfprivacy_api.models.user import UserDataUserOrigin
 from selfprivacy_api.repositories.users.kanidm_user_repository import (
+    REDIS_TOKEN_KEY,
     KanidmUserRepository,
+    kanidm_client,
 )
+from selfprivacy_api.utils.redis_pool import RedisPool
 
 
 # Shapes verified against a live Kanidm server on 2026-07-07
@@ -186,7 +190,20 @@ async def test_send_query_success_sends_expected_request(
     assert json.loads(request.content) == {"a": 1}
     assert request.headers["authorization"] == "Bearer token-123"
     assert request.headers["content-type"] == "application/json"
-    assert request.extensions["timeout"]["read"] == 1
+    assert request.extensions["timeout"]["read"] == 15
+
+
+async def test_send_query_reuses_one_http_client(
+    kanidm_api, mock_kanidm_domain, mock_admin_token
+):
+    kanidm_api.respond(200, {"ok": 1})
+    kanidm_api.respond(200, {"ok": 2})
+
+    await KanidmUserRepository._send_query("person/root")
+    await KanidmUserRepository._send_query("person/root")
+
+    assert kanidm_client() is kanidm_client()
+    assert len(kanidm_api.requests) == 2
 
 
 async def test_send_query_non_json_response_raises_query_error(
@@ -215,6 +232,8 @@ async def test_send_query_connect_error_raises_query_error(
     assert error.value.endpoint == "person/root"
     assert error.value.method == "POST"
     assert "Kanidm is not responding to requests." in str(error.value.description)
+    # transport errors are not retried
+    assert len(kanidm_api.requests) == 1
 
 
 async def test_send_query_timeout_raises_query_error(
@@ -228,21 +247,14 @@ async def test_send_query_timeout_raises_query_error(
     assert "Kanidm is not responding to requests." in str(error.value.description)
 
 
-@pytest.mark.parametrize(
-    "body",
-    [
-        # Real response of a live Kanidm server (captured 2026-07-07):
-        {
-            "conflicting_attributes": ["mail", "name", "spn"],
-            "error": "Attribute uniqueness error",
-        },
-        # Legacy shape from older Kanidm versions, still detected just in case:
-        {"plugin": {"attrunique": "duplicate value detected"}},
-    ],
-)
 async def test_send_query_duplicate_raises_user_already_exists(
-    kanidm_api, mock_kanidm_domain, mock_admin_token, body
+    kanidm_api, mock_kanidm_domain, mock_admin_token
 ):
+    # Real response of a live Kanidm server (captured 2026-07-07):
+    body = {
+        "conflicting_attributes": ["mail", "name", "spn"],
+        "error": "Attribute uniqueness error",
+    }
     kanidm_api.respond(409, body)
 
     with pytest.raises(UserAlreadyExists):
@@ -269,13 +281,38 @@ async def test_send_query_accessdenied_raises_query_error(
     assert "Kanidm access issue" in error.value.error_text
 
 
-async def test_send_query_notauthenticated_raises_failed_to_get_valid_token(
+async def test_send_query_notauthenticated_retries_once_then_succeeds(
     kanidm_api, mock_kanidm_domain, mock_admin_token
 ):
+    redis = RedisPool().get_connection_async()
+    await redis.set(REDIS_TOKEN_KEY, "rejected-token")
+    kanidm_api.respond(401, "notauthenticated")
+    kanidm_api.respond(200, {"ok": True})
+
+    result = await KanidmUserRepository._send_query("person/root")
+
+    assert result == {"ok": True}
+    assert len(kanidm_api.requests) == 2
+    # the cached token is dropped before the retry
+    assert await redis.get(REDIS_TOKEN_KEY) is None
+    # attempt 1 uses the cached chain, attempt 2 knows what was rejected
+    assert mock_admin_token.await_args_list == [
+        mocker_call(rejected_token=None),
+        mocker_call(rejected_token="token-123"),
+    ]
+
+
+async def test_send_query_notauthenticated_twice_raises_failed_to_get_valid_token(
+    kanidm_api, mock_kanidm_domain, mock_admin_token
+):
+    kanidm_api.respond(401, "notauthenticated")
     kanidm_api.respond(401, "notauthenticated")
 
     with pytest.raises(FailedToGetValidKanidmToken):
         await KanidmUserRepository._send_query("person/root")
+
+    # no third attempt
+    assert len(kanidm_api.requests) == 2
 
 
 async def test_send_query_generic_non_200_raises_query_error_with_response_text(

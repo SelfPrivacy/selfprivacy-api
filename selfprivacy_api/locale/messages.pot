@@ -729,22 +729,18 @@ msgstr ""
 msgid "No backup description found!"
 msgstr ""
 
-#: selfprivacy_api/repositories/users/kanidm_user_repository.py:246
-msgid "Kanidm is not responding to requests. Connection error."
-msgstr ""
-
-#: selfprivacy_api/repositories/users/kanidm_user_repository.py:255
-msgid "Unknown error while checking the Kanidm admin token."
-msgstr ""
-
-#: selfprivacy_api/repositories/users/kanidm_user_repository.py:395
+#: selfprivacy_api/repositories/users/kanidm_user_repository.py:386
 msgid "No JSON found in Kanidm response."
 msgstr ""
 
-#: selfprivacy_api/repositories/users/kanidm_user_repository.py:407
+#: selfprivacy_api/repositories/users/kanidm_user_repository.py:394
 msgid "Kanidm is not responding to requests."
 msgstr ""
 
-#: selfprivacy_api/repositories/users/kanidm_user_repository.py:433
+#: selfprivacy_api/repositories/users/kanidm_user_repository.py:425
+msgid "We somehow got into unreachable code."
+msgstr ""
+
+#: selfprivacy_api/repositories/users/kanidm_user_repository.py:453
 msgid "Kanidm access issue"
 msgstr ""
