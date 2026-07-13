@@ -4,7 +4,7 @@ migrations which cannot be performed from the NixOS configuration file changes.
 These migrations are checked and ran before every start of the API.
 
 You can disable certain migrations if needed by creating an array
-at api.skippedMigrations in userdata.json and populating it
+at api.skippedMigrations in secrets.json and populating it
 with IDs of the migrations to skip.
 Adding DISABLE_ALL to that array disables the migrations module entirely.
 """

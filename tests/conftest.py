@@ -470,3 +470,13 @@ def mock_kanidm_domain(mocker):
         "selfprivacy_api.repositories.users.kanidm_user_repository.get_domain",
         return_value="test.tld",
     )
+
+
+@pytest.fixture
+def mock_admin_token(mocker):
+    """Pin KanidmAdminToken.get() as looked up by the kanidm user repository."""
+    return mocker.patch(
+        "selfprivacy_api.repositories.users.kanidm_user_repository."
+        "KanidmAdminToken.get",
+        new=mocker.AsyncMock(return_value="token-123"),
+    )

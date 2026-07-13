@@ -25,15 +25,6 @@ from selfprivacy_api.repositories.users.kanidm_user_repository import (
 )
 
 
-@pytest.fixture
-def mock_admin_token(mocker):
-    return mocker.patch(
-        "selfprivacy_api.repositories.users.kanidm_user_repository."
-        "KanidmAdminToken.get",
-        new=mocker.AsyncMock(return_value="token-123"),
-    )
-
-
 # Shapes verified against a live Kanidm server on 2026-07-07
 KANIDM_USERS_RESPONSE = [
     {
