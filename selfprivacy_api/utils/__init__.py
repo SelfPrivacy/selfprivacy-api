@@ -153,6 +153,7 @@ class ReadUserData(object):
         return self.data
 
     def __exit__(self, *args):
+        """No-op because we read via cache"""
         pass
 
 
