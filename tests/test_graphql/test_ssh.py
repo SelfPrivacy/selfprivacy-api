@@ -596,3 +596,31 @@ def test_graphql_remove_ssh_key_nonexistent_user(
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHptiXtnh0b57aK6B117g+CkINlbx8JSTl03Ry0/a2BB dummykey",
     )
     assert_errorcode(output, 404)
+
+
+def test_graphql_add_ssh_key_backend_unavailable(authorized_client, mocker):
+    mocker.patch(
+        "selfprivacy_api.graphql.mutations.users_mutations.create_ssh_key_action",
+        side_effect=ConnectionError("Userdata storage is unavailable"),
+    )
+
+    output = api_add_ssh_key(
+        authorized_client,
+        "user1",
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHptiXtnh0b57aK6B117g+CkINlbx8JSTl03Ry0/a2BB dummykey",
+    )
+    assert_errorcode(output, 500)
+
+
+def test_graphql_remove_ssh_key_backend_unavailable(authorized_client, mocker):
+    mocker.patch(
+        "selfprivacy_api.graphql.mutations.users_mutations.remove_ssh_key_action",
+        side_effect=ConnectionError("Userdata storage is unavailable"),
+    )
+
+    output = api_remove_ssh_key(
+        authorized_client,
+        "user1",
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHptiXtnh0b57aK6B117g+CkINlbx8JSTl03Ry0/a2BB dummykey",
+    )
+    assert_errorcode(output, 500)

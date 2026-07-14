@@ -1748,3 +1748,18 @@ def test_set_dns_provider_unauthorized(client, generic_userdata):
 
     response = api_set_dns_provider(client, provider, token)
     assert_empty(response)
+
+
+def test_set_dns_provider_backend_unavailable(
+    authorized_client, generic_userdata, mocker
+):
+    mocker.patch(
+        "selfprivacy_api.graphql.mutations.system_mutations.set_dns_provider",
+        side_effect=ConnectionError("Secrets storage is unavailable"),
+    )
+
+    response = api_set_dns_provider(
+        authorized_client, DnsProvider.DIGITALOCEAN, "someRandomToken"
+    )
+    data = get_data(response)["system"]["setDnsProvider"]
+    assert_errorcode(data, 400)

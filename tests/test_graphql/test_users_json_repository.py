@@ -858,3 +858,109 @@ def test_graphql_update_user_no_primary_user(
     assert response.json()["data"]["users"]["updateUser"]["code"] == 200
     assert response.json()["data"]["users"]["updateUser"]["success"] is True
     assert response.json()["data"]["users"]["updateUser"]["user"]["username"] == "user1"
+
+
+API_GENERATE_PASSWORD_RESET_LINK_MUTATION = """
+mutation generatePasswordResetLink($username: String!) {
+    users {
+        generatePasswordResetLink(username: $username) {
+            success
+            message
+            code
+            passwordResetLink
+        }
+    }
+}
+"""
+
+
+def test_graphql_update_root_user_is_protected(
+    authorized_client, some_users, use_json_repository
+):
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_UPDATE_USER_MUTATION,
+            "variables": {"user": {"username": "root"}},
+        },
+    )
+    assert_errorcode(get_data(response)["users"]["updateUser"], 400)
+
+
+def test_graphql_generate_password_reset_link_wrong_repository(
+    authorized_client, use_json_repository
+):
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_GENERATE_PASSWORD_RESET_LINK_MUTATION,
+            "variables": {"username": "user1"},
+        },
+    )
+    assert_errorcode(get_data(response)["users"]["generatePasswordResetLink"], 500)
+
+
+def test_graphql_create_user_backend_unavailable(
+    authorized_client, some_users, use_json_repository, mocker
+):
+    mocker.patch(
+        "selfprivacy_api.graphql.mutations.users_mutations.create_user_action",
+        side_effect=ConnectionError("User backend is unavailable"),
+    )
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_CREATE_USERS_MUTATION,
+            "variables": {"user": {"username": "newuser"}},
+        },
+    )
+    assert_errorcode(get_data(response)["users"]["createUser"], 400)
+
+
+def test_graphql_delete_user_backend_unavailable(authorized_client, mocker):
+    mocker.patch(
+        "selfprivacy_api.graphql.mutations.users_mutations.delete_user_action",
+        side_effect=ConnectionError("User backend is unavailable"),
+    )
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_DELETE_USER_MUTATION,
+            "variables": {"username": "user1"},
+        },
+    )
+    assert_errorcode(get_data(response)["users"]["deleteUser"], 400)
+
+
+def test_graphql_update_user_backend_unavailable(
+    authorized_client, some_users, use_json_repository, mocker
+):
+    mocker.patch(
+        "selfprivacy_api.graphql.mutations.users_mutations.update_user_action",
+        side_effect=ConnectionError("User backend is unavailable"),
+    )
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_UPDATE_USER_MUTATION,
+            "variables": {"user": {"username": "user1"}},
+        },
+    )
+    assert_errorcode(get_data(response)["users"]["updateUser"], 400)
+
+
+def test_graphql_generate_password_reset_link_backend_unavailable(
+    authorized_client, mocker
+):
+    mocker.patch(
+        "selfprivacy_api.graphql.mutations.users_mutations.generate_password_reset_link_action",
+        side_effect=ConnectionError("User backend is unavailable"),
+    )
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_GENERATE_PASSWORD_RESET_LINK_MUTATION,
+            "variables": {"username": "user1"},
+        },
+    )
+    assert_errorcode(get_data(response)["users"]["generatePasswordResetLink"], 400)

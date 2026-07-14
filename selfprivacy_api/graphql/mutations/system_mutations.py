@@ -308,13 +308,13 @@ class SystemMutations:
                     message=t.translate(text=_("Provider set"), locale=locale),
                 )
 
+            except AbstractException as error:
+                return GenericMutationReturn(
+                    success=False,
+                    message=error.get_error_message(locale=locale),
+                    code=error.code,
+                )
             except Exception as error:
-                if isinstance(error, AbstractException):
-                    return GenericMutationReturn(
-                        success=False,
-                        message=error.get_error_message(locale=locale),
-                        code=error.code,
-                    )
                 return GenericMutationReturn(
                     success=False,
                     code=400,

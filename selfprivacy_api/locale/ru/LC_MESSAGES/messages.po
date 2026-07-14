@@ -458,31 +458,31 @@ msgstr "Ключ уже существует"
 msgid "Invalid key type. Supported key types: "
 msgstr "Недопустимый тип ключа. Поддерживаемые типы ключей: "
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:121
+#: selfprivacy_api/graphql/mutations/api_mutations.py:120
 msgid "Recovery key generated"
 msgstr "Ключ восстановления сгенерирован"
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:165
+#: selfprivacy_api/graphql/mutations/api_mutations.py:163
 msgid "Recovery key used"
 msgstr "Ключ восстановления использован"
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:211
+#: selfprivacy_api/graphql/mutations/api_mutations.py:208
 msgid "Token refreshed"
 msgstr "Токен обновлён"
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:251
+#: selfprivacy_api/graphql/mutations/api_mutations.py:247
 msgid "Token deleted"
 msgstr "Токен удалён"
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:264
+#: selfprivacy_api/graphql/mutations/api_mutations.py:260
 msgid "Device api key generated"
 msgstr "Сгенерирован API ключ устройства"
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:278
+#: selfprivacy_api/graphql/mutations/api_mutations.py:274
 msgid "New device key deleted"
 msgstr "Ключ нового устройства удалён"
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:322
+#: selfprivacy_api/graphql/mutations/api_mutations.py:317
 msgid "Token used"
 msgstr "Токен использован"
 
@@ -560,15 +560,15 @@ msgstr "Сервис не существует: %(service_id)s"
 msgid "Service configuration updated."
 msgstr "Настройки сервиса обновлены."
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:345
+#: selfprivacy_api/graphql/mutations/services_mutations.py:344
 msgid "Started moving the service."
 msgstr "Начат перенос сервиса."
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:354
+#: selfprivacy_api/graphql/mutations/services_mutations.py:353
 msgid "Service moved."
 msgstr "Сервис перемещён."
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:364
+#: selfprivacy_api/graphql/mutations/services_mutations.py:363
 #, python-format
 msgid "While moving service and performing the step '%(status_text)s', an error occurred: %(error)s"
 msgstr "При переносе сервиса на шаге «%(status_text)s» произошла ошибка: %(error)s"
@@ -645,27 +645,27 @@ msgstr "Провайдер установлен"
 msgid "New password applied an an email password. To use Single Sign On, please update the SelfPrivacy app."
 msgstr "Новый пароль применён как пароль электронной почты. Чтобы использовать единый вход (SSO), обновите приложение SelfPrivacy."
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:124
+#: selfprivacy_api/graphql/mutations/users_mutations.py:123
 msgid "User created"
 msgstr "Пользователь создан"
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:156
+#: selfprivacy_api/graphql/mutations/users_mutations.py:154
 msgid "User deleted"
 msgstr "Пользователь удалён"
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:204
+#: selfprivacy_api/graphql/mutations/users_mutations.py:201
 msgid "User updated"
 msgstr "Пользователь обновлён"
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:238
+#: selfprivacy_api/graphql/mutations/users_mutations.py:234
 msgid "New SSH key successfully written"
 msgstr "Новый ключ SSH успешно записан"
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:275
+#: selfprivacy_api/graphql/mutations/users_mutations.py:270
 msgid "SSH key successfully removed"
 msgstr "Ключ SSH успешно удалён"
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:312
+#: selfprivacy_api/graphql/mutations/users_mutations.py:306
 msgid "Link successfully created"
 msgstr "Ссылка успешно создана"
 

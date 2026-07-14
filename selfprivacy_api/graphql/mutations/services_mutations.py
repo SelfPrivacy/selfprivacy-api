@@ -323,20 +323,19 @@ class ServicesMutations:
 
             try:
                 job = await move_service(input.service_id, input.location)
+            except AbstractException as error:
+                return ServiceJobMutationReturn(
+                    success=False,
+                    message=error.get_error_message(locale=locale),
+                    code=error.code,
+                )
             except Exception as error:
-                if isinstance(error, AbstractException):
-                    return ServiceJobMutationReturn(
-                        success=False,
-                        message=error.get_error_message(locale=locale),
-                        code=error.code,
-                    )
-                else:
-                    return ServiceJobMutationReturn(
-                        success=False,
-                        message=pretty_error(error),
-                        code=400,
-                        service=await service_to_graphql_service(service),
-                    )
+                return ServiceJobMutationReturn(
+                    success=False,
+                    message=pretty_error(error),
+                    code=400,
+                    service=await service_to_graphql_service(service),
+                )
 
             if job.status in [JobStatus.CREATED, JobStatus.RUNNING]:
                 return ServiceJobMutationReturn(

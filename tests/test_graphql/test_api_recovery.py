@@ -299,3 +299,43 @@ def test_graphql_generate_recovery_key_with_zero_uses(authorized_client):
     assert_errorcode(output, 400)
     assert output["key"] is None
     assert graphql_recovery_status(authorized_client)["exists"] is False
+
+
+def test_graphql_generate_recovery_key_backend_unavailable(authorized_client, mocker):
+    mocker.patch(
+        "selfprivacy_api.graphql.mutations.api_mutations.get_new_api_recovery_key",
+        side_effect=ConnectionError("Redis is unavailable"),
+    )
+
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": API_RECOVERY_KEY_GENERATE_MUTATION,
+            "variables": {"limits": None},
+        },
+    )
+
+    output = get_data(response)["api"]["getNewRecoveryApiKey"]
+    assert_errorcode(output, 400)
+    assert output["key"] is None
+
+
+def test_graphql_use_recovery_key_backend_unavailable(client, mocker):
+    mocker.patch(
+        "selfprivacy_api.graphql.mutations.api_mutations.use_mnemonic_recovery_token",
+        side_effect=ConnectionError("Redis is unavailable"),
+    )
+
+    response = client.post(
+        "/graphql",
+        json={
+            "query": API_RECOVERY_KEY_USE_MUTATION,
+            "variables": {
+                "input": {"key": "someRandomKey", "deviceName": "newdevice"},
+            },
+        },
+    )
+
+    output = get_data(response)["api"]["useRecoveryApiKey"]
+    assert_errorcode(output, 400)
+    assert output["token"] is None

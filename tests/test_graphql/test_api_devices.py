@@ -323,3 +323,58 @@ def test_graphql_authorize_without_token(
         },
     )
     assert_empty(response)
+
+
+def test_graphql_refresh_token_backend_unavailable(authorized_client, mocker):
+    mocker.patch(
+        "selfprivacy_api.graphql.mutations.api_mutations.refresh_api_token",
+        side_effect=ConnectionError("Redis is unavailable"),
+    )
+
+    response = authorized_client.post(
+        "/graphql",
+        json={"query": REFRESH_TOKEN_MUTATION},
+    )
+
+    output = get_data(response)["api"]["refreshDeviceApiToken"]
+    assert_errorcode(output, 400)
+    assert output["token"] is None
+
+
+def test_graphql_delete_token_backend_unavailable(authorized_client, mocker):
+    mocker.patch(
+        "selfprivacy_api.graphql.mutations.api_mutations.delete_api_token",
+        side_effect=ConnectionError("Redis is unavailable"),
+    )
+
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": DELETE_TOKEN_MUTATION,
+            "variables": {"device": "test_token2"},
+        },
+    )
+
+    output = get_data(response)["api"]["deleteDeviceApiToken"]
+    assert_errorcode(output, 500)
+
+
+def test_graphql_authorize_new_device_backend_unavailable(client, mocker):
+    mocker.patch(
+        "selfprivacy_api.graphql.mutations.api_mutations.use_new_device_auth_token",
+        side_effect=ConnectionError("Redis is unavailable"),
+    )
+
+    response = client.post(
+        "/graphql",
+        json={
+            "query": AUTHORIZE_WITH_NEW_DEVICE_KEY_MUTATION,
+            "variables": {
+                "input": {"key": "someRandomKey", "deviceName": "new_device"},
+            },
+        },
+    )
+
+    output = get_data(response)["api"]["authorizeWithNewDeviceApiKey"]
+    assert_errorcode(output, 400)
+    assert output["token"] is None
