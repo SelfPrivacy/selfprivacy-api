@@ -515,11 +515,11 @@ msgstr ""
 msgid "Volume not unmounted (already unmounted?)"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/storage_mutations.py:155
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:158
 msgid "Already migrated to binds"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/storage_mutations.py:172
+#: selfprivacy_api/graphql/mutations/storage_mutations.py:175
 msgid "Migration to binds started, rebuild the system to apply changes"
 msgstr ""
 

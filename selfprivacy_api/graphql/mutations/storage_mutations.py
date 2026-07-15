@@ -139,7 +139,10 @@ class StorageMutations:
                 ),
             )
 
-    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    @strawberry.mutation(
+        permission_classes=[IsAuthenticated],
+        deprecation_reason="Installations without binds are no longer supported and support for migrating existing installations will be removed in next major release",
+    )
     def migrate_to_binds(
         self, input: MigrateToBindsInput, info: Info
     ) -> GenericJobMutationReturn:
