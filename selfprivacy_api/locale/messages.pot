@@ -42,71 +42,71 @@ msgstr ""
 msgid "Upgrading the system to the latest version."
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:52
+#: selfprivacy_api/backup/jobs.py:51
 msgid "Automatic backup"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:53
+#: selfprivacy_api/backup/jobs.py:52
 #, python-format
 msgid "Scheduled backup for services: %(pretty_service_list)s"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:62
+#: selfprivacy_api/backup/jobs.py:61
 #, python-format
 msgid "Cannot start a backup of %(service_id)s, another operation is running: %(op_type)s"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:71
+#: selfprivacy_api/backup/jobs.py:70
 #, python-format
 msgid "Backup %(display_name)s"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:73
+#: selfprivacy_api/backup/jobs.py:72
 #, python-format
 msgid "Backing up %(display_name)s"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:81
+#: selfprivacy_api/backup/jobs.py:80
 #, python-format
 msgid "Cannot start a restore of %(service_id)s, another operation is running: %(op_type)s"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:95
+#: selfprivacy_api/backup/jobs.py:94
 msgid "Total restore"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:96
+#: selfprivacy_api/backup/jobs.py:95
 msgid "Restoring all enabled services"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:116
+#: selfprivacy_api/backup/jobs.py:115
 msgid "Total backup"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:117
+#: selfprivacy_api/backup/jobs.py:116
 msgid "Backing up all the enabled services"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:131
+#: selfprivacy_api/backup/jobs.py:130
 #, python-format
 msgid "Restore %(display_name)s"
 msgstr ""
 
-#: selfprivacy_api/backup/jobs.py:133
+#: selfprivacy_api/backup/jobs.py:132
 #, python-format
 msgid "Restoring %(display_name)s from %(snapshot_id)s"
 msgstr ""
 
-#: selfprivacy_api/backup/tasks.py:214
+#: selfprivacy_api/backup/tasks.py:213
 msgid "Finding the last autobackup session"
 msgstr ""
 
-#: selfprivacy_api/backup/tasks.py:233
+#: selfprivacy_api/backup/tasks.py:232
 #, python-format
 msgid "restoring %(service_name)s"
 msgstr ""
 
-#: selfprivacy_api/backup/tasks.py:238
+#: selfprivacy_api/backup/tasks.py:237
 msgid "rebuilding system"
 msgstr ""
 

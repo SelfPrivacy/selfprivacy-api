@@ -44,71 +44,71 @@ msgstr "Обновление системы"
 msgid "Upgrading the system to the latest version."
 msgstr "Обновление системы до последней версии."
 
-#: selfprivacy_api/backup/jobs.py:52
+#: selfprivacy_api/backup/jobs.py:51
 msgid "Automatic backup"
 msgstr "Автоматическое резервное копирование"
 
-#: selfprivacy_api/backup/jobs.py:53
+#: selfprivacy_api/backup/jobs.py:52
 #, python-format
 msgid "Scheduled backup for services: %(pretty_service_list)s"
 msgstr "Запланированное резервное копирование для сервисов: %(pretty_service_list)s"
 
-#: selfprivacy_api/backup/jobs.py:62
+#: selfprivacy_api/backup/jobs.py:61
 #, python-format
 msgid "Cannot start a backup of %(service_id)s, another operation is running: %(op_type)s"
 msgstr "Нельзя запустить резервное копирование %(service_id)s, выполняется другая операция: %(op_type)s"
 
-#: selfprivacy_api/backup/jobs.py:71
+#: selfprivacy_api/backup/jobs.py:70
 #, python-format
 msgid "Backup %(display_name)s"
 msgstr "Резервное копирование %(display_name)s"
 
-#: selfprivacy_api/backup/jobs.py:73
+#: selfprivacy_api/backup/jobs.py:72
 #, python-format
 msgid "Backing up %(display_name)s"
 msgstr "Создание резервной копии %(display_name)s"
 
-#: selfprivacy_api/backup/jobs.py:81
+#: selfprivacy_api/backup/jobs.py:80
 #, python-format
 msgid "Cannot start a restore of %(service_id)s, another operation is running: %(op_type)s"
 msgstr "Нельзя запустить восстановление %(service_id)s, выполняется другая операция: %(op_type)s"
 
-#: selfprivacy_api/backup/jobs.py:95
+#: selfprivacy_api/backup/jobs.py:94
 msgid "Total restore"
 msgstr "Полное восстановление"
 
-#: selfprivacy_api/backup/jobs.py:96
+#: selfprivacy_api/backup/jobs.py:95
 msgid "Restoring all enabled services"
 msgstr "Восстановление всех включённых сервисов"
 
-#: selfprivacy_api/backup/jobs.py:116
+#: selfprivacy_api/backup/jobs.py:115
 msgid "Total backup"
 msgstr "Полное резервное копирование"
 
-#: selfprivacy_api/backup/jobs.py:117
+#: selfprivacy_api/backup/jobs.py:116
 msgid "Backing up all the enabled services"
 msgstr "Резервное копирование всех включённых сервисов"
 
-#: selfprivacy_api/backup/jobs.py:131
+#: selfprivacy_api/backup/jobs.py:130
 #, python-format
 msgid "Restore %(display_name)s"
 msgstr "Восстановление %(display_name)s"
 
-#: selfprivacy_api/backup/jobs.py:133
+#: selfprivacy_api/backup/jobs.py:132
 #, python-format
 msgid "Restoring %(display_name)s from %(snapshot_id)s"
 msgstr "Восстановление %(display_name)s из %(snapshot_id)s"
 
-#: selfprivacy_api/backup/tasks.py:214
+#: selfprivacy_api/backup/tasks.py:213
 msgid "Finding the last autobackup session"
 msgstr "Поиск последней сессии автоматического резервного копирования"
 
-#: selfprivacy_api/backup/tasks.py:233
+#: selfprivacy_api/backup/tasks.py:232
 #, python-format
 msgid "restoring %(service_name)s"
 msgstr "восстановление %(service_name)s"
 
-#: selfprivacy_api/backup/tasks.py:238
+#: selfprivacy_api/backup/tasks.py:237
 msgid "rebuilding system"
 msgstr "пересборка системы"
 

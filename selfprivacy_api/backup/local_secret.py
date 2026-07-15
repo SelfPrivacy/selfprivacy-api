@@ -7,7 +7,6 @@ import secrets
 
 from selfprivacy_api.utils.redis_pool import RedisPool
 
-
 REDIS_KEY = "backup:local_secret"
 
 redis = RedisPool().get_connection()

@@ -5,7 +5,6 @@ from selfprivacy_api.utils.nix import evaluate_nix_file
 
 import os
 
-
 LEGACY_SP_MODULES_BACKUP_DIR = "/etc/nixos/.legacy-sp-modules"
 
 

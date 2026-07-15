@@ -22,7 +22,6 @@ from selfprivacy_api.jobs import Jobs, JobStatus, Job
 from selfprivacy_api.jobs.upgrade_system import rebuild_system
 from selfprivacy_api.actions.system import add_rebuild_job
 
-
 _ = gettext.gettext
 
 SNAPSHOT_CACHE_TTL_HOURS = 12

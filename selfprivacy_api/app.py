@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """SelfPrivacy server management API"""
+
 import asyncio
 import logging
 import os
@@ -55,7 +56,6 @@ from selfprivacy_api.userpanel.routes.user import router as user_router
 from selfprivacy_api.userpanel.routes.internal import router as internal_router
 
 from selfprivacy_api.userpanel.static import static_dir
-
 
 setup_instrumentation()
 

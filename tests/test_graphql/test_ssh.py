@@ -19,7 +19,6 @@ from tests.test_graphql.test_users_json_repository import API_USERS_INFO
 
 from selfprivacy_api.repositories.users.test_user_repository import TestUserRepository
 
-
 key_users = ["root", "tester", "user1", "user2", "user3"]
 
 

@@ -13,7 +13,6 @@ from selfprivacy_api.userpanel.auth.session import (
     set_session_token_cookie,
 )
 
-
 router = APIRouter()
 
 logger = logging.getLogger(__name__)
@@ -21,7 +20,11 @@ logger = logging.getLogger(__name__)
 
 @router.get("/", response_class=HTMLResponse)
 async def login(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+    return templates.TemplateResponse(
+        request=request,
+        name="login.html",
+        context={},
+    )
 
 
 @router.get("/oauth")

@@ -4,10 +4,12 @@ from types import SimpleNamespace
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from fastapi.staticfiles import StaticFiles
 from starlette.responses import RedirectResponse
 from starlette.responses import Response as StarletteResponse
 
 from selfprivacy_api.userpanel.routes.login import router as login_router
+from selfprivacy_api.userpanel.static import static_dir
 
 
 class FakeKanidm:
@@ -34,6 +36,7 @@ class _OAuthRegistry:
 @pytest.fixture
 def app():
     app = FastAPI()
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
     app.include_router(login_router)
     return app
 
@@ -78,6 +81,13 @@ def session_stubs(mocker):
         autospec=True,
     )
     return set_cookie_mock
+
+
+def test_login_renders_template(client):
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert "Sign in with Single Sign On" in response.text
 
 
 def test_login_via_kanidm_redirects_to_provider(client, kanidm_oauth_mock):

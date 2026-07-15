@@ -7,7 +7,6 @@ from tests.test_graphql.common import (
 )
 from tests.test_jobs import jobs
 
-
 API_JOBS_QUERY = """
 getJobs {
     uid

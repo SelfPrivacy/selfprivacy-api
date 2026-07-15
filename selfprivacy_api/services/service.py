@@ -33,7 +33,6 @@ from selfprivacy_api.services.moving import (
     move_data_to_volume,
 )
 
-
 DEFAULT_START_STOP_TIMEOUT = 5 * 60
 
 logger = logging.getLogger(__name__)

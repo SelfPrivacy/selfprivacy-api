@@ -28,7 +28,6 @@ from selfprivacy_api.repositories.users.kanidm_user_repository import (
 )
 from selfprivacy_api.utils.redis_pool import RedisPool
 
-
 # Shapes verified against a live Kanidm server on 2026-07-07
 KANIDM_USERS_RESPONSE = [
     {

@@ -8,7 +8,6 @@ from selfprivacy_api.services.flake_service_manager import (
     set_flake_ref,
 )
 
-
 SSO_NIXOS_CONFIG_URL = set_flake_ref(DEFAULT_NIXOS_CONFIG_URL, "sso")
 
 

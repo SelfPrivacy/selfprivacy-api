@@ -6,7 +6,6 @@ from selfprivacy_api.jobs import Jobs, Job, JobStatus
 from selfprivacy_api.services.service import Service
 from selfprivacy_api.services import ServiceManager
 
-
 _ = gettext.gettext
 
 

@@ -14,7 +14,6 @@ from tests.conftest import (
     mock_system_rebuild_flow,
 )
 
-
 API_REBUILD_SYSTEM_MUTATION = """
 mutation rebuildSystem {
     system {

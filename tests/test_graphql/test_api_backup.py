@@ -28,7 +28,6 @@ from tests.test_graphql.test_services import (
 from selfprivacy_api.services import CONFIG_STASH_DIR
 from tests.test_graphql.common import assert_empty
 
-
 API_RELOAD_SNAPSHOTS = """
 mutation TestSnapshotsReload {
     backup {

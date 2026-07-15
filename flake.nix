@@ -1,7 +1,7 @@
 {
   description = "SelfPrivacy API flake";
 
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
   outputs =
     { self, nixpkgs, ... }:
@@ -128,17 +128,15 @@
               export TMPDIR=''${TMPDIR:=/tmp}/nixos-vm-tmp-dir
               export API_SOURCES=$PWD
 
-              SCRIPT=$(cat <<EOF
-              start_all()
-              machine.succeed("cd ${vmtest-src-dir} && coverage run -m pytest $@ >&2")
-              machine.succeed("cd ${vmtest-src-dir} && coverage report >&2")
-              EOF
-              )
+              if [ $# -gt 0 ]; then
+                printf -v PYTEST_VM_ARGS ' %q' "$@"
+                export PYTEST_VM_ARGS
+              fi
 
               if [ -f "/etc/arch-release" ]; then
-                  ${check.driverInteractive}/bin/nixos-test-driver --no-interactive <(printf "%s" "$SCRIPT")
+                ${check.driverInteractive}/bin/nixos-test-driver --no-interactive
               else
-                  ${check.driver}/bin/nixos-test-driver -- <(printf "%s" "$SCRIPT")
+                ${check.driver}/bin/nixos-test-driver
               fi
             '';
           dependencies-json = pkgs.writeTextFile {
@@ -238,7 +236,7 @@
               valkey
               restic
               bandit
-              nixfmt-rfc-style
+              nixfmt
               self.packages.${system}.pytest-vm
               # FIXME consider loading this explicitly only after ArchLinux issue is solved
               self.checks.${system}.default.driverInteractive
@@ -379,6 +377,7 @@
                 };
                 virtualisation.fileSystems.${vmtest-src-dir} = {
                   neededForBoot = true;
+                  fsType = "auto";
                   device = "${self.packages.${system}.src-with-mo}";
                   options = [
                     "bind"
@@ -404,13 +403,16 @@
                   # TODO: these can be passed via wrapper script around app
                   rclone
                   restic
-                  nixfmt-rfc-style
+                  nixfmt
                 ];
                 environment.variables.TEST_MODE = "true";
               };
             testScript = ''
+              import os
+
               start_all()
-              machine.succeed("cd ${vmtest-src-dir} && coverage run --data-file=/tmp/.coverage -m pytest -p no:cacheprovider -v >&2")
+              pytest_args = os.environ.get("PYTEST_VM_ARGS", "-p no:cacheprovider -v")
+              machine.succeed("cd ${vmtest-src-dir} && coverage run --data-file=/tmp/.coverage -m pytest " + pytest_args + " >&2")
               machine.succeed("cd ${vmtest-src-dir} && coverage xml --rcfile=${vmtest-src-dir}/.coveragerc --data-file=/tmp/.coverage -o /tmp/coverage.xml >&2")
               machine.copy_from_vm("/tmp/coverage.xml", "coverage.xml")
               machine.succeed("cd ${vmtest-src-dir} && coverage report --data-file=/tmp/.coverage >&2")

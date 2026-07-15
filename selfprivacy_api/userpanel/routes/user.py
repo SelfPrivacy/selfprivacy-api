@@ -78,9 +78,9 @@ async def get_profile(
     kanidm_url = f"https://auth.{get_domain()}/ui/profile"
 
     return templates.TemplateResponse(
-        "profile.html",
-        {
-            "request": request,
+        request=request,
+        name="profile.html",
+        context={
             "user": user.model_dump(),
             "services": services,
             "kanidm_url": kanidm_url,
@@ -107,9 +107,9 @@ async def edit_profile_get(
         logger.error(f"Error getting user by username: {e}")
         raise HTTPException(status_code=500)
     return templates.TemplateResponse(
-        "edit_profile.html",
-        {
-            "request": request,
+        request=request,
+        name="edit_profile.html",
+        context={
             "values": {"displayname": user.display_name},
             "errors": {},
         },
@@ -127,9 +127,9 @@ async def edit_profile_post(
     except ValidationError as e:
         errors = {err["loc"][0]: err["msg"] for err in e.errors()}
         return templates.TemplateResponse(
-            "edit_profile.html",
-            {
-                "request": request,
+            request=request,
+            name="edit_profile.html",
+            context={
                 "values": {"displayname": displayname},
                 "errors": errors,
             },
@@ -160,9 +160,9 @@ async def email_passwords_get(
         ]
         timezone = get_timezone()
         return templates.TemplateResponse(
-            "email_passwords.html",
-            {
-                "request": request,
+            request=request,
+            name="email_passwords.html",
+            context={
                 "email_passwords": email_passwords_dict,
                 "timezone": timezone,
             },
@@ -198,9 +198,9 @@ async def create_email_password_get(
     request: Request, session: Annotated[Session, Depends(get_current_user)]
 ):
     return templates.TemplateResponse(
-        "create_email_password.html",
-        {
-            "request": request,
+        request=request,
+        name="create_email_password.html",
+        context={
             "values": {"display_name": "", "expires_at": "", "deltachat": False},
             "errors": {},
         },
@@ -236,9 +236,9 @@ async def create_email_password_post(
             else {"expires_at": str(e)}
         )
         return templates.TemplateResponse(
-            "create_email_password.html",
-            {
-                "request": request,
+            request=request,
+            name="create_email_password.html",
+            context={
                 "values": {"display_name": display_name, "expires_at": expires_at},
                 "errors": errors,
             },
@@ -273,9 +273,9 @@ async def create_email_password_post(
         deltachat_qr_base64 = generate_qr_code(deltachat_uri)
 
     return templates.TemplateResponse(
-        "email_password_created.html",
-        {
-            "request": request,
+        request=request,
+        name="email_password_created.html",
+        context={
             "password": password,
             "server_domain": server_domain,
             "login": login,
