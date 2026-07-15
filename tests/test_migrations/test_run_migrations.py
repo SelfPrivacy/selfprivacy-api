@@ -129,12 +129,12 @@ def test_real_migration_names_are_stable():
     assert names == [
         "write_token_to_redis",
         "check_for_system_rebuild_jobs",
-        "add_monitoring",
-        "add_roundcube",
+        "merge_sp_modules_flake",
         "migrate_users_from_json",
         "add_postgres_location",
         "switch_to_flakes",
         "replace_block_devices_to_uuid",
+        "add_monitoring",
     ]
     assert len(set(names)) == len(names)
 
@@ -148,11 +148,16 @@ async def test_run_migrations_noop_on_fully_migrated_system(
     mock_kanidm_domain,
     mock_admin_token,
     mocker,
+    tmp_path,
 ):
     """Startup on an up-to-date server must not touch anything: the real
     migration list runs against real fully-migrated state, with only the
     read-only Kanidm GET scripted at the boundary."""
     flake_file(FLAKE_ALL_SERVICES)
+    mocker.patch(
+        "selfprivacy_api.services.flake_service_manager.LEGACY_SP_MODULES_DIR",
+        new=str(tmp_path / "absent-sp-modules"),
+    )
     with WriteUserData() as data:
         data["postgresql"] = {"location": "sdb"}
         data["server"]["rootPartition"] = f"/dev/disk/by-uuid/{ROOT_UUID}"

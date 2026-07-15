@@ -33,6 +33,27 @@ class ServiceNotFoundError(AbstractException):
         }
 
 
+class LegacySpModulesFlakeError(AbstractException):
+    def __init__(self, log: bool = True):
+        super().__init__(log=log)
+
+    def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
+        return t.translate(
+            text=_(
+                "Service modules cannot be changed because legacy service modules "
+                "have not been migrated.\n"
+                "Legacy service module flake is still present.\n"
+                "Restart the SelfPrivacy API service to re-run the migration, then try again.\n"
+                "%(REPORT_IT_TO_SUPPORT_CHATS)s"
+            ),
+            locale=locale,
+        ) % {
+            "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
+                text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
+            ),
+        }
+
+
 class VolumeNotFoundError(AbstractException):
     code = 404
 

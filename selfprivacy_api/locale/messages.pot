@@ -144,7 +144,16 @@ msgstr ""
 msgid "No such service: %(service_id)s. %(REPORT_IT_TO_SUPPORT_CHATS)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/services.py:46
+#: selfprivacy_api/exceptions/services.py:43
+#, python-format
+msgid ""
+"Service modules cannot be changed because legacy service modules have not been migrated.\n"
+"Legacy service module flake is still present.\n"
+"Restart the SelfPrivacy API service to re-run the migration, then try again.\n"
+"%(REPORT_IT_TO_SUPPORT_CHATS)s"
+msgstr ""
+
+#: selfprivacy_api/exceptions/services.py:67
 #, python-format
 msgid "No such volume: %(volume_name)s. %(REPORT_IT_TO_SUPPORT_CHATS)s"
 msgstr ""

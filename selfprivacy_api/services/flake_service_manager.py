@@ -1,59 +1,164 @@
-import re
-from typing import Tuple, Optional
+import copy
+import os
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 import aiofiles
+from opentelemetry import trace
 
-FLAKE_CONFIG_PATH = "/etc/nixos/sp-modules/flake.nix"
+from selfprivacy_api.exceptions.services import LegacySpModulesFlakeError
+from selfprivacy_api.utils.nix import evaluate_nix_file, format_nix_expr, to_nix_expr
+
+LEGACY_SP_MODULES_DIR = "/etc/nixos/sp-modules"
+
+FLAKE_CONFIG_PATH = "/etc/nixos/flake.nix"
+SP_MODULE_INPUT_PREFIX = "sp-module-"
+DEFAULT_NIXOS_CONFIG_URL = "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes"
+
+_SELFPRIVACY_NIXOS_CONFIG_INPUT = "selfprivacy-nixos-config"
+
+
+tracer = trace.get_tracer(__name__)
+
+
+def set_flake_ref(flake_url: str, ref: str) -> str:
+    """Return a flake URL with its `ref` query parameter replaced."""
+    parsed_url = urlsplit(flake_url)
+    query = [
+        (key, ref if key == "ref" else value)
+        for key, value in parse_qsl(parsed_url.query, keep_blank_values=True)
+    ]
+    if not any(key == "ref" for key, _ in query):
+        query.append(("ref", ref))
+    return urlunsplit(parsed_url._replace(query=urlencode(query, doseq=True, safe="/")))
+
+
+def get_sp_module_url(nixos_config_url: str, service_name: str) -> str:
+    """Return flake URL for a service module in selfprivacy-nixos-config."""
+    parsed_url = urlsplit(nixos_config_url)
+    query = [
+        (key, value)
+        for key, value in parse_qsl(parsed_url.query, keep_blank_values=True)
+        if key != "dir"
+    ]
+    query.append(("dir", f"sp-modules/{service_name}"))
+    return urlunsplit(parsed_url._replace(query=urlencode(query, doseq=True, safe="/")))
+
+
+def is_sp_module_url(service_url: str, nixos_config_url: str) -> bool:
+    """Return True if service URL points to sp-module in nixos_config_url."""
+    service = urlsplit(service_url)
+    nixos_config = urlsplit(nixos_config_url)
+    if (service.scheme, service.netloc, service.path) != (
+        nixos_config.scheme,
+        nixos_config.netloc,
+        nixos_config.path,
+    ):
+        return False
+
+    service_query = dict(parse_qsl(service.query, keep_blank_values=True))
+    nixos_config_query = dict(parse_qsl(nixos_config.query, keep_blank_values=True))
+    service_dir = service_query.pop("dir", "")
+    return service_dir.startswith("sp-modules/") and service_query == nixos_config_query
 
 
 class FlakeServiceManager:
+    def __init__(self, allow_legacy_sp_modules: bool = False) -> None:
+        self._allow_legacy_sp_modules = allow_legacy_sp_modules
+
+    @property
+    def nixos_config(self) -> str:
+        return self.inputs[_SELFPRIVACY_NIXOS_CONFIG_INPUT]["url"]
+
+    @nixos_config.setter
+    def nixos_config(self, url: str) -> None:
+        self.inputs[_SELFPRIVACY_NIXOS_CONFIG_INPUT]["url"] = url
+
     async def __aenter__(self) -> "FlakeServiceManager":
-        self.services = {}
+        self._span_context_manager = tracer.start_as_current_span(
+            "FlakeServiceManager context",
+            record_exception=False,
+            set_status_on_exception=False,
+        )
+        self._span = self._span_context_manager.__enter__()
+        self._inputs = {}
+        self._services = {}
 
-        async with aiofiles.open(FLAKE_CONFIG_PATH, "r") as file:
-            lines = await file.readlines()
+        try:
+            inputs = await evaluate_nix_file(
+                FLAKE_CONFIG_PATH,
+                'f: if builtins.hasAttr "inputs" f then f.inputs else {}',
+            )
 
-        for line in lines:
-            service_name, url = self._extract_services(input_string=line)
-            if service_name and url:
-                self.services[service_name] = url
+            for key, value in inputs.items():
+                if key.startswith(SP_MODULE_INPUT_PREFIX):
+                    service_name = key.removeprefix(SP_MODULE_INPUT_PREFIX)
+                    self._services[service_name] = value["url"]
+                else:
+                    self._inputs[key] = value
+
+            self.inputs = copy.deepcopy(self._inputs)
+            self.services = copy.deepcopy(self._services)
+        except Exception as exc:
+            self._span.set_status(trace.Status(trace.StatusCode.ERROR))
+            self._span.record_exception(exc)
+            self._span_context_manager.__exit__(type(exc), exc, exc.__traceback__)
+            raise
 
         return self
 
-    def _extract_services(
-        self, input_string: str
-    ) -> Tuple[Optional[str], Optional[str]]:
-        pattern = r"inputs\.([\w-]+)\.url\s*=\s*([\S]+);"
-        match = re.search(pattern, input_string)
+    async def __aexit__(self, exc_type, exc, traceback) -> None:
+        try:
+            if exc:
+                self._span.set_status(trace.Status(trace.StatusCode.ERROR))
+                self._span.record_exception(exc)
+                return
 
-        if match:
-            variable_name = match.group(1)
-            url = match.group(2)
-            if url.startswith('"') and url.endswith('"'):
-                return variable_name, url[1:-1]
-            return variable_name, url
-        else:
-            return None, None
+            if self.inputs == self._inputs and self.services == self._services:
+                self._span.set_status(trace.Status(trace.StatusCode.OK))
+                return
 
-    async def __aexit__(self, exc_type, exc_value, traceback) -> None:
-        async with aiofiles.open(FLAKE_CONFIG_PATH, "w") as file:
-            await file.write(
-                """
-{
-  description = "SelfPrivacy NixOS PoC modules/extensions/bundles/packages/etc";\n
+            if not self._allow_legacy_sp_modules and os.path.isdir(
+                LEGACY_SP_MODULES_DIR
+            ):
+                raise LegacySpModulesFlakeError()
+
+            inputs = self.inputs
+            for service_name, url in self.services.items():
+                inputs[f"{SP_MODULE_INPUT_PREFIX}{service_name}"] = {"url": url}
+
+            inputs_expr = await to_nix_expr(inputs)
+
+            content = """{
+  description = "SelfPrivacy NixOS configuration local flake";
 """
-            )
+            content += f"\n  inputs = {inputs_expr};"
+            content += """
 
-            for key, value in self.services.items():
-                await file.write(
-                    f"""
-  inputs.{key}.url = "{value}";
-"""
-                )
-
-            await file.write(
-                """
-  outputs = _: { };
+  outputs =
+    inputs@{ self, selfprivacy-nixos-config, ... }:
+    let
+      lib = selfprivacy-nixos-config.inputs.nixpkgs.lib;
+    in
+    {
+      nixosConfigurations = selfprivacy-nixos-config.outputs.nixosConfigurations-fun {
+        hardware-configuration = ./hardware-configuration.nix;
+        deployment = ./deployment.nix;
+        userdata = builtins.fromJSON (builtins.readFile ./userdata.json);
+        top-level-flake = self;
+        sp-modules = lib.mapAttrs' (service: value: {
+          name = lib.removePrefix "sp-module-" service;
+          inherit value;
+        }) (lib.filterAttrs (k: _: lib.hasPrefix "sp-module-" k) inputs);
+      };
+    };
 }
 """
-            )
+
+            content = await format_nix_expr(content)
+
+            async with aiofiles.open(FLAKE_CONFIG_PATH, "w") as file:
+                await file.write(content)
+
+            self._span.set_status(trace.Status(trace.StatusCode.OK))
+        finally:
+            self._span_context_manager.__exit__(exc_type, exc, traceback)

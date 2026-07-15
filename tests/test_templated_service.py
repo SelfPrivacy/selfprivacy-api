@@ -15,6 +15,10 @@ from selfprivacy_api.services.config_item import (
     StringServiceConfigItem,
 )
 from selfprivacy_api.services.owned_path import OwnedPath
+from selfprivacy_api.services.flake_service_manager import (
+    DEFAULT_NIXOS_CONFIG_URL,
+    get_sp_module_url,
+)
 from selfprivacy_api.services.templated_service import (
     SP_SUGGESTED_MODULES_PATH,
     TemplatedService,
@@ -434,7 +438,11 @@ def test_is_enabled_reads_userdata(generic_userdata):
     assert service.is_enabled() is True
 
 
-def _patch_flake_manager(mocker, initial: dict | None = None) -> dict:
+def _patch_flake_manager(
+    mocker,
+    initial: dict | None = None,
+    nixos_config_url: str = DEFAULT_NIXOS_CONFIG_URL,
+) -> dict:
     """
     Patch FlakeServiceManager so that `async with FlakeServiceManager() as m: m.services`
     exposes a real dict we can inspect. Returns that dict.
@@ -442,6 +450,8 @@ def _patch_flake_manager(mocker, initial: dict | None = None) -> dict:
     services = initial if initial is not None else {}
     ctx_stub = MagicMock()
     ctx_stub.services = services
+    ctx_stub.inputs = {"selfprivacy-nixos-config": {"url": nixos_config_url}}
+    ctx_stub.nixos_config = nixos_config_url
 
     class FlakeManagerStub:
         async def __aenter__(self):
@@ -526,7 +536,8 @@ async def test_enable_service_not_suggested_raises(generic_userdata, mocker, tmp
 async def test_enable_registers_flake_and_sets_location(
     generic_userdata, mocker, tmp_path
 ):
-    flake_services = _patch_flake_manager(mocker, {})
+    nixos_config_url = "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=custom"
+    flake_services = _patch_flake_manager(mocker, {}, nixos_config_url)
     suggested_modules_path = tmp_path / "suggested-modules.json"
     suggested_modules_path.write_text(json.dumps(["tsvc"]))
     mocker.patch(
@@ -547,8 +558,7 @@ async def test_enable_registers_flake_and_sets_location(
     )
     await service.enable()
 
-    assert "tsvc" in flake_services
-    assert "sp-modules/tsvc" in flake_services["tsvc"]
+    assert flake_services["tsvc"] == get_sp_module_url(nixos_config_url, "tsvc")
     assert service.is_enabled() is True
 
     from selfprivacy_api.utils import ReadUserData

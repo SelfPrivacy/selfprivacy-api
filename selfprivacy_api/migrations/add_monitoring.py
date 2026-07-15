@@ -1,6 +1,9 @@
 from selfprivacy_api.migrations.migration import Migration
 
-from selfprivacy_api.services.flake_service_manager import FlakeServiceManager
+from selfprivacy_api.services.flake_service_manager import (
+    FlakeServiceManager,
+    get_sp_module_url,
+)
 from selfprivacy_api.utils import ReadUserData, WriteUserData
 from selfprivacy_api.utils.block_devices import BlockDevices
 
@@ -26,8 +29,8 @@ class AddMonitoring(Migration):
     async def migrate(self) -> None:
         async with FlakeServiceManager() as manager:
             if "monitoring" not in manager.services:
-                manager.services["monitoring"] = (
-                    "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes&dir=sp-modules/monitoring"
+                manager.services["monitoring"] = get_sp_module_url(
+                    manager.nixos_config, "monitoring"
                 )
         with WriteUserData() as data:
             if "monitoring" not in data["modules"]:
