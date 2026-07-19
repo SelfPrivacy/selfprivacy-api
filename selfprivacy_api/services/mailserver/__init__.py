@@ -14,6 +14,9 @@ from selfprivacy_api.services.service import Service, ServiceDnsRecord, ServiceS
 from selfprivacy_api import utils
 from selfprivacy_api.services.mailserver.icon import MAILSERVER_ICON
 
+DOVECOT_UNIT = "dovecot.service"
+POSTFIX_UNIT = "postfix.service"
+
 
 class MailServer(Service):
     """Class representing mail service"""
@@ -67,18 +70,14 @@ class MailServer(Service):
 
     @staticmethod
     async def get_status() -> ServiceStatus:
-        return await get_service_status_from_several_units(
-            ["dovecot2.service", "postfix.service"]
-        )
+        return await get_service_status_from_several_units([DOVECOT_UNIT, POSTFIX_UNIT])
 
     @staticmethod
     async def wait_for_statuses(self, expected_statuses: List[ServiceStatus]):
         if (await self.get_status()) in expected_statuses:
             return
 
-        async for _ in listen_for_unit_state_changes(
-            ["dovecot2.service", "postfix.service"]
-        ):
+        async for _ in listen_for_unit_state_changes([DOVECOT_UNIT, POSTFIX_UNIT]):
             if (await self.get_status()) in expected_statuses:
                 return
 
@@ -92,18 +91,18 @@ class MailServer(Service):
 
     @staticmethod
     async def stop():
-        await stop_unit("dovecot2.service")
-        await stop_unit("postfix.service")
+        await stop_unit(DOVECOT_UNIT)
+        await stop_unit(POSTFIX_UNIT)
 
     @staticmethod
     async def start():
-        await start_unit("dovecot2.service")
-        await start_unit("postfix.service")
+        await start_unit(DOVECOT_UNIT)
+        await start_unit(POSTFIX_UNIT)
 
     @staticmethod
     async def restart():
-        await restart_unit("dovecot2.service")
-        await restart_unit("postfix.service")
+        await restart_unit(DOVECOT_UNIT)
+        await restart_unit(POSTFIX_UNIT)
 
     @staticmethod
     def get_folders() -> List[str]:

@@ -5,7 +5,7 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: SelfPrivacy API 3.8.1\n"
+"Project-Id-Version: SelfPrivacy API 3.8.3\n"
 "Report-Msgid-Bugs-To: https://git.selfprivacy.org/SelfPrivacy/selfprivacy-rest-api/issues\n"
 "POT-Creation-Date: 1970-01-01 00:00+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"

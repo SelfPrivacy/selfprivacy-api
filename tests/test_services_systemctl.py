@@ -14,7 +14,7 @@ def call_args_asserts(mocked_object):
     assert calls == [
         expected_status_call(service)
         for service in [
-            "dovecot2.service",
+            "dovecot.service",
             "postfix.service",
             "vaultwarden.service",
             "forgejo.service",
