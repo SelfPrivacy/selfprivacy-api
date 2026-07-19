@@ -68,7 +68,7 @@ class MailServer(Service):
     @staticmethod
     async def get_status() -> ServiceStatus:
         return await get_service_status_from_several_units(
-            ["dovecot2.service", "postfix.service"]
+            ["dovecot.service", "postfix.service"]
         )
 
     @staticmethod
@@ -77,7 +77,7 @@ class MailServer(Service):
             return
 
         async for _ in listen_for_unit_state_changes(
-            ["dovecot2.service", "postfix.service"]
+            ["dovecot.service", "postfix.service"]
         ):
             if (await self.get_status()) in expected_statuses:
                 return
@@ -92,17 +92,17 @@ class MailServer(Service):
 
     @staticmethod
     async def stop():
-        await stop_unit("dovecot2.service")
+        await stop_unit("dovecot.service")
         await stop_unit("postfix.service")
 
     @staticmethod
     async def start():
-        await start_unit("dovecot2.service")
+        await start_unit("dovecot.service")
         await start_unit("postfix.service")
 
     @staticmethod
     async def restart():
-        await restart_unit("dovecot2.service")
+        await restart_unit("dovecot.service")
         await restart_unit("postfix.service")
 
     @staticmethod
