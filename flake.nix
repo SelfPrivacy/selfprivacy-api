@@ -75,18 +75,12 @@
           pkgs = nixpkgs.legacyPackages.${system};
         in
         {
+          source = pkgs.callPackage ./source.nix { src = self; };
           default = pkgs.callPackage ./default.nix {
             pythonPackages = pkgs.python312Packages;
+            src = self.packages.${system}.source;
             rev = self.shortRev or self.dirtyShortRev or "dirty";
           };
-          src-with-mo = pkgs.runCommand "sp-api-src-with-mo" { nativeBuildInputs = [ pkgs.gettext ]; } ''
-            cp -r ${self} $out
-            chmod -R +w $out
-            shopt -s nullglob
-            for po in $out/selfprivacy_api/locale/*/LC_MESSAGES/messages.po; do
-              msgfmt -o "''${po%.po}.mo" "$po"
-            done
-          '';
           pam-email-selfprivacy = pkgs.callPackage ./extra/pam_email_selfprivacy { };
           pytest-vm =
             let
@@ -237,6 +231,7 @@
               restic
               bandit
               nixfmt
+              tailwindcss_4
               self.packages.${system}.pytest-vm
               # FIXME consider loading this explicitly only after ArchLinux issue is solved
               self.checks.${system}.default.driverInteractive
@@ -378,7 +373,7 @@
                 virtualisation.fileSystems.${vmtest-src-dir} = {
                   neededForBoot = true;
                   fsType = "auto";
-                  device = "${self.packages.${system}.src-with-mo}";
+                  device = "${self.packages.${system}.source}";
                   options = [
                     "bind"
                   ];

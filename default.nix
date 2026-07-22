@@ -1,21 +1,14 @@
 {
   pythonPackages,
-  gettext,
+  src,
   rev ? "local",
 }:
 
 pythonPackages.buildPythonPackage {
   pname = "selfprivacy-graphql-api";
   version = rev;
-  src = builtins.filterSource (p: t: p != ".git" && t != "symlink") ./.;
+  inherit src;
   pyproject = true;
-  nativeBuildInputs = [ gettext ];
-  preBuild = ''
-    shopt -s nullglob
-    for po in selfprivacy_api/locale/*/LC_MESSAGES/messages.po; do
-      msgfmt -o "''${po%.po}.mo" "$po"
-    done
-  '';
   propagatedBuildInputs =
     with pythonPackages;
     (

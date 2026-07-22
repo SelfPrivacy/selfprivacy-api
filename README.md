@@ -126,9 +126,9 @@ It regenerates `selfprivacy_api/locale/messages.pot` from every
 while preserving their headers and translations. Commit the resulting `.pot`
 and `.po` changes.
 
-`.mo` files are **not** committed: the Nix derivation compiles them via
-`msgfmt` in `preBuild` when building the wheel. Locally, if you need `.mo`
-for testing non-English locales, run `msgfmt` yourself inside `nix develop`.
+`.mo` files are **not** committed: the Nix derivation in `source.nix` compiles
+them via `msgfmt`. Locally, if you need `.mo` for testing non-English locales,
+run `msgfmt` yourself inside `nix develop`.
 
 CI enforces that the committed `.pot`/`.po` match what the extractor produces:
 the `lint-format` job runs `nix build .#checks.x86_64-linux.i18n-integrity`

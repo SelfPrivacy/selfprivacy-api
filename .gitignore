@@ -65,6 +65,10 @@ cover/
 # .pot is committed as the Weblate source of truth.
 *.mo
 
+# Tailwind output
+# styles.css is produced by the derivation build.
+selfprivacy_api/userpanel/static/styles.css
+
 # Django stuff:
 *.log
 local_settings.py
