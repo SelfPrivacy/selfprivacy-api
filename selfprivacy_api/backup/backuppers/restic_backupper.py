@@ -101,9 +101,6 @@ class ResticBackupper(AbstractBackupper):
             args.extend(key_args)
         return args
 
-    def _password_command(self):
-        return f"echo {LocalBackupSecret.get()}"
-
     def restic_command(self, *args, tags: Optional[List[str]] = None) -> List[str]:
         """
         Construct a restic command against the currently configured repo
@@ -118,8 +115,8 @@ class ResticBackupper(AbstractBackupper):
             self.rclone_args(),
             "-r",
             self.restic_repo(),
-            "--password-command",
-            self._password_command(),
+            "--password-file",
+            LocalBackupSecret.password_file(),
         ]
         if tags != []:
             for tag in tags:

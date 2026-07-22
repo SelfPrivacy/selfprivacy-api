@@ -43,6 +43,7 @@ from selfprivacy_api.backup.tasks import (
 )
 from selfprivacy_api.backup.storage import Storage
 from selfprivacy_api.backup.local_secret import LocalBackupSecret
+from selfprivacy_api.backup.backuppers.restic_backupper import ResticBackupper
 from selfprivacy_api.backup.jobs import (
     get_backup_fail,
     add_total_backup_job,
@@ -64,6 +65,17 @@ from tests.test_graphql.test_services import (
 REPO_NAME = "test_backup"
 
 REPOFILE_NAME = "totallyunrelated"
+
+
+def test_restic_command_uses_password_file(mocker):
+    password_file = "/run/selfprivacy-api/restic-password"
+    mocker.patch.object(LocalBackupSecret, "password_file", return_value=password_file)
+    backupper = ResticBackupper("--account", "--key", "test")
+
+    command = backupper.restic_command("check")
+
+    assert "--password-command" not in command
+    assert command[command.index("--password-file") + 1] == password_file
 
 
 def prepare_localfile_backups(temp_dir):
@@ -253,8 +265,6 @@ async def test_error_censoring_encryptionkey(dummy_service, backups):
     # local backups do not have login key
     # assert Backups.provider().key not in job_text
 
-    assert "CENSORED" in job_text
-
 
 @pytest.mark.asyncio
 async def assert_backup_fails(service) -> Job:
@@ -291,7 +301,6 @@ async def test_backup_clears_failed_jobs(dummy_service, backups):
 async def test_error_censoring_loginkey(dummy_service, backups, fp):
     # We do not want to screw up our teardown
     old_provider = Backups.provider()
-
     secret = "aSecretNYA"
 
     Backups.set_provider(
@@ -318,7 +327,6 @@ async def test_error_censoring_loginkey(dummy_service, backups, fp):
 
     job_text = all_job_text(job)
     assert secret not in job_text
-    assert job_text.count("CENSORED") == 2
 
     # We do not want to screw up our teardown
     Storage.store_provider(old_provider)
