@@ -135,6 +135,7 @@ def test_real_migration_names_are_stable():
         "switch_to_flakes",
         "replace_block_devices_to_uuid",
         "add_monitoring",
+        "configure_hetzner_bootloader",
     ]
     assert len(set(names)) == len(names)
 
@@ -161,6 +162,10 @@ async def test_run_migrations_noop_on_fully_migrated_system(
     with WriteUserData() as data:
         data["postgresql"] = {"location": "sdb"}
         data["server"]["rootPartition"] = f"/dev/disk/by-uuid/{ROOT_UUID}"
+        data["server"]["bootloader"] = {
+            "type": "grub-mbr",
+            "device": "/dev/disk/by-id/wwn-0x123",
+        }
     kanidm_api.respond(200, [kanidm_person(name) for name in ALL_USERS])
     check_output = mocker.patch("subprocess.check_output")
 
