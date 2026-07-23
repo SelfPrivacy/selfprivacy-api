@@ -17,6 +17,7 @@ REPORT_IT_TO_SUPPORT_CHATS = _(
     "#chat:selfprivacy.org on Matrix or @selprivacy_chat on Telegram."
 )
 
+
 class ApiUsingWrongUserRepository(AbstractException):
     """
     The API is using wrong user repository. Are you debugging?
