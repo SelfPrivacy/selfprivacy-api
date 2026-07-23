@@ -124,22 +124,22 @@ msgstr ""
 msgid "The API is using the wrong user repository."
 msgstr ""
 
-#: selfprivacy_api/exceptions/kanidm.py:15
-msgid "Kanidm is the identity and authentication service that manages users and access to services."
+#: selfprivacy_api/exceptions/kanidm.py:18
+msgid "Kanidm is the identity and authentication service that manages users and access to system services."
 msgstr ""
 
-#: selfprivacy_api/exceptions/kanidm.py:19
+#: selfprivacy_api/exceptions/kanidm.py:22
 msgid "In some cases, a Kanidm update may introduce breaking changes affecting the API, CLI commands, or configuration compatibility."
 msgstr ""
 
-#: selfprivacy_api/exceptions/kanidm.py:23
+#: selfprivacy_api/exceptions/kanidm.py:26
 msgid ""
 "Console commands to debug:\n"
-"    'systemctl status kanidm.service'\n"
-"    'journalctl -u kanidm.service'\n"
+"\"systemctl status kanidm.service\"\n"
+"\"journalctl -u kanidm.service -f\""
 msgstr ""
 
-#: selfprivacy_api/exceptions/kanidm.py:52
+#: selfprivacy_api/exceptions/kanidm.py:55
 #, python-format
 msgid ""
 "An error occurred during a request to Kanidm.\n"
@@ -152,7 +152,7 @@ msgid ""
 "Error: %(error)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/kanidm.py:93
+#: selfprivacy_api/exceptions/kanidm.py:99
 #, python-format
 msgid ""
 "Kanidm returned an empty response.\n"
@@ -163,7 +163,7 @@ msgid ""
 "Method: %(method)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/kanidm.py:131
+#: selfprivacy_api/exceptions/kanidm.py:137
 #, python-format
 msgid ""
 "Kanidm returned an unknown type response.\n"
@@ -176,11 +176,11 @@ msgid ""
 "Response: %(response)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/kanidm.py:171
+#: selfprivacy_api/exceptions/kanidm.py:177
 #, python-format
 msgid ""
 "Failed to get access to Kanidm admin account:\n"
-"Kanidm CLI did not reset the admin password.\n"
+"The Kanidm CLI did not provide the admin password.\n"
 "%(KANIDM_DESCRIPTION)s\n"
 "%(KANIDM_PROBLEMS)s\n"
 "%(REPORT_IT_TO_SUPPORT_CHATS)s\n"
@@ -191,11 +191,7 @@ msgid ""
 "Kanidm's CLI output: %(output)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/kanidm.py:202
-msgid "Error creating Kanidm token"
-msgstr ""
-
-#: selfprivacy_api/exceptions/kanidm.py:214
+#: selfprivacy_api/exceptions/kanidm.py:220
 #, python-format
 msgid ""
 "Kanidm CLI returned an error.\n"
@@ -208,16 +204,16 @@ msgid ""
 "Error: %(error)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/kanidm.py:246
+#: selfprivacy_api/exceptions/kanidm.py:255
 #, python-format
 msgid ""
-"Сouldn't get a valid Kanidm token.\n"
+"Couldn't get a valid Kanidm token.\n"
 "%(KANIDM_DESCRIPTION)s\n"
 "%(KANIDM_PROBLEMS)s\n"
 "%(REPORT_IT_TO_SUPPORT_CHATS)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/kanidm.py:282
+#: selfprivacy_api/exceptions/kanidm.py:291
 #, python-format
 msgid ""
 "Kanidm didn't return a password reset link.\n"
@@ -738,6 +734,18 @@ msgstr ""
 msgid "No backup description found!"
 msgstr ""
 
+#: selfprivacy_api/utils/kanidm.py:32
+msgid "Error logging in to Kanidm"
+msgstr ""
+
+#: selfprivacy_api/utils/kanidm.py:33
+msgid "Error creating Kanidm token"
+msgstr ""
+
+#: selfprivacy_api/utils/kanidm.py:34
+msgid "Error resetting Kanidm admin password"
+msgstr ""
+
 #: selfprivacy_api/utils/kanidm.py:135
 msgid "No JSON found in Kanidm response."
 msgstr ""
@@ -746,10 +754,10 @@ msgstr ""
 msgid "Kanidm is not responding to requests."
 msgstr ""
 
-#: selfprivacy_api/utils/kanidm.py:173
+#: selfprivacy_api/utils/kanidm.py:171
 msgid "We somehow got into unreachable code."
 msgstr ""
 
-#: selfprivacy_api/utils/kanidm.py:195
+#: selfprivacy_api/utils/kanidm.py:193
 msgid "Kanidm access issue"
 msgstr ""
