@@ -1,9 +1,13 @@
-from selfprivacy_api.exceptions import REPORT_IT_TO_SUPPORT_CHATS
+import pytest
+
+from selfprivacy_api.exceptions import (
+    REPORT_IT_TO_SUPPORT_CHATS,
+)
 from selfprivacy_api.exceptions.kanidm import (
+    FailedToGetValidKanidmToken,
     KANIDM_DEBUG_HELP,
     KANIDM_DESCRIPTION,
     KANIDM_PROBLEMS,
-    FailedToGetValidKanidmToken,
     KanidmCliSubprocessError,
     KanidmDidNotReturnAdminPassword,
     KanidmQueryError,
@@ -17,9 +21,17 @@ from selfprivacy_api.utils.localization import (
 )
 
 
-def test_kanidm_query_error_get_error_message():
+@pytest.fixture
+def get_domain_mock(mocker):
+    return mocker.patch(
+        "selfprivacy_api.utils.get_domain",
+        return_value="example.org",
+    )
+
+
+def test_kanidm_query_error_get_error_message(get_domain_mock):
     error = KanidmQueryError(
-        endpoint="/v1/person",
+        endpoint="person",
         method="GET",
         error_text={"detail": "boom"},
         description="Custom description",
@@ -36,14 +48,14 @@ def test_kanidm_query_error_get_error_message():
         t.translate(text=REPORT_IT_TO_SUPPORT_CHATS, locale=DEFAULT_LOCALE) in message
     )
     assert "Custom description" in message
-    assert "/v1/person" in message
+    assert "Endpoint: https://auth.example.org/v1/person" in message
     assert "GET" in message
     assert "{'detail': 'boom'}" in message
 
 
 def test_kanidm_return_empty_response_get_error_message():
     error = KanidmReturnEmptyResponse(
-        endpoint="/v1/group",
+        endpoint="group",
         method="POST",
     )
 
@@ -57,13 +69,13 @@ def test_kanidm_return_empty_response_get_error_message():
     assert (
         t.translate(text=REPORT_IT_TO_SUPPORT_CHATS, locale=DEFAULT_LOCALE) in message
     )
-    assert "/v1/group" in message
+    assert "Endpoint: group" in message
     assert "POST" in message
 
 
 def test_kanidm_return_unknown_response_type_get_error_message():
     error = KanidmReturnUnknownResponseType(
-        endpoint="/v1/token",
+        endpoint="token",
         method="PATCH",
         response_data=["unexpected", "list"],
     )
@@ -79,7 +91,7 @@ def test_kanidm_return_unknown_response_type_get_error_message():
     assert (
         t.translate(text=REPORT_IT_TO_SUPPORT_CHATS, locale=DEFAULT_LOCALE) in message
     )
-    assert "/v1/token" in message
+    assert "Endpoint: token" in message
     assert "PATCH" in message
     assert "['unexpected', 'list']" in message
 
@@ -147,7 +159,7 @@ def test_failed_to_get_valid_kanidm_token_get_error_message():
 
 def test_no_password_reset_link_found_in_response_get_error_message():
     error = NoPasswordResetLinkFoundInResponse(
-        endpoint="/v1/reset",
+        endpoint="reset",
         method="PUT",
         data={"status": "ok"},
     )
@@ -162,14 +174,14 @@ def test_no_password_reset_link_found_in_response_get_error_message():
     assert (
         t.translate(text=REPORT_IT_TO_SUPPORT_CHATS, locale=DEFAULT_LOCALE) in message
     )
-    assert "/v1/reset" in message
+    assert "Endpoint: reset" in message
     assert "PUT" in message
     assert "{'status': 'ok'}" in message
 
 
 def test_kanidm_return_empty_response_get_error_message_with_explicit_locale():
     error = KanidmReturnEmptyResponse(
-        endpoint="/test",
+        endpoint="test",
         method="GET",
     )
 
@@ -183,5 +195,5 @@ def test_kanidm_return_empty_response_get_error_message_with_explicit_locale():
     assert (
         t.translate(text=REPORT_IT_TO_SUPPORT_CHATS, locale=DEFAULT_LOCALE) in message
     )
-    assert "/test" in message
+    assert "Endpoint: test" in message
     assert "GET" in message

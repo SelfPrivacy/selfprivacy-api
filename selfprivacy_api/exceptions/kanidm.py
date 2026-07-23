@@ -1,8 +1,11 @@
 import gettext
-from typing import Any, Optional
+from typing import Any
 
-from selfprivacy_api.exceptions import REPORT_IT_TO_SUPPORT_CHATS
+from selfprivacy_api.exceptions import (
+    REPORT_IT_TO_SUPPORT_CHATS,
+)
 from selfprivacy_api.exceptions.abstract_exception import AbstractException
+from selfprivacy_api.utils import get_kanidm_url
 from selfprivacy_api.utils.localization import (
     DEFAULT_LOCALE,
     TranslateSystemMessage as t,
@@ -12,7 +15,7 @@ _ = gettext.gettext
 
 
 KANIDM_DESCRIPTION = _(
-    "Kanidm is the identity and authentication service that manages users and access to services."
+    "Kanidm is the identity and authentication service that manages users and access to system services."
 )
 
 KANIDM_PROBLEMS = _(
@@ -21,8 +24,8 @@ KANIDM_PROBLEMS = _(
 
 KANIDM_DEBUG_HELP = _(
     "Console commands to debug:\n"
-    "    'systemctl status kanidm.service'\n"
-    "    'journalctl -u kanidm.service'\n"
+    '"systemctl status kanidm.service"\n'
+    '"journalctl -u kanidm.service -f"'
 )
 
 
@@ -36,10 +39,10 @@ class KanidmQueryError(AbstractException):
         endpoint: str,
         method: str,
         error_text: Any,
-        description: Optional[str] = " ",
+        description: str = " ",
         log: bool = True,
     ) -> None:
-        self.endpoint = endpoint
+        self.endpoint = f"{get_kanidm_url()}/v1/{endpoint}"
         self.method = method
         self.error_text = str(error_text)
         self.description = description
@@ -61,7 +64,10 @@ class KanidmQueryError(AbstractException):
             locale=locale,
         ) % {
             "KANIDM_DESCRIPTION": t.translate(text=KANIDM_DESCRIPTION, locale=locale),
-            "description": self.description,
+            "description": t.translate(
+                text=self.description,
+                locale=locale,
+            ),
             "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
                 text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
             ),
@@ -169,7 +175,7 @@ class KanidmDidNotReturnAdminPassword(AbstractException):
         return t.translate(
             text=_(
                 "Failed to get access to Kanidm admin account:\n"
-                "Kanidm CLI did not reset the admin password.\n"
+                "The Kanidm CLI did not provide the admin password.\n"
                 "%(KANIDM_DESCRIPTION)s\n"
                 "%(KANIDM_PROBLEMS)s\n"
                 "%(REPORT_IT_TO_SUPPORT_CHATS)s\n\n"
@@ -199,7 +205,7 @@ class KanidmCliSubprocessError(AbstractException):
         self,
         command: str,
         error: str,
-        description: str = _("Error creating Kanidm token"),
+        description: str,
         log: bool = True,
     ) -> None:
         self.command = command
@@ -222,7 +228,10 @@ class KanidmCliSubprocessError(AbstractException):
             locale=locale,
         ) % {
             "KANIDM_DESCRIPTION": t.translate(text=KANIDM_DESCRIPTION, locale=locale),
-            "description": self.description,
+            "description": t.translate(
+                text=self.description,
+                locale=locale,
+            ),
             "KANIDM_PROBLEMS": t.translate(text=KANIDM_PROBLEMS, locale=locale),
             "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
                 text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
@@ -233,7 +242,7 @@ class KanidmCliSubprocessError(AbstractException):
 
 
 class FailedToGetValidKanidmToken(AbstractException):
-    """Сouldn't get a valid Kanidm token"""
+    """Couldn't get a valid Kanidm token"""
 
     code = 500
 
@@ -243,7 +252,7 @@ class FailedToGetValidKanidmToken(AbstractException):
     def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
         return t.translate(
             text=_(
-                "Сouldn't get a valid Kanidm token.\n"
+                "Couldn't get a valid Kanidm token.\n"
                 "%(KANIDM_DESCRIPTION)s\n"
                 "%(KANIDM_PROBLEMS)s\n"
                 "%(REPORT_IT_TO_SUPPORT_CHATS)s"

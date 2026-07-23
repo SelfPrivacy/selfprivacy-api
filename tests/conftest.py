@@ -498,10 +498,7 @@ def mock_kanidm_domain(mocker):
         "selfprivacy_api.repositories.users.kanidm_user_repository.get_domain",
         return_value="test.tld",
     )
-    mocker.patch(
-        "selfprivacy_api.utils.kanidm.get_domain",
-        return_value="test.tld",
-    )
+    mocker.patch("selfprivacy_api.utils.get_domain", return_value="test.tld")
     return repository_domain
 
 

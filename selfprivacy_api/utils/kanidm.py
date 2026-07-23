@@ -10,7 +10,6 @@ import aiofiles
 import httpx
 from opentelemetry import trace
 
-from selfprivacy_api.exceptions.users import UserAlreadyExists, UserOrGroupNotFound
 from selfprivacy_api.exceptions.kanidm import (
     FailedToGetValidKanidmToken,
     KanidmCliSubprocessError,
@@ -19,7 +18,8 @@ from selfprivacy_api.exceptions.kanidm import (
     KanidmReturnEmptyResponse,
     KanidmReturnUnknownResponseType,
 )
-from selfprivacy_api.utils import get_domain, temporary_env_var
+from selfprivacy_api.exceptions.users import UserAlreadyExists, UserOrGroupNotFound
+from selfprivacy_api.utils import get_kanidm_url, temporary_env_var
 from selfprivacy_api.utils.redis_pool import RedisPool
 
 logger = logging.getLogger(__name__)
@@ -29,11 +29,11 @@ _ = gettext.gettext
 
 REDIS_TOKEN_KEY = "kanidm:token"
 
+ERROR_LOGGING_IN_TO_KANIDM_TEXT = _("Error logging in to Kanidm")
+ERROR_CREATING_KANIDM_TOKEN_TEXT = _("Error creating Kanidm token")
+ERROR_RESETTING_KANIDM_ADMIN_PASSWORD_TEXT = _("Error resetting Kanidm admin password")
+
 _kanidm_client: Optional[httpx.AsyncClient] = None
-
-
-def get_kanidm_url() -> str:
-    return f"https://auth.{get_domain()}"
 
 
 def kanidm_client() -> httpx.AsyncClient:
@@ -130,7 +130,7 @@ async def send_kanidm_query(
 
             except JSONDecodeError as error:
                 raise KanidmQueryError(
-                    endpoint=full_endpoint,
+                    endpoint=endpoint,
                     method=method,
                     description=_("No JSON found in Kanidm response."),
                     error_text=error,
@@ -144,7 +144,7 @@ async def send_kanidm_query(
                 )
             except Exception as error:
                 raise KanidmQueryError(
-                    endpoint=full_endpoint,
+                    endpoint=endpoint,
                     method=method,
                     error_text=error,
                 )
@@ -160,14 +160,12 @@ async def send_kanidm_query(
                 continue
 
             if response.status_code != 200:
-                _raise_for_error_response(
-                    response, response_data, full_endpoint, method
-                )
+                _raise_for_error_response(response, response_data, endpoint, method)
 
             return response_data
 
         raise KanidmQueryError(
-            endpoint=full_endpoint,
+            endpoint=endpoint,
             method=method,
             error_text="",
             description=_("We somehow got into unreachable code."),
@@ -177,7 +175,7 @@ async def send_kanidm_query(
 def _raise_for_error_response(
     response: httpx.Response,
     response_data: dict | list | str,
-    full_endpoint: str,
+    endpoint: str,
     method: str,
 ) -> None:
     """Translate a non-200 Kanidm response into the appropriate exception."""
@@ -190,16 +188,17 @@ def _raise_for_error_response(
             raise UserOrGroupNotFound
         if response_data == "accessdenied":
             raise KanidmQueryError(
-                endpoint=full_endpoint,
+                endpoint=endpoint,
                 method=method,
-                error_text=_("Kanidm access issue"),
+                description=_("Kanidm access issue"),
+                error_text=response_data,
             )
         if response_data == "notauthenticated":
             raise FailedToGetValidKanidmToken
 
     raise KanidmQueryError(
         error_text=response.text,
-        endpoint=full_endpoint,
+        endpoint=endpoint,
         method=method,
     )
 
@@ -296,47 +295,54 @@ class KanidmAdminToken:
         redis = RedisPool().get_connection_async()
 
         with temporary_env_var(key="KANIDM_PASSWORD", value=kanidm_admin_password):
-            command = ["kanidm", "login", "-D", "idm_admin"]
-
+            login_command = ["kanidm", "login", "-D", "idm_admin"]
             try:
                 proc = await asyncio.create_subprocess_exec(
-                    *command,
+                    *login_command,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
                 )
                 _, stderr = await proc.communicate()
                 if proc.returncode != 0:
                     raise KanidmCliSubprocessError(
-                        command=" ".join(command),
+                        command=" ".join(login_command),
                         error=stderr.decode(errors="replace"),
+                        description=ERROR_LOGGING_IN_TO_KANIDM_TEXT,
                     )
+            except OSError as error:
+                raise KanidmCliSubprocessError(
+                    command=" ".join(login_command),
+                    error=str(error),
+                    description=ERROR_LOGGING_IN_TO_KANIDM_TEXT,
+                )
 
-                command = [
-                    "kanidm",
-                    "service-account",
-                    "api-token",
-                    "generate",
-                    "sp.selfprivacy-api.service-account",
-                    "kanidm_service_account_token",
-                    "--readwrite",
-                ]
-
+            generate_command = [
+                "kanidm",
+                "service-account",
+                "api-token",
+                "generate",
+                "sp.selfprivacy-api.service-account",
+                "kanidm_service_account_token",
+                "--readwrite",
+            ]
+            try:
                 proc = await asyncio.create_subprocess_exec(
-                    *command,
+                    *generate_command,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
                 )
                 stdout, stderr = await proc.communicate()
                 if proc.returncode != 0:
                     raise KanidmCliSubprocessError(
-                        command=" ".join(command),
+                        command=" ".join(generate_command),
                         error=stderr.decode(errors="replace"),
+                        description=ERROR_CREATING_KANIDM_TOKEN_TEXT,
                     )
-
             except OSError as error:
                 raise KanidmCliSubprocessError(
-                    command=" ".join(command),
+                    command=" ".join(generate_command),
                     error=str(error),
+                    description=ERROR_CREATING_KANIDM_TOKEN_TEXT,
                 )
 
         kanidm_admin_token = stdout.decode(errors="replace").splitlines()[-1]
@@ -366,11 +372,13 @@ class KanidmAdminToken:
                 raise KanidmCliSubprocessError(
                     command=" ".join(command),
                     error=stderr.decode(errors="replace"),
+                    description=ERROR_RESETTING_KANIDM_ADMIN_PASSWORD_TEXT,
                 )
         except OSError as error:
             raise KanidmCliSubprocessError(
                 command=" ".join(command),
                 error=str(error),
+                description=ERROR_RESETTING_KANIDM_ADMIN_PASSWORD_TEXT,
             )
 
         output = stdout.decode(errors="replace")

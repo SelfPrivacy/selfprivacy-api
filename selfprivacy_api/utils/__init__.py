@@ -71,6 +71,10 @@ def get_domain():
         return user_data["domain"]
 
 
+def get_kanidm_url() -> str:
+    return f"https://auth.{get_domain()}"
+
+
 # {path: ((st_mtime_ns, st_size, st_ino), parsed_data)}
 _json_file_cache: dict[str, tuple[tuple[int, int, int], dict]] = {}
 

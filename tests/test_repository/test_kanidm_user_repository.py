@@ -8,17 +8,17 @@ from unittest.mock import call as mocker_call
 import httpx
 import pytest
 
-from selfprivacy_api.exceptions.users import (
-    UserAlreadyExists,
-    UserNotFound,
-    UserOrGroupNotFound,
-)
 from selfprivacy_api.exceptions.kanidm import (
     FailedToGetValidKanidmToken,
     KanidmQueryError,
     KanidmReturnEmptyResponse,
     KanidmReturnUnknownResponseType,
     NoPasswordResetLinkFoundInResponse,
+)
+from selfprivacy_api.exceptions.users import (
+    UserAlreadyExists,
+    UserNotFound,
+    UserOrGroupNotFound,
 )
 from selfprivacy_api.models.user import UserDataUserOrigin
 from selfprivacy_api.repositories.users.kanidm_user_repository import (
@@ -228,9 +228,7 @@ async def test_send_query_connect_error_raises_query_error(
     with pytest.raises(KanidmQueryError) as error:
         await send_kanidm_query("person/root", method="POST")
 
-    # Transport errors report the relative endpoint before URL formatting is
-    # centralized in KanidmQueryError.
-    assert error.value.endpoint == "person/root"
+    assert error.value.endpoint == "https://auth.test.tld/v1/person/root"
     assert error.value.method == "POST"
     assert "Kanidm is not responding to requests." in str(error.value.description)
     # transport errors are not retried
