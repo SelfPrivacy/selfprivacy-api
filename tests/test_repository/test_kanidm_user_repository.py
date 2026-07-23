@@ -6,11 +6,15 @@ import json
 
 import pytest
 
-from selfprivacy_api.exceptions.users import UserNotFound
 from selfprivacy_api.exceptions.kanidm import (
     KanidmReturnEmptyResponse,
     KanidmReturnUnknownResponseType,
     NoPasswordResetLinkFoundInResponse,
+)
+from selfprivacy_api.exceptions.users import (
+    UserAlreadyExists,
+    UserNotFound,
+    UserOrGroupNotFound,
 )
 from selfprivacy_api.models.user import UserDataUserOrigin
 from selfprivacy_api.repositories.users.kanidm_user_repository import (

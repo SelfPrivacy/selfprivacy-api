@@ -187,6 +187,10 @@ async def test_send_kanidm_query_non_json_response_raises_query_error(
     assert error.value.endpoint == "https://auth.test.tld/v1/person/root"
     assert error.value.method == "GET"
     assert "No JSON found in Kanidm response." in str(error.value.description)
+    assert (
+        "Endpoint: https://auth.test.tld/v1/person/root"
+        in error.value.get_error_message()
+    )
 
 
 async def test_send_kanidm_query_connect_error_raises_query_error(
@@ -197,9 +201,7 @@ async def test_send_kanidm_query_connect_error_raises_query_error(
     with pytest.raises(KanidmQueryError) as error:
         await send_kanidm_query("person/root", method="POST")
 
-    # Transport errors report the relative endpoint before URL formatting is
-    # centralized in KanidmQueryError.
-    assert error.value.endpoint == "person/root"
+    assert error.value.endpoint == "https://auth.test.tld/v1/person/root"
     assert error.value.method == "POST"
     assert "Kanidm is not responding to requests." in str(error.value.description)
     # transport errors are not retried
