@@ -10,8 +10,7 @@ import aiofiles
 import httpx
 from opentelemetry import trace
 
-from selfprivacy_api.exceptions.users import UserAlreadyExists, UserOrGroupNotFound
-from selfprivacy_api.exceptions.users.kanidm_repository import (
+from selfprivacy_api.exceptions.kanidm import (
     FailedToGetValidKanidmToken,
     KanidmCliSubprocessError,
     KanidmDidNotReturnAdminPassword,
@@ -19,6 +18,7 @@ from selfprivacy_api.exceptions.users.kanidm_repository import (
     KanidmReturnEmptyResponse,
     KanidmReturnUnknownResponseType,
 )
+from selfprivacy_api.exceptions.users import UserAlreadyExists, UserOrGroupNotFound
 from selfprivacy_api.utils import get_kanidm_url, temporary_env_var
 from selfprivacy_api.utils.redis_pool import RedisPool
 

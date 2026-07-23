@@ -4,12 +4,10 @@ from selfprivacy_api.exceptions import (
     REPORT_IT_TO_SUPPORT_CHATS,
 )
 from selfprivacy_api.exceptions.kanidm import (
+    FailedToGetValidKanidmToken,
     KANIDM_DEBUG_HELP,
     KANIDM_DESCRIPTION,
     KANIDM_PROBLEMS,
-)
-from selfprivacy_api.exceptions.users.kanidm_repository import (
-    FailedToGetValidKanidmToken,
     KanidmCliSubprocessError,
     KanidmDidNotReturnAdminPassword,
     KanidmQueryError,

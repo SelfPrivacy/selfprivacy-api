@@ -9,8 +9,7 @@ from types import SimpleNamespace
 import httpx
 import pytest
 
-from selfprivacy_api.exceptions.users import UserAlreadyExists, UserOrGroupNotFound
-from selfprivacy_api.exceptions.users.kanidm_repository import (
+from selfprivacy_api.exceptions.kanidm import (
     FailedToGetValidKanidmToken,
     KanidmCliSubprocessError,
     KanidmDidNotReturnAdminPassword,
@@ -18,6 +17,7 @@ from selfprivacy_api.exceptions.users.kanidm_repository import (
     KanidmReturnEmptyResponse,
     KanidmReturnUnknownResponseType,
 )
+from selfprivacy_api.exceptions.users import UserAlreadyExists, UserOrGroupNotFound
 from selfprivacy_api.utils.kanidm import (
     REDIS_TOKEN_KEY,
     KanidmAdminToken,

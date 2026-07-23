@@ -1,6 +1,6 @@
 import gettext
 
-from selfprivacy_api.exceptions.users.kanidm_repository import KanidmQueryError
+from selfprivacy_api.exceptions.kanidm import KanidmQueryError
 from selfprivacy_api.models.kanidm_credential_type import KanidmCredentialType
 from selfprivacy_api.utils.kanidm import (
     send_kanidm_query,

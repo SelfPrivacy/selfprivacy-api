@@ -6,7 +6,7 @@ import json
 import httpx
 import pytest
 
-from selfprivacy_api.exceptions.users.kanidm_repository import KanidmQueryError
+from selfprivacy_api.exceptions.kanidm import KanidmQueryError
 from selfprivacy_api.migrations.migrate_users_from_json import MigrateUsersFromJson
 from selfprivacy_api.utils import WriteUserData
 from selfprivacy_api.utils.redis_pool import RedisPool

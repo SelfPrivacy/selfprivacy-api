@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from selfprivacy_api.exceptions.users.kanidm_repository import KanidmQueryError
+from selfprivacy_api.exceptions.kanidm import KanidmQueryError
 from selfprivacy_api.models.kanidm_credential_type import KanidmCredentialType
 from tests.test_graphql.common import (
     assert_empty,

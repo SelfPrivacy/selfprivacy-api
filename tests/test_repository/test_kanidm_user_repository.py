@@ -8,17 +8,17 @@ from unittest.mock import call as mocker_call
 import httpx
 import pytest
 
-from selfprivacy_api.exceptions.users import (
-    UserAlreadyExists,
-    UserNotFound,
-    UserOrGroupNotFound,
-)
-from selfprivacy_api.exceptions.users.kanidm_repository import (
+from selfprivacy_api.exceptions.kanidm import (
     FailedToGetValidKanidmToken,
     KanidmQueryError,
     KanidmReturnEmptyResponse,
     KanidmReturnUnknownResponseType,
     NoPasswordResetLinkFoundInResponse,
+)
+from selfprivacy_api.exceptions.users import (
+    UserAlreadyExists,
+    UserNotFound,
+    UserOrGroupNotFound,
 )
 from selfprivacy_api.models.user import UserDataUserOrigin
 from selfprivacy_api.repositories.users.kanidm_user_repository import (
