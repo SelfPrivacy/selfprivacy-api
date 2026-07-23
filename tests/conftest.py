@@ -427,11 +427,11 @@ def isolated_kanidm_client_singleton():
     the event loop of first use; reset it so tests (each running a fresh
     loop) never share a client, and so the kanidm_api transport patch is
     picked up on construction."""
-    from selfprivacy_api.repositories.users import kanidm_user_repository
+    from selfprivacy_api.utils import kanidm
 
-    kanidm_user_repository._kanidm_client = None
+    kanidm._kanidm_client = None
     yield
-    kanidm_user_repository._kanidm_client = None
+    kanidm._kanidm_client = None
 
 
 class HttpxApiRecorder:
@@ -474,8 +474,8 @@ class HttpxApiRecorder:
 @pytest.fixture
 def kanidm_api(mocker):
     """
-    Reroute httpx.AsyncClient, as looked up by the kanidm user repository
-    module, through an httpx.MockTransport backed by a recording handler.
+    Reroute the shared Kanidm httpx client through an httpx.MockTransport
+    backed by a recording handler.
     """
     recorder = HttpxApiRecorder()
     transport = httpx.MockTransport(recorder)
@@ -485,7 +485,7 @@ def kanidm_api(mocker):
         return real_async_client(transport=transport, **kwargs)
 
     mocker.patch(
-        "selfprivacy_api.repositories.users.kanidm_user_repository.httpx.AsyncClient",
+        "selfprivacy_api.utils.kanidm.httpx.AsyncClient",
         new=client_factory,
     )
     return recorder
@@ -493,18 +493,22 @@ def kanidm_api(mocker):
 
 @pytest.fixture
 def mock_kanidm_domain(mocker):
-    """Pin get_domain() as looked up by the kanidm user repository."""
-    return mocker.patch(
+    """Pin the domain used by both user data and Kanidm API URLs."""
+    repository_domain = mocker.patch(
         "selfprivacy_api.repositories.users.kanidm_user_repository.get_domain",
         return_value="test.tld",
     )
+    mocker.patch(
+        "selfprivacy_api.utils.kanidm.get_domain",
+        return_value="test.tld",
+    )
+    return repository_domain
 
 
 @pytest.fixture
 def mock_admin_token(mocker):
-    """Pin KanidmAdminToken.get() as looked up by the kanidm user repository."""
+    """Pin the shared KanidmAdminToken.get()."""
     return mocker.patch(
-        "selfprivacy_api.repositories.users.kanidm_user_repository."
-        "KanidmAdminToken.get",
+        "selfprivacy_api.utils.kanidm.KanidmAdminToken.get",
         new=mocker.AsyncMock(return_value="token-123"),
     )
