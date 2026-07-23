@@ -16,6 +16,10 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: selfprivacy_api/actions/kanidm_credential_type.py:14
+msgid "Error while trying to get the Kanidm minimum credential type: Kanidm did not return a valid \"credential_type_minimum\" value for the group idm_all_persons."
+msgstr ""
+
 #: selfprivacy_api/actions/services.py:28
 #, python-format
 msgid "Move %(service)s"
