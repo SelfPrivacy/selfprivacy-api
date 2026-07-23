@@ -2,6 +2,7 @@
 # pylint: disable=unused-argument
 # pylint: disable=missing-function-docstring
 
+import asyncio
 from json import JSONDecodeError
 from types import SimpleNamespace
 
@@ -446,11 +447,14 @@ async def test_create_and_save_token_success(mocker):
     login_call = create_subprocess.call_args_list[0]
     generate_call = create_subprocess.call_args_list[1]
     assert list(login_call[0][:4]) == ["kanidm", "login", "-D", "idm_admin"]
-    assert list(generate_call[0][:4]) == [
+    assert list(generate_call[0]) == [
         "kanidm",
         "service-account",
         "api-token",
         "generate",
+        "sp.selfprivacy-api.service-account",
+        "kanidm_service_account_token",
+        "--readwrite",
     ]
 
 
@@ -473,10 +477,10 @@ async def test_create_and_save_token_raises_on_login_error(mocker):
 
 @pytest.mark.asyncio
 async def test_reset_idm_admin_password_returns_parsed_password(mocker):
-    mocker.patch(
+    create_subprocess = mocker.patch(
         "selfprivacy_api.utils.kanidm.asyncio.create_subprocess_exec",
         return_value=DummyProcess(
-            stdout=b'noise {"password":"fresh-password"} more-noise',
+            stdout=b'{"output":"fresh-password"}',
             stderr=b"",
             returncode=0,
         ),
@@ -485,6 +489,16 @@ async def test_reset_idm_admin_password_returns_parsed_password(mocker):
     password = await KanidmAdminToken.reset_idm_admin_password()
 
     assert password == "fresh-password"
+    create_subprocess.assert_called_once_with(
+        "kanidmd",
+        "scripting",
+        "recover-account",
+        "idm_admin",
+        "-c",
+        "/etc/kanidm/server.toml",
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
 
 
 @pytest.mark.asyncio
@@ -492,12 +506,11 @@ async def test_reset_idm_admin_password_raises_when_password_missing(mocker):
     mocker.patch(
         "selfprivacy_api.utils.kanidm.asyncio.create_subprocess_exec",
         return_value=DummyProcess(
-            stdout=b"no password in this output",
+            stdout=b'{"status":"ok"}',
             stderr=b"",
             returncode=0,
         ),
     )
-    mocker.patch("selfprivacy_api.utils.kanidm.re.search", return_value=None)
 
     with pytest.raises(KanidmDidNotReturnAdminPassword):
         await KanidmAdminToken.reset_idm_admin_password()
