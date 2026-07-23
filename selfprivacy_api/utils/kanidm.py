@@ -31,9 +31,7 @@ REDIS_TOKEN_KEY = "kanidm:token"
 
 ERROR_LOGGING_IN_TO_KANIDM_TEXT = _("Error logging in to Kanidm")
 ERROR_CREATING_KANIDM_TOKEN_TEXT = _("Error creating Kanidm token")
-ERROR_RESETTING_KANIDM_ADMIN_PASSWORD_TEXT = _(
-    "Error resetting Kanidm admin password"
-)
+ERROR_RESETTING_KANIDM_ADMIN_PASSWORD_TEXT = _("Error resetting Kanidm admin password")
 
 _kanidm_client: Optional[httpx.AsyncClient] = None
 
