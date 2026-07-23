@@ -15,7 +15,7 @@ from selfprivacy_api.exceptions.users import (
     UserNotFound,
     UserOrGroupNotFound,
 )
-from selfprivacy_api.exceptions.users.kanidm_repository import (
+from selfprivacy_api.exceptions.kanidm import (
     FailedToGetValidKanidmToken,
     KanidmCliSubprocessError,
     KanidmDidNotReturnAdminPassword,

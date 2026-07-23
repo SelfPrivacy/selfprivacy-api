@@ -7,7 +7,7 @@ from selfprivacy_api.exceptions.users import (
     UserNotFound,
     UserOrGroupNotFound,
 )
-from selfprivacy_api.exceptions.users.kanidm_repository import (
+from selfprivacy_api.exceptions.kanidm import (
     NoPasswordResetLinkFoundInResponse,
 )
 from selfprivacy_api.models.group import Group, get_default_grops

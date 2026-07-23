@@ -1,12 +1,7 @@
 import gettext
 from typing import Any, Optional
 
-from selfprivacy_api.exceptions import (
-    KANIDM_DEBUG_HELP,
-    KANIDM_DESCRIPTION,
-    KANIDM_PROBLEMS,
-    REPORT_IT_TO_SUPPORT_CHATS,
-)
+from selfprivacy_api.exceptions import REPORT_IT_TO_SUPPORT_CHATS
 from selfprivacy_api.exceptions.abstract_exception import AbstractException
 from selfprivacy_api.utils.localization import (
     DEFAULT_LOCALE,
@@ -14,6 +9,21 @@ from selfprivacy_api.utils.localization import (
 )
 
 _ = gettext.gettext
+
+
+KANIDM_DESCRIPTION = _(
+    "Kanidm is the identity and authentication service that manages users and access to services."
+)
+
+KANIDM_PROBLEMS = _(
+    "In some cases, a Kanidm update may introduce breaking changes affecting the API, CLI commands, or configuration compatibility."
+)
+
+KANIDM_DEBUG_HELP = _(
+    "Console commands to debug:\n"
+    "    'systemctl status kanidm.service'\n"
+    "    'journalctl -u kanidm.service'\n"
+)
 
 
 class KanidmQueryError(AbstractException):
