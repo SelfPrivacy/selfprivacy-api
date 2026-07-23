@@ -1,6 +1,6 @@
 import gettext
 
-from selfprivacy_api.exceptions import KANIDM_DESCRIPTION
+from selfprivacy_api.exceptions.kanidm import KANIDM_DESCRIPTION
 from selfprivacy_api.exceptions.abstract_exception import AbstractException
 from selfprivacy_api.utils.localization import (
     DEFAULT_LOCALE,

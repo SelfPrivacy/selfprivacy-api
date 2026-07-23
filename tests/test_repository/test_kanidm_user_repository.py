@@ -22,9 +22,13 @@ from selfprivacy_api.exceptions.users.kanidm_repository import (
 )
 from selfprivacy_api.models.user import UserDataUserOrigin
 from selfprivacy_api.repositories.users.kanidm_user_repository import (
-    REDIS_TOKEN_KEY,
     KanidmUserRepository,
+)
+from selfprivacy_api.utils.kanidm import (
+    REDIS_TOKEN_KEY,
     kanidm_client,
+    send_kanidm_query,
+    validate_kanidm_response_type,
 )
 from selfprivacy_api.utils.redis_pool import RedisPool
 
@@ -114,7 +118,7 @@ KANIDM_GROUPS_RESPONSE = [
 
 def test_check_response_type_raises_for_none():
     with pytest.raises(KanidmReturnEmptyResponse):
-        KanidmUserRepository._check_response_type_and_not_empty(
+        validate_kanidm_response_type(
             data_type="dict",
             response_data=None,
             endpoint="person/root",
@@ -132,7 +136,7 @@ def test_check_response_type_raises_for_none():
 )
 def test_check_response_type_raises_for_unexpected_type(data_type, response_data):
     with pytest.raises(KanidmReturnUnknownResponseType):
-        KanidmUserRepository._check_response_type_and_not_empty(
+        validate_kanidm_response_type(
             data_type=data_type,
             response_data=response_data,
             endpoint="person/root",
@@ -148,7 +152,7 @@ def test_check_response_type_raises_for_unexpected_type(data_type, response_data
     ],
 )
 def test_check_response_type_accepts_expected_types(data_type, response_data):
-    KanidmUserRepository._check_response_type_and_not_empty(
+    validate_kanidm_response_type(
         data_type=data_type,
         response_data=response_data,
         endpoint="person/root",
@@ -177,9 +181,7 @@ async def test_send_query_success_sends_expected_request(
 ):
     kanidm_api.respond(200, {"ok": True})
 
-    result = await KanidmUserRepository._send_query(
-        "person/root", method="PATCH", data={"a": 1}
-    )
+    result = await send_kanidm_query("person/root", method="PATCH", data={"a": 1})
 
     assert result == {"ok": True}
     assert len(kanidm_api.requests) == 1
@@ -198,8 +200,8 @@ async def test_send_query_reuses_one_http_client(
     kanidm_api.respond(200, {"ok": 1})
     kanidm_api.respond(200, {"ok": 2})
 
-    await KanidmUserRepository._send_query("person/root")
-    await KanidmUserRepository._send_query("person/root")
+    await send_kanidm_query("person/root")
+    await send_kanidm_query("person/root")
 
     assert kanidm_client() is kanidm_client()
     assert len(kanidm_api.requests) == 2
@@ -211,7 +213,7 @@ async def test_send_query_non_json_response_raises_query_error(
     kanidm_api.respond_raw(httpx.Response(200, content=b"not json"))
 
     with pytest.raises(KanidmQueryError) as error:
-        await KanidmUserRepository._send_query("person/root")
+        await send_kanidm_query("person/root")
 
     assert error.value.endpoint == "https://auth.test.tld/v1/person/root"
     assert error.value.method == "GET"
@@ -224,10 +226,10 @@ async def test_send_query_connect_error_raises_query_error(
     kanidm_api.fail(httpx.ConnectError("connection failed"))
 
     with pytest.raises(KanidmQueryError) as error:
-        await KanidmUserRepository._send_query("person/root", method="POST")
+        await send_kanidm_query("person/root", method="POST")
 
-    # Current behavior: connection errors report the *relative* endpoint,
-    # unlike all other error branches (which report the full URL).
+    # Transport errors report the relative endpoint before URL formatting is
+    # centralized in KanidmQueryError.
     assert error.value.endpoint == "person/root"
     assert error.value.method == "POST"
     assert "Kanidm is not responding to requests." in str(error.value.description)
@@ -241,7 +243,7 @@ async def test_send_query_timeout_raises_query_error(
     kanidm_api.fail(httpx.TimeoutException("timed out"))
 
     with pytest.raises(KanidmQueryError) as error:
-        await KanidmUserRepository._send_query("person/root")
+        await send_kanidm_query("person/root")
 
     assert "Kanidm is not responding to requests." in str(error.value.description)
 
@@ -257,7 +259,7 @@ async def test_send_query_duplicate_raises_user_already_exists(
     kanidm_api.respond(409, body)
 
     with pytest.raises(UserAlreadyExists):
-        await KanidmUserRepository._send_query("person", method="POST", data={})
+        await send_kanidm_query("person", method="POST", data={})
 
 
 async def test_send_query_nomatchingentries_raises_user_or_group_not_found(
@@ -266,7 +268,7 @@ async def test_send_query_nomatchingentries_raises_user_or_group_not_found(
     kanidm_api.respond(404, "nomatchingentries")
 
     with pytest.raises(UserOrGroupNotFound):
-        await KanidmUserRepository._send_query("person/ghost")
+        await send_kanidm_query("person/ghost")
 
 
 async def test_send_query_accessdenied_raises_query_error(
@@ -275,7 +277,7 @@ async def test_send_query_accessdenied_raises_query_error(
     kanidm_api.respond(403, "accessdenied")
 
     with pytest.raises(KanidmQueryError) as error:
-        await KanidmUserRepository._send_query("person/root")
+        await send_kanidm_query("person/root")
 
     assert "Kanidm access issue" in error.value.error_text
 
@@ -288,7 +290,7 @@ async def test_send_query_notauthenticated_retries_once_then_succeeds(
     kanidm_api.respond(401, "notauthenticated")
     kanidm_api.respond(200, {"ok": True})
 
-    result = await KanidmUserRepository._send_query("person/root")
+    result = await send_kanidm_query("person/root")
 
     assert result == {"ok": True}
     assert len(kanidm_api.requests) == 2
@@ -308,7 +310,7 @@ async def test_send_query_notauthenticated_twice_raises_failed_to_get_valid_toke
     kanidm_api.respond(401, "notauthenticated")
 
     with pytest.raises(FailedToGetValidKanidmToken):
-        await KanidmUserRepository._send_query("person/root")
+        await send_kanidm_query("person/root")
 
     # no third attempt
     assert len(kanidm_api.requests) == 2
@@ -320,7 +322,7 @@ async def test_send_query_generic_non_200_raises_query_error_with_response_text(
     kanidm_api.respond(500, {"error": "boom"})
 
     with pytest.raises(KanidmQueryError) as error:
-        await KanidmUserRepository._send_query("person/root")
+        await send_kanidm_query("person/root")
 
     assert error.value.error_text == '{"error": "boom"}'
     assert error.value.endpoint == "https://auth.test.tld/v1/person/root"
