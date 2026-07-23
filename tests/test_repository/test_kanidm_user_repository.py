@@ -277,7 +277,8 @@ async def test_send_query_accessdenied_raises_query_error(
     with pytest.raises(KanidmQueryError) as error:
         await send_kanidm_query("person/root")
 
-    assert "Kanidm access issue" in error.value.error_text
+    assert "Kanidm access issue" in error.value.description
+    assert error.value.error_text == "accessdenied"
 
 
 async def test_send_query_notauthenticated_retries_once_then_succeeds(

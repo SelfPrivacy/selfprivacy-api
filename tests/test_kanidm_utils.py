@@ -257,7 +257,8 @@ async def test_send_kanidm_query_raises_access_denied_error(
         await send_kanidm_query("person/root")
 
     assert error.value.endpoint == "https://auth.example.org/v1/person/root"
-    assert "Kanidm access issue" in error.value.error_text
+    assert "Kanidm access issue" in error.value.description
+    assert error.value.error_text == "accessdenied"
 
 
 @pytest.mark.asyncio
