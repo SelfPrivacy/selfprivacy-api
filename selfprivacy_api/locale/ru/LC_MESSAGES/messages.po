@@ -829,19 +829,19 @@ msgstr "Описание не найдено!"
 msgid "No backup description found!"
 msgstr "Описание резервной копии не найдено!"
 
-#: selfprivacy_api/repositories/users/kanidm_user_repository.py:386
+#: selfprivacy_api/utils/kanidm.py:135
 msgid "No JSON found in Kanidm response."
 msgstr "В ответе Kanidm не найден JSON."
 
-#: selfprivacy_api/repositories/users/kanidm_user_repository.py:394
+#: selfprivacy_api/utils/kanidm.py:143
 msgid "Kanidm is not responding to requests."
 msgstr "Kanidm не отвечает на запросы."
 
-#: selfprivacy_api/repositories/users/kanidm_user_repository.py:425
+#: selfprivacy_api/utils/kanidm.py:173
 msgid "We somehow got into unreachable code."
 msgstr ""
 
-#: selfprivacy_api/repositories/users/kanidm_user_repository.py:453
+#: selfprivacy_api/utils/kanidm.py:195
 msgid "Kanidm access issue"
 msgstr "Проблема доступа к Kanidm"
 
