@@ -10,6 +10,7 @@ from selfprivacy_api.exceptions.kanidm import (
     KANIDM_DESCRIPTION,
     KANIDM_PROBLEMS,
 )
+from selfprivacy_api.utils import get_kanidm_url
 from selfprivacy_api.utils.localization import (
     DEFAULT_LOCALE,
     TranslateSystemMessage as t,
@@ -31,7 +32,7 @@ class KanidmQueryError(AbstractException):
         description: Optional[str] = " ",
         log: bool = True,
     ) -> None:
-        self.endpoint = endpoint
+        self.endpoint = f"{get_kanidm_url()}/v1/{endpoint}"
         self.method = method
         self.error_text = str(error_text)
         self.description = description

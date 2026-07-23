@@ -277,7 +277,7 @@ msgstr ""
 msgid "Display name is too long. Must be less than 256 characters."
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:44
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:45
 #, python-format
 msgid ""
 "An error occurred during a request to Kanidm.\n"
@@ -290,7 +290,7 @@ msgid ""
 "Error: %(error)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:85
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:86
 #, python-format
 msgid ""
 "Kanidm returned an empty response.\n"
@@ -301,7 +301,7 @@ msgid ""
 "Method: %(method)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:123
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:124
 #, python-format
 msgid ""
 "Kanidm returned an unknown type response.\n"
@@ -314,7 +314,7 @@ msgid ""
 "Response: %(response)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:163
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:164
 #, python-format
 msgid ""
 "Failed to get access to Kanidm admin account:\n"
@@ -329,12 +329,12 @@ msgid ""
 "Kanidm's CLI output: %(output)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:194
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:195
 #: selfprivacy_api/utils/kanidm.py:32
 msgid "Error creating Kanidm token"
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:206
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:207
 #, python-format
 msgid ""
 "Kanidm CLI returned an error.\n"
@@ -347,7 +347,7 @@ msgid ""
 "Error: %(error)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:238
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:239
 #, python-format
 msgid ""
 "Сouldn't get a valid Kanidm token.\n"
@@ -356,7 +356,7 @@ msgid ""
 "%(REPORT_IT_TO_SUPPORT_CHATS)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/users/kanidm_repository.py:274
+#: selfprivacy_api/exceptions/users/kanidm_repository.py:275
 #, python-format
 msgid ""
 "Kanidm didn't return a password reset link.\n"
@@ -743,18 +743,18 @@ msgstr ""
 msgid "No backup description found!"
 msgstr ""
 
-#: selfprivacy_api/utils/kanidm.py:137
+#: selfprivacy_api/utils/kanidm.py:133
 msgid "No JSON found in Kanidm response."
 msgstr ""
 
-#: selfprivacy_api/utils/kanidm.py:145
+#: selfprivacy_api/utils/kanidm.py:141
 msgid "Kanidm is not responding to requests."
 msgstr ""
 
-#: selfprivacy_api/utils/kanidm.py:175
+#: selfprivacy_api/utils/kanidm.py:169
 msgid "We somehow got into unreachable code."
 msgstr ""
 
-#: selfprivacy_api/utils/kanidm.py:197
+#: selfprivacy_api/utils/kanidm.py:191
 msgid "Kanidm access issue"
 msgstr ""

@@ -117,7 +117,7 @@ def patch_async_client(mocker, client: DummyAsyncClient):
 @pytest.fixture
 def get_domain_mock(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.utils.kanidm.get_domain",
+        "selfprivacy_api.utils.get_domain",
         return_value="example.org",
     )
     return mock
@@ -189,6 +189,10 @@ async def test_send_kanidm_query_json_decode_error(
     assert error.value.endpoint == "https://auth.example.org/v1/person/root"
     assert error.value.method == "GET"
     assert "No JSON found in Kanidm response" in str(error.value.description)
+    assert (
+        "Endpoint: https://auth.example.org/v1/person/root"
+        in error.value.get_error_message()
+    )
 
 
 @pytest.mark.asyncio
@@ -205,7 +209,7 @@ async def test_send_kanidm_query_request_error(
     with pytest.raises(KanidmQueryError) as error:
         await send_kanidm_query("person/root", method="POST")
 
-    assert error.value.endpoint == "person/root"
+    assert error.value.endpoint == "https://auth.example.org/v1/person/root"
     assert error.value.method == "POST"
     assert "Kanidm is not responding to requests." in str(error.value.description)
 

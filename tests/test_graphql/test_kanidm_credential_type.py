@@ -1,5 +1,7 @@
 from unittest.mock import AsyncMock
 
+import pytest
+
 from selfprivacy_api.exceptions.users.kanidm_repository import KanidmQueryError
 from selfprivacy_api.models.kanidm_credential_type import KanidmCredentialType
 from tests.test_graphql.common import (
@@ -29,6 +31,14 @@ mutation MyMutation($minimumCredentialType: KanidmCredentialType!) {
   }
 }
 """
+
+
+@pytest.fixture
+def get_domain_mock(mocker):
+    return mocker.patch(
+        "selfprivacy_api.utils.get_domain",
+        return_value="example.org",
+    )
 
 
 def test_graphql_get_minimum_kanidm_credential_type(authorized_client, mocker):
@@ -66,7 +76,7 @@ def test_graphql_set_minimum_kanidm_credential_type(authorized_client, mocker):
 
 
 def test_graphql_set_minimum_kanidm_credential_type_query_error(
-    authorized_client, mocker
+    authorized_client, mocker, get_domain_mock
 ):
     mocker.patch(
         "selfprivacy_api.graphql.mutations.kanidm_mutations.set_kanidm_minimum_credential_type_action",

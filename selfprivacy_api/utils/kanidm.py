@@ -19,7 +19,7 @@ from selfprivacy_api.exceptions.users.kanidm_repository import (
     KanidmReturnEmptyResponse,
     KanidmReturnUnknownResponseType,
 )
-from selfprivacy_api.utils import get_domain, temporary_env_var
+from selfprivacy_api.utils import get_kanidm_url, temporary_env_var
 from selfprivacy_api.utils.redis_pool import RedisPool
 
 logger = logging.getLogger(__name__)
@@ -32,10 +32,6 @@ REDIS_TOKEN_KEY = "kanidm:token"
 ERROR_CREATING_KANIDM_TOKEN_TEXT = _("Error creating Kanidm token")
 
 _kanidm_client: Optional[httpx.AsyncClient] = None
-
-
-def get_kanidm_url() -> str:
-    return f"https://auth.{get_domain()}"
 
 
 def kanidm_client() -> httpx.AsyncClient:
@@ -132,7 +128,7 @@ async def send_kanidm_query(
 
             except JSONDecodeError as error:
                 raise KanidmQueryError(
-                    endpoint=full_endpoint,
+                    endpoint=endpoint,
                     method=method,
                     description=_("No JSON found in Kanidm response."),
                     error_text=error,
@@ -146,7 +142,7 @@ async def send_kanidm_query(
                 )
             except Exception as error:
                 raise KanidmQueryError(
-                    endpoint=full_endpoint,
+                    endpoint=endpoint,
                     method=method,
                     error_text=error,
                 )
@@ -162,14 +158,12 @@ async def send_kanidm_query(
                 continue
 
             if response.status_code != 200:
-                _raise_for_error_response(
-                    response, response_data, full_endpoint, method
-                )
+                _raise_for_error_response(response, response_data, endpoint, method)
 
             return response_data
 
         raise KanidmQueryError(
-            endpoint=full_endpoint,
+            endpoint=endpoint,
             method=method,
             error_text="",
             description=_("We somehow got into unreachable code."),
@@ -179,7 +173,7 @@ async def send_kanidm_query(
 def _raise_for_error_response(
     response: httpx.Response,
     response_data: dict | list | str,
-    full_endpoint: str,
+    endpoint: str,
     method: str,
 ) -> None:
     """Translate a non-200 Kanidm response into the appropriate exception."""
@@ -192,7 +186,7 @@ def _raise_for_error_response(
             raise UserOrGroupNotFound
         if response_data == "accessdenied":
             raise KanidmQueryError(
-                endpoint=full_endpoint,
+                endpoint=endpoint,
                 method=method,
                 error_text=_("Kanidm access issue"),
             )
@@ -201,7 +195,7 @@ def _raise_for_error_response(
 
     raise KanidmQueryError(
         error_text=response.text,
-        endpoint=full_endpoint,
+        endpoint=endpoint,
         method=method,
     )
 

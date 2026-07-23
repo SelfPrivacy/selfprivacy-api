@@ -8,6 +8,14 @@ from selfprivacy_api.exceptions.users.kanidm_repository import KanidmQueryError
 from selfprivacy_api.models.kanidm_credential_type import KanidmCredentialType
 
 
+@pytest.fixture
+def get_domain_mock(mocker):
+    return mocker.patch(
+        "selfprivacy_api.utils.get_domain",
+        return_value="example.org",
+    )
+
+
 @pytest.mark.asyncio
 async def test_get_kanidm_credential_type(mocker):
     mocker.patch(
@@ -19,7 +27,7 @@ async def test_get_kanidm_credential_type(mocker):
 
 
 @pytest.mark.asyncio
-async def test_get_kanidm_credential_type_query_error(mocker):
+async def test_get_kanidm_credential_type_query_error(mocker, get_domain_mock):
     mocker.patch(
         "selfprivacy_api.actions.kanidm_credential_type.send_kanidm_query",
         side_effect=KanidmQueryError(
@@ -50,7 +58,7 @@ async def test_set_kanidm_credential_type(mocker):
 
 @pytest.mark.asyncio
 async def test_get_kanidm_credential_type_missing_field_raises_kanidm_query_error(
-    mocker,
+    mocker, get_domain_mock
 ):
     mocker.patch(
         "selfprivacy_api.actions.kanidm_credential_type.send_kanidm_query",
@@ -62,7 +70,7 @@ async def test_get_kanidm_credential_type_missing_field_raises_kanidm_query_erro
 
 
 @pytest.mark.asyncio
-async def test_set_kanidm_credential_type_query_error(mocker):
+async def test_set_kanidm_credential_type_query_error(mocker, get_domain_mock):
     mocker.patch(
         "selfprivacy_api.actions.kanidm_credential_type.send_kanidm_query",
         side_effect=KanidmQueryError(
