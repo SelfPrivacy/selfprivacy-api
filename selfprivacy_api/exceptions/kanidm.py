@@ -1,5 +1,5 @@
 import gettext
-from typing import Any, Optional
+from typing import Any
 
 from selfprivacy_api.exceptions import (
     REPORT_IT_TO_SUPPORT_CHATS,
@@ -39,7 +39,7 @@ class KanidmQueryError(AbstractException):
         endpoint: str,
         method: str,
         error_text: Any,
-        description: Optional[str] = " ",
+        description: str = " ",
         log: bool = True,
     ) -> None:
         self.endpoint = f"{get_kanidm_url()}/v1/{endpoint}"
@@ -64,7 +64,10 @@ class KanidmQueryError(AbstractException):
             locale=locale,
         ) % {
             "KANIDM_DESCRIPTION": t.translate(text=KANIDM_DESCRIPTION, locale=locale),
-            "description": self.description,
+            "description": t.translate(
+                text=self.description,
+                locale=locale,
+            ),
             "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
                 text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale
             ),
@@ -225,7 +228,10 @@ class KanidmCliSubprocessError(AbstractException):
             locale=locale,
         ) % {
             "KANIDM_DESCRIPTION": t.translate(text=KANIDM_DESCRIPTION, locale=locale),
-            "description": self.description,
+            "description": t.translate(
+                text=self.description,
+                locale=locale,
+            ),
             "KANIDM_PROBLEMS": t.translate(text=KANIDM_PROBLEMS, locale=locale),
             "REPORT_IT_TO_SUPPORT_CHATS": t.translate(
                 text=REPORT_IT_TO_SUPPORT_CHATS, locale=locale

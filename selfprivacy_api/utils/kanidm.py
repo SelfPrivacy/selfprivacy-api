@@ -192,7 +192,8 @@ def _raise_for_error_response(
             raise KanidmQueryError(
                 endpoint=endpoint,
                 method=method,
-                error_text=_("Kanidm access issue"),
+                description=_("Kanidm access issue"),
+                error_text=response_data,
             )
         if response_data == "notauthenticated":
             raise FailedToGetValidKanidmToken
