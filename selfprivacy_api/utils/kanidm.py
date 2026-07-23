@@ -29,7 +29,11 @@ _ = gettext.gettext
 
 REDIS_TOKEN_KEY = "kanidm:token"
 
+ERROR_LOGGING_IN_TO_KANIDM_TEXT = _("Error logging in to Kanidm")
 ERROR_CREATING_KANIDM_TOKEN_TEXT = _("Error creating Kanidm token")
+ERROR_RESETTING_KANIDM_ADMIN_PASSWORD_TEXT = _(
+    "Error resetting Kanidm admin password"
+)
 
 _kanidm_client: Optional[httpx.AsyncClient] = None
 
@@ -292,47 +296,54 @@ class KanidmAdminToken:
         redis = RedisPool().get_connection_async()
 
         with temporary_env_var(key="KANIDM_PASSWORD", value=kanidm_admin_password):
-            command = ["kanidm", "login", "-D", "idm_admin"]
-
+            login_command = ["kanidm", "login", "-D", "idm_admin"]
             try:
                 proc = await asyncio.create_subprocess_exec(
-                    *command,
+                    *login_command,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
                 )
                 _, stderr = await proc.communicate()
                 if proc.returncode != 0:
                     raise KanidmCliSubprocessError(
-                        command=" ".join(command),
+                        command=" ".join(login_command),
                         error=stderr.decode(errors="replace"),
+                        description=ERROR_LOGGING_IN_TO_KANIDM_TEXT,
                     )
+            except OSError as error:
+                raise KanidmCliSubprocessError(
+                    command=" ".join(login_command),
+                    error=str(error),
+                    description=ERROR_LOGGING_IN_TO_KANIDM_TEXT,
+                )
 
-                command = [
-                    "kanidm",
-                    "service-account",
-                    "api-token",
-                    "generate",
-                    "sp.selfprivacy-api.service-account",
-                    "kanidm_service_account_token",
-                    "--readwrite",
-                ]
-
+            generate_command = [
+                "kanidm",
+                "service-account",
+                "api-token",
+                "generate",
+                "sp.selfprivacy-api.service-account",
+                "kanidm_service_account_token",
+                "--readwrite",
+            ]
+            try:
                 proc = await asyncio.create_subprocess_exec(
-                    *command,
+                    *generate_command,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
                 )
                 stdout, stderr = await proc.communicate()
                 if proc.returncode != 0:
                     raise KanidmCliSubprocessError(
-                        command=" ".join(command),
+                        command=" ".join(generate_command),
                         error=stderr.decode(errors="replace"),
+                        description=ERROR_CREATING_KANIDM_TOKEN_TEXT,
                     )
-
             except OSError as error:
                 raise KanidmCliSubprocessError(
-                    command=" ".join(command),
+                    command=" ".join(generate_command),
                     error=str(error),
+                    description=ERROR_CREATING_KANIDM_TOKEN_TEXT,
                 )
 
         kanidm_admin_token = stdout.decode(errors="replace").splitlines()[-1]
@@ -362,11 +373,13 @@ class KanidmAdminToken:
                 raise KanidmCliSubprocessError(
                     command=" ".join(command),
                     error=stderr.decode(errors="replace"),
+                    description=ERROR_RESETTING_KANIDM_ADMIN_PASSWORD_TEXT,
                 )
         except OSError as error:
             raise KanidmCliSubprocessError(
                 command=" ".join(command),
                 error=str(error),
+                description=ERROR_RESETTING_KANIDM_ADMIN_PASSWORD_TEXT,
             )
 
         output = stdout.decode(errors="replace")

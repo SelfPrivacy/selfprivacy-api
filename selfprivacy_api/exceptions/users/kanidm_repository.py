@@ -192,7 +192,7 @@ class KanidmCliSubprocessError(AbstractException):
         self,
         command: str,
         error: str,
-        description: str = _("Error creating Kanidm token"),
+        description: str,
         log: bool = True,
     ) -> None:
         self.command = command
