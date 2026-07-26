@@ -16,7 +16,7 @@ from selfprivacy_api.actions.ssh import (
     remove_ssh_key,
 )
 from selfprivacy_api.exceptions.users import UserNotFound
-from selfprivacy_api.exceptions.users.ssh import KeyNotFound
+from selfprivacy_api.exceptions.ssh import KeyNotFound
 from selfprivacy_api.models.user import UserDataUserOrigin
 from selfprivacy_api.repositories.users.json_user_repository import JsonUserRepository
 from selfprivacy_api.utils import ReadUserData, WriteUserData

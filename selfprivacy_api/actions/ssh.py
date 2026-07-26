@@ -6,7 +6,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from selfprivacy_api.exceptions.users import UserNotFound
-from selfprivacy_api.exceptions.users.ssh import (
+from selfprivacy_api.exceptions.ssh import (
     InvalidPublicKey,
     KeyAlreadyExists,
     KeyNotFound,

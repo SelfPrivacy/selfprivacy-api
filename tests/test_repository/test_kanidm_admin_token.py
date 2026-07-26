@@ -9,7 +9,7 @@ from types import SimpleNamespace
 import httpx
 import pytest
 
-from selfprivacy_api.exceptions.users.kanidm_repository import (
+from selfprivacy_api.exceptions.kanidm import (
     KanidmCliSubprocessError,
     KanidmDidNotReturnAdminPassword,
 )
