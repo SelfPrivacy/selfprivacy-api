@@ -64,14 +64,9 @@ def validate_kanidm_response_type(
     if response_data is None:
         raise KanidmReturnEmptyResponse(endpoint=endpoint, method=method)
 
-    if data_type == "list" and not isinstance(response_data, list):
-        raise KanidmReturnUnknownResponseType(
-            response_data=response_data,
-            endpoint=endpoint,
-            method=method,
-        )
-
-    elif data_type == "dict" and not isinstance(response_data, dict):
+    if (data_type == "list" and not isinstance(response_data, list)) or (
+        data_type == "dict" and not isinstance(response_data, dict)
+    ):
         raise KanidmReturnUnknownResponseType(
             response_data=response_data,
             endpoint=endpoint,
