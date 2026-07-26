@@ -356,13 +356,13 @@ async def test_create_and_save_token_generate_failure_raises(redis, fake_kanidm_
     assert await redis.get(REDIS_TOKEN_KEY) is None
 
 
-# --- reset_idm_admin_password ---------------------------------------------------
+# --- _reset_idm_admin_password --------------------------------------------------
 
 
 async def test_reset_password_returns_parsed_password(fake_kanidm_cli):
     fake_kanidm_cli.processes.append(FakeProcess(stdout=b'{"output": "new-password"}'))
 
-    password = await KanidmAdminToken.reset_idm_admin_password()
+    password = await KanidmAdminToken._reset_idm_admin_password()
 
     assert password == "new-password"
     assert fake_kanidm_cli.calls[0][0] == tuple(RECOVER_COMMAND)
@@ -372,7 +372,7 @@ async def test_reset_password_non_json_output_raises(fake_kanidm_cli):
     fake_kanidm_cli.processes.append(FakeProcess(stdout=b"no json in this output"))
 
     with pytest.raises(KanidmDidNotReturnAdminPassword) as error:
-        await KanidmAdminToken.reset_idm_admin_password()
+        await KanidmAdminToken._reset_idm_admin_password()
 
     assert error.value.command == " ".join(RECOVER_COMMAND)
     assert "no json in this output" in error.value.output
@@ -384,14 +384,14 @@ async def test_reset_password_missing_output_field_raises(fake_kanidm_cli):
     )
 
     with pytest.raises(KanidmDidNotReturnAdminPassword):
-        await KanidmAdminToken.reset_idm_admin_password()
+        await KanidmAdminToken._reset_idm_admin_password()
 
 
 async def test_reset_password_empty_output_field_raises(fake_kanidm_cli):
     fake_kanidm_cli.processes.append(FakeProcess(stdout=b'{"output": ""}'))
 
     with pytest.raises(KanidmDidNotReturnAdminPassword):
-        await KanidmAdminToken.reset_idm_admin_password()
+        await KanidmAdminToken._reset_idm_admin_password()
 
 
 # --- _is_token_valid ------------------------------------------------------------

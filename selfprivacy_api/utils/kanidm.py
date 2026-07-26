@@ -91,7 +91,6 @@ async def send_kanidm_query(
     Raises:
         KanidmQueryError: If an error occurs during the request.
         UserAlreadyExists: If the user already exists.
-        UserNotFound: If the user is not found.
         UserOrGroupNotFound: If the user or group does not exist.
 
     Raises from KanidmAdminToken:
@@ -214,7 +213,7 @@ class KanidmAdminToken:
         _create_and_save_token(kanidm_admin_password: str) -> str:
             Creates a new token using the admin password and saves it to Redis.
 
-        reset_idm_admin_password() -> str:
+        _reset_idm_admin_password() -> str:
             Resets the Kanidm admin password and returns the new password.
 
         _delete_kanidm_token_from_db() -> None:
@@ -248,7 +247,7 @@ class KanidmAdminToken:
 
         logging.warning("The Kanidm admin token is missing or invalid. Regenerating.")
 
-        kanidm_admin_password = await KanidmAdminToken.reset_idm_admin_password()
+        kanidm_admin_password = await KanidmAdminToken._reset_idm_admin_password()
         return await KanidmAdminToken._create_and_save_token(kanidm_admin_password)
 
     @staticmethod
@@ -340,7 +339,7 @@ class KanidmAdminToken:
         return kanidm_admin_token
 
     @staticmethod
-    async def reset_idm_admin_password() -> str:
+    async def _reset_idm_admin_password() -> str:
         command = [
             "kanidmd",
             "scripting",

@@ -328,7 +328,7 @@ async def test_kanidm_admin_token_get_falls_back_to_env_token(mocker):
         new=mocker.AsyncMock(return_value="env-token"),
     )
     reset_password = mocker.patch(
-        "selfprivacy_api.utils.kanidm.KanidmAdminToken.reset_idm_admin_password"
+        "selfprivacy_api.utils.kanidm.KanidmAdminToken._reset_idm_admin_password"
     )
 
     token = await KanidmAdminToken.get()
@@ -350,7 +350,7 @@ async def test_kanidm_admin_token_get_regenerates_token_when_needed(mocker):
         new=mocker.AsyncMock(return_value=None),
     )
     reset_password = mocker.patch(
-        "selfprivacy_api.utils.kanidm.KanidmAdminToken.reset_idm_admin_password",
+        "selfprivacy_api.utils.kanidm.KanidmAdminToken._reset_idm_admin_password",
         return_value="new-password",
     )
     create_and_save = mocker.patch(
@@ -482,7 +482,7 @@ async def test_reset_idm_admin_password_returns_parsed_password(mocker):
         ),
     )
 
-    password = await KanidmAdminToken.reset_idm_admin_password()
+    password = await KanidmAdminToken._reset_idm_admin_password()
 
     assert password == "fresh-password"
     create_subprocess.assert_called_once_with(
@@ -509,7 +509,7 @@ async def test_reset_idm_admin_password_raises_when_password_missing(mocker):
     )
 
     with pytest.raises(KanidmDidNotReturnAdminPassword):
-        await KanidmAdminToken.reset_idm_admin_password()
+        await KanidmAdminToken._reset_idm_admin_password()
 
 
 @pytest.mark.asyncio
