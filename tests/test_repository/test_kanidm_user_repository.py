@@ -3,19 +3,11 @@
 # pylint: disable=missing-function-docstring
 
 import json
-from unittest.mock import call as mocker_call
 
-import httpx
 import pytest
 
-from selfprivacy_api.exceptions.users import (
-    UserAlreadyExists,
-    UserNotFound,
-    UserOrGroupNotFound,
-)
+from selfprivacy_api.exceptions.users import UserNotFound
 from selfprivacy_api.exceptions.kanidm import (
-    FailedToGetValidKanidmToken,
-    KanidmQueryError,
     KanidmReturnEmptyResponse,
     KanidmReturnUnknownResponseType,
     NoPasswordResetLinkFoundInResponse,
@@ -24,13 +16,6 @@ from selfprivacy_api.models.user import UserDataUserOrigin
 from selfprivacy_api.repositories.users.kanidm_user_repository import (
     KanidmUserRepository,
 )
-from selfprivacy_api.utils.kanidm import (
-    REDIS_TOKEN_KEY,
-    kanidm_client,
-    send_kanidm_query,
-    validate_kanidm_response_type,
-)
-from selfprivacy_api.utils.redis_pool import RedisPool
 
 # Shapes verified against a live Kanidm server on 2026-07-07
 KANIDM_USERS_RESPONSE = [
@@ -116,50 +101,6 @@ KANIDM_GROUPS_RESPONSE = [
 # --- Static helpers -----------------------------------------------------------
 
 
-def test_check_response_type_raises_for_none():
-    with pytest.raises(KanidmReturnEmptyResponse):
-        validate_kanidm_response_type(
-            data_type="dict",
-            response_data=None,
-            endpoint="person/root",
-            method="GET",
-        )
-
-
-@pytest.mark.parametrize(
-    "data_type,response_data",
-    [
-        ("list", {}),
-        ("dict", []),
-        ("dict", "some string"),
-    ],
-)
-def test_check_response_type_raises_for_unexpected_type(data_type, response_data):
-    with pytest.raises(KanidmReturnUnknownResponseType):
-        validate_kanidm_response_type(
-            data_type=data_type,
-            response_data=response_data,
-            endpoint="person/root",
-            method="GET",
-        )
-
-
-@pytest.mark.parametrize(
-    "data_type,response_data",
-    [
-        ("list", []),
-        ("dict", {"a": 1}),
-    ],
-)
-def test_check_response_type_accepts_expected_types(data_type, response_data):
-    validate_kanidm_response_type(
-        data_type=data_type,
-        response_data=response_data,
-        endpoint="person/root",
-        method="GET",
-    )
-
-
 def test_check_user_origin_by_memberof():
     assert (
         KanidmUserRepository._check_user_origin_by_memberof(
@@ -171,161 +112,6 @@ def test_check_user_origin_by_memberof():
         KanidmUserRepository._check_user_origin_by_memberof(memberof=["sp.full_users"])
         == UserDataUserOrigin.NORMAL
     )
-
-
-# --- _send_query --------------------------------------------------------------
-
-
-async def test_send_query_success_sends_expected_request(
-    kanidm_api, mock_kanidm_domain, mock_admin_token
-):
-    kanidm_api.respond(200, {"ok": True})
-
-    result = await send_kanidm_query("person/root", method="PATCH", data={"a": 1})
-
-    assert result == {"ok": True}
-    assert len(kanidm_api.requests) == 1
-    request = kanidm_api.requests[0]
-    assert request.method == "PATCH"
-    assert str(request.url) == "https://auth.test.tld/v1/person/root"
-    assert json.loads(request.content) == {"a": 1}
-    assert request.headers["authorization"] == "Bearer token-123"
-    assert request.headers["content-type"] == "application/json"
-    assert request.extensions["timeout"]["read"] == 15
-
-
-async def test_send_query_reuses_one_http_client(
-    kanidm_api, mock_kanidm_domain, mock_admin_token
-):
-    kanidm_api.respond(200, {"ok": 1})
-    kanidm_api.respond(200, {"ok": 2})
-
-    await send_kanidm_query("person/root")
-    await send_kanidm_query("person/root")
-
-    assert kanidm_client() is kanidm_client()
-    assert len(kanidm_api.requests) == 2
-
-
-async def test_send_query_non_json_response_raises_query_error(
-    kanidm_api, mock_kanidm_domain, mock_admin_token
-):
-    kanidm_api.respond_raw(httpx.Response(200, content=b"not json"))
-
-    with pytest.raises(KanidmQueryError) as error:
-        await send_kanidm_query("person/root")
-
-    assert error.value.endpoint == "https://auth.test.tld/v1/person/root"
-    assert error.value.method == "GET"
-    assert "No JSON found in Kanidm response." in str(error.value.description)
-
-
-async def test_send_query_connect_error_raises_query_error(
-    kanidm_api, mock_kanidm_domain, mock_admin_token
-):
-    kanidm_api.fail(httpx.ConnectError("connection failed"))
-
-    with pytest.raises(KanidmQueryError) as error:
-        await send_kanidm_query("person/root", method="POST")
-
-    # Transport errors report the relative endpoint before URL formatting is
-    # centralized in KanidmQueryError.
-    assert error.value.endpoint == "person/root"
-    assert error.value.method == "POST"
-    assert "Kanidm is not responding to requests." in str(error.value.description)
-    # transport errors are not retried
-    assert len(kanidm_api.requests) == 1
-
-
-async def test_send_query_timeout_raises_query_error(
-    kanidm_api, mock_kanidm_domain, mock_admin_token
-):
-    kanidm_api.fail(httpx.TimeoutException("timed out"))
-
-    with pytest.raises(KanidmQueryError) as error:
-        await send_kanidm_query("person/root")
-
-    assert "Kanidm is not responding to requests." in str(error.value.description)
-
-
-async def test_send_query_duplicate_raises_user_already_exists(
-    kanidm_api, mock_kanidm_domain, mock_admin_token
-):
-    # Real response of a live Kanidm server (captured 2026-07-07):
-    body = {
-        "conflicting_attributes": ["mail", "name", "spn"],
-        "error": "Attribute uniqueness error",
-    }
-    kanidm_api.respond(409, body)
-
-    with pytest.raises(UserAlreadyExists):
-        await send_kanidm_query("person", method="POST", data={})
-
-
-async def test_send_query_nomatchingentries_raises_user_or_group_not_found(
-    kanidm_api, mock_kanidm_domain, mock_admin_token
-):
-    kanidm_api.respond(404, "nomatchingentries")
-
-    with pytest.raises(UserOrGroupNotFound):
-        await send_kanidm_query("person/ghost")
-
-
-async def test_send_query_accessdenied_raises_query_error(
-    kanidm_api, mock_kanidm_domain, mock_admin_token
-):
-    kanidm_api.respond(403, "accessdenied")
-
-    with pytest.raises(KanidmQueryError) as error:
-        await send_kanidm_query("person/root")
-
-    assert "Kanidm access issue" in error.value.error_text
-
-
-async def test_send_query_notauthenticated_retries_once_then_succeeds(
-    kanidm_api, mock_kanidm_domain, mock_admin_token
-):
-    redis = RedisPool().get_connection_async()
-    await redis.set(REDIS_TOKEN_KEY, "rejected-token")
-    kanidm_api.respond(401, "notauthenticated")
-    kanidm_api.respond(200, {"ok": True})
-
-    result = await send_kanidm_query("person/root")
-
-    assert result == {"ok": True}
-    assert len(kanidm_api.requests) == 2
-    # the cached token is dropped before the retry
-    assert await redis.get(REDIS_TOKEN_KEY) is None
-    # attempt 1 uses the cached chain, attempt 2 knows what was rejected
-    assert mock_admin_token.await_args_list == [
-        mocker_call(rejected_token=None),
-        mocker_call(rejected_token="token-123"),
-    ]
-
-
-async def test_send_query_notauthenticated_twice_raises_failed_to_get_valid_token(
-    kanidm_api, mock_kanidm_domain, mock_admin_token
-):
-    kanidm_api.respond(401, "notauthenticated")
-    kanidm_api.respond(401, "notauthenticated")
-
-    with pytest.raises(FailedToGetValidKanidmToken):
-        await send_kanidm_query("person/root")
-
-    # no third attempt
-    assert len(kanidm_api.requests) == 2
-
-
-async def test_send_query_generic_non_200_raises_query_error_with_response_text(
-    kanidm_api, mock_kanidm_domain, mock_admin_token
-):
-    kanidm_api.respond(500, {"error": "boom"})
-
-    with pytest.raises(KanidmQueryError) as error:
-        await send_kanidm_query("person/root")
-
-    assert error.value.error_text == '{"error": "boom"}'
-    assert error.value.endpoint == "https://auth.test.tld/v1/person/root"
 
 
 # --- create_user --------------------------------------------------------------

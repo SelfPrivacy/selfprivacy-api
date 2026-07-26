@@ -494,7 +494,7 @@ def kanidm_api(mocker):
 @pytest.fixture
 def mock_kanidm_domain(mocker):
     """Pin the domain used by both user data and Kanidm API URLs."""
-    repository_domain = mocker.patch(
+    mocker.patch(
         "selfprivacy_api.repositories.users.kanidm_user_repository.get_domain",
         return_value="test.tld",
     )
@@ -502,7 +502,6 @@ def mock_kanidm_domain(mocker):
         "selfprivacy_api.utils.kanidm.get_domain",
         return_value="test.tld",
     )
-    return repository_domain
 
 
 @pytest.fixture
