@@ -8,7 +8,6 @@ import typing
 from os import listdir, makedirs, path
 from os.path import exists, join
 from shutil import copyfile, copytree, rmtree
-from threading import stack_size
 from typing import List
 
 import aiofiles
@@ -149,6 +148,23 @@ class ServiceManager(Service):
             )
         except Exception as e:
             logging.error(f"Error creating CAA: {e}")
+
+        # TODO: SelfPrivacy doesn't have QUIC yet, but once we have it HTTPS record will help with loading time on first connection.
+        # https://blog.cloudflare.com/speeding-up-https-and-http-3-negotiation-with-dns/
+        https_content = f'1 . alpn="h2,http/1.1" ipv4hint={ip4}'
+        if ip6 is not None:
+            https_content += f" ipv6hint={ip6}"
+
+        for name in (get_domain(), "*"):
+            dns_records.append(
+                ServiceDnsRecord(
+                    type="HTTPS",
+                    name=name,
+                    content=https_content,
+                    ttl=3600,
+                    display_name="HTTPS record",
+                ),
+            )
 
         for service in await ServiceManager.get_enabled_services():
             dns_records += service.get_dns_records(ip4, ip6)
