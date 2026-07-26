@@ -3,13 +3,14 @@
 # pylint: disable=missing-function-docstring
 
 import asyncio
-from json import JSONDecodeError
+import json
+import os
 from types import SimpleNamespace
+from unittest.mock import call as mocker_call
 
 import httpx
 import pytest
 
-from selfprivacy_api.exceptions.users import UserAlreadyExists, UserOrGroupNotFound
 from selfprivacy_api.exceptions.kanidm import (
     FailedToGetValidKanidmToken,
     KanidmCliSubprocessError,
@@ -18,81 +19,47 @@ from selfprivacy_api.exceptions.kanidm import (
     KanidmReturnEmptyResponse,
     KanidmReturnUnknownResponseType,
 )
+from selfprivacy_api.exceptions.users import UserAlreadyExists, UserOrGroupNotFound
 from selfprivacy_api.utils.kanidm import (
     REDIS_TOKEN_KEY,
     KanidmAdminToken,
-    validate_kanidm_response_type,
+    kanidm_client,
     send_kanidm_query,
+    validate_kanidm_response_type,
 )
+from selfprivacy_api.utils.redis_pool import RedisPool
+
+LOGIN_COMMAND = ["kanidm", "login", "-D", "idm_admin"]
+GENERATE_COMMAND = [
+    "kanidm",
+    "service-account",
+    "api-token",
+    "generate",
+    "--readwrite",
+    "sp.selfprivacy-api.service-account",
+    "kanidm_service_account_token",
+]
+RECOVER_COMMAND = [
+    "kanidmd",
+    "scripting",
+    "recover-account",
+    "idm_admin",
+    "-c",
+    "/etc/kanidm/server.toml",
+]
 
 
-class DummyRedis:
-    def __init__(self, initial: dict | None = None):
-        self.storage = initial or {}
-        self.set_calls = []
-        self.delete_calls = []
-
-    async def get(self, key: str):
-        return self.storage.get(key)
-
-    async def set(self, key: str, value: str):
-        self.storage[key] = value
-        self.set_calls.append((key, value))
-
-    async def delete(self, key: str):
-        self.storage.pop(key, None)
-        self.delete_calls.append(key)
+@pytest.fixture
+async def redis():
+    connection = RedisPool().get_connection_async()
+    await connection.delete(REDIS_TOKEN_KEY)
+    yield connection
+    await connection.delete(REDIS_TOKEN_KEY)
+    await connection.aclose()
 
 
-class DummyResponse:
-    def __init__(self, status_code: int, json_data, text: str = ""):
-        self.status_code = status_code
-        self._json_data = json_data
-        self.text = text
-
-    def json(self):
-        if isinstance(self._json_data, Exception):
-            raise self._json_data
-        return self._json_data
-
-
-class DummyAsyncClient:
-    def __init__(
-        self,
-        *,
-        request_response: DummyResponse | None = None,
-        request_error: Exception | None = None,
-        get_response: DummyResponse | None = None,
-        get_error: Exception | None = None,
-    ):
-        self.request_response = request_response
-        self.request_error = request_error
-        self.get_response = get_response
-        self.get_error = get_error
-        self.request_calls = []
-        self.get_calls = []
-
-    async def __aenter__(self):
-        return self
-
-    async def __aexit__(self, exc_type, exc, tb):
-        return False
-
-    async def request(self, method, endpoint, **kwargs):
-        self.request_calls.append((method, endpoint, kwargs))
-        if self.request_error is not None:
-            raise self.request_error
-        return self.request_response
-
-    async def get(self, endpoint, **kwargs):
-        self.get_calls.append((endpoint, kwargs))
-        if self.get_error is not None:
-            raise self.get_error
-        return self.get_response
-
-
-class DummyProcess:
-    def __init__(self, stdout: bytes, stderr: bytes, returncode: int):
+class FakeProcess:
+    def __init__(self, stdout: bytes = b"", stderr: bytes = b"", returncode: int = 0):
         self._stdout = stdout
         self._stderr = stderr
         self.returncode = returncode
@@ -101,41 +68,39 @@ class DummyProcess:
         return self._stdout, self._stderr
 
 
-def patch_redis_pool(mocker, redis: DummyRedis):
-    mocker.patch(
-        "selfprivacy_api.utils.kanidm.RedisPool",
-        return_value=SimpleNamespace(get_connection_async=lambda: redis),
-    )
-
-
-def patch_async_client(mocker, client: DummyAsyncClient):
-    mocker.patch(
-        "selfprivacy_api.utils.kanidm.kanidm_client",
-        return_value=client,
-    )
-
-
 @pytest.fixture
-def get_domain_mock(mocker):
-    mock = mocker.patch(
-        "selfprivacy_api.utils.kanidm.get_domain",
-        return_value="example.org",
+def fake_kanidm_cli(mocker):
+    """
+    Patches asyncio.create_subprocess_exec at the module lookup site.
+    Feed it FakeProcess objects via `.processes`; it records exact argv in
+    `.calls` and the KANIDM_PASSWORD env value at call time in
+    `.env_passwords`.
+    """
+    state = SimpleNamespace(processes=[], calls=[], env_passwords=[])
+
+    async def fake_exec(*args, **kwargs):
+        state.calls.append((args, kwargs))
+        state.env_passwords.append(os.environ.get("KANIDM_PASSWORD"))
+        return state.processes.pop(0)
+
+    mocker.patch(
+        "selfprivacy_api.utils.kanidm.asyncio.create_subprocess_exec",
+        new=fake_exec,
     )
-    return mock
+    return state
 
 
-@pytest.fixture
-def kanidm_admin_token_get_mock(mocker):
-    mock = mocker.patch(
-        "selfprivacy_api.utils.kanidm.KanidmAdminToken.get",
-        new=mocker.AsyncMock(return_value="token-123"),
-    )
-    return mock
+# --- Response validation ------------------------------------------------------
 
 
 def test_validate_kanidm_response_type_raises_for_none():
     with pytest.raises(KanidmReturnEmptyResponse):
-        validate_kanidm_response_type("dict", None, "person/root", "GET")
+        validate_kanidm_response_type(
+            data_type="dict",
+            response_data=None,
+            endpoint="person/root",
+            method="GET",
+        )
 
 
 @pytest.mark.parametrize(
@@ -143,414 +108,538 @@ def test_validate_kanidm_response_type_raises_for_none():
     [
         ("list", {}),
         ("dict", []),
+        ("dict", "some string"),
     ],
 )
 def test_validate_kanidm_response_type_raises_for_unexpected_type(
     data_type, response_data
 ):
     with pytest.raises(KanidmReturnUnknownResponseType):
-        validate_kanidm_response_type(data_type, response_data, "person/root", "GET")
+        validate_kanidm_response_type(
+            data_type=data_type,
+            response_data=response_data,
+            endpoint="person/root",
+            method="GET",
+        )
 
 
-@pytest.mark.asyncio
-async def test_send_kanidm_query_success(
-    mocker, get_domain_mock, kanidm_admin_token_get_mock
-):
-    client = DummyAsyncClient(
-        request_response=DummyResponse(status_code=200, json_data={"ok": True})
+@pytest.mark.parametrize(
+    "data_type,response_data",
+    [
+        ("list", []),
+        ("dict", {"a": 1}),
+    ],
+)
+def test_validate_kanidm_response_type_accepts_expected_types(data_type, response_data):
+    validate_kanidm_response_type(
+        data_type=data_type,
+        response_data=response_data,
+        endpoint="person/root",
+        method="GET",
     )
-    patch_async_client(mocker, client)
+
+
+# --- send_kanidm_query --------------------------------------------------------
+
+
+async def test_send_kanidm_query_success_sends_expected_request(
+    kanidm_api, mock_kanidm_domain, mock_admin_token
+):
+    kanidm_api.respond(200, {"ok": True})
 
     result = await send_kanidm_query("person/root", method="PATCH", data={"a": 1})
 
     assert result == {"ok": True}
-    assert len(client.request_calls) == 1
-    method, endpoint, kwargs = client.request_calls[0]
-    assert method == "PATCH"
-    assert endpoint == "https://auth.example.org/v1/person/root"
-    assert kwargs["json"] == {"a": 1}
-    assert kwargs["headers"]["Authorization"] == "Bearer token-123"
+    assert len(kanidm_api.requests) == 1
+    request = kanidm_api.requests[0]
+    assert request.method == "PATCH"
+    assert str(request.url) == "https://auth.test.tld/v1/person/root"
+    assert json.loads(request.content) == {"a": 1}
+    assert request.headers["authorization"] == "Bearer token-123"
+    assert request.headers["content-type"] == "application/json"
+    assert request.extensions["timeout"]["read"] == 15
 
 
-@pytest.mark.asyncio
-async def test_send_kanidm_query_json_decode_error(
-    mocker, get_domain_mock, kanidm_admin_token_get_mock
+async def test_send_kanidm_query_reuses_one_http_client(
+    kanidm_api, mock_kanidm_domain, mock_admin_token
 ):
-    client = DummyAsyncClient(
-        request_response=DummyResponse(
-            status_code=200,
-            json_data=JSONDecodeError("broken json", "doc", 0),
-        )
-    )
-    patch_async_client(mocker, client)
+    kanidm_api.respond(200, {"ok": 1})
+    kanidm_api.respond(200, {"ok": 2})
+
+    await send_kanidm_query("person/root")
+    await send_kanidm_query("person/root")
+
+    assert kanidm_client() is kanidm_client()
+    assert len(kanidm_api.requests) == 2
+
+
+async def test_send_kanidm_query_non_json_response_raises_query_error(
+    kanidm_api, mock_kanidm_domain, mock_admin_token
+):
+    kanidm_api.respond_raw(httpx.Response(200, content=b"not json"))
 
     with pytest.raises(KanidmQueryError) as error:
         await send_kanidm_query("person/root")
 
-    assert error.value.endpoint == "https://auth.example.org/v1/person/root"
+    assert error.value.endpoint == "https://auth.test.tld/v1/person/root"
     assert error.value.method == "GET"
-    assert "No JSON found in Kanidm response" in str(error.value.description)
+    assert "No JSON found in Kanidm response." in str(error.value.description)
 
 
-@pytest.mark.asyncio
-async def test_send_kanidm_query_request_error(
-    mocker, get_domain_mock, kanidm_admin_token_get_mock
+async def test_send_kanidm_query_connect_error_raises_query_error(
+    kanidm_api, mock_kanidm_domain, mock_admin_token
 ):
-    client = DummyAsyncClient(
-        request_error=httpx.ConnectError(
-            "connection failed", request=httpx.Request("GET", "https://test")
-        )
-    )
-    patch_async_client(mocker, client)
+    kanidm_api.fail(httpx.ConnectError("connection failed"))
 
     with pytest.raises(KanidmQueryError) as error:
         await send_kanidm_query("person/root", method="POST")
 
+    # Transport errors report the relative endpoint before URL formatting is
+    # centralized in KanidmQueryError.
     assert error.value.endpoint == "person/root"
     assert error.value.method == "POST"
     assert "Kanidm is not responding to requests." in str(error.value.description)
+    # transport errors are not retried
+    assert len(kanidm_api.requests) == 1
 
 
-@pytest.mark.asyncio
-async def test_send_kanidm_query_raises_user_already_exists(
-    mocker, get_domain_mock, kanidm_admin_token_get_mock
+async def test_send_kanidm_query_timeout_raises_query_error(
+    kanidm_api, mock_kanidm_domain, mock_admin_token
 ):
-    client = DummyAsyncClient(
-        request_response=DummyResponse(
-            status_code=409,
-            json_data={"conflicting_attributes": ["name"]},
-        )
-    )
-    patch_async_client(mocker, client)
-
-    with pytest.raises(UserAlreadyExists):
-        await send_kanidm_query("person/root")
-
-
-@pytest.mark.asyncio
-async def test_send_kanidm_query_raises_user_or_group_not_found(
-    mocker, get_domain_mock, kanidm_admin_token_get_mock
-):
-    client = DummyAsyncClient(
-        request_response=DummyResponse(status_code=404, json_data="nomatchingentries")
-    )
-    patch_async_client(mocker, client)
-
-    with pytest.raises(UserOrGroupNotFound):
-        await send_kanidm_query("person/root")
-
-
-@pytest.mark.asyncio
-async def test_send_kanidm_query_raises_access_denied_error(
-    mocker, get_domain_mock, kanidm_admin_token_get_mock
-):
-    client = DummyAsyncClient(
-        request_response=DummyResponse(status_code=403, json_data="accessdenied")
-    )
-    patch_async_client(mocker, client)
+    kanidm_api.fail(httpx.TimeoutException("timed out"))
 
     with pytest.raises(KanidmQueryError) as error:
         await send_kanidm_query("person/root")
 
-    assert error.value.endpoint == "https://auth.example.org/v1/person/root"
+    assert "Kanidm is not responding to requests." in str(error.value.description)
+
+
+async def test_send_kanidm_query_duplicate_raises_user_already_exists(
+    kanidm_api, mock_kanidm_domain, mock_admin_token
+):
+    # Real response of a live Kanidm server (captured 2026-07-07):
+    body = {
+        "conflicting_attributes": ["mail", "name", "spn"],
+        "error": "Attribute uniqueness error",
+    }
+    kanidm_api.respond(409, body)
+
+    with pytest.raises(UserAlreadyExists):
+        await send_kanidm_query("person", method="POST", data={})
+
+
+async def test_send_kanidm_query_nomatchingentries_raises_user_or_group_not_found(
+    kanidm_api, mock_kanidm_domain, mock_admin_token
+):
+    kanidm_api.respond(404, "nomatchingentries")
+
+    with pytest.raises(UserOrGroupNotFound):
+        await send_kanidm_query("person/ghost")
+
+
+async def test_send_kanidm_query_accessdenied_raises_query_error(
+    kanidm_api, mock_kanidm_domain, mock_admin_token
+):
+    kanidm_api.respond(403, "accessdenied")
+
+    with pytest.raises(KanidmQueryError) as error:
+        await send_kanidm_query("person/root")
+
     assert "Kanidm access issue" in error.value.error_text
 
 
-@pytest.mark.asyncio
-async def test_send_kanidm_query_raises_failed_to_get_valid_token(
-    mocker, get_domain_mock, kanidm_admin_token_get_mock
+async def test_send_kanidm_query_notauthenticated_retries_once_then_succeeds(
+    redis, kanidm_api, mock_kanidm_domain, mock_admin_token
 ):
-    delete_token = mocker.patch(
-        "selfprivacy_api.utils.kanidm.KanidmAdminToken._delete_kanidm_token_from_db",
-        new=mocker.AsyncMock(),
-    )
-    client = DummyAsyncClient(
-        request_response=DummyResponse(status_code=401, json_data="notauthenticated")
-    )
-    patch_async_client(mocker, client)
+    await redis.set(REDIS_TOKEN_KEY, "rejected-token")
+    kanidm_api.respond(401, "notauthenticated")
+    kanidm_api.respond(200, {"ok": True})
+
+    result = await send_kanidm_query("person/root")
+
+    assert result == {"ok": True}
+    assert len(kanidm_api.requests) == 2
+    # the cached token is dropped before the retry
+    assert await redis.get(REDIS_TOKEN_KEY) is None
+    # attempt 1 uses the cached chain, attempt 2 knows what was rejected
+    assert mock_admin_token.await_args_list == [
+        mocker_call(rejected_token=None),
+        mocker_call(rejected_token="token-123"),
+    ]
+
+
+async def test_send_kanidm_query_notauthenticated_twice_raises_token_error(
+    kanidm_api, mock_kanidm_domain, mock_admin_token
+):
+    kanidm_api.respond(401, "notauthenticated")
+    kanidm_api.respond(401, "notauthenticated")
 
     with pytest.raises(FailedToGetValidKanidmToken):
         await send_kanidm_query("person/root")
 
-    delete_token.assert_awaited_once_with()
+    # no third attempt
+    assert len(kanidm_api.requests) == 2
 
 
-@pytest.mark.asyncio
-async def test_send_kanidm_query_raises_generic_error_for_non_200(
-    mocker, get_domain_mock, kanidm_admin_token_get_mock
+async def test_send_kanidm_query_generic_error_includes_response_text(
+    kanidm_api, mock_kanidm_domain, mock_admin_token
 ):
-    client = DummyAsyncClient(
-        request_response=DummyResponse(
-            status_code=500,
-            json_data={"error": "boom"},
-            text="plain error",
-        )
-    )
-    patch_async_client(mocker, client)
+    kanidm_api.respond(500, {"error": "boom"})
 
     with pytest.raises(KanidmQueryError) as error:
         await send_kanidm_query("person/root")
 
-    assert error.value.endpoint == "https://auth.example.org/v1/person/root"
-    assert "plain error" == error.value.error_text
+    assert error.value.error_text == '{"error": "boom"}'
+    assert error.value.endpoint == "https://auth.test.tld/v1/person/root"
 
 
-@pytest.mark.asyncio
-async def test_kanidm_admin_token_get_returns_valid_redis_token(mocker):
-    redis = DummyRedis(initial={REDIS_TOKEN_KEY: "redis-token"})
-    patch_redis_pool(mocker, redis)
-    is_token_valid = mocker.patch(
-        "selfprivacy_api.utils.kanidm.KanidmAdminToken._is_token_valid",
-        new=mocker.AsyncMock(return_value=True),
-    )
-    get_from_env = mocker.patch(
-        "selfprivacy_api.utils.kanidm.KanidmAdminToken._get_admin_token_from_env",
-        new=mocker.AsyncMock(),
-    )
+# --- KanidmAdminToken.get() -----------------------------------------------------
+
+
+async def test_get_returns_redis_token_without_validation(
+    redis, kanidm_api, mock_kanidm_domain
+):
+    # Tokens are used optimistically; a rejected token is handled by
+    # send_kanidm_query's retry, not by pre-validation here.
+    await redis.set(REDIS_TOKEN_KEY, "redis-token")
 
     token = await KanidmAdminToken.get()
 
     assert token == "redis-token"
-    is_token_valid.assert_not_awaited()
-    get_from_env.assert_not_awaited()
+    assert kanidm_api.requests == []
 
 
-@pytest.mark.asyncio
-async def test_kanidm_admin_token_get_falls_back_to_env_token(mocker):
-    redis = DummyRedis()
-    patch_redis_pool(mocker, redis)
-    mocker.patch(
-        "selfprivacy_api.utils.kanidm.KanidmAdminToken._is_token_valid",
-        new=mocker.AsyncMock(return_value=True),
+async def test_get_without_redis_token_reads_env_file(
+    redis, kanidm_api, mock_kanidm_domain, monkeypatch, tmp_path
+):
+    token_file = tmp_path / "kanidm.token"
+    token_file.write_text("  env-token  \n")
+    monkeypatch.setenv("KANIDM_ADMIN_TOKEN_FILE", str(token_file))
+
+    token = await KanidmAdminToken.get()
+
+    assert token == "env-token"  # stripped
+    assert await redis.get(REDIS_TOKEN_KEY) == "env-token"
+    assert kanidm_api.requests == []
+
+
+# `rejected_token` is passed by send_kanidm_query's retry after Kanidm refuses the
+# cached token. The Redis cache is always skipped; the env token is adopted
+# only if it differs from the rejected one AND passes a probe request.
+
+
+async def test_get_rejected_token_adopts_rotated_env_token(
+    redis, kanidm_api, mock_kanidm_domain, monkeypatch, tmp_path, fake_kanidm_cli
+):
+    token_file = tmp_path / "kanidm.token"
+    token_file.write_text("rotated-env-token\n")
+    monkeypatch.setenv("KANIDM_ADMIN_TOKEN_FILE", str(token_file))
+    kanidm_api.respond(200, {"user": "root"})  # the probe
+
+    token = await KanidmAdminToken.get(rejected_token="rejected-token")
+
+    assert token == "rotated-env-token"
+    assert await redis.get(REDIS_TOKEN_KEY) == "rotated-env-token"
+    assert len(kanidm_api.requests) == 1
+    probe = kanidm_api.requests[0]
+    assert probe.method == "GET"
+    assert str(probe.url) == "https://auth.test.tld/v1/person/root"
+    assert probe.headers["authorization"] == "Bearer rotated-env-token"
+    # no idm_admin password reset, no token minted
+    assert fake_kanidm_cli.calls == []
+
+
+async def test_get_rejected_token_matching_env_regenerates_without_probe(
+    redis, kanidm_api, mock_kanidm_domain, monkeypatch, tmp_path, fake_kanidm_cli
+):
+    token_file = tmp_path / "kanidm.token"
+    token_file.write_text("rejected-token\n")
+    monkeypatch.setenv("KANIDM_ADMIN_TOKEN_FILE", str(token_file))
+    fake_kanidm_cli.processes.extend(
+        [
+            FakeProcess(stdout=b'{"output": "recovered-password"}'),
+            FakeProcess(),
+            FakeProcess(stdout=b"generated-token\n"),
+        ]
     )
-    mocker.patch(
-        "selfprivacy_api.utils.kanidm.KanidmAdminToken._get_admin_token_from_env",
-        new=mocker.AsyncMock(return_value="env-token"),
+
+    token = await KanidmAdminToken.get(rejected_token="rejected-token")
+
+    assert token == "generated-token"
+    assert await redis.get(REDIS_TOKEN_KEY) == "generated-token"
+    # probing the very token that was just rejected would be pointless
+    assert kanidm_api.requests == []
+    assert fake_kanidm_cli.calls[0][0] == tuple(RECOVER_COMMAND)
+
+
+async def test_get_rejected_token_with_unusable_env_token_regenerates(
+    redis, kanidm_api, mock_kanidm_domain, monkeypatch, tmp_path, fake_kanidm_cli
+):
+    token_file = tmp_path / "kanidm.token"
+    token_file.write_text("stale-env-token\n")
+    monkeypatch.setenv("KANIDM_ADMIN_TOKEN_FILE", str(token_file))
+    kanidm_api.respond(401, "notauthenticated")  # the probe fails
+    fake_kanidm_cli.processes.extend(
+        [
+            FakeProcess(stdout=b'{"output": "recovered-password"}'),
+            FakeProcess(),
+            FakeProcess(stdout=b"generated-token\n"),
+        ]
     )
-    reset_password = mocker.patch(
-        "selfprivacy_api.utils.kanidm.KanidmAdminToken._reset_idm_admin_password"
+
+    token = await KanidmAdminToken.get(rejected_token="rejected-token")
+
+    assert token == "generated-token"
+    assert await redis.get(REDIS_TOKEN_KEY) == "generated-token"
+    assert len(kanidm_api.requests) == 1  # exactly one probe, then regen
+
+
+async def test_get_rejected_token_without_env_regenerates(
+    redis, kanidm_api, mock_kanidm_domain, monkeypatch, fake_kanidm_cli
+):
+    await redis.set(REDIS_TOKEN_KEY, "rejected-token")  # skipped entirely
+    monkeypatch.delenv("KANIDM_ADMIN_TOKEN_FILE", raising=False)
+    fake_kanidm_cli.processes.extend(
+        [
+            FakeProcess(stdout=b'{"output": "recovered-password"}'),
+            FakeProcess(),
+            FakeProcess(stdout=b"generated-token\n"),
+        ]
+    )
+
+    token = await KanidmAdminToken.get(rejected_token="rejected-token")
+
+    assert token == "generated-token"
+    assert await redis.get(REDIS_TOKEN_KEY) == "generated-token"
+    assert kanidm_api.requests == []
+
+
+async def test_get_regenerates_token_when_no_sources(
+    redis, kanidm_api, mock_kanidm_domain, monkeypatch, fake_kanidm_cli
+):
+    monkeypatch.delenv("KANIDM_ADMIN_TOKEN_FILE", raising=False)
+    fake_kanidm_cli.processes.extend(
+        [
+            FakeProcess(stdout=b'{"output": "recovered-password"}'),  # recover
+            FakeProcess(),  # login
+            FakeProcess(stdout=b"info line\ngenerated-token\n"),  # generate
+        ]
     )
 
     token = await KanidmAdminToken.get()
 
-    assert token == "env-token"
-    reset_password.assert_not_awaited()
+    assert token == "generated-token"
+    assert await redis.get(REDIS_TOKEN_KEY) == "generated-token"
+    # the freshly generated token is returned without any HTTP validation
+    assert kanidm_api.requests == []
+    assert [call[0] for call in fake_kanidm_cli.calls] == [
+        tuple(RECOVER_COMMAND),
+        tuple(LOGIN_COMMAND),
+        tuple(GENERATE_COMMAND),
+    ]
+    assert fake_kanidm_cli.env_passwords == [
+        None,
+        "recovered-password",
+        "recovered-password",
+    ]
 
 
-@pytest.mark.asyncio
-async def test_kanidm_admin_token_get_regenerates_token_when_needed(mocker):
-    redis = DummyRedis(initial={REDIS_TOKEN_KEY: "old-token"})
-    patch_redis_pool(mocker, redis)
-    mocker.patch(
-        "selfprivacy_api.utils.kanidm.KanidmAdminToken._is_token_valid",
-        new=mocker.AsyncMock(return_value=False),
-    )
-    mocker.patch(
-        "selfprivacy_api.utils.kanidm.KanidmAdminToken._get_admin_token_from_env",
-        new=mocker.AsyncMock(return_value=None),
-    )
-    reset_password = mocker.patch(
-        "selfprivacy_api.utils.kanidm.KanidmAdminToken._reset_idm_admin_password",
-        return_value="new-password",
-    )
-    create_and_save = mocker.patch(
-        "selfprivacy_api.utils.kanidm.KanidmAdminToken._create_and_save_token",
-        new=mocker.AsyncMock(return_value="new-token"),
-    )
-
-    token = await KanidmAdminToken.get(rejected_token="old-token")
-
-    assert token == "new-token"
-    reset_password.assert_awaited_once_with()
-    create_and_save.assert_awaited_once_with("new-password")
-
-
-@pytest.mark.asyncio
-async def test_get_admin_token_from_env_missing_env_var(mocker, monkeypatch):
-    redis = DummyRedis()
-    patch_redis_pool(mocker, redis)
-    monkeypatch.delenv("KANIDM_ADMIN_TOKEN_FILE", raising=False)
-
-    token = await KanidmAdminToken._get_admin_token_from_env()
-
-    assert token is None
-    assert redis.set_calls == []
-
-
-@pytest.mark.asyncio
-async def test_get_admin_token_from_env_reads_file_and_saves_to_redis(
-    mocker, monkeypatch, tmp_path
+async def test_get_regenerates_token_when_env_file_missing(
+    redis, kanidm_api, mock_kanidm_domain, monkeypatch, tmp_path, fake_kanidm_cli
 ):
-    redis = DummyRedis()
-    patch_redis_pool(mocker, redis)
+    monkeypatch.setenv("KANIDM_ADMIN_TOKEN_FILE", str(tmp_path / "missing.token"))
+    fake_kanidm_cli.processes.extend(
+        [
+            FakeProcess(stdout=b'{"output": "recovered-password"}'),
+            FakeProcess(),
+            FakeProcess(stdout=b"generated-token\n"),
+        ]
+    )
+
+    token = await KanidmAdminToken.get()
+
+    assert token == "generated-token"
+    assert await redis.get(REDIS_TOKEN_KEY) == "generated-token"
+
+
+async def test_get_regenerates_token_when_env_file_empty(
+    redis, kanidm_api, mock_kanidm_domain, monkeypatch, tmp_path, fake_kanidm_cli
+):
     token_file = tmp_path / "kanidm.token"
-    token_file.write_text("  test-token  ")
+    token_file.write_text(" \n\t ")
+    monkeypatch.setenv("KANIDM_ADMIN_TOKEN_FILE", str(token_file))
+    fake_kanidm_cli.processes.extend(
+        [
+            FakeProcess(stdout=b'{"output": "recovered-password"}'),
+            FakeProcess(),
+            FakeProcess(stdout=b"generated-token\n"),
+        ]
+    )
+
+    token = await KanidmAdminToken.get()
+
+    assert token == "generated-token"
+    assert await redis.get(REDIS_TOKEN_KEY) == "generated-token"
+
+
+# --- _get_admin_token_from_env --------------------------------------------------
+
+
+async def test_get_admin_token_from_env_reads_strips_and_caches(
+    redis, monkeypatch, tmp_path
+):
+    token_file = tmp_path / "kanidm.token"
+    token_file.write_text("  test-token  \n")
     monkeypatch.setenv("KANIDM_ADMIN_TOKEN_FILE", str(token_file))
 
     token = await KanidmAdminToken._get_admin_token_from_env()
 
     assert token == "test-token"
-    assert redis.storage[REDIS_TOKEN_KEY] == "test-token"
-    assert redis.set_calls == [(REDIS_TOKEN_KEY, "test-token")]
+    assert await redis.get(REDIS_TOKEN_KEY) == "test-token"
 
 
-@pytest.mark.asyncio
-async def test_get_admin_token_from_env_empty_file(mocker, monkeypatch, tmp_path):
-    redis = DummyRedis()
-    patch_redis_pool(mocker, redis)
-    token_file = tmp_path / "kanidm.token"
-    token_file.write_text(" \n\t ")
-    monkeypatch.setenv("KANIDM_ADMIN_TOKEN_FILE", str(token_file))
+async def test_get_admin_token_from_env_returns_none_without_env_var(
+    redis, monkeypatch
+):
+    monkeypatch.delenv("KANIDM_ADMIN_TOKEN_FILE", raising=False)
 
     token = await KanidmAdminToken._get_admin_token_from_env()
 
     assert token is None
-    assert redis.set_calls == []
+    assert await redis.get(REDIS_TOKEN_KEY) is None
 
 
-@pytest.mark.asyncio
-async def test_get_admin_token_from_env_missing_file(mocker, monkeypatch, tmp_path):
-    redis = DummyRedis()
-    patch_redis_pool(mocker, redis)
-    missing_file = tmp_path / "missing.token"
-    monkeypatch.setenv("KANIDM_ADMIN_TOKEN_FILE", str(missing_file))
-
-    token = await KanidmAdminToken._get_admin_token_from_env()
-
-    assert token is None
-    assert redis.set_calls == []
+# --- _create_and_save_token -----------------------------------------------------
 
 
-@pytest.mark.asyncio
-async def test_create_and_save_token_success(mocker):
-    redis = DummyRedis()
-    patch_redis_pool(mocker, redis)
-
-    login_proc = DummyProcess(stdout=b"", stderr=b"", returncode=0)
-    generate_proc = DummyProcess(
-        stdout=b"some line\ngenerated-token\n", stderr=b"", returncode=0
-    )
-    create_subprocess = mocker.patch(
-        "selfprivacy_api.utils.kanidm.asyncio.create_subprocess_exec",
-        side_effect=[login_proc, generate_proc],
+async def test_create_and_save_token_success(redis, fake_kanidm_cli):
+    fake_kanidm_cli.processes.extend(
+        [
+            FakeProcess(),  # login
+            FakeProcess(stdout=b"some line\ngenerated-token\n"),  # generate
+        ]
     )
 
     token = await KanidmAdminToken._create_and_save_token("secret-password")
 
+    # the token is the last line of the generate command's stdout
     assert token == "generated-token"
-    assert redis.storage[REDIS_TOKEN_KEY] == "generated-token"
-    assert create_subprocess.call_count == 2
-    login_call = create_subprocess.call_args_list[0]
-    generate_call = create_subprocess.call_args_list[1]
-    assert list(login_call[0][:4]) == ["kanidm", "login", "-D", "idm_admin"]
-    assert list(generate_call[0]) == [
-        "kanidm",
-        "service-account",
-        "api-token",
-        "generate",
-        "--readwrite",
-        "sp.selfprivacy-api.service-account",
-        "kanidm_service_account_token",
-    ]
+    assert await redis.get(REDIS_TOKEN_KEY) == "generated-token"
+
+    login_args, login_kwargs = fake_kanidm_cli.calls[0]
+    assert login_args == tuple(LOGIN_COMMAND)
+    assert login_kwargs == {
+        "stdout": asyncio.subprocess.PIPE,
+        "stderr": asyncio.subprocess.PIPE,
+    }
+
+    generate_args, _ = fake_kanidm_cli.calls[1]
+    assert generate_args == tuple(GENERATE_COMMAND)
+
+    # KANIDM_PASSWORD is exported only for the duration of the CLI calls
+    assert fake_kanidm_cli.env_passwords == ["secret-password", "secret-password"]
+    assert "KANIDM_PASSWORD" not in os.environ
 
 
-@pytest.mark.asyncio
-async def test_create_and_save_token_raises_on_login_error(mocker):
-    redis = DummyRedis()
-    patch_redis_pool(mocker, redis)
-    failing_login_proc = DummyProcess(stdout=b"", stderr=b"login failed", returncode=1)
-    mocker.patch(
-        "selfprivacy_api.utils.kanidm.asyncio.create_subprocess_exec",
-        return_value=failing_login_proc,
+async def test_create_and_save_token_login_failure_raises(redis, fake_kanidm_cli):
+    fake_kanidm_cli.processes.append(FakeProcess(stderr=b"login failed", returncode=1))
+
+    with pytest.raises(KanidmCliSubprocessError) as error:
+        await KanidmAdminToken._create_and_save_token("secret-password")
+
+    assert error.value.command == "kanidm login -D idm_admin"
+    assert "login failed" in error.value.error
+    assert len(fake_kanidm_cli.calls) == 1  # generate was never attempted
+    assert await redis.get(REDIS_TOKEN_KEY) is None
+
+
+async def test_create_and_save_token_generate_failure_raises(redis, fake_kanidm_cli):
+    fake_kanidm_cli.processes.extend(
+        [
+            FakeProcess(),  # login succeeds
+            FakeProcess(stderr=b"generate failed", returncode=1),
+        ]
     )
 
     with pytest.raises(KanidmCliSubprocessError) as error:
         await KanidmAdminToken._create_and_save_token("secret-password")
 
-    assert "kanidm login -D idm_admin" == error.value.command
-    assert "login failed" in error.value.error
+    assert error.value.command == " ".join(GENERATE_COMMAND)
+    assert "generate failed" in error.value.error
+    assert await redis.get(REDIS_TOKEN_KEY) is None
 
 
-@pytest.mark.asyncio
-async def test_reset_idm_admin_password_returns_parsed_password(mocker):
-    create_subprocess = mocker.patch(
-        "selfprivacy_api.utils.kanidm.asyncio.create_subprocess_exec",
-        return_value=DummyProcess(
-            stdout=b'{"output":"fresh-password"}',
-            stderr=b"",
-            returncode=0,
-        ),
-    )
+# --- _reset_idm_admin_password --------------------------------------------------
+
+
+async def test_reset_password_returns_parsed_password(fake_kanidm_cli):
+    fake_kanidm_cli.processes.append(FakeProcess(stdout=b'{"output": "new-password"}'))
 
     password = await KanidmAdminToken._reset_idm_admin_password()
 
-    assert password == "fresh-password"
-    create_subprocess.assert_called_once_with(
-        "kanidmd",
-        "scripting",
-        "recover-account",
-        "idm_admin",
-        "-c",
-        "/etc/kanidm/server.toml",
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-    )
+    assert password == "new-password"
+    assert fake_kanidm_cli.calls[0][0] == tuple(RECOVER_COMMAND)
 
 
-@pytest.mark.asyncio
-async def test_reset_idm_admin_password_raises_when_password_missing(mocker):
-    mocker.patch(
-        "selfprivacy_api.utils.kanidm.asyncio.create_subprocess_exec",
-        return_value=DummyProcess(
-            stdout=b'{"status":"ok"}',
-            stderr=b"",
-            returncode=0,
-        ),
+async def test_reset_password_non_json_output_raises(fake_kanidm_cli):
+    fake_kanidm_cli.processes.append(FakeProcess(stdout=b"no json in this output"))
+
+    with pytest.raises(KanidmDidNotReturnAdminPassword) as error:
+        await KanidmAdminToken._reset_idm_admin_password()
+
+    assert error.value.command == " ".join(RECOVER_COMMAND)
+    assert "no json in this output" in error.value.output
+
+
+async def test_reset_password_missing_output_field_raises(fake_kanidm_cli):
+    fake_kanidm_cli.processes.append(
+        FakeProcess(stdout=b'{"password": "new-password"}')
     )
 
     with pytest.raises(KanidmDidNotReturnAdminPassword):
         await KanidmAdminToken._reset_idm_admin_password()
 
 
-@pytest.mark.asyncio
-async def test_is_token_valid_returns_true_for_200_response(mocker, get_domain_mock):
-    client = DummyAsyncClient(
-        get_response=DummyResponse(status_code=200, json_data={"user": "root"})
-    )
-    patch_async_client(mocker, client)
+async def test_reset_password_empty_output_field_raises(fake_kanidm_cli):
+    fake_kanidm_cli.processes.append(FakeProcess(stdout=b'{"output": ""}'))
 
-    result = await KanidmAdminToken._is_token_valid("valid-token")
-
-    assert result is True
-    assert len(client.get_calls) == 1
-    endpoint, kwargs = client.get_calls[0]
-    assert endpoint == "https://auth.example.org/v1/person/root"
-    assert kwargs["headers"]["Authorization"] == "Bearer valid-token"
+    with pytest.raises(KanidmDidNotReturnAdminPassword):
+        await KanidmAdminToken._reset_idm_admin_password()
 
 
-@pytest.mark.asyncio
-async def test_is_token_valid_returns_false_for_notauthenticated(
-    mocker, get_domain_mock
-):
-    client = DummyAsyncClient(
-        get_response=DummyResponse(status_code=401, json_data="notauthenticated")
-    )
-    patch_async_client(mocker, client)
-
-    result = await KanidmAdminToken._is_token_valid("invalid-token")
-
-    assert result is False
+# --- _is_token_valid ------------------------------------------------------------
 
 
-@pytest.mark.asyncio
-async def test_is_token_valid_returns_false_on_connection_issue(
-    mocker, get_domain_mock
-):
-    client = DummyAsyncClient(
-        get_error=httpx.ConnectError(
-            "connection failed", request=httpx.Request("GET", "https://test")
-        )
-    )
-    patch_async_client(mocker, client)
+async def test_is_token_valid_true_on_200(kanidm_api, mock_kanidm_domain):
+    kanidm_api.respond(200, {"user": "root"})
 
-    assert await KanidmAdminToken._is_token_valid("any-token") is False
+    assert await KanidmAdminToken._is_token_valid("probe-token") is True
+
+    assert len(kanidm_api.requests) == 1
+    probe = kanidm_api.requests[0]
+    assert probe.method == "GET"
+    assert str(probe.url) == "https://auth.test.tld/v1/person/root"
+    assert probe.headers["authorization"] == "Bearer probe-token"
+
+
+async def test_is_token_valid_false_on_non_200(kanidm_api, mock_kanidm_domain):
+    kanidm_api.respond(401, "notauthenticated")
+
+    assert await KanidmAdminToken._is_token_valid("probe-token") is False
+
+
+async def test_is_token_valid_false_on_http_error(kanidm_api, mock_kanidm_domain):
+    kanidm_api.fail(httpx.ConnectError("connection failed"))
+
+    assert await KanidmAdminToken._is_token_valid("probe-token") is False
+
+
+# --- _delete_kanidm_token_from_db -----------------------------------------------
+
+
+async def test_delete_kanidm_token_from_db(redis):
+    await redis.set(REDIS_TOKEN_KEY, "some-token")
+
+    await KanidmAdminToken._delete_kanidm_token_from_db()
+
+    assert await redis.get(REDIS_TOKEN_KEY) is None
