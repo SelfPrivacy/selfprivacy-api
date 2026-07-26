@@ -448,9 +448,9 @@ async def test_create_and_save_token_success(mocker):
         "service-account",
         "api-token",
         "generate",
+        "--readwrite",
         "sp.selfprivacy-api.service-account",
         "kanidm_service_account_token",
-        "--readwrite",
     ]
 
 

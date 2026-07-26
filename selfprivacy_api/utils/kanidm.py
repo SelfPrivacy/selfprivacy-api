@@ -310,9 +310,9 @@ class KanidmAdminToken:
                     "service-account",
                     "api-token",
                     "generate",
+                    "--readwrite",
                     "sp.selfprivacy-api.service-account",
                     "kanidm_service_account_token",
-                    "--readwrite",
                 ]
 
                 proc = await asyncio.create_subprocess_exec(

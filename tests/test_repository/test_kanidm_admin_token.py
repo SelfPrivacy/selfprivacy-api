@@ -25,9 +25,9 @@ GENERATE_COMMAND = [
     "service-account",
     "api-token",
     "generate",
+    "--readwrite",
     "sp.selfprivacy-api.service-account",
     "kanidm_service_account_token",
-    "--readwrite",
 ]
 RECOVER_COMMAND = [
     "kanidmd",
