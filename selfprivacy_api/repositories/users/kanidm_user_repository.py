@@ -1,5 +1,3 @@
-import gettext
-import logging
 from typing import Optional
 
 from selfprivacy_api.exceptions.kanidm import (
@@ -15,17 +13,12 @@ from selfprivacy_api.repositories.users.abstract_user_repository import (
 from selfprivacy_api.services import KANIDM_A_RECORD
 from selfprivacy_api.utils import get_domain
 from selfprivacy_api.utils.kanidm import (
-    validate_kanidm_response_type,
     send_kanidm_query,
+    validate_kanidm_response_type,
 )
 
 SP_ADMIN_GROUPS = ["sp.admins"]
 SP_DEFAULT_GROUPS = ["sp.full_users"]
-
-
-logger = logging.getLogger(__name__)
-
-_ = gettext.gettext
 
 
 class KanidmUserRepository(AbstractUserRepository):
