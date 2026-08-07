@@ -113,6 +113,7 @@ in
             // {
               HOME = "/root";
               PYTHONUNBUFFERED = "1";
+              SSL_CERT_FILE = config.security.pki.caBundle;
               SP_API_OTEL_ENABLED = toString cfg.opentelemetry.enable;
               KANIDM_ADMIN_TOKEN_FILE =
                 sp.passthru.auth.mkServiceAccountTokenFP unix-user;
@@ -173,6 +174,7 @@ in
             // {
               HOME = "/root";
               PYTHONUNBUFFERED = "1";
+              SSL_CERT_FILE = config.security.pki.caBundle;
               SP_API_OTEL_ENABLED = toString cfg.opentelemetry.enable;
             }
             // config.networking.proxy.envVars
