@@ -148,7 +148,6 @@ async def send_kanidm_query(
                 and response.status_code != 200
                 and response_data == "notauthenticated"
             ):
-                await KanidmAdminToken._delete_kanidm_token_from_db()
                 span.add_event("Kanidm token rejected, retrying with a new one")
                 rejected_token = token
                 continue
@@ -216,43 +215,48 @@ class KanidmAdminToken:
         _reset_idm_admin_password() -> str:
             Resets the Kanidm admin password and returns the new password.
 
-        _delete_kanidm_token_from_db() -> None:
-            Deletes the admin token from Redis.
-
         _is_token_valid() -> bool:
             Sends a request to kanidm to check the validity of the token.
     """
 
+    _regeneration_lock = asyncio.Lock()
+
     @staticmethod
     async def get(rejected_token: Optional[str] = None) -> str:
-        if rejected_token is None:
-            redis = RedisPool().get_connection_async()
-            kanidm_admin_token: str | None = await redis.get(REDIS_TOKEN_KEY)
-            if kanidm_admin_token:
-                return kanidm_admin_token
+        redis = RedisPool().get_connection_async()
+        kanidm_admin_token: str | None = await redis.get(REDIS_TOKEN_KEY)
+        if kanidm_admin_token and kanidm_admin_token != rejected_token:
+            return kanidm_admin_token
 
-            logging.warning(
+        if rejected_token is None:
+            logger.warning(
                 "No Kanidm admin token in Redis. "
                 "Trying to retrieve it from the environment."
             )
 
         new_kanidm_admin_token = await KanidmAdminToken._get_admin_token_from_env()
-        if new_kanidm_admin_token is not None:
-            if rejected_token is None:
-                return new_kanidm_admin_token
-            if new_kanidm_admin_token != rejected_token and (
-                await KanidmAdminToken._is_token_valid(new_kanidm_admin_token)
-            ):
-                return new_kanidm_admin_token
+        if new_kanidm_admin_token is not None and (
+            rejected_token is None
+            or (
+                new_kanidm_admin_token != rejected_token
+                and await KanidmAdminToken._is_token_valid(new_kanidm_admin_token)
+            )
+        ):
+            await redis.set(REDIS_TOKEN_KEY, new_kanidm_admin_token)
+            return new_kanidm_admin_token
 
-        logging.warning("The Kanidm admin token is missing or invalid. Regenerating.")
-
-        kanidm_admin_password = await KanidmAdminToken._reset_idm_admin_password()
-        return await KanidmAdminToken._create_and_save_token(kanidm_admin_password)
+        async with KanidmAdminToken._regeneration_lock:
+            kanidm_admin_token = await redis.get(REDIS_TOKEN_KEY)
+            if kanidm_admin_token and kanidm_admin_token != rejected_token:
+                return kanidm_admin_token
+            logger.warning(
+                "The Kanidm admin token is missing or invalid. Regenerating."
+            )
+            kanidm_admin_password = await KanidmAdminToken._reset_idm_admin_password()
+            return await KanidmAdminToken._create_and_save_token(kanidm_admin_password)
 
     @staticmethod
     async def _get_admin_token_from_env() -> Optional[str]:
-        redis = RedisPool().get_connection_async()
         token_path = os.environ.get("KANIDM_ADMIN_TOKEN_FILE")
         if not token_path:
             logger.warning(
@@ -270,7 +274,6 @@ class KanidmAdminToken:
                         "The Kanidm admin token will be generated."
                     )
                     return None
-                await redis.set(REDIS_TOKEN_KEY, token)
                 return token
         except FileNotFoundError:
             logger.warning(
@@ -402,8 +405,3 @@ class KanidmAdminToken:
         except httpx.HTTPError:
             return False
         return response.status_code == 200
-
-    @staticmethod
-    async def _delete_kanidm_token_from_db() -> None:
-        redis = RedisPool().get_connection_async()
-        await redis.delete(REDIS_TOKEN_KEY)

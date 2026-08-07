@@ -72,8 +72,8 @@ class FakeProcess:
 def fake_kanidm_cli(mocker):
     """
     Patches asyncio.create_subprocess_exec at the module lookup site.
-    Feed it FakeProcess objects via `.processes`; it records exact argv in
-    `.calls` and the KANIDM_PASSWORD env value at call time in
+    Feed it FakeProcess objects or exceptions via `.processes`; it records
+    exact argv in `.calls` and the KANIDM_PASSWORD env value at call time in
     `.env_passwords`.
     """
     state = SimpleNamespace(processes=[], calls=[], env_passwords=[])
@@ -81,7 +81,10 @@ def fake_kanidm_cli(mocker):
     async def fake_exec(*args, **kwargs):
         state.calls.append((args, kwargs))
         state.env_passwords.append(os.environ.get("KANIDM_PASSWORD"))
-        return state.processes.pop(0)
+        result = state.processes.pop(0)
+        if isinstance(result, Exception):
+            raise result
+        return result
 
     mocker.patch(
         "selfprivacy_api.utils.kanidm.asyncio.create_subprocess_exec",
@@ -251,7 +254,8 @@ async def test_send_kanidm_query_accessdenied_raises_query_error(
 async def test_send_kanidm_query_notauthenticated_retries_once_then_succeeds(
     redis, kanidm_api, mock_kanidm_domain, mock_admin_token
 ):
-    await redis.set(REDIS_TOKEN_KEY, "rejected-token")
+    await redis.set(REDIS_TOKEN_KEY, "newer-token")
+    mock_admin_token.side_effect = ["token-123", "newer-token"]
     kanidm_api.respond(401, "notauthenticated")
     kanidm_api.respond(200, {"ok": True})
 
@@ -259,8 +263,8 @@ async def test_send_kanidm_query_notauthenticated_retries_once_then_succeeds(
 
     assert result == {"ok": True}
     assert len(kanidm_api.requests) == 2
-    # the cached token is dropped before the retry
-    assert await redis.get(REDIS_TOKEN_KEY) is None
+    # A late rejection of the old token must not delete a newer cached token.
+    assert await redis.get(REDIS_TOKEN_KEY) == "newer-token"
     # attempt 1 uses the cached chain, attempt 2 knows what was rejected
     assert mock_admin_token.await_args_list == [
         mocker_call(rejected_token=None),
@@ -324,8 +328,9 @@ async def test_get_without_redis_token_reads_env_file(
 
 
 # `rejected_token` is passed by send_kanidm_query's retry after Kanidm refuses the
-# cached token. The Redis cache is always skipped; the env token is adopted
-# only if it differs from the rejected one AND passes a probe request.
+# cached token. That exact token is ignored; a newer cached token is reused.
+# An env token is adopted only if it differs from the rejected one and passes
+# a probe request.
 
 
 async def test_get_rejected_token_adopts_rotated_env_token(
@@ -346,6 +351,18 @@ async def test_get_rejected_token_adopts_rotated_env_token(
     assert str(probe.url) == "https://auth.test.tld/v1/person/root"
     assert probe.headers["authorization"] == "Bearer rotated-env-token"
     # no idm_admin password reset, no token minted
+    assert fake_kanidm_cli.calls == []
+
+
+async def test_get_rejected_token_reuses_newer_cached_token(
+    redis, monkeypatch, fake_kanidm_cli
+):
+    await redis.set(REDIS_TOKEN_KEY, "newer-token")
+    monkeypatch.delenv("KANIDM_ADMIN_TOKEN_FILE", raising=False)
+
+    token = await KanidmAdminToken.get(rejected_token="rejected-token")
+
+    assert token == "newer-token"
     assert fake_kanidm_cli.calls == []
 
 
@@ -397,7 +414,7 @@ async def test_get_rejected_token_with_unusable_env_token_regenerates(
 async def test_get_rejected_token_without_env_regenerates(
     redis, kanidm_api, mock_kanidm_domain, monkeypatch, fake_kanidm_cli
 ):
-    await redis.set(REDIS_TOKEN_KEY, "rejected-token")  # skipped entirely
+    await redis.set(REDIS_TOKEN_KEY, "rejected-token")
     monkeypatch.delenv("KANIDM_ADMIN_TOKEN_FILE", raising=False)
     fake_kanidm_cli.processes.extend(
         [
@@ -412,6 +429,37 @@ async def test_get_rejected_token_without_env_regenerates(
     assert token == "generated-token"
     assert await redis.get(REDIS_TOKEN_KEY) == "generated-token"
     assert kanidm_api.requests == []
+
+
+async def test_get_concurrent_rejected_token_regeneration_runs_cli_once(
+    redis, monkeypatch, fake_kanidm_cli
+):
+    await redis.set(REDIS_TOKEN_KEY, "rejected-token")
+    monkeypatch.delenv("KANIDM_ADMIN_TOKEN_FILE", raising=False)
+    fake_kanidm_cli.processes.extend(
+        [
+            FakeProcess(stdout=b'{"output": "recovered-password"}'),
+            FakeProcess(),
+            FakeProcess(stdout=b"generated-token\n"),
+        ]
+    )
+
+    first_get = asyncio.create_task(
+        KanidmAdminToken.get(rejected_token="rejected-token")
+    )
+    second_get = asyncio.create_task(
+        KanidmAdminToken.get(rejected_token="rejected-token")
+    )
+    await asyncio.sleep(0)
+    await asyncio.sleep(0)
+    tokens = await asyncio.wait_for(asyncio.gather(first_get, second_get), timeout=5)
+
+    assert tokens == ["generated-token", "generated-token"]
+    assert [call[0] for call in fake_kanidm_cli.calls] == [
+        tuple(RECOVER_COMMAND),
+        tuple(LOGIN_COMMAND),
+        tuple(GENERATE_COMMAND),
+    ]
 
 
 async def test_get_regenerates_token_when_no_sources(
@@ -485,9 +533,7 @@ async def test_get_regenerates_token_when_env_file_empty(
 # --- _get_admin_token_from_env --------------------------------------------------
 
 
-async def test_get_admin_token_from_env_reads_strips_and_caches(
-    redis, monkeypatch, tmp_path
-):
+async def test_get_admin_token_from_env_reads_and_strips(redis, monkeypatch, tmp_path):
     token_file = tmp_path / "kanidm.token"
     token_file.write_text("  test-token  \n")
     monkeypatch.setenv("KANIDM_ADMIN_TOKEN_FILE", str(token_file))
@@ -495,7 +541,7 @@ async def test_get_admin_token_from_env_reads_strips_and_caches(
     token = await KanidmAdminToken._get_admin_token_from_env()
 
     assert token == "test-token"
-    assert await redis.get(REDIS_TOKEN_KEY) == "test-token"
+    assert await redis.get(REDIS_TOKEN_KEY) is None
 
 
 async def test_get_admin_token_from_env_returns_none_without_env_var(
@@ -581,6 +627,30 @@ async def test_reset_password_returns_parsed_password(fake_kanidm_cli):
     assert fake_kanidm_cli.calls[0][0] == tuple(RECOVER_COMMAND)
 
 
+async def test_reset_password_cli_failure_raises(fake_kanidm_cli):
+    fake_kanidm_cli.processes.append(
+        FakeProcess(stderr=b"recovery failed", returncode=1)
+    )
+
+    with pytest.raises(KanidmCliSubprocessError) as error:
+        await KanidmAdminToken._reset_idm_admin_password()
+
+    assert error.value.command == " ".join(RECOVER_COMMAND)
+    assert "recovery failed" in error.value.error
+    assert fake_kanidm_cli.calls[0][0] == tuple(RECOVER_COMMAND)
+
+
+async def test_reset_password_os_error_raises(fake_kanidm_cli):
+    fake_kanidm_cli.processes.append(OSError("recover command missing"))
+
+    with pytest.raises(KanidmCliSubprocessError) as error:
+        await KanidmAdminToken._reset_idm_admin_password()
+
+    assert error.value.command == " ".join(RECOVER_COMMAND)
+    assert "recover command missing" in error.value.error
+    assert fake_kanidm_cli.calls[0][0] == tuple(RECOVER_COMMAND)
+
+
 async def test_reset_password_non_json_output_raises(fake_kanidm_cli):
     fake_kanidm_cli.processes.append(FakeProcess(stdout=b"no json in this output"))
 
@@ -632,14 +702,3 @@ async def test_is_token_valid_false_on_http_error(kanidm_api, mock_kanidm_domain
     kanidm_api.fail(httpx.ConnectError("connection failed"))
 
     assert await KanidmAdminToken._is_token_valid("probe-token") is False
-
-
-# --- _delete_kanidm_token_from_db -----------------------------------------------
-
-
-async def test_delete_kanidm_token_from_db(redis):
-    await redis.set(REDIS_TOKEN_KEY, "some-token")
-
-    await KanidmAdminToken._delete_kanidm_token_from_db()
-
-    assert await redis.get(REDIS_TOKEN_KEY) is None
