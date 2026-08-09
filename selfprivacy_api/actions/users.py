@@ -101,7 +101,9 @@ async def create_user(
 
     await ACTIVE_USERS_PROVIDER.create_user(
         username=username,
-        directmemberof=directmemberof if directmemberof else SP_DEFAULT_GROUPS,
+        directmemberof=(
+            directmemberof if directmemberof is not None else SP_DEFAULT_GROUPS
+        ),
         displayname=displayname,
         password=password,
     )
@@ -162,7 +164,7 @@ async def update_user(
             displayname=displayname,
         )
 
-    if directmemberof:
+    if directmemberof is not None:
         if ACTIVE_USERS_PROVIDER == JsonUserRepository:
             raise ApiUsingWrongUserRepository
 
