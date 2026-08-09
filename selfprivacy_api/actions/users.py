@@ -136,12 +136,78 @@ async def delete_user(username: str) -> None:
     await ACTIVE_USERS_PROVIDER.delete_user(username=username)
 
 
+def _validate_user_update(
+    username: str,
+    directmemberof: Optional[list[str]],
+    displayname: Optional[str],
+) -> None:
+    if username == "root":
+        raise RootUserIsProtected()
+
+    if (
+        displayname or directmemberof is not None
+    ) and ACTIVE_USERS_PROVIDER == JsonUserRepository:
+        raise ApiUsingWrongUserRepository
+
+    if displayname and len(displayname) >= 255:
+        raise DisplaynameTooLong
+
+
+async def _get_user_group_changes(
+    username: str,
+    directmemberof: Optional[list[str]],
+) -> tuple[list[str], list[str]]:
+    if directmemberof is None:
+        return [], []
+
+    user = await ACTIVE_USERS_PROVIDER.get_user_by_username(username=username)
+    current_groups = user.directmemberof or []
+    default_groups = get_default_grops()
+
+    groups_to_add = [
+        group
+        for group in directmemberof
+        if group not in current_groups and group not in default_groups
+    ]
+    groups_to_remove = [
+        group
+        for group in current_groups
+        if group not in directmemberof and group not in default_groups
+    ]
+    return groups_to_add, groups_to_remove
+
+
+async def _apply_user_group_changes(
+    username: str,
+    groups_to_add: list[str],
+    groups_to_remove: list[str],
+) -> None:
+    for group in groups_to_add:
+        await ACTIVE_USERS_PROVIDER.add_users_to_group(
+            group_name=group, users=[username]
+        )
+
+    for group in groups_to_remove:
+        await ACTIVE_USERS_PROVIDER.remove_users_from_group(
+            group_name=group, users=[username]
+        )
+
+
 async def update_user(
     username: str,
     directmemberof: Optional[list[str]] = None,
     displayname: Optional[str] = None,
     password: Optional[str] = None,
 ) -> None:
+    _validate_user_update(
+        username=username,
+        directmemberof=directmemberof,
+        displayname=displayname,
+    )
+    groups_to_add, groups_to_remove = await _get_user_group_changes(
+        username=username,
+        directmemberof=directmemberof,
+    )
 
     if password:
         update_legacy_email_password_hash(
@@ -150,48 +216,17 @@ async def update_user(
             with_created_at=True,
         )
 
-    if username == "root":
-        raise RootUserIsProtected()
-
     if displayname:
-        if ACTIVE_USERS_PROVIDER == JsonUserRepository:
-            raise ApiUsingWrongUserRepository
-        if len(displayname) >= 255:
-            raise DisplaynameTooLong
-
         await ACTIVE_USERS_PROVIDER.update_user(
             username=username,
             displayname=displayname,
         )
 
-    if directmemberof is not None:
-        if ACTIVE_USERS_PROVIDER == JsonUserRepository:
-            raise ApiUsingWrongUserRepository
-
-        user = await ACTIVE_USERS_PROVIDER.get_user_by_username(username=username)
-
-        groups_to_add = [item for item in directmemberof if item not in user.directmemberof]  # type: ignore
-        groups_to_delete = [item for item in user.directmemberof if item not in directmemberof]  # type: ignore
-
-        if groups_to_add:
-            for group in groups_to_add:
-
-                if group in get_default_grops():
-                    continue
-
-                await ACTIVE_USERS_PROVIDER.add_users_to_group(
-                    group_name=group, users=[username]
-                )
-
-        if groups_to_delete:
-            for group in groups_to_delete:
-
-                if group in get_default_grops():
-                    continue
-
-                await ACTIVE_USERS_PROVIDER.remove_users_from_group(
-                    group_name=group, users=[username]
-                )
+    await _apply_user_group_changes(
+        username=username,
+        groups_to_add=groups_to_add,
+        groups_to_remove=groups_to_remove,
+    )
 
 
 async def get_user_by_username(username: str) -> Optional[UserDataUser]:
