@@ -140,3 +140,18 @@ class ProviderDoesNotUseProvidedSecret(AbstractException):
             ),
             locale=locale,
         ) % {"provider": self.provider}
+
+
+class UnknownUpdateChannel(AbstractException):
+    """Unknown system update channel id"""
+
+    def __init__(self, channel_id: str, log: bool = True):
+        self.channel_id = channel_id
+
+        super().__init__(log=log)
+
+    def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
+        return t.translate(
+            text=_("There is no update channel with id %(channel_id)s."),
+            locale=locale,
+        ) % {"channel_id": self.channel_id}

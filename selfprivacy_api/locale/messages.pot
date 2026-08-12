@@ -26,19 +26,19 @@ msgstr ""
 msgid "Moving %(service)s data to %(volume)s"
 msgstr ""
 
-#: selfprivacy_api/actions/system.py:141
+#: selfprivacy_api/actions/system.py:148
 msgid "Rebuild system"
 msgstr ""
 
-#: selfprivacy_api/actions/system.py:143
+#: selfprivacy_api/actions/system.py:150
 msgid "Applying the new system configuration by building the new NixOS generation."
 msgstr ""
 
-#: selfprivacy_api/actions/system.py:165
+#: selfprivacy_api/actions/system.py:172
 msgid "Upgrade system"
 msgstr ""
 
-#: selfprivacy_api/actions/system.py:166
+#: selfprivacy_api/actions/system.py:173
 msgid "Upgrading the system to the latest version."
 msgstr ""
 
@@ -300,6 +300,11 @@ msgstr ""
 msgid "The provider %(provider)s does not use the provided additional secrets."
 msgstr ""
 
+#: selfprivacy_api/exceptions/system.py:155
+#, python-format
+msgid "There is no update channel with id %(channel_id)s."
+msgstr ""
+
 #: selfprivacy_api/exceptions/tokens.py:22
 msgid "Access token was not found."
 msgstr ""
@@ -559,6 +564,10 @@ msgstr ""
 msgid "Provider set"
 msgstr ""
 
+#: selfprivacy_api/graphql/mutations/system_mutations.py:342
+msgid "System update channel updated"
+msgstr ""
+
 #: selfprivacy_api/graphql/mutations/users_mutations.py:43
 msgid "New password applied an an email password. To use Single Sign On, please update the SelfPrivacy app."
 msgstr ""
@@ -589,6 +598,10 @@ msgstr ""
 
 #: selfprivacy_api/graphql/queries/monitoring.py:24
 msgid "Prometheus is not running"
+msgstr ""
+
+#: selfprivacy_api/graphql/queries/system.py:189
+msgid "Custom update channel"
 msgstr ""
 
 #: selfprivacy_api/jobs/migrate_to_binds.py:106
@@ -752,4 +765,12 @@ msgstr ""
 
 #: selfprivacy_api/repositories/users/kanidm_user_repository.py:453
 msgid "Kanidm access issue"
+msgstr ""
+
+#: selfprivacy_api/update_channels.py:24
+msgid "Stable channel"
+msgstr ""
+
+#: selfprivacy_api/update_channels.py:25
+msgid "Latest tested release of SelfPrivacy system"
 msgstr ""

@@ -320,3 +320,37 @@ class SystemMutations:
                     code=400,
                     message=pretty_error(error),
                 )
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    async def set_update_channel(
+        self, channel_id: str, info: Info
+    ) -> GenericMutationReturn:
+        locale = get_locale(info=info)
+
+        with tracer.start_as_current_span(
+            "set_system_update_channel",
+            attributes={
+                "channel_id": channel_id,
+            },
+        ):
+            try:
+                await system_actions.set_system_update_channel(channel_id)
+                return GenericMutationReturn(
+                    success=True,
+                    code=200,
+                    message=t.translate(
+                        text=_("System update channel updated"), locale=locale
+                    ),
+                )
+            except AbstractException as error:
+                return GenericMutationReturn(
+                    success=False,
+                    message=error.get_error_message(locale=locale),
+                    code=error.code,
+                )
+            except Exception as error:
+                return GenericMutationReturn(
+                    success=False,
+                    code=400,
+                    message=pretty_error(error),
+                )

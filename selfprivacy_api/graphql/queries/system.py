@@ -4,21 +4,33 @@
 
 import os
 import typing
+import gettext
 
+from selfprivacy_api.services.flake_service_manager import FlakeServiceManager
+from selfprivacy_api.utils.localization import get_locale
 import strawberry
+from strawberry.types import Info
 from opentelemetry import trace
 
 import selfprivacy_api.actions.ssh as ssh_actions
 import selfprivacy_api.actions.system as system_actions
 from selfprivacy_api.graphql.common_types.dns import DnsRecord
+from selfprivacy_api.graphql.common_types.system import (
+    UpdateChannel,
+    channel_to_graphql,
+)
+from selfprivacy_api.update_channels import UPDATE_CHANNELS, find_update_channel
 from selfprivacy_api.graphql.queries.common import Alert, Severity
 from selfprivacy_api.graphql.queries.providers import DnsProvider, ServerProvider
 from selfprivacy_api.jobs import Jobs
 from selfprivacy_api.jobs.migrate_to_binds import is_bind_migrated
 from selfprivacy_api.services import ServiceManager
 from selfprivacy_api.utils import ReadUserData
+from selfprivacy_api.utils.localization import TranslateSystemMessage as t
 
 tracer = trace.get_tracer(__name__)
+
+_ = gettext.gettext
 
 
 @strawberry.type
@@ -158,6 +170,42 @@ async def get_system_provider_info() -> SystemProviderInfo:
         )
 
 
+@tracer.start_as_current_span("get_current_update_channel")
+async def get_current_update_channel(info: Info) -> UpdateChannel:
+    """Get the update channel the system currently follows"""
+    locale = get_locale(info)
+
+    async with FlakeServiceManager() as flake_manager:
+        current_url = flake_manager.nixos_config
+
+        definition = find_update_channel(current_url)
+        if definition is not None:
+            return channel_to_graphql(definition, locale)
+
+        return UpdateChannel(
+            id="custom",
+            update_url=current_url,
+            name=current_url,
+            description=t.translate(text=_("Custom update channel"), locale=locale),
+        )
+
+
+@strawberry.type
+class SystemUpdatesInfo:
+    """Information about current update channel and available update channels"""
+
+    current_channel: UpdateChannel = strawberry.field(
+        resolver=get_current_update_channel
+    )
+
+    @strawberry.field
+    async def channels(self, info: Info) -> typing.List[UpdateChannel]:
+        locale = get_locale(info)
+        return [
+            channel_to_graphql(definition, locale) for definition in UPDATE_CHANNELS
+        ]
+
+
 @strawberry.type
 class System:
     """
@@ -175,6 +223,7 @@ class System:
     domain_info: SystemDomainInfo = strawberry.field(resolver=get_system_domain_info)
     settings: SystemSettings = strawberry.field(default_factory=SystemSettings)
     info: SystemInfo = strawberry.field(default_factory=SystemInfo)
+    updates: SystemUpdatesInfo = strawberry.field(default_factory=SystemUpdatesInfo)
     provider: SystemProviderInfo = strawberry.field(resolver=get_system_provider_info)
 
     @strawberry.field

@@ -11,10 +11,17 @@ from selfprivacy_api.exceptions.system import (
     InvalidTimezone,
     ProviderRequiresAdditionalSecret,
     ProviderDoesNotUseProvidedSecret,
+    UnknownUpdateChannel,
 )
+from selfprivacy_api.update_channels import find_update_channel_by_id
 from selfprivacy_api.graphql.queries.providers import DnsProvider
 from selfprivacy_api.jobs import Job, Jobs, JobStatus
 from selfprivacy_api.jobs.upgrade_system import rebuild_system_task
+from selfprivacy_api.services.flake_service_manager import (
+    FlakeServiceManager,
+    get_sp_module_url,
+    is_sp_module_url,
+)
 from selfprivacy_api.utils import ReadUserData, UserDataFiles, WriteUserData
 from selfprivacy_api.utils.systemd import start_unit, systemd_proxy
 
@@ -183,6 +190,25 @@ def get_system_version() -> str:
 def get_python_version() -> str:
     """Get Python version"""
     return subprocess.check_output(["python", "-V"]).decode("utf-8").strip()
+
+
+async def set_system_update_channel(channel_id: str):
+    """Switch the system to a known update channel"""
+    definition = find_update_channel_by_id(channel_id)
+
+    if definition is None:
+        raise UnknownUpdateChannel(channel_id)
+
+    await set_system_update_url(definition.update_url)
+
+
+async def set_system_update_url(url: str):
+    # we should update all sp-modules to new nixos config url, as usually they're dependent on each other.
+    async with FlakeServiceManager() as manager:
+        for service_name, service_url in manager.services.items():
+            if is_sp_module_url(service_url, manager.nixos_config):
+                manager.services[service_name] = get_sp_module_url(url, service_name)
+        manager.nixos_config = url
 
 
 class SystemActionResult(BaseModel):

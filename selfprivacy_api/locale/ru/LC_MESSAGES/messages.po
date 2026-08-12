@@ -28,19 +28,19 @@ msgstr "Перемещение %(service)s"
 msgid "Moving %(service)s data to %(volume)s"
 msgstr "Перемещение данных %(service)s на %(volume)s"
 
-#: selfprivacy_api/actions/system.py:141
+#: selfprivacy_api/actions/system.py:148
 msgid "Rebuild system"
 msgstr "Пересборка системы"
 
-#: selfprivacy_api/actions/system.py:143
+#: selfprivacy_api/actions/system.py:150
 msgid "Applying the new system configuration by building the new NixOS generation."
 msgstr "Применение новой конфигурации системы путём сборки новой генерации NixOS."
 
-#: selfprivacy_api/actions/system.py:165
+#: selfprivacy_api/actions/system.py:172
 msgid "Upgrade system"
 msgstr "Обновление системы"
 
-#: selfprivacy_api/actions/system.py:166
+#: selfprivacy_api/actions/system.py:173
 msgid "Upgrading the system to the latest version."
 msgstr "Обновление системы до последней версии."
 
@@ -374,6 +374,11 @@ msgstr ""
 msgid "The provider %(provider)s does not use the provided additional secrets."
 msgstr ""
 
+#: selfprivacy_api/exceptions/system.py:155
+#, python-format
+msgid "There is no update channel with id %(channel_id)s."
+msgstr "Канал обновления %(channel_id)s не существует"
+
 #: selfprivacy_api/exceptions/tokens.py:22
 #, fuzzy
 msgid "Access token was not found."
@@ -650,6 +655,11 @@ msgstr "Сборщик мусора запущен..."
 msgid "Provider set"
 msgstr "Провайдер установлен"
 
+#: selfprivacy_api/graphql/mutations/system_mutations.py:342
+#, fuzzy
+msgid "System update channel updated"
+msgstr "Настройки сервиса обновлены."
+
 #: selfprivacy_api/graphql/mutations/users_mutations.py:43
 msgid "New password applied an an email password. To use Single Sign On, please update the SelfPrivacy app."
 msgstr "Новый пароль применён как пароль электронной почты. Чтобы использовать единый вход (SSO), обновите приложение SelfPrivacy."
@@ -681,6 +691,10 @@ msgstr "Ссылка успешно создана"
 #: selfprivacy_api/graphql/queries/monitoring.py:24
 msgid "Prometheus is not running"
 msgstr "Prometheus не запущен"
+
+#: selfprivacy_api/graphql/queries/system.py:189
+msgid "Custom update channel"
+msgstr ""
 
 #: selfprivacy_api/jobs/migrate_to_binds.py:106
 msgid "Migration already done."
@@ -844,6 +858,14 @@ msgstr ""
 #: selfprivacy_api/repositories/users/kanidm_user_repository.py:453
 msgid "Kanidm access issue"
 msgstr "Проблема доступа к Kanidm"
+
+#: selfprivacy_api/update_channels.py:24
+msgid "Stable channel"
+msgstr ""
+
+#: selfprivacy_api/update_channels.py:25
+msgid "Latest tested release of SelfPrivacy system"
+msgstr ""
 
 #~ msgid "Kanidm is not responding to requests. Connection error."
 #~ msgstr "Kanidm не отвечает на запросы. Ошибка подключения."
