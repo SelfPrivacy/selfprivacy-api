@@ -600,7 +600,7 @@ msgstr ""
 msgid "Prometheus is not running"
 msgstr ""
 
-#: selfprivacy_api/graphql/queries/system.py:189
+#: selfprivacy_api/graphql/queries/system.py:188
 msgid "Custom update channel"
 msgstr ""
 

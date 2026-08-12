@@ -2,7 +2,6 @@
 
 # pylint: disable=too-few-public-methods
 
-import os
 import typing
 import gettext
 
@@ -231,9 +230,3 @@ class System:
         """Check if the system is busy"""
         with tracer.start_as_current_span("System.busy"):
             return Jobs.is_busy()
-
-    @strawberry.field
-    async def working_directory(self) -> str:
-        """Get working directory"""
-        with tracer.start_as_current_span("System.working_directory"):
-            return os.getcwd()
