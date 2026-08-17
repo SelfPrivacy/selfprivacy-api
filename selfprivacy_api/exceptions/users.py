@@ -133,6 +133,18 @@ class PasswordIsEmpty(AbstractException):
         return t.translate(text=_("Password cannot be empty."), locale=locale)
 
 
+class PasswordHasInvalidChars(AbstractException):
+    """Password contains characters unsupported by the password hasher"""
+
+    def get_error_message(self, locale: str = DEFAULT_LOCALE) -> str:
+        return t.translate(
+            text=_(
+                "Password cannot contain carriage returns, line feeds, or NUL bytes."
+            ),
+            locale=locale,
+        )
+
+
 class DisplaynameTooLong(AbstractException):
     """Display name is too long. Must be less than 16 characters"""
 

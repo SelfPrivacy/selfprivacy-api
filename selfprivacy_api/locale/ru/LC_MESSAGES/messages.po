@@ -468,7 +468,11 @@ msgstr "Имя пользователя слишком длинное. Долж�
 msgid "Password cannot be empty."
 msgstr "Пароль не может быть пустым."
 
-#: selfprivacy_api/exceptions/users.py:144
+#: selfprivacy_api/exceptions/users.py:142
+msgid "Password cannot contain carriage returns, line feeds, or NUL bytes."
+msgstr ""
+
+#: selfprivacy_api/exceptions/users.py:156
 msgid "Display name is too long. Must be less than 256 characters."
 msgstr "Отображаемое имя слишком длинное. Должно быть меньше 256 символов."
 

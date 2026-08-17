@@ -131,19 +131,13 @@ def no_primary_user(mocker, datadir):
 class ProcessMock:
     """Mock subprocess.Popen"""
 
-    def __init__(self, args, **kwargs):
-        self.args = args
-        self.kwargs = kwargs
-
-    def communicate():  # pyright: ignore[reportSelfClsParameterName]
+    def communicate(self, input=None):
         return (b"NEW_HASHED", None)
-
-    returncode = 0
 
 
 @pytest.fixture
 def mock_subprocess_popen(mocker):
-    mock = mocker.patch("subprocess.Popen", autospec=True, return_value=ProcessMock)
+    mock = mocker.patch("subprocess.Popen", autospec=True, return_value=ProcessMock())
     return mock
 
 

@@ -1,5 +1,8 @@
-from selfprivacy_api.backup.local_secret import LocalBackupSecret
+import stat
+
 from pytest import fixture
+
+from selfprivacy_api.backup.local_secret import LocalBackupSecret
 
 
 @fixture()
@@ -36,3 +39,15 @@ def test_local_secret_set(localsecret):
 
     LocalBackupSecret.set(newsecret)
     assert LocalBackupSecret.get() == newsecret
+
+
+def test_password_file_is_root_only(mocker, tmp_path):
+    password_file = tmp_path / "restic-password"
+    mocker.patch(
+        "selfprivacy_api.backup.local_secret.RESTIC_PASSWORD_FILE", str(password_file)
+    )
+    mocker.patch.object(LocalBackupSecret, "get", return_value="; touch /tmp/pwned #")
+
+    assert LocalBackupSecret.password_file() == str(password_file)
+    assert password_file.read_text() == "; touch /tmp/pwned #\n"
+    assert stat.S_IMODE(password_file.stat().st_mode) == 0o600

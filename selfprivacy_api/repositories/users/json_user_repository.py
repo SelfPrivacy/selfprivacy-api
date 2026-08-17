@@ -16,8 +16,8 @@ from selfprivacy_api.utils import (
     ReadUserData,
     WriteUserData,
     ensure_ssh_and_users_fields_exist,
-    hash_password,
 )
+from selfprivacy_api.utils.unix_password import hash_password
 
 
 class JsonUserRepository(AbstractUserRepository):

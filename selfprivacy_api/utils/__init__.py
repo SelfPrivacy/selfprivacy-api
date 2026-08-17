@@ -6,7 +6,6 @@ import datetime
 import glob
 import json
 import os
-import subprocess
 from contextlib import contextmanager
 from enum import Enum
 from traceback import format_tb as format_traceback
@@ -252,20 +251,6 @@ def get_dkim_key(domain: str, parse: bool = True) -> Optional[str]:
                 dkim = parse_dkim(dkim)
         return dkim
     return None
-
-
-def hash_password(password):
-    hashing_command = ["mkpasswd", "-m", "sha-512", password]
-    password_hash_process_descriptor = subprocess.Popen(
-        hashing_command,
-        shell=False,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-    )
-    hashed_password = password_hash_process_descriptor.communicate()[0]
-    hashed_password = hashed_password.decode("ascii")
-    hashed_password = hashed_password.rstrip()
-    return hashed_password
 
 
 def write_to_log(message):

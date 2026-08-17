@@ -105,6 +105,7 @@ in
     };
 
     systemd = {
+      tmpfiles.rules = [ "d /run/selfprivacy-api 0700 root root -" ];
       services = {
         selfprivacy-api = {
           description = "API Server used to control system from the mobile application";
