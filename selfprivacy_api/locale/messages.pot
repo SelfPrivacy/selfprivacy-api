@@ -755,6 +755,14 @@ msgstr ""
 msgid "No backup description found!"
 msgstr ""
 
+#: selfprivacy_api/update_channels.py:24
+msgid "Stable channel"
+msgstr ""
+
+#: selfprivacy_api/update_channels.py:25
+msgid "Latest tested release of SelfPrivacy system"
+msgstr ""
+
 #: selfprivacy_api/utils/kanidm.py:129
 msgid "No JSON found in Kanidm response."
 msgstr ""
@@ -769,12 +777,4 @@ msgstr ""
 
 #: selfprivacy_api/utils/kanidm.py:188
 msgid "Kanidm access issue"
-msgstr ""
-
-#: selfprivacy_api/update_channels.py:24
-msgid "Stable channel"
-msgstr ""
-
-#: selfprivacy_api/update_channels.py:25
-msgid "Latest tested release of SelfPrivacy system"
 msgstr ""

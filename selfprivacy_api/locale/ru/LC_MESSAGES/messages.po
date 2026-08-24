@@ -847,6 +847,14 @@ msgstr "Описание не найдено!"
 msgid "No backup description found!"
 msgstr "Описание резервной копии не найдено!"
 
+#: selfprivacy_api/update_channels.py:24
+msgid "Stable channel"
+msgstr ""
+
+#: selfprivacy_api/update_channels.py:25
+msgid "Latest tested release of SelfPrivacy system"
+msgstr ""
+
 #: selfprivacy_api/utils/kanidm.py:129
 msgid "No JSON found in Kanidm response."
 msgstr "В ответе Kanidm не найден JSON."
@@ -862,14 +870,6 @@ msgstr ""
 #: selfprivacy_api/utils/kanidm.py:188
 msgid "Kanidm access issue"
 msgstr "Проблема доступа к Kanidm"
-
-#: selfprivacy_api/update_channels.py:24
-msgid "Stable channel"
-msgstr ""
-
-#: selfprivacy_api/update_channels.py:25
-msgid "Latest tested release of SelfPrivacy system"
-msgstr ""
 
 #~ msgid "Kanidm is not responding to requests. Connection error."
 #~ msgstr "Kanidm не отвечает на запросы. Ошибка подключения."
