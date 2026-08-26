@@ -1,3 +1,5 @@
+import asyncio
+
 import aiofiles
 import pytest
 
@@ -7,6 +9,7 @@ from selfprivacy_api.services.flake_service_manager import (
     FlakeServiceManager,
     set_flake_ref,
 )
+from selfprivacy_api.utils.request_memo import begin_request_memo, end_request_memo
 
 all_services_file = """
 {
@@ -111,6 +114,34 @@ def some_services_flake_mock(mocker, datadir):
         new=flake_config_path,
     )
     return flake_config_path
+
+
+async def test_flake_inputs_are_coalesced_within_request(mocker, tmp_path):
+    flake_path = tmp_path / "flake.nix"
+    flake_path.write_text("{}")
+    mocker.patch(
+        "selfprivacy_api.services.flake_service_manager.FLAKE_CONFIG_PATH",
+        new=flake_path,
+    )
+    evaluate = mocker.patch(
+        "selfprivacy_api.services.flake_service_manager.evaluate_nix_file",
+        new_callable=mocker.AsyncMock,
+        return_value={},
+    )
+
+    async def read_services():
+        async with FlakeServiceManager() as manager:
+            return manager.services
+
+    token = begin_request_memo()
+    try:
+        assert await asyncio.gather(read_services(), read_services()) == [{}, {}]
+        flake_path.write_text("{ changed = true; }")
+        assert await read_services() == {}
+    finally:
+        end_request_memo(token)
+
+    assert evaluate.await_count == 2
 
 
 async def test_read_services_list(some_services_flake_mock):

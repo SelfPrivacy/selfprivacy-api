@@ -7,6 +7,7 @@ from opentelemetry import trace
 
 from selfprivacy_api.exceptions.services import LegacySpModulesFlakeError
 from selfprivacy_api.utils.nix import evaluate_nix_file, format_nix_expr, to_nix_expr
+from selfprivacy_api.utils.request_memo import request_memoized
 
 LEGACY_SP_MODULES_DIR = "/etc/nixos/sp-modules"
 
@@ -15,9 +16,23 @@ SP_MODULE_INPUT_PREFIX = "sp-module-"
 DEFAULT_NIXOS_CONFIG_URL = "git+https://git.selfprivacy.org/SelfPrivacy/selfprivacy-nixos-config.git?ref=flakes"
 
 _SELFPRIVACY_NIXOS_CONFIG_INPUT = "selfprivacy-nixos-config"
+_FLAKE_INPUTS_APPLY = 'f: if builtins.hasAttr "inputs" f then f.inputs else {}'
 
 
 tracer = trace.get_tracer(__name__)
+
+
+async def _evaluate_flake_inputs() -> dict:
+    return await evaluate_nix_file(FLAKE_CONFIG_PATH, _FLAKE_INPUTS_APPLY)
+
+
+async def _get_flake_inputs() -> dict:
+    """Read flake inputs once per request, invalidating on file changes."""
+    file_stat = os.stat(FLAKE_CONFIG_PATH)
+    return await request_memoized(
+        ("flake_service_manager_inputs", file_stat.st_mtime_ns),
+        _evaluate_flake_inputs,
+    )
 
 
 def set_flake_ref(flake_url: str, ref: str) -> str:
@@ -84,10 +99,7 @@ class FlakeServiceManager:
         self._services = {}
 
         try:
-            inputs = await evaluate_nix_file(
-                FLAKE_CONFIG_PATH,
-                'f: if builtins.hasAttr "inputs" f then f.inputs else {}',
-            )
+            inputs = await _get_flake_inputs()
 
             for key, value in inputs.items():
                 if key.startswith(SP_MODULE_INPUT_PREFIX):
