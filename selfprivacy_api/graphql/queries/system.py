@@ -2,15 +2,13 @@
 
 # pylint: disable=too-few-public-methods
 
-import typing
 import gettext
 
-from selfprivacy_api.services.flake_service_manager import FlakeServiceManager
-from selfprivacy_api.utils.localization import get_locale
 import strawberry
-from strawberry.types import Info
 from opentelemetry import trace
+from strawberry.types import Info
 
+import selfprivacy_api.actions.otel as otel_actions
 import selfprivacy_api.actions.ssh as ssh_actions
 import selfprivacy_api.actions.system as system_actions
 from selfprivacy_api.graphql.common_types.dns import DnsRecord
@@ -18,14 +16,16 @@ from selfprivacy_api.graphql.common_types.system import (
     UpdateChannel,
     channel_to_graphql,
 )
-from selfprivacy_api.update_channels import UPDATE_CHANNELS, find_update_channel
 from selfprivacy_api.graphql.queries.common import Alert, Severity
 from selfprivacy_api.graphql.queries.providers import DnsProvider, ServerProvider
 from selfprivacy_api.jobs import Jobs
 from selfprivacy_api.jobs.migrate_to_binds import is_bind_migrated
+from selfprivacy_api.models.otel import UserDataOpenTelemetrySettings
 from selfprivacy_api.services import ServiceManager
+from selfprivacy_api.services.flake_service_manager import FlakeServiceManager
+from selfprivacy_api.update_channels import UPDATE_CHANNELS, find_update_channel
 from selfprivacy_api.utils import ReadUserData
-from selfprivacy_api.utils.localization import TranslateSystemMessage as t
+from selfprivacy_api.utils.localization import TranslateSystemMessage as t, get_locale
 
 tracer = trace.get_tracer(__name__)
 
@@ -41,7 +41,7 @@ class SystemDomainInfo:
     provider: DnsProvider
 
     @strawberry.field
-    async def required_dns_records(self) -> typing.List[DnsRecord]:
+    async def required_dns_records(self) -> list[DnsRecord]:
         """Collect all required DNS records for all services"""
         with tracer.start_as_current_span("SystemDomainInfo.required_dns_records"):
             return [
@@ -76,6 +76,35 @@ class AutoUpgradeOptions:
     allow_reboot: bool
 
 
+@strawberry.experimental.pydantic.type(model=UserDataOpenTelemetrySettings)
+class OpenTelemetrySettings:
+    """Server OpenTelemetry settings."""
+
+    enable: strawberry.auto
+    endpoint: strawberry.auto
+    upload_system_logs: strawberry.auto
+    upload_system_metrics: strawberry.auto
+    header_names: list[str]
+    memory_tracing_enabled: strawberry.auto
+
+
+def open_telemetry_settings_to_graphql(
+    settings: UserDataOpenTelemetrySettings,
+) -> OpenTelemetrySettings:
+    return OpenTelemetrySettings.from_pydantic(
+        settings,
+        extra={"header_names": sorted(settings.headers)},
+    )
+
+
+@tracer.start_as_current_span("get_open_telemetry_settings")
+async def get_open_telemetry_settings() -> OpenTelemetrySettings:
+    """Get server OpenTelemetry settings."""
+    return open_telemetry_settings_to_graphql(
+        otel_actions.get_open_telemetry_settings()
+    )
+
+
 @tracer.start_as_current_span("get_auto_upgrade_options")
 async def get_auto_upgrade_options() -> AutoUpgradeOptions:
     """Get automatic upgrade options"""
@@ -94,7 +123,7 @@ class SshSettings:
     password_authentication: bool = strawberry.field(
         deprecation_reason="For security reasons, password authentication is no longer supported. Please use SSH keys."
     )
-    root_ssh_keys: typing.List[str]
+    root_ssh_keys: list[str]
 
 
 @tracer.start_as_current_span("get_ssh_settings")
@@ -120,6 +149,9 @@ class SystemSettings:
 
     auto_upgrade: AutoUpgradeOptions = strawberry.field(
         resolver=get_auto_upgrade_options
+    )
+    open_telemetry: OpenTelemetrySettings = strawberry.field(
+        resolver=get_open_telemetry_settings
     )
     ssh: SshSettings = strawberry.field(resolver=get_ssh_settings)
     timezone: str = strawberry.field(resolver=get_system_timezone)
@@ -198,7 +230,7 @@ class SystemUpdatesInfo:
     )
 
     @strawberry.field
-    async def channels(self, info: Info) -> typing.List[UpdateChannel]:
+    async def channels(self, info: Info) -> list[UpdateChannel]:
         locale = get_locale(info)
         return [
             channel_to_graphql(definition, locale) for definition in UPDATE_CHANNELS

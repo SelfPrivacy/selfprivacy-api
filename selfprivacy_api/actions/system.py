@@ -2,18 +2,16 @@
 
 import gettext
 import subprocess
-from typing import Optional
 
 import pytz
 from pydantic import BaseModel
 
 from selfprivacy_api.exceptions.system import (
     InvalidTimezone,
-    ProviderRequiresAdditionalSecret,
     ProviderDoesNotUseProvidedSecret,
+    ProviderRequiresAdditionalSecret,
     UnknownUpdateChannel,
 )
-from selfprivacy_api.update_channels import find_update_channel_by_id
 from selfprivacy_api.graphql.queries.providers import DnsProvider
 from selfprivacy_api.jobs import Job, Jobs, JobStatus
 from selfprivacy_api.jobs.upgrade_system import rebuild_system_task
@@ -22,6 +20,7 @@ from selfprivacy_api.services.flake_service_manager import (
     get_sp_module_url,
     is_sp_module_url,
 )
+from selfprivacy_api.update_channels import find_update_channel_by_id
 from selfprivacy_api.utils import ReadUserData, UserDataFiles, WriteUserData
 from selfprivacy_api.utils.systemd import start_unit, systemd_proxy
 
@@ -53,10 +52,10 @@ class UserDataAutoUpgradeSettings(BaseModel):
 
 def _validate_dns_provider_input(
     provider: DnsProvider,
-    token_id: Optional[str],
-    url: Optional[str],
-    tenant: Optional[str],
-    secondary_token: Optional[str],
+    token_id: str | None,
+    url: str | None,
+    tenant: str | None,
+    secondary_token: str | None,
 ) -> None:
     if (
         (provider.needs_token_id() and not token_id)
@@ -77,10 +76,10 @@ def _validate_dns_provider_input(
 def set_dns_provider(
     provider: DnsProvider,
     token: str,
-    token_id: Optional[str] = None,
-    url: Optional[str] = None,
-    tenant: Optional[str] = None,
-    secondary_token: Optional[str] = None,
+    token_id: str | None = None,
+    url: str | None = None,
+    tenant: str | None = None,
+    secondary_token: str | None = None,
 ) -> None:
 
     _validate_dns_provider_input(
@@ -130,7 +129,7 @@ def get_auto_upgrade_settings() -> UserDataAutoUpgradeSettings:
 
 
 def set_auto_upgrade_settings(
-    enable: Optional[bool] = None, allowReboot: Optional[bool] = None
+    enable: bool | None = None, allow_reboot: bool | None = None
 ) -> None:
     """Set the auto-upgrade settings"""
     with WriteUserData() as user_data:
@@ -138,8 +137,8 @@ def set_auto_upgrade_settings(
             user_data["autoUpgrade"] = {}
         if enable is not None:
             user_data["autoUpgrade"]["enable"] = enable
-        if allowReboot is not None:
-            user_data["autoUpgrade"]["allowReboot"] = allowReboot
+        if allow_reboot is not None:
+            user_data["autoUpgrade"]["allowReboot"] = allow_reboot
 
 
 def add_rebuild_job() -> Job:

@@ -26,19 +26,19 @@ msgstr ""
 msgid "Moving %(service)s data to %(volume)s"
 msgstr ""
 
-#: selfprivacy_api/actions/system.py:148
+#: selfprivacy_api/actions/system.py:147
 msgid "Rebuild system"
 msgstr ""
 
-#: selfprivacy_api/actions/system.py:150
+#: selfprivacy_api/actions/system.py:149
 msgid "Applying the new system configuration by building the new NixOS generation."
 msgstr ""
 
-#: selfprivacy_api/actions/system.py:172
+#: selfprivacy_api/actions/system.py:171
 msgid "Upgrade system"
 msgstr ""
 
-#: selfprivacy_api/actions/system.py:173
+#: selfprivacy_api/actions/system.py:172
 msgid "Upgrading the system to the latest version."
 msgstr ""
 
@@ -528,43 +528,47 @@ msgstr ""
 msgid "Migration to binds started, rebuild the system to apply changes"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:113
+#: selfprivacy_api/graphql/mutations/system_mutations.py:143
 msgid "Timezone changed"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:141
+#: selfprivacy_api/graphql/mutations/system_mutations.py:171
 msgid "Auto-upgrade settings changed"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:170
+#: selfprivacy_api/graphql/mutations/system_mutations.py:216
+msgid "OpenTelemetry settings changed"
+msgstr ""
+
+#: selfprivacy_api/graphql/mutations/system_mutations.py:244
 msgid "SSH settings changed"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:186
+#: selfprivacy_api/graphql/mutations/system_mutations.py:260
 msgid "Starting system rebuild"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:227
+#: selfprivacy_api/graphql/mutations/system_mutations.py:301
 msgid "Starting system upgrade"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:247
+#: selfprivacy_api/graphql/mutations/system_mutations.py:321
 msgid "System reboot has started"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:263
+#: selfprivacy_api/graphql/mutations/system_mutations.py:337
 msgid "There is no repository to pull changes from."
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:279
+#: selfprivacy_api/graphql/mutations/system_mutations.py:353
 msgid "Garbage collector started..."
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:308
+#: selfprivacy_api/graphql/mutations/system_mutations.py:382
 msgid "Provider set"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:342
+#: selfprivacy_api/graphql/mutations/system_mutations.py:416
 msgid "System update channel updated"
 msgstr ""
 
@@ -600,7 +604,7 @@ msgstr ""
 msgid "Prometheus is not running"
 msgstr ""
 
-#: selfprivacy_api/graphql/queries/system.py:188
+#: selfprivacy_api/graphql/queries/system.py:220
 msgid "Custom update channel"
 msgstr ""
 

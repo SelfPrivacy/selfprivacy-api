@@ -3,12 +3,12 @@
 # pylint: disable=too-few-public-methods
 
 import gettext
-from typing import Optional
 
 import strawberry
 from opentelemetry import trace
 from strawberry.types import Info
 
+import selfprivacy_api.actions.otel as otel_actions
 import selfprivacy_api.actions.ssh as ssh_actions
 import selfprivacy_api.actions.system as system_actions
 from selfprivacy_api.actions.system import set_dns_provider
@@ -22,6 +22,10 @@ from selfprivacy_api.graphql.mutations.mutation_interface import (
     MutationReturnInterface,
 )
 from selfprivacy_api.graphql.queries.providers import DnsProvider
+from selfprivacy_api.graphql.queries.system import (
+    OpenTelemetrySettings,
+    open_telemetry_settings_to_graphql,
+)
 from selfprivacy_api.jobs.nix_collect_garbage import start_nix_collect_garbage
 from selfprivacy_api.utils import pretty_error
 from selfprivacy_api.utils.localization import (
@@ -37,15 +41,15 @@ _ = gettext.gettext
 class TimezoneMutationReturn(MutationReturnInterface):
     """Return type of the timezone mutation, contains timezone"""
 
-    timezone: Optional[str]
+    timezone: str | None
 
 
 @strawberry.type
 class AutoUpgradeSettingsMutationReturn(MutationReturnInterface):
     """Return type autoUpgrade Settings"""
 
-    enableAutoUpgrade: bool
-    allowReboot: bool
+    enable_auto_upgrade: bool
+    allow_reboot: bool
 
 
 @strawberry.type
@@ -56,12 +60,19 @@ class SSHSettingsMutationReturn(MutationReturnInterface):
     password_authentication: bool
 
 
+@strawberry.type
+class OpenTelemetrySettingsMutationReturn(MutationReturnInterface):
+    """Result of an OpenTelemetry settings change."""
+
+    settings: OpenTelemetrySettings
+
+
 @strawberry.input
 class SSHSettingsInput:
     """Input type for SSH settings"""
 
     enable: bool
-    password_authentication: Optional[bool] = None
+    password_authentication: bool | None = None
 
 
 @strawberry.input
@@ -70,18 +81,37 @@ class SetDnsProviderInput:
 
     provider: DnsProvider
     token: str
-    token_id: Optional[str] = None
-    url: Optional[str] = None
-    tenant: Optional[str] = None
-    secondary_token: Optional[str] = None
+    token_id: str | None = None
+    url: str | None = None
+    tenant: str | None = None
+    secondary_token: str | None = None
 
 
 @strawberry.input
 class AutoUpgradeSettingsInput:
     """Input type for auto upgrade settings"""
 
-    enableAutoUpgrade: Optional[bool] = None
-    allowReboot: Optional[bool] = None
+    enable_auto_upgrade: bool | None = None
+    allow_reboot: bool | None = None
+
+
+@strawberry.input
+class OpenTelemetryHeaderInput:
+    """OpenTelemetry header update."""
+
+    name: str
+    value: str | None
+
+
+@strawberry.input
+class OpenTelemetrySettingsInput:
+    """Complete OpenTelemetry settings and optional header updates."""
+
+    enable: bool
+    endpoint: str | None
+    upload_system_logs: bool
+    upload_system_metrics: bool
+    headers: list[OpenTelemetryHeaderInput] | None = None
 
 
 @strawberry.type
@@ -125,12 +155,12 @@ class SystemMutations:
         with tracer.start_as_current_span(
             "change_auto_upgrade_settings_mutation",
             attributes={
-                "enableAutoUpgrade": str(settings.enableAutoUpgrade),
-                "allowReboot": str(settings.allowReboot),
+                "enableAutoUpgrade": str(settings.enable_auto_upgrade),
+                "allowReboot": str(settings.allow_reboot),
             },
         ):
             system_actions.set_auto_upgrade_settings(
-                settings.enableAutoUpgrade, settings.allowReboot
+                settings.enable_auto_upgrade, settings.allow_reboot
             )
 
             new_settings = system_actions.get_auto_upgrade_settings()
@@ -141,8 +171,52 @@ class SystemMutations:
                     text=_("Auto-upgrade settings changed"), locale=locale
                 ),
                 code=200,
-                enableAutoUpgrade=new_settings.enable,
-                allowReboot=new_settings.allowReboot,
+                enable_auto_upgrade=new_settings.enable,
+                allow_reboot=new_settings.allowReboot,
+            )
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    def change_open_telemetry_settings(
+        self, settings: OpenTelemetrySettingsInput, info: Info
+    ) -> OpenTelemetrySettingsMutationReturn:
+        """Change the server OpenTelemetry settings."""
+        locale = get_locale(info=info)
+
+        with tracer.start_as_current_span(
+            "change_open_telemetry_settings_mutation",
+            attributes={
+                "enable": settings.enable,
+                "upload_system_logs": settings.upload_system_logs,
+                "upload_system_metrics": settings.upload_system_metrics,
+            },
+        ):
+            try:
+                new_settings = otel_actions.set_open_telemetry_settings(
+                    enable=settings.enable,
+                    endpoint=settings.endpoint,
+                    upload_system_logs=settings.upload_system_logs,
+                    upload_system_metrics=settings.upload_system_metrics,
+                    header_updates=[
+                        (header.name, header.value) for header in settings.headers or []
+                    ],
+                )
+            except ValueError as error:
+                return OpenTelemetrySettingsMutationReturn(
+                    success=False,
+                    message=str(error),
+                    code=400,
+                    settings=open_telemetry_settings_to_graphql(
+                        otel_actions.get_open_telemetry_settings()
+                    ),
+                )
+
+            return OpenTelemetrySettingsMutationReturn(
+                success=True,
+                message=t.translate(
+                    text=_("OpenTelemetry settings changed"), locale=locale
+                ),
+                code=200,
+                settings=open_telemetry_settings_to_graphql(new_settings),
             )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
