@@ -11,7 +11,10 @@ import pytest
 import pytest_asyncio
 
 import selfprivacy_api.services.suggested as suggested_module
-from selfprivacy_api.services.suggested import SuggestedServices
+from selfprivacy_api.services.suggested import (
+    SUGGESTED_SERVICES_REDIS_KEY,
+    SuggestedServices,
+)
 from selfprivacy_api.services.templated_service import TemplatedService
 from selfprivacy_api.utils.redis_pool import RedisPool
 from tests.conftest import (
@@ -117,9 +120,13 @@ async def test_sync_fresh_cache_fetches_all_modules(
         name = module["name"]
         rev = module["last_commit_sha"]
         assert fetched_urls[name] == module_flake_url(name, rev)
-        assert await suggested_redis.get(f"suggestedservices:{name}:HEAD") == rev
-        cached_data = await suggested_redis.get(f"suggestedservices:{name}:data")
-        assert json.loads(cached_data) == json.loads(read_module_definition(name))
+        cached_payload = json.loads(
+            await suggested_redis.hget(SUGGESTED_SERVICES_REDIS_KEY, name)
+        )
+        assert cached_payload["revision"] == rev
+        assert json.loads(cached_payload["definition"]) == json.loads(
+            read_module_definition(name)
+        )
 
 
 @pytest.mark.asyncio
@@ -128,8 +135,10 @@ async def test_sync_skips_up_to_date_modules(
 ):
     modules = read_forgejo_response()
     for module in modules:
-        await suggested_redis.set(
-            f"suggestedservices:{module['name']}:HEAD", module["last_commit_sha"]
+        await suggested_redis.hset(
+            SUGGESTED_SERVICES_REDIS_KEY,
+            module["name"],
+            json.dumps({"revision": module["last_commit_sha"], "definition": {}}),
         )
     forgejo_api.respond(200, modules)
 
@@ -144,12 +153,17 @@ async def test_sync_refetches_only_stale_modules(
 ):
     modules = read_forgejo_response()
     stale, fresh = modules[0], modules[1]
-    await suggested_redis.set(
-        f"suggestedservices:{stale['name']}:HEAD",
-        "0000000000000000000000000000000000000000",
+    await suggested_redis.hset(
+        SUGGESTED_SERVICES_REDIS_KEY,
+        stale["name"],
+        json.dumps(
+            {"revision": "0000000000000000000000000000000000000000", "definition": {}}
+        ),
     )
-    await suggested_redis.set(
-        f"suggestedservices:{fresh['name']}:HEAD", fresh["last_commit_sha"]
+    await suggested_redis.hset(
+        SUGGESTED_SERVICES_REDIS_KEY,
+        fresh["name"],
+        json.dumps({"revision": fresh["last_commit_sha"], "definition": {}}),
     )
     forgejo_api.respond(200, modules)
 
@@ -158,7 +172,9 @@ async def test_sync_refetches_only_stale_modules(
     remote_service_mock.assert_awaited_once()
     assert remote_service_mock.call_args.args[0] == stale["name"]
     assert (
-        await suggested_redis.get(f"suggestedservices:{stale['name']}:HEAD")
+        json.loads(
+            await suggested_redis.hget(SUGGESTED_SERVICES_REDIS_KEY, stale["name"])
+        )["revision"]
         == stale["last_commit_sha"]
     )
 
@@ -176,19 +192,25 @@ async def test_sync_non_list_response_raises(
 
 
 @pytest.mark.asyncio
-async def test_sync_propagates_fetch_failures_and_caches_nothing(
+async def test_sync_keeps_successful_fetches_when_other_fetches_fail(
     suggested_redis, forgejo_api, remote_service_mock
 ):
     modules = read_forgejo_response()
+    failed_module = modules[0]
     forgejo_api.respond(200, modules)
-    remote_service_mock.side_effect = Exception("fetch failed")
 
-    with pytest.raises(ExceptionGroup):
-        await SuggestedServices.sync()
+    async def fail_one_module(name, url):
+        if name == failed_module["name"]:
+            raise Exception("fetch failed")
+        return TemplatedService(name, read_module_definition(name))
 
-    for module in modules:
-        name = module["name"]
-        assert await suggested_redis.get(f"suggestedservices:{name}:data") is None
+    remote_service_mock.side_effect = fail_one_module
+
+    await SuggestedServices.sync()
+
+    payloads = await suggested_redis.hgetall(SUGGESTED_SERVICES_REDIS_KEY)
+    assert failed_module["name"] not in payloads
+    assert set(payloads) == {module["name"] for module in modules[1:]}
 
 
 # --- SuggestedServices.get() ---------------------------------------------------------
@@ -196,9 +218,15 @@ async def test_sync_propagates_fetch_failures_and_caches_nothing(
 
 async def seed_cached_module(redis, name: str) -> dict:
     definition = json.loads(read_module_definition(name))
-    await redis.set(f"suggestedservices:{name}:data", json.dumps(definition))
-    await redis.set(
-        f"suggestedservices:{name}:HEAD", "f4b5ef270d75c23f2fddcd3def5e8e14c323ee65"
+    await redis.hset(
+        SUGGESTED_SERVICES_REDIS_KEY,
+        name,
+        json.dumps(
+            {
+                "revision": "f4b5ef270d75c23f2fddcd3def5e8e14c323ee65",
+                "definition": read_module_definition(name),
+            }
+        ),
     )
     return definition
 
@@ -259,12 +287,15 @@ async def test_get_cache_invalidated_when_revision_changes(
     assert first.get_id() == "gitea"
 
     # A new HEAD revision with different data must bypass the cache and reparse.
-    await suggested_redis.set(
-        "suggestedservices:gitea:HEAD",
-        "1111111111111111111111111111111111111111",
-    )
-    await suggested_redis.set(
-        "suggestedservices:gitea:data", read_module_definition("nextcloud")
+    await suggested_redis.hset(
+        SUGGESTED_SERVICES_REDIS_KEY,
+        "gitea",
+        json.dumps(
+            {
+                "revision": "1111111111111111111111111111111111111111",
+                "definition": read_module_definition("nextcloud"),
+            }
+        ),
     )
     second = (await SuggestedServices.get())[0]
 
@@ -274,9 +305,16 @@ async def test_get_cache_invalidated_when_revision_changes(
 
 @pytest.mark.asyncio
 async def test_get_does_not_cache_without_revision(suggested_redis, sp_modules_dir):
-    # Seed the data but no :HEAD key, so revision is None and must not be cached.
-    await suggested_redis.set(
-        "suggestedservices:gitea:data", read_module_definition("gitea")
+    # Seed data with no revision, so it must not be cached.
+    await suggested_redis.hset(
+        SUGGESTED_SERVICES_REDIS_KEY,
+        "gitea",
+        json.dumps(
+            {
+                "revision": None,
+                "definition": read_module_definition("gitea"),
+            }
+        ),
     )
 
     first = (await SuggestedServices.get())[0]

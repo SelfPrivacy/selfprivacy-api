@@ -29,6 +29,9 @@ from selfprivacy_api.migrations.replace_blockdevices_to_uuid import (
 
 from selfprivacy_api.migrations.switch_to_flakes import SwitchToFlakes
 from selfprivacy_api.migrations.merge_sp_modules_flake import MergeSpModulesFlake
+from selfprivacy_api.migrations.move_suggested_services_to_hash import (
+    MoveSuggestedServicesToHash,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +45,7 @@ migrations = [
     ReplaceBlockDevicesToUUID(),
     AddMonitoring(),
     ConfigureHetznerBootloader(),
+    MoveSuggestedServicesToHash(),
 ]
 
 

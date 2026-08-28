@@ -136,6 +136,7 @@ def test_real_migration_names_are_stable():
         "replace_block_devices_to_uuid",
         "add_monitoring",
         "configure_hetzner_bootloader",
+        "move_suggested_services_to_hash",
     ]
     assert len(set(names)) == len(names)
 
