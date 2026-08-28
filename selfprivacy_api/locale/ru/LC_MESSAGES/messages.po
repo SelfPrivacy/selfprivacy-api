@@ -129,24 +129,22 @@ msgid "The API is using the wrong user repository."
 msgstr "API использует неверный репозиторий пользователей."
 
 #: selfprivacy_api/exceptions/kanidm.py:18
-#, fuzzy
 msgid "Kanidm is the identity and authentication service that manages users and access to system services."
-msgstr "Kanidm — это сервис идентификации и аутентификации, который управляет пользователями и доступом к сервисам."
+msgstr "Kanidm — это сервис идентификации и аутентификации, который управляет пользователями и доступом к системным сервисам."
 
 #: selfprivacy_api/exceptions/kanidm.py:22
 msgid "In some cases, a Kanidm update may introduce breaking changes affecting the API, CLI commands, or configuration compatibility."
 msgstr "В некоторых случаях обновление Kanidm может внести несовместимые изменения, затрагивающие API, команды CLI или совместимость конфигурации."
 
 #: selfprivacy_api/exceptions/kanidm.py:26
-#, fuzzy
 msgid ""
 "Console commands to debug:\n"
 "\"systemctl status kanidm.service\"\n"
 "\"journalctl -u kanidm.service -f\""
 msgstr ""
-"Консольные команды для отладки:\n"
-"    'systemctl status kanidm.service'\n"
-"    'journalctl -u kanidm.service'\n"
+"Команды для диагностики:\n"
+"\"systemctl status kanidm.service\"\n"
+"\"journalctl -u kanidm.service -f\""
 
 #: selfprivacy_api/exceptions/kanidm.py:55
 #, python-format
@@ -208,7 +206,7 @@ msgstr ""
 "Ответ: %(response)s"
 
 #: selfprivacy_api/exceptions/kanidm.py:177
-#, fuzzy, python-format
+#, python-format
 msgid ""
 "Failed to get access to Kanidm admin account:\n"
 "The Kanidm CLI did not provide the admin password.\n"
@@ -222,7 +220,7 @@ msgid ""
 "Kanidm's CLI output: %(output)s"
 msgstr ""
 "Не удалось получить доступ к учётной записи администратора Kanidm:\n"
-"Kanidm CLI не сбросил пароль администратора.\n"
+"Kanidm CLI не предоставил пароль администратора.\n"
 "%(KANIDM_DESCRIPTION)s\n"
 "%(KANIDM_PROBLEMS)s\n"
 "%(REPORT_IT_TO_SUPPORT_CHATS)s\n"
@@ -230,7 +228,6 @@ msgstr ""
 "%(KANIDM_DEBUG_HELP)s\n"
 "\n"
 "Использованная команда: %(command)s\n"
-"Использованный шаблон regex: %(regex_pattern)s\n"
 "Вывод Kanidm CLI: %(output)s"
 
 #: selfprivacy_api/exceptions/kanidm.py:220
@@ -255,7 +252,7 @@ msgstr ""
 "Ошибка: %(error)s"
 
 #: selfprivacy_api/exceptions/kanidm.py:255
-#, fuzzy, python-format
+#, python-format
 msgid ""
 "Couldn't get a valid Kanidm token.\n"
 "%(KANIDM_DESCRIPTION)s\n"
@@ -854,18 +851,16 @@ msgid "Latest tested release of SelfPrivacy system"
 msgstr ""
 
 #: selfprivacy_api/utils/kanidm.py:32
-#, fuzzy
 msgid "Error logging in to Kanidm"
-msgstr "Ошибка при создании токена Kanidm"
+msgstr "Ошибка при входе в Kanidm"
 
 #: selfprivacy_api/utils/kanidm.py:33
 msgid "Error creating Kanidm token"
 msgstr "Ошибка при создании токена Kanidm"
 
 #: selfprivacy_api/utils/kanidm.py:34
-#, fuzzy
 msgid "Error resetting Kanidm admin password"
-msgstr "Ошибка при создании токена Kanidm"
+msgstr "Ошибка при сбросе пароля администратора Kanidm"
 
 #: selfprivacy_api/utils/kanidm.py:129
 msgid "No JSON found in Kanidm response."
@@ -877,7 +872,7 @@ msgstr "Kanidm не отвечает на запросы."
 
 #: selfprivacy_api/utils/kanidm.py:164
 msgid "We somehow got into unreachable code."
-msgstr ""
+msgstr "Выполнение дошло до недостижимого участка кода."
 
 #: selfprivacy_api/utils/kanidm.py:186
 msgid "Kanidm access issue"
