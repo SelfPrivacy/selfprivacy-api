@@ -33,7 +33,6 @@ from selfprivacy_api.graphql.mutations.email_passwords_metadata_mutations import
     EmailPasswordsMetadataMutations,
 )
 from selfprivacy_api.graphql.mutations.job_mutations import JobMutations
-from selfprivacy_api.graphql.mutations.kanidm_mutations import KanidmMutations
 from selfprivacy_api.graphql.mutations.mutation_interface import GenericMutationReturn
 from selfprivacy_api.graphql.mutations.services_mutations import ServicesMutations
 from selfprivacy_api.graphql.mutations.storage_mutations import StorageMutations
@@ -43,7 +42,6 @@ from selfprivacy_api.graphql.queries.api_queries import Api
 from selfprivacy_api.graphql.queries.backup import Backup
 from selfprivacy_api.graphql.queries.groups import Groups
 from selfprivacy_api.graphql.queries.jobs import Job
-from selfprivacy_api.graphql.queries.kanidm import Kanidm
 from selfprivacy_api.graphql.queries.logs import LogEntry, Logs
 from selfprivacy_api.graphql.queries.monitoring import Monitoring
 from selfprivacy_api.graphql.queries.services import Services
@@ -113,11 +111,6 @@ class Query:
         """Monitoring queries"""
         return Monitoring()
 
-    @strawberry.field(permission_classes=[IsAuthenticated])
-    async def kanidm(self) -> Kanidm:
-        """Kanidm queries"""
-        return Kanidm()
-
 
 @strawberry.type
 class Mutation(
@@ -156,11 +149,6 @@ class Mutation(
     ) -> EmailPasswordsMetadataMutations:
         """Storage mutations"""
         return EmailPasswordsMetadataMutations()
-
-    @strawberry.field(permission_classes=[IsAuthenticated])
-    async def kanidm(self) -> KanidmMutations:
-        """Kanidm mutations"""
-        return KanidmMutations()
 
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def services(self) -> ServicesMutations:

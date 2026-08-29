@@ -13,7 +13,7 @@ from tests.test_graphql.common import (
 
 KANIDM_GET_MIN_QUERY = """
 query MyQuery {
-  kanidm {
+  users {
     minimumCredentialType
   }
 }
@@ -21,7 +21,7 @@ query MyQuery {
 
 KANIDM_SET_MIN_MUTATION = """
 mutation MyMutation($minimumCredentialType: KanidmCredentialType!) {
-  kanidm {
+  users {
     setKanidmMinimumCredentialType(minimumCredentialType: $minimumCredentialType) {
       code
       message
@@ -44,18 +44,18 @@ def get_domain_mock(mocker):
 def test_graphql_get_minimum_kanidm_credential_type(authorized_client, mocker):
     mocker.patch(
         "selfprivacy_api.graphql.common_types.kanidm_credential_type.actions_get_kanidm_minimum_credential_type",
-        new=AsyncMock(return_value=KanidmCredentialType.mfa),
+        new=AsyncMock(return_value=KanidmCredentialType.attested_passkey),
     )
 
     response = authorized_client.post("/graphql", json={"query": KANIDM_GET_MIN_QUERY})
     data = get_data(response)
 
-    assert data["kanidm"]["minimumCredentialType"] == "mfa"
+    assert data["users"]["minimumCredentialType"] == "attested_passkey"
 
 
 def test_graphql_set_minimum_kanidm_credential_type(authorized_client, mocker):
     mocker.patch(
-        "selfprivacy_api.graphql.mutations.kanidm_mutations.set_kanidm_minimum_credential_type_action",
+        "selfprivacy_api.graphql.mutations.users_mutations.set_kanidm_minimum_credential_type_action",
         new=AsyncMock(return_value=None),
     )
 
@@ -64,22 +64,22 @@ def test_graphql_set_minimum_kanidm_credential_type(authorized_client, mocker):
         json={
             "query": KANIDM_SET_MIN_MUTATION,
             "variables": {
-                "minimumCredentialType": "passkey",
+                "minimumCredentialType": "attested_passkey",
             },
         },
     )
     data = get_data(response)
 
-    output = data["kanidm"]["setKanidmMinimumCredentialType"]
+    output = data["users"]["setKanidmMinimumCredentialType"]
     assert_ok(output, code=200)
-    assert output["minimumCredentialType"] == "passkey"
+    assert output["minimumCredentialType"] == "attested_passkey"
 
 
 def test_graphql_set_minimum_kanidm_credential_type_query_error(
     authorized_client, mocker, get_domain_mock
 ):
     mocker.patch(
-        "selfprivacy_api.graphql.mutations.kanidm_mutations.set_kanidm_minimum_credential_type_action",
+        "selfprivacy_api.graphql.mutations.users_mutations.set_kanidm_minimum_credential_type_action",
         new=AsyncMock(
             side_effect=KanidmQueryError(
                 endpoint="group/idm_all_persons/_attr/credential_type_minimum",
@@ -100,7 +100,7 @@ def test_graphql_set_minimum_kanidm_credential_type_query_error(
     )
     data = get_data(response)
 
-    output = data["kanidm"]["setKanidmMinimumCredentialType"]
+    output = data["users"]["setKanidmMinimumCredentialType"]
     assert_errorcode(output, code=500)
     assert output["minimumCredentialType"] is None
 

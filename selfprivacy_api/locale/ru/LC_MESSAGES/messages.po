@@ -20,7 +20,7 @@ msgstr ""
 
 #: selfprivacy_api/actions/kanidm_credential_type.py:14
 msgid "Error while trying to get the Kanidm minimum credential type: Kanidm did not return a valid \"credential_type_minimum\" value for the group idm_all_persons."
-msgstr ""
+msgstr "Не удалось получить минимально допустимый способ аутентификации в Kanidm: Kanidm вернул недопустимое значение \"credential_type_minimum\" для группы idm_all_persons."
 
 #: selfprivacy_api/actions/services.py:28
 #, python-format
@@ -668,31 +668,31 @@ msgstr "Провайдер установлен"
 msgid "System update channel updated"
 msgstr "Настройки сервиса обновлены."
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:43
+#: selfprivacy_api/graphql/mutations/users_mutations.py:50
 msgid "New password applied an an email password. To use Single Sign On, please update the SelfPrivacy app."
 msgstr "Новый пароль применён как пароль электронной почты. Чтобы использовать единый вход (SSO), обновите приложение SelfPrivacy."
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:123
+#: selfprivacy_api/graphql/mutations/users_mutations.py:160
 msgid "User created"
 msgstr "Пользователь создан"
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:154
+#: selfprivacy_api/graphql/mutations/users_mutations.py:191
 msgid "User deleted"
 msgstr "Пользователь удалён"
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:201
+#: selfprivacy_api/graphql/mutations/users_mutations.py:238
 msgid "User updated"
 msgstr "Пользователь обновлён"
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:234
+#: selfprivacy_api/graphql/mutations/users_mutations.py:271
 msgid "New SSH key successfully written"
 msgstr "Новый ключ SSH успешно записан"
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:270
+#: selfprivacy_api/graphql/mutations/users_mutations.py:307
 msgid "SSH key successfully removed"
 msgstr "Ключ SSH успешно удалён"
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:306
+#: selfprivacy_api/graphql/mutations/users_mutations.py:343
 msgid "Link successfully created"
 msgstr "Ссылка успешно создана"
 

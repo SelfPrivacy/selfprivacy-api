@@ -576,31 +576,31 @@ msgstr ""
 msgid "System update channel updated"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:43
+#: selfprivacy_api/graphql/mutations/users_mutations.py:50
 msgid "New password applied an an email password. To use Single Sign On, please update the SelfPrivacy app."
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:123
+#: selfprivacy_api/graphql/mutations/users_mutations.py:160
 msgid "User created"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:154
+#: selfprivacy_api/graphql/mutations/users_mutations.py:191
 msgid "User deleted"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:201
+#: selfprivacy_api/graphql/mutations/users_mutations.py:238
 msgid "User updated"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:234
+#: selfprivacy_api/graphql/mutations/users_mutations.py:271
 msgid "New SSH key successfully written"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:270
+#: selfprivacy_api/graphql/mutations/users_mutations.py:307
 msgid "SSH key successfully removed"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:306
+#: selfprivacy_api/graphql/mutations/users_mutations.py:343
 msgid "Link successfully created"
 msgstr ""
 

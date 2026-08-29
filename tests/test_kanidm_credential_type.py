@@ -27,6 +27,19 @@ async def test_get_kanidm_credential_type(mocker):
 
 
 @pytest.mark.asyncio
+async def test_get_attested_passkey_kanidm_credential_type(mocker):
+    mocker.patch(
+        "selfprivacy_api.actions.kanidm_credential_type.send_kanidm_query",
+        return_value=["attested_passkey"],
+    )
+
+    assert (
+        await get_kanidm_minimum_credential_type()
+        == KanidmCredentialType.attested_passkey
+    )
+
+
+@pytest.mark.asyncio
 async def test_get_kanidm_credential_type_query_error(mocker, get_domain_mock):
     mocker.patch(
         "selfprivacy_api.actions.kanidm_credential_type.send_kanidm_query",
@@ -48,11 +61,11 @@ async def test_set_kanidm_credential_type(mocker):
         return_value={"status": "ok"},
     )
 
-    await set_kanidm_minimum_credential_type(KanidmCredentialType.passkey)
+    await set_kanidm_minimum_credential_type(KanidmCredentialType.attested_passkey)
     send_query.assert_called_once_with(
         endpoint="group/idm_all_persons/_attr/credential_type_minimum",
         method="PUT",
-        data=["passkey"],
+        data=["attested_passkey"],
     )
 
 
