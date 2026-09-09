@@ -152,7 +152,10 @@ def test_websocket_subscription_minimal_unauthorized(unauthenticated_websocket):
         "payload": {
             "data": None,
             "errors": [
-                {"message": "You must be authenticated to access this resource."}
+                {
+                    "message": "You must be authenticated to access this resource.",
+                    "extensions": {"code": "UNAUTHENTICATED"},
+                }
             ],
         },
         "type": "next",
@@ -223,6 +226,12 @@ def test_websocket_subscription_unauthorized(unauthenticated_websocket):
     del payload["locations"]
     assert response == {
         "id": id,
-        "payload": [{"message": IsAuthenticated.message, "path": ["jobUpdates"]}],
+        "payload": [
+            {
+                "message": IsAuthenticated.message,
+                "path": ["jobUpdates"],
+                "extensions": {"code": "UNAUTHENTICATED"},
+            }
+        ],
         "type": "error",
     }

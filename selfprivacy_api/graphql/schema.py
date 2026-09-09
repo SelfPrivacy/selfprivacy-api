@@ -183,7 +183,7 @@ async def authenticated(info: Info) -> bool:
 
 async def reject_if_unauthenticated(info: Info):
     if not await authenticated(info):
-        raise Exception(IsAuthenticated().message)
+        IsAuthenticated().on_unauthorized()
 
 
 @strawberry.type

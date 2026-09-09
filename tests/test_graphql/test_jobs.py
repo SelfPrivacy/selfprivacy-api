@@ -42,6 +42,7 @@ def api_jobs(authorized_client):
 def test_all_jobs_unauthorized(client, jobs):
     response = graphql_send_query(client, generate_jobs_query([API_JOBS_QUERY]))
     assert_empty(response)
+    assert response.json()["errors"][0]["extensions"] == {"code": "UNAUTHENTICATED"}
 
 
 def test_all_jobs_when_none(authorized_client, jobs):

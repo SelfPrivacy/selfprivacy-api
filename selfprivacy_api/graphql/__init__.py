@@ -22,6 +22,9 @@ class IsAuthenticated(BasePermission):
 
     message = "You must be authenticated to access this resource."
 
+    def __init__(self) -> None:
+        self.error_extensions = {"code": "UNAUTHENTICATED"}
+
     async def has_permission(self, source: Any, info: Info, **kwargs) -> bool:
         token = info.context["request"].headers.get("Authorization")
         if token is None:
