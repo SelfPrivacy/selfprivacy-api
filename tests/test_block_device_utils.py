@@ -6,6 +6,7 @@ import json
 import subprocess
 import pytest
 
+from selfprivacy_api.graphql.queries.storage import Storage
 from selfprivacy_api.utils.block_devices import (
     BlockDevice,
     BlockDevices,
@@ -415,7 +416,7 @@ def lsblk_full_mock(mocker, generic_userdata):
     return mock
 
 
-def test_get_block_devices(lsblk_full_mock, authorized_client, generic_userdata):
+async def test_get_block_devices(lsblk_full_mock, authorized_client, generic_userdata):
     block_devices = BlockDevices().get_block_devices()
     assert len(block_devices) == 2
     devices_by_name = {device.name: device for device in block_devices}
@@ -449,6 +450,14 @@ def test_get_block_devices(lsblk_full_mock, authorized_client, generic_userdata)
     assert sdb.model == "Volume"
     assert sdb.serial == "21378102"
     assert sdb.type == "disk"
+
+    assert len(await Storage().volumes()) == 2
+    unmounted = json.loads(VOLUME_LSBLK_OUTPUT)["blockdevices"][0]
+    unmounted.update(fssize=None, fsavail=None, fsused=None, mountpoints=[None])
+    sdb.update_from_dict(unmounted)
+    assert sdb.fssize is None
+    assert BlockDevices().get_block_device("sdb") is sdb
+    assert [volume.name for volume in await Storage().volumes()] == ["sda1"]
 
 
 def test_get_block_device(lsblk_full_mock, authorized_client, generic_userdata):

@@ -39,4 +39,5 @@ class Storage:
                     type=volume.type,
                 )
                 for volume in BlockDevices().get_block_devices()
+                if volume.fssize is not None
             ]
