@@ -15,7 +15,7 @@ getJobs {
 
 def test_translate_ru_returns_msgstr_not_msgid():
     translated = t.translate(text="Rebuild system", locale="ru")
-    assert translated == "Пересборка системы"
+    assert translated == "Пересборать систему"
 
 
 def test_graphql_jobs_query_honors_accept_language_ru(
@@ -40,7 +40,7 @@ def test_graphql_jobs_query_honors_accept_language_ru(
     result = data["jobs"]["getJobs"]
 
     assert len(result) == 1
-    assert result[0]["name"] == "Пересборка системы"
+    assert result[0]["name"] == "Пересборать систему"
     assert result[0]["description"] == (
         "Применение новой конфигурации системы путём сборки новой генерации NixOS."
     )
