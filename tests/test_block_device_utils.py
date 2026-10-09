@@ -450,6 +450,18 @@ def test_get_block_devices(lsblk_full_mock, authorized_client, generic_userdata)
     assert sdb.serial == "21378102"
     assert sdb.type == "disk"
 
+    device_data = json.loads(VOLUME_LSBLK_OUTPUT)["blockdevices"][0]
+    device_data["fssize"] = None
+    sdb.update_from_dict(device_data)
+    assert sdb.fssize is None
+
+    lsblk_data = json.loads(FULL_LSBLK_OUTPUT)
+    lsblk_data["blockdevices"][1] = device_data
+    lsblk_full_mock.return_value = json.dumps(lsblk_data).encode()
+    BlockDevices().update()
+    assert BlockDevices().get_block_devices() == [sda1]
+    assert BlockDevices().get_block_device_by_canonical_name("sdb") is None
+
 
 def test_get_block_device(lsblk_full_mock, authorized_client, generic_userdata):
     block_device = BlockDevices().get_block_device("sda1")

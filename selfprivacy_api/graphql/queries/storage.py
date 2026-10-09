@@ -25,11 +25,7 @@ class Storage:
         with tracer.start_as_current_span("Storage.volumes"):
             return [
                 StorageVolume(
-                    total_space=(
-                        str(volume.fssize)
-                        if volume.fssize is not None
-                        else str(volume.size)
-                    ),
+                    total_space=str(volume.fssize),
                     free_space=str(volume.fsavail),
                     used_space=str(volume.fsused),
                     root=volume.is_root(),
