@@ -55,7 +55,10 @@ class BlockDevice:
         self.path = device_dict["path"]
         # TODO: maybe parse it as numbers, as in origin?
         self.fsavail = str(device_dict["fsavail"])
-        self.fssize = str(device_dict["fssize"])
+        # Preserve missing filesystem sizes for storage queries.
+        self.fssize = (
+            str(device_dict["fssize"]) if device_dict["fssize"] is not None else None
+        )
         self.fstype = device_dict["fstype"]
         self.fsused = str(device_dict["fsused"])
         self.mountpoints = device_dict["mountpoints"]
@@ -150,7 +153,7 @@ class BlockDevice:
         }
 
     def is_usable_partition(self):
-        if self.type == "rom" or not self.uuid:
+        if self.type == "rom" or not self.uuid or self.fssize is None:
             return False
         if self.fstype == "ext4":
             return True
