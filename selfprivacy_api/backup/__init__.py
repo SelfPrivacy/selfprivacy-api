@@ -555,11 +555,13 @@ class Backups:
         elif strategy == RestoreStrategy.INPLACE:
             needed_space = restored_snap_size - (await service.get_storage_usage())
         else:
-            raise NotImplementedError("""
+            raise NotImplementedError(
+                """
             We do not know if there is enough space for restoration because
             there is some novel restore strategy used!
             This is a developer's fault, open an issue please
-            """)
+            """
+            )
         available_space = Backups.space_usable_for_service(service)
         if needed_space > available_space:
             raise ValueError(
