@@ -2,6 +2,7 @@
 
 import aiofiles
 import base64
+import gettext
 import logging
 import json
 
@@ -48,6 +49,7 @@ SP_SUGGESTED_MODULES_PATH = "/etc/suggested-sp-modules"
 
 logger = logging.getLogger(__name__)
 tracer = trace.get_tracer(__name__)
+_ = gettext.gettext
 
 
 def config_item_from_json(json_data: dict) -> Optional[ServiceConfigItem]:
@@ -491,8 +493,9 @@ class TemplatedService(Service):
             # Dump the databases
             for db_name in self.get_postgresql_databases():
                 Jobs.update(
-                    job,
-                    status_text=f"Creating a dump of database {db_name}",
+                    job=job,
+                    status_text=_("Creating a dump of database %(db_name)s"),
+                    status_text_args={"db_name": db_name},
                     status=JobStatus.RUNNING,
                 )
                 db_dumper = PostgresDumper(db_name)
@@ -531,8 +534,9 @@ class TemplatedService(Service):
             for db_name in self.get_postgresql_databases():
                 if exists(join(db_dumps_folder, f"{db_name}.dump")):
                     Jobs.update(
-                        job,
-                        status_text=f"Restoring database {db_name}",
+                        job=job,
+                        status_text=_("Restoring database %(db_name)s"),
+                        status_text_args={"db_name": db_name},
                         status=JobStatus.RUNNING,
                     )
                     db_dumper = PostgresDumper(db_name)

@@ -1,5 +1,9 @@
+import gettext
+
 from selfprivacy_api.migrations.migration import Migration
 from selfprivacy_api.jobs import JobStatus, Jobs
+
+_ = gettext.gettext
 
 
 class CheckForSystemRebuildJobs(Migration):
@@ -43,6 +47,6 @@ class CheckForSystemRebuildJobs(Migration):
                 Jobs.update(
                     job=job,
                     status=JobStatus.FINISHED,
-                    result="System rebuilt.",
+                    result=_("System rebuilt."),
                     progress=100,
                 )

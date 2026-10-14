@@ -304,7 +304,12 @@ class Jobs:
         return False
 
 
-def report_progress(progress: int, job: Job, status_text: str) -> None:
+def report_progress(
+    progress: int,
+    job: Job,
+    status_text: str,
+    status_text_args: typing.Optional[dict] = None,
+) -> None:
     """
     A terse way to call a common operation, for readability
     job.report_progress() would be even better
@@ -314,6 +319,7 @@ def report_progress(progress: int, job: Job, status_text: str) -> None:
         job=job,
         status=JobStatus.RUNNING,
         status_text=status_text,
+        status_text_args=status_text_args,
         progress=progress,
     )
 
