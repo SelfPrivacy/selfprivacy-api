@@ -197,8 +197,10 @@ class Subscription:
     async def job_updates(self, info: Info) -> AsyncGenerator[List[ApiJob], None]:
         await reject_if_unauthenticated(info)
 
-        connection_params = info.context.get("connection_params")
+        connection_params = info.context.get("connection_params") or {}
         locales_raw = connection_params.get("Accept-Language")
+        if not locales_raw:
+            locales_raw = info.context["request"].headers.get("Accept-Language")
 
         if locales_raw:
             locale = Localization().get_locale(locales_raw)

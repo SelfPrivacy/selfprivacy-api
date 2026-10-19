@@ -159,8 +159,6 @@ class BackupMutations:
         Values <=0 for any timeframe mean no limits for that timeframe.
         To disable autobackup use autobackup period setting, not this mutation.
         """
-        locale = get_locale(info=info)
-
         with tracer.start_as_current_span(
             "set_autobackup_quotas",
             attributes={
@@ -171,15 +169,10 @@ class BackupMutations:
             },
         ):
             job = Jobs.add(
-                name=t.translate(
-                    text=_("Trimming autobackup snapshots"), locale=locale
-                ),
+                name=_("Trimming autobackup snapshots"),
                 type_id="backups.autobackup_trimming",
-                description=t.translate(
-                    text=_(
-                        "Pruning the excessive snapshots after the new autobackup quotas are set"
-                    ),
-                    locale=locale,
+                description=_(
+                    "Pruning the excessive snapshots after the new autobackup quotas are set"
                 ),
             )
 

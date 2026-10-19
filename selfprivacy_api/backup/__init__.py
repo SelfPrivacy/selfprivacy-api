@@ -3,6 +3,7 @@ This module contains the controller class for backups.
 """
 
 from datetime import datetime, timedelta, timezone
+import gettext
 import time
 import os
 from os import statvfs
@@ -46,6 +47,7 @@ from selfprivacy_api.backup.jobs import (
 )
 
 tracer = trace.get_tracer(__name__)
+_ = gettext.gettext
 
 
 BACKUP_PROVIDER_ENVS = {
@@ -263,7 +265,9 @@ class Backups:
             folders = service.get_folders_to_back_up()
             service_name = service.get_id()
             service.pre_backup(job=job)
-            Jobs.update(job, status=JobStatus.RUNNING, status_text="Uploading backup")
+            Jobs.update(
+                job=job, status=JobStatus.RUNNING, status_text=_("Uploading backup")
+            )
             snapshot = await Backups.provider().backupper.start_backup(
                 folders,
                 service_name,
@@ -278,7 +282,7 @@ class Backups:
             Jobs.update(job, status=JobStatus.ERROR, error=str(error))
             raise error
 
-        Jobs.update(job, status=JobStatus.FINISHED, result="Backup finished")
+        Jobs.update(job=job, status=JobStatus.FINISHED, result=_("Backup finished"))
         if reason in [BackupReason.AUTO, BackupReason.PRE_RESTORE]:
             Jobs.set_expiration(job, AUTOBACKUP_JOB_EXPIRATION_SECONDS)
 
@@ -438,12 +442,17 @@ class Backups:
         job: Job,
     ) -> None:
         Jobs.update(
-            job, status=JobStatus.CREATED, status_text="Waiting for pre-restore backup"
+            job=job,
+            status=JobStatus.CREATED,
+            status_text=_("Waiting for pre-restore backup"),
         )
         failsafe_snapshot = await Backups.back_up(service, BackupReason.PRE_RESTORE)
 
         Jobs.update(
-            job, status=JobStatus.RUNNING, status_text=f"Restoring from {snapshot.id}"
+            job=job,
+            status=JobStatus.RUNNING,
+            status_text=_("Restoring from %(snapshot_id)s"),
+            status_text_args={"snapshot_id": snapshot.id},
         )
         try:
             Backups._restore_service_from_snapshot(
@@ -453,17 +462,29 @@ class Backups:
             )
         except Exception as error:
             Jobs.update(
-                job,
+                job=job,
                 status=JobStatus.ERROR,
-                status_text=f"Restore failed with {str(error)}, reverting to {failsafe_snapshot.id}",
+                status_text=_(
+                    "Restore failed with %(error)s, reverting to %(snapshot_id)s"
+                ),
+                status_text_args={
+                    "error": str(error),
+                    "snapshot_id": failsafe_snapshot.id,
+                },
             )
             Backups._restore_service_from_snapshot(
                 service, failsafe_snapshot.id, verify=False
             )
             Jobs.update(
-                job,
+                job=job,
                 status=JobStatus.ERROR,
-                status_text=f"Restore failed with {str(error)}, reverted to {failsafe_snapshot.id}",
+                status_text=_(
+                    "Restore failed with %(error)s, reverted to %(snapshot_id)s"
+                ),
+                status_text_args={
+                    "error": str(error),
+                    "snapshot_id": failsafe_snapshot.id,
+                },
             )
             raise error
 
@@ -483,7 +504,7 @@ class Backups:
         try:
             await Backups._assert_restorable(snapshot)
             Jobs.update(
-                job, status=JobStatus.RUNNING, status_text="Stopping the service"
+                job=job, status=JobStatus.RUNNING, status_text=_("Stopping the service")
             )
             async with StoppedService(service):
                 if not service.is_always_active():
@@ -493,9 +514,10 @@ class Backups:
                     await Backups._inplace_restore(service, snapshot, job)
                 else:  # verify_before_download is our default
                     Jobs.update(
-                        job,
+                        job=job,
                         status=JobStatus.RUNNING,
-                        status_text=f"Restoring from {snapshot.id}",
+                        status_text=_("Restoring from %(snapshot_id)s"),
+                        status_text_args={"snapshot_id": snapshot.id},
                     )
                     Backups._restore_service_from_snapshot(
                         service, snapshot.id, verify=True
@@ -503,10 +525,10 @@ class Backups:
 
                 await service.post_restore(job=job)
                 Jobs.update(
-                    job,
+                    job=job,
                     status=JobStatus.RUNNING,
                     progress=90,
-                    status_text="Restarting the service",
+                    status_text=_("Restarting the service"),
                 )
 
         except Exception as error:

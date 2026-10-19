@@ -2,6 +2,7 @@
 
 import asyncio
 import base64
+import gettext
 import logging
 import os
 import typing
@@ -41,6 +42,7 @@ KANIDM_A_RECORD = "auth"
 
 logger = logging.getLogger(__name__)
 tracer = trace.get_tracer(__name__)
+_ = gettext.gettext
 
 
 class ServiceManager(Service):
@@ -313,8 +315,8 @@ class ServiceManager(Service):
     @classmethod
     def pre_backup(cls, job: Job):
         Jobs.update(
-            job,
-            status_text="Stashing settings",
+            job=job,
+            status_text=_("Stashing settings"),
             status=JobStatus.RUNNING,
         )
         tempdir = cls.dump_dir()

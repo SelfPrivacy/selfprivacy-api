@@ -82,8 +82,8 @@ async def rebuild_system(job: Job, upgrade: bool = False):
             Jobs.update(
                 job=job,
                 status=JobStatus.ERROR,
-                error=_("System rebuild timed out. Last log lines:\n")
-                + "\n".join(log_lines),
+                error=_("System rebuild timed out. Last log lines:\n%(logs)s"),
+                error_args={"logs": "\n".join(log_lines)},
             )
             return
         Jobs.update(
@@ -124,8 +124,8 @@ async def rebuild_system(job: Job, upgrade: bool = False):
                 Jobs.update(
                     job=job,
                     status=JobStatus.ERROR,
-                    error=_("System rebuild failed. Last log lines:\n")
-                    + "\n".join(log_lines),
+                    error=_("System rebuild failed. Last log lines:\n%(logs)s"),
+                    error_args={"logs": "\n".join(log_lines)},
                 )
 
         except asyncio.TimeoutError:
@@ -139,8 +139,8 @@ async def rebuild_system(job: Job, upgrade: bool = False):
             Jobs.update(
                 job=job,
                 status=JobStatus.ERROR,
-                error=_("System rebuild timed out. Last log lines:\n")
-                + "\n".join(log_lines),
+                error=_("System rebuild timed out. Last log lines:\n%(logs)s"),
+                error_args={"logs": "\n".join(log_lines)},
             )
             return
 

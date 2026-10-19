@@ -2,6 +2,7 @@
 
 from abc import ABC, abstractmethod
 import asyncio
+import gettext
 import logging
 from typing import List, Optional
 from os.path import exists
@@ -36,6 +37,7 @@ from selfprivacy_api.services.moving import (
 DEFAULT_START_STOP_TIMEOUT = 5 * 60
 
 logger = logging.getLogger(__name__)
+_ = gettext.gettext
 
 
 class Service(ABC):
@@ -449,35 +451,64 @@ class Service(ABC):
         service_name = self.get_display_name()
         binds = self.binds()
 
-        report_progress(10, job, "Unmounting folders from old volume...")
+        report_progress(
+            progress=10,
+            job=job,
+            status_text=_("Unmounting folders from old volume..."),
+        )
         unbind_folders(binds)
 
-        report_progress(20, job, "Moving data to new volume...")
+        report_progress(
+            progress=20,
+            job=job,
+            status_text=_("Moving data to new volume..."),
+        )
         binds = move_data_to_volume(binds, new_volume, job)
 
-        report_progress(70, job, f"Making sure {service_name} owns its files...")
+        report_progress(
+            progress=70,
+            job=job,
+            status_text=_("Making sure %(service_name)s owns its files..."),
+            status_text_args={"service_name": service_name},
+        )
         try:
             ensure_folder_ownership(binds)
         except Exception as error:
             # We have logged it via print and we additionally log it here in the error field
             # We are continuing anyway but Job has no warning field
             Jobs.update(
-                job,
-                JobStatus.RUNNING,
-                error=f"Service {service_name} will not be able to write files: "
-                + str(error),
+                job=job,
+                status=JobStatus.RUNNING,
+                error=_(
+                    "Service %(service_name)s will not be able to write files: %(error)s"
+                ),
+                error_args={"service_name": service_name, "error": str(error)},
             )
 
-        report_progress(90, job, f"Mounting {service_name} data...")
+        report_progress(
+            progress=90,
+            job=job,
+            status_text=_("Mounting %(service_name)s data..."),
+            status_text_args={"service_name": service_name},
+        )
         bind_folders(binds)
 
-        report_progress(95, job, f"Finishing moving {service_name}...")
+        report_progress(
+            progress=95,
+            job=job,
+            status_text=_("Finishing moving %(service_name)s..."),
+            status_text_args={"service_name": service_name},
+        )
         self.set_location(new_volume)
 
     async def move_to_volume(self, volume: BlockDevice, job: Job) -> Job:
         service_name = self.get_display_name()
 
-        report_progress(0, job, "Performing pre-move checks...")
+        report_progress(
+            progress=0,
+            job=job,
+            status_text=_("Performing pre-move checks..."),
+        )
 
         await self.assert_can_move(volume)
         if not self.has_folders():
@@ -485,27 +516,44 @@ class Service(ABC):
             Jobs.update(
                 job=job,
                 status=JobStatus.FINISHED,
-                result=f"{service_name} moved successfully (no folders).",
-                status_text=f"NOT starting {service_name}",
+                result=_("%(service_name)s moved successfully (no folders)."),
+                result_args={"service_name": service_name},
+                status_text=_("NOT starting %(service_name)s"),
+                status_text_args={"service_name": service_name},
                 progress=100,
             )
             return job
 
-        report_progress(5, job, f"Stopping {service_name}...")
+        report_progress(
+            progress=5,
+            job=job,
+            status_text=_("Stopping %(service_name)s..."),
+            status_text_args={"service_name": service_name},
+        )
         if self is None:
             raise AssertionError
         async with StoppedService(self):
-            report_progress(9, job, "Stopped service, starting the move...")
+            report_progress(
+                progress=9,
+                job=job,
+                status_text=_("Stopped service, starting the move..."),
+            )
             self.do_move_to_volume(volume, job)
 
-            report_progress(98, job, "Move complete, rebuilding...")
+            report_progress(
+                progress=98,
+                job=job,
+                status_text=_("Move complete, rebuilding..."),
+            )
             await rebuild_system(job, upgrade=False)
 
             Jobs.update(
                 job=job,
                 status=JobStatus.FINISHED,
-                result=f"{service_name} moved successfully.",
-                status_text=f"Starting {service_name}...",
+                result=_("%(service_name)s moved successfully."),
+                result_args={"service_name": service_name},
+                status_text=_("Starting %(service_name)s..."),
+                status_text_args={"service_name": service_name},
                 progress=100,
             )
 

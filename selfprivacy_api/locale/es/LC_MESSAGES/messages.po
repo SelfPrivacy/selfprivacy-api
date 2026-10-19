@@ -46,6 +46,42 @@ msgstr ""
 msgid "Upgrading the system to the latest version."
 msgstr ""
 
+#: selfprivacy_api/backup/__init__.py:269
+msgid "Uploading backup"
+msgstr ""
+
+#: selfprivacy_api/backup/__init__.py:285
+msgid "Backup finished"
+msgstr ""
+
+#: selfprivacy_api/backup/__init__.py:447
+msgid "Waiting for pre-restore backup"
+msgstr ""
+
+#: selfprivacy_api/backup/__init__.py:454
+#: selfprivacy_api/backup/__init__.py:519
+#, python-format
+msgid "Restoring from %(snapshot_id)s"
+msgstr ""
+
+#: selfprivacy_api/backup/__init__.py:468
+#, python-format
+msgid "Restore failed with %(error)s, reverting to %(snapshot_id)s"
+msgstr ""
+
+#: selfprivacy_api/backup/__init__.py:482
+#, python-format
+msgid "Restore failed with %(error)s, reverted to %(snapshot_id)s"
+msgstr ""
+
+#: selfprivacy_api/backup/__init__.py:507
+msgid "Stopping the service"
+msgstr ""
+
+#: selfprivacy_api/backup/__init__.py:531
+msgid "Restarting the service"
+msgstr ""
+
 #: selfprivacy_api/backup/jobs.py:51
 msgid "Automatic backup"
 msgstr ""
@@ -425,19 +461,19 @@ msgstr ""
 msgid "Snapshot not found with id:"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/backup_mutations.py:175
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:172
 msgid "Trimming autobackup snapshots"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/backup_mutations.py:180
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:175
 msgid "Pruning the excessive snapshots after the new autobackup quotas are set"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/backup_mutations.py:233
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:226
 msgid "Backup job queued"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/backup_mutations.py:254
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:247
 msgid "Total backup task queued"
 msgstr ""
 
@@ -736,7 +772,10 @@ msgstr ""
 
 #: selfprivacy_api/jobs/upgrade_system.py:85
 #: selfprivacy_api/jobs/upgrade_system.py:142
-msgid "System rebuild timed out. Last log lines:\n"
+#, python-format
+msgid ""
+"System rebuild timed out. Last log lines:\n"
+"%(logs)s"
 msgstr ""
 
 #: selfprivacy_api/jobs/upgrade_system.py:92
@@ -744,11 +783,15 @@ msgid "Rebuilding the system..."
 msgstr ""
 
 #: selfprivacy_api/jobs/upgrade_system.py:119
+#: selfprivacy_api/migrations/check_for_system_rebuild_jobs.py:50
 msgid "System rebuilt."
 msgstr ""
 
 #: selfprivacy_api/jobs/upgrade_system.py:127
-msgid "System rebuild failed. Last log lines:\n"
+#, python-format
+msgid ""
+"System rebuild failed. Last log lines:\n"
+"%(logs)s"
 msgstr ""
 
 #: selfprivacy_api/models/services.py:94
@@ -757,6 +800,86 @@ msgstr ""
 
 #: selfprivacy_api/models/services.py:101
 msgid "No backup description found!"
+msgstr ""
+
+#: selfprivacy_api/services/__init__.py:319
+msgid "Stashing settings"
+msgstr ""
+
+#: selfprivacy_api/services/moving.py:71
+#: selfprivacy_api/services/service.py:464
+msgid "Moving data to new volume..."
+msgstr ""
+
+#: selfprivacy_api/services/service.py:457
+msgid "Unmounting folders from old volume..."
+msgstr ""
+
+#: selfprivacy_api/services/service.py:471
+#, python-format
+msgid "Making sure %(service_name)s owns its files..."
+msgstr ""
+
+#: selfprivacy_api/services/service.py:483
+#, python-format
+msgid "Service %(service_name)s will not be able to write files: %(error)s"
+msgstr ""
+
+#: selfprivacy_api/services/service.py:491
+#, python-format
+msgid "Mounting %(service_name)s data..."
+msgstr ""
+
+#: selfprivacy_api/services/service.py:499
+#, python-format
+msgid "Finishing moving %(service_name)s..."
+msgstr ""
+
+#: selfprivacy_api/services/service.py:510
+msgid "Performing pre-move checks..."
+msgstr ""
+
+#: selfprivacy_api/services/service.py:519
+#, python-format
+msgid "%(service_name)s moved successfully (no folders)."
+msgstr ""
+
+#: selfprivacy_api/services/service.py:521
+#, python-format
+msgid "NOT starting %(service_name)s"
+msgstr ""
+
+#: selfprivacy_api/services/service.py:530
+#, python-format
+msgid "Stopping %(service_name)s..."
+msgstr ""
+
+#: selfprivacy_api/services/service.py:539
+msgid "Stopped service, starting the move..."
+msgstr ""
+
+#: selfprivacy_api/services/service.py:546
+msgid "Move complete, rebuilding..."
+msgstr ""
+
+#: selfprivacy_api/services/service.py:553
+#, python-format
+msgid "%(service_name)s moved successfully."
+msgstr ""
+
+#: selfprivacy_api/services/service.py:555
+#, python-format
+msgid "Starting %(service_name)s..."
+msgstr ""
+
+#: selfprivacy_api/services/templated_service.py:497
+#, python-format
+msgid "Creating a dump of database %(db_name)s"
+msgstr ""
+
+#: selfprivacy_api/services/templated_service.py:538
+#, python-format
+msgid "Restoring database %(db_name)s"
 msgstr ""
 
 #: selfprivacy_api/update_channels.py:24

@@ -7,7 +7,6 @@ from selfprivacy_api.migrations.migration import Migration
 from selfprivacy_api.utils import ReadUserData, WriteUserData
 from selfprivacy_api.utils.block_devices import BlockDevices
 
-
 PARTITION_BY_ID_SUFFIX = re.compile(r"-part\d+$")
 # one disk might expose multiple stable /dev/disk/by-id aliases. prefer globally
 # unique hardware id first (wwn), fallback to bus-specific ids used by Hetzner after that.

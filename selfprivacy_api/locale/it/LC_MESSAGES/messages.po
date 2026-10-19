@@ -48,6 +48,45 @@ msgstr "Aggiorna il sistema"
 msgid "Upgrading the system to the latest version."
 msgstr "Aggiornando il sistema all'ultima versione."
 
+#: selfprivacy_api/backup/__init__.py:269
+#, fuzzy
+msgid "Uploading backup"
+msgstr "Backup totale"
+
+#: selfprivacy_api/backup/__init__.py:285
+msgid "Backup finished"
+msgstr ""
+
+#: selfprivacy_api/backup/__init__.py:447
+msgid "Waiting for pre-restore backup"
+msgstr ""
+
+#: selfprivacy_api/backup/__init__.py:454
+#: selfprivacy_api/backup/__init__.py:519
+#, fuzzy, python-format
+msgid "Restoring from %(snapshot_id)s"
+msgstr "Ripristinando %(display_name)s da %(snapshot_id)s"
+
+#: selfprivacy_api/backup/__init__.py:468
+#, fuzzy, python-format
+msgid "Restore failed with %(error)s, reverting to %(snapshot_id)s"
+msgstr "Ripristinando %(display_name)s da %(snapshot_id)s"
+
+#: selfprivacy_api/backup/__init__.py:482
+#, fuzzy, python-format
+msgid "Restore failed with %(error)s, reverted to %(snapshot_id)s"
+msgstr "Ripristinando %(display_name)s da %(snapshot_id)s"
+
+#: selfprivacy_api/backup/__init__.py:507
+#, fuzzy
+msgid "Stopping the service"
+msgstr "Avviato lo spostamento del servizio."
+
+#: selfprivacy_api/backup/__init__.py:531
+#, fuzzy
+msgid "Restarting the service"
+msgstr "Avviato lo spostamento del servizio."
+
 #: selfprivacy_api/backup/jobs.py:51
 msgid "Automatic backup"
 msgstr "Backup automatico"
@@ -507,19 +546,19 @@ msgstr "Servizio inesistente:"
 msgid "Snapshot not found with id:"
 msgstr "Snapshot non trovato con l'ID:"
 
-#: selfprivacy_api/graphql/mutations/backup_mutations.py:175
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:172
 msgid "Trimming autobackup snapshots"
 msgstr "Ridimensionamento delle istantanee di backup automatico"
 
-#: selfprivacy_api/graphql/mutations/backup_mutations.py:180
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:175
 msgid "Pruning the excessive snapshots after the new autobackup quotas are set"
 msgstr "Eliminazione delle istantanee in eccesso dopo l'impostazione delle nuove quote di backup automatico"
 
-#: selfprivacy_api/graphql/mutations/backup_mutations.py:233
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:226
 msgid "Backup job queued"
 msgstr "Lavoro di backup in coda"
 
-#: selfprivacy_api/graphql/mutations/backup_mutations.py:254
+#: selfprivacy_api/graphql/mutations/backup_mutations.py:247
 msgid "Total backup task queued"
 msgstr "Totale attività di backup in coda"
 
@@ -819,7 +858,10 @@ msgstr "Avvio della ricostruzione del sistema..."
 
 #: selfprivacy_api/jobs/upgrade_system.py:85
 #: selfprivacy_api/jobs/upgrade_system.py:142
-msgid "System rebuild timed out. Last log lines:\n"
+#, fuzzy, python-format
+msgid ""
+"System rebuild timed out. Last log lines:\n"
+"%(logs)s"
 msgstr "Timeout durante il ripristino del sistema. Ultime righe del log:\n"
 
 #: selfprivacy_api/jobs/upgrade_system.py:92
@@ -827,11 +869,15 @@ msgid "Rebuilding the system..."
 msgstr "Ricostruzione del sistema..."
 
 #: selfprivacy_api/jobs/upgrade_system.py:119
+#: selfprivacy_api/migrations/check_for_system_rebuild_jobs.py:50
 msgid "System rebuilt."
 msgstr "Sistema ricostruito."
 
 #: selfprivacy_api/jobs/upgrade_system.py:127
-msgid "System rebuild failed. Last log lines:\n"
+#, fuzzy, python-format
+msgid ""
+"System rebuild failed. Last log lines:\n"
+"%(logs)s"
 msgstr "La ricostruzione del sistema non è andata a buon fine. Ultime righe del log:\n"
 
 #: selfprivacy_api/models/services.py:94
@@ -841,6 +887,87 @@ msgstr "Nessuna descrizione trovata!"
 #: selfprivacy_api/models/services.py:101
 msgid "No backup description found!"
 msgstr "Nessuna descrizione di backup trovata!"
+
+#: selfprivacy_api/services/__init__.py:319
+msgid "Stashing settings"
+msgstr ""
+
+#: selfprivacy_api/services/moving.py:71
+#: selfprivacy_api/services/service.py:464
+#, fuzzy
+msgid "Moving data to new volume..."
+msgstr "Sposta i dati di %(service)s su %(volume)s"
+
+#: selfprivacy_api/services/service.py:457
+msgid "Unmounting folders from old volume..."
+msgstr ""
+
+#: selfprivacy_api/services/service.py:471
+#, python-format
+msgid "Making sure %(service_name)s owns its files..."
+msgstr ""
+
+#: selfprivacy_api/services/service.py:483
+#, python-format
+msgid "Service %(service_name)s will not be able to write files: %(error)s"
+msgstr ""
+
+#: selfprivacy_api/services/service.py:491
+#, fuzzy, python-format
+msgid "Mounting %(service_name)s data..."
+msgstr "Ripristinando %(service_name)s"
+
+#: selfprivacy_api/services/service.py:499
+#, fuzzy, python-format
+msgid "Finishing moving %(service_name)s..."
+msgstr "Ripristinando %(service_name)s"
+
+#: selfprivacy_api/services/service.py:510
+msgid "Performing pre-move checks..."
+msgstr ""
+
+#: selfprivacy_api/services/service.py:519
+#, python-format
+msgid "%(service_name)s moved successfully (no folders)."
+msgstr ""
+
+#: selfprivacy_api/services/service.py:521
+#, fuzzy, python-format
+msgid "NOT starting %(service_name)s"
+msgstr "Ripristinando %(service_name)s"
+
+#: selfprivacy_api/services/service.py:530
+#, fuzzy, python-format
+msgid "Stopping %(service_name)s..."
+msgstr "Ripristinando %(service_name)s"
+
+#: selfprivacy_api/services/service.py:539
+msgid "Stopped service, starting the move..."
+msgstr ""
+
+#: selfprivacy_api/services/service.py:546
+msgid "Move complete, rebuilding..."
+msgstr ""
+
+#: selfprivacy_api/services/service.py:553
+#, python-format
+msgid "%(service_name)s moved successfully."
+msgstr ""
+
+#: selfprivacy_api/services/service.py:555
+#, fuzzy, python-format
+msgid "Starting %(service_name)s..."
+msgstr "Ripristinando %(service_name)s"
+
+#: selfprivacy_api/services/templated_service.py:497
+#, python-format
+msgid "Creating a dump of database %(db_name)s"
+msgstr ""
+
+#: selfprivacy_api/services/templated_service.py:538
+#, fuzzy, python-format
+msgid "Restoring database %(db_name)s"
+msgstr "Ripristino di %(display_name)s"
 
 #: selfprivacy_api/update_channels.py:24
 msgid "Stable channel"

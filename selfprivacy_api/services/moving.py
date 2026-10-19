@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import shutil
+import gettext
 from typing import List
 
 from selfprivacy_api.jobs import Job, report_progress
 from selfprivacy_api.services.owned_path import Bind
 from selfprivacy_api.utils.block_devices import BlockDevice
+
+_ = gettext.gettext
 
 
 class MoveError(Exception):
@@ -62,7 +65,11 @@ def move_data_to_volume(
             ) from error
 
         progress = current_progress + progress_per_folder
-        report_progress(progress, job, "Moving data to new volume...")
+        report_progress(
+            progress=progress,
+            job=job,
+            status_text=_("Moving data to new volume..."),
+        )
     return binds
 
 

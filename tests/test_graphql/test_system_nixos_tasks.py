@@ -126,9 +126,9 @@ def test_graphql_system_rebuild_failed(authorized_client, mocker, fp, action):
     assert Jobs.get_job(job_id).status == JobStatus.ERROR
     assert Jobs.get_job(job_id).type_id == f"system.nixos.{action}"
     assert (
-        Jobs.get_job(job_id).error
-        == "System rebuild failed. Last log lines:\nSome error"
+        Jobs.get_job(job_id).error == "System rebuild failed. Last log lines:\n%(logs)s"
     )
+    assert Jobs.get_job(job_id).error_args == {"logs": "Some error"}
 
 
 API_ROLLBACK_SYSTEM_MUTATION = """

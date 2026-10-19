@@ -11,7 +11,6 @@ from tests.test_graphql.common import (
     get_data,
 )
 
-
 API_SYSTEM_UPDATES_QUERY = """
 updates {
     currentChannel {
