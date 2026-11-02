@@ -44,6 +44,24 @@
           )
         );
 
+      overlays = [
+        # remove if c59b05508fd90f47d74f53edef1216226201c3bf lands nixos-26.05
+        # https://github.com/NixOS/nixpkgs/issues/581049
+        (final: prev: {
+          python312Packages = prev.python312Packages.overrideScope (
+            pythonFinal: pythonPrev: {
+              cross-web = pythonPrev.cross-web.overridePythonAttrs (old: {
+                pytestFlags = (old.pytestFlags or [ ]) ++ [
+                  "-Wignore::DeprecationWarning"
+                ];
+              });
+            }
+          );
+        })
+      ];
+
+      pkgsFor = system: import nixpkgs { inherit system overlays; };
+
       shellMOTD = ''
         Welcome to SP API development shell!
 
@@ -72,7 +90,7 @@
       packages = nixpkgs.lib.genAttrs systems (
         system:
         let
-          pkgs = nixpkgs.legacyPackages.${system};
+          pkgs = pkgsFor system;
         in
         {
           source = pkgs.callPackage ./source.nix { src = self; };
@@ -209,7 +227,7 @@
       devShells = nixpkgs.lib.genAttrs systems (
         system:
         let
-          pkgs = nixpkgs.legacyPackages.${system};
+          pkgs = pkgsFor system;
         in
         {
           default = pkgs.mkShell {
@@ -299,7 +317,7 @@
       checks = nixpkgs.lib.genAttrs systems (
         system:
         let
-          pkgs = nixpkgs.legacyPackages.${system};
+          pkgs = pkgsFor system;
         in
         {
           fmt-check = pkgs.runCommandLocal "sp-api-fmt-check" {
