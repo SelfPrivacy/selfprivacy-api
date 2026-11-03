@@ -114,52 +114,22 @@ def test_websocket_graphql_ping(authorized_client):
         assert pong == {"type": "pong"}
 
 
-def test_websocket_subscription_minimal(authorized_client, authenticated_websocket):
-    # Test a small endpoint that exists specifically for tests
-    websocket = authenticated_websocket
-    init_graphql(websocket)
-    arbitrary_id = "3aaa2445"
-    api_subscribe(websocket, arbitrary_id, "count")
-    response = websocket.receive_json()
-    assert response == {
-        "id": arbitrary_id,
-        "payload": {"data": {"count": 0}},
-        "type": "next",
-    }
-    response = websocket.receive_json()
-    assert response == {
-        "id": arbitrary_id,
-        "payload": {"data": {"count": 1}},
-        "type": "next",
-    }
-    response = websocket.receive_json()
-    assert response == {
-        "id": arbitrary_id,
-        "payload": {"data": {"count": 2}},
-        "type": "next",
-    }
-
-
-def test_websocket_subscription_minimal_unauthorized(unauthenticated_websocket):
-    websocket = unauthenticated_websocket
+@pytest.mark.parametrize(
+    "websocket_fixture", ["authenticated_websocket", "unauthenticated_websocket"]
+)
+def test_websocket_rejects_removed_count_subscription(request, websocket_fixture):
+    websocket = request.getfixturevalue(websocket_fixture)
     init_graphql(websocket)
     arbitrary_id = "3aaa2445"
     api_subscribe(websocket, arbitrary_id, "count")
 
     response = websocket.receive_json()
-    assert response == {
-        "id": arbitrary_id,
-        "payload": {
-            "data": None,
-            "errors": [
-                {
-                    "message": "You must be authenticated to access this resource.",
-                    "extensions": {"code": "UNAUTHENTICATED"},
-                }
-            ],
-        },
-        "type": "next",
-    }
+    assert response["id"] == arbitrary_id
+    assert response["type"] == "error"
+    assert len(response["payload"]) == 1
+    assert response["payload"][0]["message"] == (
+        "Cannot query field 'count' on type 'Subscription'."
+    )
 
 
 async def read_one_job(websocket):
@@ -217,7 +187,6 @@ def test_websocket_subscription_unauthorized(unauthenticated_websocket):
 
     response = websocket.receive_json()
     # I do not really know why strawberry gives more info on this
-    # One versus the counter
     payload = response["payload"][0]
     assert isinstance(payload, dict)
     assert "locations" in payload.keys()

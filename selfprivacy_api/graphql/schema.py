@@ -2,7 +2,6 @@
 
 # pylint: disable=too-few-public-methods
 
-import asyncio
 from typing import AsyncGenerator, List
 
 import strawberry
@@ -208,14 +207,6 @@ class Subscription:
             locale = DEFAULT_LOCALE
 
         return job_update_generator(locale=locale)
-
-    @strawberry.subscription
-    # Used for testing, consider deletion to shrink attack surface
-    async def count(self, info: Info) -> AsyncGenerator[int, None]:
-        await reject_if_unauthenticated(info)
-        for i in range(10):
-            yield i
-            await asyncio.sleep(0.5)
 
     @strawberry.subscription
     async def log_entries(self, info: Info) -> AsyncGenerator[LogEntry, None]:
