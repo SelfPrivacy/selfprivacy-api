@@ -11,6 +11,7 @@ import selfprivacy_api.services as service_module
 from selfprivacy_api.services import ServiceManager
 from selfprivacy_api.services.service import Service, ServiceStatus
 from selfprivacy_api.services.test_service import DummyService
+from selfprivacy_api.graphql.common_types.service import config_item_to_graphql
 
 from tests.common import generate_service_query
 from tests.test_graphql.common import assert_empty, assert_ok, get_data
@@ -366,6 +367,83 @@ def test_get_services(authorized_client, only_dummy_service):
     assert api_dummy_service["status"] == ServiceStatus.ACTIVE.value
     assert api_dummy_service["isEnabled"] is True
     assert api_dummy_service["url"] == "https://test.test-domain.tld"
+
+
+@pytest.mark.parametrize("item_type", ["int", "future", "secret", "section"])
+def test_config_item_to_graphql_skips_unsupported_type(item_type, caplog):
+    assert config_item_to_graphql({"id": "future", "type": item_type}) is None
+    assert item_type in caplog.text
+    assert "future" in caplog.text
+
+
+@pytest.mark.parametrize("unsupported_only", [False, True])
+def test_services_configuration_skips_unsupported_items(
+    authorized_client, only_dummy_service, mocker, unsupported_only
+):
+    supported = {
+        "flag": {
+            "id": "flag",
+            "type": "bool",
+            "description": "A toggle",
+            "widget": "switch",
+            "value": True,
+            "default_value": False,
+            "weight": 3,
+        },
+        "name": {
+            "id": "name",
+            "type": "string",
+            "description": "A name",
+            "widget": "text",
+            "value": "custom",
+            "default_value": "default",
+            "weight": 1,
+        },
+        "mode": {
+            "id": "mode",
+            "type": "enum",
+            "description": "A choice",
+            "widget": "select",
+            "value": "a",
+            "default_value": "b",
+            "options": ["a", "b"],
+            "weight": 2,
+        },
+    }
+    config = {} if unsupported_only else supported
+    config["future"] = {"id": "future", "type": "future", "weight": 0}
+    config["number"] = {"id": "number", "type": "int", "weight": 4}
+    mocker.patch.object(only_dummy_service, "get_configuration", return_value=config)
+    response = authorized_client.post(
+        "/graphql",
+        json={
+            "query": """{
+                services { allServices { id configuration {
+                    fieldId type
+                    ... on BoolConfigItem { boolValue: value }
+                    ... on StringConfigItem { stringValue: value }
+                    ... on EnumConfigItem { enumValue: value options }
+                } } }
+            }"""
+        },
+    )
+    services = get_data(response)["services"]["allServices"]
+    assert len(services) == 1
+    assert services[0]["id"] == only_dummy_service.get_id()
+    assert services[0]["configuration"] == (
+        []
+        if unsupported_only
+        else [
+            {"fieldId": "name", "type": "string", "stringValue": "custom"},
+            {
+                "fieldId": "mode",
+                "type": "enum",
+                "enumValue": "a",
+                "options": ["a", "b"],
+            },
+            {"fieldId": "flag", "type": "bool", "boolValue": True},
+        ]
+    )
 
 
 def test_enable_return_value(authorized_client, only_dummy_service):

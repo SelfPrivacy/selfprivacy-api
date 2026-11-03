@@ -959,12 +959,12 @@ msgstr ""
 msgid "Starting %(service_name)s..."
 msgstr "Ripristinando %(service_name)s"
 
-#: selfprivacy_api/services/templated_service.py:497
+#: selfprivacy_api/services/templated_service.py:501
 #, python-format
 msgid "Creating a dump of database %(db_name)s"
 msgstr ""
 
-#: selfprivacy_api/services/templated_service.py:538
+#: selfprivacy_api/services/templated_service.py:542
 #, fuzzy, python-format
 msgid "Restoring database %(db_name)s"
 msgstr "Ripristino di %(display_name)s"

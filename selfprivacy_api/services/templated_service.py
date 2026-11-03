@@ -101,7 +101,11 @@ def config_item_from_json(json_data: dict) -> Optional[ServiceConfigItem]:
             max_value=json_data["meta"].get("maxValue"),
             weight=weight,
         )
-    raise ValueError("Unknown config item type")
+    logger.warning(
+        f"Skipping config item {json_data.get('name')!r} "
+        f"with unsupported type {json_data['meta']['type']!r}"
+    )
+    return None
 
 
 class TemplatedService(Service):

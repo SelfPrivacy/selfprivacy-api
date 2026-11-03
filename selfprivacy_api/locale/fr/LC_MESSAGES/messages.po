@@ -872,12 +872,12 @@ msgstr ""
 msgid "Starting %(service_name)s..."
 msgstr ""
 
-#: selfprivacy_api/services/templated_service.py:497
+#: selfprivacy_api/services/templated_service.py:501
 #, python-format
 msgid "Creating a dump of database %(db_name)s"
 msgstr ""
 
-#: selfprivacy_api/services/templated_service.py:538
+#: selfprivacy_api/services/templated_service.py:542
 #, python-format
 msgid "Restoring database %(db_name)s"
 msgstr ""

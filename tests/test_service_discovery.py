@@ -129,6 +129,24 @@ async def test_get_templated_services_loads_all_installed(sp_modules_dir):
 
 
 @pytest.mark.asyncio
+async def test_unknown_option_type_keeps_service_discoverable(sp_modules_dir):
+    definition = json.loads(read_module_definition("gitea"))
+    definition["options"]["future"] = {
+        "name": "future",
+        "meta": {"type": "section"},
+    }
+    install_module_definition(sp_modules_dir, "gitea", json.dumps(definition))
+    install_real_module_definition(sp_modules_dir, "nextcloud")
+
+    services = await get_templated_services(ignored_services=[])
+    assert {service.get_id() for service in services} == {"gitea", "nextcloud"}
+    service = await get_templated_service("gitea")
+    assert service.get_id() == "gitea"
+    assert "future" not in service.config_items
+    assert service.config_items
+
+
+@pytest.mark.asyncio
 async def test_get_templated_services_skips_ignored(sp_modules_dir):
     install_real_module_definition(sp_modules_dir, "gitea")
     install_real_module_definition(sp_modules_dir, "nextcloud")

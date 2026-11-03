@@ -24,7 +24,7 @@ from selfprivacy_api.services.templated_service import (
     TemplatedService,
     config_item_from_json,
 )
-from selfprivacy_api.utils import WriteUserData
+from selfprivacy_api.utils import ReadUserData, WriteUserData
 
 TEMPLATED_SERVICE_MODULE_PATH = "selfprivacy_api.services.templated_service"
 
@@ -218,11 +218,11 @@ def test_config_item_from_json_int():
     assert item.max_value == 10
 
 
-def test_config_item_from_json_unknown_type_raises():
-    with pytest.raises(ValueError):
-        config_item_from_json(
-            {"name": "x", "default": None, "description": "d", "meta": {"type": "??"}}
-        )
+@pytest.mark.parametrize("item_type", ["??", "multiline", "secret", "section"])
+def test_config_item_from_json_skips_unknown_type(item_type, caplog):
+    assert config_item_from_json({"name": "x", "meta": {"type": item_type}}) is None
+    assert item_type in caplog.text
+    assert "x" in caplog.text
 
 
 # --- TemplatedService.__init__ validation --------------------------------------------
@@ -736,6 +736,34 @@ def test_set_configuration_delegates_to_config_items(generic_userdata):
     )
     service.set_configuration({"flag": False})
     assert service.get_configuration()["flag"]["value"] is False
+
+
+def test_configuration_preserves_unsupported_options(generic_userdata):
+    service = _make_service(
+        options_patch={
+            "future": {"name": "future", "meta": {"type": "secret"}},
+            "flag": {
+                "name": "flag",
+                "default": True,
+                "description": "A supported setting",
+                "meta": {"type": "bool"},
+            },
+        }
+    )
+    with WriteUserData() as data:
+        data["modules"]["tsvc"] = {"future": {"opaque": [1, 2]}, "flag": True}
+
+    assert set(service.get_configuration()) == {"flag"}
+    with pytest.raises(ValueError, match="Key future is not valid"):
+        service.set_configuration({"flag": False, "future": "replacement"})
+    assert service.get_configuration()["flag"]["value"] is True
+
+    service.set_configuration({"flag": False})
+    with ReadUserData() as data:
+        assert data["modules"]["tsvc"] == {
+            "future": {"opaque": [1, 2]},
+            "flag": False,
+        }
 
 
 # --- Storage, folders, drive ---------------------------------------------------------

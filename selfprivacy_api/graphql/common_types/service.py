@@ -1,5 +1,5 @@
-import asyncio
 import datetime
+import logging
 from enum import Enum
 from typing import List, Optional
 
@@ -17,6 +17,7 @@ from selfprivacy_api.services import (
 from selfprivacy_api.utils.block_devices import BlockDevices
 from selfprivacy_api.utils.network import get_ip4, get_ip6
 
+logger = logging.getLogger(__name__)
 tracer = trace.get_tracer(__name__)
 
 
@@ -162,7 +163,7 @@ class EnumConfigItem(ConfigItem):
 
 
 @tracer.start_as_current_span("config_item_to_graphql")
-def config_item_to_graphql(item: dict) -> ConfigItem:
+def config_item_to_graphql(item: dict) -> Optional[ConfigItem]:
     item_type = item.get("type")
     if item_type == "string":
         return StringConfigItem(
@@ -194,7 +195,11 @@ def config_item_to_graphql(item: dict) -> ConfigItem:
             options=item["options"],
         )
     else:
-        raise ValueError(f"Unknown config item type {item_type}")
+        logger.warning(
+            f"Skipping config item {item.get('id')!r} "
+            f"with unsupported GraphQL type {item_type!r}"
+        )
+        return None
 
 
 @strawberry.type
@@ -257,7 +262,11 @@ class Service:
             config_items = sorted(
                 unsorted_config_items, key=lambda x: x.get("weight", 50)
             )
-            return [config_item_to_graphql(item) for item in config_items]
+            return [
+                converted_item
+                for item in config_items
+                if (converted_item := config_item_to_graphql(item)) is not None
+            ]
 
     # TODO: fill this
     @strawberry.field
