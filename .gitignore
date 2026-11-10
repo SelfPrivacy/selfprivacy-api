@@ -158,3 +158,5 @@ cython_debug/
 /.nixos-test-history
 
 node_modules/
+
+.direnv/
