@@ -18,148 +18,115 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Generator: Weblate 5.7\n"
 
-#: selfprivacy_api/actions/kanidm_credential_type.py:14
 msgid "Error while trying to get the Kanidm minimum credential type: Kanidm did not return a valid \"credential_type_minimum\" value for the group idm_all_persons."
 msgstr ""
 
-#: selfprivacy_api/actions/services.py:28
 #, python-format
 msgid "Move %(service)s"
 msgstr "Sposta %(service)s"
 
-#: selfprivacy_api/actions/services.py:30
 #, python-format
 msgid "Moving %(service)s data to %(volume)s"
 msgstr "Sposta i dati di %(service)s su %(volume)s"
 
-#: selfprivacy_api/actions/system.py:147
 msgid "Rebuild system"
 msgstr "Ricostruisci il sistema"
 
-#: selfprivacy_api/actions/system.py:149
 msgid "Applying the new system configuration by building the new NixOS generation."
 msgstr "Applicazione della nuova configurazione di sistema tramite la rigenerazione di NixOS."
 
-#: selfprivacy_api/actions/system.py:171
 msgid "Upgrade system"
 msgstr "Aggiorna il sistema"
 
-#: selfprivacy_api/actions/system.py:172
 msgid "Upgrading the system to the latest version."
 msgstr "Aggiornando il sistema all'ultima versione."
 
-#: selfprivacy_api/backup/__init__.py:269
 #, fuzzy
 msgid "Uploading backup"
 msgstr "Backup totale"
 
-#: selfprivacy_api/backup/__init__.py:285
 msgid "Backup finished"
 msgstr ""
 
-#: selfprivacy_api/backup/__init__.py:447
 msgid "Waiting for pre-restore backup"
 msgstr ""
 
-#: selfprivacy_api/backup/__init__.py:454
-#: selfprivacy_api/backup/__init__.py:519
 #, fuzzy, python-format
 msgid "Restoring from %(snapshot_id)s"
 msgstr "Ripristinando %(display_name)s da %(snapshot_id)s"
 
-#: selfprivacy_api/backup/__init__.py:468
 #, fuzzy, python-format
 msgid "Restore failed with %(error)s, reverting to %(snapshot_id)s"
 msgstr "Ripristinando %(display_name)s da %(snapshot_id)s"
 
-#: selfprivacy_api/backup/__init__.py:482
 #, fuzzy, python-format
 msgid "Restore failed with %(error)s, reverted to %(snapshot_id)s"
 msgstr "Ripristinando %(display_name)s da %(snapshot_id)s"
 
-#: selfprivacy_api/backup/__init__.py:507
 #, fuzzy
 msgid "Stopping the service"
 msgstr "Avviato lo spostamento del servizio."
 
-#: selfprivacy_api/backup/__init__.py:531
 #, fuzzy
 msgid "Restarting the service"
 msgstr "Avviato lo spostamento del servizio."
 
-#: selfprivacy_api/backup/jobs.py:51
 msgid "Automatic backup"
 msgstr "Backup automatico"
 
-#: selfprivacy_api/backup/jobs.py:52
 #, python-format
 msgid "Scheduled backup for services: %(pretty_service_list)s"
 msgstr "Backup pianificato per i servizi: %(pretty_service_list)s"
 
-#: selfprivacy_api/backup/jobs.py:61
 #, python-format
 msgid "Cannot start a backup of %(service_id)s, another operation is running: %(op_type)s"
 msgstr "Impossibile avviare il backup di %(service_id)s, è in corso un'altra operazione: %(op_type)s"
 
-#: selfprivacy_api/backup/jobs.py:70
 #, python-format
 msgid "Backup %(display_name)s"
 msgstr "Backup %(display_name)s"
 
-#: selfprivacy_api/backup/jobs.py:72
 #, python-format
 msgid "Backing up %(display_name)s"
 msgstr "Eseguendo il backup %(display_name)s"
 
-#: selfprivacy_api/backup/jobs.py:80
 #, python-format
 msgid "Cannot start a restore of %(service_id)s, another operation is running: %(op_type)s"
 msgstr "Impossibile avviare il ripristino di %(service_id)s, è in corso un'altra operazione: %(op_type)s"
 
-#: selfprivacy_api/backup/jobs.py:94
 msgid "Total restore"
 msgstr "Ripristino totale"
 
-#: selfprivacy_api/backup/jobs.py:95
 msgid "Restoring all enabled services"
 msgstr "Ripristino di tutti i servizi abilitati"
 
-#: selfprivacy_api/backup/jobs.py:115
 msgid "Total backup"
 msgstr "Backup totale"
 
-#: selfprivacy_api/backup/jobs.py:116
 msgid "Backing up all the enabled services"
 msgstr "Eseguendo backup di tutti i servizi attivi"
 
-#: selfprivacy_api/backup/jobs.py:130
 #, python-format
 msgid "Restore %(display_name)s"
 msgstr "Ripristino di %(display_name)s"
 
-#: selfprivacy_api/backup/jobs.py:132
 #, python-format
 msgid "Restoring %(display_name)s from %(snapshot_id)s"
 msgstr "Ripristinando %(display_name)s da %(snapshot_id)s"
 
-#: selfprivacy_api/backup/tasks.py:213
 msgid "Finding the last autobackup session"
 msgstr "Cercare l'ultima sessione di backup automatico"
 
-#: selfprivacy_api/backup/tasks.py:232
 #, python-format
 msgid "restoring %(service_name)s"
 msgstr "Ripristinando %(service_name)s"
 
-#: selfprivacy_api/backup/tasks.py:237
 msgid "rebuilding system"
 msgstr "Ricostruendo il sistema"
 
-#: selfprivacy_api/exceptions/__init__.py:12
 msgid "Your SelfPrivacy app is out of date, please update it to use new features."
 msgstr "La tua app SelfPrivacy non è aggiornata: ti invitiamo ad aggiornarla per poter utilizzare le nuove funzionalità."
 
-#: selfprivacy_api/exceptions/__init__.py:16
 msgid ""
 "Please report it to our support chats:\n"
 "#chat:selfprivacy.org on Matrix or @selprivacy_chat on Telegram."
@@ -167,20 +134,16 @@ msgstr ""
 "Ti preghiamo di segnalarlo nelle nostre chat di assistenza:\n"
 "#chat:selfprivacy.org su Matrix o @selprivacy_chat su Telegram."
 
-#: selfprivacy_api/exceptions/__init__.py:33
 msgid "The API is using the wrong user repository."
 msgstr "L'API sta utilizzando il repository utenti sbagliato."
 
-#: selfprivacy_api/exceptions/kanidm.py:18
 #, fuzzy
 msgid "Kanidm is the identity and authentication service that manages users and access to system services."
 msgstr "Kanidm è il servizio di gestione delle identità e di autenticazione che gestisce gli utenti e l'accesso ai servizi."
 
-#: selfprivacy_api/exceptions/kanidm.py:22
 msgid "In some cases, a Kanidm update may introduce breaking changes affecting the API, CLI commands, or configuration compatibility."
 msgstr "In alcuni casi, un aggiornamento di Kanidm può comportare modifiche sostanziali che incidono sull'API, sui comandi CLI o sulla compatibilità della configurazione."
 
-#: selfprivacy_api/exceptions/kanidm.py:26
 #, fuzzy
 msgid ""
 "Console commands to debug:\n"
@@ -191,7 +154,6 @@ msgstr ""
 "    'systemctl status kanidm.service'\n"
 "    'journalctl -u kanidm.service'\n"
 
-#: selfprivacy_api/exceptions/kanidm.py:55
 #, python-format
 msgid ""
 "An error occurred during a request to Kanidm.\n"
@@ -212,7 +174,6 @@ msgstr ""
 "Metodo: %(method)s\n"
 "Errore: %(error)s"
 
-#: selfprivacy_api/exceptions/kanidm.py:99
 #, python-format
 msgid ""
 "Kanidm returned an empty response.\n"
@@ -229,7 +190,6 @@ msgstr ""
 "Endpoint: %(endpoint)s\n"
 "Metodo: %(method)s"
 
-#: selfprivacy_api/exceptions/kanidm.py:137
 #, python-format
 msgid ""
 "Kanidm returned an unknown type response.\n"
@@ -250,7 +210,6 @@ msgstr ""
 "Metodo: %(method)s\n"
 "Risposta: %(response)s"
 
-#: selfprivacy_api/exceptions/kanidm.py:177
 #, fuzzy, python-format
 msgid ""
 "Failed to get access to Kanidm admin account:\n"
@@ -276,7 +235,6 @@ msgstr ""
 "Modello di espressione regolare utilizzato: %(regex_pattern)s\n"
 "Output CLI di Kanidm: %(output)s"
 
-#: selfprivacy_api/exceptions/kanidm.py:220
 #, python-format
 msgid ""
 "Kanidm CLI returned an error.\n"
@@ -297,7 +255,6 @@ msgstr ""
 "Comando usato: %(command)s\n"
 "Errore: %(error)s"
 
-#: selfprivacy_api/exceptions/kanidm.py:255
 #, fuzzy, python-format
 msgid ""
 "Couldn't get a valid Kanidm token.\n"
@@ -310,7 +267,6 @@ msgstr ""
 "%(KANIDM_PROBLEMS)s\n"
 "%(REPORT_IT_TO_SUPPORT_CHATS)s"
 
-#: selfprivacy_api/exceptions/kanidm.py:291
 #, python-format
 msgid ""
 "Kanidm didn't return a password reset link.\n"
@@ -331,12 +287,10 @@ msgstr ""
 "Metodo: %(method)s\n"
 "Dati: %(data)s\n"
 
-#: selfprivacy_api/exceptions/services.py:26
 #, python-format
 msgid "No such service: %(service_id)s. %(REPORT_IT_TO_SUPPORT_CHATS)s"
 msgstr "Servizio non disponibile: %(service_id)s. %(REPORT_IT_TO_SUPPORT_CHATS)s"
 
-#: selfprivacy_api/exceptions/services.py:43
 #, python-format
 msgid ""
 "Service modules cannot be changed because legacy service modules have not been migrated.\n"
@@ -345,24 +299,19 @@ msgid ""
 "%(REPORT_IT_TO_SUPPORT_CHATS)s"
 msgstr ""
 
-#: selfprivacy_api/exceptions/services.py:67
 #, python-format
 msgid "No such volume: %(volume_name)s. %(REPORT_IT_TO_SUPPORT_CHATS)s"
 msgstr "Volume non disponibile: %(volume_name)s. %(REPORT_IT_TO_SUPPORT_CHATS)s"
 
-#: selfprivacy_api/exceptions/ssh.py:35
 msgid "Key not found"
 msgstr "Chiave non trovata"
 
-#: selfprivacy_api/exceptions/ssh.py:47
 msgid "Key already exists"
 msgstr "La chiave esiste già"
 
-#: selfprivacy_api/exceptions/ssh.py:58
 msgid "Invalid key type. Supported key types: "
 msgstr "Tipo di chiave non valido. Tipi di chiave supportati: "
 
-#: selfprivacy_api/exceptions/system.py:33
 #, python-format
 msgid ""
 "Command execution failed.\n"
@@ -377,7 +326,6 @@ msgstr ""
 "Comandi eseguiti: %(command)s\n"
 "Risultato: %(output)s"
 
-#: selfprivacy_api/exceptions/system.py:61
 #, python-format
 msgid ""
 "Invalid timezone: %(timezone)s\n"
@@ -390,7 +338,6 @@ msgstr ""
 "Lista dei fusi orari disponibili:\n"
 "https://data.iana.org/time-zones/data/zone.tab"
 
-#: selfprivacy_api/exceptions/system.py:89
 #, python-format
 msgid ""
 "%(description)s\n"
@@ -405,42 +352,33 @@ msgstr ""
 "Modello di espressione regolare utilizzato: %(regex_pattern)s\n"
 "Dati: %(data)s"
 
-#: selfprivacy_api/exceptions/system.py:120
 #, python-format
 msgid "The provider %(provider)s requires additional secrets, but they were not provided."
 msgstr ""
 
-#: selfprivacy_api/exceptions/system.py:139
 #, python-format
 msgid "The provider %(provider)s does not use the provided additional secrets."
 msgstr ""
 
-#: selfprivacy_api/exceptions/system.py:155
 #, python-format
 msgid "There is no update channel with id %(channel_id)s."
 msgstr ""
 
-#: selfprivacy_api/exceptions/tokens.py:22
 msgid "Access token was not found."
 msgstr "Non è stato trovato alcun token di accesso."
 
-#: selfprivacy_api/exceptions/tokens.py:36
 msgid "Recovery key is not found or no longer valid."
 msgstr "La chiave di ripristino non è stata trovata o non è più valida."
 
-#: selfprivacy_api/exceptions/tokens.py:47
 msgid "Invalid recovery key."
 msgstr "Chiave di ripristino non valida."
 
-#: selfprivacy_api/exceptions/tokens.py:60
 msgid "New device key not found."
 msgstr "Non è stata trovata la nuova chiave del dispositivo."
 
-#: selfprivacy_api/exceptions/tokens.py:72
 msgid "The access token you’re trying to delete is currently in use by this device, so removing access is not possible."
 msgstr "Il token di accesso che stai cercando di eliminare è attualmente in uso su questo dispositivo, pertanto non è possibile revocarne l'accesso."
 
-#: selfprivacy_api/exceptions/tokens.py:86
 msgid ""
 "Specified expiration date is in the past. Please provide a future date.\n"
 "If you believe this is a mistake, there may be a problem with the server's date/time settings."
@@ -448,15 +386,12 @@ msgstr ""
 "La data di scadenza specificata è già trascorsa. Si prega di inserire una data futura.\n"
 "Se ritieni che si tratti di un errore, è possibile che ci sia un problema con le impostazioni di data e ora del server."
 
-#: selfprivacy_api/exceptions/tokens.py:98
 msgid "Uses left must be greater than 0."
 msgstr "Il numero di utilizzi rimanenti deve essere maggiore di 0."
 
-#: selfprivacy_api/exceptions/users.py:22
 msgid "User not found"
 msgstr "Utente non trovato"
 
-#: selfprivacy_api/exceptions/users.py:36
 #, python-format
 msgid ""
 "User or group not found.\n"
@@ -465,11 +400,9 @@ msgstr ""
 "Utente o gruppo non trovato.\n"
 "Kanidm utilizza lo stesso messaggio di errore sia per gli utenti che per i gruppi mancanti.%(KANIDM_DESCRIPTION)s\n"
 
-#: selfprivacy_api/exceptions/users.py:52
 msgid "Root user cannot be deleted or modified."
 msgstr "L'utente root non può essere eliminato né modificato."
 
-#: selfprivacy_api/exceptions/users.py:75
 #, python-format
 msgid ""
 "Username is in reserved list or have reserved prefix.\n"
@@ -478,532 +411,402 @@ msgstr ""
 "Il nome utente è presente nell'elenco dei nomi riservati o contiene un prefisso riservato.\n"
 "Prefisso riservato: %(forbidden_prefix)s."
 
-#: selfprivacy_api/exceptions/users.py:83
 msgid "Username is in reserved list or have reserved prefix."
 msgstr "Il nome utente è presente nell'elenco dei nomi riservati o contiene un prefisso riservato."
 
-#: selfprivacy_api/exceptions/users.py:97
 msgid "User already exists"
 msgstr "L'utente è già presente"
 
-#: selfprivacy_api/exceptions/users.py:108
 msgid "Username must be alphanumeric and start with a letter.\n"
 msgstr "Il nome utente deve essere alfanumerico e iniziare con una lettera.\n"
 
-#: selfprivacy_api/exceptions/users.py:121
 msgid "Username is too long. Must be less than 32 characters."
 msgstr "Il nome utente è troppo lungo. Deve contenere meno di 32 caratteri."
 
-#: selfprivacy_api/exceptions/users.py:133
 msgid "Password cannot be empty."
 msgstr "La password non può essere vuota."
 
-#: selfprivacy_api/exceptions/users.py:142
 msgid "Password cannot contain carriage returns, line feeds, or NUL bytes."
 msgstr ""
 
-#: selfprivacy_api/exceptions/users.py:156
 msgid "Display name is too long. Must be less than 256 characters."
 msgstr "Il nome visualizzato è troppo lungo. Deve contenere meno di 256 caratteri."
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:120
 msgid "Recovery key generated"
 msgstr "Chiave di recupero generata"
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:163
 msgid "Recovery key used"
 msgstr "Chiave di recupero usata"
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:208
 msgid "Token refreshed"
 msgstr "Token aggiornato"
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:247
 msgid "Token deleted"
 msgstr "Token cancellato"
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:260
 msgid "Device api key generated"
 msgstr "Chiave API del dispositivo generata"
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:274
 msgid "New device key deleted"
 msgstr "Chiave del nuovo dispositivo eliminata"
 
-#: selfprivacy_api/graphql/mutations/api_mutations.py:317
 msgid "Token used"
 msgstr "Token usato"
 
-#: selfprivacy_api/graphql/mutations/backup_mutations.py:52
 msgid "Restore job created"
 msgstr "Operazione di ripristino creata"
 
-#: selfprivacy_api/graphql/mutations/backup_mutations.py:53
 msgid "Nonexistent service:"
 msgstr "Servizio inesistente:"
 
-#: selfprivacy_api/graphql/mutations/backup_mutations.py:54
 msgid "Snapshot not found with id:"
 msgstr "Snapshot non trovato con l'ID:"
 
-#: selfprivacy_api/graphql/mutations/backup_mutations.py:172
 msgid "Trimming autobackup snapshots"
 msgstr "Ridimensionamento delle istantanee di backup automatico"
 
-#: selfprivacy_api/graphql/mutations/backup_mutations.py:175
 msgid "Pruning the excessive snapshots after the new autobackup quotas are set"
 msgstr "Eliminazione delle istantanee in eccesso dopo l'impostazione delle nuove quote di backup automatico"
 
-#: selfprivacy_api/graphql/mutations/backup_mutations.py:226
 msgid "Backup job queued"
 msgstr "Lavoro di backup in coda"
 
-#: selfprivacy_api/graphql/mutations/backup_mutations.py:247
 msgid "Total backup task queued"
 msgstr "Totale attività di backup in coda"
 
-#: selfprivacy_api/graphql/mutations/email_passwords_metadata_mutations.py:54
 msgid "Password deleted successfully"
 msgstr "Password cancellata con successo"
 
-#: selfprivacy_api/graphql/mutations/job_mutations.py:44
 msgid "Job removed"
 msgstr "Lavoro rimosso"
 
-#: selfprivacy_api/graphql/mutations/job_mutations.py:49
 msgid "Job not found"
 msgstr "Lavoro non trovato"
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:38
 msgid "Service not found"
 msgstr "Servizio non trovato"
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:140
 msgid "Service enabled."
 msgstr "Servizio attivato."
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:172
 msgid "Service disabled."
 msgstr "Servizio disattivato."
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:195
 msgid "Service stopped."
 msgstr "Servizio fermato."
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:218
 msgid "Service started."
 msgstr "Servizio avviato."
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:243
 msgid "Service restarted."
 msgstr "Servizio riavviato."
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:266
-#: selfprivacy_api/graphql/mutations/services_mutations.py:317
 #, python-format
 msgid "Service does not exist: %(service_id)s"
 msgstr "Il servizio non esiste: %(service_id)s"
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:291
 msgid "Service configuration updated."
 msgstr "Configurazione del servizio aggiornata."
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:344
 msgid "Started moving the service."
 msgstr "Avviato lo spostamento del servizio."
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:353
 msgid "Service moved."
 msgstr "Servizio spostato."
 
-#: selfprivacy_api/graphql/mutations/services_mutations.py:363
 #, python-format
 msgid "While moving service and performing the step '%(status_text)s', an error occurred: %(error)s"
 msgstr "Durante il trasferimento dei dati, nel passaggio '%(status_text)s', si è verificato un errore: %(error)s"
 
-#: selfprivacy_api/graphql/mutations/storage_mutations.py:29
 msgid "Volume not found"
 msgstr "Volume non trovato"
 
-#: selfprivacy_api/graphql/mutations/storage_mutations.py:67
 msgid "Volume resize started"
 msgstr "Ridimensionamento del volume avviato"
 
-#: selfprivacy_api/graphql/mutations/storage_mutations.py:94
 msgid "Volume mounted, rebuild the system to apply changes"
 msgstr "Volume montato, ricostruisci il sistema per applicare le modifiche"
 
-#: selfprivacy_api/graphql/mutations/storage_mutations.py:102
 msgid "Volume not mounted (already mounted?)"
 msgstr "Volume non montato (è già montato?)"
 
-#: selfprivacy_api/graphql/mutations/storage_mutations.py:130
 msgid "Volume unmounted, rebuild the system to apply changes"
 msgstr "Volume non montato; ricostruisci il sistema per applicare le modifiche"
 
-#: selfprivacy_api/graphql/mutations/storage_mutations.py:138
 msgid "Volume not unmounted (already unmounted?)"
 msgstr "Volume non smontato (è già smontato?)"
 
-#: selfprivacy_api/graphql/mutations/storage_mutations.py:158
 msgid "Already migrated to binds"
 msgstr "Già migrato a Binds"
 
-#: selfprivacy_api/graphql/mutations/storage_mutations.py:175
 msgid "Migration to binds started, rebuild the system to apply changes"
 msgstr "Migrazione a Binds avviata; ricostruire il sistema per applicare le modifiche"
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:143
 msgid "Timezone changed"
 msgstr "Fuso orario modificato"
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:171
 msgid "Auto-upgrade settings changed"
 msgstr "Impostazioni di aggiornamento automatico modificate"
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:216
 #, fuzzy
 msgid "OpenTelemetry settings changed"
 msgstr "Impostazioni SSH modificate"
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:244
 msgid "SSH settings changed"
 msgstr "Impostazioni SSH modificate"
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:260
 msgid "Starting system rebuild"
 msgstr "Avvio ricostruzione del sistema"
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:301
 msgid "Starting system upgrade"
 msgstr "Avvio aggiornamento del sistema"
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:321
 msgid "System reboot has started"
 msgstr "È in corso il riavvio del sistema"
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:337
 msgid "There is no repository to pull changes from."
 msgstr "Non esiste un repository da cui prelevare le modifiche."
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:353
 msgid "Garbage collector started..."
 msgstr "Raccolta files da eliminare avviata..."
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:382
 msgid "Provider set"
 msgstr "Set fornitori"
 
-#: selfprivacy_api/graphql/mutations/system_mutations.py:416
 msgid "System update channel updated"
 msgstr ""
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:50
 msgid "New password applied an an email password. To use Single Sign On, please update the SelfPrivacy app."
 msgstr "La nuova password è stata impostata come password dell'account e-mail. Per utilizzare il Single Sign-On, aggiorna l'app SelfPrivacy."
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:160
 msgid "User created"
 msgstr "Utente creato"
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:191
 msgid "User deleted"
 msgstr "Utente cancellato"
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:238
 msgid "User updated"
 msgstr "Utente aggiornato"
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:271
 msgid "New SSH key successfully written"
 msgstr "La nuova chiave SSH è stata salvata con successo"
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:307
 msgid "SSH key successfully removed"
 msgstr "Chiave SSH rimossa con successo"
 
-#: selfprivacy_api/graphql/mutations/users_mutations.py:343
 msgid "Link successfully created"
 msgstr "Il collegamento è stato creato con successo"
 
-#: selfprivacy_api/graphql/queries/monitoring.py:24
 msgid "Prometheus is not running"
 msgstr "Prometheus non è in esecuzione"
 
-#: selfprivacy_api/graphql/queries/system.py:220
 msgid "Custom update channel"
 msgstr ""
 
-#: selfprivacy_api/jobs/migrate_to_binds.py:106
 msgid "Migration already done."
 msgstr "La migrazione è già stata completata."
 
-#: selfprivacy_api/jobs/migrate_to_binds.py:114
 msgid "Checking if services are present."
 msgstr "Controlla se il servizio è presente."
 
-#: selfprivacy_api/jobs/migrate_to_binds.py:134
 msgid "Nextcloud service not found."
 msgstr "Servizio Nextcloud non trovato."
 
-#: selfprivacy_api/jobs/migrate_to_binds.py:142
 msgid "Bitwarden service not found."
 msgstr "Servizio Bitwarden non trovato."
 
-#: selfprivacy_api/jobs/migrate_to_binds.py:150
 msgid "Gitea service not found."
 msgstr "Servizio Gitea non trovato."
 
-#: selfprivacy_api/jobs/migrate_to_binds.py:158
 msgid "Pleroma service not found."
 msgstr "Servizio Pleroma non trovato."
 
-#: selfprivacy_api/jobs/migrate_to_binds.py:166
 msgid "Checking if all volumes are available."
 msgstr "Controlla se tutti i volumi sono disponibili."
 
-#: selfprivacy_api/jobs/migrate_to_binds.py:184
-#: selfprivacy_api/jobs/migrate_to_binds.py:201
 #, python-format
 msgid "Block device %(block_device_name)s not found."
 msgstr "Non è stato trovato il dispositivo a blocchi %(block_device_name)s."
 
-#: selfprivacy_api/jobs/migrate_to_binds.py:209
 #, python-format
 msgid "Block device %(block_device_name)s not mounted."
 msgstr "Il dispositivo a blocchi %(block_device_name)s non è montato."
 
-#: selfprivacy_api/jobs/migrate_to_binds.py:221
 msgid "Activating binds in NixOS config."
 msgstr "Attivazione dei collegamenti nella configurazione di NixOS."
 
-#: selfprivacy_api/jobs/migrate_to_binds.py:231
 msgid "Migrating Nextcloud."
 msgstr "Migrazione di Nextcloud."
 
-#: selfprivacy_api/jobs/migrate_to_binds.py:257
 msgid "Migrating Bitwarden."
 msgstr "Migrazione di Bitwarden."
 
-#: selfprivacy_api/jobs/migrate_to_binds.py:293
 msgid "Migrating Gitea."
 msgstr "Migrazione di Gitea."
 
-#: selfprivacy_api/jobs/migrate_to_binds.py:315
 msgid "Migrating Mail server."
 msgstr "Migrazione del server Mail."
 
-#: selfprivacy_api/jobs/migrate_to_binds.py:346
 msgid "Migrating Pleroma."
 msgstr "Migrazione di Pleroma."
 
-#: selfprivacy_api/jobs/migrate_to_binds.py:379
-#: selfprivacy_api/jobs/migrate_to_binds.py:380
 msgid "Migration finished."
 msgstr "Migrazione terminata."
 
-#: selfprivacy_api/jobs/migrate_to_binds.py:388
 msgid "Migrate to binds"
 msgstr "Passa a Binds"
 
-#: selfprivacy_api/jobs/migrate_to_binds.py:389
 msgid "Migration required to use the new disk space management."
 msgstr "Migrazione necessaria per poter utilizzare la nuova gestione dello spazio su disco."
 
-#: selfprivacy_api/jobs/nix_collect_garbage.py:68
 msgid "Garbage collection completed."
 msgstr "Raccolta dei files da eliminare completata."
 
-#: selfprivacy_api/jobs/nix_collect_garbage.py:69
 #, python-format
 msgid "%(size_in_megabytes)s have been cleared"
 msgstr "Sono stati cancellati %(size_in_megabytes)s"
 
-#: selfprivacy_api/jobs/nix_collect_garbage.py:91
 msgid "Cleaning..."
 msgstr "Pulizia..."
 
-#: selfprivacy_api/jobs/nix_collect_garbage.py:113
 msgid "Calculate the number of dead packages..."
 msgstr "Calcola il numero di pacchetti morti..."
 
-#: selfprivacy_api/jobs/nix_collect_garbage.py:124
 msgid "Nothing to clear"
 msgstr "Niente da pulire"
 
-#: selfprivacy_api/jobs/nix_collect_garbage.py:125
 msgid "System is clear"
 msgstr "Il sistema è pulito"
 
-#: selfprivacy_api/jobs/nix_collect_garbage.py:133
 #, python-format
 msgid "Found %(dead_packages)s packages to remove!"
 msgstr "Trovati %(dead_packages)s pacchetti da rimuovere!"
 
-#: selfprivacy_api/jobs/nix_collect_garbage.py:151
 msgid "Garbage collection failed"
 msgstr "Raccolta dei files da eliminare non riuscita"
 
-#: selfprivacy_api/jobs/nix_collect_garbage.py:159
 msgid "Collect garbage"
 msgstr "Raccolta files da eliminare"
 
-#: selfprivacy_api/jobs/nix_collect_garbage.py:160
 msgid "Cleaning up unused packages"
 msgstr "Eliminazione dei pacchetti inutilizzati"
 
-#: selfprivacy_api/jobs/upgrade_system.py:74
 msgid "Starting the system rebuild..."
 msgstr "Avvio della ricostruzione del sistema..."
 
-#: selfprivacy_api/jobs/upgrade_system.py:85
-#: selfprivacy_api/jobs/upgrade_system.py:142
 #, fuzzy, python-format
 msgid ""
 "System rebuild timed out. Last log lines:\n"
 "%(logs)s"
 msgstr "Timeout durante il ripristino del sistema. Ultime righe del log:\n"
 
-#: selfprivacy_api/jobs/upgrade_system.py:92
 msgid "Rebuilding the system..."
 msgstr "Ricostruzione del sistema..."
 
-#: selfprivacy_api/jobs/upgrade_system.py:119
-#: selfprivacy_api/migrations/check_for_system_rebuild_jobs.py:50
 msgid "System rebuilt."
 msgstr "Sistema ricostruito."
 
-#: selfprivacy_api/jobs/upgrade_system.py:127
 #, fuzzy, python-format
 msgid ""
 "System rebuild failed. Last log lines:\n"
 "%(logs)s"
 msgstr "La ricostruzione del sistema non è andata a buon fine. Ultime righe del log:\n"
 
-#: selfprivacy_api/models/services.py:94
 msgid "No description found!"
 msgstr "Nessuna descrizione trovata!"
 
-#: selfprivacy_api/models/services.py:101
 msgid "No backup description found!"
 msgstr "Nessuna descrizione di backup trovata!"
 
-#: selfprivacy_api/services/__init__.py:319
 msgid "Stashing settings"
 msgstr ""
 
-#: selfprivacy_api/services/moving.py:71
-#: selfprivacy_api/services/service.py:464
 #, fuzzy
 msgid "Moving data to new volume..."
 msgstr "Sposta i dati di %(service)s su %(volume)s"
 
-#: selfprivacy_api/services/service.py:457
 msgid "Unmounting folders from old volume..."
 msgstr ""
 
-#: selfprivacy_api/services/service.py:471
 #, python-format
 msgid "Making sure %(service_name)s owns its files..."
 msgstr ""
 
-#: selfprivacy_api/services/service.py:483
 #, python-format
 msgid "Service %(service_name)s will not be able to write files: %(error)s"
 msgstr ""
 
-#: selfprivacy_api/services/service.py:491
 #, fuzzy, python-format
 msgid "Mounting %(service_name)s data..."
 msgstr "Ripristinando %(service_name)s"
 
-#: selfprivacy_api/services/service.py:499
 #, fuzzy, python-format
 msgid "Finishing moving %(service_name)s..."
 msgstr "Ripristinando %(service_name)s"
 
-#: selfprivacy_api/services/service.py:510
 msgid "Performing pre-move checks..."
 msgstr ""
 
-#: selfprivacy_api/services/service.py:519
 #, python-format
 msgid "%(service_name)s moved successfully (no folders)."
 msgstr ""
 
-#: selfprivacy_api/services/service.py:521
 #, fuzzy, python-format
 msgid "NOT starting %(service_name)s"
 msgstr "Ripristinando %(service_name)s"
 
-#: selfprivacy_api/services/service.py:530
 #, fuzzy, python-format
 msgid "Stopping %(service_name)s..."
 msgstr "Ripristinando %(service_name)s"
 
-#: selfprivacy_api/services/service.py:539
 msgid "Stopped service, starting the move..."
 msgstr ""
 
-#: selfprivacy_api/services/service.py:546
 msgid "Move complete, rebuilding..."
 msgstr ""
 
-#: selfprivacy_api/services/service.py:553
 #, python-format
 msgid "%(service_name)s moved successfully."
 msgstr ""
 
-#: selfprivacy_api/services/service.py:555
 #, fuzzy, python-format
 msgid "Starting %(service_name)s..."
 msgstr "Ripristinando %(service_name)s"
 
-#: selfprivacy_api/services/templated_service.py:501
 #, python-format
 msgid "Creating a dump of database %(db_name)s"
 msgstr ""
 
-#: selfprivacy_api/services/templated_service.py:542
 #, fuzzy, python-format
 msgid "Restoring database %(db_name)s"
 msgstr "Ripristino di %(display_name)s"
 
-#: selfprivacy_api/update_channels.py:24
 msgid "Stable channel"
 msgstr ""
 
-#: selfprivacy_api/update_channels.py:25
 msgid "Latest tested release of SelfPrivacy system"
 msgstr ""
 
-#: selfprivacy_api/utils/kanidm.py:32
 #, fuzzy
 msgid "Error logging in to Kanidm"
 msgstr "Errore durante la creazione del token Kanidm"
 
-#: selfprivacy_api/utils/kanidm.py:33
 msgid "Error creating Kanidm token"
 msgstr "Errore durante la creazione del token Kanidm"
 
-#: selfprivacy_api/utils/kanidm.py:34
 #, fuzzy
 msgid "Error resetting Kanidm admin password"
 msgstr "Errore durante la creazione del token Kanidm"
 
-#: selfprivacy_api/utils/kanidm.py:129
 msgid "No JSON found in Kanidm response."
 msgstr "Non è stato trovato alcun JSON nella risposta di Kanidm."
 
-#: selfprivacy_api/utils/kanidm.py:137
 msgid "Kanidm is not responding to requests."
 msgstr "Kanidm non risponde alle richieste."
 
-#: selfprivacy_api/utils/kanidm.py:164
 msgid "We somehow got into unreachable code."
 msgstr ""
 
-#: selfprivacy_api/utils/kanidm.py:186
 msgid "Kanidm access issue"
 msgstr "Problema di accesso a Kanidm"
 

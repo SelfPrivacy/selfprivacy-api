@@ -201,6 +201,7 @@
                 --foreign-user \
                 --sort-by-file \
                 --no-wrap \
+                --no-location \
                 --files-from="$files_list" \
                 -o "$POT_FILE"
 
