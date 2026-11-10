@@ -6,6 +6,10 @@ import shutil
 import gettext
 from typing import List
 
+from selfprivacy_api.exceptions.services import (
+    MoveNotEnoughSpaceError,
+    MoveVolumeNotMountedError,
+)
 from selfprivacy_api.jobs import Job, report_progress
 from selfprivacy_api.services.owned_path import Bind
 from selfprivacy_api.utils.block_devices import BlockDevice
@@ -13,21 +17,17 @@ from selfprivacy_api.utils.block_devices import BlockDevice
 _ = gettext.gettext
 
 
-class MoveError(Exception):
-    """Move of the data has failed"""
-
-
-def check_volume(volume: BlockDevice, space_needed: int) -> None:
+def assert_can_move_to_volume(volume: BlockDevice, space_needed: int) -> None:
     # Check if there is enough space on the new volume
     if int(volume.fsavail) < space_needed:
-        raise MoveError("Not enough space on the new volume.")
+        raise MoveNotEnoughSpaceError(volume)
 
     # Make sure the volume is mounted
     if (
         not volume.is_root()
         and f"/volumes/{volume.canonical_name}" not in volume.mountpoints
     ):
-        raise MoveError("Volume is not mounted.")
+        raise MoveVolumeNotMountedError(volume)
 
 
 def check_binds(volume_name: str, binds: List[Bind]) -> None:
@@ -57,12 +57,7 @@ def move_data_to_volume(
         bind.drive = new_volume
         new_location = bind.location_at_volume()
 
-        try:
-            shutil.move(old_location, new_location)
-        except Exception as error:
-            raise MoveError(
-                f"could not move {old_location} to {new_location} : {str(error)}"
-            ) from error
+        shutil.move(old_location, new_location)  # propogate error from shutil.
 
         progress = current_progress + progress_per_folder
         report_progress(

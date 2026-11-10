@@ -238,6 +238,70 @@ msgstr ""
 msgid "No such volume: %(volume_name)s. %(REPORT_IT_TO_SUPPORT_CHATS)s"
 msgstr ""
 
+#, python-format
+msgid "Not enough space on %(volume_display_name)s, failed to move service."
+msgstr ""
+
+#, python-format
+msgid "Volume %(volume_display_name)s is not mounted."
+msgstr ""
+
+#, python-format
+msgid "Service %(service_name)s is not movable."
+msgstr ""
+
+#, python-format
+msgid "Service %(service_name)s is already on volume %(volume_display_name)s."
+msgstr ""
+
+#, python-format
+msgid "Service %(service_name)s cannot be moved as it has no defined storage location."
+msgstr ""
+
+#, python-format
+msgid "Service %(service_name)s cannot be moved as server doesn't use binds."
+msgstr ""
+
+#, python-format
+msgid "No such drive: %(drive_name)s"
+msgstr ""
+
+#, python-format
+msgid "Directory %(path)s was not found."
+msgstr ""
+
+#, python-format
+msgid "%(path)s is not a directory."
+msgstr ""
+
+#, python-format
+msgid "%(path)s is not owned by %(owner)s."
+msgstr ""
+
+#, python-format
+msgid "Cannot bind to a non-existing path: %(path)s"
+msgstr ""
+
+#, python-format
+msgid "Unable to bind %(source)s to %(target)s: %(details)s"
+msgstr ""
+
+#, python-format
+msgid "Cannot unbind a non-existing path: %(path)s"
+msgstr ""
+
+#, python-format
+msgid "Unable to unmount folder %(path)s: %(details)s"
+msgstr ""
+
+#, python-format
+msgid "Unable to set ownership of %(path)s: %(details)s"
+msgstr ""
+
+#, python-format
+msgid "Operation is not supported for system service %(service_name)s."
+msgstr ""
+
 msgid "Key not found"
 msgstr ""
 

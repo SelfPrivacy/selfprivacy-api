@@ -25,6 +25,7 @@ from selfprivacy_api.actions.users import (
 from selfprivacy_api.exceptions import PLEASE_UPDATE_APP_TEXT
 from selfprivacy_api.exceptions.abstract_exception import AbstractException
 from selfprivacy_api.graphql import IsAuthenticated
+from selfprivacy_api.graphql.common_types.user import User
 from selfprivacy_api.graphql.common_types.kanidm_credential_type import (
     KanidmCredentialTypeMutationReturn,
 )
@@ -37,6 +38,7 @@ from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericMutationReturn,
 )
 from selfprivacy_api.models.kanidm_credential_type import KanidmCredentialType
+from selfprivacy_api.utils.graphql import generic_mutation_error, mutation_error_fields
 from selfprivacy_api.utils.localization import (
     TranslateSystemMessage as t,
     get_locale,
@@ -62,6 +64,10 @@ async def return_failed_mutation_return(
         code=code,
         user=await get_user_by_username(username) if username else None,
     )
+
+
+async def get_user_or_none(username: str | None) -> User | None:
+    return await get_user_by_username(username) if username else None
 
 
 @strawberry.input
@@ -96,17 +102,9 @@ class UsersMutations:
             await set_kanidm_minimum_credential_type_action(
                 minimum_credential_type=minimum_credential_type
             )
-        except AbstractException as error:
-            return KanidmCredentialTypeMutationReturn(
-                success=False,
-                message=error.get_error_message(locale=locale),
-                code=error.code,
-            )
         except Exception as error:
             return KanidmCredentialTypeMutationReturn(
-                success=False,
-                message=str(error),
-                code=400,
+                **mutation_error_fields(error, locale),
             )
 
         return KanidmCredentialTypeMutationReturn(
@@ -135,17 +133,10 @@ class UsersMutations:
                     directmemberof=user.directmemberof,
                     displayname=user.display_name,
                 )
-            except AbstractException as error:
-                return await return_failed_mutation_return(
-                    message=error.get_error_message(locale=locale),
-                    code=error.code,
-                    username=user.username,
-                )
             except Exception as error:
-                return await return_failed_mutation_return(
-                    message=str(error),
-                    code=400,
-                    username=user.username,
+                return UserMutationReturn(
+                    **mutation_error_fields(error, locale),
+                    user=await get_user_or_none(user.username),
                 )
 
             if user.password:
@@ -174,18 +165,8 @@ class UsersMutations:
         ):
             try:
                 await delete_user_action(username)
-            except AbstractException as error:
-                return GenericMutationReturn(
-                    success=False,
-                    message=error.get_error_message(locale=locale),
-                    code=error.code,
-                )
             except Exception as error:
-                return GenericMutationReturn(
-                    success=False,
-                    message=str(error),
-                    code=400,
-                )
+                return generic_mutation_error(error, locale)
             return GenericMutationReturn(
                 success=True,
                 message=t.translate(text=_("User deleted"), locale=locale),
@@ -212,17 +193,10 @@ class UsersMutations:
                     directmemberof=user.directmemberof,
                     displayname=user.display_name,
                 )
-            except AbstractException as error:
-                return await return_failed_mutation_return(
-                    message=error.get_error_message(locale=locale),
-                    username=user.username,
-                    code=error.code,
-                )
             except Exception as error:
-                return await return_failed_mutation_return(
-                    message=str(error),
-                    username=user.username,
-                    code=400,
+                return UserMutationReturn(
+                    **mutation_error_fields(error, locale),
+                    user=await get_user_or_none(user.username),
                 )
 
             if user.password:
@@ -255,15 +229,9 @@ class UsersMutations:
         ):
             try:
                 create_ssh_key_action(ssh_input.username, ssh_input.ssh_key)
-            except AbstractException as error:
-                return await return_failed_mutation_return(
-                    message=error.get_error_message(locale=locale),
-                    code=error.code,
-                )
             except Exception as error:
-                return await return_failed_mutation_return(
-                    message=str(error),
-                    code=500,
+                return UserMutationReturn(
+                    **mutation_error_fields(error, locale), user=None
                 )
             return UserMutationReturn(
                 success=True,
@@ -289,17 +257,9 @@ class UsersMutations:
         ):
             try:
                 remove_ssh_key_action(ssh_input.username, ssh_input.ssh_key)
-            except AbstractException as error:
-                return UserMutationReturn(
-                    success=False,
-                    message=error.get_error_message(locale=locale),
-                    code=error.code,
-                )
             except Exception as error:
                 return UserMutationReturn(
-                    success=False,
-                    message=str(error),
-                    code=500,
+                    **mutation_error_fields(error, locale), user=None
                 )
             return UserMutationReturn(
                 success=True,
@@ -326,17 +286,9 @@ class UsersMutations:
                 password_reset_link = await generate_password_reset_link_action(
                     username=username
                 )
-            except AbstractException as error:
-                return PasswordResetLinkReturn(
-                    success=False,
-                    message=error.get_error_message(locale=locale),
-                    code=error.code,
-                )
             except Exception as error:
                 return PasswordResetLinkReturn(
-                    success=False,
-                    message=str(error),
-                    code=400,
+                    **mutation_error_fields(error, locale),
                 )
             return PasswordResetLinkReturn(
                 success=True,

@@ -337,7 +337,7 @@ def test_graphql_refresh_token_backend_unavailable(authorized_client, mocker):
     )
 
     output = get_data(response)["api"]["refreshDeviceApiToken"]
-    assert_errorcode(output, 400)
+    assert_errorcode(output, 500)  # internal server error, redis is dead
     assert output["token"] is None
 
 
@@ -376,5 +376,5 @@ def test_graphql_authorize_new_device_backend_unavailable(client, mocker):
     )
 
     output = get_data(response)["api"]["authorizeWithNewDeviceApiKey"]
-    assert_errorcode(output, 400)
+    assert_errorcode(output, 500)
     assert output["token"] is None

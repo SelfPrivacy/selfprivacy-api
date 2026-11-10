@@ -5,8 +5,17 @@ import pathlib
 import subprocess
 from os.path import exists
 
-from pydantic import BaseModel
-
+from selfprivacy_api.exceptions.services import (
+    BindDirectoryNotFoundError,
+    BindOperationFailedError,
+    BindOwnershipFailedError,
+    BindPathNotDirectoryError,
+    BindPathNotOwnedError,
+    BindTargetNotFoundError,
+    NoSuchDriveError,
+    UnbindOperationFailedError,
+    UnbindTargetNotFoundError,
+)
 from selfprivacy_api.models.owned_path import OwnedPath
 from selfprivacy_api.utils.block_devices import BlockDevice, BlockDevices
 
@@ -14,10 +23,6 @@ logger = logging.getLogger(__name__)
 
 # tests override it to a tmpdir
 VOLUMES_PATH = "/volumes"
-
-
-class BindError(Exception):
-    pass
 
 
 class Bind:
@@ -37,7 +42,7 @@ class Bind:
     def from_owned_path(path: OwnedPath, drive_name: str) -> Bind:
         drive = BlockDevices().get_block_device_by_canonical_name(drive_name)
         if drive is None:
-            raise BindError(f"No such drive: {drive_name}")
+            raise NoSuchDriveError(drive_name)
 
         return Bind(
             binding_path=path.path, owner=path.owner, group=path.group, drive=drive
@@ -53,15 +58,15 @@ class Bind:
         path = pathlib.Path(self.location_at_volume())
 
         if not path.exists():
-            raise BindError(f"directory {path} is not found.")
+            raise BindDirectoryNotFoundError(str(path))
         if not path.is_dir():
-            raise BindError(f"{path} is not a directory.")
+            raise BindPathNotDirectoryError(str(path))
         if path.owner() != self.owner:
-            raise BindError(f"{path} is not owned by {self.owner}.")
+            raise BindPathNotOwnedError(str(path), self.owner)
 
     def bind(self) -> None:
         if not exists(self.binding_path):
-            raise BindError(f"cannot bind to a non-existing path: {self.binding_path}")
+            raise BindTargetNotFoundError(self.binding_path)
 
         source = self.location_at_volume()
         target = self.binding_path
@@ -70,25 +75,29 @@ class Bind:
             subprocess.run(
                 ["mount", "--bind", source, target],
                 stderr=subprocess.PIPE,
+                text=True,
                 check=True,
             )
         except subprocess.CalledProcessError as error:
-            logging.error(error.stderr)
-            raise BindError(f"Unable to bind {source} to {target} :{error.stderr}")
+            details = error.stderr or str(error)
+            logger.error(details)
+            raise BindOperationFailedError(source, target, details) from error
 
     def unbind(self) -> None:
         if not exists(self.binding_path):
-            raise BindError(f"cannot unbind a non-existing path: {self.binding_path}")
+            raise UnbindTargetNotFoundError(self.binding_path)
 
         try:
             subprocess.run(
                 # umount -l ?
                 ["umount", self.binding_path],
+                stderr=subprocess.PIPE,
+                text=True,
                 check=True,
             )
         except subprocess.CalledProcessError as error:
-            raise BindError(f"Unable to unmount folder {self.binding_path}. {error}")
-        pass
+            details = error.stderr or str(error)
+            raise UnbindOperationFailedError(self.binding_path, details) from error
 
     def ensure_ownership(self) -> None:
         true_location = self.location_at_volume()
@@ -103,10 +112,9 @@ class Bind:
                 ],
                 check=True,
                 stderr=subprocess.PIPE,
+                text=True,
             )
         except subprocess.CalledProcessError as error:
-            logging.error(error.stderr)
-            error_message = (
-                f"Unable to set ownership of {true_location} :{error.stderr}"
-            )
-            raise BindError(error_message)
+            details = error.stderr or str(error)
+            logger.error(details)
+            raise BindOwnershipFailedError(true_location, details) from error

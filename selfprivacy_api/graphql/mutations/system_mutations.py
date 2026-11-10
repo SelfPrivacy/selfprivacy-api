@@ -27,7 +27,10 @@ from selfprivacy_api.graphql.queries.system import (
     open_telemetry_settings_to_graphql,
 )
 from selfprivacy_api.jobs.nix_collect_garbage import start_nix_collect_garbage
-from selfprivacy_api.utils import pretty_error
+from selfprivacy_api.utils.graphql import (
+    generic_job_mutation_error,
+    generic_mutation_error,
+)
 from selfprivacy_api.utils.localization import (
     TranslateSystemMessage as t,
     get_locale,
@@ -262,12 +265,8 @@ class SystemMutations:
                     code=200,
                     job=translate_job(job=job_to_api_job(job), locale=locale),
                 )
-            except ShellException as error:
-                return GenericJobMutationReturn(
-                    success=False,
-                    message=error.get_error_message(locale=locale),
-                    code=500,
-                )
+            except Exception as error:
+                return generic_job_mutation_error(error, locale)
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def run_system_rollback(self, info: Info) -> GenericMutationReturn:
@@ -281,12 +280,8 @@ class SystemMutations:
                     message="Starting system rollback",
                     code=200,
                 )
-            except ShellException as error:
-                return GenericMutationReturn(
-                    success=False,
-                    message=error.get_error_message(locale=locale),
-                    code=500,
-                )
+            except Exception as error:
+                return generic_mutation_error(error, locale)
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def run_system_upgrade(self, info: Info) -> GenericJobMutationReturn:
@@ -303,30 +298,22 @@ class SystemMutations:
                     code=200,
                     job=translate_job(job=job_to_api_job(job), locale=locale),
                 )
-            except ShellException as error:
-                return GenericJobMutationReturn(
-                    success=False,
-                    message=error.get_error_message(locale=locale),
-                    code=500,
-                )
+            except Exception as error:
+                return generic_job_mutation_error(error, locale)
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def reboot_system(self, info: Info) -> GenericMutationReturn:
         locale = get_locale(info=info)
 
-        await system_actions.reboot_system()
         try:
+            await system_actions.reboot_system()
             return GenericMutationReturn(
                 success=True,
                 message=t.translate(text=_("System reboot has started"), locale=locale),
                 code=200,
             )
-        except ShellException as error:
-            return GenericMutationReturn(
-                success=False,
-                message=error.get_error_message(locale=locale),
-                code=500,
-            )
+        except Exception as error:
+            return generic_mutation_error(error, locale)
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def pull_repository_changes(self, info: Info) -> GenericMutationReturn:
@@ -381,19 +368,8 @@ class SystemMutations:
                     code=200,
                     message=t.translate(text=_("Provider set"), locale=locale),
                 )
-
-            except AbstractException as error:
-                return GenericMutationReturn(
-                    success=False,
-                    message=error.get_error_message(locale=locale),
-                    code=error.code,
-                )
             except Exception as error:
-                return GenericMutationReturn(
-                    success=False,
-                    code=400,
-                    message=pretty_error(error),
-                )
+                return generic_mutation_error(error, locale)
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def set_update_channel(
@@ -416,15 +392,5 @@ class SystemMutations:
                         text=_("System update channel updated"), locale=locale
                     ),
                 )
-            except AbstractException as error:
-                return GenericMutationReturn(
-                    success=False,
-                    message=error.get_error_message(locale=locale),
-                    code=error.code,
-                )
             except Exception as error:
-                return GenericMutationReturn(
-                    success=False,
-                    code=400,
-                    message=pretty_error(error),
-                )
+                return generic_mutation_error(error, locale)

@@ -29,6 +29,7 @@ from selfprivacy_api.graphql.mutations.mutation_interface import (
     GenericMutationReturn,
     MutationReturnInterface,
 )
+from selfprivacy_api.utils.graphql import generic_mutation_error, mutation_error_fields
 from selfprivacy_api.utils.localization import (
     TranslateSystemMessage as t,
     get_locale,
@@ -101,18 +102,9 @@ class ApiMutations:
                 key = await get_new_api_recovery_key(
                     limits.expiration_date, limits.uses
                 )
-            except AbstractException as error:
-                return ApiKeyMutationReturn(
-                    success=False,
-                    message=error.get_error_message(locale=locale),
-                    code=error.code,
-                    key=None,
-                )
             except Exception as error:
                 return ApiKeyMutationReturn(
-                    success=False,
-                    message=str(error),
-                    code=400,
+                    **mutation_error_fields(error, locale),
                     key=None,
                 )
             return ApiKeyMutationReturn(
@@ -137,18 +129,9 @@ class ApiMutations:
         ):
             try:
                 token = await use_mnemonic_recovery_token(input.key, input.deviceName)
-            except AbstractException as error:
-                return DeviceApiTokenMutationReturn(
-                    success=False,
-                    message=error.get_error_message(locale=locale),
-                    code=error.code,
-                    token=None,
-                )
             except Exception as error:
                 return DeviceApiTokenMutationReturn(
-                    success=False,
-                    message=str(error),
-                    code=400,
+                    **mutation_error_fields(error, locale),
                     token=None,
                 )
             if token is None:
@@ -181,26 +164,15 @@ class ApiMutations:
             if not token_string:
                 error = TokenNotFound()
                 return DeviceApiTokenMutationReturn(
-                    success=False,
-                    message=error.get_error_message(locale=locale),
-                    code=error.code,
+                    **mutation_error_fields(error, locale),
                     token=None,
                 )
 
             try:
                 new_token = await refresh_api_token(token_string)
-            except AbstractException as error:
-                return DeviceApiTokenMutationReturn(
-                    success=False,
-                    message=error.get_error_message(locale=locale),
-                    code=error.code,
-                    token=None,
-                )
             except Exception as error:
                 return DeviceApiTokenMutationReturn(
-                    success=False,
-                    message=str(error),
-                    code=400,
+                    **mutation_error_fields(error, locale),
                     token=None,
                 )
             return DeviceApiTokenMutationReturn(
@@ -230,18 +202,8 @@ class ApiMutations:
             )
             try:
                 await delete_api_token(self_token, device)
-            except AbstractException as error:
-                return GenericMutationReturn(
-                    success=False,
-                    message=error.get_error_message(locale=locale),
-                    code=error.code,
-                )
             except Exception as error:
-                return GenericMutationReturn(
-                    success=False,
-                    message=str(error),
-                    code=500,
-                )
+                return generic_mutation_error(error, locale)
             return GenericMutationReturn(
                 success=True,
                 message=t.translate(text=_("Token deleted"), locale=locale),
@@ -290,18 +252,9 @@ class ApiMutations:
         ):
             try:
                 token = await use_new_device_auth_token(input.key, input.deviceName)
-            except AbstractException as error:
-                return DeviceApiTokenMutationReturn(
-                    success=False,
-                    message=error.get_error_message(locale=locale),
-                    code=error.code,
-                    token=None,
-                )
             except Exception as error:
                 return DeviceApiTokenMutationReturn(
-                    success=False,
-                    message=str(error),
-                    code=400,
+                    **mutation_error_fields(error, locale),
                     token=None,
                 )
 

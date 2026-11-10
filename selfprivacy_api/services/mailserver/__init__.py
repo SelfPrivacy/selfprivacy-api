@@ -3,6 +3,7 @@
 import base64
 from typing import Optional, List
 
+from selfprivacy_api.exceptions.services import SystemServiceOperationNotSupportedError
 from selfprivacy_api.utils.systemd import (
     listen_for_unit_state_changes,
     get_service_status_from_several_units,
@@ -83,11 +84,12 @@ class MailServer(Service):
 
     @staticmethod
     async def enable():
-        raise NotImplementedError("enable is not implemented for MailServer")
+        # TODO(nhnn): Prometheus doesn't have those methods. Why?
+        raise SystemServiceOperationNotSupportedError(MailServer.get_id())
 
     @staticmethod
     async def disable():
-        raise NotImplementedError("disable is not implemented for MailServer")
+        raise SystemServiceOperationNotSupportedError(MailServer.get_id())
 
     @staticmethod
     async def stop():

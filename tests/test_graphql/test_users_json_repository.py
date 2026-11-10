@@ -908,7 +908,7 @@ def test_graphql_create_user_backend_unavailable(
             "variables": {"user": {"username": "newuser"}},
         },
     )
-    assert_errorcode(get_data(response)["users"]["createUser"], 400)
+    assert_errorcode(get_data(response)["users"]["createUser"], 500)
 
 
 def test_graphql_delete_user_backend_unavailable(authorized_client, mocker):
@@ -923,7 +923,7 @@ def test_graphql_delete_user_backend_unavailable(authorized_client, mocker):
             "variables": {"username": "user1"},
         },
     )
-    assert_errorcode(get_data(response)["users"]["deleteUser"], 400)
+    assert_errorcode(get_data(response)["users"]["deleteUser"], 500)
 
 
 def test_graphql_update_user_backend_unavailable(
@@ -940,7 +940,7 @@ def test_graphql_update_user_backend_unavailable(
             "variables": {"user": {"username": "user1"}},
         },
     )
-    assert_errorcode(get_data(response)["users"]["updateUser"], 400)
+    assert_errorcode(get_data(response)["users"]["updateUser"], 500)
 
 
 def test_graphql_generate_password_reset_link_backend_unavailable(
@@ -957,4 +957,4 @@ def test_graphql_generate_password_reset_link_backend_unavailable(
             "variables": {"username": "user1"},
         },
     )
-    assert_errorcode(get_data(response)["users"]["generatePasswordResetLink"], 400)
+    assert_errorcode(get_data(response)["users"]["generatePasswordResetLink"], 500)

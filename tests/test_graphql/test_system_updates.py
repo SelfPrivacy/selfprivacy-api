@@ -166,7 +166,7 @@ def test_set_update_channel_returns_action_error(authorized_client, mocker):
     )
 
     data = get_data(response)["system"]["setUpdateChannel"]
-    assert_errorcode(data, 400)
+    assert_errorcode(data, 500)
     assert "boom" in data["message"]
     set_update_channel.assert_awaited_once_with(STABLE_CHANNEL.id)
 

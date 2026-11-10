@@ -5,7 +5,7 @@ import strawberry
 from opentelemetry import trace
 from strawberry.types import Info
 
-from selfprivacy_api.utils.graphql import api_job_mutation_error
+from selfprivacy_api.utils.graphql import generic_job_mutation_error
 from selfprivacy_api.utils.localization import (
     TranslateSystemMessage as t,
     get_locale,
@@ -239,7 +239,7 @@ class BackupMutations:
                 job = await add_total_backup_job()
                 total_backup(job)
             except Exception as error:
-                return api_job_mutation_error(error)
+                return generic_job_mutation_error(error, locale)
 
             return GenericJobMutationReturn(
                 success=True,

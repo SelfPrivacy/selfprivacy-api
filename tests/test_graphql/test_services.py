@@ -113,9 +113,9 @@ def only_dummy_service_and_api(
 
 
 @pytest.fixture()
-def mock_check_volume(mocker):
+def mock_assert_can_move_to_volume(mocker):
     mock = mocker.patch(
-        "selfprivacy_api.services.service.check_volume",
+        "selfprivacy_api.services.service.assert_can_move_to_volume",
         autospec=True,
         return_value=None,
     )
@@ -691,7 +691,7 @@ def test_move_no_such_volume(authorized_client, only_dummy_service):
     data = get_data(mutation_response)["services"]["moveService"]
     assert_notfound(data)
 
-    assert data["service"] is None
+    assert data["service"] is not None
     assert data["job"] is None
 
 
@@ -733,13 +733,18 @@ def test_graphql_move_service_without_folders_on_old_volume(
     mutation_response = api_move(authorized_client, dummy_service, target)
 
     data = get_data(mutation_response)["services"]["moveService"]
-    assert_errorcode(data, 400)
-    assert "sda2/test_service is not found" in data["message"]
+    assert_errorcode(data, 500)
+    assert "sda2/test_service was not found" in data["message"]
 
 
 @pytest.mark.asyncio
 async def test_move_empty(
-    authorized_client, generic_userdata, mock_check_volume, dummy_service, fp, mocker
+    authorized_client,
+    generic_userdata,
+    mock_assert_can_move_to_volume,
+    dummy_service,
+    fp,
+    mocker,
 ):
     """
     A reregister of uninitialized service with no data.
@@ -792,7 +797,7 @@ async def test_move_empty(
 def test_graphql_move_service(
     authorized_client,
     generic_userdata,
-    mock_check_volume,
+    mock_assert_can_move_to_volume,
     dummy_service_with_binds,
     fp,
     mocker,

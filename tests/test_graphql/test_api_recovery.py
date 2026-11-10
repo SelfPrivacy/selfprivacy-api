@@ -316,7 +316,7 @@ def test_graphql_generate_recovery_key_backend_unavailable(authorized_client, mo
     )
 
     output = get_data(response)["api"]["getNewRecoveryApiKey"]
-    assert_errorcode(output, 400)
+    assert_errorcode(output, 500)
     assert output["key"] is None
 
 
@@ -337,5 +337,5 @@ def test_graphql_use_recovery_key_backend_unavailable(client, mocker):
     )
 
     output = get_data(response)["api"]["useRecoveryApiKey"]
-    assert_errorcode(output, 400)
+    assert_errorcode(output, 500)
     assert output["token"] is None

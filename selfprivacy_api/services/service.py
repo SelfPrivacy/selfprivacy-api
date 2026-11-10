@@ -8,6 +8,12 @@ from typing import List, Optional
 from os.path import exists
 
 from selfprivacy_api import utils
+from selfprivacy_api.exceptions.services import (
+    ServerDoesNotUseBindsError,
+    ServiceHasNothingToMoveError,
+    ServiceIsAlreadyOnVolumeError,
+    ServiceNotMovableError,
+)
 from selfprivacy_api.services.config_item import ServiceConfigItem
 from selfprivacy_api.utils.default_subdomains import DEFAULT_SUBDOMAINS
 from selfprivacy_api.utils import ReadUserData, WriteUserData, get_domain
@@ -26,11 +32,10 @@ from selfprivacy_api.services.generic_size_counter import get_storage_usage
 from selfprivacy_api.services.owned_path import OwnedPath, Bind
 from selfprivacy_api.services.moving import (
     check_binds,
-    check_volume,
+    assert_can_move_to_volume,
     unbind_folders,
     bind_folders,
     ensure_folder_ownership,
-    MoveError,
     move_data_to_volume,
 )
 
@@ -419,21 +424,23 @@ class Service(ABC):
         """
         service_name = self.get_display_name()
         if not self.is_movable():
-            raise MoveError(f"{service_name} is not movable")
+            raise ServiceNotMovableError(service_name)
 
         with ReadUserData() as user_data:
             if not user_data.get("useBinds", False):
-                raise MoveError("Server is not using binds.")
+                raise ServerDoesNotUseBindsError(service_name)
 
         current_volume_name = self.get_drive()
         if current_volume_name == new_volume.canonical_name:
-            raise MoveError(f"{service_name} is already on volume {new_volume}")
+            raise ServiceIsAlreadyOnVolumeError(service_name, new_volume)
 
-        check_volume(new_volume, space_needed=await self.get_storage_usage())
+        assert_can_move_to_volume(
+            new_volume, space_needed=await self.get_storage_usage()
+        )
 
         binds = self.binds()
         if binds == []:
-            raise MoveError("nothing to move")
+            raise ServiceHasNothingToMoveError(service_name)
 
         # It is ok if service is uninitialized, we will just reregister it
         if self.has_folders():

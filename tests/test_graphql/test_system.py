@@ -1762,4 +1762,4 @@ def test_set_dns_provider_backend_unavailable(
         authorized_client, DnsProvider.DIGITALOCEAN, "someRandomToken"
     )
     data = get_data(response)["system"]["setDnsProvider"]
-    assert_errorcode(data, 400)
+    assert_errorcode(data, 500)

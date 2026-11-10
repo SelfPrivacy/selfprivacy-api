@@ -6,7 +6,8 @@ from os.path import join, exists
 from tests.conftest import ensure_user_exists, generic_userdata
 from tests.test_graphql.test_services import mock_lsblk_devices
 
-from selfprivacy_api.services.owned_path import Bind, BindError
+from selfprivacy_api.services.owned_path import Bind
+from selfprivacy_api.exceptions.services import BindError
 from selfprivacy_api.utils.block_devices import BlockDevices
 
 BINDTESTS_USER = "binduser"
