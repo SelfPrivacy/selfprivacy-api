@@ -45,11 +45,17 @@
         );
 
       overlays = [
-        # remove if c59b05508fd90f47d74f53edef1216226201c3bf lands nixos-26.05
-        # https://github.com/NixOS/nixpkgs/issues/581049
         (final: prev: {
           python312Packages = prev.python312Packages.overrideScope (
             pythonFinal: pythonPrev: {
+              # flaky test
+              sse-starlette = pythonPrev.sse-starlette.overridePythonAttrs (old: {
+                dependencies = (old.dependencies or [ ]) ++ [ pythonFinal.starlette ];
+                doCheck = false;
+                doInstallCheck = false;
+              });
+              # remove if c59b05508fd90f47d74f53edef1216226201c3bf lands nixos-26.05
+              # https://github.com/NixOS/nixpkgs/issues/581049
               cross-web = pythonPrev.cross-web.overridePythonAttrs (old: {
                 pytestFlags = (old.pytestFlags or [ ]) ++ [
                   "-Wignore::DeprecationWarning"
